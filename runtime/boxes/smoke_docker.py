@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import io
+import base64
 import json
 import os
 from pathlib import Path
@@ -84,11 +85,23 @@ def start_container(suffix):
 
 
 def start_page_server(ident):
-    page = '''<!doctype html><html><head><title>AB JS loading</title><style>body{margin:0;background:red}</style></head><body><script>
+    page = '''<!doctype html><html><head><meta charset="utf-8"><title>AB JS loading</title><style>body{margin:0;background:red}</style></head><body><script>
     const previous=localStorage.getItem('ab019-smoke');
     document.body.style.background=previous==='persisted'?'blue':'red';
     document.title=previous==='persisted'?'AB JS persisted':'AB JS fresh';
     localStorage.setItem('ab019-smoke','persisted');
+    const visible=document.createElement('div');visible.textContent='AB-VISIBLE-PAGE-TEXT';document.body.append(visible);
+    const link=document.createElement('a');link.href='https://example.com/scrape-fixture';
+    link.textContent='AB-VISIBLE-LINK';document.body.append(link);
+    const longText=document.createElement('div');longText.style.position='absolute';longText.style.top='1200px';
+    longText.textContent='漢'.repeat(66000);
+    const password=document.createElement('input');password.type='password';password.value='AB-PASSWORD-SECRET';document.body.append(password);
+    const input=document.createElement('input');input.value='AB-INPUT-SECRET';document.body.append(input);
+    const textarea=document.createElement('textarea');textarea.value='AB-TEXTAREA-SECRET';
+    textarea.textContent='AB-TEXTAREA-SECRET';document.body.append(textarea);
+    const editable=document.createElement('div');editable.setAttribute('contenteditable','true');
+    editable.textContent='AB-EDITABLE-SECRET';document.body.append(editable);
+    document.body.append(longText);
     document.addEventListener('click',()=>{document.body.style.background='green';document.title='AB JS clicked'});
     </script></body></html>'''
     docker('exec', ident, 'python', '-c', "from pathlib import Path; Path('/data/workspace/smoke.html').write_text(" + repr(page) + ")")
@@ -101,6 +114,20 @@ def dominant(data, x=640, y=400):
     return image.getpixel((min(x, image.width - 1), min(y, image.height - 1)))
 
 
+def assert_page(port, token, generation):
+    _, page = checked(port, token, '/v1/page')
+    assert page['computer_id'] == COMPUTER_ID and page['generation'] == generation, page
+    assert page['url'].endswith('/smoke.html') and page['title'].startswith('AB JS '), page
+    assert page['text'].startswith('AB-VISIBLE-PAGE-TEXT'), page['text'][:100]
+    assert '漢' in page['text'] and len(page['text']) == 65536 and page['truncated'], len(page['text'])
+    assert len(page['links']) <= 200 and {'url': 'https://example.com/scrape-fixture',
+                                          'label': 'AB-VISIBLE-LINK'} in page['links'], page['links']
+    rendered = json.dumps(page, ensure_ascii=False)
+    for sentinel in ('AB-PASSWORD-SECRET', 'AB-INPUT-SECRET', 'AB-TEXTAREA-SECRET', 'AB-EDITABLE-SECRET'):
+        assert sentinel not in rendered, sentinel
+    return page
+
+
 def main():
     global created_volume
     try:
@@ -109,17 +136,25 @@ def main():
         ident, port, token = start_container('-a')
         _, health = checked(port, token, '/v1/health')
         assert health['computer_id'] == COMPUTER_ID and health['mode'] == 'http'
+        assert request(port, token, '/v1/page')[0] == 409
+        assert request(port, 'wrong-token', '/v1/page')[0] == 401
         _, lease = checked(port, token, '/v1/control/grant', {'actor_id': 'agent:smoke', 'epoch': 7,
-                                                               'paths': ['mode', 'navigate', 'input']})
+                                                               'paths': ['mode', 'navigate', 'input', 'http_request']})
+        _, public = checked(port, token, '/v1/http/request', {'url': 'https://example.com/', 'method': 'GET'}, lease)
+        assert public['computer_id'] == COMPUTER_ID and public['generation'] == 0 and public['status'] == 200, public
+        assert b'Example Domain' in base64.b64decode(public['body_base64']), public['status']
+        assert request(port, token, '/v1/http/request', {'url': 'http://127.0.0.1:8766/'}, lease)[0] == 400
         _, health = checked(port, token, '/v1/mode', {'mode': 'headless'}, lease)
         assert health['browser_ready'] and health['frame_source'] == 'browser'
         start_page_server(ident)
         _, nav = checked(port, token, '/v1/navigate', {'url': 'http://127.0.0.1:8766/smoke.html'}, lease)
+        assert_page(port, token, health['generation'])
         _, screenshot = checked(port, token, '/v1/frame')
         headless_pixel = dominant(screenshot)
         assert headless_pixel[0] > 150 and headless_pixel[1] < 100 and headless_pixel[2] < 100, headless_pixel
         _, health = checked(port, token, '/v1/mode', {'mode': 'desktop'}, lease)
         assert health['display_ready'] and health['frame_source'] == 'desktop'
+        assert_page(port, token, health['generation'])
         browser_info = json.loads(docker('exec', ident, 'python', '-c',
             "import json,urllib.request; j=json.load(urllib.request.urlopen('http://127.0.0.1:9222/json/version')); print(json.dumps({k:j[k] for k in ['Browser','User-Agent']}))"))
         assert ':9222' not in docker('port', ident)
@@ -142,6 +177,7 @@ def main():
         _, ack = checked(port, token, '/v1/control/revoke', {'actor_id': 'agent:smoke', 'epoch': 7})
         assert ack['acknowledged']
         assert request(port, token, '/v1/input', {'kind': 'click', 'button': 1}, lease)[0] == 403
+        assert request(port, token, '/v1/http/request', {'url': 'https://example.com/'}, lease)[0] == 403
         _, human = checked(port, token, '/v1/control/grant', {'actor_id': 'human', 'epoch': 8, 'paths': ['input']})
         checked(port, token, '/v1/input', {'kind': 'move', 'x': 400, 'y': 300}, human)
         checked(port, token, '/v1/control/revoke', {'actor_id': 'human', 'epoch': 8})
@@ -167,6 +203,9 @@ def main():
                           'headless_js_pixel': headless_pixel, 'desktop_frame_size': [1280, 800],
                           'desktop_clicked_pixel': clicked_pixel, 'persisted_profile_pixel': persisted_pixel,
                           'lease_takeover': 'passed', 'container_restart': 'passed',
+                          'public_https_get': 'passed', 'private_http_rejected': 'passed',
+                          'page_headless_desktop': 'passed', 'page_field_exclusion': 'passed',
+                          'page_unicode_limit': 'passed', 'revoked_http_rejected': 'passed',
                           'desktop_browser': browser_info, 'result': 'passed'}))
     finally:
         for ident in list(containers):

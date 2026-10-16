@@ -130,6 +130,98 @@ final class BrowserRuntimeTests: XCTestCase {
         }
     }
 
+    func testPageReadsBoundedAuthenticatedSnapshotAndRejectsStaleIdentity() async throws {
+        let health = frameHealth(mode: "headless", source: "browser", browserReady: true, displayReady: false)
+        let page = """
+        {"computer_id":"\(id.uuidString)","generation":4,"url":"https://example.com/","title":"Example","text":"Hello page","links":[{"url":"https://example.com/a","label":"A"}],"truncated":false}
+        """
+        BrowserRouteURLProtocol.configure(["/v1/health": Data(health.utf8), "/v1/page": Data(page.utf8)])
+        let snapshot = try await routeClient().page()
+        XCTAssertEqual(snapshot.title, "Example")
+        XCTAssertEqual(snapshot.links.first?.label, "A")
+        XCTAssertEqual(BrowserRouteURLProtocol.paths(), ["/v1/health", "/v1/page"])
+        XCTAssertTrue(BrowserRouteURLProtocol.allAuthenticated())
+
+        for badPage in [page.replacingOccurrences(of: id.uuidString, with: UUID().uuidString),
+                        page.replacingOccurrences(of: "\"generation\":4", with: "\"generation\":5")] {
+            BrowserRouteURLProtocol.configure(["/v1/health": Data(health.utf8), "/v1/page": Data(badPage.utf8)])
+            do { _ = try await routeClient().page(); XCTFail("Foreign or stale page must fail") }
+            catch BrowserRuntimeError.identityMismatch { }
+        }
+    }
+
+    func testPageRejectsOversizedTextAndUnavailableBrowserBeforeFetch() async throws {
+        let health = frameHealth(mode: "headless", source: "browser", browserReady: true, displayReady: false)
+        let page = """
+        {"computer_id":"\(id.uuidString)","generation":4,"url":"https://example.com/","title":"Example","text":"\(String(repeating: "x", count: 65_537))","links":[],"truncated":true}
+        """
+        BrowserRouteURLProtocol.configure(["/v1/health": Data(health.utf8), "/v1/page": Data(page.utf8)])
+        do { _ = try await routeClient().page(); XCTFail("Oversized page text must fail") }
+        catch BrowserRuntimeError.invalidResponse { }
+
+        let unavailable = frameHealth(mode: "http", source: "none", browserReady: false, displayReady: false)
+        BrowserRouteURLProtocol.configure(["/v1/health": Data(unavailable.utf8), "/v1/page": Data(page.utf8)])
+        do { _ = try await routeClient().page(); XCTFail("HTTP-only mode has no DOM") }
+        catch BrowserRuntimeError.invalidResponse { }
+        XCTAssertEqual(BrowserRouteURLProtocol.paths(), ["/v1/health"])
+    }
+
+    func testHTTPRoundTripUsesLeaseHeadersAndChecksBoundedIdentity() async throws {
+        let lease = try JSONDecoder().decode(BrowserRuntimeGrantedLease.self, from: Data(
+            #"{"actor_id":"agent:one","epoch":7,"paths":["http_request"],"control_token":"private-control"}"#.utf8))
+        let body = Data("hello".utf8).base64EncodedString()
+        func response(_ computerID: UUID, _ generation: Int, _ encoded: String) -> Data {
+            Data("""
+            {"computer_id":"\(computerID.uuidString)","generation":\(generation),"status":200,"content_type":"text/plain","body_base64":"\(encoded)"}
+            """.utf8)
+        }
+        BrowserRouteURLProtocol.configure(["/v1/http/request": response(id, 4, body)])
+        let result = try await routeClient().httpRequest(to: URL(string: "https://example.com/data")!, method: "GET", lease: lease)
+        XCTAssertEqual(result.body, Data("hello".utf8))
+        XCTAssertEqual(result.status, 200)
+        XCTAssertEqual(result.contentType, "text/plain")
+        XCTAssertEqual(BrowserRouteURLProtocol.paths(), ["/v1/http/request"])
+        XCTAssertTrue(BrowserRouteURLProtocol.allAuthenticated())
+        let request = try XCTUnwrap(BrowserRouteURLProtocol.requests().first)
+        XCTAssertEqual(request.value(forHTTPHeaderField: "X-AgentBox-Actor-ID"), "agent:one")
+        XCTAssertEqual(request.value(forHTTPHeaderField: "X-AgentBox-Lease-Epoch"), "7")
+        XCTAssertEqual(request.value(forHTTPHeaderField: "X-AgentBox-Control-Token"), "private-control")
+        let sent = try XCTUnwrap(JSONSerialization.jsonObject(with: try XCTUnwrap(BrowserRouteURLProtocol.bodies().first ?? nil)) as? [String: String])
+        XCTAssertEqual(sent, ["url": "https://example.com/data", "method": "GET"])
+
+        BrowserRouteURLProtocol.configure(["/v1/http/request": response(id, 4, "")])
+        let head = try await routeClient().httpRequest(to: URL(string: "https://example.com/data")!, method: "HEAD", lease: lease)
+        XCTAssertTrue(head.body.isEmpty)
+        BrowserRouteURLProtocol.configure(["/v1/http/request": response(id, 4, body)])
+        do { _ = try await routeClient().httpRequest(to: URL(string: "https://example.com")!, method: "HEAD", lease: lease)
+            XCTFail("HEAD must not return a body") }
+        catch BrowserRuntimeError.invalidResponse { }
+
+        for invalid in [response(UUID(), 4, body), response(id, 5, body)] {
+            BrowserRouteURLProtocol.configure(["/v1/http/request": invalid])
+            do { _ = try await routeClient().httpRequest(to: URL(string: "https://example.com")!, method: "GET", lease: lease)
+                XCTFail("Foreign or stale HTTP result must fail") }
+            catch BrowserRuntimeError.identityMismatch { }
+        }
+        BrowserRouteURLProtocol.configure(["/v1/http/request": response(id, 4, Data(count: 1_048_577).base64EncodedString())])
+        do { _ = try await routeClient().httpRequest(to: URL(string: "https://example.com")!, method: "GET", lease: lease)
+            XCTFail("HTTP body over 1 MiB must fail") }
+        catch BrowserRuntimeError.invalidResponse { }
+        BrowserRouteURLProtocol.configure(["/v1/http/request": response(id, 4, body)])
+        do { _ = try await routeClient().httpRequest(to: URL(string: "https://example.com")!, method: "POST", lease: lease)
+            XCTFail("Only GET/HEAD are allowed") }
+        catch BrowserRuntimeError.invalidResponse { }
+        XCTAssertTrue(BrowserRouteURLProtocol.paths().isEmpty)
+    }
+
+    private func routeClient() throws -> BrowserRuntimeClient {
+        let endpoint = try BrowserRuntimeEndpoint(baseURL: URL(string: "http://127.0.0.1:8765")!,
+            apiToken: String(repeating: "a", count: 40), computerID: id, generation: 4)
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [BrowserRouteURLProtocol.self]
+        return BrowserRuntimeClient(endpoint: endpoint, session: URLSession(configuration: config))
+    }
+
     private func frameClient() throws -> BrowserRuntimeClient {
         let endpoint = try BrowserRuntimeEndpoint(baseURL: URL(string: "http://127.0.0.1:8765")!,
             apiToken: String(repeating: "a", count: 40), computerID: id, generation: 4)
@@ -144,6 +236,53 @@ final class BrowserRuntimeTests: XCTestCase {
         {"computer_id":"\((computerID ?? id).uuidString)","generation":\(generation),"mode":"\(mode)","browser_ready":\(browserReady),"display_ready":\(displayReady),"frame_source":"\(source)","active_lease":null}
         """
     }
+}
+
+private final class BrowserRouteURLProtocol: URLProtocol {
+    private static let lock = NSLock()
+    private static var routes: [String: Data] = [:]
+    private static var seen: [URLRequest] = []
+    private static var seenBodies: [Data?] = []
+    static func configure(_ routes: [String: Data]) {
+        lock.lock(); defer { lock.unlock() }
+        self.routes = routes
+        seen = []
+        seenBodies = []
+    }
+    static func requests() -> [URLRequest] { lock.lock(); defer { lock.unlock() }; return seen }
+    static func bodies() -> [Data?] { lock.lock(); defer { lock.unlock() }; return seenBodies }
+    static func paths() -> [String] { requests().map { $0.url?.path ?? "" } }
+    static func allAuthenticated() -> Bool {
+        requests().allSatisfy { $0.value(forHTTPHeaderField: "Authorization") == "Bearer " + String(repeating: "a", count: 40) }
+    }
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func startLoading() {
+        var body = request.httpBody
+        if body == nil, let stream = request.httpBodyStream {
+            stream.open()
+            defer { stream.close() }
+            var data = Data()
+            var buffer = [UInt8](repeating: 0, count: 4096)
+            while true {
+                let count = stream.read(&buffer, maxLength: buffer.count)
+                if count <= 0 { break }
+                data.append(contentsOf: buffer.prefix(count))
+            }
+            body = data
+        }
+        Self.lock.lock()
+        Self.seen.append(request)
+        Self.seenBodies.append(body)
+        let data = Self.routes[request.url!.path]
+        Self.lock.unlock()
+        let response = HTTPURLResponse(url: request.url!, statusCode: data == nil ? 404 : 200,
+            httpVersion: "HTTP/1.1", headerFields: ["Content-Type": "application/json"])!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: data ?? Data())
+        client?.urlProtocolDidFinishLoading(self)
+    }
+    override func stopLoading() { }
 }
 
 private final class BrowserFrameURLProtocol: URLProtocol {

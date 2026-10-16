@@ -14,19 +14,24 @@ The host must publish **only** `127.0.0.1:<ephemeral-host-port>:8765`, never `0.
 |---|---|
 | `GET /v1/health` | computer UUID, generation, mode, browser/display readiness, frame source, active lease |
 | `GET /v1/frame` | one JPEG with `X-AgentBox-Frame-Source: browser` or `desktop` |
+| `GET /v1/page` | headless/desktop page `{url,title,text,links,truncated,generation,computer_id}` |
 | `GET /v1/stream` | multipart JPEG of the **entire Xvfb display**; desktop mode only, max 4 frames/s |
 | `POST /v1/control/grant` | host-only bearer request `{actor_id,epoch,paths}`; returns ephemeral control token |
 | `POST /v1/control/revoke` | host-only bearer request `{actor_id,epoch}`; returns ACK after in-flight write |
 | `POST /v1/mode` | leased `{mode:"http"|"headless"|"desktop"}` |
 | `POST /v1/navigate` | leased `{url}` for browser modes |
 | `POST /v1/input` | leased X11 `move`, `click`, `key`, `text` or `scroll` |
-| `POST /v1/http/request` | leased GET/HEAD, 10 s timeout, 1 MiB cap, no redirects |
+| `POST /v1/http/request` | leased public-web GET/HEAD, 10 s deadline, 1 MiB cap, no redirects |
+
+`/v1/page` removes form controls (including password fields), contenteditable nodes, scripts, styles, frames and non-text graphics before extracting page text or link labels. It never returns raw HTML, input values, cookies or browser storage. Text is capped at 65,536 characters, links at 200, labels at 300 characters, URLs at 4,096 characters and title at 500 characters; `truncated` reports clipping. It reads the same Playwright page used for browser navigation and screenshots, and returns 409 in HTTP mode.
+
+`/v1/http/request` accepts only `{url,method}` with an HTTP(S) URL of at most 4,096 characters and GET or HEAD. It rejects URL credentials and any private, loopback, link-local, multicast or reserved address in **any** DNS result, then connects to a vetted numeric address while keeping the original Host header and HTTPS certificate hostname. Environment proxies and redirects are not used. The response returns status, bounded content type, base64 body, generation and computer UUID; it does not expose response headers. A local fake-server test checks pinning, mixed public/private DNS, proxy isolation, redirects, response limits and a stalled resolver. This is an application-layer guard; container/network egress policy remains a separate defense.
 
 `http` mode has no browser. `headless` uses the persistent Playwright context and can provide a browser screenshot, but never a desktop stream. `desktop` starts Xvfb and Openbox, then launches the full Chromium binary as an independent desktop process using the **same** persistent profile. Playwright attaches via container-internal loopback CDP with `no_defaults=True`; port 9222 is never published. No user-agent override or fingerprint patch is applied. Headless mode uses the full Chromium channel too. Promotion closes the old context before reopening it, so transient page/form state is lost; the last URL, cookies/profile files, downloads and workspace survive. Each successful mode change increments generation. The host should refresh its endpoint after a change. The profile lock prevents a second runtime process from using the same profile concurrently.
 
 The MJPEG stream captures the entire Xvfb display, including windows beyond Chromium. `xdotool` drives XTEST input with validated argv and no shell. If the display or window manager stops, health ceases to report desktop readiness. Applications opened on the same display appear in the stream.
 
-**Security boundary:** the API lease gate controls calls to this server. It cannot constrain an untrusted process with shell access inside the same container: that process can reach its own X11 socket and browser profile. Until the control plane is isolated from agent-executable processes, the host must not advertise the lease as an adversarial in-container boundary or grant arbitrary shell access to this container. The HTTP request route also does not enforce destination policy or DNS re-resolution protection; an agent-facing network policy gateway is needed before allowing untrusted URLs.
+**Security boundary:** the API lease gate controls calls to this server. It cannot constrain an untrusted process with shell access inside the same container: that process can reach its own X11 socket and browser profile. Until the control plane is isolated from agent-executable processes, the host must not advertise the lease as an adversarial in-container boundary or grant arbitrary shell access to this container.
 
 ## Local verification
 

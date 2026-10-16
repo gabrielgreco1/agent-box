@@ -6,7 +6,7 @@ RUN python -m pip install --no-cache-dir playwright==1.63.0 mss==10.2.0 Pillow==
 RUN useradd --uid 10001 --create-home --shell /usr/sbin/nologin agentbox \
     && mkdir -p /opt/agentbox /data/profile /data/workspace/downloads \
     && chown -R agentbox:agentbox /opt/agentbox /data
-COPY --chown=agentbox:agentbox engine.py server.py desktop_browser.py /opt/agentbox/
+COPY --chown=agentbox:agentbox engine.py server.py desktop_browser.py public_http.py /opt/agentbox/
 USER agentbox
 WORKDIR /opt/agentbox
 ENV PYTHONUNBUFFERED=1

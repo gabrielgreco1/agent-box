@@ -132,6 +132,50 @@ public struct BrowserDesktopInputResult: Decodable {
     public let generation: UInt64
 }
 
+public struct BrowserPageLink: Decodable, Equatable {
+    public let url: String
+    public let label: String
+}
+
+public struct BrowserPageSnapshot: Decodable, Equatable {
+    public let computerID: UUID
+    public let generation: UInt64
+    public let url: String
+    public let title: String
+    public let text: String
+    public let links: [BrowserPageLink]
+    public let truncated: Bool
+    enum CodingKeys: String, CodingKey {
+        case computerID = "computer_id", generation, url, title, text, links, truncated
+    }
+}
+
+public struct BrowserHTTPResponse: Decodable, Equatable {
+    public let computerID: UUID
+    public let generation: UInt64
+    public let status: Int
+    public let contentType: String
+    public let body: Data
+    public var bodyBase64: String { body.base64EncodedString() }
+    enum CodingKeys: String, CodingKey {
+        case computerID = "computer_id", generation, status
+        case contentType = "content_type", bodyBase64 = "body_base64"
+    }
+    public init(from decoder: Decoder) throws {
+        let fields = try decoder.container(keyedBy: CodingKeys.self)
+        computerID = try fields.decode(UUID.self, forKey: .computerID)
+        generation = try fields.decode(UInt64.self, forKey: .generation)
+        status = try fields.decode(Int.self, forKey: .status)
+        contentType = try fields.decode(String.self, forKey: .contentType)
+        let encoded = try fields.decode(String.self, forKey: .bodyBase64)
+        guard encoded.utf8.count <= 1_398_104,
+              let decoded = Data(base64Encoded: encoded), decoded.count <= 1_048_576 else {
+            throw BrowserRuntimeError.invalidResponse
+        }
+        body = decoded
+    }
+}
+
 public struct BrowserRuntimeClient {
     public let endpoint: BrowserRuntimeEndpoint
     public let session: URLSession
@@ -194,6 +238,42 @@ public struct BrowserRuntimeClient {
         let body = try JSONEncoder().encode(action)
         let value: BrowserDesktopInputResult = try await send(authorized(endpoint.request(path: "v1/input", method: "POST", body: body), lease: lease))
         guard value.accepted, value.generation == endpoint.generation else { throw BrowserRuntimeError.identityMismatch }
+        return value
+    }
+
+    public func page() async throws -> BrowserPageSnapshot {
+        let status = try await health()
+        guard (status.mode == .headless || status.mode == .desktop), status.browserReady else {
+            throw BrowserRuntimeError.invalidResponse
+        }
+        let value: BrowserPageSnapshot = try await send(endpoint.request(path: "v1/page"))
+        guard value.computerID == endpoint.computerID, value.generation == endpoint.generation else {
+            throw BrowserRuntimeError.identityMismatch
+        }
+        // Python caps Unicode code points. Swift unicodeScalars matches that boundary;
+        // send() separately caps the total JSON bytes at 2 MiB.
+        guard value.url.unicodeScalars.count <= 4096, value.title.unicodeScalars.count <= 500,
+              value.text.unicodeScalars.count <= 65_536, value.links.count <= 200,
+              value.links.allSatisfy({ $0.url.unicodeScalars.count <= 4096 && $0.label.unicodeScalars.count <= 300 }) else {
+            throw BrowserRuntimeError.invalidResponse
+        }
+        return value
+    }
+
+    public func httpRequest(to url: URL, method: String, lease: BrowserRuntimeGrantedLease) async throws -> BrowserHTTPResponse {
+        guard (method == "GET" || method == "HEAD"),
+              (url.scheme == "http" || url.scheme == "https"), url.host != nil,
+              url.user == nil, url.password == nil, url.absoluteString.utf8.count <= 4096 else {
+            throw BrowserRuntimeError.invalidResponse
+        }
+        let body = try JSONEncoder().encode(["url": url.absoluteString, "method": method])
+        let value: BrowserHTTPResponse = try await send(authorized(
+            endpoint.request(path: "v1/http/request", method: "POST", body: body), lease: lease))
+        guard value.computerID == endpoint.computerID, value.generation == endpoint.generation else {
+            throw BrowserRuntimeError.identityMismatch
+        }
+        guard (100...599).contains(value.status), value.contentType.unicodeScalars.count <= 300,
+              method != "HEAD" || value.body.isEmpty else { throw BrowserRuntimeError.invalidResponse }
         return value
     }
 

@@ -98,6 +98,33 @@ class BrowserWorker:
                             if not context: raise RuntimeFailure('browser is not running')
                             page = context.pages[0] if context.pages else context.new_page()
                             reply.put((True, page.screenshot(type='jpeg', quality=70, timeout=5000)))
+                        elif job == 'page':
+                            if not context: raise RuntimeFailure('browser is not running')
+                            page = context.pages[0] if context.pages else context.new_page()
+                            # Clone only readable page nodes. Form controls, scripts and storage
+                            # are never serialized back to the caller.
+                            reply.put((True, page.evaluate("""() => {
+                              const forbidden = 'input,textarea,select,option,script,style,template,svg,canvas,noscript,iframe,[contenteditable]';
+                              const readable = (node) => {
+                                if (node.matches && node.matches(forbidden)) return '';
+                                const copy = node.cloneNode(true);
+                                copy.querySelectorAll(forbidden).forEach(child => child.remove());
+                                return (copy.textContent || '').replace(/\\s+/g, ' ').trim();
+                              };
+                              const fullText = document.body ? readable(document.body) : '';
+                              const anchors = document.querySelectorAll('a[href]');
+                              const fullURL = location.href;
+                              const fullTitle = document.title;
+                              let truncated = fullText.length > 65536 || anchors.length > 200 ||
+                                              fullURL.length > 4096 || fullTitle.length > 500;
+                              const links = Array.from(anchors).slice(0, 200).map(anchor => {
+                                const fullLabel = readable(anchor);
+                                if (fullLabel.length > 300 || anchor.href.length > 4096) truncated = true;
+                                return {url: anchor.href.slice(0, 4096), label: fullLabel.slice(0, 300)};
+                              });
+                              return {url: fullURL.slice(0, 4096), title: fullTitle.slice(0, 500),
+                                      text: fullText.slice(0, 65536), links, truncated};
+                            }""")))
                     except Exception as exc:
                         if job == 'launch':
                             try: close_browser()
@@ -303,6 +330,29 @@ class ComputerEngine:
             if self.mode == 'desktop': return self.display.frame(), 'desktop'
             if self.mode == 'headless': return self.browser.call('screenshot'), 'browser'
             raise RuntimeFailure('no frame available in HTTP mode')
+
+    def page(self):
+        with self.lock:
+            if self.mode not in ('headless', 'desktop') or not self.browser_ready:
+                raise RuntimeFailure('browser is not running')
+            source = self.browser.call('page')
+            if not isinstance(source, dict): raise RuntimeFailure('page snapshot is invalid')
+            url = source.get('url', '')
+            title = source.get('title', '')
+            text = source.get('text', '')
+            links = source.get('links', [])
+            if not isinstance(url, str) or not isinstance(title, str) or not isinstance(text, str) or not isinstance(links, list):
+                raise RuntimeFailure('page snapshot is invalid')
+            truncated = bool(source.get('truncated')) or len(url) > 4096 or len(title) > 500 or len(text) > 65_536 or len(links) > 200
+            bounded_links = []
+            for link in links[:200]:
+                if not isinstance(link, dict) or not isinstance(link.get('url'), str) or not isinstance(link.get('label'), str):
+                    continue
+                if len(link['url']) > 4096 or len(link['label']) > 300: truncated = True
+                bounded_links.append({'url': link['url'][:4096], 'label': link['label'][:300]})
+            return {'url': url[:4096], 'title': title[:500], 'text': text[:65_536],
+                    'links': bounded_links, 'truncated': truncated,
+                    'generation': self.generation, 'computer_id': self.computer_id}
 
     def input(self, action):
         with self.lock:

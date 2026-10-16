@@ -158,6 +158,14 @@ import Foundation
             return .text("mode=\(health.mode.rawValue); control=\(health.activeLease?.actorID ?? "idle"); awaiting_user=\(entry.pausedForHuman)")
         case .screenshot:
             return .jpeg(try await client.browserOrDesktopFrame())
+        case .page:
+            let page = try await client.page()
+            guard entry.active else { throw ComputerControlBridgeError.noTicket }
+            return try Self.jsonText([
+                "url": page.url, "title": page.title, "text": page.text,
+                "links": page.links.map { ["url": $0.url, "label": $0.label] },
+                "truncated": page.truncated
+            ])
         case .requestHelp:
             entry.pausedForHuman = true
             if let ticket = await entry.bridge.ticket(), ticket.grant.actor == .agent(runID: planID) {
@@ -186,12 +194,28 @@ import Foundation
         case .navigate(let url):
             _ = try await entry.bridge.navigate(to: url, ticket: ticket)
             guard entry.active else { throw ComputerControlBridgeError.noTicket }
-            return .text("Navigation completed. Use computer_screenshot to inspect the page.")
+            return .text("Navigation completed. Use computer_page for text and links, or computer_screenshot to inspect visually.")
+        case .httpRequest(let url, let method):
+            let response = try await entry.bridge.httpRequest(to: url, method: method, ticket: ticket)
+            guard entry.active else { throw ComputerControlBridgeError.noTicket }
+            var result: [String: Any] = ["status": response.status, "content_type": response.contentType]
+            if let text = String(data: response.body, encoding: .utf8) {
+                result["text"] = text
+            } else {
+                result["body_base64"] = response.bodyBase64
+            }
+            return try Self.jsonText(result)
         case .input(let action):
             try await entry.bridge.input(action, ticket: ticket)
             guard entry.active else { throw ComputerControlBridgeError.noTicket }
             return .text("Input accepted.")
         default: throw ComputerControlBridgeError.writeDenied
         }
+    }
+
+    private static func jsonText(_ value: [String: Any]) throws -> ComputerMCPResult {
+        let data = try JSONSerialization.data(withJSONObject: value, options: [.sortedKeys])
+        guard let text = String(data: data, encoding: .utf8) else { throw BrowserRuntimeError.invalidResponse }
+        return .text(text)
     }
 }

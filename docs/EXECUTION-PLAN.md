@@ -86,3 +86,5 @@ AB-036/037: pacote local de scraping e Chromium desktop com persistência compro
 AB-039: ferramentas MCP do computador ligadas ao lançamento Claude nativo, helper stdio empacotado, política efetiva e controle humano compartilhado. Suíte integrada com 103 testes passou; falta aceite ao vivo com o modelo e integração dos filhos. Não considerar AB-016/021/022 completos por esta entrega.
 
 AB-040: monitor de hooks Claude + árvore nativa de filhos integrados; run novo por processo, invocação protegida e sidebar derivada apenas de eventos autenticados. 110 testes e smoke do Claude real passaram. Conferência visual, computador por filho e outros harnesses pendentes. AB-035 segue com gate de reconexão no app após correção do backend legado.
+
+AB-041: HTTP público e leitura estruturada de página no MCP Claude, mantendo perfil persistente e pedido de intervenção. 113 testes Swift, 20 Python e smoke Docker arm64 passaram. Segue pendente o fluxo completo pelo modelo no app e a migração de containers existentes. Ver `tasks/AB-041-scraping-tools.md`.

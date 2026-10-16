@@ -1,7 +1,6 @@
 """Authenticated loopback-published Agent Box runtime API."""
 from __future__ import annotations
 
-import base64
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import hmac
 import json
@@ -11,12 +10,10 @@ import secrets
 import signal
 import threading
 import time
-import urllib.error
-import urllib.request
 import uuid
-from urllib.parse import urlparse
 
 from engine import ComputerEngine, RuntimeFailure
+import public_http
 
 PATHS = {'http_request', 'navigate', 'input', 'mode'}
 
@@ -76,6 +73,9 @@ class ComputerHandler(BaseHTTPRequestHandler):
         if self.path == '/ready': return self._send(200, {'ready': True})
         if not self._authenticated(): return self._error(401, 'unauthorized')
         if self.path == '/v1/health': return self._send(200, self.server.engine.health())
+        if self.path == '/v1/page':
+            try: return self._send(200, self.server.engine.page())
+            except RuntimeFailure as exc: return self._error(409, str(exc))
         if self.path == '/v1/frame':
             try: frame, source = self.server.engine.frame()
             except RuntimeFailure as exc: return self._error(409, str(exc))
@@ -132,32 +132,13 @@ class ComputerHandler(BaseHTTPRequestHandler):
                 if path == 'mode': return self._send(200, engine.switch_mode(body.get('mode')))
                 if path == 'navigate': return self._send(200, engine.navigate(body.get('url')))
                 if path == 'input': return self._send(200, engine.input(body))
-                if path == 'http_request': return self._send(200, self._http_request(body))
+                if path == 'http_request':
+                    result = public_http.request(body)
+                    result.update(generation=engine.generation, computer_id=engine.computer_id)
+                    return self._send(200, result)
         except ValueError as exc: return self._error(400, str(exc))
         except RuntimeFailure as exc: return self._error(409, str(exc))
         except Exception: return self._error(500, 'runtime operation failed')
-
-    def _http_request(self, body):
-        url, method = body.get('url'), body.get('method', 'GET')
-        if not isinstance(url, str) or len(url) > 4096: raise ValueError('invalid URL')
-        parsed = urlparse(url)
-        if parsed.scheme not in ('http', 'https') or not parsed.netloc or parsed.username or parsed.password: raise ValueError('invalid URL')
-        if method not in ('GET', 'HEAD'): raise ValueError('only GET and HEAD are supported')
-        # Redirects and private-network access require a host-side policy gateway before agent use.
-        opener = urllib.request.build_opener(_NoRedirect)
-        try:
-            with opener.open(urllib.request.Request(url, method=method), timeout=10) as response:
-                data = response.read(1048577)
-                if len(data) > 1048576: raise RuntimeFailure('HTTP response exceeds 1 MiB')
-                return {'status': response.status, 'content_type': response.headers.get('Content-Type', ''),
-                        'body_base64': base64.b64encode(data).decode()}
-        except urllib.error.HTTPError as exc:
-            return {'status': exc.code, 'content_type': exc.headers.get('Content-Type', ''), 'body_base64': ''}
-
-
-class _NoRedirect(urllib.request.HTTPRedirectHandler):
-    def redirect_request(self, request, fp, code, msg, headers, newurl): return None
-
 
 def main():
     token = os.environ.get('AB_API_TOKEN', '')

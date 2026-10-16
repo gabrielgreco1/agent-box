@@ -6,6 +6,11 @@ final class ComputerMCPToolArgumentsTests: XCTestCase {
     func testValidToolsDecodeToTypedArguments() throws {
         guard case .status = try decode("computer_status", [:]) else { return XCTFail("Expected status") }
         guard case .screenshot = try decode("computer_screenshot", [:]) else { return XCTFail("Expected screenshot") }
+        guard case .page = try decode("computer_page", [:]) else { return XCTFail("Expected page") }
+        guard case .httpRequest(let requestedURL, let method) = try decode("computer_http_request",
+            ["url": "https://example.com/data", "method": "HEAD"]) else { return XCTFail("Expected HTTP request") }
+        XCTAssertEqual(requestedURL.absoluteString, "https://example.com/data")
+        XCTAssertEqual(method, "HEAD")
         guard case .mode(.desktop) = try decode("computer_mode", ["mode": "desktop"]) else {
             return XCTFail("Expected desktop mode")
         }
@@ -28,6 +33,12 @@ final class ComputerMCPToolArgumentsTests: XCTestCase {
         let cases: [(String, [String: Any])] = [
             ("computer_status", ["extra": true]),
             ("computer_screenshot", ["mode": "desktop"]),
+            ("computer_page", ["url": "https://example.com"]),
+            ("computer_http_request", ["url": "https://example.com", "method": "POST"]),
+            ("computer_http_request", ["url": "file:///etc/passwd", "method": "GET"]),
+            ("computer_http_request", ["url": "https://user:password@example.com", "method": "GET"]),
+            ("computer_http_request", ["url": "https://example.com", "method": "GET", "body": "x"]),
+            ("computer_http_request", ["url": "https://example.com"]),
             ("computer_mode", ["mode": "desktop", "extra": 1]),
             ("computer_mode", ["mode": "invalid"]),
             ("computer_navigate", ["url": "file:///etc/passwd"]),

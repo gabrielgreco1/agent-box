@@ -6,8 +6,10 @@ import CoreFoundation
 public enum ComputerMCPToolArguments {
     case status
     case screenshot
+    case page
     case mode(BrowserRuntimeMode)
     case navigate(URL)
+    case httpRequest(URL, String)
     case input(BrowserDesktopInput)
     case requestHelp
 
@@ -23,6 +25,9 @@ public enum ComputerMCPToolArguments {
         case "computer_screenshot":
             try requireKeys(arguments, [])
             return .screenshot
+        case "computer_page":
+            try requireKeys(arguments, [])
+            return .page
         case "computer_mode":
             try requireKeys(arguments, ["mode"])
             guard let raw = arguments["mode"] as? String,
@@ -30,14 +35,12 @@ public enum ComputerMCPToolArguments {
             return .mode(mode)
         case "computer_navigate":
             try requireKeys(arguments, ["url"])
-            guard let raw = arguments["url"] as? String,
-                  raw == raw.trimmingCharacters(in: .whitespacesAndNewlines),
-                  let components = URLComponents(string: raw),
-                  ["http", "https"].contains(components.scheme?.lowercased() ?? ""),
-                  let host = components.host, !host.isEmpty,
-                  components.user == nil, components.password == nil,
-                  let url = components.url else { throw invalid() }
-            return .navigate(url)
+            return .navigate(try httpURL(arguments["url"]))
+        case "computer_http_request":
+            try requireKeys(arguments, ["url", "method"])
+            guard let method = arguments["method"] as? String,
+                  method == "GET" || method == "HEAD" else { throw invalid() }
+            return .httpRequest(try httpURL(arguments["url"]), method)
         case "computer_input":
             guard let kind = arguments["kind"] as? String else { throw invalid() }
             switch kind {
@@ -79,6 +82,17 @@ public enum ComputerMCPToolArguments {
 
     private static func requireKeys(_ arguments: [String: Any], _ expected: Set<String>) throws {
         guard Set(arguments.keys) == expected else { throw invalid() }
+    }
+
+    private static func httpURL(_ value: Any?) throws -> URL {
+        guard let raw = value as? String, !raw.isEmpty, raw.utf8.count <= 4096,
+              raw == raw.trimmingCharacters(in: .whitespacesAndNewlines),
+              let components = URLComponents(string: raw),
+              ["http", "https"].contains(components.scheme?.lowercased() ?? ""),
+              let host = components.host, !host.isEmpty,
+              components.user == nil, components.password == nil,
+              let url = components.url else { throw invalid() }
+        return url
     }
 
     private static func integer(_ value: Any?, range: ClosedRange<Int>) throws -> Int {

@@ -17,6 +17,10 @@ class FakeBrowser:
         self.calls.append((name, args))
         if name in ('launch', 'navigate'): return args[-1]
         if name == 'screenshot': return b'fake-browser-jpeg'
+        if name == 'page':
+            return {'url': 'https://example.com/', 'title': 'Example', 'text': 'T' * 70_000,
+                    'links': [{'url': 'https://example.com/a', 'label': 'L' * 400}] * 201,
+                    'truncated': False, 'input_value': 'must not escape'}
         return None
 
 
@@ -117,6 +121,35 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(checkpoint['last_url'], 'https://example.com/')
         self.assertTrue((Path(self.temp.name) / 'profile').is_dir())
         self.assertTrue((Path(self.temp.name) / 'workspace').is_dir())
+
+    def test_authenticated_page_snapshot_is_bounded_and_mode_specific(self):
+        self.assertEqual(self.request('/v1/page', token=False)[0], 401)
+        self.assertEqual(self.request('/v1/page')[0], 409)
+        lease = self.grant()
+        self.request('/v1/mode', {'mode': 'headless'}, lease=lease)
+        code, _, page = self.request('/v1/page')
+        self.assertEqual(code, 200)
+        self.assertEqual((page['computer_id'], page['generation']), (self.engine.computer_id, 1))
+        self.assertEqual((len(page['text']), len(page['links']), len(page['links'][0]['label'])),
+                         (65_536, 200, 300))
+        self.assertTrue(page['truncated'])
+        self.assertNotIn('input_value', page)
+        self.request('/v1/mode', {'mode': 'desktop'}, lease=lease)
+        self.assertEqual(self.request('/v1/page')[0], 200)
+
+    def test_http_request_keeps_lease_and_attaches_computer_identity(self):
+        body = {'url': 'https://example.com/', 'method': 'HEAD'}
+        self.assertEqual(self.request('/v1/http/request', body)[0], 403)
+        code, _, lease = self.request('/v1/control/grant', {'actor_id': 'agent', 'epoch': 8,
+                                                           'paths': ['http_request']})
+        self.assertEqual(code, 200)
+        with patch('server.public_http.request', return_value={
+                'status': 200, 'content_type': 'text/plain', 'body_base64': ''}) as fetch:
+            code, _, result = self.request('/v1/http/request', body, lease=lease)
+        self.assertEqual(code, 200)
+        fetch.assert_called_once_with(body)
+        self.assertEqual((result['computer_id'], result['generation']), (self.engine.computer_id, 0))
+        self.assertEqual(result['status'], 200)
 
     def test_profile_lock_rejects_second_engine(self):
         with self.assertRaises(RuntimeFailure):

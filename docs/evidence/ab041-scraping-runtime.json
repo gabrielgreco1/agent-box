@@ -1,0 +1,38 @@
+{
+  "context": "colima-agentbox-dev",
+  "image": "agentbox-browser:ab019-dev",
+  "image_id": "sha256:d4a2c9625570e386fc6cd3a13ae5f4cb7e2651b0065dab27abbe0a95c91fcd23",
+  "architecture": "arm64",
+  "headless_js_pixel": [
+    254,
+    0,
+    2
+  ],
+  "desktop_frame_size": [
+    1280,
+    800
+  ],
+  "desktop_clicked_pixel": [
+    0,
+    127,
+    0
+  ],
+  "persisted_profile_pixel": [
+    0,
+    0,
+    254
+  ],
+  "lease_takeover": "passed",
+  "container_restart": "passed",
+  "desktop_browser": {
+    "Browser": "Chrome/153.0.8010.12",
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36"
+  },
+  "result": "passed",
+  "public_https_get": "passed",
+  "private_http_rejected": "passed",
+  "page_headless_desktop": "passed",
+  "page_field_exclusion": "passed",
+  "page_unicode_limit": "passed",
+  "revoked_http_rejected": "passed"
+}

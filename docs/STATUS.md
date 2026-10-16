@@ -28,8 +28,8 @@ O viewer nativo, bridge de leases e serviço Docker autenticado estão integrado
 
 ## Evidências
 
-- Suíte Swift integrada: **110 testes, zero falhas**, incluindo snapshot de skills, atribuição de scraping, MCP por socket Unix e helper real por stdin/stdout. Execução com Xcode e scratch de build isolado.
-- Suite Python do runtime: **10 testes locais**, além do smoke Docker real descrito em `tasks/AB-019-020-browser-runtime.md`.
+- Suíte Swift integrada: **113 testes, zero falhas**, incluindo snapshot de skills, atribuição de scraping, MCP por socket Unix e helper real por stdin/stdout. Execução com Xcode e scratch de build isolado.
+- Suite Python do runtime: **20 testes locais**, além do smoke Docker real descrito em `tasks/AB-019-020-browser-runtime.md`.
 - Build release e assinatura ad hoc verificados. Empacotamento em staging temporário evita metadados de File Provider durante a assinatura; build recusa substituir app em execução.
 - Captura operacional: `evidence/terminal-split-2026-10-16.png`.
 - Detalhes por feature e limites em `tasks/`, incluindo AB-031 a AB-034.
@@ -78,3 +78,9 @@ Testes: 103 passaram, incluindo helper e sockets reais, leases concorrentes, tam
 Observação nativa Claude integrada ao runtime e à árvore sessão → terminais → filhos, com opt-in revisado e identidade nova a cada início. 110 testes passaram, incluindo PTYs reais e proteção contra colisão de diretórios de invocação. Smoke do Claude instalado confirmou SessionStart/SubagentStart/SubagentStop de um subagente real, com HMAC válido, sem ferramentas ou arquivos pessoais. Build release/assinatura passaram.
 
 A tentativa de conferir MCP no app encontrou novamente Keychain legado bloqueado; a correção de leitura sem UI retornou imediatamente em consulta controlada. O Mac bloqueou antes da conferência visual da correção e dos filhos. Não há prova do ciclo Claude → box → takeover → retomada ainda. O app e boxes de teste estão parados ao encerrar a rodada; o runtime de desenvolvimento também será desligado. Ver AB-035 e AB-040.
+
+## Continuação — AB-041
+
+Extração HTTP pública e leitura de texto/links da página conectadas ao MCP do Claude. 113 testes Swift, 20 Python, build/assinatura e smoke Docker real arm64 passaram. O smoke comprovou HTTP HTTPS, identidade, recusa de IP local na rota HTTP, extração JS headless/desktop, campos de formulário excluídos, Unicode, revogação e persistência após recriar o container. Evidência em `evidence/ab041-scraping-runtime.json`; contratos e limites em `tasks/AB-041-scraping-tools.md`.
+
+A skill padrão e o perfil persistente foram auditados. Não se comprovou ausência de CAPTCHA, uso dessas ferramentas pelo modelo no app nem migração de boxes antigas. O Chromium da box tem perfil próprio, separado do Chrome pessoal. App e boxes de teste encerrados; perfil de desenvolvimento desligado após a rodada.

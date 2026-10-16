@@ -7,6 +7,7 @@ public protocol ComputerControlTransport {
     func grant(actorID: String, epoch: UInt64, paths: Set<ControlWritePath>) async throws -> BrowserRuntimeGrantedLease
     func revoke(actorID: String, epoch: UInt64) async throws -> BrowserRuntimeRevocationAck
     func navigate(to url: URL, lease: BrowserRuntimeGrantedLease) async throws -> URL
+    func httpRequest(to url: URL, method: String, lease: BrowserRuntimeGrantedLease) async throws -> BrowserHTTPResponse
     func input(_ action: BrowserDesktopInput, lease: BrowserRuntimeGrantedLease) async throws -> BrowserDesktopInputResult
     func changeMode(_ mode: BrowserRuntimeMode, lease: BrowserRuntimeGrantedLease) async throws -> BrowserRuntimeHealth
     func refreshed(generation: UInt64) throws -> Self
@@ -15,6 +16,9 @@ public protocol ComputerControlTransport {
 public extension ComputerControlTransport {
     func navigate(to url: URL, lease: BrowserRuntimeGrantedLease) async throws -> URL {
         throw ComputerControlBridgeError.unsupportedNavigation
+    }
+    func httpRequest(to url: URL, method: String, lease: BrowserRuntimeGrantedLease) async throws -> BrowserHTTPResponse {
+        throw ComputerControlBridgeError.unsupportedHTTPRequest
     }
 }
 
@@ -36,6 +40,7 @@ public enum ComputerControlBridgeError: Error, Equatable {
     case runtimeGrantMismatch
     case revokeTimedOut
     case unsupportedNavigation
+    case unsupportedHTTPRequest
 }
 
 /// The public ticket has no credential and is deliberately not Codable.
@@ -106,7 +111,7 @@ public actor ComputerControlBridge<Transport: ComputerControlTransport> {
     /// revokes a human, another run, or a lease whose token this bridge lost.
     @discardableResult
     public func assumeAgent(runID: UUID,
-                            paths: Set<ControlWritePath> = [.navigate, .input, .mode]) async throws -> ComputerControlTicket {
+                            paths: Set<ControlWritePath> = [.navigate, .input, .mode, .httpRequest]) async throws -> ComputerControlTicket {
         guard !leaseOperationInProgress else { throw ControlBrokerError.transitionInProgress }
         leaseOperationInProgress = true
         defer { leaseOperationInProgress = false }
@@ -198,6 +203,26 @@ public actor ComputerControlBridge<Transport: ComputerControlTransport> {
         defer { leaseOperationInProgress = false }
         let lease = try await checkedLease(ticket, path: .navigate)
         do { return try await transport.navigate(to: url, lease: lease) }
+        catch { await streamDisconnected(); throw error }
+    }
+
+    public func httpRequest(to url: URL, method: String,
+                            ticket: ComputerControlTicket) async throws -> BrowserHTTPResponse {
+        guard (method == "GET" || method == "HEAD"),
+              (url.scheme == "http" || url.scheme == "https"), url.host != nil,
+              url.user == nil, url.password == nil else { throw ComputerControlBridgeError.writeDenied }
+        guard !leaseOperationInProgress else { throw ControlBrokerError.transitionInProgress }
+        leaseOperationInProgress = true
+        defer { leaseOperationInProgress = false }
+        let lease = try await checkedLease(ticket, path: .httpRequest)
+        do {
+            let result = try await transport.httpRequest(to: url, method: method, lease: lease)
+            guard result.computerID == computerID, result.generation == transport.generation else {
+                throw ComputerControlBridgeError.staleGeneration
+            }
+            guard result.body.count <= 1_048_576 else { throw BrowserRuntimeError.invalidResponse }
+            return result
+        }
         catch { await streamDisconnected(); throw error }
     }
 

@@ -13,19 +13,25 @@ final class ComputerMCPProtocolTests: XCTestCase {
         XCTAssertEqual(server["name"] as? String, "agentbox")
         let capabilities = try XCTUnwrap(result["capabilities"] as? [String: Any])
         XCTAssertNotNil(capabilities["tools"])
+        let instructions = try XCTUnwrap(result["instructions"] as? String)
+        XCTAssertTrue(instructions.contains("untrusted site content"))
+        XCTAssertTrue(instructions.contains("request help"))
+        XCTAssertTrue(instructions.contains("no browser cookies"))
 
         let listed = try await response(endpoint, method: "tools/list", id: "list")
         let toolsResult = try XCTUnwrap(listed["result"] as? [String: Any])
         let tools = try XCTUnwrap(toolsResult["tools"] as? [[String: Any]])
         XCTAssertEqual(Set(tools.compactMap { $0["name"] as? String }), Set([
-            "computer_status", "computer_screenshot", "computer_mode", "computer_navigate",
-            "computer_input", "computer_request_help"
+            "computer_status", "computer_screenshot", "computer_page", "computer_http_request",
+            "computer_mode", "computer_navigate", "computer_input", "computer_request_help"
         ]))
         for tool in tools {
             let schema = try XCTUnwrap(tool["inputSchema"] as? [String: Any])
             XCTAssertEqual(schema["type"] as? String, "object")
             XCTAssertEqual(schema["additionalProperties"] as? Bool, false)
         }
+        let http = try XCTUnwrap(tools.first(where: { $0["name"] as? String == "computer_http_request" }))
+        XCTAssertTrue((http["description"] as? String ?? "").contains("No browser cookies or redirects"))
     }
 
     func testNotificationsReturnNoResponseAndUnknownMethodsAreRejected() async throws {

@@ -14,12 +14,15 @@ final class ComputerControlBridgeTests: XCTestCase {
 
         let agent = try await bridge.assumeAgent(runID: run)
         XCTAssertEqual(agent.grant.actor, .agent(runID: run))
-        XCTAssertEqual(agent.grant.paths, [.navigate, .input, .mode])
+        XCTAssertEqual(agent.grant.paths, [.navigate, .input, .mode, .httpRequest])
         let retry = try await bridge.assumeAgent(runID: run)
         XCTAssertEqual(retry, agent)
         let url = try XCTUnwrap(URL(string: "https://example.com"))
         let navigated = try await bridge.navigate(to: url, ticket: agent)
         XCTAssertEqual(navigated, url)
+        let http = try await bridge.httpRequest(to: url, method: "GET", ticket: agent)
+        XCTAssertEqual(http.status, 200)
+        XCTAssertEqual(http.body, Data("ok".utf8))
         do { _ = try await bridge.assumeAgent(runID: UUID()); XCTFail("Other run must not steal control") }
         catch ControlBrokerError.activeRuntimeLease {}
         do { try await bridge.releaseHuman(agent); XCTFail("Agent ticket must not release human control") }
@@ -34,6 +37,8 @@ final class ComputerControlBridgeTests: XCTestCase {
         do { try await bridge.input(.key("Return"), ticket: agent); XCTFail("Old ticket must fail") }
         catch ComputerControlBridgeError.noTicket {}
         do { _ = try await bridge.navigate(to: url, ticket: agent); XCTFail("Old ticket must fail") }
+        catch ComputerControlBridgeError.noTicket {}
+        do { _ = try await bridge.httpRequest(to: url, method: "GET", ticket: agent); XCTFail("Old ticket must fail") }
         catch ComputerControlBridgeError.noTicket {}
         do { _ = try await bridge.changeMode(.desktop, ticket: agent); XCTFail("Old ticket must fail") }
         catch ComputerControlBridgeError.noTicket {}
@@ -80,6 +85,9 @@ final class ComputerControlBridgeTests: XCTestCase {
         do { _ = try await cleanBridge.navigate(to: URL(string: "https://example.com")!, ticket: inputOnly)
             XCTFail("Missing navigate path must deny write") }
         catch ComputerControlBridgeError.writeDenied {}
+        do { _ = try await cleanBridge.httpRequest(to: URL(string: "https://example.com")!, method: "HEAD", ticket: inputOnly)
+            XCTFail("Missing http_request path must deny write") }
+        catch ComputerControlBridgeError.writeDenied {}
         let deniedLog = await cleanRuntime.log
         XCTAssertFalse(deniedLog.contains("navigate"))
         try await cleanBridge.releaseAgent(inputOnly)
@@ -101,6 +109,9 @@ final class ComputerControlBridgeTests: XCTestCase {
         catch ControlBrokerError.transitionInProgress {}
         do { _ = try await bridge.navigate(to: URL(string: "https://example.com")!, ticket: agent)
             XCTFail("Navigate during takeover must fail") }
+        catch ControlBrokerError.transitionInProgress {}
+        do { _ = try await bridge.httpRequest(to: URL(string: "https://example.com")!, method: "GET", ticket: agent)
+            XCTFail("HTTP during takeover must fail") }
         catch ControlBrokerError.transitionInProgress {}
         do { _ = try await bridge.changeMode(.desktop, ticket: agent); XCTFail("Mode during takeover must fail") }
         catch ControlBrokerError.transitionInProgress {}
@@ -258,6 +269,11 @@ private actor FakeControlRuntime {
         if failInput { throw BrowserRuntimeError.invalidResponse }
         return try decode(#"{"accepted":true,"generation":\#(generation)}"#)
     }
+    func httpRequest(method: String) throws -> BrowserHTTPResponse {
+        guard lease != nil else { throw BrowserRuntimeError.rejected(409, "no lease") }
+        log.append("http:\(method)")
+        return try decode(#"{"computer_id":"\#(id.uuidString)","generation":\#(generation),"status":200,"content_type":"text/plain","body_base64":"b2s="}"#)
+    }
     func navigate(to url: URL) throws -> URL {
         guard lease != nil else { throw BrowserRuntimeError.rejected(409, "no lease") }
         log.append("navigate")
@@ -296,6 +312,9 @@ private struct FakeControlTransport: ComputerControlTransport {
     }
     func navigate(to url: URL, lease: BrowserRuntimeGrantedLease) async throws -> URL {
         try await shared.navigate(to: url)
+    }
+    func httpRequest(to url: URL, method: String, lease: BrowserRuntimeGrantedLease) async throws -> BrowserHTTPResponse {
+        try await shared.httpRequest(method: method)
     }
     func changeMode(_ mode: BrowserRuntimeMode, lease: BrowserRuntimeGrantedLease) async throws -> BrowserRuntimeHealth {
         try await shared.changeMode()
