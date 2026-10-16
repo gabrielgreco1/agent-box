@@ -28,7 +28,7 @@ O viewer nativo, bridge de leases e serviço Docker autenticado estão integrado
 
 ## Evidências
 
-- Suíte Swift integrada: **74 testes, zero falhas**, incluindo snapshot de pacote completo de skills e atribuição padrão de scraping.
+- Suíte Swift integrada: **82 testes, zero falhas**, incluindo snapshot de pacote completo de skills e atribuição padrão de scraping.
 - Suite Python do runtime: **10 testes locais**, além do smoke Docker real descrito em `tasks/AB-019-020-browser-runtime.md`.
 - Build release e assinatura ad hoc verificados. Empacotamento em staging temporário evita metadados de File Provider durante a assinatura; build recusa substituir app em execução.
 - Captura operacional: `evidence/terminal-split-2026-10-16.png`.
@@ -59,6 +59,10 @@ Recursos de teste: app encerrado, computador de teste parado e perfil Colima `ag
 ## Scraping e navegador — AB-036/037
 
 - Novas boxes registram o agente Web scraping e a skill local `webscraping-expert` como padrão pendente. O plugin revisado inclui os arquivos de apoio; o pacote pessoal não é publicado no Git.
-- Atribuição não equivale a ativação em CLI aberto: o lançamento revisado ainda cria outro terminal e a box permanece no terminal original. Rebinding e associação ao run continuam pendentes, explicitamente mostrados na UI e em AB-036.
+- AB-038 permite iniciar o agente revisado no mesmo terminal parado que possui a box, preservando os panes. Snapshot e terminal têm identidades independentes. Ferramentas MCP, controle pelo CLI e prova de uso no histórico continuam pendentes.
 - Desktop agora inicia Chromium como processo independente e conecta controle via CDP interno, sem override de user agent. Headless usa Chromium completo. Smoke real passou em navegação JS, clique, controle humano, saída limpa e persistência de localStorage ao recriar container.
-- Build release/assinatura verificados. Sem reteste visual do app nesta rodada; a limitação Keychain de AB-035 continua aberta. Não foi comprovada resolução do CAPTCHA do Google, nem migração de boxes existentes.
+- Build release/assinatura verificados. Conferência nativa criou o preset de scraping e preparou o pacote local sem iniciar CLI. AB-035 ganhou espera limitada e autorização explícita; recuperação real após troca de assinatura ainda não foi comprovada. Não foi comprovada resolução do CAPTCHA do Google, nem migração de boxes existentes.
+
+## Continuação — AB-038
+
+Bindings de contexto aceitam relançamento no terminal da box. Os testes reais de PTY distinguem planos e impedem substituir um processo ativo. A UI mantém sessão e pasta, verifica a skill atribuída e consulta a identidade Docker antes da troca. Detalhes em `tasks/AB-038-same-terminal-agent-launch.md`. O aceite completo de sessão → terminais → filhos → boxes segue pendente; a meta não está concluída.

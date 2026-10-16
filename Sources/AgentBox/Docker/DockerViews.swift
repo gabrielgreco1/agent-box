@@ -126,7 +126,7 @@ private struct ComputerScopeEditor:View {
 public struct ComputerPanel: View {
     public let terminalID: UUID
     public let context: ComputerPolicyContext
-    public let onReviewAgent: (UUID) -> Void
+    public let onReviewAgent: (ScrapingBoxAssignment) -> Void
     @State private var policy = ComputerPolicy()
     @State private var availability: DockerAvailability?
     @State private var computer: ManagedComputer?
@@ -135,7 +135,7 @@ public struct ComputerPanel: View {
     private let store = ComputerPolicyStore()
 
     public init(terminalID: UUID, context: ComputerPolicyContext? = nil,
-                onReviewAgent: @escaping (UUID) -> Void = { _ in }) {
+                onReviewAgent: @escaping (ScrapingBoxAssignment) -> Void = { _ in }) {
         self.terminalID = terminalID
         self.context = context ?? ComputerPolicyContext(terminalID:terminalID)
         self.onReviewAgent = onReviewAgent

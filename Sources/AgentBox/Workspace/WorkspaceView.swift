@@ -70,6 +70,7 @@ private enum WorkspaceSheet: Identifiable {
     case library
     case requests
     case launch(UUID)
+    case scrapingLaunch(ScrapingLaunchTarget)
     case settings
     case computer(UUID)
     case worktree(sessionID: UUID, terminalID: UUID)
@@ -83,6 +84,7 @@ private enum WorkspaceSheet: Identifiable {
         case .library: return "library"
         case .requests: return "requests"
         case .launch(let id): return "launch-\(id)"
+        case .scrapingLaunch(let target): return "scraping-\(target.assignment.computerID)"
         case .settings: return "settings"
         case .computer(let id): return "computer-\(id)"
         case .worktree(let sessionID, let terminalID): return "worktree-\(sessionID)-\(terminalID)"
@@ -100,6 +102,7 @@ public struct WorkspaceView: View {
     @State private var saveError: String?
     @State private var sheet: WorkspaceSheet?
     @State private var pendingLaunchAgentID: UUID?
+    @State private var pendingScrapingLaunch: ScrapingLaunchTarget?
     @State private var pendingRun: AgentUsageRecord?
     @State private var pendingRequestTarget: HumanRequestTarget?
     @State private var launchBindings: [UUID: AgentLaunchBinding]
@@ -232,15 +235,19 @@ public struct WorkspaceView: View {
                 AgentLaunchView(agentID: agentID, sessions: snapshot.sessions,
                                 selectedSessionID: snapshot.selectedSessionID,
                                 onLaunch: launchSavedAgent)
+            case .scrapingLaunch(let target):
+                AgentLaunchView(agentID: target.assignment.defaultAgentDefinitionID, sessions: snapshot.sessions,
+                                selectedSessionID: target.sessionID, scrapingTarget: target,
+                                onLaunch: launchSavedAgent)
             case .settings:
                 AppSettingsView()
             case .computer(let id):
                 if let session = snapshot.sessions.first(where: { $0.terminals.contains(where: { $0.id == id }) }),
                    let terminal = session.terminals.first(where: { $0.id == id }) {
                     ComputerPanel(terminalID: id, context: computerPolicyContext(for: terminal, in: session.id),
-                                  onReviewAgent: { agentID in
+                                  onReviewAgent: { assignment in
                                       snapshot.selectedSessionID = session.id
-                                      pendingLaunchAgentID = agentID
+                                      pendingScrapingLaunch = ScrapingLaunchTarget(assignment: assignment, sessionID: session.id, terminal: terminal)
                                       sheet = nil
                                   })
                 } else {
@@ -949,22 +956,45 @@ public struct WorkspaceView: View {
         } else if let run = pendingRun, let sessionID = run.sessionID {
             pendingRun = nil
             selectTerminal(run.terminalID, in: sessionID)
+        } else if let target = pendingScrapingLaunch {
+            pendingScrapingLaunch = nil
+            sheet = .scrapingLaunch(target)
         } else if let agentID = pendingLaunchAgentID {
             pendingLaunchAgentID = nil
             sheet = .launch(agentID)
         }
     }
 
-    private func launchSavedAgent(_ request: AgentLaunchRequest) throws {
+    private func launchSavedAgent(_ request: AgentLaunchRequest) async throws {
         guard bindingsAvailable else { throw AgentLaunchError.invalidBinding }
         guard let terminal = request.materialized.terminal,
               let binding = request.materialized.binding,
-              terminal.id == binding.planID,
+              terminal.id == binding.terminalID,
               terminal.agentDefinitionID == request.prepared.agentID else {
             throw AgentLaunchError.contextNotActive
         }
-        guard !snapshot.sessions.flatMap(\.terminals).contains(where: { $0.id == terminal.id }),
-              launchBindings[terminal.id] == nil else { throw AgentLaunchError.alreadyMaterialized }
+        if let target = request.scrapingTarget {
+            // Docker discovery performs no token read and does not start a container.
+            let computer = try await Task.detached(priority: .utility) {
+                try BrowserComputerService(runner: DockerProcessRunner(), tokens: KeychainBrowserComputerTokenStore())
+                    .computer(for: target.terminal.id)
+            }.value
+            guard computer?.id == target.assignment.computerID,
+                  request.sessionID == target.sessionID, request.newSessionTitle == nil else {
+                throw LibraryError.invalid("A box não pertence mais ao terminal revisado.")
+            }
+            let current = snapshot.sessions.first(where: { $0.id == target.sessionID })?.terminals.first(where: { $0.id == target.terminal.id })
+            try target.validate(currentTerminal: current,
+                currentAssignment: ScrapingBoxAssignmentStore().load()[target.assignment.computerID],
+                agentID: request.prepared.agentID, skillIDs: request.prepared.selectedSkills.map(\.id))
+            switch runtime.state(for: terminal.id) {
+            case .running, .starting: throw LibraryError.invalid("Pare o processo atual antes de iniciar o agente neste terminal.")
+            default: break
+            }
+        } else {
+            guard !snapshot.sessions.flatMap(\.terminals).contains(where: { $0.id == terminal.id }),
+                  launchBindings[terminal.id] == nil else { throw AgentLaunchError.alreadyMaterialized }
+        }
         try WorkspaceDirectoryAccess.shared.activate(terminal.cwd)
 
         var nextWorkspace = snapshot
@@ -978,13 +1008,17 @@ public struct WorkspaceView: View {
         guard let sessionIndex = nextWorkspace.sessions.firstIndex(where: { $0.id == request.sessionID }) else {
             throw LibraryError.invalid("A sessão escolhida não está mais disponível.")
         }
-        nextWorkspace.sessions[sessionIndex].terminals.append(terminal)
-        nextWorkspace.selectedSessionID = request.sessionID
-        nextWorkspace.updateLayout(for: request.sessionID) { layout in
-            if layout.root == nil { layout.show(terminal.id) }
-            else if let focus = layout.focusedTerminalID, layout.visibleTerminalIDs.count < 5 {
-                layout.split(terminal.id, beside: focus, axis: .horizontal)
-            } else { layout.show(terminal.id) }
+        if let target = request.scrapingTarget {
+            nextWorkspace = try target.replacingTerminal(in: nextWorkspace, with: terminal)
+        } else {
+            nextWorkspace.sessions[sessionIndex].terminals.append(terminal)
+            nextWorkspace.selectedSessionID = request.sessionID
+            nextWorkspace.updateLayout(for: request.sessionID) { layout in
+                if layout.root == nil { layout.show(terminal.id) }
+                else if let focus = layout.focusedTerminalID, layout.visibleTerminalIDs.count < 5 {
+                    layout.split(terminal.id, beside: focus, axis: .horizontal)
+                } else { layout.show(terminal.id) }
+            }
         }
 
         var library = try LibraryRepository().load()
@@ -1009,12 +1043,12 @@ public struct WorkspaceView: View {
         }
         do {
             try runtime.start(request.materialized)
-            guard case .running = runtime.state(for: terminal.id) else {
+            guard runtime.isRunning(request.materialized) else {
                 throw LibraryError.invalid("O CLI não iniciou; nenhuma execução foi registrada.")
             }
             try LibraryRepository().save(library)
         } catch {
-            if case .running = runtime.state(for: terminal.id) { runtime.stop(terminal.id) }
+            if runtime.isRunning(request.materialized) { runtime.stop(terminal.id) }
             if let rollbackError = rollbackLaunchMetadata() {
                 bindingsAvailable = false
                 throw LibraryError.invalid("Lançamento falhou e os metadados não puderam ser restaurados: \(rollbackError). O processo recebeu pedido de encerramento.")

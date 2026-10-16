@@ -66,7 +66,7 @@ Estados: **parcial** significa código funcional com limites; **em integração*
 
 ## Próxima integração concreta
 
-Checkpoint: 70 testes Swift passaram, e o runtime Docker passou no smoke arm64 real. Biblioteca, permissões/Keychain, broker e viewer têm implementação; hooks/automação de filhos, listener e continuidade completa seguem pendentes. Veja STATUS.md para distinguir prova de módulo e fluxo ao vivo.
+Checkpoint: 82 testes Swift passaram, e o runtime Docker passou no smoke arm64 real. Biblioteca, permissões/Keychain, broker e viewer têm implementação; hooks/automação de filhos, listener e continuidade completa seguem pendentes. Veja STATUS.md para distinguir prova de módulo e fluxo ao vivo.
 
 
 Integrar e testar as entregas existentes antes de avançar seus aceites. Rodada paralela executada em GPT-6 Sol, esforço medium; módulos entregues e integração em curso:
@@ -80,3 +80,5 @@ Integrar e testar as entregas existentes antes de avançar seus aceites. Rodada 
 AB-035: corrigir reconexão após troca de build e espera do Keychain, encontrada no teste ao vivo; critérios em `tasks/AB-035-keychain-reconnect.md`.
 
 O integrador mantém testes/builds em série, a conferência do app e os commits. Os três agentes não abrem apps nem executam tarefas pagas dos CLIs. A execução automática via hooks, o ciclo completo de skills nos demais clientes e os demais marcos seguem com seus próprios gates.
+
+AB-036/037: pacote local de scraping e Chromium desktop com persistência comprovada em smoke. AB-038: relançamento no terminal da box e distinção de plano/processo. Próximo gate vertical: ferramentas de computador concedidas ao CLI nativo, eventos de filhos e histórico de uso, sem inferir controle a partir da associação do terminal.

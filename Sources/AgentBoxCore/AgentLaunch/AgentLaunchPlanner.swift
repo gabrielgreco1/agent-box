@@ -98,7 +98,7 @@ public struct MaterializedAgentLaunch: Equatable, Sendable {
     /// Persist only this metadata. The context body stays in its protected snapshot file.
     public var binding: AgentLaunchBinding? {
         guard let terminal, let agentID = terminal.agentDefinitionID else { return nil }
-        return AgentLaunchBinding(planID: planID, agentDefinitionID: agentID,
+        return AgentLaunchBinding(planID: planID, terminalID: terminal.id, agentDefinitionID: agentID,
                                   executablePath: executablePath, contextFilePath: contextFileURL.path,
                                   contextSHA256: contextSHA256, provider: terminal.provider,
                                   workingDirectory: terminal.cwd, arguments: terminal.arguments,
@@ -153,6 +153,7 @@ public struct MaterializedAgentLaunch: Equatable, Sendable {
 /// Stored argv is checked against the adapter's current exact argv, never trusted as a command.
 public struct AgentLaunchBinding: Codable, Equatable, Sendable {
     public let planID: UUID
+    public let terminalID: UUID
     public let agentDefinitionID: UUID
     public let executablePath: String
     public let contextFilePath: String
@@ -163,11 +164,12 @@ public struct AgentLaunchBinding: Codable, Equatable, Sendable {
     public let skillReferences: [PreparedSkillReference]
     public let supportFileHashes: [String: String]
 
-    public init(planID: UUID, agentDefinitionID: UUID, executablePath: String,
+    public init(planID: UUID, terminalID: UUID? = nil, agentDefinitionID: UUID, executablePath: String,
                 contextFilePath: String, contextSHA256: String, provider: CLIProvider,
                 workingDirectory: String, arguments: [String],
                 skillReferences: [PreparedSkillReference] = [], supportFileHashes: [String: String] = [:]) {
-        self.planID = planID; self.agentDefinitionID = agentDefinitionID
+        self.planID = planID; self.terminalID = terminalID ?? planID
+        self.agentDefinitionID = agentDefinitionID
         self.executablePath = executablePath; self.contextFilePath = contextFilePath
         self.contextSHA256 = contextSHA256; self.provider = provider
         self.workingDirectory = workingDirectory; self.arguments = arguments
@@ -176,13 +178,15 @@ public struct AgentLaunchBinding: Codable, Equatable, Sendable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case planID, agentDefinitionID, executablePath, contextFilePath, contextSHA256
+        case planID, terminalID, agentDefinitionID, executablePath, contextFilePath, contextSHA256
         case provider, workingDirectory, arguments, skillReferences, supportFileHashes
     }
 
     public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
-        self.init(planID: try values.decode(UUID.self, forKey: .planID),
+        let planID = try values.decode(UUID.self, forKey: .planID)
+        self.init(planID: planID,
+                  terminalID: try values.decodeIfPresent(UUID.self, forKey: .terminalID) ?? planID,
                   agentDefinitionID: try values.decode(UUID.self, forKey: .agentDefinitionID),
                   executablePath: try values.decode(String.self, forKey: .executablePath),
                   contextFilePath: try values.decode(String.self, forKey: .contextFilePath),
@@ -302,7 +306,8 @@ public struct AgentLaunchPlanner {
                                activation: activation)
     }
 
-    public func materialize(_ plan: AgentLaunchPlan, reviewedDigest: String) throws -> MaterializedAgentLaunch {
+    public func materialize(_ plan: AgentLaunchPlan, reviewedDigest: String,
+                            terminalID: UUID? = nil) throws -> MaterializedAgentLaunch {
         guard reviewedDigest == plan.contextFile.sha256 else { throw AgentLaunchError.reviewRequired }
         let directory = contextDirectory.appendingPathComponent(plan.id.uuidString, isDirectory: true)
         guard plan.contextFile.url.standardizedFileURL == directory.appendingPathComponent("context.md").standardizedFileURL else {
@@ -352,7 +357,7 @@ public struct AgentLaunchPlanner {
             throw error
         }
         let terminal: TerminalRecord? = plan.activation.contextIsActiveAtLaunch
-            ? TerminalRecord(id: plan.id, title: plan.agentName, provider: plan.provider,
+            ? TerminalRecord(id: terminalID ?? plan.id, title: plan.agentName, provider: plan.provider,
                              cwd: plan.workingDirectory, arguments: plan.arguments, agentDefinitionID: plan.agentID)
             : nil
         return MaterializedAgentLaunch(planID: plan.id, executablePath: plan.executablePath,
@@ -365,7 +370,7 @@ public struct AgentLaunchPlanner {
     /// Restore a reviewed snapshot for an explicit restart. Never starts the process.
     public func restore(_ binding: AgentLaunchBinding, terminal: TerminalRecord) throws -> MaterializedAgentLaunch {
         guard binding.provider == .claude,
-              terminal.id == binding.planID,
+              terminal.id == binding.terminalID,
               terminal.agentDefinitionID == binding.agentDefinitionID,
               terminal.provider == binding.provider,
               terminal.cwd == binding.workingDirectory,

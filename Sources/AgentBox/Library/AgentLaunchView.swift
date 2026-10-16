@@ -8,6 +8,7 @@ struct AgentLaunchRequest {
     let sessionID: UUID
     let newSessionTitle: String?
     let taskSummary: String?
+    let scrapingTarget: ScrapingLaunchTarget?
 }
 
 /// Review is an explicit boundary: changing any input discards the prepared plan.
@@ -15,7 +16,10 @@ struct AgentLaunchView: View {
     @Environment(\.dismiss) private var dismiss
     let agentID: UUID
     let sessions: [WorkspaceSession]
-    let onLaunch: (AgentLaunchRequest) throws -> Void
+    let scrapingTarget: ScrapingLaunchTarget?
+    let onLaunch: (AgentLaunchRequest) async throws -> Void
+    @ObservedObject private var runtime = WorkspaceServices.terminalRuntime
+    @State private var launching = false
 
     @State private var document = LibraryDocument()
     @State private var errorText: String?
@@ -37,18 +41,27 @@ struct AgentLaunchView: View {
     @State private var confirmForceStop = false
 
     init(agentID: UUID, sessions: [WorkspaceSession], selectedSessionID: UUID?,
-         onLaunch: @escaping (AgentLaunchRequest) throws -> Void) {
+         scrapingTarget: ScrapingLaunchTarget? = nil,
+         onLaunch: @escaping (AgentLaunchRequest) async throws -> Void) {
         self.agentID = agentID
         self.sessions = sessions
         self.onLaunch = onLaunch
+        self.scrapingTarget = scrapingTarget
         let freshSessionID = UUID()
         _sessionID = State(initialValue: selectedSessionID ?? sessions.first?.id ?? freshSessionID)
         _newSessionID = State(initialValue: freshSessionID)
-        let folder = sessions.first(where: { $0.id == selectedSessionID })?.terminals.last?.cwd ?? NSHomeDirectory()
+        let folder = scrapingTarget?.terminal.cwd ?? sessions.first(where: { $0.id == selectedSessionID })?.terminals.last?.cwd ?? NSHomeDirectory()
         _directory = State(initialValue: folder)
     }
 
     private var agent: SavedAgent? { document.agents.first { $0.id == agentID } }
+    private var targetStopped: Bool {
+        guard let target = scrapingTarget else { return true }
+        switch runtime.state(for: target.terminal.id) {
+        case .running, .starting: return false
+        default: return true
+        }
+    }
     private var newSession: Bool { !sessions.contains(where: { $0.id == sessionID }) }
     private var validDirectory: Bool { (try? WorkspaceDirectory.resolve(directory)) != nil }
     private var canPrepare: Bool {
@@ -89,12 +102,14 @@ struct AgentLaunchView: View {
                         Button("Copiar contexto") { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(plan.review.contextText, forType: .string) }
                         Button("Exportar…") { export(plan.review.contextText) }
                     } else {
-                        Button("Iniciar agente") { launch() }.disabled(!reviewed)
+                        Button("Iniciar agente") { Task { await launch() } }.disabled(!reviewed || !targetStopped)
                             .keyboardShortcut(.defaultAction)
                     }
                 }
             }
         }
+        .disabled(launching)
+        .interactiveDismissDisabled(launching || stoppingTerminalID != nil)
         .font(.system(size: 13))
         .padding(20)
         .frame(width: 690, height: 640)
@@ -116,16 +131,27 @@ struct AgentLaunchView: View {
     private func inputs(_ agent: SavedAgent) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
+                if let target = scrapingTarget {
+                    Text("Terminal: \(target.terminal.title)")
+                    Text("Box: \(target.assignment.computerID.uuidString.prefix(8)) · perfil preservado")
+                        .foregroundStyle(.secondary)
+                    if !targetStopped {
+                        Button("Parar processo atual") { runtime.stop(target.terminal.id); stoppingTerminalID = target.terminal.id }
+                            .disabled(stoppingTerminalID != nil)
+                        Text("Aguarde o processo encerrar para iniciar a nova execução neste terminal.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                }
                 Picker("Sessão", selection: $sessionID) {
                     ForEach(sessions) { session in Text(session.title).tag(session.id) }
                     Text("Nova sessão").tag(newSessionID)
-                }
+                }.disabled(scrapingTarget != nil)
                 if newSession { TextField("Nome da nova sessão", text: $newSessionTitle) }
                 HStack {
                     TextField("Pasta de trabalho", text: $directory)
                         .onChange(of: directory) { _, _ in directoryAuthorizationError = nil }
                     Button("Escolher…") { chooseDirectory() }
-                }
+                }.disabled(scrapingTarget != nil)
                 if !validDirectory { Text("Escolha uma pasta existente.").foregroundStyle(.red) }
                 if let directoryAuthorizationError { Text(directoryAuthorizationError).foregroundStyle(.red) }
                 TextField("ID do projeto (opcional)", text: $projectKey)
@@ -157,43 +183,50 @@ struct AgentLaunchView: View {
     }
 
     private var review: some View {
-        VStack(alignment: .leading, spacing: 9) {
+        VStack(alignment: .leading, spacing: 12) {
             if let plan {
                 let details = plan.review
-                Text("Revisão do lançamento").fontWeight(.medium)
-                Text("Sessão: \(newSession ? newSessionTitle : sessions.first(where: { $0.id == sessionID })?.title ?? "")")
-                Text("Executável: \(details.executablePath)")
-                Text("Argumentos: \(details.arguments.joined(separator: " "))")
-                Text("Pasta: \(details.workingDirectory)")
-                Text("Snapshot: \(details.contextFilePath)")
-                Text("SHA-256: \(details.contextSHA256)")
-                Text("Memórias: \(details.selectedMemories.map { "\($0.title) r\($0.revision)" }.joined(separator: ", ").ifEmpty("nenhuma"))")
-                Text("Skills: \(details.selectedSkills.map { "\($0.name) \($0.sha256.prefix(12))" }.joined(separator: ", ").ifEmpty("nenhuma"))")
-                Text("Arquivos de apoio: \(details.supportFiles.count) · \(details.supportFiles.reduce(0) { $0 + $1.data.count }) bytes")
-                if !details.supportFiles.isEmpty {
+                HStack {
+                    Label(newSession ? newSessionTitle : sessions.first(where: { $0.id == sessionID })?.title ?? "", systemImage: "rectangle.split.2x1")
+                    Spacer()
+                    Text(details.workingDirectory).lineLimit(1).truncationMode(.middle).foregroundStyle(.secondary)
+                }
+                if let target = scrapingTarget {
+                    Text("Terminal \(target.terminal.title) · manter box \(target.assignment.computerID.uuidString.prefix(8))")
+                        .foregroundStyle(.secondary)
+                }
+                Text(details.selectedSkills.map(\.name).joined(separator: ", ").ifEmpty("Sem skills") +
+                     " · \(details.selectedMemories.count) memórias · \(details.supportFiles.count) arquivos de apoio")
+                    .foregroundStyle(.secondary)
+                DisclosureGroup("Detalhes do lançamento") {
                     ScrollView {
-                        Text(details.supportFiles.map { "\($0.url.path)  \($0.sha256)" }.joined(separator: "\n"))
-                            .font(.system(size: 10, design: .monospaced))
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Executável: \(details.executablePath)")
+                            Text("Argumentos: \(details.arguments.joined(separator: " "))")
+                            Text("Snapshot: \(details.contextFilePath)")
+                            Text("SHA-256: \(details.contextSHA256)")
+                            Text("Memórias: \(details.selectedMemories.map { "\($0.title) r\($0.revision)" }.joined(separator: ", ").ifEmpty("nenhuma"))")
+                            Text(details.supportFiles.map { "\($0.url.path)  \($0.sha256)" }.joined(separator: "\n"))
+                        }.font(.system(size: 10, design: .monospaced))
                             .frame(maxWidth: .infinity, alignment: .leading)
-                    }.frame(maxHeight: 88)
+                    }.frame(maxHeight: 130)
                 }
                 if case .exportOnly(let reason) = details.activation {
                     Text("Somente exportação: \(reason)").foregroundStyle(.orange)
                 }
                 ScrollView {
-                    Text(details.contextText).font(.system(size: 11, design: .monospaced))
-                        .textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
+                    Text(details.contextText).font(.system(size: 12, design: .monospaced))
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .frame(maxHeight: .infinity)
-                .padding(8)
-                .background(Color.black.opacity(0.15))
+                .padding(12)
+                .background(Color.white.opacity(0.025))
                 if details.activation.contextIsActiveAtLaunch {
-                    Toggle("Revisei o contexto completo e autorizo iniciar este snapshot", isOn: $reviewed)
-                        .toggleStyle(.checkbox)
+                    Toggle("Usar este contexto", isOn: $reviewed).toggleStyle(.checkbox)
                 }
             }
         }
-        .font(.system(size: 11))
+        .font(.system(size: 12))
         .textSelection(.enabled)
     }
 
@@ -222,6 +255,11 @@ struct AgentLaunchView: View {
             let project = projectKey.isEmpty ? nil : projectKey
             let task = taskKey.isEmpty ? nil : taskKey
             let profile = profileKey.isEmpty ? nil : profileKey
+            if let target = scrapingTarget {
+                try target.validate(currentTerminal: sessions.first(where: { $0.id == target.sessionID })?.terminals.first(where: { $0.id == target.terminal.id }),
+                    currentAssignment: ScrapingBoxAssignmentStore().load()[target.assignment.computerID],
+                    agentID: agentID, skillIDs: skillSelection)
+            }
             let preparedContext = try LibraryContext.prepare(agentID: agentID, in: fresh,
                 projectKey: project, taskKey: task, profileKey: profile,
                 selectedMemoryIDs: memorySelection, selectedSkillIDs: skillSelection)
@@ -241,20 +279,22 @@ struct AgentLaunchView: View {
 
     private func invalidate() { plan = nil; prepared = nil; reviewed = false; errorText = nil }
 
-    private func launch() {
-        guard reviewed, let plan, let prepared else { return }
+    private func launch() async {
+        guard reviewed, !launching, targetStopped, let plan, let prepared else { return }
+        launching = true
+        defer { launching = false }
         var materialized: MaterializedAgentLaunch?
         do {
-            let created = try AgentLaunchPlanner().materialize(plan, reviewedDigest: plan.review.contextSHA256)
+            let created = try AgentLaunchPlanner().materialize(plan, reviewedDigest: plan.review.contextSHA256, terminalID: scrapingTarget?.terminal.id)
             materialized = created
-            try onLaunch(AgentLaunchRequest(materialized: created, prepared: prepared,
+            try await onLaunch(AgentLaunchRequest(materialized: created, prepared: prepared,
                 sessionID: sessionID, newSessionTitle: newSession ? newSessionTitle.trimmingCharacters(in: .whitespacesAndNewlines) : nil,
-                taskSummary: taskSummary.trimmingCharacters(in: .whitespacesAndNewlines).nonEmpty))
+                taskSummary: taskSummary.trimmingCharacters(in: .whitespacesAndNewlines).nonEmpty, scrapingTarget: scrapingTarget))
             dismiss()
         } catch {
             if let materialized,
                let terminal = materialized.terminal,
-               case .running = WorkspaceServices.terminalRuntime.state(for: terminal.id) {
+               WorkspaceServices.terminalRuntime.isRunning(materialized) {
                 // The process may still be reading the protected file while SIGTERM completes.
                 stoppingTerminalID = terminal.id
             } else if let materialized {

@@ -1,11 +1,13 @@
 import Darwin
 import Foundation
+import LocalAuthentication
 import Security
 
 public enum BrowserComputerError: Error, LocalizedError, Equatable {
     case creationDisabled, networkDisabled, insufficientMemory
     case resourceLimit, duplicateComputer, missingComputer, unmanagedContainer
-    case missingToken, invalidDockerResponse, invalidPort, notReady, commandFailed(String)
+    case missingToken, tokenAuthorizationRequired, tokenAuthorizationDenied, keychainTimedOut
+    case invalidDockerResponse, invalidPort, notReady, commandFailed(String)
 
     public var errorDescription: String? {
         switch self {
@@ -17,6 +19,9 @@ public enum BrowserComputerError: Error, LocalizedError, Equatable {
         case .missingComputer: return "Computador browser não encontrado."
         case .unmanagedContainer: return "O container não pertence a este computador do Agent Box."
         case .missingToken: return "O token local deste computador não está disponível no Keychain."
+        case .tokenAuthorizationRequired: return "O Keychain exige autorização. Use ‘Autorizar acesso ao token’ para tentar novamente."
+        case .tokenAuthorizationDenied: return "A autorização do Keychain foi recusada ou cancelada. O computador foi preservado."
+        case .keychainTimedOut: return "O Keychain não respondeu no prazo. O computador foi preservado; tente novamente após resolver o acesso ao Keychain."
         case .invalidDockerResponse: return "Docker devolveu dados inesperados."
         case .invalidPort: return "O browser não publicou uma porta local segura."
         case .notReady: return "O browser ainda não ficou pronto."
@@ -28,7 +33,57 @@ public enum BrowserComputerError: Error, LocalizedError, Equatable {
 public protocol BrowserComputerTokenStoring {
     func put(computerID: UUID, value: String) throws
     func read(computerID: UUID) throws -> String
+    func readInteractively(computerID: UUID) throws -> String
     func delete(computerID: UUID) throws
+}
+
+public extension BrowserComputerTokenStoring {
+    func readInteractively(computerID: UUID) throws -> String { try read(computerID: computerID) }
+}
+
+/// A timed-out SecurityServer call may keep its worker occupied. Never queue another one behind it.
+final class KeychainReadGate {
+    static let shared = KeychainReadGate()
+    private let lock = NSLock()
+    private var inFlight = false
+
+    func execute(timeout: TimeInterval, onTimeout: @escaping () -> Void = {},
+                 _ operation: @escaping () throws -> String) throws -> String {
+        lock.lock()
+        guard !inFlight else { lock.unlock(); throw BrowserComputerError.keychainTimedOut }
+        inFlight = true
+        lock.unlock()
+        let result = ResultBox()
+        DispatchQueue.global(qos: .userInitiated).async {
+            let outcome = Result { try operation() }
+            self.lock.lock()
+            self.inFlight = false
+            self.lock.unlock()
+            result.complete(outcome)
+        }
+        guard result.wait(timeout: timeout) else {
+            onTimeout()
+            throw BrowserComputerError.keychainTimedOut
+        }
+        return try result.value().get()
+    }
+
+    private final class ResultBox {
+        private let semaphore = DispatchSemaphore(value: 0)
+        private let lock = NSLock()
+        private var outcome: Result<String, Error>?
+        func complete(_ result: Result<String, Error>) {
+            lock.lock(); outcome = result; lock.unlock()
+            semaphore.signal()
+        }
+        func wait(timeout: TimeInterval) -> Bool {
+            semaphore.wait(timeout: .now() + timeout) == .success
+        }
+        func value() -> Result<String, Error> {
+            lock.lock(); defer { lock.unlock() }
+            return outcome!
+        }
+    }
 }
 
 /// Separate Keychain namespace from user-imported credentials.
@@ -45,15 +100,36 @@ public struct KeychainBrowserComputerTokenStore: BrowserComputerTokenStoring {
         guard SecItemAdd(attributes as CFDictionary, nil) == errSecSuccess else { throw BrowserComputerError.missingToken }
     }
     public func read(computerID: UUID) throws -> String {
+        try read(computerID: computerID, interactive: false)
+    }
+    public func readInteractively(computerID: UUID) throws -> String {
+        try read(computerID: computerID, interactive: true)
+    }
+    private func read(computerID: UUID, interactive: Bool) throws -> String {
         var attributes = query(computerID)
         attributes[kSecReturnData as String] = kCFBooleanTrue
         attributes[kSecMatchLimit as String] = kSecMatchLimitOne
-        var result: CFTypeRef?
-        guard SecItemCopyMatching(attributes as CFDictionary, &result) == errSecSuccess,
-              let data = result as? Data, let text = String(data: data, encoding: .utf8) else {
-            throw BrowserComputerError.missingToken
+        let context = LAContext()
+        context.interactionNotAllowed = !interactive
+        attributes[kSecUseAuthenticationContext as String] = context
+        return try KeychainReadGate.shared.execute(timeout: interactive ? 60 : 8,
+                                                   onTimeout: { context.invalidate() }) {
+            var result: CFTypeRef?
+            let status = SecItemCopyMatching(attributes as CFDictionary, &result)
+            switch status {
+            case errSecSuccess:
+                guard let data = result as? Data, let text = String(data: data, encoding: .utf8) else {
+                    throw BrowserComputerError.missingToken
+                }
+                return text
+            case errSecInteractionNotAllowed:
+                throw BrowserComputerError.tokenAuthorizationRequired
+            case errSecUserCanceled, errSecAuthFailed:
+                throw BrowserComputerError.tokenAuthorizationDenied
+            default:
+                throw BrowserComputerError.missingToken
+            }
         }
-        return text
     }
     public func delete(computerID: UUID) throws {
         let status = SecItemDelete(query(computerID) as CFDictionary)
@@ -250,12 +326,14 @@ public struct BrowserComputerService<Runner: DockerCommandRunning, Tokens: Brows
     }
 
     /// Returns a capability only when the authenticated runtime confirms identity and readiness.
-    public func reconnectEndpoint(computerID: UUID, session: URLSession? = nil) async throws -> BrowserRuntimeEndpoint {
+    public func reconnectEndpoint(computerID: UUID, session: URLSession? = nil,
+                                  interactiveAuthorization: Bool = false) async throws -> BrowserRuntimeEndpoint {
         _ = try recoverMetadata()
         guard let computer = try list().first(where: { $0.id == computerID }), computer.running else {
             throw BrowserComputerError.missingComputer
         }
-        let token = try tokens.read(computerID: computerID)
+        let token = try interactiveAuthorization
+            ? tokens.readInteractively(computerID: computerID) : tokens.read(computerID: computerID)
         let portText = try checked(["port", computer.containerID, "8765/tcp"], timeout: 8).stdout
         let port = try parseLoopbackPort(portText)
         let baseURL = URL(string: "http://127.0.0.1:\(port)")!

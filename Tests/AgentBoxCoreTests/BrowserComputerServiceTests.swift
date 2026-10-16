@@ -63,12 +63,69 @@ final class BrowserComputerServiceTests: XCTestCase {
             XCTFail("Wrong computer health must be rejected")
         } catch BrowserComputerError.notReady {}
     }
+
+    func testKeychainGateTimesOutAndDoesNotQueueAnotherRead() throws {
+        let gate = KeychainReadGate()
+        let release = DispatchSemaphore(value: 0)
+        XCTAssertThrowsError(try gate.execute(timeout: 0.05) {
+            _ = release.wait(timeout: .now() + 2)
+            return "late token"
+        }) { XCTAssertEqual($0 as? BrowserComputerError, .keychainTimedOut) }
+        var startedAnotherRead = false
+        XCTAssertThrowsError(try gate.execute(timeout: 0.05) {
+            startedAnotherRead = true
+            return "other token"
+        }) { XCTAssertEqual($0 as? BrowserComputerError, .keychainTimedOut) }
+        XCTAssertFalse(startedAnotherRead)
+        release.signal()
+        let deadline = Date().addingTimeInterval(1)
+        while Date() < deadline {
+            if let value = try? gate.execute(timeout: 0.05, onTimeout: {}, { "recovered" }) {
+                XCTAssertEqual(value, "recovered")
+                return
+            }
+            Thread.sleep(forTimeInterval: 0.01)
+        }
+        XCTFail("Gate did not recover after the worker completed")
+    }
+
+    func testReconnectRequiresExplicitAuthorizationWhenFakeTokenStoreRequestsIt() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let policyStore = ComputerPolicyStore(fileURL: root.appendingPathComponent("policy.json"))
+        try policyStore.save(ComputerPolicy(creation: .manual, limits: .init(cpus: 1, memoryMiB: 2048, maxComputers: 2)))
+        let tokens = FakeBrowserTokenStore()
+        let service = BrowserComputerService(runner: FakeBrowserDockerRunner(), tokens: tokens,
+            policyStore: policyStore,
+            metadataStore: BrowserComputerMetadataStore(url: root.appendingPathComponent("metadata.json")))
+        let computer = try service.createAndStart(for: UUID())
+        tokens.requiresAuthorization = true
+        do {
+            _ = try await service.reconnectEndpoint(computerID: computer.id)
+            XCTFail("Automatic lookup must not authorize")
+        } catch BrowserComputerError.tokenAuthorizationRequired {}
+        BrowserServiceURLProtocol.healthJSON = #"{"computer_id":"\#(computer.id.uuidString)","generation":0,"mode":"http","browser_ready":false,"display_ready":false,"frame_source":"none","active_lease":null}"#
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [BrowserServiceURLProtocol.self]
+        let endpoint = try await service.reconnectEndpoint(computerID: computer.id,
+            session: URLSession(configuration: config), interactiveAuthorization: true)
+        XCTAssertEqual(endpoint.computerID, computer.id)
+        XCTAssertEqual(tokens.interactiveReads, 1)
+    }
 }
 
 private final class FakeBrowserTokenStore: BrowserComputerTokenStoring {
     private var values: [UUID: String] = [:]
+    var requiresAuthorization = false
+    var interactiveReads = 0
     func put(computerID: UUID, value: String) throws { values[computerID] = value }
     func read(computerID: UUID) throws -> String {
+        if requiresAuthorization { throw BrowserComputerError.tokenAuthorizationRequired }
+        guard let value = values[computerID] else { throw BrowserComputerError.missingToken }
+        return value
+    }
+    func readInteractively(computerID: UUID) throws -> String {
+        interactiveReads += 1
         guard let value = values[computerID] else { throw BrowserComputerError.missingToken }
         return value
     }

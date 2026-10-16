@@ -70,6 +70,47 @@ final class ProcessesPTYTests: XCTestCase {
     }
 
     @MainActor
+    func testReviewedLaunchCannotReuseLiveProcessAndCanReplaceStoppedTerminal() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let executable = root.appendingPathComponent("local-cli-fixture")
+        try "#!/bin/sh\necho SNAPSHOT_PROCESS\nexec sleep 30\n".write(to: executable, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: executable.path)
+        let planner = AgentLaunchPlanner(contextDirectory: root.appendingPathComponent("contexts"),
+            resolver: CLIExecutableResolver(overrides: [.claude: executable.path]))
+        let agent = SavedAgent(name: "Fixture", instructions: "Local fixture only", provider: .claude)
+        let document = LibraryDocument(agents: [agent])
+        let manager = TerminalRuntimeManager()
+        defer { manager.shutdown() }
+        let terminal = TerminalRecord(title: "Existing", provider: .shell, cwd: "/tmp", arguments: ["-c", "exec sleep 30"])
+        manager.start(terminal)
+        let original = manager.state(for: terminal.id)
+        let first = try planner.prepare(agentID: agent.id, in: document, workingDirectory: "/tmp")
+        let launch = try planner.materialize(first, reviewedDigest: first.review.contextSHA256, terminalID: terminal.id)
+        XCTAssertThrowsError(try manager.start(launch))
+        XCTAssertEqual(manager.state(for: terminal.id), original)
+        XCTAssertFalse(manager.isRunning(launch))
+        manager.stop(terminal.id)
+        let stopped = await waitUntil { if case .exited = manager.state(for: terminal.id) { return true }; return false }
+        XCTAssertTrue(stopped)
+        try manager.start(launch)
+        XCTAssertTrue(manager.isRunning(launch))
+        XCTAssertEqual(manager.runningPlanID(for: terminal.id), first.id)
+        let second = try planner.prepare(agentID: agent.id, in: document, workingDirectory: "/tmp")
+        let replacement = try planner.materialize(second, reviewedDigest: second.review.contextSHA256, terminalID: terminal.id)
+        XCTAssertThrowsError(try manager.start(replacement))
+        XCTAssertFalse(manager.isRunning(replacement))
+        XCTAssertTrue(manager.isRunning(launch))
+        manager.stop(terminal.id)
+        let stoppedAgain = await waitUntil { if case .exited = manager.state(for: terminal.id) { return true }; return false }
+        XCTAssertTrue(stoppedAgain)
+        try manager.start(replacement)
+        XCTAssertTrue(manager.isRunning(replacement))
+        XCTAssertFalse(manager.isRunning(launch))
+    }
+
+    @MainActor
     private func waitUntil(timeout: TimeInterval = 5, _ condition: @MainActor () -> Bool) async -> Bool {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {

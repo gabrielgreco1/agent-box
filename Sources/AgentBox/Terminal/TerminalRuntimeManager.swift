@@ -39,6 +39,7 @@ public final class TerminalRuntimeManager: ObservableObject {
     }
 
     private var entries: [UUID: Entry] = [:]
+    private var launchPlanIDs: [UUID: UUID] = [:]
     private let resolver: CLIExecutableResolver
 
     public init(resolver: CLIExecutableResolver = CLIExecutableResolver()) {
@@ -63,16 +64,34 @@ public final class TerminalRuntimeManager: ObservableObject {
     /// Starts the exact executable and reviewed context snapshot from a materialized plan.
     public func start(_ launch: MaterializedAgentLaunch) throws {
         guard let terminal = launch.terminal else { throw AgentLaunchError.contextNotActive }
+        switch state(for: terminal.id) {
+        case .running, .starting:
+            throw LibraryError.invalid("O terminal ainda tem um processo ativo. Aguarde o encerramento antes de relançar.")
+        default: break
+        }
         try launch.validateContextFile()
         guard FileManager.default.isExecutableFile(atPath: launch.executablePath) else {
             throw CLIResolutionError.notExecutable(launch.executablePath)
         }
         start(terminal, executableOverride: launch.executablePath)
+        if case .running = state(for: terminal.id) { launchPlanIDs[terminal.id] = launch.planID }
+    }
+
+    public func runningPlanID(for id: UUID) -> UUID? {
+        guard case .running = state(for: id) else { return nil }
+        return launchPlanIDs[id]
+    }
+
+    public func isRunning(_ launch: MaterializedAgentLaunch) -> Bool {
+        guard let id = launch.terminal?.id, launchPlanIDs[id] == launch.planID,
+              case .running = state(for: id) else { return false }
+        return true
     }
 
     private func start(_ terminal: TerminalRecord, executableOverride: String?) {
         if case .running = state(for: terminal.id) { return }
         if case .starting = state(for: terminal.id) { return }
+        launchPlanIDs[terminal.id] = nil
         processStates[terminal.id] = .starting
         do {
             let executable = try executableOverride ?? resolver.resolve(terminal.provider)
@@ -122,6 +141,7 @@ public final class TerminalRuntimeManager: ObservableObject {
             entries[id]?.view.terminate()
         }
         entries.removeAll()
+        launchPlanIDs.removeAll()
     }
 
     /// Called only by TerminalSurface. A missing renderer is an empty terminal, not a launch request.

@@ -13,8 +13,10 @@ private struct DesktopPresentation: Identifiable {
 struct BrowserComputerPanel: View {
     let terminalID: UUID
     let context: ComputerPolicyContext
-    let onReviewAgent: (UUID) -> Void
+    let onReviewAgent: (ScrapingBoxAssignment) -> Void
     @StateObject private var store = BrowserComputerStore()
+    @ObservedObject private var runtime = WorkspaceServices.terminalRuntime
+    @State private var launchBinding: AgentLaunchBinding?
     @State private var error: String?
     @State private var busy = false
     @State private var presentation: DesktopPresentation?
@@ -28,14 +30,24 @@ struct BrowserComputerPanel: View {
                 Label(computer.running ? "Em execução" : "Parado",systemImage:computer.running ? "circle.fill":"pause.circle")
                     .font(.caption).foregroundStyle(.secondary)
                 if let currentMode {Text(modeLabel(currentMode)).font(.caption).foregroundStyle(.secondary)}
+                if store.tokenAuthorizationRequired.contains(computer.id) {
+                    Button("Autorizar acesso ao token") {
+                        perform {
+                            let endpoint = try await store.authorizeReconnect(computerID: computer.id)
+                            currentMode = try await BrowserRuntimeClient(endpoint: endpoint).health().mode
+                        }
+                    }.disabled(busy)
+                    Text("A autorização pode abrir uma janela do macOS. O box e seus dados são preservados se você recusar.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
                 if let assignment = store.scrapingAssignment(for: computer.id),
                    assignment.terminalID == terminalID {
-                    Text("Agente padrão: Web scraping · skill pendente")
+                    Text(skillIncluded(assignment) ? "Web scraping · skill incluída no lançamento" : "Web scraping · lançamento pendente")
                         .font(.caption).foregroundStyle(.secondary)
-                    Text("A revisão abre outro terminal Claude. A skill será carregada nele; este box continua vinculado ao terminal atual.")
+                    Text("Inicie o agente de scraping neste terminal, mantendo esta box e seu perfil. O processo atual deve estar parado.")
                         .font(.caption).foregroundStyle(.secondary)
                     Button("Revisar e iniciar agente") {
-                        onReviewAgent(assignment.defaultAgentDefinitionID)
+                        onReviewAgent(assignment)
                     }
                 } else {
                     Button("Definir agente de scraping padrão") {
@@ -71,13 +83,22 @@ struct BrowserComputerPanel: View {
             if let issue=error ?? store.errorText {Text(issue).font(.caption).foregroundStyle(.red).textSelection(.enabled)}
             Button("Atualizar") {perform {await store.refresh();try await refreshMode()}}.disabled(busy)
         }
-        .task {await store.refresh();try? await refreshMode()}
+        .task {
+            launchBinding = try? AgentLaunchBindingStore().load()[terminalID]
+            await store.refresh();try? await refreshMode()
+        }
         .sheet(item:$presentation) { item in
             VStack(spacing:0) {
                 HStack {Text("Computador");Spacer();Button("Fechar"){presentation=nil}}.padding(10)
                 RemoteDesktopView(endpoint:item.endpoint,control:item.actions.actions())
             }.frame(minWidth:800,minHeight:560).frame(idealWidth:1100,idealHeight:760)
         }
+    }
+    private func skillIncluded(_ assignment: ScrapingBoxAssignment) -> Bool {
+        guard let binding = launchBinding else { return false }
+        return binding.terminalID == terminalID && binding.agentDefinitionID == assignment.defaultAgentDefinitionID &&
+            binding.skillReferences.contains(where: { $0.id == assignment.skillID }) &&
+            runtime.runningPlanID(for: terminalID) == binding.planID
     }
     private func modeLabel(_ mode:BrowserRuntimeMode)->String {
         switch mode {case .http:return "HTTP · navegador desligado";case .headless:return "Navegador headless";case .desktop:return "Desktop Linux"}

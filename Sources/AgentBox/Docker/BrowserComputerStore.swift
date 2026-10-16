@@ -10,8 +10,10 @@ final class BrowserComputerStore: ObservableObject {
     @Published private(set) var busyComputerIDs: Set<UUID> = []
     @Published private(set) var scrapingAssignments: [UUID: ScrapingBoxAssignment] = [:]
     @Published private(set) var errorText: String?
+    @Published private(set) var tokenAuthorizationRequired: Set<UUID> = []
 
     private let service: BrowserComputerService<DockerProcessRunner, KeychainBrowserComputerTokenStore>
+    private var reconnectTasks: [UUID: Task<BrowserRuntimeEndpoint, Error>] = [:]
 
     init(runner: DockerProcessRunner = DockerProcessRunner(),
          policyStore: ComputerPolicyStore = ComputerPolicyStore()) {
@@ -114,22 +116,55 @@ final class BrowserComputerStore: ObservableObject {
     }
 
     func reconnect(computerID: UUID) async throws -> BrowserRuntimeEndpoint {
-        do {
+        try await reconnect(computerID: computerID, interactiveAuthorization: false)
+    }
+
+    func authorizeReconnect(computerID: UUID) async throws -> BrowserRuntimeEndpoint {
+        if let pending = reconnectTasks[computerID] { _ = try? await pending.value }
+        reconnectTasks.removeValue(forKey: computerID)
+        return try await reconnect(computerID: computerID, interactiveAuthorization: true)
+    }
+
+    private func reconnect(computerID: UUID, interactiveAuthorization: Bool) async throws -> BrowserRuntimeEndpoint {
+        let task: Task<BrowserRuntimeEndpoint, Error>
+        if let pending = reconnectTasks[computerID] {
+            task = pending
+        } else {
             let service = service
-            let endpoint = try await Task.detached(priority: .utility) {
-                try await service.reconnectEndpoint(computerID: computerID)
-            }.value
+            task = Task.detached(priority: .utility) {
+                try await service.reconnectEndpoint(computerID: computerID,
+                                                    interactiveAuthorization: interactiveAuthorization)
+            }
+            reconnectTasks[computerID] = task
+        }
+        do {
+            let endpoint = try await task.value
+            reconnectTasks.removeValue(forKey: computerID)
             endpoints[computerID] = endpoint
+            tokenAuthorizationRequired.remove(computerID)
             errorText = nil
             return endpoint
-        } catch { endpoints.removeValue(forKey: computerID); errorText = error.localizedDescription; throw error }
+        } catch {
+            reconnectTasks.removeValue(forKey: computerID)
+            endpoints.removeValue(forKey: computerID)
+            if case BrowserComputerError.tokenAuthorizationRequired = error {
+                tokenAuthorizationRequired.insert(computerID)
+            }
+            errorText = error.localizedDescription
+            throw error
+        }
     }
 
     private func connectReady(computerID: UUID) async throws {
         var lastError: Error = BrowserComputerError.notReady
         for attempt in 0..<8 {
             do { _ = try await reconnect(computerID: computerID); return }
-            catch { lastError = error }
+            catch {
+                lastError = error
+                if case BrowserComputerError.tokenAuthorizationRequired = error { throw error }
+                if case BrowserComputerError.tokenAuthorizationDenied = error { throw error }
+                if case BrowserComputerError.keychainTimedOut = error { throw error }
+            }
             if attempt < 7 { try await Task.sleep(nanoseconds: 500_000_000) }
         }
         throw lastError

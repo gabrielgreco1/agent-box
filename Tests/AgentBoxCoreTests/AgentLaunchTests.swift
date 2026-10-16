@@ -90,6 +90,61 @@ final class AgentLaunchTests: XCTestCase {
         }
     }
 
+    func testDistinctReviewedPlansCanReuseOneTerminalID() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let agent = SavedAgent(name: "Guardado", instructions: "Revisado", provider: .claude)
+        let planner = AgentLaunchPlanner(contextDirectory: root,
+                                         resolver: CLIExecutableResolver(overrides: [.claude: "/bin/sh"]))
+        let document = LibraryDocument(agents: [agent])
+        let terminalID = UUID()
+        let firstPlan = try planner.prepare(agentID: agent.id, in: document, workingDirectory: "/tmp")
+        let firstLaunch = try planner.materialize(firstPlan, reviewedDigest: firstPlan.review.contextSHA256,
+                                                  terminalID: terminalID)
+        let firstTerminal = try XCTUnwrap(firstLaunch.terminal)
+        let firstBinding = try XCTUnwrap(firstLaunch.binding)
+        XCTAssertEqual(firstTerminal.id, terminalID)
+        XCTAssertEqual(firstBinding.terminalID, terminalID)
+        XCTAssertEqual(firstBinding.planID, firstPlan.id)
+        XCTAssertNoThrow(try planner.restore(firstBinding, terminal: firstTerminal))
+
+        let secondPlan = try planner.prepare(agentID: agent.id, in: document, workingDirectory: "/tmp")
+        let secondLaunch = try planner.materialize(secondPlan, reviewedDigest: secondPlan.review.contextSHA256,
+                                                   terminalID: terminalID)
+        let secondTerminal = try XCTUnwrap(secondLaunch.terminal)
+        let secondBinding = try XCTUnwrap(secondLaunch.binding)
+        XCTAssertNotEqual(secondPlan.id, firstPlan.id)
+        XCTAssertEqual(secondTerminal.id, terminalID)
+        XCTAssertEqual(secondBinding.terminalID, terminalID)
+        XCTAssertEqual(secondBinding.planID, secondPlan.id)
+        XCTAssertNotEqual(secondLaunch.contextFileURL, firstLaunch.contextFileURL)
+        XCTAssertEqual(secondLaunch.contextFileURL, secondPlan.contextFile.url)
+        XCTAssertNoThrow(try planner.restore(secondBinding, terminal: secondTerminal))
+
+        let mismatchedTerminal = TerminalRecord(id: secondPlan.id, title: secondTerminal.title,
+                                                 provider: secondTerminal.provider, cwd: secondTerminal.cwd,
+                                                 arguments: secondTerminal.arguments,
+                                                 agentDefinitionID: secondTerminal.agentDefinitionID)
+        XCTAssertThrowsError(try planner.restore(secondBinding, terminal: mismatchedTerminal)) {
+            XCTAssertEqual($0 as? AgentLaunchError, .invalidBinding)
+        }
+    }
+
+    func testLegacyBindingDecodesTerminalIDFromPlanID() throws {
+        let planID = UUID()
+        let binding = AgentLaunchBinding(planID: planID, agentDefinitionID: UUID(),
+                                         executablePath: "/bin/sh", contextFilePath: "/tmp/context.md",
+                                         contextSHA256: String(repeating: "0", count: 64), provider: .claude,
+                                         workingDirectory: "/tmp", arguments: [])
+        var json = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(binding)) as? [String: Any])
+        json.removeValue(forKey: "terminalID")
+        let legacyData = try JSONSerialization.data(withJSONObject: json)
+        let decoded = try JSONDecoder().decode(AgentLaunchBinding.self, from: legacyData)
+        XCTAssertEqual(decoded.planID, planID)
+        XCTAssertEqual(decoded.terminalID, planID)
+        XCTAssertEqual(decoded, binding)
+    }
+
     func testCodexPlanExportsWithoutClaimingActivation() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         defer { try? FileManager.default.removeItem(at: root) }
