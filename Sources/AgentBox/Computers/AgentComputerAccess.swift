@@ -11,6 +11,12 @@ import Foundation
         let bridge: ComputerControlBridge<BrowserRuntimeClient>
     }
     private static var entries: [UUID: Entry] = [:]
+    /// Called after a verified stopped-container replacement, while its terminal
+    /// is reserved for maintenance. Old viewers must not reuse cached tickets.
+    static func invalidateStoppedComputer(computerID: UUID) async throws {
+        entries.removeValue(forKey: computerID)
+        try await result.get().disconnect(computerID: computerID)
+    }
     static func bridge(endpoint: BrowserRuntimeEndpoint, broker: ControlBroker,
                        session: URLSession = .shared) async -> ComputerControlBridge<BrowserRuntimeClient> {
         if let existing = entries[endpoint.computerID],

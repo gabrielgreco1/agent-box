@@ -88,3 +88,5 @@ AB-039: ferramentas MCP do computador ligadas ao lançamento Claude nativo, help
 AB-040: monitor de hooks Claude + árvore nativa de filhos integrados; run novo por processo, invocação protegida e sidebar derivada apenas de eventos autenticados. 110 testes e smoke do Claude real passaram. Conferência visual, computador por filho e outros harnesses pendentes. AB-035 segue com gate de reconexão no app após correção do backend legado.
 
 AB-041: HTTP público e leitura estruturada de página no MCP Claude, mantendo perfil persistente e pedido de intervenção. 113 testes Swift, 20 Python e smoke Docker arm64 passaram. Segue pendente o fluxo completo pelo modelo no app e a migração de containers existentes. Ver `tasks/AB-041-scraping-tools.md`.
+
+AB-042: atualização manual de imagem para boxes paradas, mantendo perfil e IDs, recuperação por journal e exclusão mútua com terminais. 123 testes passaram incluindo Docker real e rollback. Não substitui backup/restore de perfis nem o aceite visual; ver `tasks/AB-042-computer-image-update.md`.

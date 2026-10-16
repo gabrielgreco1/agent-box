@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-16",
+  "context": "colima-agentbox-dev",
+  "suite_tests": 123,
+  "suite_failures": 0,
+  "docker_test": "BrowserImageUpdateDockerTests.testStoppedBoxUpdateAndRollbackWithRealDocker",
+  "docker_duration_seconds": 6.085,
+  "checks": {
+    "running_update_refused": true,
+    "image_replaced": true,
+    "computer_terminal_ids_preserved": true,
+    "volume_preserved": true,
+    "workspace_and_profile_markers_preserved": true,
+    "token_preserved_in_memory_store": true,
+    "metadata_created_at_preserved": true,
+    "rename_failure_rollback": true,
+    "fixture_cleanup": true
+  },
+  "limitations": [
+    "No user Keychain access in Docker test",
+    "No user boxes migrated",
+    "UI blocked by locked Mac",
+    "Synthetic crash-window fixtures; no physical power-loss test"
+  ]
+}

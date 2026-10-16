@@ -41,6 +41,7 @@ public final class TerminalRuntimeManager: ObservableObject {
     private var entries: [UUID: Entry] = [:]
     private var launchPlanIDs: [UUID: UUID] = [:]
     private var runIDs: [UUID: UUID] = [:]
+    private var computerMaintenance: [UUID: UUID] = [:]
     private let resolver: CLIExecutableResolver
     public let nativeAgentMonitor: NativeAgentMonitor
 
@@ -52,10 +53,39 @@ public final class TerminalRuntimeManager: ObservableObject {
 
     public func state(for id: UUID) -> TerminalProcessState { processStates[id] ?? .idle }
 
+    /// Holds the stopped terminal across an asynchronous computer replacement.
+    /// A second pane cannot start a CLI while its assigned computer is changing.
+    func beginComputerMaintenance(terminalID: UUID) throws -> UUID {
+        guard computerMaintenance[terminalID] == nil else {
+            throw LibraryError.invalid("Este computador já está sendo atualizado.")
+        }
+        switch state(for: terminalID) {
+        case .running, .starting:
+            throw LibraryError.invalid("Pare o terminal antes de atualizar seu computador.")
+        default: break
+        }
+        let ticket = UUID()
+        computerMaintenance[terminalID] = ticket
+        return ticket
+    }
+
+    func endComputerMaintenance(terminalID: UUID, ticket: UUID) {
+        guard computerMaintenance[terminalID] == ticket else { return }
+        computerMaintenance.removeValue(forKey: terminalID)
+    }
+
+    private func checkComputerMaintenance(_ terminalID: UUID) throws {
+        guard computerMaintenance[terminalID] == nil else {
+            throw LibraryError.invalid("Aguarde a atualização do computador antes de iniciar o terminal.")
+        }
+    }
+
     // Internal for runtime tests; UI attaches through TerminalSurface.
     func renderer(for id: UUID) -> LocalProcessTerminalView? { entries[id]?.view }
 
     public func start(_ terminal: TerminalRecord) {
+        do { try checkComputerMaintenance(terminal.id) }
+        catch { processStates[terminal.id] = .failed(error.localizedDescription); return }
         if case .running = state(for: terminal.id) { return }
         if case .starting = state(for: terminal.id) { return }
         guard terminal.agentDefinitionID == nil else {
@@ -68,6 +98,7 @@ public final class TerminalRuntimeManager: ObservableObject {
     /// Starts the exact executable and reviewed context snapshot from a materialized plan.
     public func start(_ launch: MaterializedAgentLaunch) throws {
         guard let terminal = launch.terminal else { throw AgentLaunchError.contextNotActive }
+        try checkComputerMaintenance(terminal.id)
         switch state(for: terminal.id) {
         case .running, .starting:
             throw LibraryError.invalid("O terminal ainda tem um processo ativo. Aguarde o encerramento antes de relançar.")

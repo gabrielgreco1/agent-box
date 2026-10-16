@@ -20,6 +20,19 @@ struct BrowserComputerPanel: View {
     @State private var currentMode: BrowserRuntimeMode?
 
     private var computer: BrowserManagedComputer? {store.computer(for:terminalID)}
+    private var isBusy: Bool {
+        busy || store.busyComputerIDs.contains(terminalID) ||
+            (computer.map { store.busyComputerIDs.contains($0.id) } ?? false)
+    }
+    private var recoveryBlocksActions: Bool {
+        store.pendingImageUpdate != nil || store.imageUpdateRecoveryBlocked
+    }
+    private var terminalActive: Bool {
+        switch runtime.state(for: terminalID) {
+        case .running, .starting: return true
+        default: return false
+        }
+    }
     var body:some View {
         VStack(alignment:.leading,spacing:10) {
             Text("Navegador e desktop").font(.system(size:13,weight:.medium))
@@ -27,13 +40,13 @@ struct BrowserComputerPanel: View {
                 Label(computer.running ? "Em execução" : "Parado",systemImage:computer.running ? "circle.fill":"pause.circle")
                     .font(.caption).foregroundStyle(.secondary)
                 if let currentMode {Text(modeLabel(currentMode)).font(.caption).foregroundStyle(.secondary)}
-                if store.tokenAuthorizationRequired.contains(computer.id) {
+                if computer.running && store.tokenAuthorizationRequired.contains(computer.id) {
                     Button("Autorizar acesso ao token") {
                         perform {
                             let endpoint = try await store.authorizeReconnect(computerID: computer.id)
                             currentMode = try await BrowserRuntimeClient(endpoint: endpoint).health().mode
                         }
-                    }.disabled(busy)
+                    }.disabled(isBusy || recoveryBlocksActions)
                     Text("A autorização pode abrir uma janela do macOS. O box e seus dados são preservados se você recusar.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
@@ -45,26 +58,54 @@ struct BrowserComputerPanel: View {
                         .font(.caption).foregroundStyle(.secondary)
                     Button("Revisar e iniciar agente") {
                         onReviewAgent(assignment)
-                    }
+                    }.disabled(isBusy || recoveryBlocksActions)
                 } else {
                     Button("Definir agente de scraping padrão") {
                         perform { try store.assignDefault(to: computer) }
-                    }.disabled(busy)
+                    }.disabled(isBusy || recoveryBlocksActions)
                 }
                 HStack {
                     if computer.running {
                         Button("Abrir desktop") {openDesktop(computer.id)}
+                            .disabled(isBusy || recoveryBlocksActions)
                         Button("Parar") {perform {try await store.stop(computerID:computer.id);currentMode=nil}}
+                            .disabled(isBusy)
                     } else {
                         Button("Iniciar") {perform {_ = try await store.start(computerID:computer.id,context:context);try await applyPreferredMode(computer.id)}}
+                            .disabled(isBusy || recoveryBlocksActions)
                     }
-                }.disabled(busy)
+                }
+                if !computer.running,
+                   let imageStatus = store.imageUpdateStatuses[computer.id], imageStatus.updateAvailable {
+                    Text("Atualização disponível")
+                        .font(.system(size: 12))
+                    Text("Nova imagem local. Perfil e arquivos permanecem; pare o terminal antes de atualizar.")
+                        .font(.system(size: 12)).foregroundStyle(.secondary)
+                    Button(store.imageUpdateAuthorizationRequired.contains(computer.id)
+                           ? "Autorizar e atualizar" : "Atualizar computador") {
+                        perform {
+                            presentation = nil
+                            _ = try await store.updateStoppedImage(computerID: computer.id, context: context,
+                                interactiveAuthorization: store.imageUpdateAuthorizationRequired.contains(computer.id))
+                            currentMode = nil
+                        }
+                    }
+                    .disabled(isBusy || terminalActive || recoveryBlocksActions)
+                    if store.imageUpdateAuthorizationRequired.contains(computer.id) {
+                        Text("A autorização pode abrir uma janela do macOS. Se for recusada, o computador e seus dados serão preservados.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    if terminalActive {
+                        Text("Encerre o processo deste terminal para atualizar.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                }
                 if computer.running {
                     Menu("Modo") {
                         Button("HTTP · sem navegador") {changeMode(.http,computerID:computer.id)}
                         Button("Navegador headless") {changeMode(.headless,computerID:computer.id)}
                         Button("Desktop") {openDesktop(computer.id)}
-                    }.disabled(busy)
+                    }.disabled(isBusy || recoveryBlocksActions)
                     Text("Trocar de modo reinicia o navegador. Perfil e arquivos são mantidos; formulários em andamento podem ser perdidos.").font(.caption).foregroundStyle(.secondary)
                 }
             } else {
@@ -73,12 +114,32 @@ struct BrowserComputerPanel: View {
                         let created=try await store.createAndStart(terminalID:terminalID,context:context)
                         try await applyPreferredMode(created.id)
                     }
-                }.disabled(busy)
+                }.disabled(isBusy || recoveryBlocksActions)
                 Text("Perfil e arquivos persistem entre reinícios. Requer imagem do runtime e teto de memória de pelo menos 2048 MiB.").font(.caption).foregroundStyle(.secondary)
             }
-            if busy {ProgressView().controlSize(.small)}
+            if let pending = store.pendingImageUpdate {
+                Text("Recuperação de atualização pendente")
+                    .font(.system(size: 12))
+                Text("O computador \(pending.computerID.uuidString.prefix(8)) precisa concluir ou desfazer uma atualização interrompida. Perfil e arquivos serão mantidos.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Button("Recuperar atualização") {
+                    perform {
+                        presentation = nil
+                        try await store.recoverStoppedImageUpdate()
+                        currentMode = nil
+                    }
+                }.disabled(isBusy || store.computers.contains(where: { $0.id == pending.computerID && $0.running }))
+                if store.computers.contains(where: { $0.id == pending.computerID && $0.running }) {
+                    Text("Pare o computador antes de recuperar a atualização.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            } else if store.imageUpdateRecoveryBlocked {
+                Text("O registro de recuperação não pôde ser verificado. A atualização automática está bloqueada; confira o erro abaixo antes de alterar este computador.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            if isBusy {ProgressView().controlSize(.small)}
             if let issue=error ?? store.errorText {Text(issue).font(.caption).foregroundStyle(.red).textSelection(.enabled)}
-            Button("Atualizar") {perform {await store.refresh();try await refreshMode()}}.disabled(busy)
+            Button("Atualizar") {perform {await store.refresh();try await refreshMode()}}.disabled(isBusy)
         }
         .task {
             launchBinding = try? AgentLaunchBindingStore().load()[terminalID]
@@ -101,11 +162,11 @@ struct BrowserComputerPanel: View {
         switch mode {case .http:return "HTTP · navegador desligado";case .headless:return "Navegador headless";case .desktop:return "Desktop Linux"}
     }
     private func perform(_ operation:@escaping @MainActor () async throws -> Void) {
-        guard !busy else{return};busy=true;error=nil
+        guard !isBusy else{return};busy=true;error=nil
         Task {do{try await operation()}catch{self.error=error.localizedDescription};busy=false}
     }
     private func refreshMode() async throws {
-        guard let computer, computer.running else {currentMode=nil;return}
+        guard let computer, computer.running, !recoveryBlocksActions else {currentMode=nil;return}
         let endpoint=try await store.reconnect(computerID:computer.id)
         currentMode=try await BrowserRuntimeClient(endpoint:endpoint).health().mode
     }

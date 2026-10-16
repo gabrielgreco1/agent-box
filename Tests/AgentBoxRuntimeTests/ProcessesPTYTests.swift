@@ -101,9 +101,20 @@ final class ProcessesPTYTests: XCTestCase {
         XCTAssertThrowsError(try manager.start(launch))
         XCTAssertEqual(manager.state(for: terminal.id), original)
         XCTAssertFalse(manager.isRunning(launch))
+        XCTAssertThrowsError(try manager.beginComputerMaintenance(terminalID: terminal.id))
         manager.stop(terminal.id)
         let stopped = await waitUntil { if case .exited = manager.state(for: terminal.id) { return true }; return false }
         XCTAssertTrue(stopped)
+        let maintenance = try manager.beginComputerMaintenance(terminalID: terminal.id)
+        XCTAssertThrowsError(try manager.beginComputerMaintenance(terminalID: terminal.id))
+        XCTAssertThrowsError(try manager.start(launch))
+        manager.start(terminal)
+        guard case .failed = manager.state(for: terminal.id) else {
+            return XCTFail("Maintenance must block a plain terminal start too")
+        }
+        manager.endComputerMaintenance(terminalID: terminal.id, ticket: UUID())
+        XCTAssertThrowsError(try manager.start(launch), "An old or foreign ticket must not release maintenance")
+        manager.endComputerMaintenance(terminalID: terminal.id, ticket: maintenance)
         try manager.start(launch)
         XCTAssertTrue(manager.isRunning(launch))
         XCTAssertEqual(manager.runningPlanID(for: terminal.id), first.id)
