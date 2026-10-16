@@ -24,7 +24,7 @@ Imagem `agentbox-browser:ab019-dev`, arm64, ID `sha256:78016d22223fe9fb258d25457
 - Smoke com root filesystem read-only, cap-drop ALL, no-new-privileges, 1 CPU/2 GiB, 256 PIDs, tmpfs e porta somente loopback.
 - Containers/volumes do smoke foram removidos pelo seu criador. Não extrapolar este teste para perfis de sites reais, backup/restore ou segurança contra shell arbitrário no mesmo container.
 
-O viewer nativo, bridge de leases e serviço Docker autenticado estão integrados em código. A interface criou um container real, promoveu HTTP para desktop, exibiu streaming ao vivo e confirmou assumir/devolver controle humano. Corrigidos dois erros encontrados nesse fluxo: geração inicial zero rejeitada e respostas JPEG individuais do CFNetwork tratadas como stream inválido. A digitação remota funcionou, mas expôs símbolos com Shift descartados; correção em verificação.
+O viewer nativo, bridge de leases e serviço Docker autenticado estão integrados em código. A interface criou um container real, promoveu HTTP para desktop, exibiu streaming ao vivo e confirmou assumir/devolver controle humano. Corrigidos dois erros encontrados nesse fluxo: geração inicial zero rejeitada e respostas JPEG individuais do CFNetwork tratadas como stream inválido. A digitação remota funcionou, mas expôs símbolos com Shift descartados; a correção passou em teste de regressão. A última conferência visual dessa correção ficou pendente: após substituir o build ad hoc, duas reconexões aguardaram `SecItemCopyMatching` no Keychain. Esse estado ainda precisa de erro recuperável e autorização explícita, sem spinner indefinido.
 
 ## Evidências
 
@@ -43,6 +43,7 @@ O viewer nativo, bridge de leases e serviço Docker autenticado estão integrado
 - Listener por fonte, evidências/datasets, cobertura e redaction de rede. Nenhum tráfego do usuário é capturado por este build.
 - Ativação nativa verificável de skills em todos os clientes; histórico completo de computadores/perfis; retomada de conversas externas; troca confirmada de modelo e handoff transacional entre harnesses.
 - Serviço PTY sobrevivente a quit/crash, recuperação de sono, perfis com backup/restore e 60 minutos de teste sustentado.
+- Reconexão de tokens após trocar o build local: espera do Keychain observada; ver AB-035.
 - Persistência de autorização de pastas após relançar precisa de conferência; bookmark foi implementado a partir do bloqueio real observado.
 
 A meta permanece ativa. Plano integral em `EXECUTION-PLAN.md`.
@@ -52,3 +53,5 @@ A meta permanece ativa. Plano integral em `EXECUTION-PLAN.md`.
 - AB-032: snapshot de skills nativas no plugin Claude, hashes e validação de restart. Testes locais e contrato oficial verificados; execução interativa real do catálogo ainda pendente. Skills com arquivos auxiliares precisam de importação de pacote.
 - AB-033: arraste, rolagem, atalhos e soltura de botões antes do ACK de revogação. Input real pelo viewer em conferência; teste prolongado e latência ainda pendentes.
 - AB-034: inbox opt-in de hooks Claude com assinatura por execução, limite de tamanho e vínculo de sessão. Ainda não ligado ao lançamento do app; não anuncia captura ao vivo de filhos.
+
+Recursos de teste: app encerrado, computador de teste parado e perfil Colima `agentbox-dev` desligado ao final da rodada. Imagem e volumes permanecem locais para retomada; nenhum serviço de login foi instalado.

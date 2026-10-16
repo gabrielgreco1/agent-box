@@ -77,4 +77,6 @@ Integrar e testar as entregas existentes antes de avançar seus aceites. Rodada 
 | AB-033 · Input do desktop | AB-020/022, AC38–43 | desktop_input | Arraste, scroll e modificadores reais sob o mesmo controle exclusivo. |
 | AB-034 · Eventos nativos | AB-016, AC19/22–25 | run_events | Payloads documentados, vínculo de sessão e ingestão verificável; não inferir filhos do texto de terminal. |
 
+AB-035: corrigir reconexão após troca de build e espera do Keychain, encontrada no teste ao vivo; critérios em `tasks/AB-035-keychain-reconnect.md`.
+
 O integrador mantém testes/builds em série, a conferência do app e os commits. Os três agentes não abrem apps nem executam tarefas pagas dos CLIs. A execução automática via hooks, o ciclo completo de skills nos demais clientes e os demais marcos seguem com seus próprios gates.
