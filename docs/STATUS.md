@@ -16,7 +16,7 @@ A spec completa continua sendo o contrato de entrega. Código compilado, teste d
 
 Docker CLI e Colima instalados via Homebrew oficial. Perfil de desenvolvimento `agentbox-dev`: 2 CPUs, 4 GiB, disco virtual 24 GiB, sem mounts do host, sem ativar contexto global e sem serviço automático no login.
 
-Imagem `agentbox-browser:ab019-dev`, arm64, ID `sha256:78016d22223fe9fb258d254571e55293578d82ba4c2127cbd62956baa72e319c`:
+Imagem `agentbox-browser:ab019-dev`, arm64, ID `sha256:43bf099353c79148d8b960389f2359864a121183585e10b61d1c54ef7509166c`:
 
 - Página JavaScript em modo headless, captura de desktop Xvfb/Openbox inteiro em 1280×800 e input real via XTEST.
 - Clique mudou o resultado visual; revogação retornou ACK; token antigo deixou de funcionar; concessão humana nova funcionou.
@@ -28,8 +28,8 @@ O viewer nativo, bridge de leases e serviço Docker autenticado estão integrado
 
 ## Evidências
 
-- Suíte Swift integrada: **70 testes, zero falhas**, após as correções de streaming multipart e digitação com Shift.
-- Suite Python do runtime: **5 testes locais**, além do smoke Docker real descrito em `tasks/AB-019-020-browser-runtime.md`.
+- Suíte Swift integrada: **74 testes, zero falhas**, incluindo snapshot de pacote completo de skills e atribuição padrão de scraping.
+- Suite Python do runtime: **10 testes locais**, além do smoke Docker real descrito em `tasks/AB-019-020-browser-runtime.md`.
 - Build release e assinatura ad hoc verificados. Empacotamento em staging temporário evita metadados de File Provider durante a assinatura; build recusa substituir app em execução.
 - Captura operacional: `evidence/terminal-split-2026-10-16.png`.
 - Detalhes por feature e limites em `tasks/`, incluindo AB-031 a AB-034.
@@ -50,8 +50,15 @@ A meta permanece ativa. Plano integral em `EXECUTION-PLAN.md`.
 
 ## Rodada paralela GPT-6 Sol medium
 
-- AB-032: snapshot de skills nativas no plugin Claude, hashes e validação de restart. Testes locais e contrato oficial verificados; execução interativa real do catálogo ainda pendente. Skills com arquivos auxiliares precisam de importação de pacote.
+- AB-032: snapshot de skills nativas no plugin Claude, hashes e validação de restart. Testes locais e contrato oficial verificados; execução interativa real do catálogo ainda pendente. Pacotes com arquivos auxiliares passaram a ser copiados e verificados por hash em AB-036.
 - AB-033: arraste, rolagem, atalhos e soltura de botões antes do ACK de revogação. Input real pelo viewer em conferência; teste prolongado e latência ainda pendentes.
 - AB-034: inbox opt-in de hooks Claude com assinatura por execução, limite de tamanho e vínculo de sessão. Ainda não ligado ao lançamento do app; não anuncia captura ao vivo de filhos.
 
 Recursos de teste: app encerrado, computador de teste parado e perfil Colima `agentbox-dev` desligado ao final da rodada. Imagem e volumes permanecem locais para retomada; nenhum serviço de login foi instalado.
+
+## Scraping e navegador — AB-036/037
+
+- Novas boxes registram o agente Web scraping e a skill local `webscraping-expert` como padrão pendente. O plugin revisado inclui os arquivos de apoio; o pacote pessoal não é publicado no Git.
+- Atribuição não equivale a ativação em CLI aberto: o lançamento revisado ainda cria outro terminal e a box permanece no terminal original. Rebinding e associação ao run continuam pendentes, explicitamente mostrados na UI e em AB-036.
+- Desktop agora inicia Chromium como processo independente e conecta controle via CDP interno, sem override de user agent. Headless usa Chromium completo. Smoke real passou em navegação JS, clique, controle humano, saída limpa e persistência de localStorage ao recriar container.
+- Build release/assinatura verificados. Sem reteste visual do app nesta rodada; a limitação Keychain de AB-035 continua aberta. Não foi comprovada resolução do CAPTCHA do Google, nem migração de boxes existentes.

@@ -139,6 +139,12 @@ struct AgentLaunchView: View {
                            isOn: setBinding(memory.id, in: $memoryIDs)).toggleStyle(.checkbox)
                 }
                 Text("Skills incluídas").fontWeight(.medium)
+                if agent.skillIDs.contains(where: { id in document.skills.contains(where: {
+                    $0.id == id && $0.name == "webscraping-expert"
+                }) }) {
+                    Text("A skill de scraping será ativada neste novo lançamento Claude após a revisão. Criar um box não injeta a skill em um agente já em execução.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
                 if agent.skillIDs.isEmpty { Text("Nenhuma skill selecionada.").foregroundStyle(.secondary) }
                 ForEach(document.skills.filter { agent.skillIDs.contains($0.id) }) { skill in
                     Toggle("\(skill.name) · \(skill.sha256.prefix(12))",
@@ -163,6 +169,14 @@ struct AgentLaunchView: View {
                 Text("SHA-256: \(details.contextSHA256)")
                 Text("Memórias: \(details.selectedMemories.map { "\($0.title) r\($0.revision)" }.joined(separator: ", ").ifEmpty("nenhuma"))")
                 Text("Skills: \(details.selectedSkills.map { "\($0.name) \($0.sha256.prefix(12))" }.joined(separator: ", ").ifEmpty("nenhuma"))")
+                Text("Arquivos de apoio: \(details.supportFiles.count) · \(details.supportFiles.reduce(0) { $0 + $1.data.count }) bytes")
+                if !details.supportFiles.isEmpty {
+                    ScrollView {
+                        Text(details.supportFiles.map { "\($0.url.path)  \($0.sha256)" }.joined(separator: "\n"))
+                            .font(.system(size: 10, design: .monospaced))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }.frame(maxHeight: 88)
+                }
                 if case .exportOnly(let reason) = details.activation {
                     Text("Somente exportação: \(reason)").foregroundStyle(.orange)
                 }

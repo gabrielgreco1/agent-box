@@ -13,6 +13,7 @@ private struct DesktopPresentation: Identifiable {
 struct BrowserComputerPanel: View {
     let terminalID: UUID
     let context: ComputerPolicyContext
+    let onReviewAgent: (UUID) -> Void
     @StateObject private var store = BrowserComputerStore()
     @State private var error: String?
     @State private var busy = false
@@ -27,6 +28,20 @@ struct BrowserComputerPanel: View {
                 Label(computer.running ? "Em execução" : "Parado",systemImage:computer.running ? "circle.fill":"pause.circle")
                     .font(.caption).foregroundStyle(.secondary)
                 if let currentMode {Text(modeLabel(currentMode)).font(.caption).foregroundStyle(.secondary)}
+                if let assignment = store.scrapingAssignment(for: computer.id),
+                   assignment.terminalID == terminalID {
+                    Text("Agente padrão: Web scraping · skill pendente")
+                        .font(.caption).foregroundStyle(.secondary)
+                    Text("A revisão abre outro terminal Claude. A skill será carregada nele; este box continua vinculado ao terminal atual.")
+                        .font(.caption).foregroundStyle(.secondary)
+                    Button("Revisar e iniciar agente") {
+                        onReviewAgent(assignment.defaultAgentDefinitionID)
+                    }
+                } else {
+                    Button("Definir agente de scraping padrão") {
+                        perform { try store.assignDefault(to: computer) }
+                    }.disabled(busy)
+                }
                 HStack {
                     if computer.running {
                         Button("Abrir desktop") {openDesktop(computer.id)}

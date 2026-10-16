@@ -88,4 +88,37 @@ import AgentBoxCore
             }
         } catch { self.error = error.localizedDescription }
     }
+
+    /// A dedicated scraping definition opts into the installed local package.
+    func createScrapingAgent() -> UUID? {
+        let source = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".claude/skills/webscraping-expert/SKILL.md")
+        do {
+            let imported = try SkillImporter.read(source)
+            var createdID: UUID?
+            let saved = change { document in
+                let skillID: UUID
+                if let existing = document.skills.first(where: { $0.sourcePath == imported.sourcePath && $0.sha256 == imported.sha256 }) {
+                    skillID = existing.id
+                } else {
+                    document.skills.append(imported)
+                    skillID = imported.id
+                }
+                if let existing = document.agents.first(where: { !$0.archived && $0.name == "Web scraping" && $0.skillIDs.contains(skillID) }) {
+                    createdID = existing.id
+                    return
+                }
+                let agent = SavedAgent(name: "Web scraping",
+                    summary: "Extração web com o pacote local webscraping-expert.",
+                    instructions: "Use a skill webscraping-expert e seus arquivos de apoio ao executar tarefas de extração web. Selecione o box de scraping na área Docker para esta execução.",
+                    provider: .claude, skillIDs: [skillID])
+                try LibraryMutations.saveAgent(agent, in: &document)
+                createdID = agent.id
+            }
+            return saved ? createdID : nil
+        } catch {
+            self.error = "Pacote webscraping-expert indisponível: \(error.localizedDescription)"
+            return nil
+        }
+    }
 }

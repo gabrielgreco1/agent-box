@@ -29,7 +29,13 @@ struct LibraryView: View {
     var body:some View {
         HSplitView {
             VStack(alignment:.leading,spacing:10) {
-                HStack { Text("Agentes").font(.headline); Spacer(); Button { editingAgent=SavedAgent(name:"") } label:{Image(systemName:"plus")}.help("Novo agente") }
+                HStack {
+                    Text("Agentes").font(.headline)
+                    Spacer()
+                    Button("Web scraping") { selection = store.createScrapingAgent() }
+                        .help("Criar agente Claude com o pacote local webscraping-expert")
+                    Button { editingAgent=SavedAgent(name:"") } label:{Image(systemName:"plus")}.help("Novo agente")
+                }
                 TextField("Buscar agentes",text:$query).textFieldStyle(.roundedBorder)
                 List(selection:$selection) {
                     ForEach(store.document.agents.filter{($0.archived==showArchived) && (query.isEmpty || $0.name.localizedCaseInsensitiveContains(query))}) { agent in
@@ -119,7 +125,7 @@ struct LibraryView: View {
     }
     @ViewBuilder private func skills(_ agent:SavedAgent)->some View {
         HStack {Text("Arquivos selecionados para o contexto").foregroundStyle(.secondary);Spacer();Button("Importar SKILL.md"){importSkill(agent.id)}}
-        Text("A importação lê o arquivo. Não instala ferramentas nem executa scripts. A ativação no CLI será feita pelo adapter correspondente.").font(.caption).foregroundStyle(.secondary)
+        Text("A importação lê SKILL.md. No lançamento Claude, os arquivos de apoio são copiados da pasta original para um snapshot protegido. Arquivos ausentes ou alterados impedem o lançamento.").font(.caption).foregroundStyle(.secondary)
         if store.document.skills.isEmpty {Text("Nenhuma skill importada.").foregroundStyle(.secondary)}
         ForEach(store.document.skills){skill in
             VStack(alignment:.leading,spacing:7) {

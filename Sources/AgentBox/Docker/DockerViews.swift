@@ -126,6 +126,7 @@ private struct ComputerScopeEditor:View {
 public struct ComputerPanel: View {
     public let terminalID: UUID
     public let context: ComputerPolicyContext
+    public let onReviewAgent: (UUID) -> Void
     @State private var policy = ComputerPolicy()
     @State private var availability: DockerAvailability?
     @State private var computer: ManagedComputer?
@@ -133,12 +134,17 @@ public struct ComputerPanel: View {
     @State private var busy = false
     private let store = ComputerPolicyStore()
 
-    public init(terminalID: UUID, context: ComputerPolicyContext? = nil) { self.terminalID = terminalID; self.context = context ?? ComputerPolicyContext(terminalID:terminalID) }
+    public init(terminalID: UUID, context: ComputerPolicyContext? = nil,
+                onReviewAgent: @escaping (UUID) -> Void = { _ in }) {
+        self.terminalID = terminalID
+        self.context = context ?? ComputerPolicyContext(terminalID:terminalID)
+        self.onReviewAgent = onReviewAgent
+    }
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Computador").font(.headline)
-            BrowserComputerPanel(terminalID:terminalID,context:context)
+            BrowserComputerPanel(terminalID:terminalID,context:context,onReviewAgent:onReviewAgent)
             Text("Container HTTP básico").font(.caption).foregroundStyle(.secondary)
             Text("Terminal \(terminalID.uuidString)").font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
             if let availability {

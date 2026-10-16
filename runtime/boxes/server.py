@@ -8,6 +8,8 @@ import json
 import os
 from pathlib import Path
 import secrets
+import signal
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -163,7 +165,20 @@ def main():
     try: uuid.UUID(computer_id)
     except ValueError: raise SystemExit('AB_COMPUTER_ID must be a UUID')
     engine = ComputerEngine(computer_id, Path('/data'))
-    ComputerServer(('0.0.0.0', 8765), engine, token).serve_forever()
+    server = ComputerServer(('0.0.0.0', 8765), engine, token)
+    stopping = threading.Event()
+    def shutdown(signum, frame):
+        if not stopping.is_set():
+            stopping.set()
+            # BaseServer.shutdown must run outside the serve_forever thread.
+            threading.Thread(target=server.shutdown, daemon=True).start()
+    signal.signal(signal.SIGTERM, shutdown)
+    signal.signal(signal.SIGINT, shutdown)
+    try:
+        server.serve_forever(poll_interval=.1)
+    finally:
+        server.server_close()
+        engine.close()
 
 
 if __name__ == '__main__': main()

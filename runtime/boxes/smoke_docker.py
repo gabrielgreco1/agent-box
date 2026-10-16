@@ -62,7 +62,7 @@ def start_container(suffix):
     os.chmod(env_path, 0o600)
     name = NAME + suffix
     try:
-        ident = docker('run', '-d', '--name', name,
+        ident = docker('run', '-d', '--init', '--name', name,
                        '--label', 'com.agentbox.smoke=' + RUN_ID,
                        '--mount', f'type=volume,source={VOLUME},target=/data',
                        '--publish', '127.0.0.1::8765', '--env-file', env_path,
@@ -120,6 +120,9 @@ def main():
         assert headless_pixel[0] > 150 and headless_pixel[1] < 100 and headless_pixel[2] < 100, headless_pixel
         _, health = checked(port, token, '/v1/mode', {'mode': 'desktop'}, lease)
         assert health['display_ready'] and health['frame_source'] == 'desktop'
+        browser_info = json.loads(docker('exec', ident, 'python', '-c',
+            "import json,urllib.request; j=json.load(urllib.request.urlopen('http://127.0.0.1:9222/json/version')); print(json.dumps({k:j[k] for k in ['Browser','User-Agent']}))"))
+        assert ':9222' not in docker('port', ident)
         headers, frame = checked(port, token, '/v1/frame')
         assert headers['X-AgentBox-Frame-Source'] == 'desktop'
         assert Image.open(io.BytesIO(frame)).size == (1280, 800)
@@ -128,6 +131,13 @@ def main():
         _, after = checked(port, token, '/v1/frame')
         clicked_pixel = dominant(after)
         # The page should occupy the center; exact pixels depend on WM/browser window placement.
+        for _ in range(12):
+            if clicked_pixel[1] > clicked_pixel[0] and clicked_pixel[1] > clicked_pixel[2]: break
+            time.sleep(.25)
+            _, after = checked(port, token, '/v1/frame')
+            clicked_pixel = dominant(after)
+        if os.environ.get('AB_SMOKE_FRAME_PATH'):
+            Path(os.environ['AB_SMOKE_FRAME_PATH']).write_bytes(after)
         assert clicked_pixel[1] > clicked_pixel[0] and clicked_pixel[1] > clicked_pixel[2], clicked_pixel
         _, ack = checked(port, token, '/v1/control/revoke', {'actor_id': 'agent:smoke', 'epoch': 7})
         assert ack['acknowledged']
@@ -136,6 +146,9 @@ def main():
         checked(port, token, '/v1/input', {'kind': 'move', 'x': 400, 'y': 300}, human)
         checked(port, token, '/v1/control/revoke', {'actor_id': 'human', 'epoch': 8})
         docker('stop', ident)
+        exit_code = docker('inspect', ident, '--format', '{{.State.ExitCode}}')
+        if exit_code != '0':
+            raise RuntimeError('runtime shutdown exit ' + exit_code + ': ' + docker('logs', ident))
         docker('rm', ident)
         containers.remove(ident)
         ident2, port2, token2 = start_container('-b')
@@ -153,7 +166,8 @@ def main():
                           'architecture': docker('image', 'inspect', IMAGE, '--format', '{{.Architecture}}'),
                           'headless_js_pixel': headless_pixel, 'desktop_frame_size': [1280, 800],
                           'desktop_clicked_pixel': clicked_pixel, 'persisted_profile_pixel': persisted_pixel,
-                          'lease_takeover': 'passed', 'container_restart': 'passed', 'result': 'passed'}))
+                          'lease_takeover': 'passed', 'container_restart': 'passed',
+                          'desktop_browser': browser_info, 'result': 'passed'}))
     finally:
         for ident in list(containers):
             try: docker('stop', ident)

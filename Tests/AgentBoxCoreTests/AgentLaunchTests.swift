@@ -8,7 +8,8 @@ final class AgentLaunchTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: root) }
         let skillContent = "---\nname: pesquisa\ndescription: Usar fontes verificadas\n---\nUsar fontes verificadas.\n"
         let skillHash = SHA256.hash(data: Data(skillContent.utf8)).map { String(format: "%02x", $0) }.joined()
-        let skill = SkillEntry(name: "Pesquisa", summary: "", sourcePath: "/imported/SKILL.md",
+        let skillSource = try makeSkillPackage(at: root, content: skillContent)
+        let skill = SkillEntry(name: "Pesquisa", summary: "", sourcePath: skillSource.path,
                                content: skillContent, sha256: skillHash)
         var agent = SavedAgent(name: "Pesquisador", instructions: "Pesquisar com fontes.", provider: .claude)
         let memory = AgentMemory(title: "Fonte", content: "Guardar a URL.", scopeKey: agent.id.uuidString,
@@ -122,7 +123,8 @@ final class AgentLaunchTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: root) }
         let content = "---\nname: native-test\ndescription: Test\n---\nNative instructions.\n"
         let hash = SHA256.hash(data: Data(content.utf8)).map { String(format: "%02x", $0) }.joined()
-        let skill = SkillEntry(name: "Native", summary: "Test", sourcePath: "/imported/native/SKILL.md",
+        let skillSource = try makeSkillPackage(at: root, content: content)
+        let skill = SkillEntry(name: "Native", summary: "Test", sourcePath: skillSource.path,
                                content: content, sha256: hash)
         var agent = SavedAgent(name: "Saved", provider: .claude)
         agent.skillIDs = [skill.id]
@@ -158,5 +160,77 @@ final class AgentLaunchTests: XCTestCase {
             guard case .incompatibleSkill = $0 as? AgentLaunchError else { return XCTFail("Expected incompatible skill") }
         }
         XCTAssertFalse(FileManager.default.fileExists(atPath: root.path))
+    }
+
+    func testSupportFilesFreezeAtReviewAndTamperingBlocksRestart() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let content = "---\nname: webscraping-expert\n---\nRead approach/guide.md.\n"
+        let source = try makeSkillPackage(at: root, content: content)
+        let guide = source.deletingLastPathComponent().appendingPathComponent("approach/guide.md")
+        try FileManager.default.createDirectory(at: guide.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data("original guide".utf8).write(to: guide)
+        let skill = try SkillImporter.read(source)
+        var agent = SavedAgent(name: "Scraping", provider: .claude)
+        agent.skillIDs = [skill.id]
+        let planner = AgentLaunchPlanner(contextDirectory: root.appendingPathComponent("contexts"),
+                                         resolver: CLIExecutableResolver(overrides: [.claude: "/bin/sh"]))
+        let plan = try planner.prepare(agentID: agent.id, in: LibraryDocument(agents: [agent], skills: [skill]),
+                                       workingDirectory: "/tmp")
+        XCTAssertEqual(plan.review.supportFiles.count, 1)
+        XCTAssertEqual(plan.review.supportFiles.first?.data, Data("original guide".utf8))
+        try Data("changed after review".utf8).write(to: guide)
+        let launch = try planner.materialize(plan, reviewedDigest: plan.review.contextSHA256)
+        let frozen = try XCTUnwrap(launch.supportFiles.first)
+        XCTAssertEqual(try Data(contentsOf: frozen.url), Data("original guide".utf8))
+        let binding = try XCTUnwrap(launch.binding)
+        let terminal = try XCTUnwrap(launch.terminal)
+        XCTAssertEqual(binding.supportFileHashes.count, 1)
+        XCTAssertNoThrow(try planner.restore(binding, terminal: terminal))
+        try Data("tampered".utf8).write(to: frozen.url)
+        XCTAssertThrowsError(try planner.restore(binding, terminal: terminal)) {
+            XCTAssertEqual($0 as? AgentLaunchError, .contextChanged)
+        }
+        try FileManager.default.removeItem(at: frozen.url)
+        XCTAssertThrowsError(try launch.validateContextFile()) {
+            XCTAssertEqual($0 as? AgentLaunchError, .contextChanged)
+        }
+    }
+
+    func testSupportPackageRejectsSymlinksAndMissingSource() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let source = try makeSkillPackage(at: root, content: "---\nname: scraping\n---\nRead guides.\n")
+        let skill = try SkillImporter.read(source)
+        var agent = SavedAgent(name: "Scraping", provider: .claude)
+        agent.skillIDs = [skill.id]
+        let document = LibraryDocument(agents: [agent], skills: [skill])
+        let contexts = root.appendingPathComponent("contexts")
+        let planner = AgentLaunchPlanner(contextDirectory: contexts,
+                                         resolver: CLIExecutableResolver(overrides: [.claude: "/bin/sh"]))
+        let link = source.deletingLastPathComponent().appendingPathComponent("guide.md")
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: URL(fileURLWithPath: "/etc/hosts"))
+        XCTAssertThrowsError(try planner.prepare(agentID: agent.id, in: document, workingDirectory: "/tmp")) {
+            guard case .incompatibleSkill = $0 as? AgentLaunchError else { return XCTFail("Expected incompatible skill") }
+        }
+        try FileManager.default.removeItem(at: link)
+        try Data("-----BEGIN OPENSSH PRIVATE KEY-----\nsecret\n".utf8).write(to: link)
+        XCTAssertThrowsError(try planner.prepare(agentID: agent.id, in: document, workingDirectory: "/tmp")) {
+            guard case .incompatibleSkill = $0 as? AgentLaunchError else { return XCTFail("Expected incompatible skill") }
+        }
+        try FileManager.default.removeItem(at: link)
+        try FileManager.default.removeItem(at: source)
+        XCTAssertThrowsError(try planner.prepare(agentID: agent.id, in: document, workingDirectory: "/tmp")) {
+            guard case .incompatibleSkill = $0 as? AgentLaunchError else { return XCTFail("Expected incompatible skill") }
+        }
+        XCTAssertFalse(FileManager.default.fileExists(atPath: contexts.path))
+    }
+
+    private func makeSkillPackage(at root: URL, content: String) throws -> URL {
+        let directory = root.appendingPathComponent("skill", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let source = directory.appendingPathComponent("SKILL.md")
+        try Data(content.utf8).write(to: source)
+        return source
     }
 }

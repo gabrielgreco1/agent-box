@@ -237,7 +237,12 @@ public struct WorkspaceView: View {
             case .computer(let id):
                 if let session = snapshot.sessions.first(where: { $0.terminals.contains(where: { $0.id == id }) }),
                    let terminal = session.terminals.first(where: { $0.id == id }) {
-                    ComputerPanel(terminalID: id, context: computerPolicyContext(for: terminal, in: session.id))
+                    ComputerPanel(terminalID: id, context: computerPolicyContext(for: terminal, in: session.id),
+                                  onReviewAgent: { agentID in
+                                      snapshot.selectedSessionID = session.id
+                                      pendingLaunchAgentID = agentID
+                                      sheet = nil
+                                  })
                 } else {
                     Text("O terminal não está mais disponível.").padding(20)
                 }

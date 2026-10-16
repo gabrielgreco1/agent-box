@@ -27,6 +27,12 @@ public struct AgentLaunchSkillFile: Equatable, Sendable {
     public let content: String
 }
 
+public struct AgentLaunchSupportFile: Equatable, Sendable {
+    public let url: URL
+    public let data: Data
+    public let sha256: String
+}
+
 public struct AgentLaunchPlan: Equatable, Sendable {
     public let id: UUID
     public let agentID: UUID
@@ -41,6 +47,7 @@ public struct AgentLaunchPlan: Equatable, Sendable {
     public let selectedMemories: [SelectedMemoryRevision]
     public let selectedSkills: [PreparedSkillReference]
     public let skillFiles: [AgentLaunchSkillFile]
+    public let supportFiles: [AgentLaunchSupportFile]
     public let pluginDirectory: URL?
     public let activation: AgentLaunchActivation
 
@@ -51,7 +58,7 @@ public struct AgentLaunchPlan: Equatable, Sendable {
                           arguments: arguments, environmentOverrides: environmentOverrides,
                           contextFilePath: contextFile.url.path, contextSHA256: contextFile.sha256,
                           contextText: contextFile.text, selectedMemories: selectedMemories,
-                          selectedSkills: selectedSkills, skillFiles: skillFiles,
+                          selectedSkills: selectedSkills, skillFiles: skillFiles, supportFiles: supportFiles,
                           pluginDirectoryPath: pluginDirectory?.path, activation: activation)
     }
 }
@@ -70,6 +77,7 @@ public struct AgentLaunchReview: Equatable, Sendable {
     public let selectedMemories: [SelectedMemoryRevision]
     public let selectedSkills: [PreparedSkillReference]
     public let skillFiles: [AgentLaunchSkillFile]
+    public let supportFiles: [AgentLaunchSupportFile]
     public let pluginDirectoryPath: String?
     public let activation: AgentLaunchActivation
 }
@@ -84,6 +92,7 @@ public struct MaterializedAgentLaunch: Equatable, Sendable {
     public let terminal: TerminalRecord?
     public let activation: AgentLaunchActivation
     public let skillFiles: [AgentLaunchSkillFile]
+    public let supportFiles: [AgentLaunchSupportFile]
     public let pluginDirectory: URL?
 
     /// Persist only this metadata. The context body stays in its protected snapshot file.
@@ -93,7 +102,10 @@ public struct MaterializedAgentLaunch: Equatable, Sendable {
                                   executablePath: executablePath, contextFilePath: contextFileURL.path,
                                   contextSHA256: contextSHA256, provider: terminal.provider,
                                   workingDirectory: terminal.cwd, arguments: terminal.arguments,
-                                  skillReferences: skillFiles.map(\.reference))
+                                  skillReferences: skillFiles.map(\.reference),
+                                  supportFileHashes: Dictionary(uniqueKeysWithValues: supportFiles.map {
+                                      ($0.url.path.replacingOccurrences(of: pluginDirectory!.path + "/", with: ""), $0.sha256)
+                                  }))
     }
 
     public func validateContextFile() throws {
@@ -106,6 +118,13 @@ public struct MaterializedAgentLaunch: Equatable, Sendable {
             try Self.requireRegularFile(skill.url, through: snapshotRoot)
             let data = try Data(contentsOf: skill.url)
             guard SHA256.hash(data: data).map({ String(format: "%02x", $0) }).joined() == skill.reference.sha256 else {
+                throw AgentLaunchError.contextChanged
+            }
+        }
+        for support in supportFiles {
+            try Self.requireRegularFile(support.url, through: snapshotRoot)
+            let data = try Data(contentsOf: support.url)
+            guard SHA256.hash(data: data).map({ String(format: "%02x", $0) }).joined() == support.sha256 else {
                 throw AgentLaunchError.contextChanged
             }
         }
@@ -142,21 +161,23 @@ public struct AgentLaunchBinding: Codable, Equatable, Sendable {
     public let workingDirectory: String
     public let arguments: [String]
     public let skillReferences: [PreparedSkillReference]
+    public let supportFileHashes: [String: String]
 
     public init(planID: UUID, agentDefinitionID: UUID, executablePath: String,
                 contextFilePath: String, contextSHA256: String, provider: CLIProvider,
                 workingDirectory: String, arguments: [String],
-                skillReferences: [PreparedSkillReference] = []) {
+                skillReferences: [PreparedSkillReference] = [], supportFileHashes: [String: String] = [:]) {
         self.planID = planID; self.agentDefinitionID = agentDefinitionID
         self.executablePath = executablePath; self.contextFilePath = contextFilePath
         self.contextSHA256 = contextSHA256; self.provider = provider
         self.workingDirectory = workingDirectory; self.arguments = arguments
         self.skillReferences = skillReferences
+        self.supportFileHashes = supportFileHashes
     }
 
     private enum CodingKeys: String, CodingKey {
         case planID, agentDefinitionID, executablePath, contextFilePath, contextSHA256
-        case provider, workingDirectory, arguments, skillReferences
+        case provider, workingDirectory, arguments, skillReferences, supportFileHashes
     }
 
     public init(from decoder: Decoder) throws {
@@ -169,7 +190,8 @@ public struct AgentLaunchBinding: Codable, Equatable, Sendable {
                   provider: try values.decode(CLIProvider.self, forKey: .provider),
                   workingDirectory: try values.decode(String.self, forKey: .workingDirectory),
                   arguments: try values.decode([String].self, forKey: .arguments),
-                  skillReferences: try values.decodeIfPresent([PreparedSkillReference].self, forKey: .skillReferences) ?? [])
+                  skillReferences: try values.decodeIfPresent([PreparedSkillReference].self, forKey: .skillReferences) ?? [],
+                  supportFileHashes: try values.decodeIfPresent([String: String].self, forKey: .supportFileHashes) ?? [:])
     }
 }
 
@@ -223,6 +245,7 @@ public struct AgentLaunchPlanner {
         let file = contextDirectory.appendingPathComponent(id.uuidString, isDirectory: true).appendingPathComponent("context.md")
         let plugin = file.deletingLastPathComponent().appendingPathComponent("agentbox-\(id.uuidString.lowercased())", isDirectory: true)
         var skillFiles: [AgentLaunchSkillFile] = []
+        var supportFiles: [AgentLaunchSupportFile] = []
         if prepared.provider == .claude {
             var commandNames = Set<String>()
             for reference in prepared.selectedSkills {
@@ -237,7 +260,18 @@ public struct AgentLaunchPlanner {
                 let url = plugin.appendingPathComponent("skills", isDirectory: true)
                     .appendingPathComponent(skill.id.uuidString.lowercased(), isDirectory: true)
                     .appendingPathComponent("SKILL.md")
+                let source = URL(fileURLWithPath: skill.sourcePath)
+                if source.lastPathComponent == "SKILL.md" {
+                    var sourceInfo = stat()
+                    guard lstat(source.path, &sourceInfo) == 0,
+                          (sourceInfo.st_mode & mode_t(S_IFMT)) == mode_t(S_IFREG),
+                          Self.sha256(try Data(contentsOf: source)) == reference.sha256 else {
+                        throw AgentLaunchError.incompatibleSkill("SKILL.md original está ausente ou mudou; importe novamente")
+                    }
+                }
                 skillFiles.append(AgentLaunchSkillFile(reference: reference, url: url, content: skill.content))
+                supportFiles += try Self.snapshotSupportFiles(source: source,
+                    destination: url.deletingLastPathComponent())
             }
         }
         let digest = SHA256.hash(data: Data(prepared.text.utf8)).map { String(format: "%02x", $0) }.joined()
@@ -263,7 +297,8 @@ public struct AgentLaunchPlanner {
                                workingDirectory: cwd, arguments: arguments, environmentOverrides: [:],
                                contextFile: AgentLaunchContextFile(url: file, sha256: digest, text: prepared.text),
                                selectedMemories: prepared.selectedMemories, selectedSkills: prepared.selectedSkills,
-                               skillFiles: skillFiles, pluginDirectory: skillFiles.isEmpty ? nil : plugin,
+                               skillFiles: skillFiles, supportFiles: supportFiles,
+                               pluginDirectory: skillFiles.isEmpty ? nil : plugin,
                                activation: activation)
     }
 
@@ -280,6 +315,9 @@ public struct AgentLaunchPlanner {
             guard Self.sha256(Data(skill.content.utf8)) == skill.reference.sha256 else {
                 throw AgentLaunchError.contextChanged
             }
+        }
+        for support in plan.supportFiles {
+            guard Self.sha256(support.data) == support.sha256 else { throw AgentLaunchError.contextChanged }
         }
         try FileManager.default.createDirectory(at: contextDirectory, withIntermediateDirectories: true,
                                                 attributes: [.posixPermissions: 0o700])
@@ -302,6 +340,12 @@ public struct AgentLaunchPlanner {
                                                             attributes: [.posixPermissions: 0o700])
                     try writeProtected(Data(skill.content.utf8), to: skill.url)
                 }
+                for support in plan.supportFiles {
+                    try FileManager.default.createDirectory(at: support.url.deletingLastPathComponent(),
+                                                            withIntermediateDirectories: true,
+                                                            attributes: [.posixPermissions: 0o700])
+                    try writeProtected(support.data, to: support.url)
+                }
             }
         } catch {
             try? FileManager.default.removeItem(at: directory)
@@ -314,7 +358,8 @@ public struct AgentLaunchPlanner {
         return MaterializedAgentLaunch(planID: plan.id, executablePath: plan.executablePath,
                                        contextFileURL: plan.contextFile.url, contextSHA256: digest,
                                        terminal: terminal, activation: plan.activation,
-                                       skillFiles: plan.skillFiles, pluginDirectory: plan.pluginDirectory)
+                                       skillFiles: plan.skillFiles, supportFiles: plan.supportFiles,
+                                       pluginDirectory: plan.pluginDirectory)
     }
 
     /// Restore a reviewed snapshot for an explicit restart. Never starts the process.
@@ -337,6 +382,11 @@ public struct AgentLaunchPlanner {
               binding.skillReferences.allSatisfy({ $0.sha256.count == 64 && $0.sha256.allSatisfy { $0.isHexDigit && !$0.isUppercase } }) else {
             throw AgentLaunchError.invalidBinding
         }
+        guard binding.supportFileHashes.allSatisfy({ path, hash in
+            !path.isEmpty && !path.split(separator: "/").contains(where: { $0.hasPrefix(".") }) &&
+            path.hasPrefix("skills/") && !path.contains("\\") &&
+            hash.count == 64 && hash.allSatisfy { $0.isHexDigit && !$0.isUppercase }
+        }) else { throw AgentLaunchError.invalidBinding }
         let plugin = expected.deletingLastPathComponent()
             .appendingPathComponent("agentbox-\(binding.planID.uuidString.lowercased())", isDirectory: true)
         let expectedArgs = ["--append-system-prompt-file", expected.path]
@@ -361,10 +411,14 @@ public struct AgentLaunchPlanner {
                                     .appendingPathComponent(reference.id.uuidString.lowercased(), isDirectory: true)
                                     .appendingPathComponent("SKILL.md"), content: "")
         }
+        let supportFiles = binding.supportFileHashes.map { path, hash in
+            AgentLaunchSupportFile(url: plugin.appendingPathComponent(path), data: Data(), sha256: hash)
+        }
         let launch = MaterializedAgentLaunch(planID: binding.planID, executablePath: executable,
                                              contextFileURL: expected, contextSHA256: binding.contextSHA256,
                                              terminal: terminal, activation: .claudeAppendPromptFile,
-                                             skillFiles: skillFiles, pluginDirectory: skillFiles.isEmpty ? nil : plugin)
+                                             skillFiles: skillFiles, supportFiles: supportFiles,
+                                             pluginDirectory: skillFiles.isEmpty ? nil : plugin)
         try launch.validateContextFile()
         return launch
     }
@@ -387,6 +441,80 @@ public struct AgentLaunchPlanner {
 
     private static func sha256(_ data: Data) -> String {
         SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+    }
+
+    /// Freeze referenced package files with the launch. Refuse links, hidden files and oversized trees.
+    private static func snapshotSupportFiles(source: URL, destination: URL) throws -> [AgentLaunchSupportFile] {
+        guard source.lastPathComponent == "SKILL.md" else { return [] }
+        let root = source.deletingLastPathComponent()
+        var rootInfo = stat()
+        guard lstat(root.path, &rootInfo) == 0,
+              (rootInfo.st_mode & mode_t(S_IFMT)) == mode_t(S_IFDIR) else {
+            throw AgentLaunchError.incompatibleSkill("a pasta de origem não está disponível ou é um link")
+        }
+        var walkFailed = false
+        guard let walker = FileManager.default.enumerator(at: root, includingPropertiesForKeys: nil,
+            options: [], errorHandler: { _, _ in walkFailed = true; return false }) else {
+            throw AgentLaunchError.incompatibleSkill("não foi possível ler o pacote completo")
+        }
+        var files: [AgentLaunchSupportFile] = []
+        var totalBytes = 0
+        // FileManager's enumerator canonicalizes /var to /private/var on macOS.
+        guard let canonicalRoot = realpath(root.path, nil) else {
+            throw AgentLaunchError.incompatibleSkill("não foi possível resolver a pasta da skill")
+        }
+        defer { free(canonicalRoot) }
+        let rootPath = String(cString: canonicalRoot)
+        let prefix = rootPath.hasSuffix("/") ? rootPath : rootPath + "/"
+        while let item = walker.nextObject() as? URL {
+            guard item.path.hasPrefix(prefix) else {
+                throw AgentLaunchError.incompatibleSkill("um arquivo saiu da pasta da skill")
+            }
+            let relative = String(item.path.dropFirst(prefix.count))
+            let components = relative.split(separator: "/", omittingEmptySubsequences: false)
+            guard !components.isEmpty,
+                  components.allSatisfy({ !$0.isEmpty && $0 != ".." }),
+                  !relative.contains("\\") else {
+                throw AgentLaunchError.incompatibleSkill("o pacote contém caminhos inválidos")
+            }
+            if components.contains(where: { $0.hasPrefix(".") }) {
+                walker.skipDescendants()
+                continue
+            }
+            let sensitiveNames = Set(["id_rsa", "id_ed25519", "credentials", "credentials.json",
+                                      "secrets", "secrets.json", "token", "token.json", "key.pem"])
+            guard !components.contains(where: { sensitiveNames.contains($0.lowercased()) }) else {
+                throw AgentLaunchError.incompatibleSkill("o pacote contém um possível arquivo de credenciais")
+            }
+            var info = stat()
+            guard lstat(item.path, &info) == 0 else {
+                throw AgentLaunchError.incompatibleSkill("um arquivo do pacote desapareceu")
+            }
+            let kind = info.st_mode & mode_t(S_IFMT)
+            if kind == mode_t(S_IFDIR) { continue }
+            guard kind == mode_t(S_IFREG) else {
+                throw AgentLaunchError.incompatibleSkill("o pacote contém links ou arquivos especiais")
+            }
+            if relative == "SKILL.md" { continue }
+            guard files.count < 200, info.st_size <= 1_048_576,
+                  totalBytes + Int(info.st_size) <= 5_242_880 else {
+                throw AgentLaunchError.incompatibleSkill("o pacote excede 200 arquivos ou 5 MB")
+            }
+            let data = try Data(contentsOf: item)
+            guard data.count == Int(info.st_size) else {
+                throw AgentLaunchError.incompatibleSkill("um arquivo do pacote mudou durante a leitura")
+            }
+            if let text = String(data: data, encoding: .utf8),
+               text.range(of: #"-----BEGIN (?:RSA |OPENSSH |EC |DSA )?PRIVATE KEY-----|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{36,}"#,
+                          options: .regularExpression) != nil {
+                throw AgentLaunchError.incompatibleSkill("o pacote contém um possível segredo no conteúdo")
+            }
+            totalBytes += data.count
+            files.append(AgentLaunchSupportFile(url: destination.appendingPathComponent(relative),
+                                                data: data, sha256: sha256(data)))
+        }
+        guard !walkFailed else { throw AgentLaunchError.incompatibleSkill("não foi possível ler o pacote completo") }
+        return files.sorted { $0.url.path < $1.url.path }
     }
 
     private static func claudeCommandName(_ content: String, fallback: String) throws -> String {

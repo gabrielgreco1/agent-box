@@ -13,6 +13,8 @@ import time
 import uuid
 from urllib.parse import urlparse
 
+from desktop_browser import DesktopBrowserProcess
+
 
 class RuntimeFailure(Exception):
     pass
@@ -28,6 +30,22 @@ class BrowserWorker:
 
     def _run(self):
         context = None
+        desktop = None
+        attached_browser = None
+
+        def close_browser():
+            nonlocal context, desktop, attached_browser
+            if desktop is not None:
+                if attached_browser is not None:
+                    try: attached_browser.new_browser_cdp_session().send('Browser.close')
+                    except Exception: pass
+                    try: attached_browser.close()
+                    except Exception: pass
+                desktop.stop(graceful=True)
+            elif context is not None:
+                context.close()
+            context = desktop = attached_browser = None
+
         try:
             from playwright.sync_api import sync_playwright
             with sync_playwright() as playwright:
@@ -35,17 +53,26 @@ class BrowserWorker:
                     job, args, reply = self.jobs.get()
                     try:
                         if job == 'stop':
-                            if context: context.close()
+                            close_browser()
                             reply.put((True, None))
                             return
                         if job == 'launch':
-                            if context: context.close()
+                            close_browser()
                             headed, initial_url = args
-                            context = playwright.chromium.launch_persistent_context(
-                                str(self.profile), headless=not headed, accept_downloads=True,
-                                downloads_path=str(self.downloads), viewport={'width': 1280, 'height': 800},
-                                env=dict(os.environ, DISPLAY=':99') if headed else None,
-                            )
+                            if headed:
+                                desktop = DesktopBrowserProcess(playwright.chromium.executable_path,
+                                                                self.profile, self.downloads)
+                                desktop.start()
+                                attached_browser = playwright.chromium.connect_over_cdp(
+                                    desktop.endpoint, no_defaults=True, timeout=10000)
+                                context = attached_browser.contexts[0]
+                            else:
+                                context = playwright.chromium.launch_persistent_context(
+                                    str(self.profile), channel='chromium', headless=True,
+                                    accept_downloads=True, downloads_path=str(self.downloads),
+                                    viewport={'width': 1280, 'height': 800},
+                                    env={k: v for k, v in os.environ.items() if not k.startswith('AB_')},
+                                )
                             def save_download(download):
                                 safe_name = Path(download.suggested_filename).name
                                 download.save_as(str(self.downloads / f'{uuid.uuid4().hex}-{safe_name}'))
@@ -55,22 +82,26 @@ class BrowserWorker:
                             for existing_page in context.pages: attach_page(existing_page)
                             page = context.pages[0] if context.pages else context.new_page()
                             if initial_url: page.goto(initial_url, wait_until='domcontentloaded', timeout=15000)
+                            if headed: page.bring_to_front()
                             reply.put((True, page.url))
                         elif job == 'close':
-                            if context: context.close()
-                            context = None
+                            close_browser()
                             reply.put((True, None))
                         elif job == 'navigate':
                             if not context: raise RuntimeFailure('browser is not running')
                             (url,) = args
                             page = context.pages[0] if context.pages else context.new_page()
                             page.goto(url, wait_until='domcontentloaded', timeout=15000)
+                            page.bring_to_front()
                             reply.put((True, page.url))
                         elif job == 'screenshot':
                             if not context: raise RuntimeFailure('browser is not running')
                             page = context.pages[0] if context.pages else context.new_page()
                             reply.put((True, page.screenshot(type='jpeg', quality=70, timeout=5000)))
                     except Exception as exc:
+                        if job == 'launch':
+                            try: close_browser()
+                            except Exception: pass
                         reply.put((False, str(exc)))
         except Exception as exc:
             while True:
@@ -212,6 +243,18 @@ class ComputerEngine:
         temp = path.with_suffix('.tmp')
         temp.write_text(json.dumps({'generation': self.generation, 'last_url': self.last_url}))
         temp.replace(path)
+
+    def close(self):
+        """Flush the browser profile before Docker terminates this runtime."""
+        with self.lock:
+            self.lease = None
+            try:
+                self.browser.call('stop', timeout=7)
+            finally:
+                self.browser_ready = False
+                self.mode = 'http'
+                self.display.stop()
+                self.profile_lock.close()
 
     def health(self):
         with self.lock:
