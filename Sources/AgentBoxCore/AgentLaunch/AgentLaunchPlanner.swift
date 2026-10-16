@@ -52,6 +52,7 @@ public struct AgentLaunchPlan: Equatable, Sendable {
     public let computerMCP: ComputerMCPConfiguration?
     public let mcpConfigData: Data?
     public let mcpCapabilityData: Data?
+    public let claudeHookSnapshot: ClaudeHookLaunchSnapshot?
     public let activation: AgentLaunchActivation
 
     /// Full text and provenance for a human review before `materialize` writes a file.
@@ -98,18 +99,27 @@ public struct MaterializedAgentLaunch: Equatable, Sendable {
     public let supportFiles: [AgentLaunchSupportFile]
     public let pluginDirectory: URL?
     public let computerMCP: ComputerMCPConfiguration?
+    public let claudeHookDescriptor: ClaudeHookLaunchDescriptor?
+    public let claudeHook: ClaudeHookInboxConfiguration?
 
     /// Persist only this metadata. The context body stays in its protected snapshot file.
     public var binding: AgentLaunchBinding? {
         guard let terminal, let agentID = terminal.agentDefinitionID else { return nil }
+        var storedArguments = terminal.arguments
+        if let claudeHookDescriptor, let claudeHook {
+            guard Array(storedArguments.suffix(2)) == ["--settings", claudeHook.settingsURL.path] else { return nil }
+            storedArguments.replaceSubrange((storedArguments.count - 2)..<storedArguments.count,
+                                            with: ["--settings", claudeHookDescriptor.settingsPath])
+        }
         return AgentLaunchBinding(planID: planID, terminalID: terminal.id, agentDefinitionID: agentID,
                                   executablePath: executablePath, contextFilePath: contextFileURL.path,
                                   contextSHA256: contextSHA256, provider: terminal.provider,
-                                  workingDirectory: terminal.cwd, arguments: terminal.arguments,
+                                  workingDirectory: terminal.cwd, arguments: storedArguments,
                                   skillReferences: skillFiles.map(\.reference),
                                   supportFileHashes: Dictionary(uniqueKeysWithValues: supportFiles.map {
                                       ($0.url.path.replacingOccurrences(of: pluginDirectory!.path + "/", with: ""), $0.sha256)
-                                  }), computerMCP: computerMCP)
+                                  }), computerMCP: computerMCP,
+                                  claudeHookDescriptor: claudeHookDescriptor)
     }
 
     public func validateContextFile() throws {
@@ -133,6 +143,33 @@ public struct MaterializedAgentLaunch: Equatable, Sendable {
             }
         }
         try computerMCP?.validate(directory: contextFileURL.deletingLastPathComponent())
+        if let claudeHookDescriptor {
+            let directory = contextFileURL.deletingLastPathComponent()
+            try claudeHookDescriptor.validate(directory: directory)
+            if let claudeHook {
+                try claudeHookDescriptor.validateInvocation(claudeHook, directory: directory)
+            }
+        } else if claudeHook != nil { throw AgentLaunchError.invalidBinding }
+    }
+
+    /// Prepare a fresh authenticated hook run for one process start. A terminal
+    /// restored from the same reviewed snapshot receives a distinct run ID.
+    public func prepareHookInvocation(runID: UUID = UUID()) throws -> MaterializedAgentLaunch {
+        try validateContextFile()
+        guard let descriptor = claudeHookDescriptor, claudeHook == nil,
+              var terminal, Array(terminal.arguments.suffix(2)) == ["--settings", descriptor.settingsPath] else {
+            throw AgentLaunchError.invalidBinding
+        }
+        let configuration = try descriptor.prepareInvocation(
+            directory: contextFileURL.deletingLastPathComponent(), runID: runID)
+        terminal.arguments.replaceSubrange((terminal.arguments.count - 2)..<terminal.arguments.count,
+                                           with: ["--settings", configuration.settingsURL.path])
+        return MaterializedAgentLaunch(planID: planID, executablePath: executablePath,
+            contextFileURL: contextFileURL, contextSHA256: contextSHA256,
+            terminal: terminal, activation: activation, skillFiles: skillFiles,
+            supportFiles: supportFiles, pluginDirectory: pluginDirectory,
+            computerMCP: computerMCP, claudeHookDescriptor: descriptor,
+            claudeHook: configuration)
     }
 
     private static func requireRegularFile(_ url: URL, through root: URL) throws {
@@ -169,12 +206,14 @@ public struct AgentLaunchBinding: Codable, Equatable, Sendable {
     public let skillReferences: [PreparedSkillReference]
     public let supportFileHashes: [String: String]
     public let computerMCP: ComputerMCPConfiguration?
+    public let claudeHookDescriptor: ClaudeHookLaunchDescriptor?
 
     public init(planID: UUID, terminalID: UUID? = nil, agentDefinitionID: UUID, executablePath: String,
                 contextFilePath: String, contextSHA256: String, provider: CLIProvider,
                 workingDirectory: String, arguments: [String],
                 skillReferences: [PreparedSkillReference] = [], supportFileHashes: [String: String] = [:],
-                computerMCP: ComputerMCPConfiguration? = nil) {
+                computerMCP: ComputerMCPConfiguration? = nil,
+                claudeHookDescriptor: ClaudeHookLaunchDescriptor? = nil) {
         self.planID = planID; self.terminalID = terminalID ?? planID
         self.agentDefinitionID = agentDefinitionID
         self.executablePath = executablePath; self.contextFilePath = contextFilePath
@@ -183,11 +222,12 @@ public struct AgentLaunchBinding: Codable, Equatable, Sendable {
         self.skillReferences = skillReferences
         self.supportFileHashes = supportFileHashes
         self.computerMCP = computerMCP
+        self.claudeHookDescriptor = claudeHookDescriptor
     }
 
     private enum CodingKeys: String, CodingKey {
         case planID, terminalID, agentDefinitionID, executablePath, contextFilePath, contextSHA256
-        case provider, workingDirectory, arguments, skillReferences, supportFileHashes, computerMCP
+        case provider, workingDirectory, arguments, skillReferences, supportFileHashes, computerMCP, claudeHookDescriptor
     }
 
     public init(from decoder: Decoder) throws {
@@ -204,7 +244,8 @@ public struct AgentLaunchBinding: Codable, Equatable, Sendable {
                   arguments: try values.decode([String].self, forKey: .arguments),
                   skillReferences: try values.decodeIfPresent([PreparedSkillReference].self, forKey: .skillReferences) ?? [],
                   supportFileHashes: try values.decodeIfPresent([String: String].self, forKey: .supportFileHashes) ?? [:],
-                  computerMCP: try values.decodeIfPresent(ComputerMCPConfiguration.self, forKey: .computerMCP))
+                  computerMCP: try values.decodeIfPresent(ComputerMCPConfiguration.self, forKey: .computerMCP),
+                  claudeHookDescriptor: try values.decodeIfPresent(ClaudeHookLaunchDescriptor.self, forKey: .claudeHookDescriptor))
     }
 }
 
@@ -248,7 +289,7 @@ public struct AgentLaunchPlanner {
                         title: String? = nil, projectKey: String? = nil, taskKey: String? = nil,
                         profileKey: String? = nil, selectedMemoryIDs: [UUID]? = nil,
                         selectedSkillIDs: [UUID]? = nil, computerID: UUID? = nil,
-                        mcpHelper: URL? = nil) throws -> AgentLaunchPlan {
+                        mcpHelper: URL? = nil, hookScriptURL: URL? = nil) throws -> AgentLaunchPlan {
         let prepared = try LibraryContext.prepare(agentID: agentID, in: document,
                                                   projectKey: projectKey, taskKey: taskKey, profileKey: profileKey,
                                                   selectedMemoryIDs: selectedMemoryIDs, selectedSkillIDs: selectedSkillIDs)
@@ -258,6 +299,12 @@ public struct AgentLaunchPlanner {
         let id = UUID()
         let file = contextDirectory.appendingPathComponent(id.uuidString, isDirectory: true).appendingPathComponent("context.md")
         let plugin = file.deletingLastPathComponent().appendingPathComponent("agentbox-\(id.uuidString.lowercased())", isDirectory: true)
+        let claudeHookSnapshot: ClaudeHookLaunchSnapshot?
+        if let hookScriptURL {
+            guard prepared.provider == .claude else { throw AgentLaunchError.contextNotActive }
+            claudeHookSnapshot = try ClaudeHookLaunchSnapshot.prepare(
+                planID: id, directory: file.deletingLastPathComponent(), hookScriptURL: hookScriptURL)
+        } else { claudeHookSnapshot = nil }
         let computerMCP: ComputerMCPConfiguration?
         let mcpConfigData: Data?
         let mcpCapabilityData: Data?
@@ -308,6 +355,7 @@ public struct AgentLaunchPlanner {
             arguments = ["--append-system-prompt-file", file.path]
                 + (skillFiles.isEmpty ? [] : ["--plugin-dir", plugin.path])
                 + (computerMCP.map { ["--mcp-config", $0.configPath] } ?? [])
+                + (claudeHookSnapshot.map { ["--settings", $0.descriptor.settingsPath] } ?? [])
         case .codex:
             activation = .exportOnly(reason: "Codex não oferece um append de arquivo verificado para a TUI sem substituir instruções internas.")
             arguments = []
@@ -327,6 +375,7 @@ public struct AgentLaunchPlanner {
                                pluginDirectory: skillFiles.isEmpty ? nil : plugin,
                                computerMCP: computerMCP, mcpConfigData: mcpConfigData,
                                mcpCapabilityData: mcpCapabilityData,
+                               claudeHookSnapshot: claudeHookSnapshot,
                                activation: activation)
     }
 
@@ -362,6 +411,18 @@ public struct AgentLaunchPlanner {
         } else if plan.mcpConfigData != nil || plan.mcpCapabilityData != nil {
             throw AgentLaunchError.invalidBinding
         }
+        if let hook = plan.claudeHookSnapshot {
+            let descriptor = hook.descriptor
+            guard plan.provider == .claude, plan.activation.contextIsActiveAtLaunch,
+                  descriptor.planID == plan.id,
+                  descriptor.settingsPath == directory.appendingPathComponent("hooks.settings.json").path,
+                  descriptor.scriptPath == directory.appendingPathComponent("claude_event.py").path,
+                  hook.settingsData == (try ClaudeHookLaunchDescriptor.settingsData(scriptPath: descriptor.scriptPath)),
+                  Self.sha256(hook.settingsData) == descriptor.settingsHash,
+                  Self.sha256(hook.scriptData) == descriptor.scriptHash else {
+                throw AgentLaunchError.invalidBinding
+            }
+        }
         try FileManager.default.createDirectory(at: contextDirectory, withIntermediateDirectories: true,
                                                 attributes: [.posixPermissions: 0o700])
         try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: contextDirectory.path)
@@ -379,6 +440,11 @@ public struct AgentLaunchPlanner {
                 try writeProtected(config, to: URL(fileURLWithPath: mcp.configPath))
                 try writeProtected(capability, to: URL(fileURLWithPath: mcp.capabilityPath))
                 try mcp.validate(directory: directory)
+            }
+            if let hook = plan.claudeHookSnapshot {
+                try writeProtected(hook.settingsData, to: URL(fileURLWithPath: hook.descriptor.settingsPath))
+                try writeProtected(hook.scriptData, to: URL(fileURLWithPath: hook.descriptor.scriptPath), permissions: 0o700)
+                try hook.descriptor.validate(directory: directory)
             }
             if let plugin = plan.pluginDirectory {
                 try FileManager.default.createDirectory(at: plugin, withIntermediateDirectories: false,
@@ -409,7 +475,9 @@ public struct AgentLaunchPlanner {
                                        terminal: terminal, activation: plan.activation,
                                        skillFiles: plan.skillFiles, supportFiles: plan.supportFiles,
                                        pluginDirectory: plan.pluginDirectory,
-                                       computerMCP: plan.computerMCP)
+                                       computerMCP: plan.computerMCP,
+                                       claudeHookDescriptor: plan.claudeHookSnapshot?.descriptor,
+                                       claudeHook: nil)
     }
 
     /// Restore a reviewed snapshot for an explicit restart. Never starts the process.
@@ -442,8 +510,10 @@ public struct AgentLaunchPlanner {
         let expectedArgs = ["--append-system-prompt-file", expected.path]
             + (binding.skillReferences.isEmpty ? [] : ["--plugin-dir", plugin.path])
             + (binding.computerMCP.map { ["--mcp-config", $0.configPath] } ?? [])
+            + (binding.claudeHookDescriptor.map { ["--settings", $0.settingsPath] } ?? [])
         guard binding.arguments == expectedArgs else { throw AgentLaunchError.invalidBinding }
         try binding.computerMCP?.validate(directory: expected.deletingLastPathComponent())
+        try binding.claudeHookDescriptor?.validate(directory: expected.deletingLastPathComponent())
         let executable = try resolver.resolve(binding.provider)
         let cwd = try resolver.validateWorkingDirectory(binding.workingDirectory)
         guard executable == binding.executablePath, cwd == binding.workingDirectory else {
@@ -471,7 +541,9 @@ public struct AgentLaunchPlanner {
                                              terminal: terminal, activation: .claudeAppendPromptFile,
                                              skillFiles: skillFiles, supportFiles: supportFiles,
                                              pluginDirectory: skillFiles.isEmpty ? nil : plugin,
-                                             computerMCP: binding.computerMCP)
+                                             computerMCP: binding.computerMCP,
+                                             claudeHookDescriptor: binding.claudeHookDescriptor,
+                                             claudeHook: nil)
         try launch.validateContextFile()
         return launch
     }
@@ -496,6 +568,20 @@ public struct AgentLaunchPlanner {
             }
             try FileManager.default.removeItem(atPath: mcp.configPath)
             try FileManager.default.removeItem(atPath: mcp.capabilityPath)
+        }
+        if let hook = launch.claudeHookDescriptor {
+            guard hook.planID == launch.planID,
+                  hook.settingsPath == directory.appendingPathComponent("hooks.settings.json").path,
+                  hook.scriptPath == directory.appendingPathComponent("claude_event.py").path else {
+                throw AgentLaunchError.planDirectoryMismatch
+            }
+            for path in [hook.settingsPath, hook.scriptPath] {
+                try FileManager.default.removeItem(atPath: path)
+            }
+            let runs = directory.appendingPathComponent("hook-runs", isDirectory: true)
+            if FileManager.default.fileExists(atPath: runs.path) {
+                try FileManager.default.removeItem(at: runs)
+            }
         }
         _ = Darwin.rmdir(directory.path) // Leave any unexpected sibling files untouched.
     }
@@ -593,8 +679,8 @@ public struct AgentLaunchPlanner {
         return name.lowercased()
     }
 
-    private func writeProtected(_ data: Data, to url: URL) throws {
-        let fd = Darwin.open(url.path, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW, 0o600)
+    private func writeProtected(_ data: Data, to url: URL, permissions: mode_t = 0o600) throws {
+        let fd = Darwin.open(url.path, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW, permissions)
         guard fd >= 0 else { throw AgentLaunchError.writeFailed(errno) }
         defer { _ = Darwin.close(fd) }
         try data.withUnsafeBytes { buffer in

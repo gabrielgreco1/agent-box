@@ -147,8 +147,10 @@ final class BrowserComputerStore: ObservableObject {
         } catch {
             reconnectTasks.removeValue(forKey: computerID)
             endpoints.removeValue(forKey: computerID)
-            if case BrowserComputerError.tokenAuthorizationRequired = error {
+            switch error {
+            case BrowserComputerError.tokenAuthorizationRequired, BrowserComputerError.keychainTimedOut:
                 tokenAuthorizationRequired.insert(computerID)
+            default: break
             }
             errorText = error.localizedDescription
             throw error

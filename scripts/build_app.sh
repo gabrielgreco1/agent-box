@@ -18,8 +18,10 @@ AGENTBOX_STAGE="$(mktemp -d /private/tmp/agentbox-package.XXXXXX)"
 trap 'rm -rf "$AGENTBOX_STAGE"' EXIT
 AGENTBOX_APP="$AGENTBOX_STAGE/Agent Box.app"
 mkdir -p "$AGENTBOX_APP/Contents/MacOS" "$AGENTBOX_APP/Contents/Resources"
+mkdir -p "$AGENTBOX_APP/Contents/Resources/Hooks"
 cp "$AGENTBOX_BIN/AgentBox" "$AGENTBOX_APP/Contents/MacOS/AgentBox"
 cp "$AGENTBOX_BIN/AgentBoxMCP" "$AGENTBOX_APP/Contents/MacOS/AgentBoxMCP"
+install -m 755 "$AGENTBOX_ROOT/runtime/hooks/claude_event.py" "$AGENTBOX_APP/Contents/Resources/Hooks/claude_event.py"
 for AGENTBOX_RESOURCE in "$AGENTBOX_BIN"/*.bundle; do
   [[ -d "$AGENTBOX_RESOURCE" ]] || continue
   # SwiftPM resources can be read-only. Replace the generated bundle instead of overwriting its files.

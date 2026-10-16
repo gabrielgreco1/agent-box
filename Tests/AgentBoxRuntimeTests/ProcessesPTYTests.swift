@@ -7,7 +7,7 @@ import AgentBoxCore
 final class ProcessesPTYTests: XCTestCase {
     @MainActor
     func testRealTTYResizeRemountAndControlC() async throws {
-        let manager = TerminalRuntimeManager()
+        let manager = TerminalRuntimeManager(nativeAgentMonitor: try makeMonitor())
         defer { manager.shutdown() }
         let record = TerminalRecord(title: "PTY smoke", provider: .shell, cwd: "/tmp",
                                     arguments: ["-c", "echo PTY_READY; tty; stty size; exec sleep 30"])
@@ -56,17 +56,27 @@ final class ProcessesPTYTests: XCTestCase {
 
     @MainActor
     func testNormalExitAndExplicitRestart() async throws {
-        let manager = TerminalRuntimeManager()
+        let monitor = try makeMonitor()
+        let manager = TerminalRuntimeManager(nativeAgentMonitor: monitor)
         defer { manager.shutdown() }
         let record = TerminalRecord(title: "exit", provider: .shell, cwd: "/tmp", arguments: ["-c", "exit 7"])
         manager.start(record)
         let firstExit = await waitUntil { manager.state(for: record.id) == .exited(code: 7) }
         XCTAssertTrue(firstExit)
+        let firstRecorded = await waitUntil {
+            monitor.runs.filter { $0.terminalID == record.id && $0.status == .finished }.count == 1
+        }
+        XCTAssertTrue(firstRecorded)
         let oldRenderer = manager.renderer(for: record.id)
         manager.start(record)
         XCTAssertFalse(manager.renderer(for: record.id) === oldRenderer)
         let secondExit = await waitUntil { manager.state(for: record.id) == .exited(code: 7) }
         XCTAssertTrue(secondExit)
+        let secondRecorded = await waitUntil {
+            monitor.runs.filter { $0.terminalID == record.id && $0.status == .finished }.count == 2
+        }
+        XCTAssertTrue(secondRecorded)
+        XCTAssertEqual(Set(monitor.runs.filter { $0.terminalID == record.id }.map(\.id)).count, 2)
     }
 
     @MainActor
@@ -81,7 +91,7 @@ final class ProcessesPTYTests: XCTestCase {
             resolver: CLIExecutableResolver(overrides: [.claude: executable.path]))
         let agent = SavedAgent(name: "Fixture", instructions: "Local fixture only", provider: .claude)
         let document = LibraryDocument(agents: [agent])
-        let manager = TerminalRuntimeManager()
+        let manager = TerminalRuntimeManager(nativeAgentMonitor: try makeMonitor())
         defer { manager.shutdown() }
         let terminal = TerminalRecord(title: "Existing", provider: .shell, cwd: "/tmp", arguments: ["-c", "exec sleep 30"])
         manager.start(terminal)
@@ -111,6 +121,54 @@ final class ProcessesPTYTests: XCTestCase {
     }
 
     @MainActor
+    func testReviewedClaudeHookGetsFreshInvocationForEachPTYRun() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("hook-runtime-\(UUID())")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let executable = root.appendingPathComponent("claude-fixture")
+        let script = """
+        #!/bin/sh
+        [ -n "$AGENT_BOX_HOOK_RUN_ID" ] || exit 41
+        [ -n "$AGENT_BOX_HOOK_TOKEN" ] || exit 42
+        [ -f "$AGENT_BOX_HOOK_INBOX" ] || exit 43
+        case " $* " in *" --settings "*) ;; *) exit 44 ;; esac
+        exit 0
+        """
+        try script.write(to: executable, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: executable.path)
+        let hookScript = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("runtime/hooks/claude_event.py")
+        let planner = AgentLaunchPlanner(contextDirectory: root.appendingPathComponent("contexts"),
+            resolver: CLIExecutableResolver(overrides: [.claude: executable.path]))
+        let agent = SavedAgent(name: "Hook fixture", instructions: "Local test", provider: .claude)
+        let plan = try planner.prepare(agentID: agent.id, in: LibraryDocument(agents: [agent]),
+                                       workingDirectory: root.path, hookScriptURL: hookScript)
+        let launch = try planner.materialize(plan, reviewedDigest: plan.review.contextSHA256)
+        let monitor = try makeMonitor()
+        let manager = TerminalRuntimeManager(nativeAgentMonitor: monitor)
+        defer { manager.shutdown() }
+        let terminalID = try XCTUnwrap(launch.terminal?.id)
+
+        try manager.start(launch)
+        let firstExited = await waitUntil { manager.state(for: terminalID) == .exited(code: 0) }
+        XCTAssertTrue(firstExited)
+        let firstRecorded = await waitUntil {
+            monitor.runs.filter { $0.terminalID == terminalID && $0.status == .finished }.count == 1
+        }
+        XCTAssertTrue(firstRecorded)
+        try manager.start(launch)
+        let secondExited = await waitUntil { manager.state(for: terminalID) == .exited(code: 0) }
+        XCTAssertTrue(secondExited)
+        let secondRecorded = await waitUntil {
+            monitor.runs.filter { $0.terminalID == terminalID && $0.status == .finished }.count == 2
+        }
+        XCTAssertTrue(secondRecorded)
+        XCTAssertEqual(Set(monitor.runs.filter { $0.terminalID == terminalID }.map(\.id)).count, 2)
+        XCTAssertNil(monitor.errorText)
+    }
+
+    @MainActor
     private func waitUntil(timeout: TimeInterval = 5, _ condition: @MainActor () -> Bool) async -> Bool {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
@@ -118,5 +176,12 @@ final class ProcessesPTYTests: XCTestCase {
             try? await Task.sleep(nanoseconds: 50_000_000)
         }
         return condition()
+    }
+
+    @MainActor
+    private func makeMonitor() throws -> NativeAgentMonitor {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("agent-runs-\(UUID())")
+        return NativeAgentMonitor(registry: try AgentRunRegistry(url: root.appendingPathComponent("runs.json")),
+                                  pollIntervalNanoseconds: 20_000_000)
     }
 }

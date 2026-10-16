@@ -1,0 +1,28 @@
+{
+  "exitCode": 0,
+  "isError": false,
+  "subtype": "success",
+  "turns": 2,
+  "costUSD": 0.035543,
+  "result": "HOOK_OK",
+  "events": [
+    {
+      "event": "SessionStart",
+      "agentType": "",
+      "signatureValid": true,
+      "runMatches": true
+    },
+    {
+      "event": "SubagentStart",
+      "agentType": "box-verification",
+      "signatureValid": true,
+      "runMatches": true
+    },
+    {
+      "event": "SubagentStop",
+      "agentType": "box-verification",
+      "signatureValid": true,
+      "runMatches": true
+    }
+  ]
+}

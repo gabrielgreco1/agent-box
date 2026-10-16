@@ -19,3 +19,7 @@ Falta provar em execução real: identificação inequívoca do run pai no trans
 ## Verificação
 
 `AgentRegistryTests` usa fixtures de formato documentado, exige correlação de sessão, confirma persistência/permissão e rejeita texto de terminal e evento de filho não correlacionado. `swiftc -typecheck` passou para o Core isolado. O integrador executa o pacote completo serialmente.
+
+## Integração posterior — AB-040
+
+Monitor de runtime e sidebar estão ligados ao registry. Claude Code real produziu início/fim de um subagente com assinaturas válidas no smoke; resultado sanitizado em `../evidence/claude-native-hooks-2026-10-16.json`. O teste visual de TUI → árvore de filhos no app ainda está pendente. Ver `AB-040-native-agent-tree.md` para separar evidência de transporte, PTY e UI.

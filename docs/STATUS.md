@@ -28,7 +28,7 @@ O viewer nativo, bridge de leases e serviço Docker autenticado estão integrado
 
 ## Evidências
 
-- Suíte Swift integrada: **103 testes, zero falhas**, incluindo snapshot de skills, atribuição de scraping, MCP por socket Unix e helper real por stdin/stdout. Execução com Xcode e scratch de build isolado.
+- Suíte Swift integrada: **110 testes, zero falhas**, incluindo snapshot de skills, atribuição de scraping, MCP por socket Unix e helper real por stdin/stdout. Execução com Xcode e scratch de build isolado.
 - Suite Python do runtime: **10 testes locais**, além do smoke Docker real descrito em `tasks/AB-019-020-browser-runtime.md`.
 - Build release e assinatura ad hoc verificados. Empacotamento em staging temporário evita metadados de File Provider durante a assinatura; build recusa substituir app em execução.
 - Captura operacional: `evidence/terminal-split-2026-10-16.png`.
@@ -36,7 +36,7 @@ O viewer nativo, bridge de leases e serviço Docker autenticado estão integrado
 
 ## Pendências que impedem conclusão
 
-- Captura ao vivo de subagentes nativos: registry/eventos documentados existem, mas hooks confiáveis ainda precisam ser instalados e comprovados em cada harness. Sem isso não há atribuição automática de box a filho comprovado.
+- Captura de subagentes Claude ligada ao lançamento revisado em AB-040; smoke do CLI real comprovou eventos assinados. Falta conferir TUI → sidebar ao vivo e implementar os demais harnesses. Atribuição automática de box por filho ainda não existe.
 - MCP de computador ligado ao lançamento Claude em AB-039; ainda falta provar invocações pelo modelo ao vivo. Orquestração de filhos, fila justa persistente/idempotência sob falhas, política de URLs e limites robustos entre processos continuam pendentes.
 - Pedidos de ação via ferramenta MCP implementados, mas notificação e takeover com um agente nativo operando ao vivo ainda precisam de prova, assim como a reconciliação de todos os caminhos de escrita. Viewer e assumir/devolver sem agente concorrente já foram exercitados pela UI.
 - Grants de credenciais conectados ao broker; revogar não apaga valores já herdados por processos. CLI local continua com permissões reais do usuário no Mac.
@@ -72,3 +72,9 @@ Bindings de contexto aceitam relançamento no terminal da box. Os testes reais d
 Claude Code recebe ferramentas MCP do computador atribuído no lançamento revisado, mantendo o harness nativo. O app e o viewer compartilham controle exclusivo; pedido de ajuda pausa as escritas até assumir/devolver explicitamente. O helper local não recebe o token do container. Configuração, binding, ownership e arquivos são revalidados no lançamento/restauração.
 
 Testes: 103 passaram, incluindo helper e sockets reais, leases concorrentes, tampering, argumentos e frames autenticados. Build release e assinatura ad hoc passaram, incluindo o helper empacotado em `Contents/MacOS`. Não houve execução paga do Claude, abertura do app ou Docker nesta rodada. O próximo gate é a interação ao vivo Claude → box → pedido humano → takeover → retomada. Detalhes e limites em `tasks/AB-039-native-computer-mcp.md`.
+
+## Continuação — AB-040
+
+Observação nativa Claude integrada ao runtime e à árvore sessão → terminais → filhos, com opt-in revisado e identidade nova a cada início. 110 testes passaram, incluindo PTYs reais e proteção contra colisão de diretórios de invocação. Smoke do Claude instalado confirmou SessionStart/SubagentStart/SubagentStop de um subagente real, com HMAC válido, sem ferramentas ou arquivos pessoais. Build release/assinatura passaram.
+
+A tentativa de conferir MCP no app encontrou novamente Keychain legado bloqueado; a correção de leitura sem UI retornou imediatamente em consulta controlada. O Mac bloqueou antes da conferência visual da correção e dos filhos. Não há prova do ciclo Claude → box → takeover → retomada ainda. O app e boxes de teste estão parados ao encerrar a rodada; o runtime de desenvolvimento também será desligado. Ver AB-035 e AB-040.

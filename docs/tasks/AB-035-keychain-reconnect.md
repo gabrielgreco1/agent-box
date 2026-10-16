@@ -20,3 +20,13 @@ O app criou o computador, abriu o desktop, recebeu frames, assumiu/devolveu cont
 - Testes com token store falso cobrem autorização explícita e o gate de timeout sem consultar credenciais reais. A recuperação após troca de assinatura, a recusa do diálogo macOS e o fluxo visual ainda exigem conferência no app.
 
 Os 70 testes Swift da rodada passaram; essa falha só foi observada no ambiente real. A meta não está concluída.
+
+## Diagnóstico e correção complementar — 16/10, AB-040
+
+O teste do app após novo build voltou a esperar no `SecItemCopyMatching`. Uma amostra do processo confirmou o backend antigo `SecItemCopyMatching_osx → SecKeychainItemCopyContent → SecurityServer.decrypt`. O timeout protegeu a UI, mas a thread continuou ocupada e impediu nova leitura.
+
+O backend legado não usa o caminho de LAContext observado pela API moderna. A leitura automática agora também desativa interação opcional por `SecKeychainSetUserInteractionAllowed(false)` dentro de uma seção serializada, restaura o estado anterior em `defer` e trata `errSecAuthFailed` não interativo como necessidade de autorização explícita. O caminho interativo permanece separado. Timeout também expõe a ação de autorização. O acesso e o ACL do item não são alterados e nenhum token é recuperado por outra fonte.
+
+Uma consulta controlada ao item do próprio Agent Box, sem imprimir seu valor, retornou imediatamente status `-25293` em vez de esperar; get/set da preferência retornaram sucesso. Testes confirmam restauração da preferência quando há erro e preservação de estado previamente desativado. A API é depreciada, mantida aqui estritamente para os itens legados existentes; migração para armazenamento moderno/assinatura estável continua necessária para uma distribuição futura.
+
+A conferência do botão e da autorização pelo app ficou pendente porque o Mac bloqueou. Não declarar reconexão resolvida ponta a ponta. Fontes: [código legado da Apple](https://github.com/apple-oss-distributions/Security/blob/main/OSX/libsecurity_keychain/lib/SecItem.cpp) e headers `SecKeychain.h` do SDK local; [LAContext.interactionNotAllowed](https://developer.apple.com/documentation/localauthentication/lacontext/interactionnotallowed).

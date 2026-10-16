@@ -115,7 +115,17 @@ public struct KeychainBrowserComputerTokenStore: BrowserComputerTokenStoring {
         return try KeychainReadGate.shared.execute(timeout: interactive ? 60 : 8,
                                                    onTimeout: { context.invalidate() }) {
             var result: CFTypeRef?
-            let status = SecItemCopyMatching(attributes as CFDictionary, &result)
+            // Existing macOS login-keychain items use the legacy backend, which
+            // does not honor LAContext.interactionNotAllowed. Suppress optional
+            // UI there too, and restore the process preference on every exit.
+            let status: OSStatus
+            if interactive {
+                status = SecItemCopyMatching(attributes as CFDictionary, &result)
+            } else {
+                status = try LegacyKeychainInteraction.withoutUI {
+                    SecItemCopyMatching(attributes as CFDictionary, &result)
+                }
+            }
             switch status {
             case errSecSuccess:
                 guard let data = result as? Data, let text = String(data: data, encoding: .utf8) else {
@@ -123,6 +133,8 @@ public struct KeychainBrowserComputerTokenStore: BrowserComputerTokenStoring {
                 }
                 return text
             case errSecInteractionNotAllowed:
+                throw BrowserComputerError.tokenAuthorizationRequired
+            case errSecAuthFailed where !interactive:
                 throw BrowserComputerError.tokenAuthorizationRequired
             case errSecUserCanceled, errSecAuthFailed:
                 throw BrowserComputerError.tokenAuthorizationDenied

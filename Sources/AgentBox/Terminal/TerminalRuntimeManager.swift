@@ -40,10 +40,14 @@ public final class TerminalRuntimeManager: ObservableObject {
 
     private var entries: [UUID: Entry] = [:]
     private var launchPlanIDs: [UUID: UUID] = [:]
+    private var runIDs: [UUID: UUID] = [:]
     private let resolver: CLIExecutableResolver
+    public let nativeAgentMonitor: NativeAgentMonitor
 
-    public init(resolver: CLIExecutableResolver = CLIExecutableResolver()) {
+    public init(resolver: CLIExecutableResolver = CLIExecutableResolver(),
+                nativeAgentMonitor: NativeAgentMonitor? = nil) {
         self.resolver = resolver
+        self.nativeAgentMonitor = nativeAgentMonitor ?? .shared
     }
 
     public func state(for id: UUID) -> TerminalProcessState { processStates[id] ?? .idle }
@@ -58,7 +62,7 @@ public final class TerminalRuntimeManager: ObservableObject {
             processStates[terminal.id] = .failed(AgentLaunchError.invalidBinding.localizedDescription)
             return
         }
-        start(terminal, executableOverride: nil)
+        start(terminal, executableOverride: nil, hook: nil)
     }
 
     /// Starts the exact executable and reviewed context snapshot from a materialized plan.
@@ -73,7 +77,9 @@ public final class TerminalRuntimeManager: ObservableObject {
         guard FileManager.default.isExecutableFile(atPath: launch.executablePath) else {
             throw CLIResolutionError.notExecutable(launch.executablePath)
         }
-        start(terminal, executableOverride: launch.executablePath)
+        let invocation = try launch.claudeHookDescriptor == nil ? launch : launch.prepareHookInvocation()
+        guard let invocationTerminal = invocation.terminal else { throw AgentLaunchError.contextNotActive }
+        start(invocationTerminal, executableOverride: invocation.executablePath, hook: invocation.claudeHook)
         if case .running = state(for: terminal.id) { launchPlanIDs[terminal.id] = launch.planID }
     }
 
@@ -88,23 +94,30 @@ public final class TerminalRuntimeManager: ObservableObject {
         return true
     }
 
-    private func start(_ terminal: TerminalRecord, executableOverride: String?) {
+    private func start(_ terminal: TerminalRecord, executableOverride: String?,
+                       hook: ClaudeHookInboxConfiguration?) {
         if case .running = state(for: terminal.id) { return }
         if case .starting = state(for: terminal.id) { return }
         launchPlanIDs[terminal.id] = nil
+        let runID = hook?.runID ?? UUID()
         processStates[terminal.id] = .starting
         do {
             let executable = try executableOverride ?? resolver.resolve(terminal.provider)
             let cwd = try resolver.validateWorkingDirectory(terminal.cwd)
             // A previous run has a distinct renderer. The record ID remains the UI identity.
-            let entry = makeEntry(id: terminal.id)
+            let entry = makeEntry(id: terminal.id, runID: runID)
             entries[terminal.id] = entry
             let args = terminal.provider == .shell && terminal.arguments.isEmpty ? ["-l"] : terminal.arguments
             entry.view.startProcess(executable: executable, args: args,
-                                    environment: childEnvironment(executable: executable), currentDirectory: cwd)
+                                    environment: childEnvironment(executable: executable,
+                                                                  hookEnvironment: hook?.environment ?? [:]),
+                                    currentDirectory: cwd)
             let process = entry.view.process
-            if let process, process.running && process.shellPid > 0 {
+            if let process, process.shellPid > 0 {
                 processStates[terminal.id] = .running(pid: process.shellPid)
+                runIDs[terminal.id] = runID
+                nativeAgentMonitor.didStart(terminalID: terminal.id, provider: terminal.provider,
+                                            processID: process.shellPid, runID: runID, hook: hook)
                 focus(terminal.id)
             } else {
                 processStates[terminal.id] = .failed("Could not start a PTY for \(executable).")
@@ -139,9 +152,11 @@ public final class TerminalRuntimeManager: ObservableObject {
                 signalOwnedGroups(entry: entry, leaderPID: pid, signal: SIGKILL)
             }
             entries[id]?.view.terminate()
+            if let runID = runIDs[id] { nativeAgentMonitor.didExit(terminalID: id, runID: runID) }
         }
         entries.removeAll()
         launchPlanIDs.removeAll()
+        runIDs.removeAll()
     }
 
     /// Called only by TerminalSurface. A missing renderer is an empty terminal, not a launch request.
@@ -171,7 +186,7 @@ public final class TerminalRuntimeManager: ObservableObject {
         window.makeFirstResponder(view)
     }
 
-    private func makeEntry(id: UUID) -> Entry {
+    private func makeEntry(id: UUID, runID: UUID? = nil) -> Entry {
         let options = TerminalOptions(cols: 80, rows: 24, termName: "xterm-256color", scrollback: 5_000)
         let view = LocalProcessTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 480),
                                             font: .monospacedSystemFont(ofSize: 12, weight: .regular), options: options)
@@ -183,6 +198,7 @@ public final class TerminalRuntimeManager: ObservableObject {
             Task { @MainActor [weak self] in
                 guard let self, self.entries[id]?.generation == generation else { return }
                 self.processStates[id] = .exited(code: Self.decodeWaitStatus(rawStatus))
+                if let runID { self.nativeAgentMonitor.didExit(terminalID: id, runID: runID) }
             }
         }
         view.processDelegate = observer
@@ -210,7 +226,7 @@ public final class TerminalRuntimeManager: ObservableObject {
         return nil
     }
 
-    private func childEnvironment(executable: String) -> [String] {
+    private func childEnvironment(executable: String, hookEnvironment: [String: String]) -> [String] {
         let inherited = ProcessInfo.processInfo.environment
         let allowed = ["HOME", "USER", "LOGNAME", "SHELL", "TMPDIR", "LANG", "LC_ALL", "LC_CTYPE", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME"]
         var values = Dictionary(uniqueKeysWithValues: allowed.compactMap { key in inherited[key].map { (key, $0) } })
@@ -221,6 +237,9 @@ public final class TerminalRuntimeManager: ObservableObject {
         values["TERM"] = "xterm-256color"
         values["COLORTERM"] = "truecolor"
         if values["LANG"] == nil { values["LANG"] = "en_US.UTF-8" }
+        for key in ["AGENT_BOX_HOOK_RUN_ID", "AGENT_BOX_HOOK_TOKEN", "AGENT_BOX_HOOK_INBOX"] {
+            if let value = hookEnvironment[key] { values[key] = value }
+        }
         return values.map { "\($0.key)=\($0.value)" }
     }
 }

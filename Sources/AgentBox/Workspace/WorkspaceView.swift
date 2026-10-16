@@ -74,6 +74,7 @@ private enum WorkspaceSheet: Identifiable {
     case settings
     case computer(UUID)
     case worktree(sessionID: UUID, terminalID: UUID)
+    case nativeAgent(UUID)
 
     var id: String {
         switch self {
@@ -88,6 +89,7 @@ private enum WorkspaceSheet: Identifiable {
         case .settings: return "settings"
         case .computer(let id): return "computer-\(id)"
         case .worktree(let sessionID, let terminalID): return "worktree-\(sessionID)-\(terminalID)"
+        case .nativeAgent(let id): return "native-agent-\(id)"
         }
     }
 }
@@ -96,6 +98,7 @@ public struct WorkspaceView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @StateObject private var runtime = WorkspaceServices.terminalRuntime
     @StateObject private var humanRequests = HumanRequestCenter.shared
+    @StateObject private var nativeAgents = NativeAgentMonitor.shared
     @State private var snapshot: WorkspaceSnapshot
     @State private var loadError: String?
     @State private var showLoadError = false
@@ -109,6 +112,7 @@ public struct WorkspaceView: View {
     @State private var bindingLoadError: String?
     @State private var bindingsAvailable: Bool
     @State private var collapsedSessions = Set<UUID>()
+    @State private var collapsedTerminals = Set<UUID>()
     @State private var sidebarDragStart: Double?
     @State private var splitDragStarts: [UUID: Double] = [:]
     @State private var stopRequested = Set<UUID>()
@@ -264,6 +268,8 @@ public struct WorkspaceView: View {
                 } else {
                     Text("O checkout não está mais disponível.").padding(20)
                 }
+            case .nativeAgent(let id):
+                nativeAgentDetails(id)
             }
         }
         .alert("Erro no workspace", isPresented: Binding(get: { saveError != nil }, set: { if !$0 { saveError = nil } })) {
@@ -327,6 +333,11 @@ public struct WorkspaceView: View {
                         if !collapsedSessions.contains(session.id) {
                             ForEach(session.terminals) { terminal in
                                 terminalRow(terminal, sessionID: session.id)
+                                if !collapsedTerminals.contains(terminal.id) {
+                                    ForEach(nativeChildren(for: terminal.id)) { child in
+                                        nativeChildRow(child)
+                                    }
+                                }
                             }
                             Button { sheet = .terminal(session.id) } label: {
                                 Label("Novo terminal", systemImage: "plus")
@@ -347,6 +358,15 @@ public struct WorkspaceView: View {
                     }
                 }
                 .padding(.horizontal, 6)
+            }
+
+            if let errorText = nativeAgents.errorText {
+                Text(errorText)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.orange)
+                    .lineLimit(2)
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 6)
             }
 
             HStack {
@@ -375,7 +395,12 @@ public struct WorkspaceView: View {
 
     private func matchesSearch(_ session: WorkspaceSession) -> Bool {
         search.isEmpty || session.title.localizedCaseInsensitiveContains(search) ||
-        session.terminals.contains { $0.title.localizedCaseInsensitiveContains(search) }
+        session.terminals.contains { terminal in
+            terminal.title.localizedCaseInsensitiveContains(search) || nativeChildren(for: terminal.id).contains {
+                ($0.nativeAgentType ?? "").localizedCaseInsensitiveContains(search) ||
+                ($0.nativeAgentID ?? "").localizedCaseInsensitiveContains(search)
+            }
+        }
     }
 
     private func sessionRow(_ session: WorkspaceSession) -> some View {
@@ -422,39 +447,57 @@ public struct WorkspaceView: View {
 
     private func terminalRow(_ terminal: TerminalRecord, sessionID: UUID) -> some View {
         let focused = snapshot.selectedSessionID == sessionID && selectedLayout?.focusedTerminalID == terminal.id
-        return Button {
-            selectTerminal(terminal.id, in: sessionID)
-        } label: {
-            HStack(spacing: 8) {
-                ProviderMark(provider: terminal.provider, size: 16)
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 6) {
-                        Text(terminal.title).lineLimit(1)
-                        Spacer(minLength: 0)
-                        HumanRequestBadge(terminalID: terminal.id)
-                        statusIcon(for: terminal.id)
-                    }
-                    if let checkout = checkout(for: terminal.id) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "arrow.triangle.branch")
-                            Text(gitBranchLabel(checkout)).lineLimit(1)
-                            if checkout.isDirty {
-                                Text("• Alterações").foregroundStyle(Color.orange)
-                            }
-                            if let remote = checkout.remote {
-                                Text("· \(remote.displayName)").lineLimit(1)
-                            }
+        let hasChildren = !nativeChildren(for: terminal.id).isEmpty
+        return HStack(spacing: 0) {
+            if hasChildren {
+                Button {
+                    if collapsedTerminals.contains(terminal.id) { collapsedTerminals.remove(terminal.id) }
+                    else { collapsedTerminals.insert(terminal.id) }
+                } label: {
+                    Image(systemName: collapsedTerminals.contains(terminal.id) ? "chevron.right" : "chevron.down")
+                        .font(.system(size: 10, weight: .medium))
+                        .frame(width: 16, height: 28)
+                }
+                .accessibilityLabel(collapsedTerminals.contains(terminal.id) ?
+                    "Expandir subagentes de \(terminal.title)" : "Recolher subagentes de \(terminal.title)")
+            } else {
+                Color.clear.frame(width: 16, height: 28)
+            }
+            Button {
+                selectTerminal(terminal.id, in: sessionID)
+            } label: {
+                HStack(spacing: 8) {
+                    ProviderMark(provider: terminal.provider, size: 16)
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: 6) {
+                            Text(terminal.title).lineLimit(1)
+                            Spacer(minLength: 0)
+                            HumanRequestBadge(terminalID: terminal.id)
+                            statusIcon(for: terminal.id)
                         }
-                        .font(.system(size: 10))
-                        .foregroundStyle(WorkspaceChrome.secondary)
+                        if let checkout = checkout(for: terminal.id) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "arrow.triangle.branch")
+                                Text(gitBranchLabel(checkout)).lineLimit(1)
+                                if checkout.isDirty {
+                                    Text("• Alterações").foregroundStyle(Color.orange)
+                                }
+                                if let remote = checkout.remote {
+                                    Text("· \(remote.displayName)").lineLimit(1)
+                                }
+                            }
+                            .font(.system(size: 10))
+                            .foregroundStyle(WorkspaceChrome.secondary)
+                        }
                     }
                 }
+                .padding(.trailing, 7)
+                .frame(height: checkout(for: terminal.id) == nil ? 30 : 42)
+                .contentShape(Rectangle())
             }
-            .padding(.leading, 27)
-            .padding(.trailing, 7)
-            .frame(height: checkout(for: terminal.id) == nil ? 30 : 42)
-            .contentShape(Rectangle())
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .padding(.leading, 11)
         .buttonStyle(.plain)
         .background(focused ? WorkspaceChrome.selection : .clear)
         .clipShape(RoundedRectangle(cornerRadius: 4))
@@ -474,6 +517,77 @@ public struct WorkspaceView: View {
             Button("Encerrar processo") { requestStop(terminal.id) }
             if stopRequested.contains(terminal.id) {
                 Button("Forçar encerramento…") { forceStopTerminalID = terminal.id }
+            }
+        }
+    }
+
+    private func nativeChildren(for terminalID: UUID) -> [AgentRunRecord] {
+        nativeAgents.runs.filter { $0.kind == .nativeSubagent && $0.parentTerminalID == terminalID }
+            .sorted { $0.startedAt < $1.startedAt }
+    }
+
+    private func nativeChildStatus(_ child: AgentRunRecord) -> String {
+        if child.status == .finished { return "Concluído" }
+        guard let parentID = child.parentRunID,
+              let parent = nativeAgents.runs.first(where: { $0.id == parentID && $0.kind == .terminal }),
+              parent.status == .running,
+              case .running(let pid) = runtime.state(for: child.terminalID),
+              parent.processID == pid else { return "Último evento: iniciado" }
+        return "Em execução"
+    }
+
+    private func nativeChildRow(_ child: AgentRunRecord) -> some View {
+        Button { sheet = .nativeAgent(child.id) } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "arrow.turn.down.right").font(.system(size: 10))
+                Text(child.nativeAgentType ?? "Subagente Claude").lineLimit(1)
+                Text(String((child.nativeAgentID ?? "").prefix(8)))
+                    .font(.system(size: 10, design: .monospaced))
+                    .foregroundStyle(WorkspaceChrome.secondary)
+                Spacer(minLength: 0)
+                Text(nativeChildStatus(child))
+                    .font(.system(size: 10)).foregroundStyle(WorkspaceChrome.secondary)
+                    .lineLimit(1)
+            }
+            .padding(.leading, 43)
+            .padding(.trailing, 7)
+            .frame(height: 26)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Subagente nativo \(child.nativeAgentType ?? "Claude"), \(nativeChildStatus(child))")
+    }
+
+    private func nativeAgentDetails(_ id: UUID) -> some View {
+        Group {
+            if let child = nativeAgents.runs.first(where: { $0.id == id && $0.kind == .nativeSubagent }) {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Subagente nativo").font(.system(size: 16, weight: .medium))
+                    LabeledContent("Tipo", value: child.nativeAgentType ?? "Desconhecido")
+                    LabeledContent("ID nativo", value: child.nativeAgentID ?? "Indisponível")
+                    LabeledContent("Estado observado", value: nativeChildStatus(child))
+                    LabeledContent("Origem", value: child.nativeHookSource?.rawValue ?? "Indisponível")
+                    LabeledContent("Iniciado", value: child.startedAt.formatted(date: .abbreviated, time: .standard))
+                    if let endedAt = child.endedAt {
+                        LabeledContent("Último fim observado", value: endedAt.formatted(date: .abbreviated, time: .standard))
+                    }
+                    Text("Este é um registro de eventos nativos do CLI. O subagente compartilha o terminal pai e não possui PTY independente.")
+                        .font(.system(size: 11)).foregroundStyle(WorkspaceChrome.secondary)
+                    HStack {
+                        Spacer()
+                        Button("Mostrar terminal pai") {
+                            if let session = snapshot.sessions.first(where: { $0.terminals.contains(where: { $0.id == child.terminalID }) }) {
+                                selectTerminal(child.terminalID, in: session.id)
+                            }
+                            sheet = nil
+                        }
+                    }
+                }
+                .font(.system(size: 13))
+                .padding(20)
+                .frame(width: 480)
+            } else {
+                Text("Este registro de subagente não está mais disponível.").padding(20)
             }
         }
     }

@@ -3,7 +3,7 @@ import CryptoKit
 
 /// Per-launch opt-in transport. The caller passes `environment` to the Claude process and
 /// appends `--settings settingsURL.path` to that process's arguments. No user settings are edited.
-public struct ClaudeHookInboxConfiguration: Sendable {
+public struct ClaudeHookInboxConfiguration: Equatable, Sendable {
     public let runID: UUID
     public let settingsURL: URL
     public let inboxURL: URL

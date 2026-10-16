@@ -218,6 +218,121 @@ final class AgentLaunchTests: XCTestCase {
         }
     }
 
+    func testClaudeHooksFreezeReviewedTemplateAndCreateFreshProcessInvocations() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let script = root.appendingPathComponent("source-hook.py")
+        try Data("#!/usr/bin/env python3\nimport sys\n".utf8).write(to: script)
+        try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: script.path)
+        let agent = SavedAgent(name: "Hooked", provider: .claude)
+        let planner = AgentLaunchPlanner(contextDirectory: root.appendingPathComponent("contexts"),
+                                         resolver: CLIExecutableResolver(overrides: [.claude: "/bin/sh"]))
+        let plan = try planner.prepare(agentID: agent.id, in: LibraryDocument(agents: [agent]),
+                                       workingDirectory: "/tmp", hookScriptURL: script)
+        let descriptor = try XCTUnwrap(plan.claudeHookSnapshot?.descriptor)
+        XCTAssertEqual(Array(plan.arguments.suffix(2)), ["--settings", descriptor.settingsPath])
+        XCTAssertFalse(FileManager.default.fileExists(atPath: descriptor.settingsPath))
+        try Data("#!/usr/bin/env python3\nraise RuntimeError('changed after review')\n".utf8).write(to: script)
+        let launch = try planner.materialize(plan, reviewedDigest: plan.review.contextSHA256)
+        XCTAssertNil(launch.claudeHook)
+        XCTAssertEqual(try Data(contentsOf: URL(fileURLWithPath: descriptor.scriptPath)),
+                       plan.claudeHookSnapshot?.scriptData)
+        for path in [descriptor.settingsPath, descriptor.scriptPath] {
+            let permissions = try XCTUnwrap(FileManager.default.attributesOfItem(atPath: path)[.posixPermissions] as? NSNumber)
+            XCTAssertEqual(permissions.intValue & 0o077, 0)
+        }
+        let first = try launch.prepareHookInvocation()
+        let second = try launch.prepareHookInvocation()
+        let firstHook = try XCTUnwrap(first.claudeHook)
+        let secondHook = try XCTUnwrap(second.claudeHook)
+        XCTAssertNotEqual(firstHook.runID, secondHook.runID)
+        XCTAssertNotEqual(firstHook.inboxURL, secondHook.inboxURL)
+        XCTAssertNotEqual(firstHook.settingsURL, secondHook.settingsURL)
+        XCTAssertNotEqual(firstHook.environment["AGENT_BOX_HOOK_TOKEN"],
+                          secondHook.environment["AGENT_BOX_HOOK_TOKEN"])
+        let firstToken = firstHook.settingsURL.deletingLastPathComponent().appendingPathComponent("hook.token")
+        let originalToken = try Data(contentsOf: firstToken)
+        let originalSettings = try Data(contentsOf: firstHook.settingsURL)
+        XCTAssertThrowsError(try launch.prepareHookInvocation(runID: firstHook.runID)) {
+            XCTAssertEqual($0 as? AgentLaunchError, .alreadyMaterialized)
+        }
+        XCTAssertEqual(try Data(contentsOf: firstToken), originalToken)
+        XCTAssertEqual(try Data(contentsOf: firstHook.settingsURL), originalSettings)
+        XCTAssertEqual(try Data(contentsOf: firstHook.inboxURL), Data())
+        let outside = root.appendingPathComponent("outside", isDirectory: true)
+        try FileManager.default.createDirectory(at: outside, withIntermediateDirectories: false)
+        let sentinel = outside.appendingPathComponent("sentinel")
+        try Data("keep".utf8).write(to: sentinel)
+        let linkedRunID = UUID()
+        let linkedRun = firstHook.settingsURL.deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent(linkedRunID.uuidString)
+        try FileManager.default.createSymbolicLink(at: linkedRun, withDestinationURL: outside)
+        XCTAssertThrowsError(try launch.prepareHookInvocation(runID: linkedRunID)) {
+            XCTAssertEqual($0 as? AgentLaunchError, .alreadyMaterialized)
+        }
+        XCTAssertEqual(try Data(contentsOf: sentinel), Data("keep".utf8))
+        XCTAssertEqual(try FileManager.default.destinationOfSymbolicLink(atPath: linkedRun.path), outside.path)
+        XCTAssertEqual(Array(try XCTUnwrap(first.terminal).arguments.suffix(2)),
+                       ["--settings", firstHook.settingsURL.path])
+        XCTAssertEqual(first.binding, launch.binding)
+        XCTAssertEqual(second.binding, launch.binding)
+        XCTAssertThrowsError(try first.prepareHookInvocation()) {
+            XCTAssertEqual($0 as? AgentLaunchError, .invalidBinding)
+        }
+        XCTAssertNoThrow(try first.validateContextFile())
+        XCTAssertNoThrow(try second.validateContextFile())
+        let binding = try XCTUnwrap(first.binding)
+        let restored = try planner.restore(binding, terminal: try XCTUnwrap(launch.terminal))
+        XCTAssertNil(restored.claudeHook)
+        let third = try restored.prepareHookInvocation()
+        XCTAssertNotEqual(third.claudeHook?.runID, firstHook.runID)
+        XCTAssertEqual(try Data(contentsOf: firstHook.inboxURL), Data())
+        XCTAssertEqual(try Data(contentsOf: secondHook.inboxURL), Data())
+        try planner.removeContextFile(for: launch)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: firstHook.inboxURL.path))
+        XCTAssertEqual(try Data(contentsOf: sentinel), Data("keep".utf8))
+    }
+
+    func testClaudeHooksRejectTamperedTemplateAndInvocation() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let script = root.appendingPathComponent("source-hook.py")
+        try Data("#!/usr/bin/env python3\n".utf8).write(to: script)
+        try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: script.path)
+        let agent = SavedAgent(name: "Hooked", provider: .claude)
+        let planner = AgentLaunchPlanner(contextDirectory: root.appendingPathComponent("contexts"),
+                                         resolver: CLIExecutableResolver(overrides: [.claude: "/bin/sh"]))
+        let plan = try planner.prepare(agentID: agent.id, in: LibraryDocument(agents: [agent]),
+                                       workingDirectory: "/tmp", hookScriptURL: script)
+        let launch = try planner.materialize(plan, reviewedDigest: plan.review.contextSHA256)
+        let binding = try XCTUnwrap(launch.binding)
+        let terminal = try XCTUnwrap(launch.terminal)
+        let invocation = try launch.prepareHookInvocation()
+        let tokenPath = try XCTUnwrap(invocation.claudeHook).settingsURL.deletingLastPathComponent()
+            .appendingPathComponent("hook.token")
+        try Data("bad".utf8).write(to: tokenPath)
+        XCTAssertThrowsError(try invocation.validateContextFile()) {
+            XCTAssertEqual($0 as? AgentLaunchError, .contextChanged)
+        }
+        XCTAssertNoThrow(try launch.validateContextFile())
+        let descriptor = try XCTUnwrap(launch.claudeHookDescriptor)
+        var json = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(binding)) as? [String: Any])
+        var hookJSON = try XCTUnwrap(json["claudeHookDescriptor"] as? [String: Any])
+        hookJSON["scriptPath"] = root.appendingPathComponent("outside.py").path
+        json["claudeHookDescriptor"] = hookJSON
+        let wrongPath = try JSONDecoder().decode(AgentLaunchBinding.self,
+            from: JSONSerialization.data(withJSONObject: json))
+        XCTAssertThrowsError(try planner.restore(wrongPath, terminal: terminal)) {
+            XCTAssertEqual($0 as? AgentLaunchError, .invalidBinding)
+        }
+        try Data("changed script".utf8).write(to: URL(fileURLWithPath: descriptor.scriptPath))
+        XCTAssertThrowsError(try planner.restore(binding, terminal: terminal)) {
+            XCTAssertEqual($0 as? AgentLaunchError, .contextChanged)
+        }
+    }
+
     func testCodexPlanExportsWithoutClaimingActivation() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         defer { try? FileManager.default.removeItem(at: root) }

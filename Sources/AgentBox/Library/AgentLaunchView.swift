@@ -34,6 +34,7 @@ struct AgentLaunchView: View {
     @State private var taskSummary = ""
     @State private var memoryIDs: Set<UUID> = []
     @State private var skillIDs: Set<UUID> = []
+    @State private var observeClaudeSubagents = true
     @State private var plan: AgentLaunchPlan?
     @State private var prepared: PreparedAgentContext?
     @State private var reviewed = false
@@ -158,6 +159,12 @@ struct AgentLaunchView: View {
                 TextField("ID da tarefa (opcional)", text: $taskKey)
                 TextField("ID do perfil (opcional)", text: $profileKey)
                 TextField("Resumo da tarefa (opcional)", text: $taskSummary)
+                if agent.provider == .claude {
+                    Toggle("Observar subagentes do Claude", isOn: $observeClaudeSubagents)
+                        .toggleStyle(.checkbox)
+                    Text("Registra apenas eventos nativos de início e fim desta execução; subagentes não ganham terminal próprio.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
                 Text("Memórias incluídas").fontWeight(.medium)
                 if agent.memoryIDs.isEmpty { Text("Nenhuma memória selecionada.").foregroundStyle(.secondary) }
                 ForEach(document.memories.filter { agent.memoryIDs.contains($0.id) }) { memory in
@@ -199,6 +206,10 @@ struct AgentLaunchView: View {
                     Text("Controle MCP do box \(mcp.computerID.uuidString.prefix(8)) · acesso autorizado por execução")
                         .foregroundStyle(.secondary)
                 }
+                if plan.claudeHookSnapshot != nil {
+                    Text("Observação de subagentes Claude ativada apenas para esta execução")
+                        .foregroundStyle(.secondary)
+                }
                 Text(details.selectedSkills.map(\.name).joined(separator: ", ").ifEmpty("Sem skills") +
                      " · \(details.selectedMemories.count) memórias · \(details.supportFiles.count) arquivos de apoio")
                     .foregroundStyle(.secondary)
@@ -212,6 +223,11 @@ struct AgentLaunchView: View {
                             if let mcp = plan.computerMCP {
                                 Text("Helper MCP: \(mcp.helperPath)")
                                 Text("Configuração MCP: \(mcp.configPath)")
+                            }
+                            if let hook = plan.claudeHookSnapshot?.descriptor {
+                                Text("Hook Claude: \(hook.scriptPath)")
+                                Text("Configuração do hook: \(hook.settingsPath)")
+                                Text("SHA-256 do script: \(hook.scriptHash)")
                             }
                             Text("Memórias: \(details.selectedMemories.map { "\($0.title) r\($0.revision)" }.joined(separator: ", ").ifEmpty("nenhuma"))")
                             Text(details.supportFiles.map { "\($0.url.path)  \($0.sha256)" }.joined(separator: "\n"))
@@ -283,7 +299,8 @@ struct AgentLaunchView: View {
             let candidate = try AgentLaunchPlanner().prepare(agentID: agentID, in: fresh,
                 workingDirectory: directory, projectKey: project, taskKey: task, profileKey: profile,
                 selectedMemoryIDs: memorySelection, selectedSkillIDs: skillSelection,
-                computerID: mcpComputerID, mcpHelper: mcpHelper)
+                computerID: mcpComputerID, mcpHelper: mcpHelper,
+                hookScriptURL: preparedContext.provider == .claude && observeClaudeSubagents ? Self.packagedClaudeHook : nil)
             guard candidate.review.contextText == preparedContext.text,
                   candidate.agentRevision == preparedContext.agentRevision else {
                 throw AgentLaunchError.contextChanged
@@ -302,6 +319,15 @@ struct AgentLaunchView: View {
         (Bundle.main.executableURL?.deletingLastPathComponent() ??
          Bundle.main.bundleURL.appendingPathComponent("Contents/MacOS", isDirectory: true))
             .appendingPathComponent("AgentBoxMCP")
+    }
+
+    private static var packagedClaudeHook: URL {
+        if Bundle.main.bundleURL.pathExtension == "app", let resources = Bundle.main.resourceURL {
+            return resources.appendingPathComponent("Hooks/claude_event.py")
+        }
+        return URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("runtime/hooks/claude_event.py")
     }
 
     private func launch() async {
