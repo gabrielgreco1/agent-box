@@ -13,3 +13,6 @@ dist/
 *.key
 *.xcuserstate
 work/
+
+__pycache__/
+*.py[cod]

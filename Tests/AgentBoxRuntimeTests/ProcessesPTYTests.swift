@@ -18,6 +18,14 @@ final class ProcessesPTYTests: XCTestCase {
             return
         }
         XCTAssertGreaterThan(pid, 0)
+        let background = try XCTUnwrap(renderer.nativeBackgroundColor.usingColorSpace(.sRGB))
+        let foreground = try XCTUnwrap(renderer.nativeForegroundColor.usingColorSpace(.sRGB))
+        XCTAssertEqual(background.redComponent, 39.0 / 255, accuracy: 0.001)
+        XCTAssertEqual(background.greenComponent, 43.0 / 255, accuracy: 0.001)
+        XCTAssertEqual(background.blueComponent, 51.0 / 255, accuracy: 0.001)
+        XCTAssertEqual(foreground.redComponent, 218.0 / 255, accuracy: 0.001)
+        XCTAssertEqual(foreground.greenComponent, 220.0 / 255, accuracy: 0.001)
+        XCTAssertEqual(foreground.blueComponent, 226.0 / 255, accuracy: 0.001)
         let sawTTY = await waitUntil {
             let text = String(data: renderer.getTerminal().getBufferAsData(), encoding: .utf8) ?? ""
             return text.contains("PTY_READY") && text.contains("/dev/tty")

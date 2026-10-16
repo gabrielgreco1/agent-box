@@ -24,27 +24,28 @@ Estados: **parcial** significa código funcional com limites; **em integração*
 | AB-006 | Chrome Orca: tons cinza-azulados, sem bordas/glow, hierarquia compacta | 003 | AC01–AC07 | Em integração / interface |
 | AB-007 | Foco nativo, cores do emulador e autenticação no ambiente Finder | 002 | AC09–AC14 | Em integração / terminais |
 | AB-008 | Inspeção Git e criação explícita de worktree, sem mutações implícitas | 001 | AC16–AC17 | Em integração / computadores |
-| AB-009 | Git/worktree na sessão e no fluxo de criar terminal; erros recuperáveis | 008, 003 | AC16–AC18 | Em execução / interface |
-| AB-010 | Memórias por escopo, revisões imutáveis, edição/arquivo/exclusão e histórico real | 005 | AC26, AC61–AC64, AC67–AC68 | Em execução / biblioteca |
-| AB-011 | Plano de lançamento revisável por CLI, contexto fixado e skills com mecanismo comprovado | 005, 010 | AC10, AC23, AC25–AC26, AC63, AC65–AC68 | Em execução / terminais |
-| AB-012 | UI de lançamento da biblioteca ligada a sessão/terminal; registro de início/fim e falha | 009–011 | AC61–AC68 | Planejada / integrador |
+| AB-009 | Git/worktree na sessão e no fluxo de criar terminal; erros recuperáveis | 008, 003 | AC16–AC18 | Em integração / interface |
+| AB-010 | Memórias por escopo, revisões imutáveis, edição/arquivo/exclusão e histórico real | 005 | AC26, AC61–AC64, AC67–AC68 | Em integração / biblioteca |
+| AB-011 | Plano de lançamento revisável por CLI, contexto fixado e skills com mecanismo comprovado | 005, 010 | AC10, AC23, AC25–AC26, AC63, AC65–AC68 | Em integração / terminais |
+| AB-012 | UI de lançamento da biblioteca ligada a sessão/terminal; registro de início/fim e falha | 009–011 | AC61–AC68 | Em integração / integrador |
 | AB-013 | Registro de conversas: descoberta, origem, resume suportado e escrita exclusiva | 007, 009 | AC15, AC18, AC23 | Planejada |
-| AB-014 | Política efetiva por escopo, tetos, primeiro uso retomável e aplicação de mudanças | 004 | AC44–AC46, AC50 | Planejada |
-| AB-015 | .env como dados, Keychain, grants/revogação e redaction sem valores nos logs | 014 | AC47–AC50 | Planejada |
-| AB-016 | Adapter/eventos de filhos por harness; identidade e capabilities comprovadas | 011, 014 | AC19, AC22–AC25 | Planejada |
-| AB-017 | Broker: actor/run/computer IDs autenticados, concessões e revogação no cancelamento | 016, 015 | AC19–AC24 | Planejada |
+| AB-014 | Política efetiva por escopo, tetos, primeiro uso retomável e aplicação de mudanças | 004 | AC44–AC46, AC50 | Parcial / integração |
+| AB-015 | .env como dados, Keychain, grants/revogação e redaction sem valores nos logs | 014 | AC47–AC50 | Parcial / integração |
+| AB-016 | Adapter/eventos de filhos por harness; identidade e capabilities comprovadas | 011, 014 | AC19, AC22–AC25 | Parcial / integração |
+| AB-017 | Broker: actor/run/computer IDs autenticados, concessões e revogação no cancelamento | 016, 015 | AC19–AC24 | Parcial / integração |
 | AB-018 | Reservas Docker idempotentes, fila justa/cancelável, quotas e HTTP real | 004, 014 | AC27–AC29, AC37 | Planejada |
-| AB-019 | Imagem browser headless, JS real, health checks e promoção de modo recuperável | 018 | AC30, AC32–AC33, AC37 | Planejada |
-| AB-020 | Desktop e viewer em streaming; iniciar/parar stream independente do browser | 019 | AC08, AC31–AC33, AC36–AC37 | Planejada |
-| AB-021 | Perfis persistentes fora de imagens, lock de escritor, backup/restore | 018, 015 | AC34–AC35, AC59 | Planejada |
-| AB-022 | Takeover com revogação/ACK/epoch em todos os caminhos de escrita e reconciliação | 017, 020 | AC38–AC41, AC43 | Planejada |
-| AB-023 | Pedidos de intervenção, badge/som deduplicado, foco no alvo certo e previews | 022 | AC04, AC08, AC40, AC42–AC43 | Planejada |
+| AB-019 | Imagem browser headless, JS real, health checks e promoção de modo recuperável | 018 | AC30, AC32–AC33, AC37 | Parcial / integração |
+| AB-020 | Desktop e viewer em streaming; iniciar/parar stream independente do browser | 019 | AC08, AC31–AC33, AC36–AC37 | Parcial / integração |
+| AB-021 | Perfis persistentes fora de imagens, lock de escritor, backup/restore | 018, 015 | AC34–AC35, AC59 | Parcial / integração |
+| AB-022 | Takeover com revogação/ACK/epoch em todos os caminhos de escrita e reconciliação | 017, 020 | AC38–AC41, AC43 | Parcial / integração |
+| AB-023 | Pedidos de intervenção, badge/som deduplicado, foco no alvo certo e previews | 022 | AC04, AC08, AC40, AC42–AC43 | Parcial / integração |
 | AB-024 | Listener browser/HTTP com cobertura declarada, filtros e retenção/backpressure | 019, 015 | AC51–AC54 | Planejada |
 | AB-025 | Resultados CSV/JSON com proveniência, evidências e deduplicação auditável | 024 | AC55 | Planejada |
 | AB-026 | Troca de modelo confirmada por execução, capacidades específicas por CLI | 016, 012 | AC56 | Planejada |
 | AB-027 | Handoff entre harnesses com checkpoint e controlador único; falha recuperável | 026, 021, 022 | AC57, AC67–AC68 | Planejada |
 | AB-028 | Serviço PTY, reconexão após crash/sono e migração versionada com backup | 002, 017, 021 | AC11–AC13, AC58–AC59 | Planejada |
 | AB-029 | Aceite completo: TUIs, acesso por teclado, cinco panes, boxes e 60 min de carga | Todas as necessárias | AC01–AC68, especialmente AC60 | Planejada |
+| AB-031 | Acesso explícito a pastas, bookmark e restauração para Git/PTY | 009, 012 | AC09, AC16, AC18, AC58 | Em integração / interface |
 | AB-030 | Marca própria, ícone Dock, recurso empacotado e higiene de processos/builds | 001, 006 | AC05–AC07, AC60 | Em integração / integrador |
 
 ## Entregas que não podem ficar implícitas
@@ -65,4 +66,15 @@ Estados: **parcial** significa código funcional com limites; **em integração*
 
 ## Próxima integração concreta
 
-Integrar AB-006/007/008/030; testar em uma única execução de build. Em seguida integrar AB-009/010/011 e ligar o lançamento real em AB-012. Avançar política/segredos e prova de identidade em paralelo às imagens Docker. Não deixar a biblioteca/memória dependente do término de todo streaming para começar a funcionar.
+Checkpoint: 70 testes Swift passaram, e o runtime Docker passou no smoke arm64 real. Biblioteca, permissões/Keychain, broker e viewer têm implementação; hooks/automação de filhos, listener e continuidade completa seguem pendentes. Veja STATUS.md para distinguir prova de módulo e fluxo ao vivo.
+
+
+Integrar e testar as entregas existentes antes de avançar seus aceites. Rodada paralela executada em GPT-6 Sol, esforço medium; módulos entregues e integração em curso:
+
+| Subtarefa | Ligação com a spec | Responsável | Resultado exigido |
+|---|---|---|---|
+| AB-032 · Skills nativas | AB-011/012, AC65–68 | skills_activation | Snapshot por execução e carregamento Claude suportado, sem alterar configuração global. |
+| AB-033 · Input do desktop | AB-020/022, AC38–43 | desktop_input | Arraste, scroll e modificadores reais sob o mesmo controle exclusivo. |
+| AB-034 · Eventos nativos | AB-016, AC19/22–25 | run_events | Payloads documentados, vínculo de sessão e ingestão verificável; não inferir filhos do texto de terminal. |
+
+O integrador mantém testes/builds em série, a conferência do app e os commits. Os três agentes não abrem apps nem executam tarefas pagas dos CLIs. A execução automática via hooks, o ciclo completo de skills nos demais clientes e os demais marcos seguem com seus próprios gates.

@@ -27,6 +27,11 @@ public enum CLICommandProbe {
         var captured = Data()
         process.executableURL = URL(fileURLWithPath: executable)
         process.arguments = arguments
+        var environment = ProcessInfo.processInfo.environment
+        let executableDirectory = URL(fileURLWithPath: executable).deletingLastPathComponent().path
+        environment["PATH"] = ([executableDirectory, environment["PATH"] ?? "", "/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", "/bin"])
+            .filter { !$0.isEmpty }.joined(separator: ":")
+        process.environment = environment
         process.standardOutput = pipe
         process.standardError = pipe
         process.standardInput = FileHandle.nullDevice
@@ -46,21 +51,27 @@ public enum CLICommandProbe {
             return CLICommandResult(exitCode: nil, output: error.localizedDescription, timedOut: false)
         }
 
-        let done = DispatchGroup()
-        done.enter()
-        DispatchQueue.global(qos: .utility).async {
-            process.waitUntilExit()
-            done.leave()
-        }
-        let limit = max(0.05, timeout)
-        let timedOut = done.wait(timeout: .now() + limit) == .timedOut
-        if timedOut {
-            _ = Darwin.kill(process.processIdentifier, SIGTERM)
-            if done.wait(timeout: .now() + 0.3) == .timedOut {
-                _ = Darwin.kill(process.processIdentifier, SIGKILL)
-                _ = done.wait(timeout: .now() + 1)
+        let timeoutLock = NSLock()
+        var finished = false
+        var timedOut = false
+        let pid = process.processIdentifier
+        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + max(0.05, timeout)) {
+            timeoutLock.lock()
+            guard !finished else { timeoutLock.unlock(); return }
+            timedOut = true
+            _ = Darwin.kill(pid, SIGTERM)
+            timeoutLock.unlock()
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 0.3) {
+                timeoutLock.lock()
+                if !finished { _ = Darwin.kill(pid, SIGKILL) }
+                timeoutLock.unlock()
             }
         }
+        process.waitUntilExit()
+        timeoutLock.lock()
+        finished = true
+        let didTimeOut = timedOut
+        timeoutLock.unlock()
         pipe.fileHandleForReading.readabilityHandler = nil
         // Drain only bytes currently available. A descendant may still hold the
         // pipe open after the direct CLI exits, so waiting for EOF could hang.
@@ -78,7 +89,7 @@ public enum CLICommandProbe {
         if captured.count < 16_384 { captured.append(remaining.prefix(16_384 - captured.count)) }
         let text = String(decoding: captured, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
         lock.unlock()
-        return CLICommandResult(exitCode: timedOut ? nil : process.terminationStatus, output: text, timedOut: timedOut)
+        return CLICommandResult(exitCode: didTimeOut ? nil : process.terminationStatus, output: text, timedOut: didTimeOut)
     }
 }
 

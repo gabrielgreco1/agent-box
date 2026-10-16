@@ -53,9 +53,29 @@ public final class TerminalRuntimeManager: ObservableObject {
     public func start(_ terminal: TerminalRecord) {
         if case .running = state(for: terminal.id) { return }
         if case .starting = state(for: terminal.id) { return }
+        guard terminal.agentDefinitionID == nil else {
+            processStates[terminal.id] = .failed(AgentLaunchError.invalidBinding.localizedDescription)
+            return
+        }
+        start(terminal, executableOverride: nil)
+    }
+
+    /// Starts the exact executable and reviewed context snapshot from a materialized plan.
+    public func start(_ launch: MaterializedAgentLaunch) throws {
+        guard let terminal = launch.terminal else { throw AgentLaunchError.contextNotActive }
+        try launch.validateContextFile()
+        guard FileManager.default.isExecutableFile(atPath: launch.executablePath) else {
+            throw CLIResolutionError.notExecutable(launch.executablePath)
+        }
+        start(terminal, executableOverride: launch.executablePath)
+    }
+
+    private func start(_ terminal: TerminalRecord, executableOverride: String?) {
+        if case .running = state(for: terminal.id) { return }
+        if case .starting = state(for: terminal.id) { return }
         processStates[terminal.id] = .starting
         do {
-            let executable = try resolver.resolve(terminal.provider)
+            let executable = try executableOverride ?? resolver.resolve(terminal.provider)
             let cwd = try resolver.validateWorkingDirectory(terminal.cwd)
             // A previous run has a distinct renderer. The record ID remains the UI identity.
             let entry = makeEntry(id: terminal.id)
@@ -66,6 +86,7 @@ public final class TerminalRuntimeManager: ObservableObject {
             let process = entry.view.process
             if let process, process.running && process.shellPid > 0 {
                 processStates[terminal.id] = .running(pid: process.shellPid)
+                focus(terminal.id)
             } else {
                 processStates[terminal.id] = .failed("Could not start a PTY for \(executable).")
             }
@@ -125,10 +146,17 @@ public final class TerminalRuntimeManager: ObservableObject {
         }
     }
 
+    public func focus(_ id: UUID) {
+        guard let view = entries[id]?.view, let window = view.window else { return }
+        window.makeFirstResponder(view)
+    }
+
     private func makeEntry(id: UUID) -> Entry {
         let options = TerminalOptions(cols: 80, rows: 24, termName: "xterm-256color", scrollback: 5_000)
         let view = LocalProcessTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 480),
                                             font: .monospacedSystemFont(ofSize: 12, weight: .regular), options: options)
+        view.nativeBackgroundColor = NSColor(srgbRed: 39.0 / 255, green: 43.0 / 255, blue: 51.0 / 255, alpha: 1)
+        view.nativeForegroundColor = NSColor(srgbRed: 218.0 / 255, green: 220.0 / 255, blue: 226.0 / 255, alpha: 1)
         let observer = ProcessObserver()
         let generation = UUID()
         observer.onExit = { [weak self] rawStatus in
@@ -177,26 +205,62 @@ public final class TerminalRuntimeManager: ObservableObject {
     }
 }
 
+private final class TerminalHostView: NSView {
+    var onWindowAttached: (() -> Void)?
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if window != nil {
+            DispatchQueue.main.async { [weak self] in self?.onWindowAttached?() }
+        }
+    }
+}
+
 public struct TerminalSurface: NSViewRepresentable {
     public let terminal: TerminalRecord
     @ObservedObject public var runtime: TerminalRuntimeManager
+    public let isFocused: Bool
 
-    public init(terminal: TerminalRecord, runtime: TerminalRuntimeManager) {
+    public init(terminal: TerminalRecord, runtime: TerminalRuntimeManager, isFocused: Bool = false) {
         self.terminal = terminal
         self.runtime = runtime
+        self.isFocused = isFocused
     }
 
+    public final class Coordinator {
+        var wasFocused = false
+        var rendererIdentity: ObjectIdentifier?
+    }
+
+    public func makeCoordinator() -> Coordinator { Coordinator() }
+
     public func makeNSView(context: Context) -> NSView {
-        let host = NSView()
+        let host = TerminalHostView()
+        host.onWindowAttached = isFocused ? { [runtime, id = terminal.id] in runtime.focus(id) } : nil
         runtime.attach(terminal.id, to: host)
+        context.coordinator.wasFocused = isFocused
+        context.coordinator.rendererIdentity = runtime.renderer(for: terminal.id).map(ObjectIdentifier.init)
+        if isFocused { scheduleFocus() }
         return host
     }
 
     public func updateNSView(_ host: NSView, context: Context) {
+        (host as? TerminalHostView)?.onWindowAttached = isFocused ? { [runtime, id = terminal.id] in runtime.focus(id) } : nil
         runtime.attach(terminal.id, to: host)
+        let currentRenderer = runtime.renderer(for: terminal.id).map(ObjectIdentifier.init)
+        if isFocused && (!context.coordinator.wasFocused || context.coordinator.rendererIdentity != currentRenderer) { scheduleFocus() }
+        context.coordinator.wasFocused = isFocused
+        context.coordinator.rendererIdentity = currentRenderer
     }
 
-    public static func dismantleNSView(_ host: NSView, coordinator: ()) {
+    public static func dismantleNSView(_ host: NSView, coordinator: Coordinator) {
+        (host as? TerminalHostView)?.onWindowAttached = nil
         host.subviews.forEach { $0.removeFromSuperview() }
+    }
+
+    private func scheduleFocus() {
+        let id = terminal.id
+        let runtime = runtime
+        DispatchQueue.main.async { runtime.focus(id) }
     }
 }

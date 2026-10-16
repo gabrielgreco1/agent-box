@@ -8,7 +8,13 @@ import AppKit
 }
 
 @MainActor final class AgentBoxAppDelegate:NSObject, NSApplicationDelegate {
-    func applicationDidFinishLaunching(_ notification:Notification) {NSApp.setActivationPolicy(.regular);NSApp.activate(ignoringOtherApps:true)}
+    func applicationDidFinishLaunching(_ notification:Notification) {
+        if let url = AppResources.brandURL("agentbox") {
+            NSApp.applicationIconImage = NSImage(contentsOf: url)
+        }
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps:true)
+    }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender:NSApplication)->Bool {false}
     func applicationShouldHandleReopen(_ sender:NSApplication,hasVisibleWindows:Bool)->Bool {
         if !hasVisibleWindows {sender.windows.first(where:{$0.canBecomeMain})?.makeKeyAndOrderFront(nil)}
@@ -20,6 +26,7 @@ import AppKit
             guard alert.runModal() == .alertSecondButtonReturn else {return .terminateCancel}
         }
         RuntimeLifecycle.shared.runtime?.shutdown()
+        WorkspaceDirectoryAccess.shared.stopAll()
         return .terminateNow
     }
 }

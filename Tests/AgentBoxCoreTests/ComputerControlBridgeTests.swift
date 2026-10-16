@@ -1,0 +1,178 @@
+import Foundation
+import XCTest
+@testable import AgentBoxCore
+
+final class ComputerControlBridgeTests: XCTestCase {
+    func testInputFailureRevokesRuntimeLeaseBeforeItIsForgotten() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let id = UUID()
+        let broker = try ControlBroker(url: root.appendingPathComponent("control.json"))
+        let shared = FakeControlRuntime(id: id, generation: 0)
+        let bridge = ComputerControlBridge(broker: broker, transport: FakeControlTransport(shared: shared, id: id, generation: 0))
+        let ticket = try await bridge.assumeHuman()
+        await shared.setFailInput(true)
+        do { try await bridge.input(.key("Return"), ticket: ticket); XCTFail("Input must fail") }
+        catch BrowserRuntimeError.invalidResponse {}
+        let lease = await shared.lease
+        let active = await bridge.ticket()
+        XCTAssertNil(lease)
+        XCTAssertNil(active)
+        let log = await shared.log
+        XCTAssertEqual(log.last, "revoke:human:\(ticket.grant.epoch)")
+    }
+    func testTakeoverRevokesBeforeGrantAndOldEpochCannotWrite() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let broker = try ControlBroker(url: root.appendingPathComponent("control.json"))
+        let id = UUID(), run = UUID()
+        try await broker.reconcile(computerID: id, activeRuntimeLease: nil)
+        guard case .granted(let agent) = try await broker.requestAgent(computerID: id, runID: run) else {
+            return XCTFail("Expected agent")
+        }
+        let shared = FakeControlRuntime(id: id, generation: 7,
+                                        initialLease: BrowserRuntimeLease(actorID: agent.actorID,
+                                                                          epoch: agent.epoch, paths: Array(agent.paths)))
+        let bridge = ComputerControlBridge(broker: broker, transport: FakeControlTransport(shared: shared, id: id, generation: 7))
+        let ticket = try await bridge.assumeHuman()
+        XCTAssertEqual(ticket.grant.actor, .human)
+        XCTAssertGreaterThan(ticket.grant.epoch, agent.epoch)
+        let log = await shared.log
+        XCTAssertEqual(log, ["health", "revoke:\(agent.actorID):\(agent.epoch)",
+                             "grant:human:\(ticket.grant.epoch)"])
+        let oldCanWrite = await broker.checkWrite(actor: agent.actor, computer: id, epoch: agent.epoch, path: .input)
+        XCTAssertFalse(oldCanWrite)
+        try await bridge.input(.key("Return"), ticket: ticket)
+        let inputLog = await shared.log
+        XCTAssertEqual(inputLog.last, "input")
+        try await bridge.releaseHuman(ticket)
+        let afterRelease = await bridge.ticket()
+        XCTAssertNil(afterRelease)
+        let humanCanWrite = await broker.checkWrite(actor: .human, computer: id, epoch: ticket.grant.epoch, path: .input)
+        XCTAssertFalse(humanCanWrite)
+    }
+
+    func testBadRevokeAckSuspendsWithoutHumanTicket() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let broker = try ControlBroker(url: root.appendingPathComponent("control.json"))
+        let id = UUID(), run = UUID()
+        try await broker.reconcile(computerID: id, activeRuntimeLease: nil)
+        guard case .granted(let agent) = try await broker.requestAgent(computerID: id, runID: run) else {
+            return XCTFail("Expected agent")
+        }
+        let shared = FakeControlRuntime(id: id, generation: 1,
+                                        initialLease: BrowserRuntimeLease(actorID: agent.actorID,
+                                                                          epoch: agent.epoch, paths: Array(agent.paths)))
+        await shared.setBadAck(true)
+        let bridge = ComputerControlBridge(broker: broker, transport: FakeControlTransport(shared: shared, id: id, generation: 1))
+        do { _ = try await bridge.assumeHuman(); XCTFail("Bad ACK must fail") }
+        catch ComputerControlBridgeError.wrongGrant {}
+        let ticket = await bridge.ticket()
+        XCTAssertNil(ticket)
+        let current = await broker.currentGrant(computerID: id)
+        XCTAssertNil(current)
+        let log = await shared.log
+        XCTAssertFalse(log.contains(where: { $0.hasPrefix("grant:human:") }))
+    }
+
+    func testGenerationMismatchAndModeRefresh() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let id = UUID()
+        let broker = try ControlBroker(url: root.appendingPathComponent("control.json"))
+        let shared = FakeControlRuntime(id: id, generation: 2)
+        let stale = ComputerControlBridge(broker: broker, transport: FakeControlTransport(shared: shared, id: id, generation: 1))
+        do { _ = try await stale.assumeHuman(); XCTFail("Stale generation must fail") }
+        catch ComputerControlBridgeError.staleGeneration {}
+        let current = ComputerControlBridge(broker: broker, transport: FakeControlTransport(shared: shared, id: id, generation: 2))
+        let ticket = try await current.assumeHuman()
+        let health = try await current.changeMode(.desktop, ticket: ticket)
+        XCTAssertEqual(health.generation, 3)
+        let newGeneration = await current.currentGeneration()
+        XCTAssertEqual(newGeneration, 3)
+        let updatedTicket = await current.ticket()
+        let renewed = try XCTUnwrap(updatedTicket)
+        XCTAssertEqual(renewed.generation, 3)
+        do { try await current.input(.key("Return"), ticket: ticket); XCTFail("Old generation ticket must fail") }
+        catch ComputerControlBridgeError.noTicket {}
+        try await current.input(.key("Return"), ticket: renewed)
+    }
+}
+
+private actor FakeControlRuntime {
+    let id: UUID
+    var generation: UInt64
+    var lease: BrowserRuntimeLease?
+    var log: [String] = []
+    var badAck = false
+    var failInput = false
+
+    init(id: UUID, generation: UInt64, initialLease: BrowserRuntimeLease? = nil) {
+        self.id = id; self.generation = generation; self.lease = initialLease
+    }
+
+    func setBadAck(_ value: Bool) { badAck = value }
+    func setFailInput(_ value: Bool) { failInput = value }
+    func health() throws -> BrowserRuntimeHealth {
+        log.append("health")
+        return try decode(#"{"computer_id":"\#(id.uuidString)","generation":\#(generation),"mode":"desktop","browser_ready":true,"display_ready":true,"frame_source":"desktop","active_lease":\#(leaseJSON())}"#)
+    }
+    func grant(actorID: String, epoch: UInt64, paths: Set<ControlWritePath>) throws -> BrowserRuntimeGrantedLease {
+        guard lease == nil else { throw BrowserRuntimeError.rejected(409, "lease exists") }
+        log.append("grant:\(actorID):\(epoch)")
+        lease = BrowserRuntimeLease(actorID: actorID, epoch: epoch, paths: Array(paths))
+        let pathsJSON = paths.map { "\"\($0.rawValue)\"" }.joined(separator: ",")
+        return try decode(#"{"actor_id":"\#(actorID)","epoch":\#(epoch),"paths":[\#(pathsJSON)],"control_token":"private-token"}"#)
+    }
+    func revoke(actorID: String, epoch: UInt64) throws -> BrowserRuntimeRevocationAck {
+        log.append("revoke:\(actorID):\(epoch)")
+        guard lease?.actorID == actorID, lease?.epoch == epoch else { throw BrowserRuntimeError.rejected(409, "lease mismatch") }
+        if badAck { return try decode(#"{"revoked_actor_id":"wrong","revoked_epoch":\#(epoch),"acknowledged":true}"#) }
+        lease = nil
+        return try decode(#"{"revoked_actor_id":"\#(actorID)","revoked_epoch":\#(epoch),"acknowledged":true}"#)
+    }
+    func input() throws -> BrowserDesktopInputResult {
+        guard lease != nil else { throw BrowserRuntimeError.rejected(409, "no lease") }
+        log.append("input")
+        if failInput { throw BrowserRuntimeError.invalidResponse }
+        return try decode(#"{"accepted":true,"generation":\#(generation)}"#)
+    }
+    func changeMode() throws -> BrowserRuntimeHealth {
+        generation += 1
+        return try health()
+    }
+    private func leaseJSON() -> String {
+        guard let lease else { return "null" }
+        let paths = lease.paths.map { "\"\($0.rawValue)\"" }.joined(separator: ",")
+        return #"{"actor_id":"\#(lease.actorID)","epoch":\#(lease.epoch),"paths":[\#(paths)]}"#
+    }
+    private func decode<T: Decodable>(_ json: String) throws -> T {
+        try JSONDecoder().decode(T.self, from: Data(json.utf8))
+    }
+}
+
+private struct FakeControlTransport: ComputerControlTransport {
+    let shared: FakeControlRuntime
+    let computerID: UUID
+    let generation: UInt64
+    init(shared: FakeControlRuntime, id: UUID, generation: UInt64) {
+        self.shared = shared; self.computerID = id; self.generation = generation
+    }
+    func health() async throws -> BrowserRuntimeHealth { try await shared.health() }
+    func grant(actorID: String, epoch: UInt64, paths: Set<ControlWritePath>) async throws -> BrowserRuntimeGrantedLease {
+        try await shared.grant(actorID: actorID, epoch: epoch, paths: paths)
+    }
+    func revoke(actorID: String, epoch: UInt64) async throws -> BrowserRuntimeRevocationAck {
+        try await shared.revoke(actorID: actorID, epoch: epoch)
+    }
+    func input(_ action: BrowserDesktopInput, lease: BrowserRuntimeGrantedLease) async throws -> BrowserDesktopInputResult {
+        try await shared.input()
+    }
+    func changeMode(_ mode: BrowserRuntimeMode, lease: BrowserRuntimeGrantedLease) async throws -> BrowserRuntimeHealth {
+        try await shared.changeMode()
+    }
+    func refreshed(generation: UInt64) throws -> Self {
+        Self(shared: shared, id: computerID, generation: generation)
+    }
+}

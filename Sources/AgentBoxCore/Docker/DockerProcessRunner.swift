@@ -32,7 +32,12 @@ public protocol DockerCommandRunning {
 /// Uses argv directly; neither shell expansion nor inherited stdin is involved.
 public struct DockerProcessRunner: DockerCommandRunning {
     public let executableURL: URL?
-    public init(executableURL: URL? = DockerProcessRunner.findExecutable()) { self.executableURL = executableURL }
+    public let contextName: String?
+    public let connectionStore: DockerConnectionStore
+    public init(executableURL: URL? = DockerProcessRunner.findExecutable(), contextName: String? = nil,
+                connectionStore: DockerConnectionStore = DockerConnectionStore()) {
+        self.executableURL=executableURL; self.contextName=contextName; self.connectionStore=connectionStore
+    }
 
     public static func findExecutable() -> URL? {
         let envPaths = (ProcessInfo.processInfo.environment["PATH"] ?? "").split(separator: ":").map(String.init)
@@ -48,7 +53,9 @@ public struct DockerProcessRunner: DockerCommandRunning {
         guard let executableURL else { throw DockerCommandError.executableMissing }
         let process = Process()
         process.executableURL = executableURL
-        process.arguments = arguments
+        let selectedContext = try contextName ?? (executableURL.lastPathComponent == "docker" ? connectionStore.load().contextName : nil)
+        try DockerConnection(contextName:selectedContext).validate()
+        process.arguments = (selectedContext.map { ["--context", $0] } ?? []) + arguments
         process.standardInput = FileHandle.nullDevice
         let out = Pipe(), err = Pipe()
         process.standardOutput = out; process.standardError = err

@@ -47,6 +47,8 @@ final class DockerComputerTests: XCTestCase {
         try store.save(ComputerPolicy(creation: .manual))
         runner.responses = [
             .init(exitCode: 0), // No existing container.
+            .init(exitCode: 0), // Legacy capacity available.
+            .init(exitCode: 0), // Browser capacity available.
             .init(exitCode: 0, stdout: "container-123\n"), // docker create
             .init(exitCode: 0, stdout: "container-123\n"), // list
             .init(exitCode: 0, stdout: inspection(id, running: false)), // inspect
@@ -58,7 +60,7 @@ final class DockerComputerTests: XCTestCase {
         let service = DockerComputerService(runner: runner, policyStore: store)
         let computer = try service.createAndStart(for: id)
         XCTAssertTrue(computer.running)
-        let create = runner.commands[1]
+        let create = runner.commands[3]
         XCTAssertEqual(create.first, "create")
         XCTAssertTrue(create.contains("com.agentbox.terminal-id=\(id.uuidString.lowercased())"))
         for option in ["--cpus", "--memory", "--pids-limit", "--read-only", "--cap-drop", "--user"] {
@@ -67,7 +69,7 @@ final class DockerComputerTests: XCTestCase {
         for forbidden in ["--privileged", "--volume", "-v", "--mount", "--publish", "-p"] {
             XCTAssertFalse(create.contains(forbidden), forbidden)
         }
-        XCTAssertEqual(runner.commands[5], ["start", "container-123"])
+        XCTAssertEqual(runner.commands[7], ["start", "container-123"])
     }
 
     func testUnownedContainerCannotBeStopped() throws {

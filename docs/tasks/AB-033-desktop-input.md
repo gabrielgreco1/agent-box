@@ -1,0 +1,7 @@
+# AB-033 — Input do desktop
+
+Implementado em 16/10/2026. O canvas do viewer converte eventos dentro do frame inteiro, com letterbox, para coordenadas normalizadas. O broker converte para pixels 1280×800 do Xvfb e envia movimento, botão pressionado/solto, arrasto, scroll vertical/horizontal e teclado pelo `ComputerControlBridge.input`. Cada comando passa pela checagem de ticket/epoch do broker e pelos headers de lease do runtime. A fila do viewer mantém a ordem dos eventos de arrasto; comandos enfileirados de uma concessão antiga são descartados quando o controle muda.
+
+Atalhos de teclado chegam como uma ação atômica do xdotool. Command e Control do Mac correspondem a Control do Linux; Option corresponde a Alt. O runtime não mantém modificadores de teclado pressionados entre eventos. O clique mantém o botão pressionado durante movimentos de arrasto, e a revogação ACK solta os botões mantidos antes de encerrar o lease. O canvas volta ao estado sem botão capturado quando perde permissão de input.
+
+Verificação: `python3 -m unittest test_runtime.py` em `runtime/boxes` passou com 5 testes, incluindo guarda de lease no endpoint, scroll horizontal, movimento e soltura de botão. Há teste Swift de encoding em `BrowserRuntimeTests`; o integrador executará o build/teste Swift em série. O gesto e atalhos completos ainda precisam de smoke ao vivo pela UI do app. O runtime tem resolução fixa 1280×800; ampliar para resolução dinâmica exige contrato explícito de tamanho no health/frame.

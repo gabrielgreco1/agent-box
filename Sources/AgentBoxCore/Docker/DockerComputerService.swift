@@ -1,5 +1,7 @@
 import Foundation
 
+enum ComputerCreationLock { static let lock = NSRecursiveLock() }
+
 public enum DockerAvailability: Equatable {
     case cliMissing
     case daemonUnavailable(String)
@@ -16,6 +18,7 @@ public struct ManagedComputer: Equatable, Identifiable {
 
 public enum DockerComputerError: Error, LocalizedError, Equatable {
     case unmanagedContainer
+    case resourceLimit
     case duplicateContainers
     case containerMissing
     case malformedResponse
@@ -23,6 +26,7 @@ public enum DockerComputerError: Error, LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .unmanagedContainer: return "O container existente não pertence ao Agent Box; nenhuma ação foi feita."
+        case .resourceLimit: return "O teto de computadores ativos foi atingido. Pare um computador ou ajuste o teto global."
         case .duplicateContainers: return "Mais de um container gerenciado foi encontrado para este terminal. Resolva o conflito no Docker antes de continuar."
         case .containerMissing: return "Nenhum computador foi encontrado para este terminal."
         case .malformedResponse: return "Docker retornou uma resposta inesperada."
@@ -84,22 +88,30 @@ public struct DockerComputerService<Runner: DockerCommandRunning> {
         return computers.first
     }
 
-    public func createAndStart(for terminalID: UUID) throws -> ManagedComputer {
-        guard try policyStore.load().creation == .manual else { throw ComputerPolicyError.creationDisabled }
+    public func createAndStart(for terminalID: UUID, context: ComputerPolicyContext? = nil) throws -> ManagedComputer {
+        ComputerCreationLock.lock.lock()
+        defer { ComputerCreationLock.lock.unlock() }
+        let ancestry = context ?? ComputerPolicyContext(terminalID: terminalID)
+        guard ancestry.terminalID == terminalID else { throw ComputerPolicyError.invalidScope }
+        let policy = try policyStore.load().effective(for: ancestry)
+        guard policy.creation != .disabled else { throw ComputerPolicyError.creationDisabled }
+        guard policy.modePreference != .alwaysGraphical else { throw ComputerPolicyError.graphicalUnavailable }
         if let existing = try computer(for: terminalID) {
             if existing.running { return existing }
+            try checkCapacity(policy)
             try start(existing)
             return try computer(for: terminalID) ?? existing
         }
+        try checkCapacity(policy)
         let name = "agentbox-\(terminalID.uuidString.lowercased())"
         // Docker will reject name conflicts, including unowned containers; never overwrite them.
         _ = try checked(["create", "--name", name,
                          "--label", "\(Self.ownerLabel)=true",
                          "--label", "\(Self.terminalLabel)=\(terminalID.uuidString.lowercased())",
-                         "--cpus", "1", "--memory", "768m", "--pids-limit", "128",
+                         "--cpus", String(policy.limits.cpus), "--memory", "\(policy.limits.memoryMiB)m", "--pids-limit", "128",
                          "--read-only", "--tmpfs", "/tmp:rw,nosuid,nodev,size=128m",
                          "--security-opt", "no-new-privileges", "--cap-drop", "ALL",
-                         "--user", "65534:65534", "--network", "bridge", "--init",
+                         "--user", "65534:65534", "--network", policy.networkAllowed ? "bridge" : "none", "--init",
                          Self.image, "sleep", "infinity"], timeout: 120)
         guard let computer = try computer(for: terminalID) else { throw DockerComputerError.containerMissing }
         try start(computer)
@@ -116,6 +128,14 @@ public struct DockerComputerService<Runner: DockerCommandRunning> {
             throw DockerComputerError.unmanagedContainer
         }
         _ = try checked(["stop", "--time", "10", computer.containerID], timeout: 20)
+    }
+
+    private func checkCapacity(_ policy: EffectiveComputerPolicy) throws {
+        let active = try checked(["ps", "-q", "--filter", "label=\(Self.ownerLabel)=true"], timeout: 8)
+            .stdout.split(whereSeparator: \.isNewline).count
+        let browsers = try checked(["ps", "-q", "--filter", "label=com.agentbox.browser-managed=true"], timeout: 8)
+            .stdout.split(whereSeparator: \.isNewline).count
+        guard active + browsers < policy.limits.maxComputers else { throw DockerComputerError.resourceLimit }
     }
 
     private func start(_ computer: ManagedComputer) throws {

@@ -37,8 +37,17 @@ public struct LibraryRepository {
               Set(document.skills.map(\.id)).count == document.skills.count else {
             throw LibraryError.invalid("A biblioteca contém IDs duplicados; o arquivo original foi preservado.")
         }
-        guard document.agents.allSatisfy({ !$0.name.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty }) else {
-            throw LibraryError.invalid("O agente precisa de um nome.")
+        guard Set(document.history.map(\.id)).count == document.history.count,
+              Set(document.agentRevisions.map { "\($0.agentID)-\($0.revision)" }).count == document.agentRevisions.count,
+              Set(document.memoryRevisions.map { "\($0.memoryID)-\($0.revision)" }).count == document.memoryRevisions.count else {
+            throw LibraryError.invalid("A biblioteca contém revisões ou execuções duplicadas; o arquivo original foi preservado.")
+        }
+        guard document.agents.allSatisfy({ !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && $0.revision > 0 }) else {
+            throw LibraryError.invalid("O agente precisa de nome e revisão válidos.")
+        }
+        guard document.memories.allSatisfy({ !$0.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+            !$0.content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && $0.revision > 0 }) else {
+            throw LibraryError.invalid("A memória precisa de título, conteúdo e revisão válidos.")
         }
     }
 }
@@ -67,23 +76,56 @@ public enum SkillImporter {
 }
 
 public enum LibraryContext {
-    /// Generates reviewable text; does not activate a native CLI agent or install a skill.
-    public static func render(agentID:UUID, in document:LibraryDocument, projectKey:String? = nil, taskKey:String? = nil) throws -> String {
-        guard let agent=document.agents.first(where:{$0.id==agentID && !$0.archived}) else { throw LibraryError.invalid("Agente indisponível.") }
-        var parts=["# \(agent.name)","Revisão: \(agent.revision)","## Instruções\n\(agent.instructions)"]
-        for id in agent.memoryIDs {
-            guard let memory=document.memories.first(where:{$0.id==id}), !memory.archived else { throw LibraryError.unavailableMemory(id.uuidString) }
-            let allowed:Bool
-            switch memory.scope { case .agent: allowed=memory.scopeKey==agent.id.uuidString; case .preference: allowed=true; case .project: allowed=projectKey != nil && projectKey==memory.scopeKey; case .task: allowed=taskKey != nil && taskKey==memory.scopeKey }
-            guard allowed else { throw LibraryError.unavailableMemory(memory.title) }
-            parts.append("## Memória: \(memory.title)\nEscopo: \(memory.scope.label) · revisão \(memory.revision)\nFonte: \(memory.source)\n\n\(memory.content)")
+    /// Prepares a reviewable snapshot. A provider adapter still must choose a supported launch mechanism.
+    public static func prepare(agentID: UUID, in document: LibraryDocument,
+                               projectKey: String? = nil, taskKey: String? = nil,
+                               profileKey: String? = nil, selectedMemoryIDs: [UUID]? = nil,
+                               selectedSkillIDs: [UUID]? = nil, now: Date = Date()) throws -> PreparedAgentContext {
+        guard let agent = document.agents.first(where: { $0.id == agentID && !$0.archived }) else {
+            throw LibraryError.invalid("Agente indisponível.")
         }
-        for id in agent.skillIDs {
-            guard let skill=document.skills.first(where:{$0.id==id}) else { throw LibraryError.invalid("Uma skill selecionada não está mais disponível.") }
+        let memoryIDs = selectedMemoryIDs ?? agent.memoryIDs
+        let skillIDs = selectedSkillIDs ?? agent.skillIDs
+        guard Set(memoryIDs).count == memoryIDs.count, Set(skillIDs).count == skillIDs.count else {
+            throw LibraryError.invalid("A seleção contém IDs repetidos.")
+        }
+        var parts = ["# \(agent.name)", "Revisão: \(agent.revision)", "## Instruções\n\(agent.instructions)"]
+        var selectedMemories: [SelectedMemoryRevision] = []
+        for id in memoryIDs {
+            guard let memory = document.memories.first(where: { $0.id == id }), !memory.archived,
+                  memory.validUntil.map({ $0 >= now }) ?? true else {
+                throw LibraryError.unavailableMemory(id.uuidString)
+            }
+            let allowed: Bool
+            switch memory.scope {
+            case .agent: allowed = memory.scopeKey == agent.id.uuidString
+            case .preference: allowed = true
+            case .project: allowed = projectKey != nil && projectKey == memory.scopeKey
+            case .task: allowed = taskKey != nil && taskKey == memory.scopeKey
+            case .profile: allowed = profileKey != nil && profileKey == memory.scopeKey
+            }
+            guard allowed else { throw LibraryError.unavailableMemory(memory.title) }
+            selectedMemories.append(SelectedMemoryRevision(memory: memory))
+            parts.append("## Memória: \(memory.title)\nTipo: \(memory.kind.label) · Escopo: \(memory.scope.label) · revisão \(memory.revision)\nFonte: \(memory.source)\n\n\(memory.content)")
+        }
+        var selectedSkills: [PreparedSkillReference] = []
+        for id in skillIDs {
+            guard let skill = document.skills.first(where: { $0.id == id }) else {
+                throw LibraryError.invalid("Uma skill selecionada não está mais disponível.")
+            }
+            selectedSkills.append(PreparedSkillReference(skill: skill))
             parts.append("## Skill selecionada: \(skill.name)\nOrigem: \(skill.sourcePath)\nSHA-256: \(skill.sha256)\n\n\(skill.content)")
         }
-        let text=parts.joined(separator:"\n\n")+"\n"
+        let text = parts.joined(separator: "\n\n") + "\n"
         guard text.utf8.count <= 200_000 else { throw LibraryError.oversized }
-        return text
+        return PreparedAgentContext(agentID: agent.id, agentRevision: agent.revision,
+                                    provider: agent.provider, text: text,
+                                    selectedMemories: selectedMemories, selectedSkills: selectedSkills)
+    }
+
+    /// Compatibility wrapper for the library's export action.
+    public static func render(agentID: UUID, in document: LibraryDocument,
+                              projectKey: String? = nil, taskKey: String? = nil) throws -> String {
+        try prepare(agentID: agentID, in: document, projectKey: projectKey, taskKey: taskKey).text
     }
 }
