@@ -1,0 +1,32 @@
+{
+  "purpose": "Bounded synthetic native Claude probe for multipart SubagentStart additionalContext",
+  "result": "passed",
+  "claudeCodeVersion": "2.1.301",
+  "setup": {
+    "hookScript": "An unchanged copy of the production claude_event.py hook was used in an isolated scratch directory.",
+    "settings": "Equivalent settings were generated manually for this probe, not materialized by the Swift launch planner. SessionStart and SubagentStop used the production event hook; SubagentStart used that hook plus five numbered child-context commands matching the planner's command shape.",
+    "context": "Synthetic UTF-8 only, frozen to a protected local file with SHA-256 checked by each hook command; no user skill or credentials were read.",
+    "contextBytes": 40000,
+    "chunkCount": 5,
+    "chunkBytes": 8000,
+    "model": "haiku",
+    "cliMode": "Single noninteractive -p JSON call, no session persistence, empty setting sources, strict MCP configuration, Agent as the only parent tool, no child tools, permission mode dontAsk.",
+    "maxBudgetUSD": 0.5,
+    "watchdogSeconds": 90
+  },
+  "observed": {
+    "exitCode": 0,
+    "elapsedSeconds": 5.3,
+    "allFiveUniqueMarkersPresentInChildReport": true,
+    "markerPresenceByPart": [true, true, true, true, true],
+    "sessionStartEventPresent": true,
+    "subagentStartHadNativeAgentID": true,
+    "subagentStopHadSameNativeAgentID": true,
+    "hookSignatures": "Hook-generated HMAC fields were present; cryptographic verification was not independently performed in this probe because the ephemeral key was not retained.",
+    "reportedCostUSD": 0.00317251,
+    "cliReportedError": false,
+    "stderrNonempty": false
+  },
+  "limits": "This establishes delivery through Claude Code's native child hook path in one print-mode invocation. It does not exercise the Swift planner's file materialization, interactive TUI behavior, or app-level child-box routing.",
+  "cleanup": "The owned CLI process exited normally; the 90-second process-group watchdog did not fire. No extra model call was made."
+}

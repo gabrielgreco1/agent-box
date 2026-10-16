@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-16",
+  "claude_version": "2.1.301",
+  "mode": "native non-interactive -p with isolated fixture MCP and explicit tool allowlist",
+  "exit_code": 0,
+  "subagent_start_events": 1,
+  "pre_tool_use_events": 2,
+  "mcp_calls": 2,
+  "parent_agent_id_absent": true,
+  "child_agent_id_matches_subagent_start": true,
+  "parent_and_child_share_native_session": true,
+  "tool_use_ids_distinct": true,
+  "updated_input_matches_each_mcp_call": true,
+  "hook_sets_permission_decision": false,
+  "stderr_empty": true,
+  "reported_cost_usd": 0.00194349,
+  "docker_started": false,
+  "personal_skill_used": false,
+  "limits": [
+    "Probe verifies routing metadata transport, not production computer operations.",
+    "Interactive TUI permission handling and independent child box control remain unverified."
+  ]
+}

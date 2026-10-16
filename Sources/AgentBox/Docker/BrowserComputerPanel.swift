@@ -9,17 +9,33 @@ private struct DesktopPresentation: Identifiable {
 
 struct BrowserComputerPanel: View {
     let terminalID: UUID
+    let owner: BrowserComputerOwner
     let context: ComputerPolicyContext
     let onReviewAgent: (ScrapingBoxAssignment) -> Void
     @StateObject private var store = BrowserComputerStore()
     @ObservedObject private var runtime = WorkspaceServices.terminalRuntime
+    @ObservedObject private var nativeAgents = NativeAgentMonitor.shared
     @State private var launchBinding: AgentLaunchBinding?
     @State private var error: String?
     @State private var busy = false
     @State private var presentation: DesktopPresentation?
     @State private var currentMode: BrowserRuntimeMode?
 
-    private var computer: BrowserManagedComputer? {store.computer(for:terminalID)}
+    init(terminalID: UUID, context: ComputerPolicyContext,
+         owner: BrowserComputerOwner? = nil,
+         onReviewAgent: @escaping (ScrapingBoxAssignment) -> Void = { _ in }) {
+        self.terminalID = terminalID
+        self.owner = owner ?? .terminal(terminalID)
+        self.context = context
+        self.onReviewAgent = onReviewAgent
+    }
+
+    private var computer: BrowserManagedComputer? { store.computer(for: owner) }
+    private var nativeChildCurrent: Bool {
+        guard case .nativeChild(let parentTerminalID, let runID) = owner else { return true }
+        return nativeAgents.isCurrentNativeChild(runID: runID,
+            parentTerminalID: parentTerminalID, runtime: runtime)
+    }
     private var isBusy: Bool {
         busy || store.busyComputerIDs.contains(terminalID) ||
             (computer.map { store.busyComputerIDs.contains($0.id) } ?? false)
@@ -35,7 +51,16 @@ struct BrowserComputerPanel: View {
     }
     var body:some View {
         VStack(alignment:.leading,spacing:10) {
-            Text("Navegador e desktop").font(.system(size:13,weight:.medium))
+            Text(owner.agentRunID == nil ? "Navegador e desktop" : "Computador do subagente")
+                .font(.system(size:13,weight:.medium))
+            if let runID = owner.agentRunID {
+                Text("Run observado \(runID.uuidString.prefix(8)) · terminal pai compartilhado")
+                    .font(.caption).foregroundStyle(.secondary)
+                Text(nativeChildCurrent
+                     ? "Box próprio do subagente. O acesso nativo às ferramentas ainda não está disponível."
+                     : "Subagente não ativo; esta box pode ser consultada ou parada, sem iniciar nova execução.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
             if let computer {
                 Label(computer.running ? "Em execução" : "Parado",systemImage:computer.running ? "circle.fill":"pause.circle")
                     .font(.caption).foregroundStyle(.secondary)
@@ -50,7 +75,8 @@ struct BrowserComputerPanel: View {
                     Text("A autorização pode abrir uma janela do macOS. O box e seus dados são preservados se você recusar.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
-                if let assignment = store.scrapingAssignment(for: computer.id),
+                if owner.agentRunID == nil,
+                   let assignment = store.scrapingAssignment(for: computer.id),
                    assignment.terminalID == terminalID {
                     Text(skillIncluded(assignment) ? "Web scraping · skill incluída no lançamento" : "Web scraping · lançamento pendente")
                         .font(.caption).foregroundStyle(.secondary)
@@ -59,20 +85,20 @@ struct BrowserComputerPanel: View {
                     Button("Revisar e iniciar agente") {
                         onReviewAgent(assignment)
                     }.disabled(isBusy || recoveryBlocksActions)
-                } else {
+                } else if owner.agentRunID == nil {
                     Button("Definir agente de scraping padrão") {
                         perform { try store.assignDefault(to: computer) }
                     }.disabled(isBusy || recoveryBlocksActions)
                 }
                 HStack {
                     if computer.running {
-                        Button("Abrir desktop") {openDesktop(computer.id)}
-                            .disabled(isBusy || recoveryBlocksActions)
-                        Button("Parar") {perform {try await store.stop(computerID:computer.id);currentMode=nil}}
+                        Button("Abrir desktop") {openDesktop(computer.id, allowModeChange: nativeChildCurrent)}
+                            .disabled(isBusy || recoveryBlocksActions || (!nativeChildCurrent && currentMode != .desktop))
+                        Button("Parar") {perform {try await store.stop(computerID:computer.id,owner:owner);currentMode=nil}}
                             .disabled(isBusy)
                     } else {
-                        Button("Iniciar") {perform {_ = try await store.start(computerID:computer.id,context:context);try await applyPreferredMode(computer.id)}}
-                            .disabled(isBusy || recoveryBlocksActions)
+                        Button("Iniciar") {perform {_ = try await store.start(computerID:computer.id,owner:owner,context:context);try await applyPreferredMode(computer.id)}}
+                            .disabled(isBusy || recoveryBlocksActions || !nativeChildCurrent)
                     }
                 }
                 if !computer.running,
@@ -85,7 +111,7 @@ struct BrowserComputerPanel: View {
                            ? "Autorizar e atualizar" : "Atualizar computador") {
                         perform {
                             presentation = nil
-                            _ = try await store.updateStoppedImage(computerID: computer.id, context: context,
+                            _ = try await store.updateStoppedImage(computerID: computer.id, owner: owner, context: context,
                                 interactiveAuthorization: store.imageUpdateAuthorizationRequired.contains(computer.id))
                             currentMode = nil
                         }
@@ -105,16 +131,21 @@ struct BrowserComputerPanel: View {
                         Button("HTTP · sem navegador") {changeMode(.http,computerID:computer.id)}
                         Button("Navegador headless") {changeMode(.headless,computerID:computer.id)}
                         Button("Desktop") {openDesktop(computer.id)}
-                    }.disabled(isBusy || recoveryBlocksActions)
+                    }.disabled(isBusy || recoveryBlocksActions || !nativeChildCurrent)
                     Text("Trocar de modo reinicia o navegador. Perfil e arquivos são mantidos; formulários em andamento podem ser perdidos.").font(.caption).foregroundStyle(.secondary)
                 }
             } else {
                 Button("Criar computador") {
                     perform {
-                        let created=try await store.createAndStart(terminalID:terminalID,context:context)
+                        let created: BrowserManagedComputer
+                        if owner.agentRunID == nil {
+                            created = try await store.createAndStart(terminalID: terminalID, context: context)
+                        } else {
+                            created = try await store.createAndStart(owner: owner, context: context)
+                        }
                         try await applyPreferredMode(created.id)
                     }
-                }.disabled(isBusy || recoveryBlocksActions)
+                }.disabled(isBusy || recoveryBlocksActions || !nativeChildCurrent)
                 Text("Perfil e arquivos persistem entre reinícios. Requer imagem do runtime e teto de memória de pelo menos 2048 MiB.").font(.caption).foregroundStyle(.secondary)
             }
             if let pending = store.pendingImageUpdate {
@@ -198,9 +229,14 @@ struct BrowserComputerPanel: View {
     private func changeMode(_ mode:BrowserRuntimeMode,computerID:UUID) {
         perform {_ = try await setMode(mode,computerID:computerID)}
     }
-    private func openDesktop(_ id:UUID) {
+    private func openDesktop(_ id:UUID, allowModeChange: Bool = true) {
         perform {
-            let endpoint=try await setMode(.desktop,computerID:id)
+            let endpoint: BrowserRuntimeEndpoint
+            if allowModeChange {
+                endpoint = try await setMode(.desktop, computerID: id)
+            } else {
+                endpoint = try await store.reconnect(computerID: id)
+            }
             let health=try await BrowserRuntimeClient(endpoint:endpoint).health()
             guard health.isFullDesktopReady else {throw BrowserComputerError.notReady}
             presentation=DesktopPresentation(id:id,endpoint:endpoint,actions:await BrokerDesktopActions(endpoint:endpoint,broker:try DesktopBrokerService.result.get()))

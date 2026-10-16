@@ -2,6 +2,39 @@ import XCTest
 @testable import AgentBoxCore
 
 final class AgentRegistryTests: XCTestCase {
+    func testConcurrentInboxDrainsKeepCursorOrderedAndChildStopped() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let runID = UUID()
+        let hook = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("runtime/hooks/claude_event.py")
+        let config = try ClaudeHookInboxConfiguration.create(runID: runID,
+            directory: root.appendingPathComponent("inbox"), hookScriptURL: hook)
+        let registry = try AgentRunRegistry(url: root.appendingPathComponent("runs.json"))
+        _ = try await registry.recordTerminalStart(terminalID: UUID(), provider: .claude,
+                                                   processID: 42, runID: runID)
+        try Self.emit(#"{"hook_event_name":"SessionStart","session_id":"session-A"}"#,
+                      hook: hook, environment: config.environment)
+        try Self.emit(#"{"hook_event_name":"SubagentStart","session_id":"session-A","agent_id":"child-A","agent_type":"Explore"}"#,
+                      hook: hook, environment: config.environment)
+        try Self.emit(#"{"hook_event_name":"SubagentStop","session_id":"session-A","agent_id":"child-A","agent_type":"Explore"}"#,
+                      hook: hook, environment: config.environment)
+        let reader = ClaudeHookInbox(configuration: config, registry: registry)
+        let total = try await withThrowingTaskGroup(of: Int.self) { group in
+            for _ in 0..<32 { group.addTask { try await reader.drain() } }
+            var accepted = 0
+            for try await count in group { accepted += count }
+            return accepted
+        }
+        XCTAssertEqual(total, 3, "Each signed line must be admitted once despite concurrent drain callers")
+        let subsequent = try await reader.drain()
+        XCTAssertEqual(subsequent, 0)
+        let runs = await registry.allRuns()
+        XCTAssertEqual(runs.count, 2)
+        XCTAssertEqual(runs.first(where: { $0.nativeAgentID == "child-A" })?.status, .finished)
+    }
+
     func testOptInClaudeHookInboxAcceptsOnlyAuthenticatedRunEvents() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         defer { try? FileManager.default.removeItem(at: root) }

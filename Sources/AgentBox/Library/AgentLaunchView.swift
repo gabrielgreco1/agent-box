@@ -160,9 +160,13 @@ struct AgentLaunchView: View {
                 TextField("ID do perfil (opcional)", text: $profileKey)
                 TextField("Resumo da tarefa (opcional)", text: $taskSummary)
                 if agent.provider == .claude {
-                    Toggle("Observar subagentes do Claude", isOn: $observeClaudeSubagents)
-                        .toggleStyle(.checkbox)
-                    Text("Registra apenas eventos nativos de início e fim desta execução; subagentes não ganham terminal próprio.")
+                    if scrapingTarget == nil {
+                        Toggle("Observar subagentes do Claude", isOn: $observeClaudeSubagents)
+                            .toggleStyle(.checkbox)
+                    }
+                    Text(scrapingTarget == nil
+                         ? "Registra eventos nativos de início e fim; subagentes não ganham terminal próprio."
+                         : "O hook nativo é obrigatório para identificar cada chamada ao computador; subagentes aguardam um box próprio.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 Text("Memórias incluídas").fontWeight(.medium)
@@ -300,7 +304,8 @@ struct AgentLaunchView: View {
                 workingDirectory: directory, projectKey: project, taskKey: task, profileKey: profile,
                 selectedMemoryIDs: memorySelection, selectedSkillIDs: skillSelection,
                 computerID: mcpComputerID, mcpHelper: mcpHelper,
-                hookScriptURL: preparedContext.provider == .claude && observeClaudeSubagents ? Self.packagedClaudeHook : nil)
+                hookScriptURL: preparedContext.provider == .claude &&
+                    (observeClaudeSubagents || mcpComputerID != nil) ? Self.packagedClaudeHook : nil)
             guard candidate.review.contextText == preparedContext.text,
                   candidate.agentRevision == preparedContext.agentRevision else {
                 throw AgentLaunchError.contextChanged

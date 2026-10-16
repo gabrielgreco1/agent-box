@@ -153,21 +153,55 @@ public struct KeychainBrowserComputerTokenStore: BrowserComputerTokenStoring {
     }
 }
 
+public enum BrowserComputerOwner: Hashable, Sendable {
+    case terminal(UUID)
+    case nativeChild(parentTerminalID: UUID, agentRunID: UUID)
+
+    public var terminalID: UUID {
+        switch self {
+        case .terminal(let id): return id
+        case .nativeChild(let id, _): return id
+        }
+    }
+    public var agentRunID: UUID? {
+        if case .nativeChild(_, let id) = self { return id }
+        return nil
+    }
+}
+
 public struct BrowserManagedComputer: Codable, Equatable, Identifiable, Sendable {
     public let id: UUID
     public let terminalID: UUID
+    public let agentRunID: UUID?
     public let containerID: String
     public let name: String
     public let volumeName: String
     public let running: Bool
+    public var owner: BrowserComputerOwner {
+        agentRunID.map { .nativeChild(parentTerminalID: terminalID, agentRunID: $0) } ?? .terminal(terminalID)
+    }
+    public init(id: UUID, terminalID: UUID, containerID: String, name: String,
+                volumeName: String, running: Bool, agentRunID: UUID? = nil) {
+        self.id = id; self.terminalID = terminalID; self.agentRunID = agentRunID
+        self.containerID = containerID; self.name = name; self.volumeName = volumeName; self.running = running
+    }
 }
 
 public struct BrowserComputerMetadata: Codable, Equatable, Sendable {
     public let computerID: UUID
     public let terminalID: UUID
+    public let agentRunID: UUID?
     public let containerID: String
     public let volumeName: String
     public let createdAt: Date
+    public var owner: BrowserComputerOwner {
+        agentRunID.map { .nativeChild(parentTerminalID: terminalID, agentRunID: $0) } ?? .terminal(terminalID)
+    }
+    public init(computerID: UUID, terminalID: UUID, containerID: String, volumeName: String,
+                createdAt: Date, agentRunID: UUID? = nil) {
+        self.computerID = computerID; self.terminalID = terminalID; self.agentRunID = agentRunID
+        self.containerID = containerID; self.volumeName = volumeName; self.createdAt = createdAt
+    }
 }
 
 public struct BrowserComputerImageUpdateStatus: Equatable, Sendable {
@@ -185,6 +219,7 @@ public struct PendingBrowserImageUpdate: Equatable, Sendable {
 private struct BrowserImageUpdateJournal: Codable {
     let computerID: UUID
     let terminalID: UUID
+    let agentRunID: UUID?
     let volumeName: String
     let oldContainerID: String
     var newContainerID: String?
@@ -202,7 +237,7 @@ public struct BrowserComputerMetadataStore {
     }
     public func save(_ records: [BrowserComputerMetadata]) throws {
         guard Set(records.map(\.computerID)).count == records.count,
-              Set(records.map(\.terminalID)).count == records.count else { throw BrowserComputerError.duplicateComputer }
+              Set(records.map(\.owner)).count == records.count else { throw BrowserComputerError.duplicateComputer }
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true,
                                                 attributes: [.posixPermissions: 0o700])
         try JSONEncoder().encode(records).write(to: url, options: .atomic)
@@ -225,6 +260,7 @@ public struct BrowserComputerService<Runner: DockerCommandRunning, Tokens: Brows
     public static var ownerLabel: String { "com.agentbox.browser-managed" }
     public static var computerLabel: String { "com.agentbox.browser-computer-id" }
     public static var terminalLabel: String { "com.agentbox.browser-terminal-id" }
+    public static var agentRunLabel: String { "com.agentbox.browser-agent-run-id" }
     public let runner: Runner
     public let tokens: Tokens
     public let policyStore: ComputerPolicyStore
@@ -240,12 +276,16 @@ public struct BrowserComputerService<Runner: DockerCommandRunning, Tokens: Brows
             .stdout.split(whereSeparator: \.isNewline).map(String.init)
         let computers = try ids.compactMap { try inspectOwned($0) }
         guard Set(computers.map(\.id)).count == computers.count,
-              Set(computers.map(\.terminalID)).count == computers.count else { throw BrowserComputerError.duplicateComputer }
+              Set(computers.map(\.owner)).count == computers.count else { throw BrowserComputerError.duplicateComputer }
         return computers
     }
 
     public func computer(for terminalID: UUID) throws -> BrowserManagedComputer? {
-        try list().first(where: { $0.terminalID == terminalID })
+        try computer(for: .terminal(terminalID))
+    }
+
+    public func computer(for owner: BrowserComputerOwner) throws -> BrowserManagedComputer? {
+        try list().first(where: { $0.owner == owner })
     }
 
     /// Rebuilds missing metadata from owned Docker labels after an app reinstall or file loss.
@@ -259,15 +299,17 @@ public struct BrowserComputerService<Runner: DockerCommandRunning, Tokens: Brows
         let live = try list()
         var records = try metadataStore.load()
         for computer in live {
-            if let existing = records.first(where: { $0.computerID == computer.id || $0.terminalID == computer.terminalID }) {
+            if let existing = records.first(where: { $0.computerID == computer.id || $0.owner == computer.owner }) {
                 guard existing.computerID == computer.id, existing.terminalID == computer.terminalID,
+                      existing.agentRunID == computer.agentRunID,
                       existing.containerID == computer.containerID, existing.volumeName == computer.volumeName else {
                     throw BrowserComputerError.duplicateComputer
                 }
             } else {
                 records.append(BrowserComputerMetadata(computerID: computer.id, terminalID: computer.terminalID,
                                                        containerID: computer.containerID,
-                                                       volumeName: computer.volumeName, createdAt: Date()))
+                                                       volumeName: computer.volumeName, createdAt: Date(),
+                                                       agentRunID: computer.agentRunID))
             }
         }
         try metadataStore.save(records)
@@ -275,19 +317,27 @@ public struct BrowserComputerService<Runner: DockerCommandRunning, Tokens: Brows
     }
 
     public func createAndStart(for terminalID: UUID, context: ComputerPolicyContext? = nil) throws -> BrowserManagedComputer {
+        try createAndStart(for: .terminal(terminalID), context: context)
+    }
+
+    /// The host must verify a native child run in AgentRunRegistry before calling this overload.
+    /// This service uses the real parent terminal for policy ancestry and Docker labels.
+    public func createAndStart(for owner: BrowserComputerOwner,
+                               context: ComputerPolicyContext? = nil) throws -> BrowserManagedComputer {
         ComputerCreationLock.lock.lock(); defer { ComputerCreationLock.lock.unlock() }
         guard try loadImageUpdateJournal() == nil else { throw BrowserComputerError.updateRecoveryRequired }
+        let terminalID = owner.terminalID
         let context = context ?? ComputerPolicyContext(terminalID: terminalID)
         guard context.terminalID == terminalID else { throw ComputerPolicyError.invalidScope }
         let policy = try policyStore.load().effective(for: context)
         guard policy.creation != .disabled else { throw BrowserComputerError.creationDisabled }
         guard policy.networkAllowed else { throw BrowserComputerError.networkDisabled }
         guard policy.limits.memoryMiB >= 2048 else { throw BrowserComputerError.insufficientMemory }
-        if let existing = try computer(for: terminalID) {
+        if let existing = try computer(for: owner) {
             if existing.running { return existing }
             try checkCapacity(policy)
             try start(existing)
-            guard let restarted = try computer(for: terminalID), restarted.running else {
+            guard let restarted = try computer(for: owner), restarted.running else {
                 throw BrowserComputerError.notReady
             }
             return restarted
@@ -311,7 +361,7 @@ public struct BrowserComputerService<Runner: DockerCommandRunning, Tokens: Brows
             defer { try? FileManager.default.removeItem(at: environmentFile) }
             let result = try checked(createArguments(name: name, computerID: id,
                 terminalID: terminalID, volume: volume, policy: policy,
-                environmentFile: environmentFile, image: Self.image), timeout: 120)
+                environmentFile: environmentFile, image: Self.image, agentRunID: owner.agentRunID), timeout: 120)
             let containerID = result.stdout.trimmingCharacters(in: .whitespacesAndNewlines)
             guard (12...64).contains(containerID.count),
                   containerID.allSatisfy({ $0.isHexDigit && !$0.isUppercase }) else {
@@ -320,10 +370,11 @@ public struct BrowserComputerService<Runner: DockerCommandRunning, Tokens: Brows
             createdContainer = containerID
             try FileManager.default.removeItem(at: environmentFile)
             guard let computer = try inspectOwned(containerID), computer.id == id,
-                  computer.terminalID == terminalID else { throw BrowserComputerError.unmanagedContainer }
+                  computer.owner == owner else { throw BrowserComputerError.unmanagedContainer }
             var metadata = try metadataStore.load()
             metadata.append(BrowserComputerMetadata(computerID: id, terminalID: terminalID,
-                                                    containerID: containerID, volumeName: volume, createdAt: Date()))
+                                                    containerID: containerID, volumeName: volume, createdAt: Date(),
+                                                    agentRunID: owner.agentRunID))
             try metadataStore.save(metadata)
             try start(computer)
             guard let running = try inspectOwned(containerID), running.running else {
@@ -391,6 +442,7 @@ public struct BrowserComputerService<Runner: DockerCommandRunning, Tokens: Brows
             ? tokens.readInteractively(computerID: computerID) : tokens.read(computerID: computerID)
         let nonce = UUID().uuidString.lowercased()
         var journal = BrowserImageUpdateJournal(computerID: computerID, terminalID: old.terminalID,
+            agentRunID: old.agentRunID,
             volumeName: old.volumeName, oldContainerID: old.containerID, newContainerID: nil,
             temporaryName: "agentbox-updating-\(nonce)", backupName: "agentbox-backup-\(nonce)",
             targetImageID: targetImageID)
@@ -404,13 +456,14 @@ public struct BrowserComputerService<Runner: DockerCommandRunning, Tokens: Brows
             defer { try? FileManager.default.removeItem(at: environmentFile) }
             let created = try checked(createArguments(name: journal.temporaryName, computerID: computerID,
                 terminalID: old.terminalID, volume: old.volumeName, policy: policy,
-                environmentFile: environmentFile, image: targetImageID), timeout: 120)
+                environmentFile: environmentFile, image: targetImageID,
+                agentRunID: old.agentRunID), timeout: 120)
             let newID = created.stdout.trimmingCharacters(in: .whitespacesAndNewlines)
             guard Self.validContainerID(newID) else { throw BrowserComputerError.invalidDockerResponse }
             journal.newContainerID = newID
             try saveImageUpdateJournal(journal)
             guard let candidate = try inspectOwned(newID, expectedName: journal.temporaryName),
-                  candidate.id == old.id, candidate.terminalID == old.terminalID,
+                  candidate.id == old.id, candidate.owner == old.owner,
                   !candidate.running, candidate.volumeName == old.volumeName else {
                 throw BrowserComputerError.unmanagedContainer
             }
@@ -426,7 +479,8 @@ public struct BrowserComputerService<Runner: DockerCommandRunning, Tokens: Brows
             let previous = records[index]
             records[index] = BrowserComputerMetadata(computerID: previous.computerID,
                 terminalID: previous.terminalID, containerID: newID,
-                volumeName: previous.volumeName, createdAt: previous.createdAt)
+                volumeName: previous.volumeName, createdAt: previous.createdAt,
+                agentRunID: previous.agentRunID)
             try metadataStore.save(records)
             // A failed remove is recoverable; the new canonical box is already durable.
             if (try? checked(["rm", old.containerID], timeout: 20)) != nil {
@@ -527,11 +581,19 @@ public struct BrowserComputerService<Runner: DockerCommandRunning, Tokens: Brows
               let rawTerminal = labels[Self.terminalLabel], let terminalID = UUID(uuidString: rawTerminal) else {
             throw BrowserComputerError.invalidDockerResponse
         }
+        let agentRunID: UUID?
+        if let rawAgentRun = labels[Self.agentRunLabel] {
+            guard let parsed = UUID(uuidString: rawAgentRun),
+                  rawAgentRun == parsed.uuidString.lowercased() else {
+                throw BrowserComputerError.invalidDockerResponse
+            }
+            agentRunID = parsed
+        } else { agentRunID = nil }
         let volume = "agentbox-browser-data-\(computerID.uuidString.lowercased())"
         guard rawName == "/\(expectedName ?? "agentbox-browser-\(computerID.uuidString.lowercased())")" else { return nil }
         return BrowserManagedComputer(id: computerID, terminalID: terminalID,
                                       containerID: containerID, name: String(rawName.dropFirst()),
-                                      volumeName: volume, running: running)
+                                      volumeName: volume, running: running, agentRunID: agentRunID)
     }
 
     private static func validContainerID(_ value: String) -> Bool {
@@ -591,20 +653,25 @@ public struct BrowserComputerService<Runner: DockerCommandRunning, Tokens: Brows
 
     private func verifyMetadata(_ computer: BrowserManagedComputer) throws {
         let records = try metadataStore.load()
-        guard records.count(where: { $0.computerID == computer.id || $0.terminalID == computer.terminalID }) == 1,
+        guard records.count(where: { $0.computerID == computer.id || $0.owner == computer.owner }) == 1,
               let record = records.first(where: { $0.computerID == computer.id }),
               record.terminalID == computer.terminalID,
+              record.agentRunID == computer.agentRunID,
               record.containerID == computer.containerID,
               record.volumeName == computer.volumeName else { throw BrowserComputerError.duplicateComputer }
     }
 
     private func createArguments(name: String, computerID: UUID, terminalID: UUID, volume: String,
                                  policy: EffectiveComputerPolicy, environmentFile: URL,
-                                 image: String) -> [String] {
-        ["create", "--name", name,
+                                 image: String, agentRunID: UUID?) -> [String] {
+        var arguments = ["create", "--name", name,
          "--label", "\(Self.ownerLabel)=true",
          "--label", "\(Self.computerLabel)=\(computerID.uuidString.lowercased())",
-         "--label", "\(Self.terminalLabel)=\(terminalID.uuidString.lowercased())",
+         "--label", "\(Self.terminalLabel)=\(terminalID.uuidString.lowercased())"]
+        if let agentRunID {
+            arguments += ["--label", "\(Self.agentRunLabel)=\(agentRunID.uuidString.lowercased())"]
+        }
+        arguments += [
          "--cpus", String(policy.limits.cpus), "--memory", "\(policy.limits.memoryMiB)m",
          "--pids-limit", "256", "--shm-size", "256m",
          "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
@@ -613,6 +680,7 @@ public struct BrowserComputerService<Runner: DockerCommandRunning, Tokens: Brows
          "--network", "bridge", "--publish", "127.0.0.1::8765",
          "--mount", "type=volume,source=\(volume),target=/data",
          "--env-file", environmentFile.path, "--init", image]
+        return arguments
     }
 
     private var imageUpdateJournalURL: URL {
@@ -706,13 +774,17 @@ public struct BrowserComputerService<Runner: DockerCommandRunning, Tokens: Brows
         guard let journal = try loadImageUpdateJournal() else { return }
         guard let record = try metadataStore.load().first(where: { $0.computerID == journal.computerID }),
               record.terminalID == journal.terminalID,
+              record.agentRunID == journal.agentRunID,
               record.volumeName == journal.volumeName else { throw BrowserComputerError.updateRecoveryRequired }
+        let owner = journal.agentRunID.map {
+            BrowserComputerOwner.nativeChild(parentTerminalID: journal.terminalID, agentRunID: $0)
+        } ?? .terminal(journal.terminalID)
         let canonicalName = "agentbox-browser-\(journal.computerID.uuidString.lowercased())"
         guard try inspectIfPresent(journal.oldContainerID) == journal.oldContainerID else {
             // Only a committed update may have already removed the backup.
             guard let newID = journal.newContainerID, record.containerID == newID,
                   let new = try inspectOwned(newID), !new.running,
-                  new.id == journal.computerID, new.terminalID == journal.terminalID else {
+                  new.id == journal.computerID, new.owner == owner else {
                 throw BrowserComputerError.updateRecoveryRequired
             }
             try verifyOwnedVolume(newID, computer: new)
@@ -727,7 +799,7 @@ public struct BrowserComputerService<Runner: DockerCommandRunning, Tokens: Brows
         let oldBackup = try inspectOwned(journal.oldContainerID, expectedName: journal.backupName)
         guard let old = oldCanonical ?? oldBackup,
               !old.running, old.id == journal.computerID,
-              old.terminalID == journal.terminalID else { throw BrowserComputerError.updateRecoveryRequired }
+              old.owner == owner else { throw BrowserComputerError.updateRecoveryRequired }
         try verifyOwnedVolume(journal.oldContainerID, computer: old)
         let foundNewID = try inspectIfPresent(journal.temporaryName)
             ?? journal.newContainerID.flatMap { try inspectIfPresent($0) }
@@ -743,7 +815,7 @@ public struct BrowserComputerService<Runner: DockerCommandRunning, Tokens: Brows
             newTemporary = try inspectOwned(newID, expectedName: journal.temporaryName)
             guard let new = newCanonical ?? newTemporary,
                   !new.running, new.id == journal.computerID,
-                  new.terminalID == journal.terminalID,
+                  new.owner == owner,
                   new.volumeName == journal.volumeName,
                   try containerImageID(newID) == journal.targetImageID else {
                 throw BrowserComputerError.updateRecoveryRequired

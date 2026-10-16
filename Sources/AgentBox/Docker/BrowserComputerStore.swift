@@ -29,7 +29,11 @@ final class BrowserComputerStore: ObservableObject {
     }
 
     func computer(for terminalID: UUID) -> BrowserManagedComputer? {
-        computers.first(where: { $0.terminalID == terminalID })
+        computer(for: .terminal(terminalID))
+    }
+
+    func computer(for owner: BrowserComputerOwner) -> BrowserManagedComputer? {
+        computers.first(where: { $0.owner == owner })
     }
 
     func scrapingAssignment(for computerID: UUID) -> ScrapingBoxAssignment? {
@@ -90,7 +94,64 @@ final class BrowserComputerStore: ObservableObject {
         }
     }
 
+    /// A native child is an observed run sharing its parent's PTY. Its box has
+    /// a separate owner; no saved scraping agent or launch binding is created.
+    @discardableResult
+    func createAndStart(owner: BrowserComputerOwner, context: ComputerPolicyContext) async throws -> BrowserManagedComputer {
+        guard case .nativeChild(let parentTerminalID, let runID) = owner,
+              context.terminalID == parentTerminalID else {
+            throw LibraryError.invalid("O dono do computador não corresponde ao terminal pai.")
+        }
+        try requireCurrentNativeChild(owner)
+        try WorkspaceServices.terminalRuntime.requireChildScrapingContext(for: parentTerminalID)
+        try ensureAvailable(computerID: runID)
+        busyComputerIDs.insert(runID)
+        defer { busyComputerIDs.remove(runID) }
+        var startedComputerID: UUID?
+        do {
+            // Recheck immediately before scheduling Docker work; a historical
+            // child must never acquire a newly launched box.
+            try requireCurrentNativeChild(owner)
+            let service = service
+            let computer = try await Task.detached(priority: .utility) {
+                try service.createAndStart(for: owner, context: context)
+            }.value
+            guard computer.owner == owner else { throw BrowserComputerError.unmanagedContainer }
+            startedComputerID = computer.id
+            try requireCurrentNativeChild(owner)
+            await refresh()
+            try await connectReady(computerID: computer.id)
+            try requireCurrentNativeChild(owner)
+            return computer
+        } catch {
+            var reportedError = error
+            if !isCurrentNativeChild(owner) {
+                let service = service
+                let computerID: UUID?
+                if let startedComputerID {
+                    computerID = startedComputerID
+                } else {
+                    computerID = try? await Task.detached(priority: .utility) {
+                        try service.computer(for: owner)?.id
+                    }.value
+                }
+                if let computerID {
+                    let stopped = await stopAndVerify(computerID: computerID)
+                    reportedError = LibraryError.invalid(stopped
+                        ? "O subagente deixou de estar ativo. O computador foi preservado e parado."
+                        : "O subagente deixou de estar ativo. Confira e pare o computador antes de continuar.")
+                }
+            }
+            await refresh()
+            errorText = reportedError.localizedDescription
+            throw reportedError
+        }
+    }
+
     func assignDefault(to computer: BrowserManagedComputer) throws {
+        guard computer.owner == .terminal(computer.terminalID) else {
+            throw LibraryError.invalid("Subagentes nativos não usam o lançamento salvo do terminal pai.")
+        }
         try saveAssignment(for: computer, defaultAgent: prepareDefaultAgent())
         errorText = nil
     }
@@ -119,8 +180,14 @@ final class BrowserComputerStore: ObservableObject {
     }
 
     @discardableResult
-    func start(computerID: UUID, context: ComputerPolicyContext) async throws -> BrowserManagedComputer {
+    func start(computerID: UUID, owner: BrowserComputerOwner,
+               context: ComputerPolicyContext) async throws -> BrowserManagedComputer {
         try ensureAvailable(computerID: computerID)
+        guard let current = computers.first(where: { $0.id == computerID }),
+              current.owner == owner, current.terminalID == context.terminalID else {
+            throw BrowserComputerError.missingComputer
+        }
+        if current.agentRunID != nil { try requireCurrentNativeChild(current.owner) }
         busyComputerIDs.insert(computerID)
         defer { busyComputerIDs.remove(computerID) }
         do {
@@ -128,17 +195,31 @@ final class BrowserComputerStore: ObservableObject {
             let computer = try await Task.detached(priority: .utility) {
                 try service.start(computerID: computerID, context: context)
             }.value
+            guard computer.owner == current.owner else { throw BrowserComputerError.unmanagedContainer }
+            if current.agentRunID != nil { try requireCurrentNativeChild(current.owner) }
             await refresh()
             try await connectReady(computerID: computerID)
+            if current.agentRunID != nil { try requireCurrentNativeChild(current.owner) }
             return computer
-        } catch { errorText = error.localizedDescription; throw error }
+        } catch {
+            var reportedError = error
+            if current.agentRunID != nil && !isCurrentNativeChild(current.owner) {
+                let stopped = await stopAndVerify(computerID: computerID)
+                reportedError = LibraryError.invalid(stopped
+                    ? "O subagente deixou de estar ativo. O computador foi preservado e parado."
+                    : "O subagente deixou de estar ativo. Confira e pare o computador antes de continuar.")
+            }
+            await refresh()
+            errorText = reportedError.localizedDescription
+            throw reportedError
+        }
     }
 
-    func stop(computerID: UUID) async throws {
+    func stop(computerID: UUID, owner: BrowserComputerOwner) async throws {
         // A pending update journal can describe a canonical box that was started
         // outside this process. Stopping that owned box must remain possible so
         // explicit recovery can proceed.
-        guard let current = computers.first(where: { $0.id == computerID }) else {
+        guard let current = computers.first(where: { $0.id == computerID && $0.owner == owner }) else {
             throw BrowserComputerError.missingComputer
         }
         guard !busyComputerIDs.contains(computerID),
@@ -158,11 +239,13 @@ final class BrowserComputerStore: ObservableObject {
     }
 
     @discardableResult
-    func updateStoppedImage(computerID: UUID, context: ComputerPolicyContext,
+    func updateStoppedImage(computerID: UUID, owner: BrowserComputerOwner,
+                            context: ComputerPolicyContext,
                             interactiveAuthorization: Bool = false) async throws -> BrowserManagedComputer {
         try ensureAvailable(computerID: computerID)
         guard let current = computers.first(where: { $0.id == computerID }),
-              current.terminalID == context.terminalID, !current.running else {
+              current.owner == owner, current.terminalID == context.terminalID,
+              !current.running else {
             throw LibraryError.invalid("Pare o computador antes de atualizar sua imagem.")
         }
         let maintenance = try WorkspaceServices.terminalRuntime.beginComputerMaintenance(terminalID: current.terminalID)
@@ -319,6 +402,28 @@ final class BrowserComputerStore: ObservableObject {
               !Self.updatingTerminalIDs.contains(pending.terminalID) else {
             throw LibraryError.invalid("Este computador já está em outra operação.")
         }
+    }
+
+    private func isCurrentNativeChild(_ owner: BrowserComputerOwner) -> Bool {
+        guard case .nativeChild(let parentTerminalID, let runID) = owner else { return false }
+        return NativeAgentMonitor.shared.isCurrentNativeChild(runID: runID,
+            parentTerminalID: parentTerminalID, runtime: WorkspaceServices.terminalRuntime)
+    }
+
+    private func requireCurrentNativeChild(_ owner: BrowserComputerOwner) throws {
+        guard isCurrentNativeChild(owner) else {
+            throw LibraryError.invalid("Este subagente nativo não está mais ativo no terminal pai.")
+        }
+    }
+
+    private func stopAndVerify(computerID: UUID) async -> Bool {
+        let service = service
+        do {
+            return try await Task.detached(priority: .utility) {
+                try service.stop(computerID: computerID)
+                return try service.list().first(where: { $0.id == computerID })?.running == false
+            }.value
+        } catch { return false }
     }
 
     private func invalidateEndpoint(_ computerID: UUID) {

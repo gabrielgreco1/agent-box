@@ -50,6 +50,7 @@ public actor ClaudeHookInbox {
     public let configuration: ClaudeHookInboxConfiguration
     private let registry: AgentRunRegistry
     private var offset = 0
+    private var drainInProgress = false
     private let maximumBytes = 1_048_576
 
     public init(configuration: ClaudeHookInboxConfiguration, registry: AgentRunRegistry) {
@@ -59,6 +60,11 @@ public actor ClaudeHookInbox {
 
     @discardableResult
     public func drain() async throws -> Int {
+        // Actors can re-enter this method while recordHookEvent suspends. Only
+        // one drain may own the cursor; the next monitor tick retries a busy one.
+        guard !drainInProgress else { return 0 }
+        drainInProgress = true
+        defer { drainInProgress = false }
         let attributes = try FileManager.default.attributesOfItem(atPath: configuration.inboxURL.path)
         guard (attributes[.type] as? FileAttributeType) == .typeRegular,
               let mode = attributes[.posixPermissions] as? NSNumber, mode.intValue & 0o077 == 0 else {

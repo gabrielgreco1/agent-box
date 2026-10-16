@@ -6,6 +6,34 @@ import XCTest
 
 final class NativeAgentMonitorTests: XCTestCase {
     @MainActor
+    func testParentSessionCheckDrainsAuthenticatedStartAndRejectsMismatch() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("monitor-route-\(UUID())")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let registry = try AgentRunRegistry(url: root.appendingPathComponent("runs.json"))
+        let runID = UUID(), terminalID = UUID()
+        let hook = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("runtime/hooks/claude_event.py")
+        let configuration = try ClaudeHookInboxConfiguration.create(runID: runID,
+            directory: root.appendingPathComponent("hook"), hookScriptURL: hook)
+        let monitor = NativeAgentMonitor(registry: registry, pollIntervalNanoseconds: 10_000_000_000)
+        monitor.didStart(terminalID: terminalID, provider: .claude, processID: 42,
+                         runID: runID, hook: configuration)
+        try appendHook("SessionStart", agentID: "", agentType: "", configuration: configuration)
+        let admitted = await monitor.verifiedParentSession(terminalID: terminalID,
+                                                            runID: runID, sessionID: "new-session")
+        let mismatched = await monitor.verifiedParentSession(terminalID: terminalID,
+                                                              runID: runID, sessionID: "wrong-session")
+        let wrongRun = await monitor.verifiedParentSession(terminalID: terminalID,
+                                                            runID: UUID(), sessionID: "new-session")
+        XCTAssertTrue(admitted)
+        XCTAssertFalse(mismatched)
+        XCTAssertFalse(wrongRun)
+        XCTAssertEqual(monitor.runs.first(where: { $0.id == runID })?.nativeSessionID, "new-session")
+        monitor.didExit(terminalID: terminalID, runID: runID)
+    }
+
+    @MainActor
     func testExitDrainsAuthenticatedHooksBeforeClosingParent() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("monitor-\(UUID())")
         defer { try? FileManager.default.removeItem(at: root) }

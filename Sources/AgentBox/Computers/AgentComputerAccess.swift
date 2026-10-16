@@ -40,6 +40,8 @@ import Foundation
         let endpoint: BrowserRuntimeEndpoint
         let bridge: ComputerControlBridge<BrowserRuntimeClient>
         let directory: URL
+        var verifier: ComputerCallProvenanceVerifier?
+        var hookRunID: UUID?
         var server: LocalMCPServer?
         var active = false
         var busy = false
@@ -67,7 +69,8 @@ import Foundation
 
     func register(launch: MaterializedAgentLaunch, sessionID: UUID,
                   policyContext: ComputerPolicyContext, endpoint: BrowserRuntimeEndpoint) async throws {
-        guard let config = launch.computerMCP, let terminal = launch.terminal,
+        guard let config = launch.computerMCP, launch.claudeHookDescriptor != nil,
+              let terminal = launch.terminal,
               terminal.id == policyContext.terminalID, sessionID == policyContext.sessionID,
               config.computerID == endpoint.computerID, entries[terminal.id] == nil else {
             throw AgentLaunchError.invalidBinding
@@ -103,16 +106,27 @@ import Foundation
         }
     }
 
-    func activate(terminalID: UUID) {
-        guard let entry = entries[terminalID], WorkspaceServices.terminalRuntime.isRunning(entry.launch) else {
-            stop(terminalID: terminalID); return
+    func activate(terminalID: UUID) throws {
+        guard let entry = entries[terminalID], WorkspaceServices.terminalRuntime.isRunning(entry.launch),
+              let invocation = WorkspaceServices.terminalRuntime.hookInvocation(for: terminalID,
+                                                                                 planID: entry.launch.planID),
+              let token = invocation.environment["AGENT_BOX_HOOK_TOKEN"] else {
+            stop(terminalID: terminalID)
+            throw AgentLaunchError.invalidBinding
         }
+        do { entry.verifier = try ComputerCallProvenanceVerifier(runID: invocation.runID, tokenHex: token) }
+        catch {
+            stop(terminalID: terminalID)
+            throw AgentLaunchError.invalidBinding
+        }
+        entry.hookRunID = invocation.runID
         entry.active = true
     }
 
     func stop(terminalID: UUID) {
         guard let entry = entries.removeValue(forKey: terminalID) else { return }
         entry.active = false
+        entry.verifier = nil
         entry.server?.stop()
         rmdir(entry.directory.path)
         Task {
@@ -152,7 +166,20 @@ import Foundation
         }
         entry.busy = true
         defer { entry.busy = false }
-        let arguments = try ComputerMCPToolArguments.validate(name: name, data: data)
+        guard let verifier = entry.verifier, let hookRunID = entry.hookRunID else {
+            throw ComputerCallProvenanceError.invalid
+        }
+        let verified = try await verifier.verify(toolName: "mcp__agentbox__\(name)", argumentsData: data)
+        guard entry.active, WorkspaceServices.terminalRuntime.isRunning(entry.launch) else {
+            throw ComputerCallProvenanceError.invalid
+        }
+        try Self.requireParentRoute(verified, currentRunID: hookRunID)
+        guard await WorkspaceServices.terminalRuntime.nativeAgentMonitor.verifiedParentSession(
+            terminalID: terminalID, runID: hookRunID, sessionID: verified.sessionID),
+              entry.active, WorkspaceServices.terminalRuntime.isRunning(entry.launch) else {
+            throw ComputerCallProvenanceError.invalid
+        }
+        let arguments = try ComputerMCPToolArguments.validate(name: name, data: verified.argumentsData)
         let policy = try ComputerPolicyStore().load().effective(for: entry.context)
         guard policy.creation != .disabled else { throw ComputerPolicyError.creationDisabled }
         guard policy.networkAllowed else { throw BrowserComputerError.networkDisabled }
@@ -223,5 +250,12 @@ import Foundation
         let data = try JSONSerialization.data(withJSONObject: value, options: [.sortedKeys])
         guard let text = String(data: data, encoding: .utf8) else { throw BrowserRuntimeError.invalidResponse }
         return .text(text)
+    }
+
+    /// This check precedes session verification, argument decoding, and every bridge operation.
+    /// A native child cannot inherit the parent's computer assignment.
+    static func requireParentRoute(_ verified: VerifiedComputerCall, currentRunID: UUID) throws {
+        guard verified.runID == currentRunID else { throw ComputerCallProvenanceError.invalid }
+        if verified.agentID != nil { throw ComputerCallProvenanceError.childRoutingPending }
     }
 }

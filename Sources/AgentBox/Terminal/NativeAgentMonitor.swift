@@ -12,6 +12,7 @@ public final class NativeAgentMonitor: ObservableObject {
 
     private struct Observation {
         let runID: UUID
+        let inbox: ClaudeHookInbox?
         var exitRequested = false
         var task: Task<Void, Never>?
     }
@@ -38,11 +39,12 @@ public final class NativeAgentMonitor: ObservableObject {
             return
         }
         let previousTask = observations[terminalID]?.task
-        observations[terminalID] = Observation(runID: runID)
+        let inbox = hook.flatMap { config in registry.map { ClaudeHookInbox(configuration: config, registry: $0) } }
+        observations[terminalID] = Observation(runID: runID, inbox: inbox)
         let task = Task { [weak self] in
             await previousTask?.value
             await self?.observe(terminalID: terminalID, provider: provider,
-                                processID: processID, runID: runID, hook: hook)
+                                processID: processID, runID: runID)
         }
         observations[terminalID]?.task = task
     }
@@ -57,6 +59,49 @@ public final class NativeAgentMonitor: ObservableObject {
 
     public func stopAll() {
         for (terminalID, observation) in observations { didExit(terminalID: terminalID, runID: observation.runID) }
+    }
+
+    /// A PreToolUse route is valid only after the authenticated SessionStart
+    /// event has linked this Claude process to the native session in the registry.
+    func verifiedParentSession(terminalID: UUID, runID: UUID, sessionID: String) async -> Bool {
+        guard !sessionID.isEmpty, let registry else { return false }
+        await bootstrapTask?.value
+        for attempt in 0..<6 {
+            guard let observation = observations[terminalID],
+                  observation.runID == runID, !observation.exitRequested,
+                  let inbox = observation.inbox else { return false }
+            let before = await registry.allRuns()
+            if let admitted = before.first(where: { $0.id == runID && $0.kind == .terminal }) {
+                guard admitted.terminalID == terminalID, admitted.provider == .claude,
+                      admitted.status == .running else { return false }
+                do { if try await inbox.drain() > 0 { await refresh(registry) } }
+                catch { return false }
+                let records = await registry.allRuns()
+                guard let parent = records.first(where: { $0.id == runID && $0.kind == .terminal }),
+                      parent.status == .running else { return false }
+                if let observed = parent.nativeSessionID {
+                    return parent.nativeHookSource == .claude && observed == sessionID
+                }
+            }
+            if attempt < 5 { try? await Task.sleep(nanoseconds: 100_000_000) }
+        }
+        return false
+    }
+
+    /// A child can request a new box only while its observed parent PTY and
+    /// native hook run are still current. Historical hook state is not liveness.
+    public func isCurrentNativeChild(runID: UUID, parentTerminalID: UUID,
+                                     runtime: TerminalRuntimeManager) -> Bool {
+        guard let child = runs.first(where: { $0.id == runID && $0.kind == .nativeSubagent }),
+              child.parentTerminalID == parentTerminalID, child.terminalID == parentTerminalID,
+              child.status == .running, let parentRunID = child.parentRunID,
+              let parent = runs.first(where: { $0.id == parentRunID && $0.kind == .terminal }),
+              parent.terminalID == parentTerminalID, parent.status == .running,
+              let observation = observations[parentTerminalID],
+              observation.runID == parentRunID, !observation.exitRequested,
+              case .running(let pid) = runtime.state(for: parentTerminalID),
+              parent.processID == pid else { return false }
+        return true
     }
 
     private func reconcilePreviousRuns() async {
@@ -74,7 +119,7 @@ public final class NativeAgentMonitor: ObservableObject {
     }
 
     private func observe(terminalID: UUID, provider: CLIProvider, processID: Int32,
-                         runID: UUID, hook: ClaudeHookInboxConfiguration?) async {
+                         runID: UUID) async {
         await bootstrapTask?.value
         guard let registry else {
             if observations[terminalID]?.runID == runID { observations[terminalID] = nil }
@@ -90,7 +135,7 @@ public final class NativeAgentMonitor: ObservableObject {
             return
         }
 
-        let inbox = hook.map { ClaudeHookInbox(configuration: $0, registry: registry) }
+        let inbox = observations[terminalID]?.runID == runID ? observations[terminalID]?.inbox : nil
         while observations[terminalID]?.runID == runID,
               observations[terminalID]?.exitRequested == false,
               !Task.isCancelled {

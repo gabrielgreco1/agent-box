@@ -54,6 +54,8 @@ public actor ComputerMCPProtocol {
         } catch {
             let text: String
             switch error {
+            case ComputerCallProvenanceError.childRoutingPending:
+                text = "This native child has no assigned computer yet. Ask the user to assign a separate box to this child; do not use the parent computer."
             case ComputerControlBridgeError.noTicket, ComputerControlBridgeError.writeDenied,
                  ControlBrokerError.activeRuntimeLease, ControlBrokerError.transitionInProgress:
                 text = "Computer control is unavailable or held by the user. Wait for the user to release control."
@@ -68,7 +70,10 @@ public actor ComputerMCPProtocol {
     private func encode(_ object: [String: Any]) throws -> Data { try JSONSerialization.data(withJSONObject: object, options: [.sortedKeys]) }
     public static var tools: [[String: Any]] {
         func tool(_ name: String, _ description: String, _ properties: [String: Any] = [:], _ required: [String] = []) -> [String: Any] {
-            ["name": name, "description": description,
+            var properties = properties
+            // Added by the reviewed PreToolUse hook, never requested from the model.
+            properties["route_token"] = ["type": "string"]
+            return ["name": name, "description": description,
              "inputSchema": ["type": "object", "properties": properties, "required": required, "additionalProperties": false]]
         }
         return [

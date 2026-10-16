@@ -231,6 +231,10 @@ final class AgentLaunchTests: XCTestCase {
         let plan = try planner.prepare(agentID: agent.id, in: LibraryDocument(agents: [agent]),
                                        workingDirectory: "/tmp", hookScriptURL: script)
         let descriptor = try XCTUnwrap(plan.claudeHookSnapshot?.descriptor)
+        var legacyDescriptor = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(descriptor)) as? [String: Any])
+        for key in ["childContextPath", "childContextHash", "childContextChunkCount"] { legacyDescriptor.removeValue(forKey: key) }
+        XCTAssertEqual(try JSONDecoder().decode(ClaudeHookLaunchDescriptor.self,
+            from: JSONSerialization.data(withJSONObject: legacyDescriptor)), descriptor)
         XCTAssertEqual(Array(plan.arguments.suffix(2)), ["--settings", descriptor.settingsPath])
         XCTAssertFalse(FileManager.default.fileExists(atPath: descriptor.settingsPath))
         try Data("#!/usr/bin/env python3\nraise RuntimeError('changed after review')\n".utf8).write(to: script)
@@ -292,6 +296,41 @@ final class AgentLaunchTests: XCTestCase {
         try planner.removeContextFile(for: launch)
         XCTAssertFalse(FileManager.default.fileExists(atPath: firstHook.inboxURL.path))
         XCTAssertEqual(try Data(contentsOf: sentinel), Data("keep".utf8))
+    }
+
+    func testReviewedScrapingSkillIsFrozenForNativeChildContextAndTamperingBlocksRestart() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let script = root.appendingPathComponent("source-hook.py")
+        try Data("#!/usr/bin/env python3\n".utf8).write(to: script)
+        try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: script.path)
+        let content = "---\nname: webscraping-expert\n---\n" + String(repeating: "Read sources é😀 and keep links.\n", count: 650)
+        let source = try makeSkillPackage(at: root, content: content)
+        let hash = SHA256.hash(data: Data(content.utf8)).map { String(format: "%02x", $0) }.joined()
+        let skill = SkillEntry(name: "webscraping-expert", summary: "", sourcePath: source.path,
+                               content: content, sha256: hash)
+        let agent = SavedAgent(name: "Scraping", provider: .claude, skillIDs: [skill.id])
+        let planner = AgentLaunchPlanner(contextDirectory: root.appendingPathComponent("contexts"),
+            resolver: CLIExecutableResolver(overrides: [.claude: "/bin/sh"]))
+        let document = LibraryDocument(agents: [agent], skills: [skill])
+        let plan = try planner.prepare(agentID: agent.id, in: document, workingDirectory: "/tmp", hookScriptURL: script)
+        let descriptor = try XCTUnwrap(plan.claudeHookSnapshot?.descriptor)
+        XCTAssertGreaterThan(descriptor.childContextChunkCount, 1)
+        XCTAssertEqual(descriptor.childContextPath,
+            plan.contextFile.url.deletingLastPathComponent().appendingPathComponent("child-skill-context.txt").path)
+        XCTAssertEqual(descriptor.childContextHash, plan.claudeHookSnapshot?.childContextData.map {
+            SHA256.hash(data: $0).map { String(format: "%02x", $0) }.joined()
+        })
+        let launch = try planner.materialize(plan, reviewedDigest: plan.review.contextSHA256)
+        XCTAssertNoThrow(try launch.validateContextFile())
+        let binding = try XCTUnwrap(launch.binding)
+        XCTAssertEqual(try planner.restore(binding, terminal: try XCTUnwrap(launch.terminal)).binding, binding)
+        let childFile = URL(fileURLWithPath: try XCTUnwrap(descriptor.childContextPath))
+        XCTAssertTrue(try String(contentsOf: childFile, encoding: .utf8).contains(content))
+        try Data("tampered".utf8).write(to: childFile)
+        XCTAssertThrowsError(try launch.validateContextFile())
+        XCTAssertThrowsError(try planner.restore(binding, terminal: try XCTUnwrap(launch.terminal)))
     }
 
     func testClaudeHooksRejectTamperedTemplateAndInvocation() throws {

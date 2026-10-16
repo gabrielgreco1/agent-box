@@ -10,12 +10,45 @@ public struct ClaudeHookLaunchDescriptor: Codable, Equatable, Sendable {
     public let scriptPath: String
     public let settingsHash: String
     public let scriptHash: String
+    public let childContextPath: String?
+    public let childContextHash: String?
+    public let childContextChunkCount: Int
+
+    public init(planID: UUID, settingsPath: String, scriptPath: String,
+                settingsHash: String, scriptHash: String,
+                childContextPath: String? = nil, childContextHash: String? = nil,
+                childContextChunkCount: Int = 0) {
+        self.planID = planID; self.settingsPath = settingsPath; self.scriptPath = scriptPath
+        self.settingsHash = settingsHash; self.scriptHash = scriptHash
+        self.childContextPath = childContextPath; self.childContextHash = childContextHash
+        self.childContextChunkCount = childContextChunkCount
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case planID, settingsPath, scriptPath, settingsHash, scriptHash
+        case childContextPath, childContextHash, childContextChunkCount
+    }
+
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(planID: try values.decode(UUID.self, forKey: .planID),
+                  settingsPath: try values.decode(String.self, forKey: .settingsPath),
+                  scriptPath: try values.decode(String.self, forKey: .scriptPath),
+                  settingsHash: try values.decode(String.self, forKey: .settingsHash),
+                  scriptHash: try values.decode(String.self, forKey: .scriptHash),
+                  childContextPath: try values.decodeIfPresent(String.self, forKey: .childContextPath),
+                  childContextHash: try values.decodeIfPresent(String.self, forKey: .childContextHash),
+                  childContextChunkCount: try values.decodeIfPresent(Int.self, forKey: .childContextChunkCount) ?? 0)
+    }
 
     public func validate(directory: URL) throws {
         var directoryInfo = stat()
         guard planID.uuidString == directory.lastPathComponent,
               settingsPath == directory.appendingPathComponent("hooks.settings.json").path,
               scriptPath == directory.appendingPathComponent("claude_event.py").path,
+              childContextPath == nil || childContextPath == directory.appendingPathComponent("child-skill-context.txt").path,
+              (childContextPath == nil) == (childContextHash == nil),
+              (childContextPath == nil ? childContextChunkCount == 0 : (1...9).contains(childContextChunkCount)),
               lstat(directory.path, &directoryInfo) == 0,
               directoryInfo.st_mode & mode_t(S_IFMT) == mode_t(S_IFDIR),
               directoryInfo.st_uid == getuid(), directoryInfo.st_mode & 0o077 == 0,
@@ -27,8 +60,21 @@ public struct ClaudeHookLaunchDescriptor: Codable, Equatable, Sendable {
         let script = try Self.protectedData(at: scriptPath, maximumBytes: 65_536, executable: true)
         guard Self.sha256(settings) == settingsHash,
               Self.sha256(script) == scriptHash,
-              settings == (try Self.settingsData(scriptPath: scriptPath)) else {
+              settings == (try Self.settingsData(scriptPath: scriptPath,
+                childContextPath: childContextPath, childContextHash: childContextHash,
+                childContextChunkCount: childContextChunkCount)) else {
             throw AgentLaunchError.contextChanged
+        }
+        if let childContextPath, let childContextHash {
+            guard childContextHash.count == 64,
+                  childContextHash.allSatisfy({ $0.isHexDigit && !$0.isUppercase }) else {
+                throw AgentLaunchError.invalidBinding
+            }
+            let context = try Self.protectedData(at: childContextPath, maximumBytes: 65_536, executable: false)
+            guard Self.sha256(context) == childContextHash,
+                  Self.contextChunkCount(context) == childContextChunkCount else {
+                throw AgentLaunchError.contextChanged
+            }
         }
     }
 
@@ -59,7 +105,9 @@ public struct ClaudeHookLaunchDescriptor: Codable, Equatable, Sendable {
         let tokenText = Data((0..<32).map { _ in UInt8.random(in: 0...255) })
             .map { String(format: "%02x", $0) }.joined()
         do {
-            try Self.writeProtected(try Self.settingsData(scriptPath: scriptPath), to: settingsURL)
+            try Self.writeProtected(try Self.settingsData(scriptPath: scriptPath,
+                childContextPath: childContextPath, childContextHash: childContextHash,
+                childContextChunkCount: childContextChunkCount), to: settingsURL)
             try Self.writeProtected(Data(tokenText.utf8), to: tokenURL)
             try Self.writeProtected(Data(), to: inboxURL)
         } catch {
@@ -105,7 +153,9 @@ public struct ClaudeHookLaunchDescriptor: Codable, Equatable, Sendable {
         _ = try Self.protectedData(at: configuration.inboxURL.path,
                                    maximumBytes: 1_048_576, executable: false)
         guard Self.sha256(settings) == settingsHash,
-              settings == (try Self.settingsData(scriptPath: scriptPath)),
+              settings == (try Self.settingsData(scriptPath: scriptPath,
+                childContextPath: childContextPath, childContextHash: childContextHash,
+                childContextChunkCount: childContextChunkCount)),
               tokenFile == Data(token.utf8) else { throw AgentLaunchError.contextChanged }
     }
 
@@ -136,13 +186,35 @@ public struct ClaudeHookLaunchDescriptor: Codable, Equatable, Sendable {
         return try Data(contentsOf: URL(fileURLWithPath: path))
     }
 
-    static func settingsData(scriptPath: String) throws -> Data {
+    static func settingsData(scriptPath: String, childContextPath: String? = nil,
+                             childContextHash: String? = nil, childContextChunkCount: Int = 0) throws -> Data {
         let quoted = "'" + scriptPath.replacingOccurrences(of: "'", with: "'\\''") + "'"
         let entry: [String: Any] = ["type": "command", "command": quoted, "timeout": 5]
         let hooks = ["SessionStart", "SubagentStart", "SubagentStop"].reduce(into: [String: Any]()) {
             $0[$1] = [["hooks": [entry]]]
         }
-        return try JSONSerialization.data(withJSONObject: ["hooks": hooks], options: [.sortedKeys])
+        var configured = hooks
+        if let childContextPath, let childContextHash, childContextChunkCount > 0 {
+            let quotedContext = "'" + childContextPath.replacingOccurrences(of: "'", with: "'\\''") + "'"
+            let parts: [[String: Any]] = (0..<childContextChunkCount).map { index in
+                ["type": "command", "command": "\(quoted) --child-context \(quotedContext) --sha256 \(childContextHash) --part \(index)", "timeout": 5]
+            }
+            configured["SubagentStart"] = [["hooks": [entry] + parts]]
+        }
+        configured["PreToolUse"] = [["matcher": "^mcp__agentbox__computer_", "hooks": [entry]]]
+        return try JSONSerialization.data(withJSONObject: ["hooks": configured], options: [.sortedKeys])
+    }
+
+    static func contextChunkCount(_ data: Data) -> Int {
+        guard let content = String(data: data, encoding: .utf8), !content.isEmpty else { return 0 }
+        var chunks = 1
+        var bytes = 0
+        for scalar in content.unicodeScalars {
+            let size = scalar.utf8.count
+            if bytes + size > 8_000 { chunks += 1; bytes = 0 }
+            bytes += size
+        }
+        return chunks
     }
 
     static func sha256(_ data: Data) -> String {
@@ -155,8 +227,10 @@ public struct ClaudeHookLaunchSnapshot: Equatable, Sendable {
     public let descriptor: ClaudeHookLaunchDescriptor
     public let settingsData: Data
     public let scriptData: Data
+    public let childContextData: Data?
 
-    public static func prepare(planID: UUID, directory: URL, hookScriptURL: URL) throws -> Self {
+    public static func prepare(planID: UUID, directory: URL, hookScriptURL: URL,
+                               childContextData: Data? = nil) throws -> Self {
         var info = stat()
         guard lstat(hookScriptURL.path, &info) == 0,
               info.st_mode & mode_t(S_IFMT) == mode_t(S_IFREG),
@@ -165,12 +239,27 @@ public struct ClaudeHookLaunchSnapshot: Equatable, Sendable {
         let script = try Data(contentsOf: hookScriptURL)
         guard script.count == Int(info.st_size) else { throw AgentLaunchError.contextChanged }
         let scriptPath = directory.appendingPathComponent("claude_event.py").path
-        let settings = try ClaudeHookLaunchDescriptor.settingsData(scriptPath: scriptPath)
+        if let childContextData {
+            guard !childContextData.isEmpty, childContextData.count <= 65_536,
+                  String(data: childContextData, encoding: .utf8) != nil,
+                  (1...9).contains(ClaudeHookLaunchDescriptor.contextChunkCount(childContextData)) else {
+                throw AgentLaunchError.incompatibleSkill("o contexto da skill para subagentes excede 64 KiB ou não é texto UTF-8")
+            }
+        }
+        let childContextPath = childContextData.map { _ in directory.appendingPathComponent("child-skill-context.txt").path }
+        let childContextHash = childContextData.map(ClaudeHookLaunchDescriptor.sha256)
+        let chunkCount = childContextData.map(ClaudeHookLaunchDescriptor.contextChunkCount) ?? 0
+        let settings = try ClaudeHookLaunchDescriptor.settingsData(scriptPath: scriptPath,
+            childContextPath: childContextPath, childContextHash: childContextHash,
+            childContextChunkCount: chunkCount)
         let descriptor = ClaudeHookLaunchDescriptor(planID: planID,
             settingsPath: directory.appendingPathComponent("hooks.settings.json").path,
             scriptPath: scriptPath,
             settingsHash: ClaudeHookLaunchDescriptor.sha256(settings),
-            scriptHash: ClaudeHookLaunchDescriptor.sha256(script))
-        return Self(descriptor: descriptor, settingsData: settings, scriptData: script)
+            scriptHash: ClaudeHookLaunchDescriptor.sha256(script),
+            childContextPath: childContextPath, childContextHash: childContextHash,
+            childContextChunkCount: chunkCount)
+        return Self(descriptor: descriptor, settingsData: settings, scriptData: script,
+                    childContextData: childContextData)
     }
 }

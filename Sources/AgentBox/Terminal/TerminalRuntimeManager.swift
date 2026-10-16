@@ -41,6 +41,8 @@ public final class TerminalRuntimeManager: ObservableObject {
     private var entries: [UUID: Entry] = [:]
     private var launchPlanIDs: [UUID: UUID] = [:]
     private var runIDs: [UUID: UUID] = [:]
+    private var childSkillDescriptors: [UUID: ClaudeHookLaunchDescriptor] = [:]
+    private var hookInvocations: [UUID: ClaudeHookInboxConfiguration] = [:]
     private var computerMaintenance: [UUID: UUID] = [:]
     private let resolver: CLIExecutableResolver
     public let nativeAgentMonitor: NativeAgentMonitor
@@ -105,18 +107,42 @@ public final class TerminalRuntimeManager: ObservableObject {
         default: break
         }
         try launch.validateContextFile()
+        guard launch.computerMCP == nil || launch.claudeHookDescriptor != nil else {
+            throw AgentLaunchError.invalidBinding
+        }
         guard FileManager.default.isExecutableFile(atPath: launch.executablePath) else {
             throw CLIResolutionError.notExecutable(launch.executablePath)
         }
         let invocation = try launch.claudeHookDescriptor == nil ? launch : launch.prepareHookInvocation()
         guard let invocationTerminal = invocation.terminal else { throw AgentLaunchError.contextNotActive }
         start(invocationTerminal, executableOverride: invocation.executablePath, hook: invocation.claudeHook)
-        if case .running = state(for: terminal.id) { launchPlanIDs[terminal.id] = launch.planID }
+        if case .running = state(for: terminal.id) {
+            launchPlanIDs[terminal.id] = launch.planID
+            childSkillDescriptors[terminal.id] = invocation.claudeHookDescriptor
+        }
+    }
+
+    /// A box cannot retroactively supply startup context to an existing native
+    /// child. Require the reviewed template used by its actual parent process.
+    func requireChildScrapingContext(for terminalID: UUID) throws {
+        guard case .running = state(for: terminalID),
+              let descriptor = childSkillDescriptors[terminalID],
+              launchPlanIDs[terminalID] == descriptor.planID,
+              descriptor.childContextPath != nil, descriptor.childContextHash != nil else {
+            throw LibraryError.invalid("Prepare e reinicie o terminal pai com o agente Web scraping antes de criar computadores para seus subagentes. A skill não pode ser adicionada ao contexto inicial de um subagente já em execução.")
+        }
+        try descriptor.validate(directory: URL(fileURLWithPath: descriptor.settingsPath).deletingLastPathComponent())
     }
 
     public func runningPlanID(for id: UUID) -> UUID? {
         guard case .running = state(for: id) else { return nil }
         return launchPlanIDs[id]
+    }
+
+    func hookInvocation(for terminalID: UUID, planID: UUID) -> ClaudeHookInboxConfiguration? {
+        guard runningPlanID(for: terminalID) == planID,
+              hookInvocations[terminalID]?.runID == runIDs[terminalID] else { return nil }
+        return hookInvocations[terminalID]
     }
 
     public func isRunning(_ launch: MaterializedAgentLaunch) -> Bool {
@@ -130,6 +156,8 @@ public final class TerminalRuntimeManager: ObservableObject {
         if case .running = state(for: terminal.id) { return }
         if case .starting = state(for: terminal.id) { return }
         launchPlanIDs[terminal.id] = nil
+        childSkillDescriptors[terminal.id] = nil
+        hookInvocations[terminal.id] = nil
         let runID = hook?.runID ?? UUID()
         processStates[terminal.id] = .starting
         do {
@@ -147,6 +175,7 @@ public final class TerminalRuntimeManager: ObservableObject {
             if let process, process.shellPid > 0 {
                 processStates[terminal.id] = .running(pid: process.shellPid)
                 runIDs[terminal.id] = runID
+                hookInvocations[terminal.id] = hook
                 nativeAgentMonitor.didStart(terminalID: terminal.id, provider: terminal.provider,
                                             processID: process.shellPid, runID: runID, hook: hook)
                 focus(terminal.id)
@@ -188,6 +217,8 @@ public final class TerminalRuntimeManager: ObservableObject {
         entries.removeAll()
         launchPlanIDs.removeAll()
         runIDs.removeAll()
+        childSkillDescriptors.removeAll()
+        hookInvocations.removeAll()
     }
 
     /// Called only by TerminalSurface. A missing renderer is an empty terminal, not a launch request.
@@ -229,6 +260,7 @@ public final class TerminalRuntimeManager: ObservableObject {
             Task { @MainActor [weak self] in
                 guard let self, self.entries[id]?.generation == generation else { return }
                 self.processStates[id] = .exited(code: Self.decodeWaitStatus(rawStatus))
+                self.hookInvocations[id] = nil
                 if let runID { self.nativeAgentMonitor.didExit(terminalID: id, runID: runID) }
             }
         }

@@ -54,6 +54,69 @@ final class BrowserImageUpdateTests: XCTestCase {
         XCTAssertNil(try service.pendingImageUpdate())
     }
 
+    func testNativeChildOwnerSharesRealParentTerminalWithoutReplacingTerminalBox() throws {
+        let (root, docker, _, service) = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        try service.policyStore.save(ComputerPolicy(creation: .manual,
+            limits: .init(cpus: 1, memoryMiB: 2048, maxComputers: 4)))
+        let terminalID = UUID(), childRunID = UUID()
+        let terminal = try service.createAndStart(for: terminalID)
+        let childOwner = BrowserComputerOwner.nativeChild(parentTerminalID: terminalID, agentRunID: childRunID)
+        let child = try service.createAndStart(for: childOwner,
+            context: ComputerPolicyContext(terminalID: terminalID))
+        XCTAssertNotEqual(child.id, terminal.id)
+        XCTAssertEqual(child.terminalID, terminalID)
+        XCTAssertEqual(child.agentRunID, childRunID)
+        XCTAssertEqual(child.owner, childOwner)
+        XCTAssertEqual(try service.computer(for: terminalID)?.id, terminal.id)
+        XCTAssertEqual(try service.computer(for: childOwner)?.id, child.id)
+        XCTAssertEqual(try service.createAndStart(for: childOwner).id, child.id)
+        XCTAssertEqual(try service.list().count, 2)
+        let childCreate = try XCTUnwrap(docker.commands.last(where: { $0.first == "create" }))
+        XCTAssertTrue(childCreate.contains("com.agentbox.browser-terminal-id=\(terminalID.uuidString.lowercased())"))
+        XCTAssertTrue(childCreate.contains("com.agentbox.browser-agent-run-id=\(childRunID.uuidString.lowercased())"))
+        try service.stop(computerID: child.id)
+        XCTAssertEqual(try service.createAndStart(for: childOwner).id, child.id)
+        try service.stop(computerID: child.id)
+        let updated = try service.updateStoppedImage(computerID: child.id)
+        XCTAssertEqual(updated.owner, childOwner)
+        XCTAssertEqual(try service.metadataStore.load().first(where: { $0.computerID == child.id })?.owner, childOwner)
+        XCTAssertEqual(try service.computer(for: terminalID)?.id, terminal.id)
+        XCTAssertEqual(try service.computer(for: childOwner)?.containerID, updated.containerID)
+        XCTAssertNil(try service.pendingImageUpdate())
+        try service.metadataStore.save([])
+        let recovered = try service.recoverMetadata()
+        XCTAssertEqual(recovered.count, 2)
+        XCTAssertEqual(recovered.first(where: { $0.computerID == child.id })?.owner, childOwner)
+        XCTAssertEqual(recovered.first(where: { $0.computerID == terminal.id })?.owner, .terminal(terminalID))
+    }
+
+    func testLegacyOwnerFieldsDecodeAsTerminal() throws {
+        let terminalID = UUID(), computerID = UUID()
+        let date = Date(timeIntervalSince1970: 1_700_000_000)
+        let legacy = BrowserComputerMetadata(computerID: computerID, terminalID: terminalID,
+            containerID: String(repeating: "a", count: 64), volumeName: "legacy", createdAt: date)
+        var json = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(legacy)) as? [String: Any])
+        json.removeValue(forKey: "agentRunID")
+        let decoded = try JSONDecoder().decode(BrowserComputerMetadata.self,
+            from: JSONSerialization.data(withJSONObject: json))
+        XCTAssertNil(decoded.agentRunID)
+        XCTAssertEqual(decoded.owner, .terminal(terminalID))
+    }
+
+    func testMalformedChildOwnerLabelFailsClosed() throws {
+        let (root, docker, _, service) = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let child = try service.createAndStart(for: .nativeChild(parentTerminalID: UUID(), agentRunID: UUID()))
+        docker.malformedAgentRunLabelForComputerID = child.id
+        XCTAssertThrowsError(try service.list()) {
+            XCTAssertEqual($0 as? BrowserComputerError, .invalidDockerResponse)
+        }
+        let startCount = docker.commands.count(where: { $0 == ["start", child.containerID] })
+        XCTAssertThrowsError(try service.start(computerID: child.id))
+        XCTAssertEqual(docker.commands.count(where: { $0 == ["start", child.containerID] }), startCount)
+    }
+
     func testCreateFailureAfterSideEffectRemovesOnlyNewContainer() throws {
         let (root, docker, tokens, service) = try fixture()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -243,6 +306,7 @@ private final class UpdateDockerRunner: DockerCommandRunning {
         var name: String
         let computerID: UUID
         let terminalID: UUID
+        let agentRunID: UUID?
         let volume: String
         let imageID: String
         var running = false
@@ -256,6 +320,7 @@ private final class UpdateDockerRunner: DockerCommandRunning {
     var failNextRenameToCanonical = false
     var failNextRemove = false
     var afterRenameToCanonical: (() -> Void)?
+    var malformedAgentRunLabelForComputerID: UUID?
     var commands: [[String]] = []
     var containers: [String: Container] = [:]
     var volumeOwners: [String: UUID] = [:]
@@ -297,11 +362,14 @@ private final class UpdateDockerRunner: DockerCommandRunning {
                   let terminal = arguments.first(where: { $0.hasPrefix("com.agentbox.browser-terminal-id=") })
                     .flatMap({ UUID(uuidString: String($0.split(separator: "=").last ?? "")) }),
                   !containers.values.contains(where: { $0.name == name }) else { return .init(exitCode: 1) }
+            let agentRunID = arguments.first(where: { $0.hasPrefix("com.agentbox.browser-agent-run-id=") })
+                .flatMap { UUID(uuidString: String($0.split(separator: "=").last ?? "")) }
             let id = String(repeating: String(containers.count + 1, radix: 16), count: 64)
             let image = arguments.last == BrowserComputerService<UpdateDockerRunner, UpdateTokenStore>.image
                 ? oldImageID : (arguments.last ?? "")
             containers[id] = Container(id: id, name: name, computerID: computer,
-                                       terminalID: terminal, volume: volume, imageID: image)
+                                       terminalID: terminal, agentRunID: agentRunID,
+                                       volume: volume, imageID: image)
             if failNextCreateAfterEffect {
                 failNextCreateAfterEffect = false
                 if transientAfterFailedCreate { failNextInspectID = true; transientAfterFailedCreate = false }
@@ -325,7 +393,15 @@ private final class UpdateDockerRunner: DockerCommandRunning {
             case "{{json .Mounts}}":
                 return .init(exitCode: 0, stdout: "[{\"Type\":\"volume\",\"Name\":\"\(item.volume)\",\"Destination\":\"/data\"}]")
             default:
-                let json = "{\"Id\":\"\(item.id)\",\"Name\":\"/\(item.name)\",\"Config\":{\"Labels\":{\"com.agentbox.browser-managed\":\"true\",\"com.agentbox.browser-computer-id\":\"\(item.computerID.uuidString.lowercased())\",\"com.agentbox.browser-terminal-id\":\"\(item.terminalID.uuidString.lowercased())\"}},\"State\":{\"Running\":\(item.running)}}"
+                let childLabel: String
+                if malformedAgentRunLabelForComputerID == item.computerID {
+                    childLabel = ",\"com.agentbox.browser-agent-run-id\":\"invalid\""
+                } else {
+                    childLabel = item.agentRunID.map {
+                        ",\"com.agentbox.browser-agent-run-id\":\"\($0.uuidString.lowercased())\""
+                    } ?? ""
+                }
+                let json = "{\"Id\":\"\(item.id)\",\"Name\":\"/\(item.name)\",\"Config\":{\"Labels\":{\"com.agentbox.browser-managed\":\"true\",\"com.agentbox.browser-computer-id\":\"\(item.computerID.uuidString.lowercased())\",\"com.agentbox.browser-terminal-id\":\"\(item.terminalID.uuidString.lowercased())\"\(childLabel)}},\"State\":{\"Running\":\(item.running)}}"
                 return .init(exitCode: 0, stdout: json)
             }
         }

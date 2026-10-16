@@ -300,11 +300,6 @@ public struct AgentLaunchPlanner {
         let file = contextDirectory.appendingPathComponent(id.uuidString, isDirectory: true).appendingPathComponent("context.md")
         let plugin = file.deletingLastPathComponent().appendingPathComponent("agentbox-\(id.uuidString.lowercased())", isDirectory: true)
         let claudeHookSnapshot: ClaudeHookLaunchSnapshot?
-        if let hookScriptURL {
-            guard prepared.provider == .claude else { throw AgentLaunchError.contextNotActive }
-            claudeHookSnapshot = try ClaudeHookLaunchSnapshot.prepare(
-                planID: id, directory: file.deletingLastPathComponent(), hookScriptURL: hookScriptURL)
-        } else { claudeHookSnapshot = nil }
         let computerMCP: ComputerMCPConfiguration?
         let mcpConfigData: Data?
         let mcpCapabilityData: Data?
@@ -346,6 +341,17 @@ public struct AgentLaunchPlanner {
                     destination: url.deletingLastPathComponent())
             }
         }
+        let scrapingSkill = skillFiles.first(where: { $0.reference.name == "webscraping-expert" })
+        if computerID != nil, scrapingSkill != nil, hookScriptURL == nil {
+            throw AgentLaunchError.incompatibleSkill("a skill de scraping para subagentes exige observação nativa do Claude neste lançamento")
+        }
+        if let hookScriptURL {
+            guard prepared.provider == .claude else { throw AgentLaunchError.contextNotActive }
+            let childContext = scrapingSkill.map(Self.childScrapingContext)
+            claudeHookSnapshot = try ClaudeHookLaunchSnapshot.prepare(
+                planID: id, directory: file.deletingLastPathComponent(), hookScriptURL: hookScriptURL,
+                childContextData: childContext)
+        } else { claudeHookSnapshot = nil }
         let digest = SHA256.hash(data: Data(prepared.text.utf8)).map { String(format: "%02x", $0) }.joined()
         let activation: AgentLaunchActivation
         let arguments: [String]
@@ -417,9 +423,19 @@ public struct AgentLaunchPlanner {
                   descriptor.planID == plan.id,
                   descriptor.settingsPath == directory.appendingPathComponent("hooks.settings.json").path,
                   descriptor.scriptPath == directory.appendingPathComponent("claude_event.py").path,
-                  hook.settingsData == (try ClaudeHookLaunchDescriptor.settingsData(scriptPath: descriptor.scriptPath)),
+                  hook.settingsData == (try ClaudeHookLaunchDescriptor.settingsData(scriptPath: descriptor.scriptPath,
+                    childContextPath: descriptor.childContextPath, childContextHash: descriptor.childContextHash,
+                    childContextChunkCount: descriptor.childContextChunkCount)),
                   Self.sha256(hook.settingsData) == descriptor.settingsHash,
                   Self.sha256(hook.scriptData) == descriptor.scriptHash else {
+                throw AgentLaunchError.invalidBinding
+            }
+            let expectedChildContext = plan.skillFiles.first(where: { $0.reference.name == "webscraping-expert" })
+                .map(Self.childScrapingContext)
+            guard hook.childContextData == expectedChildContext,
+                  descriptor.childContextPath == expectedChildContext.map({ _ in directory.appendingPathComponent("child-skill-context.txt").path }),
+                  descriptor.childContextHash == expectedChildContext.map(Self.sha256),
+                  descriptor.childContextChunkCount == (expectedChildContext.map(ClaudeHookLaunchDescriptor.contextChunkCount) ?? 0) else {
                 throw AgentLaunchError.invalidBinding
             }
         }
@@ -444,6 +460,10 @@ public struct AgentLaunchPlanner {
             if let hook = plan.claudeHookSnapshot {
                 try writeProtected(hook.settingsData, to: URL(fileURLWithPath: hook.descriptor.settingsPath))
                 try writeProtected(hook.scriptData, to: URL(fileURLWithPath: hook.descriptor.scriptPath), permissions: 0o700)
+                if let childContextData = hook.childContextData,
+                   let path = hook.descriptor.childContextPath {
+                    try writeProtected(childContextData, to: URL(fileURLWithPath: path))
+                }
                 try hook.descriptor.validate(directory: directory)
             }
             if let plugin = plan.pluginDirectory {
@@ -575,7 +595,7 @@ public struct AgentLaunchPlanner {
                   hook.scriptPath == directory.appendingPathComponent("claude_event.py").path else {
                 throw AgentLaunchError.planDirectoryMismatch
             }
-            for path in [hook.settingsPath, hook.scriptPath] {
+            for path in [hook.settingsPath, hook.scriptPath] + (hook.childContextPath.map { [$0] } ?? []) {
                 try FileManager.default.removeItem(atPath: path)
             }
             let runs = directory.appendingPathComponent("hook-runs", isDirectory: true)
@@ -588,6 +608,14 @@ public struct AgentLaunchPlanner {
 
     private static func sha256(_ data: Data) -> String {
         SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+    }
+
+    private static func childScrapingContext(_ skill: AgentLaunchSkillFile) -> Data {
+        let path = skill.url.path
+        return Data(("Reviewed webscraping-expert is the default skill for this native child when doing web scraping. "
+            + "The full reviewed SKILL.md follows. Supporting files and relative paths are frozen beside \(path). "
+            + "Use the Agent Box computer tools only if a separate child box has been assigned and authenticated.\n\n"
+            + skill.content).utf8)
     }
 
     /// Freeze referenced package files with the launch. Refuse links, hidden files and oversized trees.

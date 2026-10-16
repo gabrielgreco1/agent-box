@@ -75,6 +75,7 @@ private enum WorkspaceSheet: Identifiable {
     case computer(UUID)
     case worktree(sessionID: UUID, terminalID: UUID)
     case nativeAgent(UUID)
+    case childComputer(UUID)
 
     var id: String {
         switch self {
@@ -90,6 +91,7 @@ private enum WorkspaceSheet: Identifiable {
         case .computer(let id): return "computer-\(id)"
         case .worktree(let sessionID, let terminalID): return "worktree-\(sessionID)-\(terminalID)"
         case .nativeAgent(let id): return "native-agent-\(id)"
+        case .childComputer(let id): return "child-computer-\(id)"
         }
     }
 }
@@ -270,6 +272,20 @@ public struct WorkspaceView: View {
                 }
             case .nativeAgent(let id):
                 nativeAgentDetails(id)
+            case .childComputer(let id):
+                if let child = nativeAgents.runs.first(where: { $0.id == id && $0.kind == .nativeSubagent }),
+                   let parentTerminalID = child.parentTerminalID,
+                   let session = snapshot.sessions.first(where: { $0.terminals.contains(where: { $0.id == parentTerminalID }) }),
+                   let terminal = session.terminals.first(where: { $0.id == parentTerminalID }) {
+                    BrowserComputerPanel(terminalID: parentTerminalID,
+                        context: computerPolicyContext(for: terminal, in: session.id),
+                        owner: .nativeChild(parentTerminalID: parentTerminalID, agentRunID: child.id))
+                        .padding(20)
+                        .frame(width: 480)
+                } else {
+                    Text("O vínculo observado entre subagente e terminal pai não está mais disponível.")
+                        .padding(20)
+                }
             }
         }
         .alert("Erro no workspace", isPresented: Binding(get: { saveError != nil }, set: { if !$0 { saveError = nil } })) {
@@ -574,6 +590,9 @@ public struct WorkspaceView: View {
                     Text("Este é um registro de eventos nativos do CLI. O subagente compartilha o terminal pai e não possui PTY independente.")
                         .font(.system(size: 11)).foregroundStyle(WorkspaceChrome.secondary)
                     HStack {
+                        Button("Computador do subagente…") {
+                            sheet = .childComputer(child.id)
+                        }
                         Spacer()
                         Button("Mostrar terminal pai") {
                             if let session = snapshot.sessions.first(where: { $0.terminals.contains(where: { $0.id == child.terminalID }) }) {
@@ -1177,11 +1196,11 @@ public struct WorkspaceView: View {
             guard runtime.isRunning(request.materialized) else {
                 throw LibraryError.invalid("O CLI não iniciou; nenhuma execução foi registrada.")
             }
+            if registeredComputerMCP { try AgentComputerAccess.shared.activate(terminalID: terminal.id) }
             try LibraryRepository().save(library)
-            if registeredComputerMCP { AgentComputerAccess.shared.activate(terminalID: terminal.id) }
         } catch {
             if registeredComputerMCP { AgentComputerAccess.shared.stop(terminalID: terminal.id) }
-            if runtime.isRunning(request.materialized) { runtime.stop(terminal.id) }
+            await stopFailedAgentProcess(request.materialized)
             if let rollbackError = rollbackLaunchMetadata() {
                 bindingsAvailable = false
                 throw LibraryError.invalid("Lançamento falhou e os metadados não puderam ser restaurados: \(rollbackError). O processo recebeu pedido de encerramento.")
@@ -1200,6 +1219,13 @@ public struct WorkspaceView: View {
             try bindingStore.save(launchBindings)
             return nil
         } catch { return error.localizedDescription }
+    }
+
+    private func stopFailedAgentProcess(_ launch: MaterializedAgentLaunch) async {
+        guard let terminalID = launch.terminal?.id, runtime.isRunning(launch) else { return }
+        runtime.stop(terminalID)
+        try? await Task.sleep(nanoseconds: 500_000_000)
+        if runtime.isRunning(launch) { runtime.forceStop(terminalID) }
     }
 
     private func requestStop(_ id: UUID) {
@@ -1236,6 +1262,7 @@ public struct WorkspaceView: View {
             return
         }
         var registeredComputerMCP = false
+        var startedLaunch: MaterializedAgentLaunch?
         do {
             let restored = try AgentLaunchPlanner().restore(binding, terminal: terminal)
             if let mcp = restored.computerMCP {
@@ -1249,14 +1276,16 @@ public struct WorkspaceView: View {
                 registeredComputerMCP = true
                 try validateComputerAssignment(for: terminal, in: session.id, mcp: mcp)
             }
+            startedLaunch = restored
             try runtime.start(restored)
             guard runtime.isRunning(restored) else {
                 throw LibraryError.invalid("O CLI não iniciou; o controle do computador permanece inativo.")
             }
-            if restored.computerMCP != nil { AgentComputerAccess.shared.activate(terminalID: terminal.id) }
+            if restored.computerMCP != nil { try AgentComputerAccess.shared.activate(terminalID: terminal.id) }
             runtime.focus(terminal.id)
         } catch {
             if registeredComputerMCP { AgentComputerAccess.shared.stop(terminalID: terminal.id) }
+            if let startedLaunch { await stopFailedAgentProcess(startedLaunch) }
             saveError = error.localizedDescription
         }
     }
