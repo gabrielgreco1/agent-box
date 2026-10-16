@@ -10,7 +10,10 @@ AGENTBOX_BIN="$(swift build -c release --show-bin-path)"
 AGENTBOX_APP="$AGENTBOX_ROOT/build/Agent Box.app"
 mkdir -p "$AGENTBOX_APP/Contents/MacOS" "$AGENTBOX_APP/Contents/Resources"
 cp "$AGENTBOX_BIN/AgentBox" "$AGENTBOX_APP/Contents/MacOS/AgentBox"
-cp -R "$AGENTBOX_BIN/AgentBox_AgentBox.bundle" "$AGENTBOX_APP/Contents/Resources/"
+for AGENTBOX_RESOURCE in "$AGENTBOX_BIN"/*.bundle; do
+  [[ -d "$AGENTBOX_RESOURCE" ]] || continue
+  cp -R "$AGENTBOX_RESOURCE" "$AGENTBOX_APP/Contents/Resources/"
+done
 cat > "$AGENTBOX_APP/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -27,5 +30,10 @@ cat > "$AGENTBOX_APP/Contents/Info.plist" <<'PLIST'
 <key>NSPrincipalClass</key><string>NSApplication</string>
 </dict></plist>
 PLIST
+# Finder may attach presentation metadata after the previous local launch.
+# Remove only those two generated-bundle attributes; preserve other attributes.
+xattr -rd com.apple.FinderInfo "$AGENTBOX_APP" 2>/dev/null || true
+xattr -rd com.apple.ResourceFork "$AGENTBOX_APP" 2>/dev/null || true
 codesign --force --deep --sign - "$AGENTBOX_APP"
+codesign --verify --deep --strict "$AGENTBOX_APP"
 printf 'App: %s\n' "$AGENTBOX_APP"
