@@ -13,6 +13,7 @@ import time
 import uuid
 from urllib.parse import urlparse
 
+from capture import CaptureStore
 from desktop_browser import DesktopBrowserProcess
 
 
@@ -22,8 +23,9 @@ class RuntimeFailure(Exception):
 
 class BrowserWorker:
     """Playwright's sync API stays on its own thread across all calls."""
-    def __init__(self, profile: Path, downloads: Path):
+    def __init__(self, profile: Path, downloads: Path, capture=None):
         self.profile, self.downloads = profile, downloads
+        self.capture = capture
         self.jobs: queue.Queue = queue.Queue()
         self.thread = threading.Thread(target=self._run, daemon=True)
         self.thread.start()
@@ -32,6 +34,7 @@ class BrowserWorker:
         context = None
         desktop = None
         attached_browser = None
+        observed = {}
 
         def close_browser():
             nonlocal context, desktop, attached_browser
@@ -45,12 +48,66 @@ class BrowserWorker:
             elif context is not None:
                 context.close()
             context = desktop = attached_browser = None
+            if self.capture is not None and observed:
+                with self.capture.lock:
+                    current_id = self.capture.capture_id
+                self.capture.record_loss(sum(item[4] == current_id for item in observed.values()), current_id)
+            observed.clear()
+
+        def attach_capture(context):
+            if self.capture is None: return
+            def request_started(request):
+                # A request receives one ID even across response/failure events.
+                with self.capture.lock:
+                    capture_id = self.capture.capture_id if self.capture.enabled and \
+                        self.capture._safe_url(request.url) is not None else None
+                if capture_id is None: return
+                if len(observed) >= 2048:
+                    with self.capture.lock:
+                        current_id = self.capture.capture_id
+                    self.capture.record_loss(sum(item[4] == current_id for item in observed.values()), current_id)
+                    observed.clear()
+                observed[id(request)] = (str(uuid.uuid4()), time.monotonic(), None, None, capture_id)
+            def response_seen(response):
+                key = id(response.request)
+                if key in observed:
+                    request_id, started, _, _, capture_id = observed[key]
+                    try: mime = response.headers.get('content-type', '').split(';', 1)[0].lower()
+                    except Exception: mime = None
+                    observed[key] = (request_id, started, response.status, mime, capture_id)
+            def finished(request, failure=False):
+                request_id, started, status, mime, capture_id = observed.pop(
+                    id(request), (str(uuid.uuid4()), time.monotonic(), None, None, None))
+                if capture_id is None: return
+                try:
+                    self.capture.browser(request_id=request_id, method=request.method,
+                        url=request.url, status=status, mime=mime,
+                        duration_ms=(time.monotonic() - started) * 1000,
+                        failure=failure, capture_id=capture_id)
+                except Exception:
+                    # Observation must not change browser navigation semantics.
+                    pass
+            context.on('request', request_started)
+            context.on('response', response_seen)
+            context.on('requestfinished', finished)
+            context.on('requestfailed', lambda request: finished(request, True))
 
         try:
             from playwright.sync_api import sync_playwright
             with sync_playwright() as playwright:
                 while True:
-                    job, args, reply = self.jobs.get()
+                    try: job, args, reply = self.jobs.get(timeout=.1)
+                    except queue.Empty:
+                        # Playwright's synchronous dispatch loop only processes
+                        # network events while an API call is active. Pump it even
+                        # when the host has no queued browser command.
+                        if context is not None:
+                            try:
+                                page = context.pages[0] if context.pages else None
+                                if page: page.wait_for_timeout(25)
+                                else: context.wait_for_event('page', timeout=25)
+                            except Exception: pass
+                        continue
                     try:
                         if job == 'stop':
                             close_browser()
@@ -78,6 +135,7 @@ class BrowserWorker:
                                 download.save_as(str(self.downloads / f'{uuid.uuid4().hex}-{safe_name}'))
                             def attach_page(page):
                                 page.on('download', save_download)
+                            attach_capture(context)
                             context.on('page', attach_page)
                             for existing_page in context.pages: attach_page(existing_page)
                             page = context.pages[0] if context.pages else context.new_page()
@@ -251,7 +309,8 @@ class ComputerEngine:
             self.profile_lock.close()
             raise RuntimeFailure('profile already has an active computer')
         self.lock = threading.RLock()
-        self.browser = browser or BrowserWorker(data / 'profile', data / 'workspace' / 'downloads')
+        self.capture = CaptureStore(computer_id)
+        self.browser = browser or BrowserWorker(data / 'profile', data / 'workspace' / 'downloads', self.capture)
         self.display = display or RealDisplay()
         self.mode = 'http'
         self.browser_ready = False

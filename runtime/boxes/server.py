@@ -11,6 +11,7 @@ import signal
 import threading
 import time
 import uuid
+from urllib.parse import parse_qs, urlsplit
 
 from engine import ComputerEngine, RuntimeFailure
 import public_http
@@ -72,6 +73,15 @@ class ComputerHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/ready': return self._send(200, {'ready': True})
         if not self._authenticated(): return self._error(401, 'unauthorized')
+        if urlsplit(self.path).path == '/v1/capture':
+            try:
+                parsed = urlsplit(self.path)
+                query = parse_qs(parsed.query, keep_blank_values=True, strict_parsing=True)
+                if set(query) != {'after'} or len(query['after']) != 1 or \
+                   not query['after'][0].isascii() or not query['after'][0].isdigit():
+                    raise ValueError('invalid capture cursor')
+                return self._send(200, self.server.engine.capture.snapshot(int(query['after'][0])))
+            except ValueError: return self._error(400, 'invalid capture cursor')
         if self.path == '/v1/health': return self._send(200, self.server.engine.health())
         if self.path == '/v1/page':
             try: return self._send(200, self.server.engine.page())
@@ -108,6 +118,11 @@ class ComputerHandler(BaseHTTPRequestHandler):
         engine = self.server.engine
         try:
             with engine.lock:
+                if self.path == '/v1/capture/clear':
+                    if body: raise ValueError('capture clear expects an empty object')
+                    return self._send(200, engine.capture.clear())
+                if self.path == '/v1/capture/config':
+                    return self._send(200, engine.capture.configure(body))
                 if self.path == '/v1/control/grant':
                     actor, epoch, paths = body.get('actor_id'), body.get('epoch'), body.get('paths')
                     if not isinstance(actor, str) or not (1 <= len(actor) <= 200) or type(epoch) is not int or epoch <= engine.last_epoch or not isinstance(paths, list) or not paths or not all(isinstance(path, str) and path in PATHS for path in paths):
@@ -133,7 +148,16 @@ class ComputerHandler(BaseHTTPRequestHandler):
                 if path == 'navigate': return self._send(200, engine.navigate(body.get('url')))
                 if path == 'input': return self._send(200, engine.input(body))
                 if path == 'http_request':
-                    result = public_http.request(body)
+                    started = time.monotonic()
+                    try: result = public_http.request(body)
+                    except Exception:
+                        engine.capture.broker_http(method=body.get('method', 'GET'),
+                            url=body.get('url'), result={},
+                            duration_ms=(time.monotonic() - started) * 1000, failure=True)
+                        raise
+                    engine.capture.broker_http(method=body.get('method', 'GET'),
+                        url=body.get('url'), result=result,
+                        duration_ms=(time.monotonic() - started) * 1000)
                     result.update(generation=engine.generation, computer_id=engine.computer_id)
                     return self._send(200, result)
         except ValueError as exc: return self._error(400, str(exc))

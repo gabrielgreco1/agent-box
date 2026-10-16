@@ -20,6 +20,7 @@ struct BrowserComputerPanel: View {
     @State private var error: String?
     @State private var busy = false
     @State private var presentation: DesktopPresentation?
+    @State private var capturePresentation: CapturePanelStore?
     @State private var currentMode: BrowserRuntimeMode?
 
     init(terminalID: UUID, context: ComputerPolicyContext,
@@ -66,6 +67,10 @@ struct BrowserComputerPanel: View {
             if let computer {
                 Label(computer.running ? "Em execução" : "Parado",systemImage:computer.running ? "circle.fill":"pause.circle")
                     .font(.caption).foregroundStyle(.secondary)
+                Button("Capturas e dados") {
+                    capturePresentation = CapturePanelRegistry.store(computerID: computer.id, owner: owner, context: context)
+                }
+                .disabled(isBusy)
                 if let cleanupFailure = computerAccess.cleanupFailures[computer.id] {
                     Text(cleanupFailure).font(.caption).foregroundStyle(.red).textSelection(.enabled)
                 }
@@ -98,6 +103,7 @@ struct BrowserComputerPanel: View {
                 HStack {
                     if computer.running {
                         Button("Abrir desktop") {openDesktop(computer.id, allowModeChange: nativeChildCurrent)}
+                            .help("Chromium completo com perfil exclusivo e persistente desta box, separado do Chrome pessoal. Desafios exigem assumir o controle.")
                             .disabled(isBusy || recoveryBlocksActions || (!nativeChildCurrent && currentMode != .desktop))
                         Button("Parar") {perform {try await store.stop(computerID:computer.id,owner:owner);currentMode=nil}}
                             .disabled(isBusy)
@@ -136,6 +142,7 @@ struct BrowserComputerPanel: View {
                         Button("HTTP · sem navegador") {changeMode(.http,computerID:computer.id)}
                         Button("Navegador headless") {changeMode(.headless,computerID:computer.id)}
                         Button("Desktop") {openDesktop(computer.id)}
+                            .help("Chromium completo com perfil exclusivo e persistente desta box, separado do Chrome pessoal. Desafios exigem assumir o controle.")
                     }.disabled(isBusy || recoveryBlocksActions || !nativeChildCurrent)
                     Text("Trocar de modo reinicia o navegador. Perfil e arquivos são mantidos; formulários em andamento podem ser perdidos.").font(.caption).foregroundStyle(.secondary)
                 }
@@ -186,6 +193,9 @@ struct BrowserComputerPanel: View {
                 HStack {Text("Computador");Spacer();Button("Fechar"){presentation=nil}}.padding(10)
                 RemoteDesktopView(endpoint:item.endpoint,control:item.actions.actions())
             }.frame(minWidth:800,minHeight:560).frame(idealWidth:1100,idealHeight:760)
+        }
+        .sheet(item: $capturePresentation) { capture in
+            CapturePanel(store: capture)
         }
     }
     private func skillIncluded(_ assignment: ScrapingBoxAssignment) -> Bool {

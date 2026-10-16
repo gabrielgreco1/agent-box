@@ -39,8 +39,8 @@ Estados: **parcial** significa código funcional com limites; **em integração*
 | AB-021 | Perfis persistentes fora de imagens, lock de escritor, backup/restore | 018, 015 | AC34–AC35, AC59 | Parcial / integração |
 | AB-022 | Takeover com revogação/ACK/epoch em todos os caminhos de escrita e reconciliação | 017, 020 | AC38–AC41, AC43 | Parcial / integração |
 | AB-023 | Pedidos de intervenção, badge/som deduplicado, foco no alvo certo e previews | 022 | AC04, AC08, AC40, AC42–AC43 | Parcial / integração |
-| AB-024 | Listener browser/HTTP com cobertura declarada, filtros e retenção/backpressure | 019, 015 | AC51–AC54 | Planejada |
-| AB-025 | Resultados CSV/JSON com proveniência, evidências e deduplicação auditável | 024 | AC55 | Planejada |
+| AB-024 | Listener browser/HTTP com cobertura declarada, filtros e retenção/backpressure | 019, 015 | AC51–AC54 | Parcial / AB-046 |
+| AB-025 | Resultados CSV/JSON com proveniência, evidências e deduplicação auditável | 024 | AC55 | Parcial / AB-046 |
 | AB-026 | Troca de modelo confirmada por execução, capacidades específicas por CLI | 016, 012 | AC56 | Planejada |
 | AB-027 | Handoff entre harnesses com checkpoint e controlador único; falha recuperável | 026, 021, 022 | AC57, AC67–AC68 | Planejada |
 | AB-028 | Serviço PTY, reconexão após crash/sono e migração versionada com backup | 002, 017, 021 | AC11–AC13, AC58–AC59 | Planejada |
@@ -96,3 +96,5 @@ AB-043: donos distintos para boxes de terminais e filhos observados; proveniênc
 AB-044 implementa o despacho antes pendente: aquisição sob política, skill obrigatória para filhos, concessões independentes, encaminhamento concorrente e limpeza no término/quit. 152 testes passaram com ambos os opt-ins Docker ligados; duas boxes reais mantiveram controle e perfis separados durante takeover/reinício. A prova do dispatcher com PTY e a prova Docker são separadas: próximo gate vertical permanece Claude na TUI → filhos → boxes → intervenção → retomada. Nenhum aceite global é marcado completo por teste de módulo. Ver `tasks/AB-044-native-child-routing.md`.
 
 AB-045 une o caminho nativo não interativo: modelo Claude real → filho nativo → MCP do app → box própria → pedido de ajuda → controle humano pelas APIs → navegação retomada → parada automática. 160 testes passaram (dois opt-ins Docker de AB-044 desativados). Retomada explícita de conversas foi ligada à UI e ao PTY, e ajustes de teclado/tamanho de sheets foram integrados. O gate visual/TUI continua aberto, junto dos demais marcos integrais. Ver `tasks/AB-045-native-flow-and-resume.md`.
+
+AB-046 integra listener opt-in por box, metadados browser, JSON escalar do HTTP controlado, painel de capturas e datasets CSV/JSON com evidências. Cobertura incompleta é explícita; não completa AC51–55 nem a meta global. Próximos gates: coleta restaurada após relançar, política herdada, acesso MCP às capturas, cobertura de outras fontes e aceite visual. Ver `tasks/AB-046-capture-results.md`.

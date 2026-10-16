@@ -22,6 +22,13 @@ The host must publish **only** `127.0.0.1:<ephemeral-host-port>:8765`, never `0.
 | `POST /v1/navigate` | leased `{url}` for browser modes |
 | `POST /v1/input` | leased X11 `move`, `click`, `key`, `text` or `scroll` |
 | `POST /v1/http/request` | leased public-web GET/HEAD, 10 s deadline, 1 MiB cap, no redirects |
+| `POST /v1/capture/config` | host-app bearer configuration; no agent lease route exists |
+| `POST /v1/capture/clear` | host-app bearer `{}`; clears ring and rotates capture ID while preserving filters |
+| `GET /v1/capture?after=N` | bearer-only sanitized in-memory events after a sequence cursor |
+
+Capture is disabled on every runtime start. Enabling requires an explicit nonempty exact host allowlist. Configuration has the exact fields `enabled`, `hosts`, `path_prefixes`, `include_json`, `json_fields`, `max_body_bytes` (1–65,536), `max_events` (1–1,000), and `retention_seconds` (1–86,400). Paths are never stored in full: a recorded URL is its origin plus only a matching configured static prefix, without userinfo, query or fragment. Request and response headers, cookies, form values and browser response bodies are never recorded. Broker HTTP can retain only explicitly named top-level JSON scalar fields from a response within the byte cap. All capture lives in a ring under 900 KB, with expiry/overflow counted as `dropped`; it is never written to `/data`. Any configuration change clears the ring and rotates `capture_id`, so cursors must be keyed by computer and capture instance. `next_cursor` is the highest sequence observed in that instance.
+
+The response declares `coverage_version`, `coverage` and `gaps`. Browser coverage attaches to the persistent context before initial navigation and includes new pages, response/redirect requests and failures; an idle Playwright pump keeps it active between host calls. Browser worker internals, websocket frames, cache detail, browser bodies, curl, Python clients, raw sockets and proxy traffic are **not** covered. The broker HTTP tool covers its own GET/HEAD result or failure only; it does not follow redirects. These gaps remain explicit even when capture is enabled.
 
 `/v1/page` removes form controls (including password fields), contenteditable nodes, scripts, styles, frames and non-text graphics before extracting page text or link labels. It never returns raw HTML, input values, cookies or browser storage. Text is capped at 65,536 characters, links at 200, labels at 300 characters, URLs at 4,096 characters and title at 500 characters; `truncated` reports clipping. It reads the same Playwright page used for browser navigation and screenshots, and returns 409 in HTTP mode.
 

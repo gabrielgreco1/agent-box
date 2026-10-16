@@ -17,7 +17,11 @@ struct AppSettingsView:View {
                         Toggle("Notificar e tocar som quando um agente precisar de mim",isOn:Binding(get:{requests.notificationsEnabled},set:{enabled in if enabled {Task{_ = await requests.enableNotifications()}} else {requests.disableNotifications()}}))
                         Text("O pedido permanece no app mesmo com notificações desativadas.").font(.caption).foregroundStyle(.secondary)
                     }
-                    Section("Listener") {Text("Captura de rede por fonte");Text("A captura ainda não foi conectada ao runtime. Nenhum tráfego é gravado por este app.").font(.caption).foregroundStyle(.secondary)}
+                    Section("Listener") {
+                        Text("Captura de rede por computador")
+                        Text("Abra Capturas e dados no painel da box para escolher hosts, campos JSON e retenção. A captura só é ativada após Aplicar e confirmação do runtime.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
                     Section("Credenciais") {Text("Login dos CLIs permanece nos clientes locais. Importe .env e gerencie concessões na aba Credenciais.").font(.caption).foregroundStyle(.secondary)}
                     Section("Agentes e skills") {Text("A biblioteca permite salvar definições, selecionar memória e importar arquivos de skill. A ativação nativa no CLI depende do adapter.").font(.caption).foregroundStyle(.secondary)}
                 }.formStyle(.grouped)

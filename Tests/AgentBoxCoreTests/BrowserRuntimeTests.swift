@@ -5,6 +5,46 @@ import Foundation
 final class BrowserRuntimeTests: XCTestCase {
     private let id = UUID(uuidString: "a635d250-14d1-4432-bac5-af57f613bb3a")!
 
+    func testCaptureAuthenticatedCursorAndExplicitConfiguration() async throws {
+        let batch = CaptureBatch(schemaVersion: 1, captureID: UUID(), coverageVersion: "agentbox-capture/1",
+            computerID: id.uuidString, enabled: true, coverage: ["browser_context_requests"],
+            gaps: ["websocket_frames"], events: [], nextCursor: 42, dropped: 3)
+        let bytes = try JSONEncoder().encode(batch)
+        BrowserRouteURLProtocol.configure(["/v1/capture": bytes, "/v1/capture/config": bytes, "/v1/capture/clear": bytes])
+        let client = try routeClient()
+        let received = try await client.capture(after: 41)
+        XCTAssertEqual(received.captureID, batch.captureID)
+        XCTAssertEqual(received.dropped, 3)
+        XCTAssertEqual(BrowserRouteURLProtocol.requests().first?.url?.query, "after=41")
+        let config = CaptureConfiguration(enabled: true, hosts: ["example.com"])
+        _ = try await client.configureCapture(config)
+        _ = try await client.clearCaptures()
+        XCTAssertEqual(BrowserRouteURLProtocol.paths(), ["/v1/capture", "/v1/capture/config", "/v1/capture/clear"])
+        XCTAssertTrue(BrowserRouteURLProtocol.allAuthenticated())
+        XCTAssertEqual(BrowserRouteURLProtocol.requests().map(\.httpMethod), ["GET", "POST", "POST"])
+        XCTAssertTrue(BrowserRouteURLProtocol.requests().allSatisfy { $0.value(forHTTPHeaderField: "X-AgentBox-Control-Token") == nil })
+        XCTAssertEqual(try JSONDecoder().decode(CaptureConfiguration.self,
+            from: XCTUnwrap(BrowserRouteURLProtocol.bodies()[1])), config)
+        do { _ = try await client.capture(after: -1); XCTFail("Negative cursor accepted") }
+        catch BrowserRuntimeError.invalidResponse { }
+        do { _ = try await client.configureCapture(.init(enabled: true)); XCTFail("Missing host accepted") }
+        catch CaptureError.invalidConfiguration { }
+        XCTAssertEqual(BrowserRouteURLProtocol.requests().count, 3)
+    }
+
+    func testCaptureRejectsForeignComputerAndMalformedCursor() async throws {
+        for (foreignID, schema, cursor, expectedIdentity) in [
+            (UUID().uuidString, 1, 0, true), (id.uuidString, 2, 0, false), (id.uuidString, 1, -1, false)
+        ] {
+            let batch = CaptureBatch(schemaVersion: schema, captureID: UUID(), coverageVersion: "agentbox-capture/1",
+                computerID: foreignID, enabled: false, coverage: [], gaps: [], events: [], nextCursor: cursor, dropped: 0)
+            BrowserRouteURLProtocol.configure(["/v1/capture": try JSONEncoder().encode(batch)])
+            do { _ = try await routeClient().capture(); XCTFail("Invalid capture accepted") }
+            catch BrowserRuntimeError.identityMismatch { XCTAssertTrue(expectedIdentity) }
+            catch BrowserRuntimeError.invalidResponse { XCTAssertFalse(expectedIdentity) }
+        }
+    }
+
     func testDesktopButtonAndScrollEncoding() throws {
         let down = try JSONSerialization.jsonObject(with: JSONEncoder().encode(BrowserDesktopInput.button(button: 1, pressed: true))) as! [String: Any]
         XCTAssertEqual(down["kind"] as? String, "button")

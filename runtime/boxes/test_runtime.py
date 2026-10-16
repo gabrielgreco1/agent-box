@@ -3,6 +3,7 @@ from pathlib import Path
 import tempfile
 import threading
 import unittest
+from datetime import datetime, timezone
 import urllib.error
 import urllib.request
 from unittest.mock import patch
@@ -150,6 +151,53 @@ class RuntimeTests(unittest.TestCase):
         fetch.assert_called_once_with(body)
         self.assertEqual((result['computer_id'], result['generation']), (self.engine.computer_id, 0))
         self.assertEqual(result['status'], 200)
+
+    def test_capture_config_requires_bearer_and_explicit_allowlist(self):
+        settings = {'enabled': True, 'hosts': ['example.com'], 'path_prefixes': [],
+                    'include_json': False, 'json_fields': [], 'max_body_bytes': 4096,
+                    'max_events': 2, 'retention_seconds': 3600}
+        self.assertEqual(self.request('/v1/capture/config', settings, token=False)[0], 401)
+        self.assertEqual(self.request('/v1/capture/config', dict(settings, hosts=[]))[0], 400)
+        code, _, configured = self.request('/v1/capture/config', settings)
+        self.assertEqual(code, 200)
+        self.assertTrue(configured['enabled'])
+        self.assertEqual(configured['computer_id'], self.engine.computer_id)
+        self.assertEqual(configured['events'], [])
+        self.assertEqual(self.request('/v1/capture?after=0', token=False)[0], 401)
+        self.assertEqual(self.request('/v1/capture?after=nope')[0], 400)
+
+        code, _, lease = self.request('/v1/control/grant', {'actor_id': 'agent', 'epoch': 8,
+                                                           'paths': ['http_request']})
+        self.assertEqual(code, 200)
+        with patch('server.public_http.request', return_value={
+                'status': 200, 'content_type': 'text/plain', 'body_base64': ''}):
+            self.assertEqual(self.request('/v1/http/request',
+                {'url': 'https://example.com/private?token=SECRET', 'method': 'GET'}, lease=lease)[0], 200)
+        code, _, batch = self.request('/v1/capture?after=0')
+        self.assertEqual(code, 200)
+        self.assertEqual(len(batch['events']), 1)
+        self.assertEqual(batch['events'][0]['url'], 'https://example.com')
+        self.assertNotIn('SECRET', json.dumps(batch))
+        self.assertEqual(batch['events'][0]['source'], 'http_tool')
+        self.assertEqual(datetime.fromisoformat(batch['events'][0]['timestamp']).tzinfo, timezone.utc)
+        self.assertEqual(batch['next_cursor'], 1)
+        self.assertEqual(self.request('/v1/capture?after=1')[2]['events'], [])
+        self.assertEqual(self.request('/v1/capture/config', settings)[2]['events'], batch['events'],
+                         "Idempotent configuration must return a full retained batch")
+
+        old_id = batch['capture_id']
+        settings['hosts'] = ['other.example']
+        self.assertNotEqual(self.request('/v1/capture/config', settings)[2]['capture_id'], old_id)
+        self.assertEqual(self.request('/v1/capture?after=0')[2]['events'], [])
+        self.assertEqual(self.request('/v1/capture/clear', {}, token=False)[0], 401)
+        self.assertEqual(self.request('/v1/capture/clear', {'unexpected': True})[0], 400)
+        prior = self.request('/v1/capture?after=0')[2]['capture_id']
+        code, _, cleared = self.request('/v1/capture/clear', {})
+        self.assertEqual(code, 200)
+        self.assertEqual(cleared['events'], [])
+        self.assertTrue(cleared['enabled'])
+        self.assertNotEqual(cleared['capture_id'], prior)
+        self.assertEqual(self.request('/v1/capture?after=0')[2]['capture_id'], cleared['capture_id'])
 
     def test_profile_lock_rejects_second_engine(self):
         with self.assertRaises(RuntimeFailure):

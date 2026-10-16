@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "checkpoint": "AB-046",
+  "checked_at": "2026-10-16T17:02:10.385254+00:00",
+  "scope": "Opt-in per-computer listener, capture panel and evidence-backed dataset foundation",
+  "swift": {
+    "total": 172,
+    "failures": 0,
+    "skipped": 3,
+    "enabled_opt_in": "AGENTBOX_TEST_CAPTURE_DOCKER=1",
+    "skipped_gates": [
+      "native Claude child flow (previous AB045 proof)",
+      "child Docker control (previous AB044 proof)",
+      "Docker image update (previous AB042 proof)"
+    ]
+  },
+  "python": {
+    "tests": 30,
+    "failures": 0
+  },
+  "build": {
+    "release": true,
+    "ad_hoc_signature_verified": true,
+    "app": "build/Agent Box.app",
+    "launched": false
+  },
+  "docker": {
+    "context": "colima-agentbox-dev",
+    "image": "agentbox-browser:ab019-dev",
+    "image_id": "sha256:a98fc001c9126068eb4569ce9a388ecc7e8160d533eb6b0e94de2264448cc000",
+    "architecture": "arm64",
+    "fixture": "local HTTP server inside owned disposable box",
+    "browser_events_observed": 3,
+    "verified": [
+      "capture off by default",
+      "unlisted hosts excluded",
+      "redirect observed",
+      "delayed JavaScript fetch while browser command queue idle",
+      "new desktop tab observed",
+      "query tokens not retained",
+      "capture UUID rotates on clear and restart",
+      "profile persists through headless/desktop and restart without reseeding marker",
+      "metadata dataset null reasons and JSON export manifest"
+    ],
+    "not_proved": [
+      "browser response body capture",
+      "Google CAPTCHA cause or absence",
+      "real-site authenticated profile behavior",
+      "HTTP selected JSON integration against a public upstream"
+    ],
+    "cleanup": {
+      "owned_test_containers_removed": true,
+      "owned_test_volumes_removed": true,
+      "preexisting_boxes_unchanged": 2,
+      "preexisting_volumes_unchanged": 2,
+      "development_vm_stopped": true
+    }
+  },
+  "native_ui": {
+    "visual_acceptance": false,
+    "reason": "Mac locked; no app launched"
+  },
+  "limits": [
+    "browser bodies, worker-internal requests, WebSocket frames and uninstrumented HTTP clients outside coverage",
+    "automatic host collector restore after app relaunch pending",
+    "filter changes may lose requests completing between drain and config rotation",
+    "listener policy inheritance and additional filters pending",
+    "captured-data MCP tool not yet implemented",
+    "business-key deduplication/nested JSON extraction pending"
+  ],
+  "goal_status": "active; full specification acceptance not complete"
+}

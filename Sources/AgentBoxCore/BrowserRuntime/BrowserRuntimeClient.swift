@@ -203,6 +203,40 @@ public struct BrowserRuntimeClient {
         return value
     }
 
+    /// Read-only observation; no write lease or browser mode change is involved.
+    /// A capture ID, independent of browser generation, identifies cursor resets.
+    public func capture(after: Int = 0) async throws -> CaptureBatch {
+        guard (0...9_007_199_254_740_991).contains(after) else { throw BrowserRuntimeError.invalidResponse }
+        var request = endpoint.request(path: "v1/capture")
+        var components = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)!
+        components.queryItems = [URLQueryItem(name: "after", value: String(after))]
+        request.url = components.url
+        return try validateCapture(await send(request))
+    }
+
+    /// Called only by the user's settings UI; not exposed as an agent tool.
+    public func configureCapture(_ configuration: CaptureConfiguration) async throws -> CaptureBatch {
+        let body = try JSONEncoder().encode(configuration.validated())
+        return try validateCapture(await send(endpoint.request(path: "v1/capture/config", method: "POST", body: body)))
+    }
+
+    public func clearCaptures() async throws -> CaptureBatch {
+        return try validateCapture(await send(endpoint.request(path: "v1/capture/clear", method: "POST", body: Data("{}".utf8))))
+    }
+
+    private func validateCapture(_ value: CaptureBatch) throws -> CaptureBatch {
+        guard UUID(uuidString: value.computerID) == endpoint.computerID else { throw BrowserRuntimeError.identityMismatch }
+        guard value.schemaVersion == 1, value.coverageVersion == "agentbox-capture/1",
+              (0...9_007_199_254_740_991).contains(value.nextCursor), value.dropped >= 0,
+              value.events.count <= 1_000, value.coverage.count <= 32, value.gaps.count <= 32,
+              (value.coverage + value.gaps).allSatisfy({ $0.utf8.count <= 128 && !$0.contains("\0") }),
+              value.events.allSatisfy({ $0.sequence > 0 && $0.sequence <= value.nextCursor }),
+              zip(value.events, value.events.dropFirst()).allSatisfy({ $0.sequence < $1.sequence }) else {
+            throw BrowserRuntimeError.invalidResponse
+        }
+        return value
+    }
+
     public func grant(actorID: String, epoch: UInt64, paths: Set<ControlWritePath>) async throws -> BrowserRuntimeGrantedLease {
         let body = try JSONEncoder().encode(GrantBody(actorID: actorID, epoch: epoch, paths: Array(paths)))
         let value: BrowserRuntimeGrantedLease = try await send(endpoint.request(path: "v1/control/grant", method: "POST", body: body))
