@@ -8,6 +8,7 @@ import AppKit
 }
 
 @MainActor final class AgentBoxAppDelegate:NSObject, NSApplicationDelegate {
+    private var terminating = false
     func applicationDidFinishLaunching(_ notification:Notification) {
         if let url = AppResources.brandURL("agentbox") {
             NSApp.applicationIconImage = NSImage(contentsOf: url)
@@ -21,14 +22,32 @@ import AppKit
         return true
     }
     func applicationShouldTerminate(_ sender:NSApplication)->NSApplication.TerminateReply {
+        guard !terminating else { return .terminateLater }
         if RuntimeLifecycle.shared.runtime?.hasRunningProcesses == true {
             let alert=NSAlert();alert.messageText="Encerrar os terminais ativos?";alert.informativeText="Sair encerra os processos deste app. As sessões ficam salvas para abrir novamente; os processos não continuam em segundo plano após sair.";alert.addButton(withTitle:"Cancelar");alert.addButton(withTitle:"Encerrar e sair")
             guard alert.runModal() == .alertSecondButtonReturn else {return .terminateCancel}
         }
         AgentComputerAccess.shared.shutdown()
         RuntimeLifecycle.shared.runtime?.shutdown()
-        WorkspaceDirectoryAccess.shared.stopAll()
-        return .terminateNow
+        terminating = true
+        Task { @MainActor in
+            let unresolved = await AgentComputerAccess.shared.finishShutdown()
+            if unresolved > 0 {
+                let alert = NSAlert()
+                alert.messageText = "Alguns computadores não puderam ser encerrados"
+                alert.informativeText = "Confira as boxes antes de sair. Os terminais já foram encerrados e os arquivos foram preservados."
+                alert.addButton(withTitle: "Voltar ao app")
+                alert.addButton(withTitle: "Sair mesmo assim")
+                if alert.runModal() != .alertSecondButtonReturn {
+                    self.terminating = false
+                    sender.reply(toApplicationShouldTerminate: false)
+                    return
+                }
+            }
+            WorkspaceDirectoryAccess.shared.stopAll()
+            sender.reply(toApplicationShouldTerminate: true)
+        }
+        return .terminateLater
     }
 }
 

@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-16",
+  "swift_integrated_with_docker": {
+    "tests": 152,
+    "failures": 0,
+    "skipped": 0,
+    "child_control_opt_in": true,
+    "image_update_opt_in": true,
+    "duration_seconds": 20.685
+  },
+  "swift_after_review_fixes": {
+    "tests": 154,
+    "failures": 0,
+    "skipped": 2,
+    "skipped_reason": "Docker opt-ins already verified in integrated run; runtime stopped before final app/helper regression run",
+    "duration_seconds": 9.646,
+    "regressions": [
+      "Connected child rejects replaced reviewed scraping context",
+      "Helper exits on in-flight socket failure even with stdin left open"
+    ]
+  },
+  "python_hook_tests": {
+    "tests": 5,
+    "failures": 0
+  },
+  "real_docker": {
+    "context": "colima-agentbox-dev",
+    "two_independent_child_computers": true,
+    "headless_javascript": true,
+    "separate_profile_markers": true,
+    "human_takeover_preserves_sibling_control": true,
+    "stale_ticket_rejected": true,
+    "idle_stop_preserves_sibling": true,
+    "profile_survives_restart": true,
+    "image_update_and_rollback": true,
+    "external_web_access_in_test": false
+  },
+  "app_dispatcher": {
+    "actual_owned_pty": true,
+    "authenticated_hook_fixture": true,
+    "runtime_transport": "URLProtocol fixture",
+    "parent_and_children_route_to_distinct_computers": true,
+    "manual_policy_refuses_automatic_creation": true,
+    "child_stop_preserves_human_control": true,
+    "help_targets_observed_child_and_own_computer": true,
+    "human_release_resumes_only_target_child": true
+  },
+  "cleanup": {
+    "test_containers_and_volumes_removed": true,
+    "baseline_two_containers_remain_stopped": true,
+    "baseline_two_volumes_unchanged": true,
+    "development_colima_stopped": true,
+    "personal_browser_profiles_used": false,
+    "personal_skill_published": false
+  },
+  "remaining_gates": [
+    "Native Claude interactive TUI controlling child computers end to end",
+    "Visual confirmation of child panel, notification and takeover flow",
+    "Codex and OpenCode native child adapters",
+    "Full 68-case acceptance, persistent recovery and sustained load",
+    "Cause of observed Google CAPTCHA remains undetermined"
+  ],
+  "release": {
+    "build_passed": true,
+    "ad_hoc_signature_verified": true,
+    "app_opened_for_visual_check": false,
+    "packaging_note": "Finder reapplied FinderInfo to the generated bundle after packaging; removed only that root attribute and verified strict signing again."
+  }
+}

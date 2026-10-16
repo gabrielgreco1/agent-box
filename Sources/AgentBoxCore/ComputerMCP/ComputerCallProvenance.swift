@@ -3,7 +3,6 @@ import Foundation
 
 public enum ComputerCallProvenanceError: Error, Equatable {
     case invalid
-    case childRoutingPending
 }
 
 public struct VerifiedComputerCall: Sendable, Equatable {

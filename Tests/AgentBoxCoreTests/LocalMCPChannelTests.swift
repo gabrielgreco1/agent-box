@@ -4,6 +4,151 @@ import XCTest
 @testable import AgentBoxCore
 
 final class LocalMCPChannelTests: XCTestCase {
+    func testHelperExitsWhenInFlightSocketFailsWhileStdinRemainsOpen() throws {
+        let (directory, socketPath) = try socketFixture()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let capability = "failure-fixture-capability"
+        let capabilityFile = directory.appendingPathComponent("capability")
+        try Data("\(capability)\n".utf8).write(to: capabilityFile, options: .atomic)
+        try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: capabilityFile.path)
+        let callEntered = DispatchSemaphore(value: 0)
+        let server = try LocalMCPServer(socketPath: socketPath, capability: capability) { message in
+            let object = try XCTUnwrap(JSONSerialization.jsonObject(with: message) as? [String: Any])
+            switch object["method"] as? String {
+            case "initialize":
+                return Data(#"{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18"}}"#.utf8)
+            case "notifications/initialized": return Data()
+            case "tools/call":
+                callEntered.signal()
+                try await Task.sleep(nanoseconds: 5_000_000_000)
+                return Data(#"{"jsonrpc":"2.0","id":2,"result":{}}"#.utf8)
+            default: throw LocalMCPError.malformedMessage
+            }
+        }
+        defer { server.stop() }
+        let process = Process()
+        process.executableURL = try helperExecutable()
+        process.arguments = ["--socket", socketPath, "--capability-file", capabilityFile.path]
+        let input = Pipe(), output = Pipe(), errors = Pipe()
+        process.standardInput = input
+        process.standardOutput = output
+        process.standardError = errors
+        let finished = DispatchSemaphore(value: 0)
+        process.terminationHandler = { _ in finished.signal() }
+        try process.run()
+        defer {
+            try? input.fileHandleForWriting.close()
+            if process.isRunning {
+                process.terminate()
+                if finished.wait(timeout: .now() + .seconds(2)) != .success {
+                    _ = Darwin.kill(process.processIdentifier, SIGKILL)
+                    _ = finished.wait(timeout: .now() + .seconds(2))
+                }
+            }
+        }
+        let requests = [
+            #"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}"#,
+            #"{"jsonrpc":"2.0","method":"notifications/initialized"}"#,
+            #"{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"computer_status","arguments":{}}}"#
+        ]
+        try input.fileHandleForWriting.write(contentsOf: Data((requests.joined(separator: "\n") + "\n").utf8))
+        XCTAssertEqual(callEntered.wait(timeout: .now() + .seconds(5)), .success,
+                       "The tool call must reach a concurrent socket worker")
+        guard process.isRunning else { return }
+        // Shut down the accepted socket but deliberately keep helper stdin
+        // open. The helper must close stdout instead of waiting for another line.
+        server.stop()
+        XCTAssertEqual(finished.wait(timeout: .now() + .seconds(3)), .success,
+                       "A failed worker must terminate without waiting for stdin EOF")
+        guard !process.isRunning else { return }
+        XCTAssertEqual(process.terminationStatus, 3)
+        XCTAssertTrue(errors.fileHandleForReading.readDataToEndOfFile().isEmpty)
+        let lines = try XCTUnwrap(String(data: output.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8))
+            .split(separator: "\n")
+        XCTAssertEqual(lines.compactMap { line in
+            (try? JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any])?["id"] as? Int
+        }, [1], "The failed call must not receive an invented response")
+    }
+
+    func testPackagedHelperForwardsEightConcurrentCallsWithExactResponseIDs() throws {
+        let (directory, socketPath) = try socketFixture()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let capability = "concurrent-fixture-capability"
+        let capabilityFile = directory.appendingPathComponent("capability")
+        try Data("\(capability)\n".utf8).write(to: capabilityFile, options: .atomic)
+        try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: capabilityFile.path)
+        let counter = ForwardingCounter()
+        let server = try LocalMCPServer(socketPath: socketPath, capability: capability) { message in
+            let object = try XCTUnwrap(JSONSerialization.jsonObject(with: message) as? [String: Any])
+            let method = try XCTUnwrap(object["method"] as? String)
+            if method == "initialize" {
+                counter.markInitialize()
+                return Data(#"{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18"}}"#.utf8)
+            }
+            if method == "notifications/initialized" {
+                counter.markNotification()
+                return Data()
+            }
+            let id = try XCTUnwrap(object["id"] as? Int)
+            counter.enter()
+            try await Task.sleep(nanoseconds: id == 2 ? 300_000_000 : 70_000_000)
+            counter.leave()
+            return try JSONSerialization.data(withJSONObject: ["jsonrpc": "2.0", "id": id, "result": ["seen": id]])
+        }
+        defer { server.stop() }
+        let process = Process()
+        process.executableURL = try helperExecutable()
+        process.arguments = ["--socket", socketPath, "--capability-file", capabilityFile.path]
+        let input = Pipe(), output = Pipe(), errors = Pipe()
+        process.standardInput = input
+        process.standardOutput = output
+        process.standardError = errors
+        let finished = DispatchSemaphore(value: 0)
+        process.terminationHandler = { _ in finished.signal() }
+        try process.run()
+        defer {
+            if process.isRunning {
+                process.terminate()
+                if finished.wait(timeout: .now() + .seconds(2)) != .success {
+                    _ = Darwin.kill(process.processIdentifier, SIGKILL)
+                    _ = finished.wait(timeout: .now() + .seconds(2))
+                }
+            }
+        }
+        var requests = [
+            #"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}"#,
+            #"{"jsonrpc":"2.0","method":"notifications/initialized"}"#
+        ]
+        requests += (2...17).map { id in
+            "{\"jsonrpc\":\"2.0\",\"id\":\(id),\"method\":\"tools/call\",\"params\":{}}"
+        }
+        try input.fileHandleForWriting.write(contentsOf: Data((requests.joined(separator: "\n") + "\n").utf8))
+        try input.fileHandleForWriting.close()
+        XCTAssertEqual(finished.wait(timeout: .now() + .seconds(15)), .success,
+                       "Concurrent helper did not drain all requests on EOF")
+        guard !process.isRunning else { return }
+        XCTAssertEqual(process.terminationStatus, 0)
+        XCTAssertTrue(errors.fileHandleForReading.readDataToEndOfFile().isEmpty)
+        let lines = try XCTUnwrap(String(data: output.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8))
+            .split(separator: "\n")
+        XCTAssertEqual(lines.count, 17)
+        let responses = try lines.map { line in
+            try XCTUnwrap(JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any])
+        }
+        XCTAssertEqual(responses.first?["id"] as? Int, 1, "Initialize must complete before tool responses")
+        let toolResponses = responses.dropFirst()
+        XCTAssertEqual(Set(toolResponses.compactMap { $0["id"] as? Int }), Set(2...17))
+        for response in toolResponses {
+            let id = try XCTUnwrap(response["id"] as? Int)
+            XCTAssertEqual((response["result"] as? [String: Any])?["seen"] as? Int, id)
+        }
+        let observed = counter.snapshot()
+        XCTAssertTrue(observed.initializeBeforeNotification)
+        XCTAssertFalse(observed.toolBeforeNotification)
+        XCTAssertGreaterThan(observed.peak, 1, "Fixture must observe actual concurrent forwarding")
+        XCTAssertLessThanOrEqual(observed.peak, 8)
+    }
+
     func testPackagedStdioHelperForwardsMCPAndExitsOnEOF() throws {
         let (directory, socketPath) = try socketFixture()
         defer { try? FileManager.default.removeItem(at: directory) }
@@ -66,11 +211,14 @@ final class LocalMCPChannelTests: XCTestCase {
         let responses = try lines.dropLast().map { line in
             try XCTUnwrap(JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any])
         }
-        XCTAssertEqual(responses.compactMap { $0["id"] as? Int }, [1, 2, 3])
+        XCTAssertEqual(responses.first?["id"] as? Int, 1)
+        XCTAssertEqual(Set(responses.compactMap { $0["id"] as? Int }), Set([1, 2, 3]))
         XCTAssertEqual((responses[0]["result"] as? [String: Any])?["protocolVersion"] as? String, "2025-06-18")
-        let tools = try XCTUnwrap((responses[1]["result"] as? [String: Any])?["tools"] as? [[String: Any]])
+        let listResponse = try XCTUnwrap(responses.first { $0["id"] as? Int == 2 })
+        let callResponse = try XCTUnwrap(responses.first { $0["id"] as? Int == 3 })
+        let tools = try XCTUnwrap((listResponse["result"] as? [String: Any])?["tools"] as? [[String: Any]])
         XCTAssertTrue(tools.contains { $0["name"] as? String == "computer_status" })
-        let result = try XCTUnwrap(responses[2]["result"] as? [String: Any])
+        let result = try XCTUnwrap(callResponse["result"] as? [String: Any])
         XCTAssertEqual(result["isError"] as? Bool, false)
         let content = try XCTUnwrap(result["content"] as? [[String: Any]])
         XCTAssertEqual(content.first?["text"] as? String, "fake computer is ready")
@@ -164,5 +312,36 @@ final class LocalMCPChannelTests: XCTestCase {
         }
         let missing: URL? = nil
         return try XCTUnwrap(missing, "AgentBoxMCP executable is missing beside the test bundle; build the executable target")
+    }
+}
+
+private final class ForwardingCounter: @unchecked Sendable {
+    private let lock = NSLock()
+    private var initialized = false
+    private var notification = false
+    private var initializeBeforeNotification = false
+    private var toolBeforeNotification = false
+    private var active = 0
+    private var peak = 0
+
+    func markInitialize() {
+        lock.lock(); initialized = true; lock.unlock()
+    }
+    func markNotification() {
+        lock.lock(); initializeBeforeNotification = initialized; notification = true; lock.unlock()
+    }
+    func enter() {
+        lock.lock()
+        if !notification { toolBeforeNotification = true }
+        active += 1
+        peak = max(peak, active)
+        lock.unlock()
+    }
+    func leave() {
+        lock.lock(); active -= 1; lock.unlock()
+    }
+    func snapshot() -> (initializeBeforeNotification: Bool, toolBeforeNotification: Bool, peak: Int) {
+        lock.lock(); defer { lock.unlock() }
+        return (initializeBeforeNotification, toolBeforeNotification, peak)
     }
 }

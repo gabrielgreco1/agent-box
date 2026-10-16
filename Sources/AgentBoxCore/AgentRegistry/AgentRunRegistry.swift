@@ -115,6 +115,28 @@ public actor AgentRunRegistry {
 
     public func allRuns() -> [AgentRunRecord] { store.runs }
 
+    /// Resolve a caller only from authenticated native hook state already admitted
+    /// to this registry. A child's stale running status is insufficient when its
+    /// observed parent has exited or belongs to a different native session.
+    public func verifiedCaller(parentRunID: UUID, terminalID: UUID,
+                               sessionID: String, agentID: String?) -> AgentRunRecord? {
+        guard !sessionID.isEmpty,
+              let parent = store.runs.first(where: { $0.id == parentRunID && $0.kind == .terminal }),
+              parent.status == .running, parent.provider == .claude,
+              parent.terminalID == terminalID, (parent.processID ?? 0) > 0,
+              parent.nativeHookSource == .claude,
+              parent.nativeSessionID == sessionID else { return nil }
+        guard let agentID, !agentID.isEmpty else { return parent }
+        let matches = store.runs.filter {
+            $0.kind == .nativeSubagent && $0.status == .running &&
+            $0.parentRunID == parentRunID && $0.parentTerminalID == terminalID &&
+            $0.terminalID == terminalID && $0.provider == .claude &&
+            $0.nativeHookSource == .claude && $0.nativeSessionID == sessionID &&
+            $0.nativeAgentID == agentID
+        }
+        return matches.count == 1 ? matches[0] : nil
+    }
+
     /// Call only after TerminalRuntimeManager reports `.running(pid:)`.
     @discardableResult
     public func recordTerminalStart(terminalID: UUID, provider: CLIProvider, processID: Int32,

@@ -7,6 +7,9 @@ final class ComputerMCPToolArgumentsTests: XCTestCase {
         guard case .status = try decode("computer_status", [:]) else { return XCTFail("Expected status") }
         guard case .screenshot = try decode("computer_screenshot", [:]) else { return XCTFail("Expected screenshot") }
         guard case .page = try decode("computer_page", [:]) else { return XCTFail("Expected page") }
+        guard case .acquire(.headless) = try decode("computer_acquire", ["mode": "headless"]) else {
+            return XCTFail("Expected acquire")
+        }
         guard case .httpRequest(let requestedURL, let method) = try decode("computer_http_request",
             ["url": "https://example.com/data", "method": "HEAD"]) else { return XCTFail("Expected HTTP request") }
         XCTAssertEqual(requestedURL.absoluteString, "https://example.com/data")
@@ -34,6 +37,12 @@ final class ComputerMCPToolArgumentsTests: XCTestCase {
             ("computer_status", ["extra": true]),
             ("computer_screenshot", ["mode": "desktop"]),
             ("computer_page", ["url": "https://example.com"]),
+            ("computer_acquire", [:]),
+            ("computer_acquire", ["mode": "graphical"]),
+            ("computer_acquire", ["mode": "HTTP"]),
+            ("computer_acquire", ["mode": "desktop", "computer_id": UUID().uuidString]),
+            ("computer_acquire", ["mode": "desktop", "agent_id": "child"]),
+            ("computer_acquire", ["mode": "desktop", "terminal_id": UUID().uuidString]),
             ("computer_http_request", ["url": "https://example.com", "method": "POST"]),
             ("computer_http_request", ["url": "file:///etc/passwd", "method": "GET"]),
             ("computer_http_request", ["url": "https://user:password@example.com", "method": "GET"]),

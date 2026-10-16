@@ -141,6 +141,53 @@ public actor ComputerControlBridge<Transport: ComputerControlTransport> {
         return try await complete(transition)
     }
 
+    /// A verified native child may control its own box when that box is idle.
+    /// The caller must verify the child identity, box owner, and parent policy.
+    /// Neither a live runtime lease nor another broker grant is displaced.
+    @discardableResult
+    public func assumeChild(parentRunID: UUID, nativeChildID: String,
+                            paths: Set<ControlWritePath>,
+                            allowedParentPaths: Set<ControlWritePath>) async throws -> ComputerControlTicket {
+        guard !nativeChildID.isEmpty, !paths.isEmpty,
+              paths.isSubset(of: allowedParentPaths) else { throw ControlBrokerError.invalidActor }
+        guard !leaseOperationInProgress else { throw ControlBrokerError.transitionInProgress }
+        leaseOperationInProgress = true
+        defer { leaseOperationInProgress = false }
+        let actor = ControlActor.child(parentRunID: parentRunID, nativeID: nativeChildID)
+        let health = try await verifiedHealth()
+        if let live = health.activeLease {
+            guard let ticket = activeTicket, let lease = activeLease,
+                  ticket.grant.actor == actor, ticket.grant.paths == paths,
+                  ticket.grant.delegatedFrom == nil,
+                  ticket.grant.delegatedParentPaths == nil,
+                  ticket.generation == transport.generation,
+                  await broker.currentGrant(computerID: computerID) == ticket.grant,
+                  live.actorID == ticket.grant.actorID, live.epoch == ticket.grant.epoch,
+                  lease.actorID == live.actorID, lease.epoch == live.epoch else {
+                throw ControlBrokerError.activeRuntimeLease
+            }
+            return ticket
+        }
+        if let existing = await broker.currentGrant(computerID: computerID),
+           (existing.actor != actor || existing.delegatedFrom != nil ||
+            existing.delegatedParentPaths != nil || existing.paths != paths) {
+            throw ControlBrokerError.activeRuntimeLease
+        }
+        // An observed idle runtime cannot still honor the prior token. This
+        // reissues the child's own ticket, never another controller's grant.
+        try await broker.disconnect(computerID: computerID)
+        activeTicket = nil; activeLease = nil
+        guard try await verifiedHealth().activeLease == nil else {
+            throw ControlBrokerError.activeRuntimeLease
+        }
+        try await broker.reconcile(computerID: computerID, activeRuntimeLease: nil)
+        let transition = try await broker.requestIndependentChild(
+            computerID: computerID, parentRunID: parentRunID, nativeChildID: nativeChildID,
+            paths: paths, allowedParentPaths: allowedParentPaths)
+        guard case .granted = transition else { throw ControlBrokerError.activeRuntimeLease }
+        return try await complete(transition)
+    }
+
     /// Release revokes the human lease and leaves the box without a writer.
     public func releaseHuman(_ ticket: ComputerControlTicket) async throws {
         guard !leaseOperationInProgress else { throw ControlBrokerError.transitionInProgress }
@@ -163,10 +210,19 @@ public actor ComputerControlBridge<Transport: ComputerControlTransport> {
 
     /// Release only this run's own lease; a stale agent ticket cannot release a human.
     public func releaseAgent(_ ticket: ComputerControlTicket) async throws {
+        guard ticket.grant.actor.kind == .agent else { throw ComputerControlBridgeError.wrongGrant }
+        try await releaseController(ticket)
+    }
+
+    /// Revoke an agent or independent child ticket; never releases a human.
+    /// The exact ticket, broker grant, and current runtime token must still match.
+    public func releaseController(_ ticket: ComputerControlTicket) async throws {
         guard !leaseOperationInProgress else { throw ControlBrokerError.transitionInProgress }
         leaseOperationInProgress = true
         defer { leaseOperationInProgress = false }
-        guard ticket.grant.actor.kind == .agent else { throw ComputerControlBridgeError.wrongGrant }
+        guard ticket.grant.actor.kind == .agent || ticket.grant.actor.kind == .nativeChild else {
+            throw ComputerControlBridgeError.wrongGrant
+        }
         let lease = try await checkedLease(ticket)
         do {
             try await revokeRuntime(actorID: lease.actorID, epoch: lease.epoch)
@@ -179,6 +235,32 @@ public actor ComputerControlBridge<Transport: ComputerControlTransport> {
             try? await suspend()
             throw error
         }
+    }
+
+    /// Hold this bridge closed while the host stops or retires an idle box.
+    /// A controller must release its ticket first. A broker reservation blocks
+    /// every bridge for this box throughout the external operation.
+    public func performIdleMaintenance(operation: @Sendable () async throws -> Void) async throws {
+        guard !leaseOperationInProgress else { throw ControlBrokerError.transitionInProgress }
+        leaseOperationInProgress = true
+        defer { leaseOperationInProgress = false }
+        let health = try await verifiedHealth()
+        guard health.activeLease == nil,
+              await broker.currentGrant(computerID: computerID) == nil else {
+            throw ControlBrokerError.activeRuntimeLease
+        }
+        let reservation = try await broker.beginIdleMaintenance(computerID: computerID)
+        activeTicket = nil; activeLease = nil
+        do {
+            guard try await verifiedHealth().activeLease == nil else {
+                throw ControlBrokerError.activeRuntimeLease
+            }
+            try await operation()
+        } catch {
+            try? await broker.endIdleMaintenance(computerID: computerID, reservationID: reservation)
+            throw error
+        }
+        try await broker.endIdleMaintenance(computerID: computerID, reservationID: reservation)
     }
 
     /// A dropped stream/connection invalidates host input immediately and best-effort revokes runtime input.

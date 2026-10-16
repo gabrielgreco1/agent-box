@@ -7,6 +7,7 @@ public enum ComputerMCPToolArguments {
     case status
     case screenshot
     case page
+    case acquire(BrowserRuntimeMode)
     case mode(BrowserRuntimeMode)
     case navigate(URL)
     case httpRequest(URL, String)
@@ -28,6 +29,11 @@ public enum ComputerMCPToolArguments {
         case "computer_page":
             try requireKeys(arguments, [])
             return .page
+        case "computer_acquire":
+            try requireKeys(arguments, ["mode"])
+            guard let raw = arguments["mode"] as? String,
+                  let mode = BrowserRuntimeMode(rawValue: raw) else { throw invalid() }
+            return .acquire(mode)
         case "computer_mode":
             try requireKeys(arguments, ["mode"])
             guard let raw = arguments["mode"] as? String,

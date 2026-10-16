@@ -2,6 +2,41 @@ import XCTest
 @testable import AgentBoxCore
 
 final class AgentRegistryTests: XCTestCase {
+    func testVerifiedCallerRejectsStaleChildWrongSessionAndFinishedParent() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let registry = try AgentRunRegistry(url: root.appendingPathComponent("runs.json"))
+        let terminalID = UUID()
+        let parent = try await registry.recordTerminalStart(terminalID: terminalID,
+                                                             provider: .claude, processID: 42)
+        let session = try NativeAgentHookEvent.parse(Data(#"{"hook_event_name":"SessionStart","session_id":"session-A"}"#.utf8), source: .claude)
+        _ = try await registry.recordHookEvent(session, parentRunID: parent.id)
+        let started = try NativeAgentHookEvent.parse(Data(#"{"hook_event_name":"SubagentStart","session_id":"session-A","agent_id":"child-A","agent_type":"Explore"}"#.utf8), source: .claude)
+        let childRecord = try await registry.recordHookEvent(started, parentRunID: parent.id)
+        let child = try XCTUnwrap(childRecord)
+        let verifiedParent = await registry.verifiedCaller(parentRunID: parent.id,
+            terminalID: terminalID, sessionID: "session-A", agentID: nil)
+        let verifiedChild = await registry.verifiedCaller(parentRunID: parent.id,
+            terminalID: terminalID, sessionID: "session-A", agentID: "child-A")
+        XCTAssertEqual(verifiedParent?.id, parent.id)
+        XCTAssertEqual(verifiedChild?.id, child.id)
+        let wrongSession = await registry.verifiedCaller(parentRunID: parent.id,
+            terminalID: terminalID, sessionID: "session-B", agentID: "child-A")
+        let wrongTerminal = await registry.verifiedCaller(parentRunID: parent.id,
+            terminalID: UUID(), sessionID: "session-A", agentID: "child-A")
+        XCTAssertNil(wrongSession)
+        XCTAssertNil(wrongTerminal)
+        let stopped = try NativeAgentHookEvent.parse(Data(#"{"hook_event_name":"SubagentStop","session_id":"session-A","agent_id":"child-A","agent_type":"Explore"}"#.utf8), source: .claude)
+        _ = try await registry.recordHookEvent(stopped, parentRunID: parent.id)
+        let staleChild = await registry.verifiedCaller(parentRunID: parent.id,
+            terminalID: terminalID, sessionID: "session-A", agentID: "child-A")
+        XCTAssertNil(staleChild)
+        try await registry.finishTerminalRun(parent.id)
+        let staleParent = await registry.verifiedCaller(parentRunID: parent.id,
+            terminalID: terminalID, sessionID: "session-A", agentID: nil)
+        XCTAssertNil(staleParent)
+    }
+
     func testConcurrentInboxDrainsKeepCursorOrderedAndChildStopped() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         defer { try? FileManager.default.removeItem(at: root) }

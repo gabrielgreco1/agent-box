@@ -112,6 +112,78 @@ final class BrowserComputerServiceTests: XCTestCase {
         XCTAssertEqual(endpoint.computerID, computer.id)
         XCTAssertEqual(tokens.interactiveReads, 1)
     }
+
+    func testStartRejectsChangedOwnerAndVolumeBeforeDockerStart() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let policyStore = ComputerPolicyStore(fileURL: root.appendingPathComponent("policy.json"))
+        try policyStore.save(ComputerPolicy(creation: .manual, limits: .init(cpus: 1, memoryMiB: 2048, maxComputers: 2)))
+        let runner = FakeBrowserDockerRunner()
+        let service = BrowserComputerService(runner: runner, tokens: FakeBrowserTokenStore(),
+            policyStore: policyStore,
+            metadataStore: BrowserComputerMetadataStore(url: root.appendingPathComponent("metadata.json")))
+        let terminalID = UUID()
+        let computer = try service.createAndStart(for: terminalID)
+        try service.stop(computerID: computer.id)
+        let initialStarts = runner.commands.count(where: { $0.first == "start" })
+
+        runner.wrongMount = true
+        XCTAssertThrowsError(try service.start(computerID: computer.id)) {
+            XCTAssertEqual($0 as? BrowserComputerError, .unmanagedContainer)
+        }
+        XCTAssertEqual(runner.commands.count(where: { $0.first == "start" }), initialStarts)
+        XCTAssertThrowsError(try service.createAndStart(for: terminalID)) {
+            XCTAssertEqual($0 as? BrowserComputerError, .unmanagedContainer)
+        }
+        XCTAssertEqual(runner.commands.count(where: { $0.first == "start" }), initialStarts)
+
+        runner.wrongMount = false
+        runner.wrongOwner = true
+        XCTAssertThrowsError(try service.start(computerID: computer.id))
+        XCTAssertEqual(runner.commands.count(where: { $0.first == "start" }), initialStarts)
+    }
+
+    func testAutomaticStartRechecksEffectivePolicyInsideOperation() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let policyStore = ComputerPolicyStore(fileURL: root.appendingPathComponent("policy.json"))
+        try policyStore.save(ComputerPolicy(creation: .manual, limits: .init(cpus: 1, memoryMiB: 2048, maxComputers: 2)))
+        let runner = FakeBrowserDockerRunner()
+        let service = BrowserComputerService(runner: runner, tokens: FakeBrowserTokenStore(),
+            policyStore: policyStore,
+            metadataStore: BrowserComputerMetadataStore(url: root.appendingPathComponent("metadata.json")))
+        XCTAssertThrowsError(try service.createAndStart(for: UUID(), automaticRequest: true)) {
+            XCTAssertEqual($0 as? ComputerMCPAccessError, .automaticCreationRequired)
+        }
+        XCTAssertFalse(runner.commands.contains(where: { $0.first == "create" }))
+
+        let computer = try service.createAndStart(for: UUID())
+        try service.stop(computerID: computer.id)
+        let initialStarts = runner.commands.count(where: { $0.first == "start" })
+        XCTAssertThrowsError(try service.start(computerID: computer.id, automaticRequest: true)) {
+            XCTAssertEqual($0 as? ComputerMCPAccessError, .automaticCreationRequired)
+        }
+        XCTAssertEqual(runner.commands.count(where: { $0.first == "start" }), initialStarts)
+    }
+
+    func testReconnectRejectsChangedVolumeBeforeReadingToken() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let policyStore = ComputerPolicyStore(fileURL: root.appendingPathComponent("policy.json"))
+        try policyStore.save(ComputerPolicy(creation: .manual, limits: .init(cpus: 1, memoryMiB: 2048, maxComputers: 2)))
+        let runner = FakeBrowserDockerRunner()
+        let tokens = FakeBrowserTokenStore()
+        let service = BrowserComputerService(runner: runner, tokens: tokens,
+            policyStore: policyStore,
+            metadataStore: BrowserComputerMetadataStore(url: root.appendingPathComponent("metadata.json")))
+        let computer = try service.createAndStart(for: UUID())
+        tokens.requiresAuthorization = true
+        runner.wrongMount = true
+        do {
+            _ = try await service.reconnectEndpoint(computerID: computer.id)
+            XCTFail("Changed volume must prevent endpoint reconnection")
+        } catch BrowserComputerError.unmanagedContainer {}
+    }
 }
 
 private final class FakeBrowserTokenStore: BrowserComputerTokenStoring {
@@ -137,11 +209,21 @@ private final class FakeBrowserDockerRunner: DockerCommandRunning {
     private var containerID: String?
     private var computerID: UUID?
     private var terminalID: UUID?
+    private var volumeName: String?
     private var running = false
+    var wrongMount = false
+    var wrongOwner = false
     func run(_ arguments: [String], timeout: TimeInterval) throws -> DockerCommandResult {
         commands.append(arguments)
         if arguments.first == "volume" {
-            if arguments.dropFirst().first == "inspect" { return DockerCommandResult(exitCode: 1) }
+            if arguments.dropFirst().first == "inspect" {
+                guard let volumeName, arguments.last == volumeName, let computerID else {
+                    return DockerCommandResult(exitCode: 1)
+                }
+                let labels = #"{"com.agentbox.browser-managed":"true","com.agentbox.browser-computer-id":"\#(computerID.uuidString.lowercased())"}"#
+                return DockerCommandResult(exitCode: 0, stdout: labels)
+            }
+            volumeName = arguments.last
             return DockerCommandResult(exitCode: 0, stdout: "volume\n")
         }
         if arguments.first == "ps" { return DockerCommandResult(exitCode: 0, stdout: running || arguments.contains("-a") ? (containerID.map { "\($0)\n" } ?? "") : "") }
@@ -156,7 +238,12 @@ private final class FakeBrowserDockerRunner: DockerCommandRunning {
         }
         if arguments.first == "inspect" {
             guard let containerID, let computerID, let terminalID else { return DockerCommandResult(exitCode: 1) }
-            let json = #"{"Id":"\#(containerID)","Name":"/agentbox-browser-\#(computerID.uuidString.lowercased())","Config":{"Labels":{"com.agentbox.browser-managed":"true","com.agentbox.browser-computer-id":"\#(computerID.uuidString.lowercased())","com.agentbox.browser-terminal-id":"\#(terminalID.uuidString.lowercased())"}},"State":{"Running":\#(running)}}"#
+            if arguments.contains("{{json .Mounts}}") {
+                let mount = #"[{"Type":"volume","Name":"\#(wrongMount ? "foreign-volume" : (volumeName ?? ""))","Destination":"/data"}]"#
+                return DockerCommandResult(exitCode: 0, stdout: mount)
+            }
+            let ownerID = wrongOwner ? UUID() : terminalID
+            let json = #"{"Id":"\#(containerID)","Name":"/agentbox-browser-\#(computerID.uuidString.lowercased())","Config":{"Labels":{"com.agentbox.browser-managed":"true","com.agentbox.browser-computer-id":"\#(computerID.uuidString.lowercased())","com.agentbox.browser-terminal-id":"\#(ownerID.uuidString.lowercased())"}},"State":{"Running":\#(running)}}"#
             return DockerCommandResult(exitCode: 0, stdout: json)
         }
         if arguments.first == "start" { running = true; return DockerCommandResult(exitCode: 0) }

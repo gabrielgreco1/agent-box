@@ -16,9 +16,11 @@ O MCP é compartilhado pelo harness. Só fornecer uma conexão com a box do term
 - O app mantém um verificador por invocação: recusa alteração de argumentos, execução errada, validade expirada e replay. Valida o `SessionStart` autenticado antes de aceitar o pai. Não usa texto do terminal para atribuir identidade.
 - Lançamentos com MCP exigem os hooks revisados; falha de ativação encerra o processo recém-iniciado. Templates antigos precisam ser preparados novamente quando o contrato dos hooks muda.
 
-## Limite explícito
+## Limite do checkpoint AB-043
 
 Nesta etapa, a chamada autenticada de um filho ainda recebe erro indicando que o acesso à box própria está pendente. Ela **não** cai na box do pai. O painel pode gerenciar a box separada, mas isso não comprova que o filho já a controla. Falta integrar o despacho por dono, concessão de controle ao filho, criação sob a política automática e liberação no fim do filho.
+
+Esse limite foi substituído pela implementação de [AB-044](AB-044-native-child-routing.md), com testes de dispatcher e Docker real. O aceite completo pela TUI permanece pendente.
 
 ## Prova do mecanismo nativo
 

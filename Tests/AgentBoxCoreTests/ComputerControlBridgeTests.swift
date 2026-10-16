@@ -3,6 +3,118 @@ import XCTest
 @testable import AgentBoxCore
 
 final class ComputerControlBridgeTests: XCTestCase {
+    func testIdleMaintenanceRejectsLiveControllerAndBlocksConcurrentTakeover() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let id = UUID()
+        let broker = try ControlBroker(url: root.appendingPathComponent("control.json"))
+        let runtime = FakeControlRuntime(id: id, generation: 0)
+        let bridge = ComputerControlBridge(broker: broker,
+            transport: FakeControlTransport(shared: runtime, id: id, generation: 0))
+        let human = try await bridge.assumeHuman()
+        let rejected = MaintenanceGate()
+        do {
+            try await bridge.performIdleMaintenance { await rejected.markCalled() }
+            XCTFail("Maintenance must not stop a box held by a human")
+        } catch ControlBrokerError.activeRuntimeLease {}
+        let rejectedCount = await rejected.count
+        XCTAssertEqual(rejectedCount, 0)
+        try await bridge.releaseHuman(human)
+
+        let gate = MaintenanceGate()
+        let maintenance = Task { try await bridge.performIdleMaintenance { await gate.wait() } }
+        await gate.waitUntilStarted()
+        do {
+            _ = try await bridge.assumeHuman()
+            XCTFail("A human cannot acquire during the stop operation")
+        } catch ControlBrokerError.transitionInProgress {}
+        let otherBridge = ComputerControlBridge(broker: broker,
+            transport: FakeControlTransport(shared: runtime, id: id, generation: 0))
+        do {
+            _ = try await otherBridge.assumeHuman()
+            XCTFail("A second bridge cannot reconcile during the stop operation")
+        } catch ControlBrokerError.transitionInProgress {}
+        let noGrant = await broker.currentGrant(computerID: id)
+        XCTAssertNil(noGrant)
+        await gate.release()
+        try await maintenance.value
+        let after = await bridge.ticket()
+        XCTAssertNil(after)
+        let humanAfterMaintenance = try await bridge.assumeHuman()
+        try await bridge.releaseHuman(humanAfterMaintenance)
+    }
+
+    func testIndependentChildrenKeepSeparateBoxesAndTickets() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let broker = try ControlBroker(url: root.appendingPathComponent("control.json"))
+        let firstID = UUID(), secondID = UUID(), parent = UUID()
+        let firstRuntime = FakeControlRuntime(id: firstID, generation: 0)
+        let secondRuntime = FakeControlRuntime(id: secondID, generation: 0)
+        let first = ComputerControlBridge(broker: broker,
+            transport: FakeControlTransport(shared: firstRuntime, id: firstID, generation: 0))
+        let second = ComputerControlBridge(broker: broker,
+            transport: FakeControlTransport(shared: secondRuntime, id: secondID, generation: 0))
+        do {
+            _ = try await first.assumeChild(parentRunID: parent, nativeChildID: "one",
+                paths: [.mode], allowedParentPaths: [.navigate, .input])
+            XCTFail("Parent policy limits child paths")
+        } catch ControlBrokerError.invalidActor {}
+        let one = try await first.assumeChild(parentRunID: parent, nativeChildID: "one",
+            paths: [.navigate], allowedParentPaths: [.navigate, .input])
+        let two = try await second.assumeChild(parentRunID: parent, nativeChildID: "two",
+            paths: [.input], allowedParentPaths: [.input])
+        XCTAssertEqual(one.grant.actor, .child(parentRunID: parent, nativeID: "one"))
+        XCTAssertEqual(two.grant.actor, .child(parentRunID: parent, nativeID: "two"))
+        XCTAssertNil(one.grant.delegatedFrom)
+        let retry = try await first.assumeChild(parentRunID: parent, nativeChildID: "one",
+            paths: [.navigate], allowedParentPaths: [.navigate])
+        XCTAssertEqual(retry, one)
+        do {
+            _ = try await first.assumeChild(parentRunID: parent, nativeChildID: "two",
+                paths: [.navigate], allowedParentPaths: [.navigate])
+            XCTFail("Another child cannot take an active child box")
+        } catch ControlBrokerError.activeRuntimeLease {}
+        let lostToken = ComputerControlBridge(broker: broker,
+            transport: FakeControlTransport(shared: firstRuntime, id: firstID, generation: 0))
+        do {
+            _ = try await lostToken.assumeChild(parentRunID: parent, nativeChildID: "one",
+                paths: [.navigate], allowedParentPaths: [.navigate])
+            XCTFail("A new bridge cannot recover an unknown runtime token")
+        } catch ControlBrokerError.activeRuntimeLease {}
+        let firstLogBeforeHuman = await firstRuntime.log
+        XCTAssertFalse(firstLogBeforeHuman.contains(where: { $0.hasPrefix("revoke:") }))
+
+        let human = try await first.assumeHuman()
+        XCTAssertEqual(human.grant.actor, .human)
+        do { try await first.releaseController(one); XCTFail("Stale child ticket cannot release human") }
+        catch ComputerControlBridgeError.noTicket {}
+        do { try await first.releaseController(human); XCTFail("Controller release cannot release human") }
+        catch ComputerControlBridgeError.wrongGrant {}
+        do {
+            _ = try await first.assumeChild(parentRunID: parent, nativeChildID: "one",
+                paths: [.navigate], allowedParentPaths: [.navigate])
+            XCTFail("Child cannot retake live human control")
+        } catch ControlBrokerError.activeRuntimeLease {}
+        let secondStillHeld = await second.ticket()
+        let secondLease = await secondRuntime.lease
+        XCTAssertEqual(secondStillHeld, two)
+        XCTAssertEqual(secondLease?.actorID, two.grant.actorID)
+
+        try await first.releaseHuman(human)
+        let renewed = try await first.assumeChild(parentRunID: parent, nativeChildID: "one",
+            paths: [.navigate], allowedParentPaths: [.navigate])
+        XCTAssertNotEqual(renewed.id, one.id)
+        do { try await first.releaseController(one); XCTFail("Old child ticket cannot release new lease") }
+        catch ComputerControlBridgeError.noTicket {}
+        try await first.releaseController(renewed)
+        try await second.releaseController(two)
+        let firstReleased = await firstRuntime.lease
+        let secondReleased = await secondRuntime.lease
+        XCTAssertNil(firstReleased)
+        XCTAssertNil(secondReleased)
+    }
+
     func testAgentCannotStealHumanLeaseAndCanResumeAfterRelease() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         defer { try? FileManager.default.removeItem(at: root) }
@@ -215,6 +327,28 @@ final class ComputerControlBridgeTests: XCTestCase {
         catch ComputerControlBridgeError.noTicket {}
         try await current.input(.key("Return"), ticket: renewed)
     }
+}
+
+private actor MaintenanceGate {
+    private(set) var count = 0
+    private var waitingForStart: CheckedContinuation<Void, Never>?
+    private var resume: CheckedContinuation<Void, Never>?
+
+    func markCalled() { count += 1 }
+
+    func wait() async {
+        count += 1
+        waitingForStart?.resume()
+        waitingForStart = nil
+        await withCheckedContinuation { resume = $0 }
+    }
+
+    func waitUntilStarted() async {
+        if count > 0 { return }
+        await withCheckedContinuation { waitingForStart = $0 }
+    }
+
+    func release() { resume?.resume(); resume = nil }
 }
 
 private actor FakeControlRuntime {

@@ -28,7 +28,7 @@ O viewer nativo, bridge de leases e serviço Docker autenticado estão integrado
 
 ## Evidências
 
-- Suíte Swift integrada: **123 testes, zero falhas**, incluindo snapshot de skills, atribuição de scraping, MCP por socket Unix e helper real por stdin/stdout. Execução com Xcode e scratch de build isolado.
+- Suíte Swift com Docker integrado: **152 testes, zero falhas**, incluindo dois computadores de filhos, takeover isolado, persistência de perfil e atualização/rollback de imagem. Execução com Xcode e scratch de build isolado; resultados posteriores de regressão em `evidence/ab044-child-routing.json`.
 - Suite Python do runtime: **20 testes locais**, além do smoke Docker real descrito em `tasks/AB-019-020-browser-runtime.md`.
 - Build release e assinatura ad hoc verificados. Empacotamento em staging temporário evita metadados de File Provider durante a assinatura; build recusa substituir app em execução.
 - Captura operacional: `evidence/terminal-split-2026-10-16.png`.
@@ -36,8 +36,8 @@ O viewer nativo, bridge de leases e serviço Docker autenticado estão integrado
 
 ## Pendências que impedem conclusão
 
-- Captura de subagentes Claude ligada ao lançamento revisado em AB-040; smoke do CLI real comprovou eventos assinados. Falta conferir TUI → sidebar ao vivo e implementar os demais harnesses. Atribuição automática de box por filho ainda não existe.
-- MCP de computador ligado ao lançamento Claude em AB-039; ainda falta provar invocações pelo modelo ao vivo. Orquestração de filhos, fila justa persistente/idempotência sob falhas, política de URLs e limites robustos entre processos continuam pendentes.
+- Captura de subagentes Claude ligada ao lançamento revisado em AB-040; smoke do CLI real comprovou eventos assinados. Aquisição automática e despacho por filho implementados em AB-044. Falta conferir o fluxo completo TUI → sidebar → box ao vivo e implementar os demais harnesses.
+- MCP de computador ligado ao lançamento Claude em AB-039; ainda falta provar invocações de computador pelo modelo ao vivo. Despacho e isolamento de filhos testados em AB-044; fila justa persistente/idempotência sob falhas, política de URLs e limites robustos entre processos continuam pendentes.
 - Pedidos de ação via ferramenta MCP implementados, mas notificação e takeover com um agente nativo operando ao vivo ainda precisam de prova, assim como a reconciliação de todos os caminhos de escrita. Viewer e assumir/devolver sem agente concorrente já foram exercitados pela UI.
 - Grants de credenciais conectados ao broker; revogar não apaga valores já herdados por processos. CLI local continua com permissões reais do usuário no Mac.
 - Listener por fonte, evidências/datasets, cobertura e redaction de rede. Nenhum tráfego do usuário é capturado por este build.
@@ -47,6 +47,12 @@ O viewer nativo, bridge de leases e serviço Docker autenticado estão integrado
 - Persistência de autorização de pastas após relançar precisa de conferência; bookmark foi implementado a partir do bloqueio real observado.
 
 A meta permanece ativa. Plano integral em `EXECUTION-PLAN.md`.
+
+## Estado atual do controle por filho — AB-044
+
+Chamadas autenticadas agora chegam à box própria de cada filho. `computer_acquire` cria/inicia apenas sob política automática, com a skill revisada obrigatória. Controle humano em uma box não interrompe irmãos. O encerramento libera a concessão do filho e para suas boxes automaticamente iniciadas quando ociosas, preservando perfis e controle humano. O helper encaminha chamadas em paralelo com limite e encerra diante de falha de transporte.
+
+Docker real confirmou dois computadores separados, navegação JS, takeover, revogação e persistência. O dispatcher do app foi exercitado com PTY e transporte controlado. O fluxo completo pela TUI e a conferência visual continuam pendentes; esses testes não completam os 68 aceites. Detalhes em `tasks/AB-044-native-child-routing.md`. As seções de continuação abaixo registram checkpoints históricos.
 
 ## Rodada paralela GPT-6 Sol medium
 

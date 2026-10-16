@@ -34,7 +34,11 @@ final class BrokerDesktopActions {
                 self.ticket = nil
                 // Closing an observer must never revoke the agent or a newer human lease.
                 for _ in 0..<600 {
-                    do { try await self.bridge.releaseHuman(ticket); return }
+                    do {
+                        try await self.bridge.releaseHuman(ticket)
+                        AgentComputerAccess.shared.controlDisconnected(computerID: self.computerID)
+                        return
+                    }
                     catch ControlBrokerError.transitionInProgress {
                         try? await Task.sleep(nanoseconds: 100_000_000)
                     }

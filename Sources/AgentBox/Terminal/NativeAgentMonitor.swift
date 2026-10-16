@@ -2,6 +2,8 @@ import AgentBoxCore
 import Foundation
 import SwiftUI
 
+enum NativeAgentMonitorError: Error { case unverifiedCaller }
+
 /// Observes terminal processes and authenticated native hooks. PTY text is never parsed as identity.
 @MainActor
 public final class NativeAgentMonitor: ObservableObject {
@@ -61,31 +63,49 @@ public final class NativeAgentMonitor: ObservableObject {
         for (terminalID, observation) in observations { didExit(terminalID: terminalID, runID: observation.runID) }
     }
 
-    /// A PreToolUse route is valid only after the authenticated SessionStart
-    /// event has linked this Claude process to the native session in the registry.
-    func verifiedParentSession(terminalID: UUID, runID: UUID, sessionID: String) async -> Bool {
-        guard !sessionID.isEmpty, let registry else { return false }
+    /// Resolve only an active native caller admitted by this run's authenticated
+    /// hook inbox. Terminal text, a model-supplied ID, and old child history never
+    /// establish caller identity on their own.
+    func verifiedCaller(terminalID: UUID, runID: UUID, sessionID: String,
+                        agentID: String?) async throws -> AgentRunRecord {
+        guard !sessionID.isEmpty, let registry else { throw NativeAgentMonitorError.unverifiedCaller }
         await bootstrapTask?.value
         for attempt in 0..<6 {
             guard let observation = observations[terminalID],
                   observation.runID == runID, !observation.exitRequested,
-                  let inbox = observation.inbox else { return false }
+                  let inbox = observation.inbox else { throw NativeAgentMonitorError.unverifiedCaller }
             let before = await registry.allRuns()
+            guard observations[terminalID]?.runID == runID,
+                  observations[terminalID]?.exitRequested == false else {
+                throw NativeAgentMonitorError.unverifiedCaller
+            }
             if let admitted = before.first(where: { $0.id == runID && $0.kind == .terminal }) {
                 guard admitted.terminalID == terminalID, admitted.provider == .claude,
-                      admitted.status == .running else { return false }
-                do { if try await inbox.drain() > 0 { await refresh(registry) } }
-                catch { return false }
-                let records = await registry.allRuns()
-                guard let parent = records.first(where: { $0.id == runID && $0.kind == .terminal }),
-                      parent.status == .running else { return false }
-                if let observed = parent.nativeSessionID {
-                    return parent.nativeHookSource == .claude && observed == sessionID
+                      admitted.status == .running else { throw NativeAgentMonitorError.unverifiedCaller }
+                do {
+                    if try await inbox.drain() > 0 { await refresh(registry) }
+                } catch { throw NativeAgentMonitorError.unverifiedCaller }
+                guard observations[terminalID]?.runID == runID,
+                      observations[terminalID]?.exitRequested == false else {
+                    throw NativeAgentMonitorError.unverifiedCaller
                 }
+                let caller = await registry.verifiedCaller(parentRunID: runID,
+                    terminalID: terminalID, sessionID: sessionID, agentID: agentID)
+                guard observations[terminalID]?.runID == runID,
+                      observations[terminalID]?.exitRequested == false else {
+                    throw NativeAgentMonitorError.unverifiedCaller
+                }
+                if let caller { return caller }
             }
             if attempt < 5 { try? await Task.sleep(nanoseconds: 100_000_000) }
         }
-        return false
+        throw NativeAgentMonitorError.unverifiedCaller
+    }
+
+    /// Compatibility for callers that need only the parent identity.
+    func verifiedParentSession(terminalID: UUID, runID: UUID, sessionID: String) async -> Bool {
+        (try? await verifiedCaller(terminalID: terminalID, runID: runID,
+                                   sessionID: sessionID, agentID: nil)) != nil
     }
 
     /// A child can request a new box only while its observed parent PTY and

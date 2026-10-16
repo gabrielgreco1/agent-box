@@ -17,12 +17,15 @@ final class ComputerMCPProtocolTests: XCTestCase {
         XCTAssertTrue(instructions.contains("untrusted site content"))
         XCTAssertTrue(instructions.contains("request help"))
         XCTAssertTrue(instructions.contains("no browser cookies"))
+        XCTAssertTrue(instructions.contains("native child"))
+        XCTAssertTrue(instructions.contains("computer_acquire"))
+        XCTAssertTrue(instructions.contains("not computer or agent IDs"))
 
         let listed = try await response(endpoint, method: "tools/list", id: "list")
         let toolsResult = try XCTUnwrap(listed["result"] as? [String: Any])
         let tools = try XCTUnwrap(toolsResult["tools"] as? [[String: Any]])
         XCTAssertEqual(Set(tools.compactMap { $0["name"] as? String }), Set([
-            "computer_status", "computer_screenshot", "computer_page", "computer_http_request",
+            "computer_status", "computer_acquire", "computer_screenshot", "computer_page", "computer_http_request",
             "computer_mode", "computer_navigate", "computer_input", "computer_request_help"
         ]))
         for tool in tools {
@@ -32,6 +35,13 @@ final class ComputerMCPProtocolTests: XCTestCase {
         }
         let http = try XCTUnwrap(tools.first(where: { $0["name"] as? String == "computer_http_request" }))
         XCTAssertTrue((http["description"] as? String ?? "").contains("No browser cookies or redirects"))
+        let acquire = try XCTUnwrap(tools.first(where: { $0["name"] as? String == "computer_acquire" }))
+        let acquireSchema = try XCTUnwrap(acquire["inputSchema"] as? [String: Any])
+        XCTAssertEqual(acquireSchema["required"] as? [String], ["mode"])
+        let acquireProperties = try XCTUnwrap(acquireSchema["properties"] as? [String: Any])
+        XCTAssertEqual(Set(acquireProperties.keys), Set(["mode", "route_token"]))
+        let mode = try XCTUnwrap(acquireProperties["mode"] as? [String: Any])
+        XCTAssertEqual(mode["enum"] as? [String], ["http", "headless", "desktop"])
     }
 
     func testNotificationsReturnNoResponseAndUnknownMethodsAreRejected() async throws {
@@ -67,6 +77,26 @@ final class ComputerMCPProtocolTests: XCTestCase {
         XCTAssertEqual(content.first?["type"] as? String, "text")
         XCTAssertFalse((content.first?["text"] as? String ?? "").contains(secret))
         XCTAssertFalse(String(data: try JSONSerialization.data(withJSONObject: reply), encoding: .utf8)!.contains(secret))
+    }
+
+    func testAcquireRouteFailuresReturnSafeActionableMessages() async throws {
+        let failures: [(ComputerMCPAccessError, String)] = [
+            (.childComputerMissing, "computer_acquire"),
+            (.automaticCreationRequired, "automatic creation permission"),
+            (.callerInactive, "no longer active"),
+            (.busy, "another operation"),
+            (.unsupportedCapability, "routing is unavailable")
+        ]
+        for (failure, expected) in failures {
+            let endpoint = ComputerMCPProtocol { _, _ in throw failure }
+            _ = try await response(endpoint, method: "initialize", id: 1)
+            let reply = try await response(endpoint, method: "tools/call", id: 2,
+                                           params: ["name": "computer_acquire", "arguments": ["mode": "http"]])
+            let result = try XCTUnwrap(reply["result"] as? [String: Any])
+            XCTAssertEqual(result["isError"] as? Bool, true)
+            let content = try XCTUnwrap(result["content"] as? [[String: Any]])
+            XCTAssertTrue((content.first?["text"] as? String ?? "").contains(expected))
+        }
     }
 
     func testJPEGToolResultUsesMCPImageContent() async throws {

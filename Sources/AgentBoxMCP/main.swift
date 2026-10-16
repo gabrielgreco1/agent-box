@@ -68,16 +68,82 @@ private func writeStdout(_ response: Data) throws {
     }
 }
 
+private final class ForwardingState: @unchecked Sendable {
+    private let lock = NSLock()
+    private var failed = false
+
+    var hasFailed: Bool {
+        lock.lock(); defer { lock.unlock() }
+        return failed
+    }
+
+    func send(_ response: Data) {
+        lock.lock(); defer { lock.unlock() }
+        guard !failed else { return }
+        do { try writeStdout(response) }
+        catch {
+            // Hold the stdout lock through process exit so another worker
+            // cannot begin a JSON-RPC line after this transport has failed.
+            failed = true
+            Darwin._exit(3)
+        }
+    }
+
+    func failAndExit() {
+        // There is no safe invented response ID for a failed socket request.
+        // Exiting closes stdio immediately, waking a CLI that is still waiting
+        // for its reply while keeping any other stdout line complete.
+        lock.lock()
+        failed = true
+        Darwin._exit(3)
+    }
+}
+
+private func method(of request: Data) -> String? {
+    guard let object = try? JSONSerialization.jsonObject(with: request) as? [String: Any] else { return nil }
+    return object["method"] as? String
+}
+
 let arguments = CommandLine.arguments
 guard arguments.count == 5, arguments[1] == "--socket", arguments[3] == "--capability-file" else {
     exit(2)
 }
 do {
+    // A closed Claude reader must make write(2) fail cleanly rather than kill
+    // the helper with SIGPIPE while another request is still in flight.
+    _ = signal(SIGPIPE, SIG_IGN)
     let capability = try readCapability(arguments[4])
+    let state = ForwardingState()
+    let slots = DispatchSemaphore(value: 8)
+    let pending = DispatchGroup()
+    var initialized = false
+    var notificationSeen = false
     while let request = try readStdinLine() {
-        let response = try LocalMCPClient.send(message: request, socketPath: arguments[2], capability: capability)
-        try writeStdout(response)
+        guard !state.hasFailed else { throw LocalMCPError.connectionFailed }
+        let requestMethod = method(of: request)
+        if !notificationSeen {
+            // Keep initialization and its notification ordered on the local
+            // transport. A malformed/pre-init message is still handled by the
+            // server, but cannot open the concurrent forwarding phase.
+            let response = try LocalMCPClient.send(message: request, socketPath: arguments[2], capability: capability)
+            try writeStdout(response)
+            if requestMethod == "initialize", !response.isEmpty { initialized = true }
+            if initialized, requestMethod == "notifications/initialized" { notificationSeen = true }
+            continue
+        }
+        slots.wait() // At most eight workers; stdin pipe supplies backpressure.
+        guard !state.hasFailed else { slots.signal(); throw LocalMCPError.connectionFailed }
+        pending.enter()
+        DispatchQueue.global(qos: .utility).async {
+            defer { slots.signal(); pending.leave() }
+            do {
+                let response = try LocalMCPClient.send(message: request, socketPath: arguments[2], capability: capability)
+                state.send(response) // One complete JSON-RPC line per locked write.
+            } catch { state.failAndExit() }
+        }
     }
+    pending.wait() // EOF is not completion until every owned request has replied.
+    guard !state.hasFailed else { throw LocalMCPError.connectionFailed }
 } catch {
     // This helper emits only JSON-RPC responses on stdout. Do not print secrets or raw input.
     exit(3)

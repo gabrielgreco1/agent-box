@@ -187,7 +187,10 @@ final class BrowserComputerStore: ObservableObject {
               current.owner == owner, current.terminalID == context.terminalID else {
             throw BrowserComputerError.missingComputer
         }
-        if current.agentRunID != nil { try requireCurrentNativeChild(current.owner) }
+        if current.agentRunID != nil {
+            try requireCurrentNativeChild(current.owner)
+            try WorkspaceServices.terminalRuntime.requireChildScrapingContext(for: current.terminalID)
+        }
         busyComputerIDs.insert(computerID)
         defer { busyComputerIDs.remove(computerID) }
         do {

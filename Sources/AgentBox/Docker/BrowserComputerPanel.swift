@@ -15,6 +15,7 @@ struct BrowserComputerPanel: View {
     @StateObject private var store = BrowserComputerStore()
     @ObservedObject private var runtime = WorkspaceServices.terminalRuntime
     @ObservedObject private var nativeAgents = NativeAgentMonitor.shared
+    @ObservedObject private var computerAccess = AgentComputerAccess.shared
     @State private var launchBinding: AgentLaunchBinding?
     @State private var error: String?
     @State private var busy = false
@@ -56,14 +57,18 @@ struct BrowserComputerPanel: View {
             if let runID = owner.agentRunID {
                 Text("Run observado \(runID.uuidString.prefix(8)) · terminal pai compartilhado")
                     .font(.caption).foregroundStyle(.secondary)
-                Text(nativeChildCurrent
-                     ? "Box próprio do subagente. O acesso nativo às ferramentas ainda não está disponível."
-                     : "Subagente não ativo; esta box pode ser consultada ou parada, sem iniciar nova execução.")
+                Text(computerAccess.connectedChildRuns.contains(runID)
+                     ? "Controle conectado"
+                     : (nativeChildCurrent ? "Aguardando o subagente" :
+                        "Subagente não ativo; esta box pode ser consultada ou parada, sem iniciar nova execução."))
                     .font(.caption).foregroundStyle(.secondary)
             }
             if let computer {
                 Label(computer.running ? "Em execução" : "Parado",systemImage:computer.running ? "circle.fill":"pause.circle")
                     .font(.caption).foregroundStyle(.secondary)
+                if let cleanupFailure = computerAccess.cleanupFailures[computer.id] {
+                    Text(cleanupFailure).font(.caption).foregroundStyle(.red).textSelection(.enabled)
+                }
                 if let currentMode {Text(modeLabel(currentMode)).font(.caption).foregroundStyle(.secondary)}
                 if computer.running && store.tokenAuthorizationRequired.contains(computer.id) {
                     Button("Autorizar acesso ao token") {

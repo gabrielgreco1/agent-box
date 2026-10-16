@@ -316,31 +316,37 @@ public struct BrowserComputerService<Runner: DockerCommandRunning, Tokens: Brows
         return records
     }
 
-    public func createAndStart(for terminalID: UUID, context: ComputerPolicyContext? = nil) throws -> BrowserManagedComputer {
-        try createAndStart(for: .terminal(terminalID), context: context)
+    public func createAndStart(for terminalID: UUID, context: ComputerPolicyContext? = nil,
+                               automaticRequest: Bool = false) throws -> BrowserManagedComputer {
+        try createAndStart(for: .terminal(terminalID), context: context, automaticRequest: automaticRequest)
     }
 
     /// The host must verify a native child run in AgentRunRegistry before calling this overload.
     /// This service uses the real parent terminal for policy ancestry and Docker labels.
     public func createAndStart(for owner: BrowserComputerOwner,
-                               context: ComputerPolicyContext? = nil) throws -> BrowserManagedComputer {
+                               context: ComputerPolicyContext? = nil,
+                               automaticRequest: Bool = false) throws -> BrowserManagedComputer {
         ComputerCreationLock.lock.lock(); defer { ComputerCreationLock.lock.unlock() }
         guard try loadImageUpdateJournal() == nil else { throw BrowserComputerError.updateRecoveryRequired }
         let terminalID = owner.terminalID
         let context = context ?? ComputerPolicyContext(terminalID: terminalID)
         guard context.terminalID == terminalID else { throw ComputerPolicyError.invalidScope }
         let policy = try policyStore.load().effective(for: context)
+        if automaticRequest && policy.creation != .automatic {
+            throw ComputerMCPAccessError.automaticCreationRequired
+        }
         guard policy.creation != .disabled else { throw BrowserComputerError.creationDisabled }
         guard policy.networkAllowed else { throw BrowserComputerError.networkDisabled }
         guard policy.limits.memoryMiB >= 2048 else { throw BrowserComputerError.insufficientMemory }
         if let existing = try computer(for: owner) {
-            if existing.running { return existing }
+            let verified = try verifyCurrentOwnedComputer(existing)
+            if verified.running { return verified }
             try checkCapacity(policy)
-            try start(existing)
+            try start(verified)
             guard let restarted = try computer(for: owner), restarted.running else {
                 throw BrowserComputerError.notReady
             }
-            return restarted
+            return try verifyCurrentOwnedComputer(restarted)
         }
         try checkCapacity(policy)
         let id = UUID()
@@ -380,7 +386,7 @@ public struct BrowserComputerService<Runner: DockerCommandRunning, Tokens: Brows
             guard let running = try inspectOwned(containerID), running.running else {
                 throw BrowserComputerError.notReady
             }
-            return running
+            return try verifyCurrentOwnedComputer(running)
         } catch {
             if let createdContainer { _ = try? runner.run(["rm", "--force", createdContainer], timeout: 20) }
             if createdVolume { _ = try? runner.run(["volume", "rm", volume], timeout: 20) }
@@ -511,23 +517,28 @@ public struct BrowserComputerService<Runner: DockerCommandRunning, Tokens: Brows
 
     public func imageUpdateRecoveryPending() throws -> Bool { try pendingImageUpdate() != nil }
 
-    public func start(computerID: UUID, context: ComputerPolicyContext? = nil) throws -> BrowserManagedComputer {
+    public func start(computerID: UUID, context: ComputerPolicyContext? = nil,
+                      automaticRequest: Bool = false) throws -> BrowserManagedComputer {
         ComputerCreationLock.lock.lock(); defer { ComputerCreationLock.lock.unlock() }
         guard try loadImageUpdateJournal() == nil else { throw BrowserComputerError.updateRecoveryRequired }
         guard let computer = try list().first(where: { $0.id == computerID }) else { throw BrowserComputerError.missingComputer }
-        if computer.running { return computer }
+        let verified = try verifyCurrentOwnedComputer(computer)
+        if verified.running { return verified }
         let context = context ?? ComputerPolicyContext(terminalID: computer.terminalID)
         guard context.terminalID == computer.terminalID else { throw ComputerPolicyError.invalidScope }
         let policy = try policyStore.load().effective(for: context)
+        if automaticRequest && policy.creation != .automatic {
+            throw ComputerMCPAccessError.automaticCreationRequired
+        }
         guard policy.creation != .disabled else { throw BrowserComputerError.creationDisabled }
         guard policy.networkAllowed else { throw BrowserComputerError.networkDisabled }
         guard policy.limits.memoryMiB >= 2048 else { throw BrowserComputerError.insufficientMemory }
         try checkCapacity(policy)
-        try start(computer)
+        try start(verified)
         guard let running = try inspectOwned(computer.containerID), running.running else {
             throw BrowserComputerError.notReady
         }
-        return running
+        return try verifyCurrentOwnedComputer(running)
     }
 
     /// Returns a capability only when the authenticated runtime confirms identity and readiness.
@@ -537,6 +548,7 @@ public struct BrowserComputerService<Runner: DockerCommandRunning, Tokens: Brows
         guard let computer = try list().first(where: { $0.id == computerID }), computer.running else {
             throw BrowserComputerError.missingComputer
         }
+        _ = try verifyCurrentOwnedComputer(computer)
         let token = try interactiveAuthorization
             ? tokens.readInteractively(computerID: computerID) : tokens.read(computerID: computerID)
         let portText = try checked(["port", computer.containerID, "8765/tcp"], timeout: 8).stdout
@@ -557,13 +569,27 @@ public struct BrowserComputerService<Runner: DockerCommandRunning, Tokens: Brows
         guard let http = response as? HTTPURLResponse, http.statusCode == 200,
               let health = try? JSONDecoder().decode(BrowserRuntimeHealth.self, from: data),
               health.computerID == computerID else { throw BrowserComputerError.notReady }
+        guard try verifyCurrentOwnedComputer(computer).running else { throw BrowserComputerError.notReady }
         return try BrowserRuntimeEndpoint(baseURL: baseURL, apiToken: token,
                                           computerID: computerID, generation: health.generation)
     }
 
     private func start(_ computer: BrowserManagedComputer) throws {
-        guard try inspectOwned(computer.containerID)?.id == computer.id else { throw BrowserComputerError.unmanagedContainer }
+        _ = try verifyCurrentOwnedComputer(computer)
         _ = try checked(["start", computer.containerID], timeout: 30)
+    }
+
+    @discardableResult
+    private func verifyCurrentOwnedComputer(_ expected: BrowserManagedComputer) throws -> BrowserManagedComputer {
+        guard let current = try inspectOwned(expected.containerID),
+              current.id == expected.id, current.owner == expected.owner,
+              current.containerID == expected.containerID,
+              current.name == expected.name, current.volumeName == expected.volumeName else {
+            throw BrowserComputerError.unmanagedContainer
+        }
+        try verifyMetadata(current)
+        try verifyOwnedVolume(current.containerID, computer: current)
+        return current
     }
 
     private func inspectOwned(_ id: String, expectedName: String? = nil) throws -> BrowserManagedComputer? {

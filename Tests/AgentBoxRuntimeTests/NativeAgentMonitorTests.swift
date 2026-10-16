@@ -34,6 +34,49 @@ final class NativeAgentMonitorTests: XCTestCase {
     }
 
     @MainActor
+    func testVerifiedCallerRequiresExactActiveNativeChildAndObservedParent() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("monitor-route-\(UUID())")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let registry = try AgentRunRegistry(url: root.appendingPathComponent("runs.json"))
+        let runID = UUID(), terminalID = UUID()
+        let hook = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("runtime/hooks/claude_event.py")
+        let configuration = try ClaudeHookInboxConfiguration.create(runID: runID,
+            directory: root.appendingPathComponent("hook"), hookScriptURL: hook)
+        let monitor = NativeAgentMonitor(registry: registry, pollIntervalNanoseconds: 10_000_000_000)
+        monitor.didStart(terminalID: terminalID, provider: .claude, processID: 42,
+                         runID: runID, hook: configuration)
+        try appendHook("SessionStart", agentID: "", agentType: "", configuration: configuration)
+        try appendHook("SubagentStart", agentID: "native-child", agentType: "Explore", configuration: configuration)
+        let child = try await monitor.verifiedCaller(terminalID: terminalID, runID: runID,
+                                                     sessionID: "new-session", agentID: "native-child")
+        XCTAssertEqual(child.kind, .nativeSubagent)
+        XCTAssertEqual(child.parentRunID, runID)
+        let parent = try await monitor.verifiedCaller(terminalID: terminalID, runID: runID,
+                                                      sessionID: "new-session", agentID: nil)
+        XCTAssertEqual(parent.id, runID)
+        await XCTAssertThrowsErrorAsync {
+            _ = try await monitor.verifiedCaller(terminalID: terminalID, runID: runID,
+                                                 sessionID: "wrong-session", agentID: "native-child")
+        }
+        await XCTAssertThrowsErrorAsync {
+            _ = try await monitor.verifiedCaller(terminalID: terminalID, runID: runID,
+                                                 sessionID: "new-session", agentID: "another-child")
+        }
+        try appendHook("SubagentStop", agentID: "native-child", agentType: "Explore", configuration: configuration)
+        await XCTAssertThrowsErrorAsync {
+            _ = try await monitor.verifiedCaller(terminalID: terminalID, runID: runID,
+                                                 sessionID: "new-session", agentID: "native-child")
+        }
+        monitor.didExit(terminalID: terminalID, runID: runID)
+        await XCTAssertThrowsErrorAsync {
+            _ = try await monitor.verifiedCaller(terminalID: terminalID, runID: runID,
+                                                 sessionID: "new-session", agentID: nil)
+        }
+    }
+
+    @MainActor
     func testExitDrainsAuthenticatedHooksBeforeClosingParent() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("monitor-\(UUID())")
         defer { try? FileManager.default.removeItem(at: root) }
@@ -52,6 +95,7 @@ final class NativeAgentMonitorTests: XCTestCase {
 
         try appendHook("SessionStart", agentID: "", agentType: "", configuration: configuration)
         try appendHook("SubagentStart", agentID: "native-child", agentType: "Explore", configuration: configuration)
+        try appendHook("SubagentStop", agentID: "native-child", agentType: "Explore", configuration: configuration)
         monitor.didExit(terminalID: terminalID, runID: runID)
         let drained = await waitUntil {
             monitor.runs.contains { $0.id == runID && $0.status == .finished } &&
@@ -60,7 +104,7 @@ final class NativeAgentMonitorTests: XCTestCase {
         XCTAssertTrue(drained, "The final drain must admit an authenticated child before parent closure")
         XCTAssertNil(monitor.errorText)
         let child = try XCTUnwrap(monitor.runs.first { $0.parentRunID == runID })
-        XCTAssertEqual(child.status, .running, "Parent exit does not prove native child completion")
+        XCTAssertEqual(child.status, .finished, "The final drain must process child stop before closing parent")
     }
 
     @MainActor
@@ -103,6 +147,15 @@ final class NativeAgentMonitorTests: XCTestCase {
         try file.seekToEnd()
         try file.write(contentsOf: line)
         try file.close()
+    }
+
+    @MainActor
+    private func XCTAssertThrowsErrorAsync(_ operation: @MainActor () async throws -> Void) async {
+        do {
+            try await operation()
+            XCTFail("Unverified caller must be rejected")
+        } catch NativeAgentMonitorError.unverifiedCaller {}
+        catch { XCTFail("Unexpected error: \(error)") }
     }
 
     @MainActor

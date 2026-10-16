@@ -63,7 +63,7 @@ public enum ControlBrokerError: Error, Equatable {
 /// One writer lease per computer. External routes must verify actor, epoch, path and
 /// the runtime's ephemeral token as well; this in-process broker is not a host security boundary.
 public actor ControlBroker {
-    private enum Phase: String, Codable { case suspended, ready, revoking }
+    private enum Phase: String, Codable { case suspended, ready, revoking, maintenance }
     private struct Pending: Codable {
         let revocation: ControlRevocation
         let target: ControlActor
@@ -77,6 +77,7 @@ public actor ControlBroker {
         var grant: ControlGrant?
         var pending: Pending?
         var lastAcknowledged: ControlRevocation?
+        var maintenanceID: UUID?
     }
     private struct Store: Codable {
         var schemaVersion = 1
@@ -97,6 +98,7 @@ public actor ControlBroker {
                 stopped.boxes[id]?.phase = .suspended
                 stopped.boxes[id]?.grant = nil
                 stopped.boxes[id]?.pending = nil
+                stopped.boxes[id]?.maintenanceID = nil
             }
             self.store = stopped
         } else {
@@ -125,7 +127,39 @@ public actor ControlBroker {
     public func disconnect(computerID: UUID) throws {
         var next = store
         var box = next.boxes[computerID] ?? Box()
+        guard box.phase != .maintenance else { throw ControlBrokerError.transitionInProgress }
         box.phase = .suspended; box.grant = nil; box.pending = nil
+        next.boxes[computerID] = box
+        try persist(next); store = next
+    }
+
+    /// Reserve an idle box for a host operation such as stopping its container.
+    /// No other bridge can reconcile or grant it until the exact token ends.
+    public func beginIdleMaintenance(computerID: UUID) throws -> UUID {
+        var next = store
+        var box = next.boxes[computerID] ?? Box()
+        guard box.phase == .ready || box.phase == .suspended else {
+            throw ControlBrokerError.transitionInProgress
+        }
+        guard box.grant == nil, box.pending == nil else {
+            throw ControlBrokerError.activeRuntimeLease
+        }
+        let id = UUID()
+        box.phase = .maintenance; box.maintenanceID = id
+        next.boxes[computerID] = box
+        try persist(next); store = next
+        return id
+    }
+
+    /// End a reservation suspended. A future writer must inspect runtime
+    /// health and reconcile again before it can receive a fresh token.
+    public func endIdleMaintenance(computerID: UUID, reservationID: UUID) throws {
+        var next = store
+        guard var box = next.boxes[computerID], box.phase == .maintenance,
+              box.maintenanceID == reservationID else {
+            throw ControlBrokerError.invalidAcknowledgment
+        }
+        box.phase = .suspended; box.maintenanceID = nil
         next.boxes[computerID] = box
         try persist(next); store = next
     }
@@ -153,6 +187,28 @@ public actor ControlBroker {
         return try request(computerID: computerID,
                            target: .child(parentRunID: parentRunID, nativeID: nativeChildID),
                            paths: paths, delegatedFrom: parent.actor, delegatedParentPaths: parent.paths)
+    }
+
+    /// A host-verified native child can control its own box without a parent
+    /// lease on that box. The caller supplies the parent's allowed capabilities;
+    /// this broker does not authenticate the native child or its box ownership.
+    @discardableResult
+    public func requestIndependentChild(computerID: UUID, parentRunID: UUID, nativeChildID: String,
+                                        paths: Set<ControlWritePath>,
+                                        allowedParentPaths: Set<ControlWritePath>) throws -> ControlTransition {
+        guard !nativeChildID.isEmpty, !paths.isEmpty,
+              paths.isSubset(of: allowedParentPaths) else { throw ControlBrokerError.invalidActor }
+        let child = ControlActor.child(parentRunID: parentRunID, nativeID: nativeChildID)
+        if let current = store.boxes[computerID]?.grant {
+            guard current.actor == child, current.delegatedFrom == nil,
+                  current.delegatedParentPaths == nil, current.paths == paths else {
+                throw ControlBrokerError.activeRuntimeLease
+            }
+        }
+        // `request` is only called for an idle box or an exact independent-child
+        // retry. It must never initiate revocation of another controller.
+        return try request(computerID: computerID, target: child, paths: paths,
+                           delegatedFrom: nil, delegatedParentPaths: nil)
     }
 
     /// Takes control back from a child only after the child runtime lease is revoked and ACKed.
