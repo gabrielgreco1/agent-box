@@ -49,6 +49,9 @@ public struct AgentLaunchPlan: Equatable, Sendable {
     public let skillFiles: [AgentLaunchSkillFile]
     public let supportFiles: [AgentLaunchSupportFile]
     public let pluginDirectory: URL?
+    public let computerMCP: ComputerMCPConfiguration?
+    public let mcpConfigData: Data?
+    public let mcpCapabilityData: Data?
     public let activation: AgentLaunchActivation
 
     /// Full text and provenance for a human review before `materialize` writes a file.
@@ -94,6 +97,7 @@ public struct MaterializedAgentLaunch: Equatable, Sendable {
     public let skillFiles: [AgentLaunchSkillFile]
     public let supportFiles: [AgentLaunchSupportFile]
     public let pluginDirectory: URL?
+    public let computerMCP: ComputerMCPConfiguration?
 
     /// Persist only this metadata. The context body stays in its protected snapshot file.
     public var binding: AgentLaunchBinding? {
@@ -105,7 +109,7 @@ public struct MaterializedAgentLaunch: Equatable, Sendable {
                                   skillReferences: skillFiles.map(\.reference),
                                   supportFileHashes: Dictionary(uniqueKeysWithValues: supportFiles.map {
                                       ($0.url.path.replacingOccurrences(of: pluginDirectory!.path + "/", with: ""), $0.sha256)
-                                  }))
+                                  }), computerMCP: computerMCP)
     }
 
     public func validateContextFile() throws {
@@ -128,6 +132,7 @@ public struct MaterializedAgentLaunch: Equatable, Sendable {
                 throw AgentLaunchError.contextChanged
             }
         }
+        try computerMCP?.validate(directory: contextFileURL.deletingLastPathComponent())
     }
 
     private static func requireRegularFile(_ url: URL, through root: URL) throws {
@@ -163,11 +168,13 @@ public struct AgentLaunchBinding: Codable, Equatable, Sendable {
     public let arguments: [String]
     public let skillReferences: [PreparedSkillReference]
     public let supportFileHashes: [String: String]
+    public let computerMCP: ComputerMCPConfiguration?
 
     public init(planID: UUID, terminalID: UUID? = nil, agentDefinitionID: UUID, executablePath: String,
                 contextFilePath: String, contextSHA256: String, provider: CLIProvider,
                 workingDirectory: String, arguments: [String],
-                skillReferences: [PreparedSkillReference] = [], supportFileHashes: [String: String] = [:]) {
+                skillReferences: [PreparedSkillReference] = [], supportFileHashes: [String: String] = [:],
+                computerMCP: ComputerMCPConfiguration? = nil) {
         self.planID = planID; self.terminalID = terminalID ?? planID
         self.agentDefinitionID = agentDefinitionID
         self.executablePath = executablePath; self.contextFilePath = contextFilePath
@@ -175,11 +182,12 @@ public struct AgentLaunchBinding: Codable, Equatable, Sendable {
         self.workingDirectory = workingDirectory; self.arguments = arguments
         self.skillReferences = skillReferences
         self.supportFileHashes = supportFileHashes
+        self.computerMCP = computerMCP
     }
 
     private enum CodingKeys: String, CodingKey {
         case planID, terminalID, agentDefinitionID, executablePath, contextFilePath, contextSHA256
-        case provider, workingDirectory, arguments, skillReferences, supportFileHashes
+        case provider, workingDirectory, arguments, skillReferences, supportFileHashes, computerMCP
     }
 
     public init(from decoder: Decoder) throws {
@@ -195,7 +203,8 @@ public struct AgentLaunchBinding: Codable, Equatable, Sendable {
                   workingDirectory: try values.decode(String.self, forKey: .workingDirectory),
                   arguments: try values.decode([String].self, forKey: .arguments),
                   skillReferences: try values.decodeIfPresent([PreparedSkillReference].self, forKey: .skillReferences) ?? [],
-                  supportFileHashes: try values.decodeIfPresent([String: String].self, forKey: .supportFileHashes) ?? [:])
+                  supportFileHashes: try values.decodeIfPresent([String: String].self, forKey: .supportFileHashes) ?? [:],
+                  computerMCP: try values.decodeIfPresent(ComputerMCPConfiguration.self, forKey: .computerMCP))
     }
 }
 
@@ -238,7 +247,8 @@ public struct AgentLaunchPlanner {
     public func prepare(agentID: UUID, in document: LibraryDocument, workingDirectory: String,
                         title: String? = nil, projectKey: String? = nil, taskKey: String? = nil,
                         profileKey: String? = nil, selectedMemoryIDs: [UUID]? = nil,
-                        selectedSkillIDs: [UUID]? = nil) throws -> AgentLaunchPlan {
+                        selectedSkillIDs: [UUID]? = nil, computerID: UUID? = nil,
+                        mcpHelper: URL? = nil) throws -> AgentLaunchPlan {
         let prepared = try LibraryContext.prepare(agentID: agentID, in: document,
                                                   projectKey: projectKey, taskKey: taskKey, profileKey: profileKey,
                                                   selectedMemoryIDs: selectedMemoryIDs, selectedSkillIDs: selectedSkillIDs)
@@ -248,6 +258,17 @@ public struct AgentLaunchPlanner {
         let id = UUID()
         let file = contextDirectory.appendingPathComponent(id.uuidString, isDirectory: true).appendingPathComponent("context.md")
         let plugin = file.deletingLastPathComponent().appendingPathComponent("agentbox-\(id.uuidString.lowercased())", isDirectory: true)
+        let computerMCP: ComputerMCPConfiguration?
+        let mcpConfigData: Data?
+        let mcpCapabilityData: Data?
+        if let computerID, let mcpHelper {
+            guard prepared.provider == .claude else { throw AgentLaunchError.contextNotActive }
+            (computerMCP, mcpConfigData, mcpCapabilityData) = try ComputerMCPConfiguration.prepare(
+                planID: id, directory: file.deletingLastPathComponent(), helper: mcpHelper, computerID: computerID)
+        } else {
+            guard computerID == nil, mcpHelper == nil else { throw AgentLaunchError.invalidBinding }
+            computerMCP = nil; mcpConfigData = nil; mcpCapabilityData = nil
+        }
         var skillFiles: [AgentLaunchSkillFile] = []
         var supportFiles: [AgentLaunchSupportFile] = []
         if prepared.provider == .claude {
@@ -286,6 +307,7 @@ public struct AgentLaunchPlanner {
             activation = .claudeAppendPromptFile
             arguments = ["--append-system-prompt-file", file.path]
                 + (skillFiles.isEmpty ? [] : ["--plugin-dir", plugin.path])
+                + (computerMCP.map { ["--mcp-config", $0.configPath] } ?? [])
         case .codex:
             activation = .exportOnly(reason: "Codex não oferece um append de arquivo verificado para a TUI sem substituir instruções internas.")
             arguments = []
@@ -303,6 +325,8 @@ public struct AgentLaunchPlanner {
                                selectedMemories: prepared.selectedMemories, selectedSkills: prepared.selectedSkills,
                                skillFiles: skillFiles, supportFiles: supportFiles,
                                pluginDirectory: skillFiles.isEmpty ? nil : plugin,
+                               computerMCP: computerMCP, mcpConfigData: mcpConfigData,
+                               mcpCapabilityData: mcpCapabilityData,
                                activation: activation)
     }
 
@@ -324,6 +348,20 @@ public struct AgentLaunchPlanner {
         for support in plan.supportFiles {
             guard Self.sha256(support.data) == support.sha256 else { throw AgentLaunchError.contextChanged }
         }
+        if let mcp = plan.computerMCP {
+            guard plan.provider == .claude, plan.activation.contextIsActiveAtLaunch,
+                  let config = plan.mcpConfigData, let capability = plan.mcpCapabilityData,
+                  mcp.configPath == directory.appendingPathComponent("computer.mcp.json").path,
+                  mcp.capabilityPath == directory.appendingPathComponent("computer.capability").path,
+                  mcp.socketPath == "/private/tmp/ab-\(plan.id.uuidString.lowercased())/control.sock",
+                  FileManager.default.isExecutableFile(atPath: mcp.helperPath),
+                  Self.sha256(config) == mcp.configHash,
+                  Self.sha256(capability) == mcp.capabilityHash else {
+                throw AgentLaunchError.invalidBinding
+            }
+        } else if plan.mcpConfigData != nil || plan.mcpCapabilityData != nil {
+            throw AgentLaunchError.invalidBinding
+        }
         try FileManager.default.createDirectory(at: contextDirectory, withIntermediateDirectories: true,
                                                 attributes: [.posixPermissions: 0o700])
         try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: contextDirectory.path)
@@ -336,6 +374,12 @@ public struct AgentLaunchPlanner {
         }
         do {
             try writeProtected(data, to: plan.contextFile.url)
+            if let mcp = plan.computerMCP,
+               let config = plan.mcpConfigData, let capability = plan.mcpCapabilityData {
+                try writeProtected(config, to: URL(fileURLWithPath: mcp.configPath))
+                try writeProtected(capability, to: URL(fileURLWithPath: mcp.capabilityPath))
+                try mcp.validate(directory: directory)
+            }
             if let plugin = plan.pluginDirectory {
                 try FileManager.default.createDirectory(at: plugin, withIntermediateDirectories: false,
                                                         attributes: [.posixPermissions: 0o700])
@@ -364,7 +408,8 @@ public struct AgentLaunchPlanner {
                                        contextFileURL: plan.contextFile.url, contextSHA256: digest,
                                        terminal: terminal, activation: plan.activation,
                                        skillFiles: plan.skillFiles, supportFiles: plan.supportFiles,
-                                       pluginDirectory: plan.pluginDirectory)
+                                       pluginDirectory: plan.pluginDirectory,
+                                       computerMCP: plan.computerMCP)
     }
 
     /// Restore a reviewed snapshot for an explicit restart. Never starts the process.
@@ -396,7 +441,9 @@ public struct AgentLaunchPlanner {
             .appendingPathComponent("agentbox-\(binding.planID.uuidString.lowercased())", isDirectory: true)
         let expectedArgs = ["--append-system-prompt-file", expected.path]
             + (binding.skillReferences.isEmpty ? [] : ["--plugin-dir", plugin.path])
+            + (binding.computerMCP.map { ["--mcp-config", $0.configPath] } ?? [])
         guard binding.arguments == expectedArgs else { throw AgentLaunchError.invalidBinding }
+        try binding.computerMCP?.validate(directory: expected.deletingLastPathComponent())
         let executable = try resolver.resolve(binding.provider)
         let cwd = try resolver.validateWorkingDirectory(binding.workingDirectory)
         guard executable == binding.executablePath, cwd == binding.workingDirectory else {
@@ -423,7 +470,8 @@ public struct AgentLaunchPlanner {
                                              contextFileURL: expected, contextSHA256: binding.contextSHA256,
                                              terminal: terminal, activation: .claudeAppendPromptFile,
                                              skillFiles: skillFiles, supportFiles: supportFiles,
-                                             pluginDirectory: skillFiles.isEmpty ? nil : plugin)
+                                             pluginDirectory: skillFiles.isEmpty ? nil : plugin,
+                                             computerMCP: binding.computerMCP)
         try launch.validateContextFile()
         return launch
     }
@@ -440,6 +488,14 @@ public struct AgentLaunchPlanner {
                 throw AgentLaunchError.planDirectoryMismatch
             }
             try FileManager.default.removeItem(at: plugin)
+        }
+        if let mcp = launch.computerMCP {
+            guard mcp.configPath == directory.appendingPathComponent("computer.mcp.json").path,
+                  mcp.capabilityPath == directory.appendingPathComponent("computer.capability").path else {
+                throw AgentLaunchError.planDirectoryMismatch
+            }
+            try FileManager.default.removeItem(atPath: mcp.configPath)
+            try FileManager.default.removeItem(atPath: mcp.capabilityPath)
         }
         _ = Darwin.rmdir(directory.path) // Leave any unexpected sibling files untouched.
     }

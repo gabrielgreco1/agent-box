@@ -195,6 +195,10 @@ struct AgentLaunchView: View {
                     Text("Terminal \(target.terminal.title) · manter box \(target.assignment.computerID.uuidString.prefix(8))")
                         .foregroundStyle(.secondary)
                 }
+                if let mcp = plan.computerMCP {
+                    Text("Controle MCP do box \(mcp.computerID.uuidString.prefix(8)) · acesso autorizado por execução")
+                        .foregroundStyle(.secondary)
+                }
                 Text(details.selectedSkills.map(\.name).joined(separator: ", ").ifEmpty("Sem skills") +
                      " · \(details.selectedMemories.count) memórias · \(details.supportFiles.count) arquivos de apoio")
                     .foregroundStyle(.secondary)
@@ -205,6 +209,10 @@ struct AgentLaunchView: View {
                             Text("Argumentos: \(details.arguments.joined(separator: " "))")
                             Text("Snapshot: \(details.contextFilePath)")
                             Text("SHA-256: \(details.contextSHA256)")
+                            if let mcp = plan.computerMCP {
+                                Text("Helper MCP: \(mcp.helperPath)")
+                                Text("Configuração MCP: \(mcp.configPath)")
+                            }
                             Text("Memórias: \(details.selectedMemories.map { "\($0.title) r\($0.revision)" }.joined(separator: ", ").ifEmpty("nenhuma"))")
                             Text(details.supportFiles.map { "\($0.url.path)  \($0.sha256)" }.joined(separator: "\n"))
                         }.font(.system(size: 10, design: .monospaced))
@@ -263,9 +271,19 @@ struct AgentLaunchView: View {
             let preparedContext = try LibraryContext.prepare(agentID: agentID, in: fresh,
                 projectKey: project, taskKey: task, profileKey: profile,
                 selectedMemoryIDs: memorySelection, selectedSkillIDs: skillSelection)
+            let mcpComputerID: UUID?
+            let mcpHelper: URL?
+            if let target = scrapingTarget, preparedContext.provider == .claude {
+                mcpComputerID = target.assignment.computerID
+                mcpHelper = Self.packagedMCPHelper
+            } else {
+                mcpComputerID = nil
+                mcpHelper = nil
+            }
             let candidate = try AgentLaunchPlanner().prepare(agentID: agentID, in: fresh,
                 workingDirectory: directory, projectKey: project, taskKey: task, profileKey: profile,
-                selectedMemoryIDs: memorySelection, selectedSkillIDs: skillSelection)
+                selectedMemoryIDs: memorySelection, selectedSkillIDs: skillSelection,
+                computerID: mcpComputerID, mcpHelper: mcpHelper)
             guard candidate.review.contextText == preparedContext.text,
                   candidate.agentRevision == preparedContext.agentRevision else {
                 throw AgentLaunchError.contextChanged
@@ -278,6 +296,13 @@ struct AgentLaunchView: View {
     }
 
     private func invalidate() { plan = nil; prepared = nil; reviewed = false; errorText = nil }
+
+    private static var packagedMCPHelper: URL {
+        // The release app stages the helper beside AgentBox. SwiftPM does the same for local runs.
+        (Bundle.main.executableURL?.deletingLastPathComponent() ??
+         Bundle.main.bundleURL.appendingPathComponent("Contents/MacOS", isDirectory: true))
+            .appendingPathComponent("AgentBoxMCP")
+    }
 
     private func launch() async {
         guard reviewed, !launching, targetStopped, let plan, let prepared else { return }

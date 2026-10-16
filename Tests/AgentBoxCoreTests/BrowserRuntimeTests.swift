@@ -65,6 +65,126 @@ final class BrowserRuntimeTests: XCTestCase {
             XCTAssertFalse(reason.contains("secret-value"))
         }
     }
+
+    func testBrowserOrDesktopFrameAcceptsMatchingHeadlessAndDesktopSources() async throws {
+        for (mode, source, browserReady, displayReady) in [
+            ("headless", "browser", true, false),
+            ("desktop", "desktop", true, true)
+        ] {
+            BrowserFrameURLProtocol.configure(health: frameHealth(mode: mode, source: source,
+                browserReady: browserReady, displayReady: displayReady), frameSource: source)
+            let client = try frameClient()
+            let frame = try await client.browserOrDesktopFrame()
+            XCTAssertEqual(frame, BrowserFrameURLProtocol.jpeg)
+            XCTAssertEqual(BrowserFrameURLProtocol.requestPaths(), ["/v1/health", "/v1/frame"])
+            XCTAssertTrue(BrowserFrameURLProtocol.allRequestsAuthenticated())
+        }
+    }
+
+    func testBrowserOrDesktopFrameRejectsMismatchedAndAbsentSources() async throws {
+        for (mode, healthSource, responseSource, expectedPaths) in [
+            ("headless", "browser", "desktop", ["/v1/health", "/v1/frame"]),
+            ("desktop", "desktop", "browser", ["/v1/health", "/v1/frame"]),
+            ("http", "none", "browser", ["/v1/health"])
+        ] {
+            BrowserFrameURLProtocol.configure(health: frameHealth(mode: mode, source: healthSource,
+                browserReady: mode != "http", displayReady: mode == "desktop"), frameSource: responseSource)
+            let client = try frameClient()
+            do {
+                _ = try await client.browserOrDesktopFrame()
+                XCTFail("A frame with source \(responseSource) must not satisfy \(healthSource)")
+            } catch BrowserRuntimeError.invalidResponse { }
+            XCTAssertEqual(BrowserFrameURLProtocol.requestPaths(), expectedPaths)
+        }
+    }
+
+    func testBrowserOrDesktopFrameRejectsInconsistentHealthModeAndReadiness() async throws {
+        for (mode, source, browserReady, displayReady) in [
+            ("desktop", "browser", true, true),
+            ("headless", "desktop", true, true),
+            ("headless", "browser", false, false),
+            ("desktop", "desktop", true, false)
+        ] {
+            BrowserFrameURLProtocol.configure(health: frameHealth(mode: mode, source: source,
+                browserReady: browserReady, displayReady: displayReady), frameSource: source)
+            let client = try frameClient()
+            do {
+                _ = try await client.browserOrDesktopFrame()
+                XCTFail("Health cannot advertise \(source) in \(mode) with missing readiness")
+            } catch BrowserRuntimeError.invalidResponse { }
+            XCTAssertEqual(BrowserFrameURLProtocol.requestPaths(), ["/v1/health"])
+        }
+    }
+
+    func testBrowserOrDesktopFrameChecksIdentityAndGenerationBeforeFetching() async throws {
+        for (computerID, generation) in [(UUID(), UInt64(4)), (id, UInt64(5))] {
+            BrowserFrameURLProtocol.configure(health: frameHealth(mode: "headless", source: "browser",
+                browserReady: true, displayReady: false, computerID: computerID, generation: generation),
+                frameSource: "browser")
+            let client = try frameClient()
+            do {
+                _ = try await client.browserOrDesktopFrame()
+                XCTFail("A stale or foreign computer cannot supply a frame")
+            } catch BrowserRuntimeError.identityMismatch { }
+            XCTAssertEqual(BrowserFrameURLProtocol.requestPaths(), ["/v1/health"])
+        }
+    }
+
+    private func frameClient() throws -> BrowserRuntimeClient {
+        let endpoint = try BrowserRuntimeEndpoint(baseURL: URL(string: "http://127.0.0.1:8765")!,
+            apiToken: String(repeating: "a", count: 40), computerID: id, generation: 4)
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [BrowserFrameURLProtocol.self]
+        return BrowserRuntimeClient(endpoint: endpoint, session: URLSession(configuration: config))
+    }
+
+    private func frameHealth(mode: String, source: String, browserReady: Bool, displayReady: Bool,
+                             computerID: UUID? = nil, generation: UInt64 = 4) -> String {
+        """
+        {"computer_id":"\((computerID ?? id).uuidString)","generation":\(generation),"mode":"\(mode)","browser_ready":\(browserReady),"display_ready":\(displayReady),"frame_source":"\(source)","active_lease":null}
+        """
+    }
+}
+
+private final class BrowserFrameURLProtocol: URLProtocol {
+    static let jpeg = Data([0xff, 0xd8, 0xff, 0xd9])
+    private static let lock = NSLock()
+    private static var health = ""
+    private static var frameSource = ""
+    private static var paths: [String] = []
+    private static var authenticated = true
+
+    static func configure(health: String, frameSource: String) {
+        lock.lock(); defer { lock.unlock() }
+        self.health = health
+        self.frameSource = frameSource
+        paths = []
+        authenticated = true
+    }
+    static func requestPaths() -> [String] { lock.lock(); defer { lock.unlock() }; return paths }
+    static func allRequestsAuthenticated() -> Bool { lock.lock(); defer { lock.unlock() }; return authenticated }
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func startLoading() {
+        let path = request.url!.path
+        Self.lock.lock()
+        Self.paths.append(path)
+        Self.authenticated = Self.authenticated &&
+            request.value(forHTTPHeaderField: "Authorization") == "Bearer " + String(repeating: "a", count: 40)
+        let health = Self.health
+        let source = Self.frameSource
+        Self.lock.unlock()
+        let isFrame = path == "/v1/frame"
+        let data = isFrame ? Self.jpeg : Data(health.utf8)
+        let headers = isFrame
+            ? ["Content-Type": "image/jpeg", "X-AgentBox-Frame-Source": source]
+            : ["Content-Type": "application/json"]
+        let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: headers)!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: data)
+        client?.urlProtocolDidFinishLoading(self)
+    }
+    override func stopLoading() { }
 }
 
 private final class BrowserRuntimeURLProtocol: URLProtocol {

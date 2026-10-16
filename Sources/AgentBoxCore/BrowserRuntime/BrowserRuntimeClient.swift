@@ -207,6 +207,22 @@ public struct BrowserRuntimeClient {
         return data
     }
 
+    /// Frame source is checked against the authenticated runtime, including headless browser frames.
+    public func browserOrDesktopFrame() async throws -> Data {
+        let health = try await health()
+        guard (health.mode == .headless && health.browserReady && health.frameSource == .browser) ||
+              (health.mode == .desktop && health.browserReady && health.isFullDesktopReady) else {
+            throw BrowserRuntimeError.invalidResponse
+        }
+        let (data, response) = try await fetch(endpoint.request(path: "v1/frame"))
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200,
+              http.value(forHTTPHeaderField: "X-AgentBox-Frame-Source") == health.frameSource.rawValue,
+              http.mimeType == "image/jpeg", !data.isEmpty, data.count <= 8_388_608 else {
+            throw BrowserRuntimeError.invalidResponse
+        }
+        return data
+    }
+
     private func authorized(_ request: URLRequest, lease: BrowserRuntimeGrantedLease) -> URLRequest {
         var value = request
         value.setValue(lease.actorID, forHTTPHeaderField: "X-AgentBox-Actor-ID")

@@ -145,6 +145,79 @@ final class AgentLaunchTests: XCTestCase {
         XCTAssertEqual(decoded, binding)
     }
 
+    func testComputerMCPFilesAreProtectedAndRestoredWithReviewedPlan() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let agent = SavedAgent(name: "Browser", instructions: "Use the assigned computer", provider: .claude)
+        let computerID = UUID()
+        let planner = AgentLaunchPlanner(contextDirectory: root,
+                                         resolver: CLIExecutableResolver(overrides: [.claude: "/bin/sh"]))
+        let plan = try planner.prepare(agentID: agent.id, in: LibraryDocument(agents: [agent]),
+                                       workingDirectory: "/tmp", computerID: computerID,
+                                       mcpHelper: URL(fileURLWithPath: "/bin/sh"))
+        let mcp = try XCTUnwrap(plan.computerMCP)
+        let capability = try XCTUnwrap(plan.mcpCapabilityData)
+        XCTAssertEqual(mcp.computerID, computerID)
+        XCTAssertEqual(Array(plan.arguments.suffix(2)), ["--mcp-config", mcp.configPath])
+        XCTAssertFalse(FileManager.default.fileExists(atPath: mcp.configPath))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: mcp.capabilityPath))
+        XCTAssertFalse(plan.review.contextText.contains(String(decoding: capability, as: UTF8.self)))
+
+        let launch = try planner.materialize(plan, reviewedDigest: plan.review.contextSHA256)
+        XCTAssertEqual(launch.computerMCP, mcp)
+        XCTAssertEqual(try Data(contentsOf: URL(fileURLWithPath: mcp.configPath)), plan.mcpConfigData)
+        XCTAssertEqual(try Data(contentsOf: URL(fileURLWithPath: mcp.capabilityPath)), capability)
+        for path in [mcp.configPath, mcp.capabilityPath] {
+            let permissions = try XCTUnwrap(FileManager.default.attributesOfItem(atPath: path)[.posixPermissions] as? NSNumber)
+            XCTAssertEqual(permissions.intValue & 0o777, 0o600)
+        }
+        XCTAssertNoThrow(try launch.validateContextFile())
+        let binding = try XCTUnwrap(launch.binding)
+        let decoded = try JSONDecoder().decode(AgentLaunchBinding.self, from: JSONEncoder().encode(binding))
+        XCTAssertEqual(decoded.computerMCP, mcp)
+        let restored = try planner.restore(decoded, terminal: try XCTUnwrap(launch.terminal))
+        XCTAssertEqual(restored.computerMCP, mcp)
+        try planner.removeContextFile(for: launch)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: mcp.configPath))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: mcp.capabilityPath))
+    }
+
+    func testComputerMCPRejectsTamperedFilesAndMismatchedPlanPath() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let agent = SavedAgent(name: "Browser", provider: .claude)
+        let planner = AgentLaunchPlanner(contextDirectory: root,
+                                         resolver: CLIExecutableResolver(overrides: [.claude: "/bin/sh"]))
+        let plan = try planner.prepare(agentID: agent.id, in: LibraryDocument(agents: [agent]),
+                                       workingDirectory: "/tmp", computerID: UUID(),
+                                       mcpHelper: URL(fileURLWithPath: "/bin/sh"))
+        let launch = try planner.materialize(plan, reviewedDigest: plan.review.contextSHA256)
+        let mcp = try XCTUnwrap(launch.computerMCP)
+        let terminal = try XCTUnwrap(launch.terminal)
+        let binding = try XCTUnwrap(launch.binding)
+
+        try Data("changed config".utf8).write(to: URL(fileURLWithPath: mcp.configPath))
+        XCTAssertThrowsError(try launch.validateContextFile()) {
+            XCTAssertEqual($0 as? AgentLaunchError, .contextChanged)
+        }
+        try XCTUnwrap(plan.mcpConfigData).write(to: URL(fileURLWithPath: mcp.configPath))
+        try Data("changed capability".utf8).write(to: URL(fileURLWithPath: mcp.capabilityPath))
+        XCTAssertThrowsError(try planner.restore(binding, terminal: terminal)) {
+            XCTAssertEqual($0 as? AgentLaunchError, .contextChanged)
+        }
+        try XCTUnwrap(plan.mcpCapabilityData).write(to: URL(fileURLWithPath: mcp.capabilityPath))
+
+        var json = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(binding)) as? [String: Any])
+        var descriptor = try XCTUnwrap(json["computerMCP"] as? [String: Any])
+        descriptor["configPath"] = root.appendingPathComponent(UUID().uuidString).appendingPathComponent("computer.mcp.json").path
+        json["computerMCP"] = descriptor
+        let wrongPath = try JSONDecoder().decode(AgentLaunchBinding.self,
+            from: JSONSerialization.data(withJSONObject: json))
+        XCTAssertThrowsError(try planner.restore(wrongPath, terminal: terminal)) {
+            XCTAssertEqual($0 as? AgentLaunchError, .invalidBinding)
+        }
+    }
+
     func testCodexPlanExportsWithoutClaimingActivation() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         defer { try? FileManager.default.removeItem(at: root) }

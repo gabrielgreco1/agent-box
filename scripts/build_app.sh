@@ -19,6 +19,7 @@ trap 'rm -rf "$AGENTBOX_STAGE"' EXIT
 AGENTBOX_APP="$AGENTBOX_STAGE/Agent Box.app"
 mkdir -p "$AGENTBOX_APP/Contents/MacOS" "$AGENTBOX_APP/Contents/Resources"
 cp "$AGENTBOX_BIN/AgentBox" "$AGENTBOX_APP/Contents/MacOS/AgentBox"
+cp "$AGENTBOX_BIN/AgentBoxMCP" "$AGENTBOX_APP/Contents/MacOS/AgentBoxMCP"
 for AGENTBOX_RESOURCE in "$AGENTBOX_BIN"/*.bundle; do
   [[ -d "$AGENTBOX_RESOURCE" ]] || continue
   # SwiftPM resources can be read-only. Replace the generated bundle instead of overwriting its files.

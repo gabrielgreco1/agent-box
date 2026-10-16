@@ -7,8 +7,8 @@ import AgentBoxCore
 /// The UI never calls `/v1/control/grant` or manufactures a control token.
 struct RemoteDesktopControlActions {
     let assume: () async throws -> ControlGrant
-    let release: () async throws -> Void
-    let streamDisconnected: () async -> Void
+    let release: (ControlGrant) async throws -> Void
+    let streamDisconnected: (ControlGrant) async -> Void
     let pointer: (ControlGrant, DesktopPointerInput) async throws -> Void
     let key: (ControlGrant, String) async throws -> Void
 }
@@ -58,12 +58,14 @@ private enum DesktopConnectionState: Equatable {
         let attempt = UUID()
         connectionAttempt = attempt
         stopStream()
-        if humanGrant != nil {
-            humanGrant = nil
-            await control?.streamDisconnected()
-        }
-        active = true
+        active = false
         state = hasConnectedBefore ? .reconnecting : .connecting
+        if let grant = humanGrant {
+            humanGrant = nil
+            await control?.streamDisconnected(grant)
+        }
+        guard connectionAttempt == attempt else { return }
+        active = true
         frame = nil
         controlError = nil
         do {
@@ -98,28 +100,33 @@ private enum DesktopConnectionState: Equatable {
         active = false
         stopStream()
         state = .disconnected
-        if humanGrant != nil {
+        if let grant = humanGrant {
             humanGrant = nil
-            Task { await control?.streamDisconnected() }
+            Task { await control?.streamDisconnected(grant) }
         }
     }
 
     func assume() async {
         guard state == .live, let control else { return }
+        let attempt = connectionAttempt
         do {
             let grant = try await control.assume()
             guard grant.computerID == endpoint.computerID, grant.actor == .human,
                   grant.paths.contains(.input) else { throw DesktopViewerError.invalidGrant }
+            guard active, state == .live, connectionAttempt == attempt else {
+                await control.streamDisconnected(grant)
+                return
+            }
             humanGrant = grant
             controlError = nil
         } catch { controlError = error.localizedDescription }
     }
 
     func release() async {
-        guard humanGrant != nil, let control else { return }
+        guard let grant = humanGrant, let control else { return }
         do {
-            try await control.release()
-            humanGrant = nil
+            try await control.release(grant)
+            if humanGrant == grant { humanGrant = nil }
             controlError = nil
         } catch { controlError = error.localizedDescription }
     }
@@ -144,7 +151,7 @@ private enum DesktopConnectionState: Equatable {
                 guard self.humanGrant == grant else { return }
                 self.controlError = error.localizedDescription
                 self.humanGrant = nil
-                await self.control?.streamDisconnected()
+                await self.control?.streamDisconnected(grant)
             }
         }
     }
@@ -192,9 +199,9 @@ private enum DesktopConnectionState: Equatable {
                 let frameReference = self.lastFrameAt ?? self.streamStartedAt
                 if let last = frameReference, Date().timeIntervalSince(last) > 4 {
                     self.state = .delayed
-                    if self.humanGrant != nil {
+                    if let grant = self.humanGrant {
                         self.humanGrant = nil
-                        await self.control?.streamDisconnected()
+                        await self.control?.streamDisconnected(grant)
                     }
                 }
             }
@@ -205,9 +212,9 @@ private enum DesktopConnectionState: Equatable {
         guard active else { return }
         stopStream()
         state = .unavailable(message)
-        if humanGrant != nil {
+        if let grant = humanGrant {
             humanGrant = nil
-            Task { await control?.streamDisconnected() }
+            Task { await control?.streamDisconnected(grant) }
         }
     }
 

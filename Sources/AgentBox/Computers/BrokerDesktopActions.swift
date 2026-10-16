@@ -5,10 +5,12 @@ import Foundation
 @MainActor
 final class BrokerDesktopActions {
     private let bridge: ComputerControlBridge<BrowserRuntimeClient>
+    private let computerID: UUID
     private var ticket: ComputerControlTicket?
 
-    init(endpoint: BrowserRuntimeEndpoint, broker: ControlBroker, session: URLSession = .shared) {
-        bridge = ComputerControlBridge(broker: broker, transport: BrowserRuntimeClient(endpoint: endpoint, session: session))
+    init(endpoint: BrowserRuntimeEndpoint, broker: ControlBroker, session: URLSession = .shared) async {
+        computerID = endpoint.computerID
+        bridge = await DesktopBrokerService.bridge(endpoint: endpoint, broker: broker, session: session)
     }
 
     func actions() -> RemoteDesktopControlActions {
@@ -19,15 +21,25 @@ final class BrokerDesktopActions {
                 self.ticket = ticket
                 return ticket.grant
             },
-            release: { [weak self] in
-                guard let self, let ticket = self.ticket else { throw ComputerControlBridgeError.noTicket }
+            release: { [weak self] expectedGrant in
+                guard let self, let ticket = self.ticket, ticket.grant == expectedGrant else {
+                    throw ComputerControlBridgeError.noTicket
+                }
                 try await self.bridge.releaseHuman(ticket)
-                self.ticket = nil
+                if self.ticket == ticket { self.ticket = nil }
+                AgentComputerAccess.shared.humanReleased(computerID: self.computerID)
             },
-            streamDisconnected: { [weak self] in
-                guard let self else { return }
+            streamDisconnected: { [weak self] expectedGrant in
+                guard let self, let ticket = self.ticket, ticket.grant == expectedGrant else { return }
                 self.ticket = nil
-                await self.bridge.streamDisconnected()
+                // Closing an observer must never revoke the agent or a newer human lease.
+                for _ in 0..<600 {
+                    do { try await self.bridge.releaseHuman(ticket); return }
+                    catch ControlBrokerError.transitionInProgress {
+                        try? await Task.sleep(nanoseconds: 100_000_000)
+                    }
+                    catch { return }
+                }
             },
             pointer: { [weak self] grant, input in
                 guard let self, let ticket = self.ticket, ticket.grant == grant else {

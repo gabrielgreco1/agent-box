@@ -3,6 +3,112 @@ import XCTest
 @testable import AgentBoxCore
 
 final class ComputerControlBridgeTests: XCTestCase {
+    func testAgentCannotStealHumanLeaseAndCanResumeAfterRelease() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let id = UUID(), run = UUID()
+        let broker = try ControlBroker(url: root.appendingPathComponent("control.json"))
+        let shared = FakeControlRuntime(id: id, generation: 0)
+        let bridge = ComputerControlBridge(broker: broker,
+            transport: FakeControlTransport(shared: shared, id: id, generation: 0))
+
+        let agent = try await bridge.assumeAgent(runID: run)
+        XCTAssertEqual(agent.grant.actor, .agent(runID: run))
+        XCTAssertEqual(agent.grant.paths, [.navigate, .input, .mode])
+        let retry = try await bridge.assumeAgent(runID: run)
+        XCTAssertEqual(retry, agent)
+        let url = try XCTUnwrap(URL(string: "https://example.com"))
+        let navigated = try await bridge.navigate(to: url, ticket: agent)
+        XCTAssertEqual(navigated, url)
+        do { _ = try await bridge.assumeAgent(runID: UUID()); XCTFail("Other run must not steal control") }
+        catch ControlBrokerError.activeRuntimeLease {}
+        do { try await bridge.releaseHuman(agent); XCTFail("Agent ticket must not release human control") }
+        catch ComputerControlBridgeError.wrongGrant {}
+        let stillAgent = await bridge.ticket()
+        XCTAssertEqual(stillAgent, agent)
+
+        let human = try await bridge.assumeHuman()
+        XCTAssertEqual(human.grant.actor, .human)
+        let log = await shared.log
+        XCTAssertEqual(log.filter { $0.hasPrefix("revoke:") }, ["revoke:\(agent.grant.actorID):\(agent.grant.epoch)"])
+        do { try await bridge.input(.key("Return"), ticket: agent); XCTFail("Old ticket must fail") }
+        catch ComputerControlBridgeError.noTicket {}
+        do { _ = try await bridge.navigate(to: url, ticket: agent); XCTFail("Old ticket must fail") }
+        catch ComputerControlBridgeError.noTicket {}
+        do { _ = try await bridge.changeMode(.desktop, ticket: agent); XCTFail("Old ticket must fail") }
+        catch ComputerControlBridgeError.noTicket {}
+        do { _ = try await bridge.assumeAgent(runID: run); XCTFail("Retry must not revoke human") }
+        catch ControlBrokerError.activeRuntimeLease {}
+        let stillHuman = await bridge.ticket()
+        XCTAssertEqual(stillHuman, human)
+        let afterRetryLog = await shared.log
+        XCTAssertFalse(afterRetryLog.contains("revoke:human:\(human.grant.epoch)"))
+
+        try await bridge.releaseHuman(human)
+        let resumed = try await bridge.assumeAgent(runID: run)
+        XCTAssertGreaterThan(resumed.grant.epoch, human.grant.epoch)
+        XCTAssertNotEqual(resumed.id, agent.id)
+        try await bridge.releaseAgent(resumed)
+        let releasedTicket = await bridge.ticket()
+        let releasedLease = await shared.lease
+        XCTAssertNil(releasedTicket)
+        XCTAssertNil(releasedLease)
+    }
+
+    func testAgentRejectsUnknownLiveLeaseAndNavigationWithoutPath() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let id = UUID(), run = UUID()
+        let broker = try ControlBroker(url: root.appendingPathComponent("control.json"))
+        let shared = FakeControlRuntime(id: id, generation: 0,
+            initialLease: BrowserRuntimeLease(actorID: "human", epoch: 4, paths: [.input]))
+        let bridge = ComputerControlBridge(broker: broker,
+            transport: FakeControlTransport(shared: shared, id: id, generation: 0))
+        do { _ = try await bridge.assumeAgent(runID: run); XCTFail("Unknown live lease must remain untouched") }
+        catch ControlBrokerError.activeRuntimeLease {}
+        let untouchedLease = await shared.lease
+        let untouchedLog = await shared.log
+        XCTAssertEqual(untouchedLease?.actorID, "human")
+        XCTAssertFalse(untouchedLog.contains(where: { $0.hasPrefix("revoke:") }))
+
+        let cleanID = UUID()
+        let cleanBroker = try ControlBroker(url: root.appendingPathComponent("clean-control.json"))
+        let cleanRuntime = FakeControlRuntime(id: cleanID, generation: 0)
+        let cleanBridge = ComputerControlBridge(broker: cleanBroker,
+            transport: FakeControlTransport(shared: cleanRuntime, id: cleanID, generation: 0))
+        let inputOnly = try await cleanBridge.assumeAgent(runID: run, paths: [.input])
+        do { _ = try await cleanBridge.navigate(to: URL(string: "https://example.com")!, ticket: inputOnly)
+            XCTFail("Missing navigate path must deny write") }
+        catch ComputerControlBridgeError.writeDenied {}
+        let deniedLog = await cleanRuntime.log
+        XCTAssertFalse(deniedLog.contains("navigate"))
+        try await cleanBridge.releaseAgent(inputOnly)
+    }
+
+    func testWritesAreDeniedWhileHumanTakeoverAwaitsRevocationAck() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let id = UUID()
+        let broker = try ControlBroker(url: root.appendingPathComponent("control.json"))
+        let shared = FakeControlRuntime(id: id, generation: 0)
+        let bridge = ComputerControlBridge(broker: broker,
+            transport: FakeControlTransport(shared: shared, id: id, generation: 0))
+        let agent = try await bridge.assumeAgent(runID: UUID())
+        await shared.pauseNextRevoke()
+        let takeover = Task { try await bridge.assumeHuman() }
+        await shared.waitForRevokeStart()
+        do { try await bridge.input(.key("Return"), ticket: agent); XCTFail("Input during takeover must fail") }
+        catch ControlBrokerError.transitionInProgress {}
+        do { _ = try await bridge.navigate(to: URL(string: "https://example.com")!, ticket: agent)
+            XCTFail("Navigate during takeover must fail") }
+        catch ControlBrokerError.transitionInProgress {}
+        do { _ = try await bridge.changeMode(.desktop, ticket: agent); XCTFail("Mode during takeover must fail") }
+        catch ControlBrokerError.transitionInProgress {}
+        await shared.resumeRevocation()
+        let human = try await takeover.value
+        XCTAssertEqual(human.grant.actor, .human)
+    }
+
     func testInputFailureRevokesRuntimeLeaseBeforeItIsForgotten() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         defer { try? FileManager.default.removeItem(at: root) }
@@ -107,6 +213,9 @@ private actor FakeControlRuntime {
     var log: [String] = []
     var badAck = false
     var failInput = false
+    var holdNextRevoke = false
+    var revokeStarted: CheckedContinuation<Void, Never>?
+    var resumeRevoke: CheckedContinuation<Void, Never>?
 
     init(id: UUID, generation: UInt64, initialLease: BrowserRuntimeLease? = nil) {
         self.id = id; self.generation = generation; self.lease = initialLease
@@ -114,6 +223,12 @@ private actor FakeControlRuntime {
 
     func setBadAck(_ value: Bool) { badAck = value }
     func setFailInput(_ value: Bool) { failInput = value }
+    func pauseNextRevoke() { holdNextRevoke = true }
+    func waitForRevokeStart() async {
+        if log.contains(where: { $0.hasPrefix("revoke:") }) { return }
+        await withCheckedContinuation { revokeStarted = $0 }
+    }
+    func resumeRevocation() { resumeRevoke?.resume(); resumeRevoke = nil }
     func health() throws -> BrowserRuntimeHealth {
         log.append("health")
         return try decode(#"{"computer_id":"\#(id.uuidString)","generation":\#(generation),"mode":"desktop","browser_ready":true,"display_ready":true,"frame_source":"desktop","active_lease":\#(leaseJSON())}"#)
@@ -125,8 +240,13 @@ private actor FakeControlRuntime {
         let pathsJSON = paths.map { "\"\($0.rawValue)\"" }.joined(separator: ",")
         return try decode(#"{"actor_id":"\#(actorID)","epoch":\#(epoch),"paths":[\#(pathsJSON)],"control_token":"private-token"}"#)
     }
-    func revoke(actorID: String, epoch: UInt64) throws -> BrowserRuntimeRevocationAck {
+    func revoke(actorID: String, epoch: UInt64) async throws -> BrowserRuntimeRevocationAck {
         log.append("revoke:\(actorID):\(epoch)")
+        revokeStarted?.resume(); revokeStarted = nil
+        if holdNextRevoke {
+            holdNextRevoke = false
+            await withCheckedContinuation { resumeRevoke = $0 }
+        }
         guard lease?.actorID == actorID, lease?.epoch == epoch else { throw BrowserRuntimeError.rejected(409, "lease mismatch") }
         if badAck { return try decode(#"{"revoked_actor_id":"wrong","revoked_epoch":\#(epoch),"acknowledged":true}"#) }
         lease = nil
@@ -137,6 +257,11 @@ private actor FakeControlRuntime {
         log.append("input")
         if failInput { throw BrowserRuntimeError.invalidResponse }
         return try decode(#"{"accepted":true,"generation":\#(generation)}"#)
+    }
+    func navigate(to url: URL) throws -> URL {
+        guard lease != nil else { throw BrowserRuntimeError.rejected(409, "no lease") }
+        log.append("navigate")
+        return url
     }
     func changeMode() throws -> BrowserRuntimeHealth {
         generation += 1
@@ -168,6 +293,9 @@ private struct FakeControlTransport: ComputerControlTransport {
     }
     func input(_ action: BrowserDesktopInput, lease: BrowserRuntimeGrantedLease) async throws -> BrowserDesktopInputResult {
         try await shared.input()
+    }
+    func navigate(to url: URL, lease: BrowserRuntimeGrantedLease) async throws -> URL {
+        try await shared.navigate(to: url)
     }
     func changeMode(_ mode: BrowserRuntimeMode, lease: BrowserRuntimeGrantedLease) async throws -> BrowserRuntimeHealth {
         try await shared.changeMode()

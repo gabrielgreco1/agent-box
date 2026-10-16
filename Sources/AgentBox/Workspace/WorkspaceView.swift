@@ -112,6 +112,7 @@ public struct WorkspaceView: View {
     @State private var sidebarDragStart: Double?
     @State private var splitDragStarts: [UUID: Double] = [:]
     @State private var stopRequested = Set<UUID>()
+    @State private var startingTerminalIDs = Set<UUID>()
     @State private var forceStopTerminalID: UUID?
     @State private var search = ""
     @State private var gitObservations: [UUID: GitObservation] = [:]
@@ -279,7 +280,10 @@ public struct WorkspaceView: View {
             get: { forceStopTerminalID != nil }, set: { if !$0 { forceStopTerminalID = nil } }
         )) {
             Button("Forçar encerramento", role: .destructive) {
-                if let id = forceStopTerminalID { runtime.forceStop(id) }
+                if let id = forceStopTerminalID {
+                    AgentComputerAccess.shared.stop(terminalID: id)
+                    runtime.forceStop(id)
+                }
                 forceStopTerminalID = nil
             }
             Button("Cancelar", role: .cancel) { forceStopTerminalID = nil }
@@ -973,6 +977,10 @@ public struct WorkspaceView: View {
               terminal.agentDefinitionID == request.prepared.agentID else {
             throw AgentLaunchError.contextNotActive
         }
+        guard startingTerminalIDs.insert(terminal.id).inserted else {
+            throw LibraryError.invalid("Este terminal já está iniciando. Aguarde a tentativa atual.")
+        }
+        defer { startingTerminalIDs.remove(terminal.id) }
         if let target = request.scrapingTarget {
             // Docker discovery performs no token read and does not start a container.
             let computer = try await Task.detached(priority: .utility) {
@@ -1041,13 +1049,24 @@ public struct WorkspaceView: View {
             }
             throw error
         }
+        var registeredComputerMCP = false
         do {
+            if let mcp = request.materialized.computerMCP {
+                let endpoint = try await verifiedComputerEndpoint(for: terminal, in: request.sessionID, mcp: mcp)
+                try await AgentComputerAccess.shared.register(
+                    launch: request.materialized, sessionID: request.sessionID,
+                    policyContext: computerPolicyContext(for: terminal, in: request.sessionID), endpoint: endpoint)
+                registeredComputerMCP = true
+                try validateComputerAssignment(for: terminal, in: request.sessionID, mcp: mcp)
+            }
             try runtime.start(request.materialized)
             guard runtime.isRunning(request.materialized) else {
                 throw LibraryError.invalid("O CLI não iniciou; nenhuma execução foi registrada.")
             }
             try LibraryRepository().save(library)
+            if registeredComputerMCP { AgentComputerAccess.shared.activate(terminalID: terminal.id) }
         } catch {
+            if registeredComputerMCP { AgentComputerAccess.shared.stop(terminalID: terminal.id) }
             if runtime.isRunning(request.materialized) { runtime.stop(terminal.id) }
             if let rollbackError = rollbackLaunchMetadata() {
                 bindingsAvailable = false
@@ -1071,10 +1090,24 @@ public struct WorkspaceView: View {
 
     private func requestStop(_ id: UUID) {
         stopRequested.insert(id)
+        AgentComputerAccess.shared.stop(terminalID: id)
         runtime.stop(id)
     }
 
     private func startTerminal(_ terminal: TerminalRecord) {
+        guard !startingTerminalIDs.contains(terminal.id) else { return }
+        switch runtime.state(for: terminal.id) {
+        case .running, .starting: runtime.focus(terminal.id); return
+        default: break
+        }
+        startingTerminalIDs.insert(terminal.id)
+        Task {
+            defer { startingTerminalIDs.remove(terminal.id) }
+            await startTerminalValidated(terminal)
+        }
+    }
+
+    private func startTerminalValidated(_ terminal: TerminalRecord) async {
         stopRequested.remove(terminal.id)
         do { try WorkspaceDirectoryAccess.shared.activate(terminal.cwd) }
         catch { saveError = error.localizedDescription; return }
@@ -1088,11 +1121,59 @@ public struct WorkspaceView: View {
             saveError = "O snapshot revisado deste agente não está disponível. O terminal não será iniciado."
             return
         }
+        var registeredComputerMCP = false
         do {
             let restored = try AgentLaunchPlanner().restore(binding, terminal: terminal)
+            if let mcp = restored.computerMCP {
+                guard let session = snapshot.sessions.first(where: { $0.terminals.contains(where: { $0.id == terminal.id }) }) else {
+                    throw LibraryError.invalid("A sessão do terminal não está disponível.")
+                }
+                let endpoint = try await verifiedComputerEndpoint(for: terminal, in: session.id, mcp: mcp)
+                try await AgentComputerAccess.shared.register(
+                    launch: restored, sessionID: session.id,
+                    policyContext: computerPolicyContext(for: terminal, in: session.id), endpoint: endpoint)
+                registeredComputerMCP = true
+                try validateComputerAssignment(for: terminal, in: session.id, mcp: mcp)
+            }
             try runtime.start(restored)
+            guard runtime.isRunning(restored) else {
+                throw LibraryError.invalid("O CLI não iniciou; o controle do computador permanece inativo.")
+            }
+            if restored.computerMCP != nil { AgentComputerAccess.shared.activate(terminalID: terminal.id) }
             runtime.focus(terminal.id)
-        } catch { saveError = error.localizedDescription }
+        } catch {
+            if registeredComputerMCP { AgentComputerAccess.shared.stop(terminalID: terminal.id) }
+            saveError = error.localizedDescription
+        }
+    }
+
+    private func verifiedComputerEndpoint(for terminal: TerminalRecord, in sessionID: UUID,
+                                          mcp: ComputerMCPConfiguration) async throws -> BrowserRuntimeEndpoint {
+        try validateComputerAssignment(for: terminal, in: sessionID, mcp: mcp)
+        let endpoint = try await Task.detached(priority: .utility) {
+            let service = BrowserComputerService(runner: DockerProcessRunner(), tokens: KeychainBrowserComputerTokenStore())
+            guard try service.computer(for: terminal.id)?.id == mcp.computerID else {
+                throw LibraryError.invalid("O computador não pertence mais a este terminal.")
+            }
+            return try await service.reconnectEndpoint(computerID: mcp.computerID)
+        }.value
+        try validateComputerAssignment(for: terminal, in: sessionID, mcp: mcp)
+        return endpoint
+    }
+
+    private func validateComputerAssignment(for terminal: TerminalRecord, in sessionID: UUID,
+                                            mcp: ComputerMCPConfiguration) throws {
+        guard terminal.provider == .claude,
+              terminal.agentDefinitionID != nil,
+              snapshot.sessions.contains(where: { $0.id == sessionID && $0.terminals.contains(where: {
+                  $0.id == terminal.id && $0.cwd == terminal.cwd
+              }) }),
+              let assignment = try ScrapingBoxAssignmentStore().load()[mcp.computerID],
+              assignment.computerID == mcp.computerID,
+              assignment.terminalID == terminal.id,
+              assignment.defaultAgentDefinitionID == terminal.agentDefinitionID else {
+            throw LibraryError.invalid("A atribuição atual do box não corresponde ao lançamento revisado.")
+        }
     }
 
     private func reauthorizeDirectory(for terminal: TerminalRecord) {

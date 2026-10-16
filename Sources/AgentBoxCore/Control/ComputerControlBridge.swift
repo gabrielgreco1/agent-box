@@ -6,9 +6,16 @@ public protocol ComputerControlTransport {
     func health() async throws -> BrowserRuntimeHealth
     func grant(actorID: String, epoch: UInt64, paths: Set<ControlWritePath>) async throws -> BrowserRuntimeGrantedLease
     func revoke(actorID: String, epoch: UInt64) async throws -> BrowserRuntimeRevocationAck
+    func navigate(to url: URL, lease: BrowserRuntimeGrantedLease) async throws -> URL
     func input(_ action: BrowserDesktopInput, lease: BrowserRuntimeGrantedLease) async throws -> BrowserDesktopInputResult
     func changeMode(_ mode: BrowserRuntimeMode, lease: BrowserRuntimeGrantedLease) async throws -> BrowserRuntimeHealth
     func refreshed(generation: UInt64) throws -> Self
+}
+
+public extension ComputerControlTransport {
+    func navigate(to url: URL, lease: BrowserRuntimeGrantedLease) async throws -> URL {
+        throw ComputerControlBridgeError.unsupportedNavigation
+    }
 }
 
 extension BrowserRuntimeClient: ComputerControlTransport {
@@ -28,6 +35,7 @@ public enum ComputerControlBridgeError: Error, Equatable {
     case writeDenied
     case runtimeGrantMismatch
     case revokeTimedOut
+    case unsupportedNavigation
 }
 
 /// The public ticket has no credential and is deliberately not Codable.
@@ -94,12 +102,67 @@ public actor ComputerControlBridge<Transport: ComputerControlTransport> {
         return try await complete(transition)
     }
 
+    /// An agent may acquire an idle box or resume its own live lease. It never
+    /// revokes a human, another run, or a lease whose token this bridge lost.
+    @discardableResult
+    public func assumeAgent(runID: UUID,
+                            paths: Set<ControlWritePath> = [.navigate, .input, .mode]) async throws -> ComputerControlTicket {
+        guard !leaseOperationInProgress else { throw ControlBrokerError.transitionInProgress }
+        leaseOperationInProgress = true
+        defer { leaseOperationInProgress = false }
+        let health = try await verifiedHealth()
+        let actor = ControlActor.agent(runID: runID)
+        if let live = health.activeLease {
+            guard let ticket = activeTicket, let lease = activeLease,
+                  ticket.grant.actor == actor, ticket.grant.paths == paths,
+                  ticket.generation == transport.generation,
+                  await broker.currentGrant(computerID: computerID) == ticket.grant,
+                  live.actorID == ticket.grant.actorID, live.epoch == ticket.grant.epoch,
+                  lease.actorID == live.actorID, lease.epoch == live.epoch else {
+                throw ControlBrokerError.activeRuntimeLease
+            }
+            return ticket
+        }
+        // Only an observed idle runtime can be reconciled. This clears a stale
+        // broker grant without taking over any live control token.
+        try await broker.disconnect(computerID: computerID)
+        activeTicket = nil; activeLease = nil
+        guard try await verifiedHealth().activeLease == nil else {
+            throw ControlBrokerError.activeRuntimeLease
+        }
+        try await broker.reconcile(computerID: computerID, activeRuntimeLease: nil)
+        let transition = try await broker.requestAgent(computerID: computerID, runID: runID, paths: paths)
+        guard case .granted = transition else { throw ControlBrokerError.activeRuntimeLease }
+        return try await complete(transition)
+    }
+
     /// Release revokes the human lease and leaves the box without a writer.
     public func releaseHuman(_ ticket: ComputerControlTicket) async throws {
         guard !leaseOperationInProgress else { throw ControlBrokerError.transitionInProgress }
         leaseOperationInProgress = true
         defer { leaseOperationInProgress = false }
-        let lease = try await checkedLease(ticket, path: .input)
+        guard ticket.grant.actor == .human else { throw ComputerControlBridgeError.wrongGrant }
+        let lease = try await checkedLease(ticket)
+        do {
+            try await revokeRuntime(actorID: lease.actorID, epoch: lease.epoch)
+            activeTicket = nil; activeLease = nil
+            try await broker.disconnect(computerID: computerID)
+            let health = try await verifiedHealth()
+            try await broker.reconcile(computerID: computerID,
+                                       activeRuntimeLease: health.activeLease.map { ControlRevocation(computerID: computerID, actorID: $0.actorID, epoch: $0.epoch) })
+        } catch {
+            try? await suspend()
+            throw error
+        }
+    }
+
+    /// Release only this run's own lease; a stale agent ticket cannot release a human.
+    public func releaseAgent(_ ticket: ComputerControlTicket) async throws {
+        guard !leaseOperationInProgress else { throw ControlBrokerError.transitionInProgress }
+        leaseOperationInProgress = true
+        defer { leaseOperationInProgress = false }
+        guard ticket.grant.actor.kind == .agent else { throw ComputerControlBridgeError.wrongGrant }
+        let lease = try await checkedLease(ticket)
         do {
             try await revokeRuntime(actorID: lease.actorID, epoch: lease.epoch)
             activeTicket = nil; activeLease = nil
@@ -121,12 +184,27 @@ public actor ComputerControlBridge<Transport: ComputerControlTransport> {
     }
 
     public func input(_ action: BrowserDesktopInput, ticket: ComputerControlTicket) async throws {
+        guard !leaseOperationInProgress else { throw ControlBrokerError.transitionInProgress }
+        leaseOperationInProgress = true
+        defer { leaseOperationInProgress = false }
         let lease = try await checkedLease(ticket, path: .input)
         do { _ = try await transport.input(action, lease: lease) }
         catch { await streamDisconnected(); throw error }
     }
 
+    public func navigate(to url: URL, ticket: ComputerControlTicket) async throws -> URL {
+        guard !leaseOperationInProgress else { throw ControlBrokerError.transitionInProgress }
+        leaseOperationInProgress = true
+        defer { leaseOperationInProgress = false }
+        let lease = try await checkedLease(ticket, path: .navigate)
+        do { return try await transport.navigate(to: url, lease: lease) }
+        catch { await streamDisconnected(); throw error }
+    }
+
     public func changeMode(_ mode: BrowserRuntimeMode, ticket: ComputerControlTicket) async throws -> BrowserRuntimeHealth {
+        guard !leaseOperationInProgress else { throw ControlBrokerError.transitionInProgress }
+        leaseOperationInProgress = true
+        defer { leaseOperationInProgress = false }
         let lease = try await checkedLease(ticket, path: .mode)
         do {
             let health = try await transport.changeMode(mode, lease: lease)
@@ -139,13 +217,19 @@ public actor ComputerControlBridge<Transport: ComputerControlTransport> {
         } catch { await streamDisconnected(); throw error }
     }
 
-    private func checkedLease(_ ticket: ComputerControlTicket, path: ControlWritePath) async throws -> BrowserRuntimeGrantedLease {
+    private func checkedLease(_ ticket: ComputerControlTicket, path: ControlWritePath? = nil) async throws -> BrowserRuntimeGrantedLease {
         guard activeTicket?.id == ticket.id, activeTicket?.grant == ticket.grant,
               ticket.generation == transport.generation, let lease = activeLease else {
             throw ComputerControlBridgeError.noTicket
         }
-        guard await broker.checkWrite(actor: ticket.grant.actor, computer: computerID,
-                                      epoch: ticket.grant.epoch, path: path) else {
+        let authorized: Bool
+        if let path {
+            authorized = await broker.checkWrite(actor: ticket.grant.actor, computer: computerID,
+                                                 epoch: ticket.grant.epoch, path: path)
+        } else {
+            authorized = await broker.currentGrant(computerID: computerID) == ticket.grant
+        }
+        guard authorized else {
             throw ComputerControlBridgeError.writeDenied
         }
         return lease

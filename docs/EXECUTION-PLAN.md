@@ -82,3 +82,5 @@ AB-035: corrigir reconexão após troca de build e espera do Keychain, encontrad
 O integrador mantém testes/builds em série, a conferência do app e os commits. Os três agentes não abrem apps nem executam tarefas pagas dos CLIs. A execução automática via hooks, o ciclo completo de skills nos demais clientes e os demais marcos seguem com seus próprios gates.
 
 AB-036/037: pacote local de scraping e Chromium desktop com persistência comprovada em smoke. AB-038: relançamento no terminal da box e distinção de plano/processo. Próximo gate vertical: ferramentas de computador concedidas ao CLI nativo, eventos de filhos e histórico de uso, sem inferir controle a partir da associação do terminal.
+
+AB-039: ferramentas MCP do computador ligadas ao lançamento Claude nativo, helper stdio empacotado, política efetiva e controle humano compartilhado. Suíte integrada com 103 testes passou; falta aceite ao vivo com o modelo e integração dos filhos. Não considerar AB-016/021/022 completos por esta entrega.

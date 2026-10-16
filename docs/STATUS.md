@@ -28,7 +28,7 @@ O viewer nativo, bridge de leases e serviço Docker autenticado estão integrado
 
 ## Evidências
 
-- Suíte Swift integrada: **82 testes, zero falhas**, incluindo snapshot de pacote completo de skills e atribuição padrão de scraping.
+- Suíte Swift integrada: **103 testes, zero falhas**, incluindo snapshot de skills, atribuição de scraping, MCP por socket Unix e helper real por stdin/stdout. Execução com Xcode e scratch de build isolado.
 - Suite Python do runtime: **10 testes locais**, além do smoke Docker real descrito em `tasks/AB-019-020-browser-runtime.md`.
 - Build release e assinatura ad hoc verificados. Empacotamento em staging temporário evita metadados de File Provider durante a assinatura; build recusa substituir app em execução.
 - Captura operacional: `evidence/terminal-split-2026-10-16.png`.
@@ -37,8 +37,8 @@ O viewer nativo, bridge de leases e serviço Docker autenticado estão integrado
 ## Pendências que impedem conclusão
 
 - Captura ao vivo de subagentes nativos: registry/eventos documentados existem, mas hooks confiáveis ainda precisam ser instalados e comprovados em cada harness. Sem isso não há atribuição automática de box a filho comprovado.
-- Orquestrador/MCP conectado, fila justa persistente/idempotência sob falhas, política de URLs e limites robustos entre processos.
-- Pedidos de ação vindos do agente, notificação real, takeover de um agente nativo em execução e reconciliação de todos os caminhos de escrita. Viewer e assumir/devolver sem agente concorrente já foram exercitados pela UI.
+- MCP de computador ligado ao lançamento Claude em AB-039; ainda falta provar invocações pelo modelo ao vivo. Orquestração de filhos, fila justa persistente/idempotência sob falhas, política de URLs e limites robustos entre processos continuam pendentes.
+- Pedidos de ação via ferramenta MCP implementados, mas notificação e takeover com um agente nativo operando ao vivo ainda precisam de prova, assim como a reconciliação de todos os caminhos de escrita. Viewer e assumir/devolver sem agente concorrente já foram exercitados pela UI.
 - Grants de credenciais conectados ao broker; revogar não apaga valores já herdados por processos. CLI local continua com permissões reais do usuário no Mac.
 - Listener por fonte, evidências/datasets, cobertura e redaction de rede. Nenhum tráfego do usuário é capturado por este build.
 - Ativação nativa verificável de skills em todos os clientes; histórico completo de computadores/perfis; retomada de conversas externas; troca confirmada de modelo e handoff transacional entre harnesses.
@@ -59,10 +59,16 @@ Recursos de teste: app encerrado, computador de teste parado e perfil Colima `ag
 ## Scraping e navegador — AB-036/037
 
 - Novas boxes registram o agente Web scraping e a skill local `webscraping-expert` como padrão pendente. O plugin revisado inclui os arquivos de apoio; o pacote pessoal não é publicado no Git.
-- AB-038 permite iniciar o agente revisado no mesmo terminal parado que possui a box, preservando os panes. Snapshot e terminal têm identidades independentes. Ferramentas MCP, controle pelo CLI e prova de uso no histórico continuam pendentes.
+- AB-038 permite iniciar o agente revisado no mesmo terminal parado que possui a box, preservando os panes. Snapshot e terminal têm identidades independentes. AB-039 liga as ferramentas MCP ao lançamento; invocação pelo modelo e prova de uso no histórico continuam pendentes.
 - Desktop agora inicia Chromium como processo independente e conecta controle via CDP interno, sem override de user agent. Headless usa Chromium completo. Smoke real passou em navegação JS, clique, controle humano, saída limpa e persistência de localStorage ao recriar container.
 - Build release/assinatura verificados. Conferência nativa criou o preset de scraping e preparou o pacote local sem iniciar CLI. AB-035 ganhou espera limitada e autorização explícita; recuperação real após troca de assinatura ainda não foi comprovada. Não foi comprovada resolução do CAPTCHA do Google, nem migração de boxes existentes.
 
 ## Continuação — AB-038
 
 Bindings de contexto aceitam relançamento no terminal da box. Os testes reais de PTY distinguem planos e impedem substituir um processo ativo. A UI mantém sessão e pasta, verifica a skill atribuída e consulta a identidade Docker antes da troca. Detalhes em `tasks/AB-038-same-terminal-agent-launch.md`. O aceite completo de sessão → terminais → filhos → boxes segue pendente; a meta não está concluída.
+
+## Continuação — AB-039
+
+Claude Code recebe ferramentas MCP do computador atribuído no lançamento revisado, mantendo o harness nativo. O app e o viewer compartilham controle exclusivo; pedido de ajuda pausa as escritas até assumir/devolver explicitamente. O helper local não recebe o token do container. Configuração, binding, ownership e arquivos são revalidados no lançamento/restauração.
+
+Testes: 103 passaram, incluindo helper e sockets reais, leases concorrentes, tampering, argumentos e frames autenticados. Build release e assinatura ad hoc passaram, incluindo o helper empacotado em `Contents/MacOS`. Não houve execução paga do Claude, abertura do app ou Docker nesta rodada. O próximo gate é a interação ao vivo Claude → box → pedido humano → takeover → retomada. Detalhes e limites em `tasks/AB-039-native-computer-mcp.md`.

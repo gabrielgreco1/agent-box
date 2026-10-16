@@ -1,9 +1,6 @@
 import SwiftUI
 import AgentBoxCore
 
-@MainActor private enum DesktopBrokerService {
-    static let result = Result { try ControlBroker() }
-}
 private struct DesktopPresentation: Identifiable {
     let id: UUID
     let endpoint: BrowserRuntimeEndpoint
@@ -123,12 +120,17 @@ struct BrowserComputerPanel: View {
         let endpoint=try await store.reconnect(computerID:computerID)
         let health=try await BrowserRuntimeClient(endpoint:endpoint).health()
         if health.mode == mode {currentMode=mode;return endpoint}
-        let actions=BrokerDesktopActions(endpoint:endpoint,broker:try DesktopBrokerService.result.get())
+        let actions=await BrokerDesktopActions(endpoint:endpoint,broker:try DesktopBrokerService.result.get())
+        var assumedGrant: ControlGrant?
         do {
-            _ = try await actions.actions().assume()
+            let grant = try await actions.actions().assume()
+            assumedGrant = grant
             _ = try await actions.changeMode(mode)
-            try await actions.actions().release()
-        } catch {await actions.actions().streamDisconnected();throw error}
+            try await actions.actions().release(grant)
+        } catch {
+            if let assumedGrant { await actions.actions().streamDisconnected(assumedGrant) }
+            throw error
+        }
         currentMode=mode
         return try await store.reconnect(computerID:computerID)
     }
@@ -140,7 +142,7 @@ struct BrowserComputerPanel: View {
             let endpoint=try await setMode(.desktop,computerID:id)
             let health=try await BrowserRuntimeClient(endpoint:endpoint).health()
             guard health.isFullDesktopReady else {throw BrowserComputerError.notReady}
-            presentation=DesktopPresentation(id:id,endpoint:endpoint,actions:BrokerDesktopActions(endpoint:endpoint,broker:try DesktopBrokerService.result.get()))
+            presentation=DesktopPresentation(id:id,endpoint:endpoint,actions:await BrokerDesktopActions(endpoint:endpoint,broker:try DesktopBrokerService.result.get()))
         }
     }
 }

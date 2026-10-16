@@ -25,6 +25,7 @@ import AppKit
             let alert=NSAlert();alert.messageText="Encerrar os terminais ativos?";alert.informativeText="Sair encerra os processos deste app. As sessões ficam salvas para abrir novamente; os processos não continuam em segundo plano após sair.";alert.addButton(withTitle:"Cancelar");alert.addButton(withTitle:"Encerrar e sair")
             guard alert.runModal() == .alertSecondButtonReturn else {return .terminateCancel}
         }
+        AgentComputerAccess.shared.shutdown()
         RuntimeLifecycle.shared.runtime?.shutdown()
         WorkspaceDirectoryAccess.shared.stopAll()
         return .terminateNow
