@@ -36,6 +36,7 @@ Fechar uma visualização não encerra seu processo. Sair do aplicativo solicita
 ## Documentação
 
 - [Spec de produto e arquitetura](docs/spec/index.html): 18 capítulos, incluindo agentes personalizados, memória, skills, listener, credenciais e políticas.
+- [Plano de execução por feature](docs/EXECUTION-PLAN.md): tarefas, dependências e frentes paralelas.
 - [Critérios de aceite](docs/spec/acceptance.json) e [marcos](docs/spec/backlog.json).
 - [Interface existente](design/index.html) e [fonte Swift](design/source).
 - [Proveniência dos logos](design/assets/brands/sources.json).

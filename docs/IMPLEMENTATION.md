@@ -1,5 +1,7 @@
 # Plano de implementação
 
+O detalhamento atual por feature, dependência, responsável e aceite está em [EXECUTION-PLAN.md](EXECUTION-PLAN.md). Os lotes abaixo preservam a visão geral.
+
 Os critérios detalhados estão em `spec/acceptance.json`. Um requisito só muda para concluído com evidência; UI e status de conexão devem refletir estado observado.
 
 ## Lote 1 — fundação utilizável
