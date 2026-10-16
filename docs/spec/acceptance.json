@@ -1,0 +1,550 @@
+{
+  "version": 1,
+  "checked_at": null,
+  "cases": [
+    {
+      "id": "AC01",
+      "group": "interface",
+      "scenario": "Redimensionar sidebar",
+      "expected": "Arrastar 224–480 pt e teclado alteram largura; relançar restaura.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC02",
+      "group": "interface",
+      "scenario": "Recolher sidebar",
+      "expected": "Botão/atalho recolhe, reabre largura e seleção anteriores sem reiniciar PTY.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC03",
+      "group": "interface",
+      "scenario": "Cinco terminais",
+      "expected": "Uma sessão com cinco PTYs distintos; splits/abas e foco independentes.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC04",
+      "group": "interface",
+      "scenario": "Hierarquia",
+      "expected": "Dois terminais com filhos homônimos ficam separados; expansão não muda seleção.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC05",
+      "group": "interface",
+      "scenario": "Chrome visual",
+      "expected": "Sem glow, cards grandes de dashboard, semáforos falsos ou rótulos demo na UI operacional.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC06",
+      "group": "interface",
+      "scenario": "Marcas",
+      "expected": "Claude, Codex e OpenCode usam assets oficiais com peso óptico comparável em 16/18/24/32 pt.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC07",
+      "group": "interface",
+      "scenario": "Acessibilidade",
+      "expected": "Teclado, foco visível, rótulos de ícones e Reduce Motion; 1000×650 sem ações inacessíveis.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC08",
+      "group": "interface",
+      "scenario": "Preview correto",
+      "expected": "Hover/foco mostra execução certa; HTTP não finge desktop; captura tem horário.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC09",
+      "group": "terminais",
+      "scenario": "PTY de verdade",
+      "expected": "tty/stty, Ctrl-C, Unicode, ANSI, paste, alternate screen e resize funcionam.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC10",
+      "group": "terminais",
+      "scenario": "Três CLIs",
+      "expected": "Claude, Codex e OpenCode mantêm TUI original; shell puro funciona sem projeto.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC11",
+      "group": "terminais",
+      "scenario": "Sem reinício de View",
+      "expected": "Trocar aba, maximizar pane e navegar preservam PID/PTY e saída.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC12",
+      "group": "terminais",
+      "scenario": "Reattach UI",
+      "expected": "Fechar e abrir janela reanexa; nenhum comando inicial repetido.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC13",
+      "group": "terminais",
+      "scenario": "Encerramento",
+      "expected": "Terminar um pane sinaliza seu grupo; irmãos e apps externos não são afetados.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC14",
+      "group": "terminais",
+      "scenario": "Login existente",
+      "expected": "Status público consultado com timeout; nenhum token copiado e nenhuma conta conectada pelo app.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC15",
+      "group": "terminais",
+      "scenario": "Conversa externa ativa",
+      "expected": "Origem externa identificada; não sequestra PTY nem duplica escrita.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC16",
+      "group": "terminais",
+      "scenario": "Git/worktree",
+      "expected": "Pasta sem Git, branch distinta, diretório com espaços e colisões tratados; fechar não apaga checkout.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC17",
+      "group": "terminais",
+      "scenario": "GitHub",
+      "expected": "Remote, auth e PR são estados distintos; nenhuma operação de escrita ao abrir sessão.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC18",
+      "group": "terminais",
+      "scenario": "Rename e restore",
+      "expected": "Nome local, título do terminal e conversa nativa permanecem corretamente separados após relançar.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC19",
+      "group": "agentes",
+      "scenario": "Identidade concorrente",
+      "expected": "Dois filhos do mesmo tipo mapeiam chamadas à execução certa, com evidência verificável.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC20",
+      "group": "agentes",
+      "scenario": "Vínculo indevido",
+      "expected": "Trocar run_id/computer_id no payload não dá acesso a box de outro ator.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC21",
+      "group": "agentes",
+      "scenario": "Fim e cancelamento",
+      "expected": "Encerrar filho revoga sua concessão; irmãos continuam e locks ficam consistentes.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC22",
+      "group": "agentes",
+      "scenario": "Sem PTY de filho",
+      "expected": "Atividade do subagente não é apresentada como terminal digitável inexistente.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC23",
+      "group": "agentes",
+      "scenario": "Capability ausente",
+      "expected": "Feature não verificada fica indisponível com motivo; terminal continua utilizável.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC24",
+      "group": "agentes",
+      "scenario": "Worker independente",
+      "expected": "Quando usado, é identificado como CLI independente; não passa por subagente nativo.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC25",
+      "group": "agentes",
+      "scenario": "Skills e biblioteca",
+      "expected": "Importar preserva origem; formato incompatível é sinalizado; run registra revisão.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC26",
+      "group": "agentes",
+      "scenario": "Memória por escopo",
+      "expected": "Dados de perfil/projeto diferente não entram sem seleção autorizada.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC27",
+      "group": "computadores",
+      "scenario": "Criação idempotente",
+      "expected": "Repetir pedido após timeout devolve mesma reserva/box.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC28",
+      "group": "computadores",
+      "scenario": "Limites e fila",
+      "expected": "Dez pedidos com teto dois não excedem teto; fila justa e cancelável.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC29",
+      "group": "computadores",
+      "scenario": "HTTP leve",
+      "expected": "Tarefa HTTP executa sem browser/display/stream iniciados.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC30",
+      "group": "computadores",
+      "scenario": "JS headless",
+      "expected": "Página de teste dinâmica funciona em headless sem ativar desktop.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC31",
+      "group": "computadores",
+      "scenario": "Sempre gráfico",
+      "expected": "Política prepara desktop para boxes atribuídas, com health real.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC32",
+      "group": "computadores",
+      "scenario": "Escalonamento",
+      "expected": "HTTP→headless→desktop mantém IDs, progresso, arquivos e recupera perfil disponível.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC33",
+      "group": "computadores",
+      "scenario": "Estado volátil",
+      "expected": "Transição informa perda/recuperação; não repete submissão incerta.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC34",
+      "group": "computadores",
+      "scenario": "Perfil exclusivo",
+      "expected": "Segundo writer é recusado/enfileirado; parada conserva dados.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC35",
+      "group": "computadores",
+      "scenario": "Restore de perfil",
+      "expected": "Login de site de teste persiste por restart/recriação e backup/restore verificado.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC36",
+      "group": "computadores",
+      "scenario": "Desligar stream",
+      "expected": "Fechar viewer para transmissão sem fechar browser; reabrir mostra a mesma execução.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC37",
+      "group": "computadores",
+      "scenario": "Health inválido",
+      "expected": "Browser/listener obrigatório indisponível impede ready; timeout não escreve sucesso.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC38",
+      "group": "controle",
+      "scenario": "Takeover",
+      "expected": "Mouse humano habilitado somente após revogação/ACK; epoch antiga rejeitada.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC39",
+      "group": "controle",
+      "scenario": "Todos os caminhos",
+      "expected": "Browser actions, CDP, input e subprocessos controlados não continuam escrevendo durante human.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC40",
+      "group": "controle",
+      "scenario": "Irmãos independentes",
+      "expected": "Assumir box A não pausa trabalho autorizado da box B.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC41",
+      "group": "controle",
+      "scenario": "Devolver",
+      "expected": "Reconcilia página/arquivos antes de liberar agente, sem transmitir segredo.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC42",
+      "group": "controle",
+      "scenario": "Notificação",
+      "expected": "Pedido liga ao alvo correto e apita uma vez; reconexão não duplica.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC43",
+      "group": "controle",
+      "scenario": "Queda de stream",
+      "expected": "Input suspenso; pedido permanece até ação explícita e estado válido.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC44",
+      "group": "configuracao",
+      "scenario": "Primeiro uso",
+      "expected": "Setup retoma de interrupção; credencial opcional; modo terminal disponível sem Docker.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC45",
+      "group": "configuracao",
+      "scenario": "Herança",
+      "expected": "Permissão efetiva respeita tetos e mostra origem; filho não amplia grant.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC46",
+      "group": "configuracao",
+      "scenario": "Aplicação",
+      "expected": "UI diferencia agora/próxima execução/reinício; valor inválido não substitui configuração válida.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC47",
+      "group": "configuracao",
+      "scenario": "Env seguro",
+      "expected": "Importar .env não executa shell/expansão; valores não aparecem em eventos/prompts.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC48",
+      "group": "configuracao",
+      "scenario": "Grant e revoke",
+      "expected": "Agente sem concessão não usa credencial via serviço; env existente exige tratamento explícito.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC49",
+      "group": "configuracao",
+      "scenario": "Keychain",
+      "expected": "Segredo fora do SQLite, argv, imagem e export; falha de acesso recuperável.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC50",
+      "group": "configuracao",
+      "scenario": "Fronteira host",
+      "expected": "Teste distingue broker policy de permissões reais do CLI local; não alega isolamento inexistente.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC51",
+      "group": "captura",
+      "scenario": "Cobertura browser",
+      "expected": "Página nova, redirect, cache, worker, websocket e resposta grande têm resultado/cobertura registrada.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC52",
+      "group": "captura",
+      "scenario": "Cobertura HTTP",
+      "expected": "curl/requests/curl_cffi testados; bibliotecas sem adapter marcadas fora de cobertura.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC53",
+      "group": "captura",
+      "scenario": "Filtro e sanitização",
+      "expected": "Headers/cookies/URL tokens e dados privados não persistidos no conjunto de teste.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC54",
+      "group": "captura",
+      "scenario": "Retenção/backpressure",
+      "expected": "Limites de body/memória/disco respeitados; gaps visíveis; resultado preservado.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC55",
+      "group": "captura",
+      "scenario": "Dataset rastreável",
+      "expected": "CSV/JSON referencia evidência e campos ausentes; deduplicação sem perda silenciosa.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC56",
+      "group": "continuidade",
+      "scenario": "Modelo correto",
+      "expected": "Mudança só na execução escolhida; pendente até confirmação, sem digitar comando em prompt errado.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC57",
+      "group": "continuidade",
+      "scenario": "Handoff",
+      "expected": "Claude↔Codex↔OpenCode com checkpoint; falha retorna a estado recuperável e um único controlador.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC58",
+      "group": "continuidade",
+      "scenario": "Crash e sono",
+      "expected": "App/service/Docker e sleep/wake reconciliados sem replay inseguro.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC59",
+      "group": "continuidade",
+      "scenario": "Migração",
+      "expected": "Banco/config/profiles migrados com backup; histórico antigo permanece legível.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC60",
+      "group": "continuidade",
+      "scenario": "Uso sustentado",
+      "expected": "Carga de terminais/boxes por 60 min e uso diário medidos; sem vazamento progressivo de processos/streams.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC61",
+      "group": "biblioteca",
+      "scenario": "CRUD de agente",
+      "expected": "Criar, editar, duplicar e arquivar sobrevivem ao relançamento; ID e revisão preservam histórico.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC62",
+      "group": "biblioteca",
+      "scenario": "Memória persistente",
+      "expected": "Criar, selecionar, editar, arquivar e excluir memória funciona; exclusão não promete apagar contexto já enviado.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC63",
+      "group": "biblioteca",
+      "scenario": "Escopo no lançamento",
+      "expected": "Preview do contexto inclui apenas memória explicitamente selecionada e compatível com escopo.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC64",
+      "group": "biblioteca",
+      "scenario": "Histórico navegável",
+      "expected": "Definição liga a sessões, terminais, execuções, computadores e revisões reais; vazio não recebe exemplos fictícios.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC65",
+      "group": "biblioteca",
+      "scenario": "Importação de skill",
+      "expected": "SKILL.md é lido como dados; hash/origem registrados; nenhum script/hook executado na importação.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC66",
+      "group": "biblioteca",
+      "scenario": "Ativação verificável",
+      "expected": "Skills selecionadas chegam ao CLI por mecanismo suportado; sem adapter, estado exportável não é apresentado como ativo.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC67",
+      "group": "biblioteca",
+      "scenario": "Revisão em execução",
+      "expected": "Editar definição/skill não altera silenciosamente execuções existentes.",
+      "status": "planned",
+      "evidence": null
+    },
+    {
+      "id": "AC68",
+      "group": "biblioteca",
+      "scenario": "Reutilização",
+      "expected": "Usar novamente permite nova tarefa ou retomada suportada e revisão de memória/skills antes de executar.",
+      "status": "planned",
+      "evidence": null
+    }
+  ]
+}

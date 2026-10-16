@@ -1,0 +1,15 @@
+.DS_Store
+.build/
+.swiftpm/
+build/
+dist/
+*.app/
+*.zip
+.env
+.env.*
+!.env.example
+*.p12
+*.pem
+*.key
+*.xcuserstate
+work/

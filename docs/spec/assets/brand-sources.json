@@ -1,0 +1,30 @@
+{
+  "retrieved": "2026-10-16",
+  "notes": "Official vendor assets; originals preserved. Logos identify third-party integrations, not Agent Box ownership. Google ICO decoded to PNG without redrawing.",
+  "assets": [
+    {
+      "file": "claude.png",
+      "source": "https://anthropic.com/press-kit",
+      "member": "Anthropic media resources/Anthropic logos/Claude logos/3 Claude Spark/PNG/Claude Spark - Clay.png",
+      "sha256": "c7d8415b1edba67e5337d3684b480b563826f07be9e28e10ccc14bf92037ef6d"
+    },
+    {
+      "file": "codex.png",
+      "source": "/Applications/Codex.app/Contents/Resources/icon-codex-dark-color.png",
+      "member": "",
+      "sha256": "69fb4384e161be8a20dcb94a9ac34aea4fbfaeb67514110a71e7b0732eccb0fc"
+    },
+    {
+      "file": "docker.png",
+      "source": "https://www.docker.com/static/Docker-Logos-1.zip",
+      "member": "docker-logos/PNG/docker-mark-white.png",
+      "sha256": "c81cdb5fb94a62699bbdc409eda29adf4e1d65cb0f2e0b14297dc3fef374382e"
+    },
+    {
+      "file": "opencode.png",
+      "source": "https://opencode.ai/opencode-brand-assets.zip",
+      "member": "OpenCode Brand Assets/Logo/opencode-logo-dark.png",
+      "sha256": "20c8b4794f4c988ab335a519980415ba94ea3442b5a794b920c5408be295bc53"
+    }
+  ]
+}

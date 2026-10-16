@@ -1,0 +1,148 @@
+<!doctype html>
+<!--
+  timeline.html — deterministic motion timeline template.
+  Contract with scripts/render.py:
+    * reads ?ar=16x9|1x1|4x5|9x16 and lays out NATIVELY for that frame (never letterbox / pad / blur-fill)
+    * window.DUR (seconds), window.MARK (named event times for audio + VO), window.seek(t) (pure function of t)
+    * window.ready = true once fonts + images are loaded
+  Debug in a browser: open timeline.html?ar=9x16&guides=1&t=4.2   (guides = platform safe box; tinted area gets covered by app UI)
+    (or &play=1 for real-time playback)
+  Replace the BRAND block and the scenes; keep the core.
+-->
+<html><head><meta charset="utf-8"><title>Agent Box · Motion study</title>
+<style>
+@font-face{font-family:Manrope;src:url(../source/Fonts/Manrope.ttf);font-weight:200 800}
+/* ---------------- BRAND (replace with the product's exact tokens) */
+:root{--bg:#151517;--ink:#E8E8EB;--cap:#E8E8EB;--cap-shadow:none;--muted:#A1A1AA;--rule:#303036;--accent:#CDD5EA;
+      --display:Manrope,sans-serif;--mono:ui-monospace,monospace}
+/* ---------------- core */
+html,body{margin:0;padding:0;background:var(--bg);overflow:hidden}
+#stage{position:relative;overflow:hidden;background:var(--bg);font-family:var(--display);color:var(--ink)}
+.scene{position:absolute;inset:0;display:none}
+.cam{position:absolute;inset:0;transform-origin:0 0}
+.el{position:absolute;left:0;top:0}
+.hl{position:absolute;font-weight:700;letter-spacing:-.035em;line-height:1.02}
+.hl .ln{display:block;overflow:hidden;padding-bottom:.08em}
+.hl .w{display:inline-block;overflow:hidden;vertical-align:top}
+.hl .wi{display:inline-block}
+.mono{font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase}
+#guides{position:absolute;inset:0;pointer-events:none;display:none;z-index:99}
+#guides div{position:absolute;border:2px dashed rgba(255,0,80,.7);box-shadow:0 0 0 4000px rgba(255,0,80,.08)}
+</style></head>
+<body><div id="stage"><div id="guides"><div id="safe"></div></div></div>
+<script>
+// ================================================================= core (do not edit per project)
+const Q = new URLSearchParams(location.search);
+const SIZES = {'16x9':[1920,1080],'1x1':[1080,1080],'4x5':[1080,1350],'9x16':[1080,1920]};
+const qa = Q.get('ar')||'16x9', cm = /^(\d+)x(\d+)$/.exec(qa);
+const AR = SIZES[qa] ? qa : (cm && +cm[1] > 99 ? qa : '16x9');   // custom WxH, e.g. 1200x628
+const [W,H] = SIZES[AR] || [+cm[1], +cm[2]];
+const stage = document.getElementById('stage'); stage.style.width=W+'px'; stage.style.height=H+'px';
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x)), lerp=(a,b,t)=>a+(b-a)*t, seg=(t,a,b)=>clamp((t-a)/(b-a));
+const E={o2:t=>1-(1-t)*(1-t),o3:t=>1-Math.pow(1-t,3),o5:t=>1-Math.pow(1-t,5),i2:t=>t*t,i3:t=>t*t*t,
+  io3:t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2, io5:t=>t<.5?16*t**5:1-Math.pow(-2*t+2,5)/2,
+  oX:t=>t>=1?1:1-Math.pow(2,-10*t), ioX:t=>t<=0?0:t>=1?1:t<.5?Math.pow(2,20*t-10)/2:(2-Math.pow(2,-20*t+10))/2,
+  oB:(t,s=1.9)=>1+(s+1)*Math.pow(t-1,3)+s*Math.pow(t-1,2)};
+const spr=(t,f=2.4,z=.42)=>{if(t<=0)return 0;const w=2*Math.PI*f,wd=w*Math.sqrt(1-z*z);return 1-Math.exp(-z*w*t)*(Math.cos(wd*t)+z*w/wd*Math.sin(wd*t));};
+const hash=n=>{const x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x);};   // deterministic "random"
+// readability: minimum on-screen hold for a text = words/3 + 1 s
+const hold=txt=>txt.trim().split(/\s+/).length/3+1;
+function div(p,cls,css,html){const d=document.createElement('div');if(cls)d.className=cls;if(css)d.style.cssText=css;if(html!=null)d.innerHTML=html;p.appendChild(d);return d;}
+function T(e,{x=0,y=0,s=1,r=0,o=1,ax=.5,ay=.5}={}){e.style.transformOrigin=`${ax*100}% ${ay*100}%`;
+  e.style.transform=`translate(${x}px,${y}px) translate(${-ax*100}%,${-ay*100}%) rotate(${r}deg) scale(${s})`;
+  e.style.opacity=o; e.style.visibility=o<=.001?'hidden':'visible';}
+function cam(e,cx,cy,s){e.style.transform=`translate(${W/2}px,${H/2}px) scale(${s}) translate(${-cx}px,${-cy}px)`;}
+function scene(bg){const s=div(stage,'scene',bg?`background:${bg}`:'');const c=div(s,'cam');return{s,c};}
+function show(sc,on){sc.s.style.display=on?'block':'none';}
+function HL(p,lines,css){const h=div(p,'hl',css);
+  h.innerHTML=lines.map(l=>'<span class="ln">'+l.split(' ').map(w=>`<span class="w"><span class="wi">${w}</span></span>`).join(' ')+'</span>').join('');
+  h._w=[...h.querySelectorAll('.wi')];return h;}
+function hlA(h,t,tin,tout=1e9,st=.055){h._w.forEach((w,k)=>{const p=E.o5(seg(t,tin+k*st,tin+k*st+.6)),q=E.i3(seg(t,tout+k*.03,tout+k*.03+.32));
+  w.style.transform=`translateY(${(1-p)*115-q*115}%)`;});h.style.visibility=(t<tin-.01||t>tout+h._w.length*.03+.35)?'hidden':'visible';}
+function fade(e,t,tin,tout=1e9,dy=24){const p=E.o5(seg(t,tin,tin+.6)),q=E.i3(seg(t,tout,tout+.3));e.style.opacity=p*(1-q);e.style.transform=`translateY(${(1-p)*dy-q*dy*.6}px)`;}
+
+// ================================================================= SAFE ZONES — platform UI covers the edges
+// Feeds/reels overlay captions, buttons, progress bars and profile rows on top of the video. Everything that must be
+// READ (text, numbers, logos, CTA, key UI) stays inside the safe box; only backgrounds/textures may bleed to the edge.
+// 9x16 numbers are the union of TikTok + Instagram Reels + YouTube Shorts overlays (top bar, right action rail,
+// bottom caption/CTA block), made symmetric left/right so content stays visually centred.
+const SAFE={
+  '1920x1200':{t:34,r:110,b:34,l:110},
+  '512x512':{t:30,r:30,b:30,l:30},
+  '16x9':{t:80, r:110,b:90, l:110},
+  '1x1': {t:90, r:90, b:90, l:90},
+  '4x5': {t:110,r:90, b:120,l:90},
+  '9x16':{t:260,r:150,b:460,l:150},
+};
+const SA=SAFE[AR]||SAFE[Object.keys(SIZES).sort((a,b)=>Math.abs(SIZES[a][0]/SIZES[a][1]-W/H)-Math.abs(SIZES[b][0]/SIZES[b][1]-W/H))[0]];
+const SB={x:SA.l,y:SA.t,w:W-SA.l-SA.r,h:H-SA.t-SA.b}; SB.cx=SB.x+SB.w/2; SB.cy=SB.y+SB.h/2;
+window.SAFE_BOX=SB;   // render.py --test / --sweep checks every visible text element against this box
+
+// ================================================================= ZONES — every element has its own slot (no stacking)
+// Inside the safe box each screen is split into bands that NEVER overlap: kicker+headline on top, the hero visual in
+// the middle, captions in their own band at the bottom. A visual may be big, but it lives in VIS; captions never sit on
+// it, headlines never sit on it. Need more room? Split the beat into two screens — don't stack layers.
+const ZONES=(()=>{if(AR==='1920x1200') return {HEAD:{x:SB.x,y:SB.y,w:SB.w,h:80},VIS:{x:SB.x,y:130,w:SB.w,h:975},CAP:{x:SB.x,y:1124,w:SB.w,h:42}}; const g=24,tall=H/W>1.2, cap=tall?190:150, head=tall?Math.round(SB.h*.25):Math.round(SB.h*.28);
+  const HEAD={x:SB.x,y:SB.y,w:SB.w,h:head}, CAP={x:SB.x,y:SB.y+SB.h-cap,w:SB.w,h:cap};
+  return {HEAD, VIS:{x:SB.x,y:HEAD.y+head+g,w:SB.w,h:CAP.y-g-(HEAD.y+head+g)}, CAP};})();
+window.ZONES=ZONES;
+const fit=(z,ar)=>{const w=Math.min(z.w,z.h*ar),h=w/ar;return{x:z.x+(z.w-w)/2,y:z.y+(z.h-h)/2,w,h};};  // contain, never crop
+
+// ================================================================= LAYOUT — one entry per format, composed for that frame
+// Rules: compose each format from scratch; derive every position from SB (never from W/H edges);
+// tall formats (4x5, 9x16) = CENTRED, stacked, FEWER elements per screen (one headline + one visual), bigger type;
+// text >= 34 px on 1080-wide formats.
+const LAYOUT={
+  '16x9':{align:'left',   title:{fs:120,x:SB.x,y:SB.y+300,w:SB.w*.75}, sub:{fs:34}, card:{x:SB.cx,y:SB.cy,w:1100,h:520}},
+  '1x1': {align:'center', title:{fs:100,x:SB.x,y:SB.y+200,w:SB.w},     sub:{fs:36}, card:{x:SB.cx,y:SB.cy+40,w:SB.w,h:520}},
+  '4x5': {align:'center', title:{fs:104,x:SB.x,y:SB.y+240,w:SB.w},     sub:{fs:38}, card:{x:SB.cx,y:SB.cy+40,w:SB.w,h:620}},
+  '9x16':{align:'center', title:{fs:104,x:SB.x,y:SB.y+300,w:SB.w},     sub:{fs:40}, card:{x:SB.cx,y:SB.cy,w:SB.w,h:760}},
+};
+// custom sizes: add a LAYOUT['1200x628'] entry; until then fall back to the closest aspect
+const LY=LAYOUT[AR] || LAYOUT[Object.keys(SIZES).sort((a,b)=>Math.abs(SIZES[a][0]/SIZES[a][1]-W/H)-Math.abs(SIZES[b][0]/SIZES[b][1]-W/H))[0]];
+{const g=document.getElementById('safe');Object.assign(g.style,{left:SB.x+'px',top:SB.y+'px',width:SB.w+'px',height:SB.h+'px'});
+ for(const [k,z] of Object.entries(ZONES)){const d=div(document.getElementById('guides'),'',`left:${z.x}px;top:${z.y}px;width:${z.w}px;height:${z.h}px;border:2px dotted rgba(0,160,255,.8);box-shadow:none`);d.innerHTML=`<span style="font:12px monospace;color:#08f;padding:2px">${k}</span>`;}
+ if(Q.get('guides'))document.getElementById('guides').style.display='block';}
+
+// ================================================================= CAPTIONS — follow the speech, word by word
+// WORDS = [{w:'Essa', s:0.12, e:0.31}, ...] from the TTS word timings (edge-tts WordBoundary or ElevenLabs alignment).
+// A word is INVISIBLE until it is spoken, pops in at its start time; the newest word is in accent. Chunks of 2–4 words.
+// Captions live only in ZONES.CAP (data-role=caption) and hide while a headline repeats the same words on screen.
+function Captions(parent,WORDS,{max=4,fs=tall0()?60:48,gap=.35}={}){
+  const box=div(parent,'el','',null);box.dataset.role='caption';
+  Object.assign(box.style,{left:ZONES.CAP.x+'px',top:ZONES.CAP.y+'px',width:ZONES.CAP.w+'px',height:ZONES.CAP.h+'px',display:'flex',
+    alignItems:'center',justifyContent:'center',flexWrap:'wrap',gap:'0 .28em',textAlign:'center',fontWeight:800,fontSize:fs+'px',
+    lineHeight:1.1,color:'var(--cap)',textShadow:'var(--cap-shadow)'});   // dark scenes: --cap:#fff; --cap-shadow:0 2px 12px rgba(0,0,0,.55)
+  const chunks=[];let cur=[];WORDS.forEach((w,i)=>{cur.push(w);const nx=WORDS[i+1];
+    if(cur.length>=max||!nx||nx.s-w.e>gap||/[.?!,:]$/.test(w.w)){chunks.push(cur);cur=[];}});
+  const spans=chunks.map(c=>c.map(w=>{const sp=document.createElement('span');sp.textContent=w.w;sp.style.display='inline-block';return sp;}));
+  return {box,seek(t,hide=false){const k=chunks.findIndex((c,i)=>t>=c[0].s-.02&&(i===chunks.length-1||t<chunks[i+1][0].s-.02)&&t<c[c.length-1].e+.6);
+    box.replaceChildren();if(hide||k<0)return;
+    chunks[k].forEach((w,j)=>{if(t<w.s-.02)return;const sp=spans[k][j],p=E.oB(seg(t,w.s-.02,w.s+.18));
+      const newest=j===chunks[k].length-1||t<chunks[k][j+1].s-.02;sp.style.color=newest?'var(--accent)':'var(--cap)';
+      sp.style.transform=`translateY(${(1-p)*18}px) scale(${.85+.15*p})`;sp.style.opacity=clamp(p*2);box.appendChild(sp);});}};}
+function tall0(){return H/W>1.2;}
+
+// Deterministic 24-second UI motion study. Screens and actions are illustrative.
+const MARK={OVERVIEW:0,PREVIEW:4,TERMINAL:8,HUMAN:12,AGENTS:16,MEMORY:20,END:24};
+const DUR=24;window.MARK=MARK;window.DUR=DUR;
+const beats=[['01-overview','Agora'],['15-hover-preview','Prévia da sessão'],['02-workspace','Terminal + desktop'],['03-human-control','Você no controle'],['13-agents','Seus agentes'],['14-agent-memory','AI memory']];
+const frames=beats.map((b,i)=>{
+ const sc=scene();
+ const rect=fit({x:SB.x,y:75,w:SB.w,h:H-145},1.6);
+ const title=div(sc.c,'el',`left:${rect.x}px;top:36px;font-size:21px;font-weight:500;color:var(--muted)`,b[1]);
+ const frame=div(sc.c,'el',`left:${rect.x}px;top:${rect.y}px;width:${rect.w}px;height:${rect.h}px;border-radius:12px;overflow:hidden;border:1px solid #303036`);
+ frame.dataset.role='focal';frame.dataset.name='native-swiftui-screen';
+ const img=document.createElement('img');img.src='../screens/'+b[0]+'.png';img.style='width:100%;height:100%;display:block';frame.appendChild(img);
+ const cursor=div(frame,'el',`width:20px;height:26px;left:0;top:0;pointer-events:none`, '<svg viewBox="0 0 18 24"><path d="M2 1L16 14L9 15L13 22L9 24L5 16L1 21Z" fill="#dde1ed" stroke="#22232a" stroke-width="1.4"/></svg>');
+ const progress=div(sc.c,'el',`left:${rect.x}px;top:${H-35}px;height:2px;width:0;background:var(--accent);opacity:.4`);
+ return {sc,title,frame,cursor,progress,rect};
+});
+function seek(t){t=clamp(t,0,DUR-.0001);frames.forEach((f,i)=>{const u=t-i*4;show(f.sc,u>=0&&u<4);if(u<0||u>=4)return;const p=E.o3(seg(u,0,.3)),q=E.i3(seg(u,3.8,4));f.title.style.opacity=p*(1-q);f.frame.style.opacity=p*(1-q);f.frame.style.transform=`translateY(${(1-p)*8}px)`;f.progress.style.width=f.rect.w*t/DUR+'px';const path=[[.54,.42,.74,.58],[.1,.45,.29,.52],[.38,.05,.8,.15],[.83,.45,.91,.13],[.3,.29,.39,.44],[.3,.33,.54,.44]][i];const move=E.io3(seg(u,.7,2.5));f.cursor.style.transform=`translate(${f.rect.w*lerp(path[0],path[2],move)}px,${f.rect.h*lerp(path[1],path[3],move)}px)`;f.cursor.style.opacity=u>.35&&u<3.7?1:0;});}
+window.seek=seek;
+// ---- boot: wait for fonts (and any <img>) before declaring ready
+Promise.all([document.fonts.ready,...[...document.images].map(i=>i.complete?1:new Promise(r=>i.onload=i.onerror=r))]).then(()=>{
+  seek(+Q.get('t')||0); window.ready=true;
+  if(Q.get('play')){const t0=performance.now();const loop=()=>{seek(((performance.now()-t0)/1000)%DUR);requestAnimationFrame(loop)};loop();}
+});
+</script></body></html>

@@ -1,0 +1,277 @@
+{
+  "schema_version": 1,
+  "milestones": [
+    {
+      "id": "M0",
+      "title": "Reconciliar base e contratos",
+      "depends_on": [],
+      "modules": [
+        "source/Package.swift",
+        "Domain/",
+        "docs/ADR/"
+      ],
+      "acceptance": [],
+      "exit_criteria": "Separar target de fixtures; corrigir manifest incompleto; fixar nomenclatura, capabilities e interfaces. Build reprodutível sem runtime falso.",
+      "status": "not_started"
+    },
+    {
+      "id": "M1",
+      "title": "Shell visual e layout persistente",
+      "depends_on": [
+        "M0"
+      ],
+      "modules": [
+        "AppShell/",
+        "Sessions/",
+        "DesignSystem/"
+      ],
+      "acceptance": [
+        "AC01",
+        "AC02",
+        "AC03",
+        "AC04",
+        "AC05",
+        "AC06",
+        "AC07",
+        "AC08"
+      ],
+      "exit_criteria": "Sidebar ajustável/recolhível, árvore e tabs/splits. Dados de teste só no target de design; não chamar esta fase de app operacional.",
+      "status": "not_started"
+    },
+    {
+      "id": "M2",
+      "title": "Serviço PTY e três clientes",
+      "depends_on": [
+        "M0",
+        "M1"
+      ],
+      "modules": [
+        "PTYHost/",
+        "ProviderAdapters/",
+        "TerminalRenderer/"
+      ],
+      "acceptance": [
+        "AC09",
+        "AC10",
+        "AC11",
+        "AC12",
+        "AC13",
+        "AC14",
+        "AC15",
+        "AC16",
+        "AC17",
+        "AC18"
+      ],
+      "exit_criteria": "Claude/Codex/OpenCode e zsh reais, status local, resize, foco, saída e ciclo de vida; janela não dona do processo.",
+      "status": "not_started"
+    },
+    {
+      "id": "M3",
+      "title": "Projetos, conversas e Git",
+      "depends_on": [
+        "M2"
+      ],
+      "modules": [
+        "Workspaces/",
+        "ConversationRegistry/",
+        "GitAdapter/"
+      ],
+      "acceptance": [
+        "AC09",
+        "AC10",
+        "AC11",
+        "AC12",
+        "AC13",
+        "AC14",
+        "AC15",
+        "AC16",
+        "AC17",
+        "AC18"
+      ],
+      "exit_criteria": "Descoberta com origem, retomada suportada, rename, worktree explícito, GitHub read-only e sem duplicar conversas ativas.",
+      "status": "not_started"
+    },
+    {
+      "id": "M4",
+      "title": "Política, setup e segredos",
+      "depends_on": [
+        "M0",
+        "M2"
+      ],
+      "modules": [
+        "Settings/",
+        "PolicyResolver/",
+        "SecretResolver/"
+      ],
+      "acceptance": [
+        "AC44",
+        "AC45",
+        "AC46",
+        "AC47",
+        "AC48",
+        "AC49",
+        "AC50"
+      ],
+      "exit_criteria": "Setup persistente, grants efetivos, .env como dados, Keychain e aplicação/revogação reais.",
+      "status": "not_started"
+    },
+    {
+      "id": "M5",
+      "title": "Prova de identidade por harness",
+      "depends_on": [
+        "M2",
+        "M4"
+      ],
+      "modules": [
+        "ProviderAdapters/",
+        "AgentRegistry/",
+        "ToolBroker/"
+      ],
+      "acceptance": [
+        "AC19",
+        "AC20",
+        "AC21",
+        "AC22",
+        "AC23",
+        "AC24",
+        "AC25",
+        "AC26"
+      ],
+      "exit_criteria": "Gate: filhos concorrentes, chamadas atribuídas e negativa de acesso cruzado. Resultado por CLI; não esconder incompatibilidade com worker substituto.",
+      "status": "not_started"
+    },
+    {
+      "id": "M6",
+      "title": "Docker e modos de execução",
+      "depends_on": [
+        "M4"
+      ],
+      "modules": [
+        "BoxRuntime/",
+        "ResourceScheduler/",
+        "ProfileStore/"
+      ],
+      "acceptance": [
+        "AC27",
+        "AC28",
+        "AC29",
+        "AC30",
+        "AC31",
+        "AC32",
+        "AC33",
+        "AC34",
+        "AC35",
+        "AC36",
+        "AC37"
+      ],
+      "exit_criteria": "HTTP/headless/desktop, fila, health real, perfil e recuperação de transição. Instalar runtime só no trabalho de implementação autorizado.",
+      "status": "not_started"
+    },
+    {
+      "id": "M7",
+      "title": "Vertical completa de controle",
+      "depends_on": [
+        "M5",
+        "M6"
+      ],
+      "modules": [
+        "RemoteDesktopView/",
+        "ControlCoordinator/",
+        "HumanRequests/"
+      ],
+      "acceptance": [
+        "AC38",
+        "AC39",
+        "AC40",
+        "AC41",
+        "AC42",
+        "AC43"
+      ],
+      "exit_criteria": "Gate: uma sessão, dois terminais, dois filhos/boxes, intervenção em um e continuidade do outro; nenhum caminho de escrita bypassa controle.",
+      "status": "not_started"
+    },
+    {
+      "id": "M8",
+      "title": "Listener e scraping rastreável",
+      "depends_on": [
+        "M6",
+        "M7"
+      ],
+      "modules": [
+        "Capture/",
+        "EvidenceStore/",
+        "Datasets/"
+      ],
+      "acceptance": [
+        "AC51",
+        "AC52",
+        "AC53",
+        "AC54",
+        "AC55"
+      ],
+      "exit_criteria": "Captura por fonte, limites, gaps, sanitização, deduplicação e export com evidência.",
+      "status": "not_started"
+    },
+    {
+      "id": "M9",
+      "title": "Biblioteca, memória e trocas",
+      "depends_on": [
+        "M3",
+        "M5",
+        "M7",
+        "M8"
+      ],
+      "modules": [
+        "Agents/",
+        "Memory/",
+        "Handoff/"
+      ],
+      "acceptance": [
+        "AC19",
+        "AC20",
+        "AC21",
+        "AC22",
+        "AC23",
+        "AC24",
+        "AC25",
+        "AC26",
+        "AC56",
+        "AC57",
+        "AC58",
+        "AC59",
+        "AC60",
+        "AC61",
+        "AC62",
+        "AC63",
+        "AC64",
+        "AC65",
+        "AC66",
+        "AC67",
+        "AC68"
+      ],
+      "exit_criteria": "Revisões de agentes/skills, contexto selecionado, modelo por run e transferência transacional entre os três clientes.",
+      "status": "not_started"
+    },
+    {
+      "id": "M10",
+      "title": "Uso diário e distribuição local",
+      "depends_on": [
+        "M9"
+      ],
+      "modules": [
+        "Recovery/",
+        "Migrations/",
+        "Packaging/"
+      ],
+      "acceptance": [
+        "AC56",
+        "AC57",
+        "AC58",
+        "AC59",
+        "AC60"
+      ],
+      "exit_criteria": "Sono/crashes, manutenção, restauração, desempenho e build assinado estável para Keychain. Gate completo de aceite.",
+      "status": "not_started"
+    }
+  ]
+}

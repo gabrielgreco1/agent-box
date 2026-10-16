@@ -1,0 +1,51 @@
+{
+  "reviewed_date": "2026-10-16",
+  "baseline": "Agent Box Design v0.4 plus unfinished Package.swift preparation",
+  "operational_runtime": false,
+  "files": [
+    {
+      "path": "source/AgentBox.swift",
+      "bytes": 45918,
+      "sha256": "1d20622f33f9efcfae3bea412f271d3a7520fc0d9061490dc3cbd30449fd9ef6"
+    },
+    {
+      "path": "source/TerminalViews.swift",
+      "bytes": 13482,
+      "sha256": "64bf80af5116b95372f65a27bbb6705742cdee5a7ad73eaff48a77c2b2541b36"
+    },
+    {
+      "path": "source/Agents.swift",
+      "bytes": 15404,
+      "sha256": "4be4c39f92204a4f421e07c695a261985e1552e8f69add28234c2222081b271d"
+    },
+    {
+      "path": "source/MotionAssetView.swift",
+      "bytes": 1862,
+      "sha256": "3e065fb7bd73a839edcd3ddd45f472296c0499cd80313688bbee8ce5a45a7538"
+    },
+    {
+      "path": "source/Package.swift",
+      "bytes": 707,
+      "sha256": "3caa7d4aafc2a5f4a1127c5d7cf3e797b1fa34309c1d47492c416126f6acad8c"
+    },
+    {
+      "path": "source/build.sh",
+      "bytes": 1114,
+      "sha256": "99987d524aefb03e57ca31cc356006e6ebde9e3a23403318687d4988b60cbdc4"
+    },
+    {
+      "path": "index.html",
+      "bytes": 36940,
+      "sha256": "df71869ea9381810529f8362c06559ccd6b568449f72e3c1c84b279faa592780"
+    },
+    {
+      "path": "docs/spec.html",
+      "bytes": 74416,
+      "sha256": "9dbb7eecb24e25ce35bfe9e81d21189c840a1f24b01af8ca497ac7613aef9dde"
+    }
+  ],
+  "missing_references": [
+    "source/Runtime.swift",
+    "source/RuntimeViews.swift"
+  ]
+}
