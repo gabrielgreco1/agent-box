@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-16",
+  "test_command": "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test",
+  "tests": 23,
+  "failures": 0,
+  "followup": {
+    "filter": "ProcessesPTYTests",
+    "tests": 2,
+    "failures": 0,
+    "reason": "foreground process-group termination fix"
+  },
+  "docker_live_test": false,
+  "native_cli_task_test": false,
+  "manual_smoke": [
+    "onboarding",
+    "local CLI status",
+    "create session",
+    "create shell terminal",
+    "start shell PID and visible prompt"
+  ],
+  "limitations": "See docs/STATUS.md"
+}

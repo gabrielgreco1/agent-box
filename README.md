@@ -4,11 +4,34 @@ App pessoal de macOS para organizar sessões com múltiplos terminais de agentes
 
 **Hierarquia:** sessão → terminais → execuções de agentes/subagentes → computadores opcionais.
 
-## Estado atual
+## Estado atual — primeiro lote operacional
 
-A base versionada contém o código SwiftUI e a interface web existentes, assets oficiais, estudo de movimento e uma spec consolidada. O build de design compila e exporta 16 telas no Mac de desenvolvimento. Os terminais dessa base ainda não executam processos; Docker, streaming, memória persistente e associação de subagentes são requisitos, não funcionalidades entregues neste commit.
+O app nativo em `Sources/` abre PTYs reais e preserva o emulador ao trocar a visualização. A interface tem sessões com múltiplos terminais, abas/splits, sidebar ajustável/recolhível e nomes persistentes. O usuário escolhe Claude Code, Codex ou shell; OpenCode também pode ser lançado se instalado, mas sua integração avançada continua no plano.
 
-A próxima implementação está organizada em [tarefas](docs/IMPLEMENTATION.md). A referência visual é Orca: sidebar ajustável/recolhível, árvore de sessões e terminais divididos. A biblioteca de agentes, memória e skills segue a organização discutida a partir do Maestrum.
+A biblioteca persiste agentes personalizados, instruções, memórias selecionadas e skills importadas. O contexto pode ser revisado, copiado ou exportado. A ativação nativa dessas definições no CLI e o histórico automático ainda não estão conectados.
+
+Configurações consultam comandos locais de versão/login e guardam a política de Docker. A camada Docker implementa criação/início/parada de container HTTP por terminal com testes controlados; **não foi validada com daemon real**, pois Docker não está instalado no Mac usado. Browser, desktop, streaming, subagentes nativos, `.env`/Keychain e handoff continuam pendentes.
+
+**Validação:** 23 testes passaram em Xcode, incluindo PTY real, TTY, resize, Ctrl-C, retomada da visualização, persistência, escopos de memória e comandos Docker. Os dois testes PTY passaram novamente após o ajuste de encerramento de grupos de processos. [Detalhes e limites](docs/STATUS.md).
+
+O design anterior permanece separado em `design/`. A organização visual segue Orca; biblioteca, memória e skills seguem a intenção discutida a partir do Maestrum.
+
+## Compilar e abrir o app
+
+Requer macOS 14+ e Xcode com Swift 6. O script usa Xcode.app quando disponível, sem alterar `xcode-select` global.
+
+```sh
+bash scripts/build_app.sh
+open "build/Agent Box.app"
+```
+
+Para os testes no ambiente usado:
+
+```sh
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test
+```
+
+Fechar uma visualização não encerra seu processo. Sair do aplicativo solicita encerrar os processos ativos; sobrevivência ao quit/crash depende de um serviço ainda não implementado. Metadados ficam em `~/Library/Application Support/AgentBox`; restaurar uma sessão não reexecuta comandos automaticamente.
 
 ## Documentação
 

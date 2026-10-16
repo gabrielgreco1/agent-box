@@ -32,6 +32,10 @@ Os critérios detalhados estão em `spec/acceptance.json`. Um requisito só muda
 - Memória revisável, histórico real e retomada por checkpoint entre harnesses.
 - Sono/crash, recuperação, carga prolongada e distribuição local.
 
+## Checkpoint do lote 1
+
+Implementação inicial integrada e testada; consulte [STATUS.md](STATUS.md) para entregas, provas e partes ainda pendentes de cada tarefa. Não considerar os marcos M0–M10 integralmente concluídos.
+
 ## Execução paralela
 
 O lote 1 será executado em módulos com propriedade de arquivos definida. Agentes não fazem push, não apagam trabalho de outros e não instalam Docker/CLIs. O integrador compila, testa, revisa e publica checkpoints. Feature parcial continua parcial no registro de progresso.
