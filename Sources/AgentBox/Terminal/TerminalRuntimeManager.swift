@@ -44,6 +44,9 @@ public final class TerminalRuntimeManager: ObservableObject {
     private var childSkillDescriptors: [UUID: ClaudeHookLaunchDescriptor] = [:]
     private var hookInvocations: [UUID: ClaudeHookInboxConfiguration] = [:]
     private var computerMaintenance: [UUID: UUID] = [:]
+    private static let conversationWriters = CLIConversationWriteCoordinator.shared
+    private var conversationTickets: [UUID: CLIConversationWriteTicket] = [:]
+    private var shutdownEpoch: UInt64 = 0
     private let resolver: CLIExecutableResolver
     public let nativeAgentMonitor: NativeAgentMonitor
 
@@ -90,11 +93,66 @@ public final class TerminalRuntimeManager: ObservableObject {
         catch { processStates[terminal.id] = .failed(error.localizedDescription); return }
         if case .running = state(for: terminal.id) { return }
         if case .starting = state(for: terminal.id) { return }
+        guard terminal.nativeConversation == nil else {
+            processStates[terminal.id] = .failed("Revise a retomada desta conversa antes de iniciar o terminal.")
+            return
+        }
         guard terminal.agentDefinitionID == nil else {
             processStates[terminal.id] = .failed(AgentLaunchError.invalidBinding.localizedDescription)
             return
         }
         start(terminal, executableOverride: nil, hook: nil)
+    }
+
+    /// Resume is explicit, keeps the provider's TUI, and reserves one app writer
+    /// until the PTY exit callback. It never imports transcript contents.
+    func startResuming(_ terminal: TerminalRecord, candidate: CLIConversationCandidate,
+                       externalClosedAcknowledged: Bool) async throws {
+        let epoch = shutdownEpoch
+        try checkComputerMaintenance(terminal.id)
+        switch state(for: terminal.id) {
+        case .running, .starting: throw LibraryError.invalid("Este terminal ainda está em execução.")
+        default: break
+        }
+        let executable = try resolver.resolve(candidate.identity.provider)
+        let command = try CLIConversationCatalog.resumeCommand(for: candidate, executablePath: executable)
+        guard terminal.nativeConversation == command.identity,
+              terminal.provider == command.identity.provider, terminal.cwd == command.workingDirectory,
+              terminal.arguments == command.arguments, terminal.agentDefinitionID == nil else {
+            throw LibraryError.invalid("O terminal não corresponde à conversa escolhida.")
+        }
+        if candidate.identity.provider == .claude {
+            let active = try await Task.detached(priority: .utility) {
+                try CLIConversationCatalog.discoverActiveClaude(executablePath: executable,
+                    workingDirectory: command.workingDirectory)
+            }.value
+            guard !active.contains(where: { $0.identity == command.identity }) else {
+                throw LibraryError.invalid("Esta conversa ainda está aberta no Claude. Encerre o outro terminal antes de retomá-la aqui.")
+            }
+        }
+        // Discovery awaited; another pane may have started this terminal.
+        guard shutdownEpoch == epoch else {
+            throw LibraryError.invalid("A retomada foi cancelada durante o encerramento do aplicativo.")
+        }
+        try checkComputerMaintenance(terminal.id)
+        switch state(for: terminal.id) {
+        case .running, .starting: throw LibraryError.invalid("Este terminal já iniciou em outro painel.")
+        default: break
+        }
+        let ticket = try Self.conversationWriters.reserve(candidate: candidate,
+            externalClosedAcknowledged: externalClosedAcknowledged)
+        conversationTickets[terminal.id] = ticket
+        start(terminal, executableOverride: executable, hook: nil)
+        guard case .running = state(for: terminal.id) else {
+            releaseConversation(terminal.id)
+            throw LibraryError.invalid("O terminal da conversa não iniciou. Tente novamente.")
+        }
+    }
+
+    private func releaseConversation(_ terminalID: UUID) {
+        if let ticket = conversationTickets.removeValue(forKey: terminalID) {
+            _ = Self.conversationWriters.release(ticket: ticket)
+        }
     }
 
     /// Starts the exact executable and reviewed context snapshot from a materialized plan.
@@ -202,6 +260,7 @@ public final class TerminalRuntimeManager: ObservableObject {
     }
 
     public func shutdown() {
+        shutdownEpoch &+= 1
         let hadRunningProcesses = hasRunningProcesses
         for id in Array(entries.keys) { stop(id) }
         // The quit flow explicitly authorized ending these processes. Give SIGTERM
@@ -219,6 +278,7 @@ public final class TerminalRuntimeManager: ObservableObject {
         runIDs.removeAll()
         childSkillDescriptors.removeAll()
         hookInvocations.removeAll()
+        for id in Array(conversationTickets.keys) { releaseConversation(id) }
     }
 
     /// Called only by TerminalSurface. A missing renderer is an empty terminal, not a launch request.
@@ -261,6 +321,7 @@ public final class TerminalRuntimeManager: ObservableObject {
                 guard let self, self.entries[id]?.generation == generation else { return }
                 self.processStates[id] = .exited(code: Self.decodeWaitStatus(rawStatus))
                 self.hookInvocations[id] = nil
+                self.releaseConversation(id)
                 if let runID { self.nativeAgentMonitor.didExit(terminalID: id, runID: runID) }
             }
         }

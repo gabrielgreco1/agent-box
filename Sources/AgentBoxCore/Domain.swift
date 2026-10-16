@@ -19,8 +19,10 @@ public struct TerminalRecord: Identifiable, Codable, Equatable, Sendable {
     public var arguments: [String]
     public var createdAt: Date
     public var agentDefinitionID: UUID?
-    public init(id: UUID = UUID(), title: String, provider: CLIProvider, cwd: String, arguments: [String] = [], createdAt: Date = Date(), agentDefinitionID: UUID? = nil) {
+    public var nativeConversation: CLIConversationIdentity?
+    public init(id: UUID = UUID(), title: String, provider: CLIProvider, cwd: String, arguments: [String] = [], createdAt: Date = Date(), agentDefinitionID: UUID? = nil, nativeConversation: CLIConversationIdentity? = nil) {
         self.id = id; self.title = title; self.provider = provider; self.cwd = cwd; self.arguments = arguments; self.createdAt = createdAt; self.agentDefinitionID = agentDefinitionID
+        self.nativeConversation = nativeConversation
     }
 }
 

@@ -16,3 +16,14 @@ Referência: comparação fornecida em 16/10/2026 (`image-1.png`, Agent Box acim
 ## Verificação e limite
 
 Nenhum app, build ou teste foi iniciado nesta etapa, conforme pedido. O integrador fará a compilação e inspeção visual. O fundo do terminal depende da mudança de SwiftTerm realizada no módulo de runtime. Em layouts divididos, os cabeçalhos compactos continuam necessários para distinguir panes independentes.
+
+## Comparação com a referência
+
+| Diferença observada no print | Estado do código atual | Verificação pendente |
+| --- | --- | --- |
+| Terminal preto no Agent Box; cinza-azulado no Orca | `WorkspaceView.swift` define canvas `#272B33`; a superfície do terminal depende da configuração SwiftTerm no runtime. | Confirmar em captura do app que o PTY preenche o canvas nessa cor. |
+| Contorno claro destacado ao redor do pane | `WorkspaceView.swift` não desenha contorno de foco; o pane focado recebe apenas tom de cabeçalho quando há split. | Conferir foco visível pelo sistema e ausência do contorno antigo. |
+| Três faixas repetindo o terminal | `WorkspaceView.swift` mantém toolbar e abas compactas; omite cabeçalho de pane quando há um só terminal visível. | Verificar alturas e truncamento em 1000×650. |
+| Hierarquia de projetos/sessões e tipografia mais densa no Orca | A sidebar mostra sessões, terminais e filhos observados, com chrome de sistema em 13 pt e metadados menores. | Conferir árvore e legibilidade com nomes longos; nenhuma captura nova foi produzida. |
+
+AC01/AC02/AC07: a divisória da sidebar agora expõe largura e ajuste acessível em passos de 24 pt; o menu oferece os mesmos passos, restauração para 288 pt e ⌘K para busca. A largura e o estado recolhido já são persistidos no `WorkspaceSnapshot`. A sheet de revisão do agente passou de 640 para 550 pt de altura para manter a barra de ações disponível na janela mínima de 1000×650. Essas mudanças têm inspeção estática apenas; o integrador deve validar build, VoiceOver, atalhos, persistência após relançar e alcance dos botões nessa dimensão.

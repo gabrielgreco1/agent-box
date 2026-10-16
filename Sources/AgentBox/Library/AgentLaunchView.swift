@@ -113,7 +113,9 @@ struct AgentLaunchView: View {
         .interactiveDismissDisabled(launching || stoppingTerminalID != nil)
         .font(.system(size: 13))
         .padding(20)
-        .frame(width: 690, height: 640)
+        // Keep review and its action row inside the 1000 × 650 workspace minimum.
+        // Both input selection and context preview scroll independently.
+        .frame(width: 690, height: 550)
         .onAppear(perform: load)
         .onReceive(WorkspaceServices.terminalRuntime.$processStates) { states in
             if let id = stoppingTerminalID {

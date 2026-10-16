@@ -6,7 +6,10 @@ if [[ -d /Applications/Xcode.app/Contents/Developer ]]; then
   export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
 fi
 AGENTBOX_RUNNING="$AGENTBOX_ROOT/build/Agent Box.app/Contents/MacOS/AgentBox"
-if pgrep -f "^${AGENTBOX_RUNNING}$" >/dev/null; then
+AGENTBOX_BUILD_KEY="$(printf '%s' "$AGENTBOX_ROOT" | shasum -a 256 | cut -c1-16)"
+AGENTBOX_CACHE_ROOT="$HOME/Library/Caches/AgentBox/Builds/$AGENTBOX_BUILD_KEY"
+AGENTBOX_CACHED_APP="$AGENTBOX_CACHE_ROOT/Agent Box.app"
+if pgrep -f "^${AGENTBOX_RUNNING}$" >/dev/null || pgrep -f "^${AGENTBOX_CACHED_APP}/Contents/MacOS/AgentBox$" >/dev/null; then
   printf 'Feche o Agent Box antes de substituir o build em execução.\n' >&2
   exit 1
 fi
@@ -58,7 +61,14 @@ xattr -rd com.apple.ResourceFork "$AGENTBOX_APP" 2>/dev/null || true
 codesign --force --deep --sign - "$AGENTBOX_APP"
 codesign --verify --deep --strict "$AGENTBOX_APP"
 mkdir -p "$AGENTBOX_ROOT/build"
+# A File Provider may immediately reattach FinderInfo to a bundle in Documents,
+# even after signing in /private/tmp. Keep the executable development bundle in
+# the local cache; the checkout exposes a link, not another synchronized copy.
+mkdir -p "$AGENTBOX_CACHE_ROOT"
+rm -rf "$AGENTBOX_CACHED_APP"
+mv "$AGENTBOX_APP" "$AGENTBOX_CACHED_APP"
+codesign --verify --deep --strict "$AGENTBOX_CACHED_APP"
 rm -rf "$AGENTBOX_OUTPUT"
-mv "$AGENTBOX_APP" "$AGENTBOX_OUTPUT"
+ln -s "$AGENTBOX_CACHED_APP" "$AGENTBOX_OUTPUT"
 codesign --verify --deep --strict "$AGENTBOX_OUTPUT"
 printf 'App: %s\n' "$AGENTBOX_OUTPUT"

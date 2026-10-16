@@ -30,15 +30,15 @@ O viewer nativo, bridge de leases e serviço Docker autenticado estão integrado
 
 - Suíte Swift com Docker integrado: **152 testes, zero falhas**, incluindo dois computadores de filhos, takeover isolado, persistência de perfil e atualização/rollback de imagem. Execução com Xcode e scratch de build isolado; resultados posteriores de regressão em `evidence/ab044-child-routing.json`.
 - Suite Python do runtime: **20 testes locais**, além do smoke Docker real descrito em `tasks/AB-019-020-browser-runtime.md`.
-- Build release e assinatura ad hoc verificados. Empacotamento em staging temporário evita metadados de File Provider durante a assinatura; build recusa substituir app em execução.
+- Build release e assinatura ad hoc verificados. O bundle fica no cache local por checkout, com link em `build/Agent Box.app`, para evitar metadados reaplicados pelo File Provider em Documentos. Build recusa substituir app em execução.
 - Captura operacional: `evidence/terminal-split-2026-10-16.png`.
 - Detalhes por feature e limites em `tasks/`, incluindo AB-031 a AB-034.
 
 ## Pendências que impedem conclusão
 
 - Captura de subagentes Claude ligada ao lançamento revisado em AB-040; smoke do CLI real comprovou eventos assinados. Aquisição automática e despacho por filho implementados em AB-044. Falta conferir o fluxo completo TUI → sidebar → box ao vivo e implementar os demais harnesses.
-- MCP de computador ligado ao lançamento Claude em AB-039; ainda falta provar invocações de computador pelo modelo ao vivo. Despacho e isolamento de filhos testados em AB-044; fila justa persistente/idempotência sob falhas, política de URLs e limites robustos entre processos continuam pendentes.
-- Pedidos de ação via ferramenta MCP implementados, mas notificação e takeover com um agente nativo operando ao vivo ainda precisam de prova, assim como a reconciliação de todos os caminhos de escrita. Viewer e assumir/devolver sem agente concorrente já foram exercitados pela UI.
+- MCP de computador ligado ao lançamento Claude em AB-039 e provado com modelo Claude real em AB-045, em modo não interativo. Falta o fluxo interativo na TUI. Despacho e isolamento de filhos testados em AB-044; fila justa persistente/idempotência sob falhas, política de URLs e limites robustos entre processos continuam pendentes.
+- Pedido de ação nativo, takeover pelas APIs do app e retomada de navegação passaram no fluxo real não interativo AB-045. Notificação visual e cliques humanos com o agente concorrente ainda precisam de prova, assim como a reconciliação de todos os caminhos de escrita. Viewer e assumir/devolver sem agente concorrente já foram exercitados pela UI.
 - Grants de credenciais conectados ao broker; revogar não apaga valores já herdados por processos. CLI local continua com permissões reais do usuário no Mac.
 - Listener por fonte, evidências/datasets, cobertura e redaction de rede. Nenhum tráfego do usuário é capturado por este build.
 - Ativação nativa verificável de skills em todos os clientes; histórico completo de computadores/perfis; retomada de conversas externas; troca confirmada de modelo e handoff transacional entre harnesses.
@@ -47,6 +47,12 @@ O viewer nativo, bridge de leases e serviço Docker autenticado estão integrado
 - Persistência de autorização de pastas após relançar precisa de conferência; bookmark foi implementado a partir do bloqueio real observado.
 
 A meta permanece ativa. Plano integral em `EXECUTION-PLAN.md`.
+
+## Checkpoint atual — AB-045
+
+Claude real em PTY criou um filho, recebeu sua própria box, executou JavaScript, pediu intervenção e voltou a navegar após takeover/devolução pelas APIs do app. A box do pai permaneceu em HTTP e a do filho foi parada automaticamente. A suíte integrada passou em 160 testes, com dois opt-ins Docker anteriores desativados. Este fluxo foi não interativo e não substitui o aceite visual. Evidência em `evidence/ab045-native-child-flow.json`.
+
+Retomada explícita por ID foi ligada ao menu, seleção de CLI/pasta e PTY, com identidade persistente e reserva por conversa até a saída do processo. Teste de PTY confirmou argv, duplicata recusada, liberação e cancelamento durante quit; retomada de históricos reais nos três clientes continua pendente. Acesso por teclado à sidebar e layout da revisão de lançamento também avançaram. Ver `tasks/AB-013-conversation-discovery.md`, `tasks/AB-045-native-flow-and-resume.md` e a comparação visual em AB-006.
 
 ## Estado atual do controle por filho — AB-044
 

@@ -65,6 +65,7 @@ private struct ProviderMark: View {
 private enum WorkspaceSheet: Identifiable {
     case session
     case terminal(UUID)
+    case resumeConversation(sessionID: UUID, terminalID: UUID?)
     case renameSession(UUID)
     case renameTerminal(UUID)
     case library
@@ -81,6 +82,7 @@ private enum WorkspaceSheet: Identifiable {
         switch self {
         case .session: return "session"
         case .terminal(let id): return "terminal-\(id)"
+        case .resumeConversation(let session, let terminal): return "resume-\(session)-\(terminal?.uuidString ?? "new")"
         case .renameSession(let id): return "rename-session-\(id)"
         case .renameTerminal(let id): return "rename-terminal-\(id)"
         case .library: return "library"
@@ -206,6 +208,20 @@ public struct WorkspaceView: View {
                 TerminalEditor(defaultDirectory: snapshot.sessions.first(where: { $0.id == sessionID })?.terminals.last?.cwd ?? NSHomeDirectory()) { title, provider, cwd in
                     createTerminal(in: sessionID, title: title, provider: provider, cwd: cwd)
                 }
+            case .resumeConversation(let sessionID, let terminalID):
+                let session = snapshot.sessions.first { $0.id == sessionID }
+                let existing = session?.terminals.first { $0.id == terminalID }
+                let initial = existing.flatMap { terminal in
+                    terminal.nativeConversation.flatMap { identity in
+                        try? CLIConversationCatalog.explicitIdentity(provider: identity.provider,
+                            sessionID: identity.nativeSessionID, projectPath: terminal.cwd)
+                    }
+                }
+                ConversationResumeView(initialCandidate: initial,
+                    defaultDirectory: existing?.cwd ?? session?.terminals.last?.cwd ?? NSHomeDirectory()) { candidate, acknowledged in
+                        try await resumeConversation(candidate, in: sessionID, terminalID: terminalID,
+                                                     externalClosedAcknowledged: acknowledged)
+                    }
             case .renameSession(let id):
                 RenameEditor(title: "Renomear sessão", current: snapshot.sessions.first(where: { $0.id == id })?.title ?? "") { name in
                     guard let index = snapshot.sessions.firstIndex(where: { $0.id == id }) else { return }
@@ -635,11 +651,28 @@ public struct WorkspaceView: View {
             .gesture(DragGesture(minimumDistance: 0)
                 .onChanged { value in
                     if sidebarDragStart == nil { sidebarDragStart = snapshot.sidebarWidth }
-                    snapshot.sidebarWidth = min(480, max(224, (sidebarDragStart ?? 288) + Double(value.translation.width)))
+                    snapshot.sidebarWidth = clampedSidebarWidth((sidebarDragStart ?? 288) + Double(value.translation.width))
                 }
                 .onEnded { _ in sidebarDragStart = nil })
             .onTapGesture(count: 2) { snapshot.sidebarWidth = 288 }
             .accessibilityLabel("Largura da barra lateral")
+            .accessibilityValue("\(Int(snapshot.sidebarWidth)) pontos")
+            .accessibilityHint("Ajuste em passos de 24 pontos; clique duas vezes para restaurar 288 pontos.")
+            .accessibilityAdjustableAction { direction in
+                switch direction {
+                case .increment: adjustSidebarWidth(by: 24)
+                case .decrement: adjustSidebarWidth(by: -24)
+                @unknown default: break
+                }
+            }
+    }
+
+    private func clampedSidebarWidth(_ width: Double) -> Double {
+        min(480, max(224, width))
+    }
+
+    private func adjustSidebarWidth(by step: Double) {
+        snapshot.sidebarWidth = clampedSidebarWidth(snapshot.sidebarWidth + step)
     }
 
     private var workspace: some View {
@@ -744,6 +777,11 @@ public struct WorkspaceView: View {
             Menu {
                 Button("Nova sessão") { sheet = .session }
                     .keyboardShortcut("n", modifiers: .command)
+                if let selectedSession {
+                    Button("Retomar conversa…") {
+                        sheet = .resumeConversation(sessionID: selectedSession.id, terminalID: nil)
+                    }
+                }
                 if let selectedSession, let focusedTerminal {
                     Button("Fechar pane focado") {
                         snapshot.updateLayout(for: selectedSession.id) { $0.closePane(focusedTerminal.id) }
@@ -757,10 +795,12 @@ public struct WorkspaceView: View {
                     if snapshot.sidebarCollapsed { snapshot.sidebarCollapsed = false }
                     searchFocused = true
                 }
-                Button("Estreitar barra lateral") { snapshot.sidebarWidth = max(224, snapshot.sidebarWidth - 24) }
+                    .keyboardShortcut("k", modifiers: .command)
+                Button("Estreitar barra lateral") { adjustSidebarWidth(by: -24) }
                     .keyboardShortcut("[", modifiers: [.command, .option])
-                Button("Alargar barra lateral") { snapshot.sidebarWidth = min(480, snapshot.sidebarWidth + 24) }
+                Button("Alargar barra lateral") { adjustSidebarWidth(by: 24) }
                     .keyboardShortcut("]", modifiers: [.command, .option])
+                Button("Restaurar largura da barra lateral") { snapshot.sidebarWidth = 288 }
             } label: { Image(systemName: "ellipsis") }
                 .help("Mais opções")
                 .accessibilityLabel("Mais opções")
@@ -1249,6 +1289,11 @@ public struct WorkspaceView: View {
 
     private func startTerminalValidated(_ terminal: TerminalRecord) async {
         stopRequested.remove(terminal.id)
+        if terminal.nativeConversation != nil,
+           let session = snapshot.sessions.first(where: { $0.terminals.contains(where: { $0.id == terminal.id }) }) {
+            sheet = .resumeConversation(sessionID: session.id, terminalID: terminal.id)
+            return
+        }
         do { try WorkspaceDirectoryAccess.shared.activate(terminal.cwd) }
         catch { saveError = error.localizedDescription; return }
         guard let agentID = terminal.agentDefinitionID else {
@@ -1336,6 +1381,58 @@ public struct WorkspaceView: View {
             try WorkspaceDirectoryAccess.shared.remember(selected)
             refreshGit(for: terminal)
         } catch { saveError = error.localizedDescription }
+    }
+
+    private func resumeConversation(_ candidate: CLIConversationCandidate, in sessionID: UUID,
+                                    terminalID: UUID?, externalClosedAcknowledged: Bool) async throws {
+        guard let index = snapshot.sessions.firstIndex(where: { $0.id == sessionID }) else {
+            throw LibraryError.invalid("A sessão escolhida não está mais disponível.")
+        }
+        let executable = try CLIExecutableResolver().resolve(candidate.identity.provider)
+        let command = try CLIConversationCatalog.resumeCommand(for: candidate, executablePath: executable)
+        try WorkspaceDirectoryAccess.shared.activate(command.workingDirectory)
+        var next = snapshot
+        let terminal: TerminalRecord
+        let reusableID = terminalID ?? next.sessions[index].terminals.first(where: {
+            $0.nativeConversation == candidate.identity && $0.cwd == command.workingDirectory
+        })?.id
+        if let terminalID = reusableID {
+            guard let existing = next.sessions[index].terminals.first(where: { $0.id == terminalID }),
+                  existing.nativeConversation == candidate.identity, existing.cwd == command.workingDirectory else {
+                throw LibraryError.invalid("A identidade ou pasta da conversa mudou. Abra uma nova retomada.")
+            }
+            terminal = existing
+        } else {
+            terminal = TerminalRecord(title: "\(candidate.identity.provider.displayName) · \(candidate.identity.nativeSessionID.prefix(8))",
+                provider: candidate.identity.provider, cwd: command.workingDirectory,
+                arguments: command.arguments, nativeConversation: command.identity)
+            next.sessions[index].terminals.append(terminal)
+        }
+        guard !startingTerminalIDs.contains(terminal.id) else {
+            throw LibraryError.invalid("Esta conversa já está sendo aberta.")
+        }
+        next.selectedSessionID = sessionID
+        next.updateLayout(for: sessionID) { layout in
+            if !layout.visibleTerminalIDs.contains(terminal.id),
+               let focus = layout.focusedTerminalID, layout.visibleTerminalIDs.count < 5 {
+                layout.split(terminal.id, beside: focus, axis: .horizontal)
+            } else { layout.show(terminal.id) }
+        }
+        try repository.save(next)
+        // Publish before discovery yields. A failed launch leaves a saved idle
+        // terminal for retry; never overwrite edits with an old workspace copy.
+        snapshot = next
+        startingTerminalIDs.insert(terminal.id)
+        defer { startingTerminalIDs.remove(terminal.id) }
+        try await runtime.startResuming(terminal, candidate: candidate,
+                                       externalClosedAcknowledged: externalClosedAcknowledged)
+        guard snapshot.sessions.contains(where: { $0.id == sessionID && $0.terminals.contains(where: {
+            $0.id == terminal.id && $0.nativeConversation == candidate.identity && $0.cwd == terminal.cwd
+        }) }) else {
+            runtime.stop(terminal.id)
+            throw LibraryError.invalid("O terminal foi removido durante a retomada.")
+        }
+        runtime.focus(terminal.id)
     }
 
     private func createTerminal(in sessionID: UUID, title: String, provider: CLIProvider, cwd: String) {

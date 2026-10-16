@@ -1,0 +1,73 @@
+{
+  "date": "2026-10-16",
+  "claude_version": "2.1.301",
+  "mode": "native Claude print mode in a real app-owned PTY, programmatic human takeover",
+  "production_components": [
+    "AgentLaunchPlanner",
+    "TerminalRuntimeManager",
+    "NativeAgentMonitor",
+    "claude_event.py",
+    "AgentBoxMCP",
+    "AgentComputerAccess",
+    "BrowserComputerService",
+    "ComputerControlBridge"
+  ],
+  "isolated_components": [
+    "synthetic skill",
+    "temporary metadata and policy",
+    "memory token store",
+    "injected human notification callback",
+    "owned local HTTP fixture"
+  ],
+  "swift_tests": {
+    "executed": 160,
+    "failures": 0,
+    "skipped": 2,
+    "duration_seconds": 29.2
+  },
+  "skipped_tests": "Standalone Docker child-control and image-update opt-ins were verified in AB-044; this run enabled the native flow opt-in.",
+  "native_flow": {
+    "real_model_called": true,
+    "synthetic_tool_calls_or_hook_events": false,
+    "native_child_count": 1,
+    "reported_cost_usd": 0.00309765,
+    "budget_cap_usd": 0.25,
+    "child_owns_distinct_computer": true,
+    "marker_only_present_in_fixture_page": true,
+    "javascript_marker_returned": true,
+    "human_request_targets_child_computer": true,
+    "programmatic_human_takeover": true,
+    "request_resolved_on_explicit_release": true,
+    "page_visits_after_release": 2,
+    "parent_remained_in_http_mode": true,
+    "child_computer_stopped_automatically": true
+  },
+  "earlier_native_smoke": {
+    "reported_cost_usd": 0.002802725,
+    "human_intervention_included": false,
+    "passed": true
+  },
+  "data_hygiene": {
+    "personal_skill_used": false,
+    "personal_browser_profile_used": false,
+    "raw_model_output_published": false,
+    "external_web_navigation": false,
+    "test_containers_and_volumes_removed": true,
+    "baseline_two_stopped_boxes_preserved": true,
+    "development_colima_stopped": true
+  },
+  "limits": [
+    "No interactive TUI or visual UI acceptance while Mac locked",
+    "Human intervention uses real control APIs but no human clicks",
+    "No claim that the observed Google CAPTCHA is resolved",
+    "Native resume across real histories of all three providers remains unverified",
+    "The full 68-case acceptance and sustained-load gate remain open"
+  ],
+  "release": {
+    "build_passed": true,
+    "ad_hoc_signature_verified": true,
+    "app_opened": false,
+    "cache_bundle_and_project_link_verified": true,
+    "reason_for_cache": "File Provider reapplied FinderInfo immediately to bundles inside Documents; generated app now lives in the per-checkout local build cache."
+  }
+}
