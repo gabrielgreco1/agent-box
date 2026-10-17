@@ -60,6 +60,13 @@ extension SettingsModel {
                 return settings.general[keyPath: keyPath] ? "on" : "off"
             }
         }
+        try registry.register(
+            .settingsGeneralAllowLoginItems,
+            enablement: { [unowned self] in backgroundNeedsApproval ? .enabled : .disabled(reason: "Background agents are already allowed.") }
+        ) { [unowned self] _ in
+            openLoginItems()
+            return nil
+        }
         try bool(.settingsGeneralKeepAgentsRunning, \.keepAgentsRunning, name: "Keep agents running")
         try bool(.settingsGeneralAskBeforeQuit, \.askBeforeQuit, name: "Ask before quitting")
         try bool(.settingsGeneralConfirmCloseTerminal, \.confirmCloseTerminal, name: "Confirm before closing a terminal")

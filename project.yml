@@ -34,6 +34,8 @@ targets:
     platform: macOS
     sources:
       - path: App
+        excludes:
+          - LaunchAgents/**  # plist do daemon: scripts/build.sh o embute em Contents/Library/LaunchAgents
     dependencies:
       - package: AgentBoxKit
         product: AgentBoxPlatform

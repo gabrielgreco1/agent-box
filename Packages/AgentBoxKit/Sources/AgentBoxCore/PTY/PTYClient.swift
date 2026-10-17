@@ -85,7 +85,7 @@ public actor PTYClient {
         var replayEndSeq: UInt64 = 0
     }
 
-    private let configuration: PTYClientConfiguration
+    private var configuration: PTYClientConfiguration
     private var framed: FramedConnection?
     private var sender: AsyncStream<Frame>.Continuation?
     private var generation = 0
@@ -106,6 +106,13 @@ public actor PTYClient {
         self.configuration = configuration
         (events, eventsContinuation) = AsyncStream<DaemonEvent>.makeStream(bufferingPolicy: .unbounded)
     }
+
+    /// Troca o caminho do socket das próximas conexões (o launchd muda o caminho a cada registro; o fallback usa outro socket).
+    public func updateSocketPath(_ path: String) {
+        configuration.socketPath = path
+    }
+
+    public var socketPath: String { configuration.socketPath }
 
     public func connectionStates() -> AsyncStream<PTYConnectionState> {
         let id = UUID()

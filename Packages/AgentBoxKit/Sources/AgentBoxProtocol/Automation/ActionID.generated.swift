@@ -9,6 +9,8 @@ extension ActionID {
     public static let appHideAppName = ActionID(unchecked: "app.hideAppName")
     public static let appQuit = ActionID(unchecked: "app.quit")
     public static let appQuitCompletely = ActionID(unchecked: "app.quitCompletely")
+    public static let appOpenMainWindow = ActionID(unchecked: "app.openMainWindow")
+    public static let appStopAllAgents = ActionID(unchecked: "app.stopAllAgents")
     public static let viewToggleSidebar = ActionID(unchecked: "view.toggleSidebar")
     public static let viewToggleRightPanel = ActionID(unchecked: "view.toggleRightPanel")
     public static let viewToggleStatusBar = ActionID(unchecked: "view.toggleStatusBar")
@@ -248,6 +250,7 @@ extension ActionID {
     public static let settingsOpenSection = ActionID(unchecked: "settings.openSection")
     public static let settingsBack = ActionID(unchecked: "settings.back")
     public static let settingsGeneralKeepAgentsRunning = ActionID(unchecked: "settings.general.keepAgentsRunning")
+    public static let settingsGeneralAllowLoginItems = ActionID(unchecked: "settings.general.allowLoginItems")
     public static let settingsGeneralAskBeforeQuit = ActionID(unchecked: "settings.general.askBeforeQuit")
     public static let settingsGeneralConfirmCloseTerminal = ActionID(unchecked: "settings.general.confirmCloseTerminal")
     public static let settingsGeneralConfirmDeleteSession = ActionID(unchecked: "settings.general.confirmDeleteSession")
@@ -364,6 +367,8 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "app.hideAppName"), label: "Hide App Name", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "app.quit"), label: "Quit Agent Box", shortcut: "⌘Q", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "app.quitCompletely"), label: "Quit Agent Box Completely", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "app.openMainWindow"), label: "Open Agent Box (barra de menus)", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "app.stopAllAgents"), label: "Stop All Agents… (barra de menus)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "view.toggleSidebar"), label: "Toggle Sidebar", shortcut: "⌘B", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "view.toggleRightPanel"), label: "Right Panel", shortcut: "⌘L (Fatia 2)", slice: .slice2),
         ActionSpec(id: ActionID(unchecked: "view.toggleStatusBar"), label: "Show Status Bar", shortcut: "", slice: .slice1),
@@ -603,6 +608,7 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "settings.openSection"), label: "Seção do Settings (nav)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.back"), label: "Back to App", shortcut: "Esc", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.general.keepAgentsRunning"), label: "Keep agents running when you quit", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.general.allowLoginItems"), label: "Allow in Login Items", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.general.askBeforeQuit"), label: "Ask before quitting with running agents", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.general.confirmCloseTerminal"), label: "Confirm before closing a running terminal", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.general.confirmDeleteSession"), label: "Confirm before deleting a session", shortcut: "", slice: .slice1),

@@ -1,0 +1,36 @@
+--- bootstrap
+rc=0
+--- launchctl getenv AGENTBOX_PTYD_SOCK_V1 => /var/run/com.apple.launchd.1zETeIKcxQ/Listeners (len 47)
+--- job antes de qualquer conexao
+	state = not running
+	runs = 0
+			path = /var/run/com.apple.launchd.1zETeIKcxQ/Listeners
+			secure key = AGENTBOX_PTYD_SOCK_V1
+total 0
+drwx------   3 gabriel  wheel     96 Oct 17 06:10 .
+drwxrwxr-x  54 root     daemon  1728 Oct 17 06:10 ..
+srw-rw-rw-   1 gabriel  staff      0 Oct 17 06:10 Listeners
+--- nc -U acorda o daemon
+hello from daemon pid 64369
+	state = running
+	runs = 1
+	pid = 64369
+--- aguardando saida por ociosidade (8 s)
+	state = not running
+	runs = 1
+	last exit code = 0
+--- nova conexao relanca o daemon, mesmo caminho
+hello from daemon pid 64683
+	state = running
+	runs = 2
+--- log do daemon
+2026-10-17 09:10:31 +0000 pid=64369 start v29072 argv=["/private/tmp/claude-501/-Users-gabriel-orca-workspaces-agent-box-otter/5dda428d-ecea-4852-b667-584fd17012cc/scratc
+2026-10-17 09:10:31 +0000 pid=64369 launch_activate_socket rc=0 count=1
+2026-10-17 09:10:31 +0000 pid=64369 fd=3 sockname=/var/run/com.apple.launchd.1zETeIKcxQ/Listeners
+2026-10-17 09:10:31 +0000 pid=64369 accepted conn peer uid=501
+2026-10-17 09:10:39 +0000 pid=64369 idle exit
+2026-10-17 09:10:41 +0000 pid=64683 start v29072 argv=["/private/tmp/claude-501/-Users-gabriel-orca-workspaces-agent-box-otter/5dda428d-ecea-4852-b667-584fd17012cc/scratc
+2026-10-17 09:10:41 +0000 pid=64683 launch_activate_socket rc=0 count=1
+2026-10-17 09:10:41 +0000 pid=64683 fd=3 sockname=/var/run/com.apple.launchd.1zETeIKcxQ/Listeners
+2026-10-17 09:10:41 +0000 pid=64683 accepted conn peer uid=501
+--- bootout; getenv agora: []

@@ -48,8 +48,10 @@ public final class AppEnvironment {
     let dockBadgeOverride: (@MainActor (String?) -> Void)?
     /// Pane de terminal focado: destino das ações de zoom, busca, copiar/colar e limpar (T1-09).
     public let terminalRouter = TerminalActionRouter()
-    /// Computadores (T3-05): viewer, páginas Computers e Inbox, painel direito, pedido de ajuda e ações `computer.*`.
+    /// Computadores (T3-05): viewer, página Computers, painel direito, pedido de ajuda e ações `computer.*`.
     public let computers = ComputersController()
+    /// ⌘Q com agentes vivos, modo accessory e barra de menus (T1-24).
+    public private(set) var lifecycle: AppLifecycleCoordinator!
     public let automationEnabled: Bool
     public let fixture: String?
     public let socketPath: String
@@ -112,15 +114,20 @@ public final class AppEnvironment {
         }
         let loginProvider = LoginShellEnvProvider(
             config: LoginShellEnvConfig(runDirectory: storeRoot.appendingPathComponent("run", isDirectory: true)))
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1.0 (dev)"
         let runtime = TerminalRuntime(
             configuration: TerminalRuntime.Configuration(
                 daemonHome: storeRoot, daemonExecutable: environment["AGENTBOX_DAEMON"].map { URL(fileURLWithPath: $0) },
                 stopDaemonOnQuit: automationEnabled || environment["AGENTBOX_STOP_DAEMON_ON_QUIT"] == "1",
-                appSocketPath: socketPath, loginEnvironment: { await loginProvider.environment().variables },
+                appSocketPath: socketPath, build: build,
+                backgroundAgent: Self.makeBackgroundAgent(environment: environment, storeRoot: storeRoot),
+                loginEnvironment: { await loginProvider.environment().variables },
                 slice: slice2 ? .slice2 : .slice1, helperPath: slice2 ? Self.helperPath(environment) : nil),
             registry: registry, elements: elements)
         workspace = WorkspaceModel(runtime: runtime)
+        lifecycle = AppLifecycleCoordinator(registry: registry, overlays: overlays)
         registerShellActions()
+        wireLifecycle()
         do { try sidebar.registerActions(in: registry) } catch { log.publicError("duplicate sidebar action registration") }
         do { try projects.registerActions(in: registry) } catch { log.publicError("duplicate project action registration") }
         wireOverlays()
@@ -216,7 +223,10 @@ public final class AppEnvironment {
         workspace.toasts = toasts
         workspace.sessionLookup = { [sidebar] id in sidebar.session(id) }
         sidebar.onSelectionChange = { [workspace] id in workspace.setSession(id) }
-        sidebar.onSnapshot = { [workspace] snapshot in workspace.ingest(snapshot) }
+        sidebar.onSnapshot = { [workspace, lifecycle] snapshot in
+            workspace.ingest(snapshot)
+            lifecycle?.update(terminals: snapshot.terminals)
+        }
         workspace.runtime.contextMenu = { [workspace, registry] id in workspace.paneContextMenu(registry: registry, terminalID: id) }
         let demo = fixture == Self.overlayDemoFixture
         do {
@@ -276,12 +286,115 @@ public final class AppEnvironment {
                 enablement: { [shell] in shell.canGoForward ? .enabled : .disabled(reason: "No later page") },
                 handler: { _ in nil })
             try registry.register(.appQuit) { _ in
-                NSApp.terminate(nil)
+                AppLifecycleCoordinator.requestTermination()
                 return nil
+            }
+            try registry.register(.appQuitCompletely) { [unowned self] _ in
+                lifecycle.quitCompletely()
+                return nil
+            }
+            try registry.register(.appOpenMainWindow) { [unowned self] _ in
+                lifecycle.leaveBackground()
+                return nil
+            }
+            try registry.register(
+                .appStopAllAgents,
+                enablement: { [weak self] in (self?.lifecycle.cachedCounts.agents ?? 0) > 0 ? .enabled : .disabled(reason: "No agents are running.") }
+            ) { [unowned self] _ in
+                guard await lifecycle.requestStopAll() else { throw ActionError.failed(.appStopAllAgents, message: "No agents are running.") }
+                return nil
+            }
+            try registry.register(.dialogQuitKeepRunning) { [unowned self] _ in
+                lifecycle.choose(.keepRunning(dontAskAgain: lifecycle.dontAskChecked))
+                return nil
+            }
+            try registry.register(.dialogQuitStopAll) { [unowned self] _ in
+                lifecycle.choose(.stopAll)
+                return nil
+            }
+            try registry.register(.dialogQuitStopAllConfirm) { [unowned self] _ in
+                lifecycle.confirmStopAll()
+                return nil
+            }
+            try registry.register(.dialogQuitCancel) { [unowned self] _ in
+                lifecycle.choose(.cancel)
+                return nil
+            }
+            try registry.register(.dialogQuitDontAsk) { [unowned self] arg in
+                lifecycle.setDontAsk(arg.value.map { $0 == "on" } ?? !lifecycle.dontAskChecked)
+                return lifecycle.dontAskChecked ? "on" : "off"
             }
         } catch {
             log.publicError("duplicate action registration")
         }
+    }
+
+    /// LaunchAgent do daemon (T1-24). Só dentro do `.app` com o plist embutido, e nunca em fixtures, automação ou com
+    /// `AGENTBOX_HOME` próprio (testes usam o daemon filho), salvo `AGENTBOX_LAUNCHD=1` (label de teste, 08 §0.1).
+    static func makeBackgroundAgent(environment: [String: String], storeRoot: URL) -> BackgroundAgentHost? {
+        let explicit = environment["AGENTBOX_LAUNCHD"] == "1"
+        if environment["AGENTBOX_LAUNCHD"] == "0" { return nil }
+        if !explicit, environment["AGENTBOX_HOME"] != nil || environment["AGENTBOX_AUTOMATION"] == "1" || environment["AGENTBOX_SCREEN"] != nil
+            || environment["AGENTBOX_DAEMON"] != nil
+        {
+            return nil
+        }
+        let bundleURL = Bundle.main.bundleURL
+        guard bundleURL.pathExtension == "app" else { return nil }
+        let identity = BackgroundAgentIdentity.resolve(environment: environment)
+        return BackgroundAgentHost(
+            identity: identity, service: SMBackgroundAgentService(plistName: identity.plistName), bundleURL: bundleURL,
+            daemonExecutable: ChildDaemon.launcherExecutable(),
+            stateFile: storeRoot.appendingPathComponent("run/ptyd-registration.json"))
+    }
+
+    /// ⌘Q, accessory, barra de menus e o aviso de aprovação do LaunchAgent.
+    private func wireLifecycle() {
+        lifecycle.dependencies = AppLifecycleCoordinator.Dependencies(
+            countLive: { [weak self] in await self?.liveCounts() ?? LiveProcessCounts() },
+            preferences: { [weak self] in
+                let general = self?.settings.settings.general
+                return QuitPreferences(keepAgentsRunning: general?.keepAgentsRunning ?? true, askBeforeQuit: general?.askBeforeQuit ?? true)
+            },
+            disableAsking: { [weak self] in self?.settings.disableAskBeforeQuit() },
+            promptShownBefore: { [weak self] in await self?.quitPromptShown() ?? false },
+            markPromptShown: { [weak self] in self?.recordQuitPromptShown() },
+            stopAll: { [weak self] in await self?.stopAllProcesses() },
+            markCleanExit: { [weak self] in await self?.markCleanExit() })
+        settings.openLoginItems = { [workspace] in workspace.runtime.openLoginItemsSettings() }
+        workspace.runtime.onHostModeChange = { [settings] mode in
+            settings.backgroundNeedsApproval = mode.fallbackReason == .requiresApproval
+        }
+    }
+
+    private static let quitPromptKey = "quit.promptShown"
+
+    /// Terminais com processo vivo segundo o banco (também sessões que não estão na tela).
+    func liveCounts() async -> LiveProcessCounts {
+        guard let store else { return lifecycle.cachedCounts }
+        let running = (try? await store.terminals(in: .running)) ?? []
+        let launching = (try? await store.terminals(in: .launching)) ?? []
+        return LiveProcessCounts(counting: running + launching)
+    }
+
+    private func quitPromptShown() async -> Bool {
+        guard let store else { return false }
+        return (try? await store.uiState(Self.quitPromptKey, as: Bool.self)) ?? false
+    }
+
+    private func recordQuitPromptShown() {
+        guard let store else { return }
+        Task { try? await store.setUIState(Self.quitPromptKey, true) }
+    }
+
+    /// `Stop All and Quit`: `kill graceful` em todos, espera até 5 s e só então força o que sobrou (o usuário já confirmou duas vezes).
+    func stopAllProcesses() async {
+        let client = workspace.runtime.client
+        func running() async -> [SessionSummary] { ((try? await client.list()) ?? []).filter { $0.state == .running } }
+        for summary in await running() { try? await client.kill(sessionID: summary.sessionID, mode: .graceful) }
+        let deadline = ContinuousClock.now + .seconds(5)
+        while ContinuousClock.now < deadline, !(await running()).isEmpty { try? await Task.sleep(for: .milliseconds(150)) }
+        for summary in await running() { try? await client.kill(sessionID: summary.sessionID, mode: .force) }
     }
 
     /// Fixture de desenvolvimento (`AGENTBOX_SCREEN=overlay-demo`): liga ações que abrem overlays e toasts de exemplo (o composer é o real).

@@ -3,8 +3,19 @@ import AgentBoxProtocol
 import Darwin
 import Foundation
 
+/// De onde vem o socket de escuta (06 §1.2).
+enum DaemonListenSource: Sendable, Equatable {
+    /// Modo degradado e testes: o próprio daemon faz `bind` em `paths.socketPath`.
+    case bind
+    /// LaunchAgent: `launch_activate_socket(name)`; o daemon nunca faz `unlink`/`bind`.
+    case launchd(name: String)
+    /// Descritor já em escuta herdado (simula `launch_activate_socket` nos testes de integração).
+    case inheritedFD(Int32)
+}
+
 struct DaemonConfiguration: Sendable {
     var paths: DaemonPaths
+    var listen: DaemonListenSource = .bind
     var build: String
     /// Sai depois de tanto tempo sem sessões vivas e sem clientes (06 §1.2). `nil` desliga.
     var idleExit: Duration?
@@ -36,11 +47,23 @@ actor DaemonServer {
     // MARK: Execução
 
     func run() async throws {
-        try configuration.paths.prepare()
+        try configuration.paths.prepare(includeSocketDirectory: configuration.listen == .bind)
         let sessionsDirectory = configuration.paths.sessionsDirectory
         _ = await BlockingIOBridge.run { ColdLog.sweep(sessionsDirectory: sessionsDirectory, keeping: []) }
-        let listener = try await UDSListener.listen(path: configuration.paths.socketPath)
-        log.publicInfo("agentboxd listening")
+        let listener: UDSListener
+        switch configuration.listen {
+        case .bind:
+            listener = try await UDSListener.listen(path: configuration.paths.socketPath)
+            log.publicInfo("agentboxd listening")
+        case .launchd(let name):
+            let descriptors = try LaunchdSocketActivation.activate(name: name)
+            for extra in descriptors.dropFirst() { Darwin.close(extra) }
+            listener = try UDSListener.adopt(fileDescriptor: descriptors[0])
+            log.publicInfo("agentboxd listening on launchd socket")
+        case .inheritedFD(let descriptor):
+            listener = try UDSListener.adopt(fileDescriptor: descriptor)
+            log.publicInfo("agentboxd listening on inherited socket")
+        }
         switch configuration.peerAuthenticator.policy {
         case .signed: authLog.publicInfo("peer auth: signed (uid + code requirement)")
         case .adhocDevelopment: authLog.publicInfo("peer auth: ad-hoc development mode (uid only)")

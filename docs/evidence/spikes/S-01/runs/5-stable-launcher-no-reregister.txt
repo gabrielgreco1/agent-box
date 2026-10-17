@@ -1,0 +1,12 @@
+before: notFound register: ok after: enabled 
+hello from daemon pid 56401
+--- apos rebuild+saida:
+	state = not running 	jetsamproperties category = daemon 	job state = exited 	properties = partial import | abandon process group | resolve program | has LWCR 
+CandidateCDHash sha256=a56872349bb96307e001c876ea9cea1de3c01fdf
+CandidateCDHashFull sha256=a56872349bb96307e001c876ea9cea1de3c01fdf2e84aa16ac5554bb9acac000
+CDHash=a56872349bb96307e001c876ea9cea1de3c01fdf
+hello from daemon pid 56774
+--- final:
+	state = running 	jetsamproperties category = daemon 	job state = running 	properties = partial import | abandon process group | resolve program | has LWCR 
+2026-10-17 10:33:44 +0000 pid=56401 start v19958 argv=["/tmp
+2026-10-17 10:34:04 +0000 pid=56774 start v22730 argv=["/tmp

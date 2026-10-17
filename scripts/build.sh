@@ -5,7 +5,7 @@
 #   Entrada : project.yml, Packages/AgentBoxKit. Env: DEVELOPER_DIR, AGENTBOX_SIGN_IDENTITY (nome do
 #             certificado; padrão "Agent Box Local Signing"; "-" força ad-hoc), AGENTBOX_SIGN_KEYCHAIN (caminho de um
 #             keychain efêmero de CI: procura e assina por nome nele, sem confiança de usuário), AGENTBOX_BUILD_DIR (padrão build/AgentBox).
-#   Efeitos : compila o app (xcodebuild Release, Swift 6 estrito, warnings como erro) e os executáveis SPM
+#   Efeitos : embute o plist do LaunchAgent do daemon (Contents/Library/LaunchAgents); compila o app (xcodebuild Release, Swift 6 estrito, warnings como erro) e os executáveis SPM
 #             agentbox/agentboxd (swift build -c release), embute-os em Contents/MacOS e assina de dentro
 #             para fora (agentbox, agentboxd, app), SEM --deep, com --options runtime e sem entitlements.
 #   Assinatura: com a identidade local, designated requirement = identifier "<id>" and certificate leaf = H"<sha1>".
@@ -64,8 +64,8 @@ fi
 SWIFT_EXTRA=()
 if [ "$IDENT" = "-" ]; then SWIFT_EXTRA=(-Xswiftc -DAGENTBOX_ALLOW_ADHOC_PEERS); fi
 
-echo "build: swift build -c release (agentbox, agentboxd)"
-for prod in agentbox agentboxd; do
+echo "build: swift build -c release (agentbox, agentboxd, agentboxd-launch)"
+for prod in agentbox agentboxd agentboxd-launch; do
   swift build -c release --package-path Packages/AgentBoxKit --product "$prod" ${SWIFT_EXTRA[@]+"${SWIFT_EXTRA[@]}"}
 done
 BIN="$(swift build -c release --package-path Packages/AgentBoxKit --show-bin-path)"
@@ -76,7 +76,16 @@ ditto "$DD/Build/Products/Release/Agent Box.app" "$APP"
 [ ! -e "$APP/Contents/MacOS/agentbox" ] || fail "Contents/MacOS/agentbox já existe antes de embutir o helper (colisão de nome com o executável do app)"
 install -m 755 "$BIN/agentbox" "$APP/Contents/MacOS/agentbox"
 install -m 755 "$BIN/agentboxd" "$APP/Contents/MacOS/agentboxd"
-# LaunchAgent plist (Contents/Library/LaunchAgents) e Info.plist embutido do daemon entram com a tarefa do daemon.
+# Launcher estável do LaunchAgent (T1-24/S-01): o launchd prende o job ao cdhash do BundleProgram, então o job é registrado com
+# este binário minúsculo (só faz exec do agentboxd) e as atualizações do daemon não exigem novo registro. Símbolos removidos
+# (strip -S -x) para o cdhash não depender de caminhos de build; o identificador de assinatura é fixo.
+install -m 755 "$BIN/agentboxd-launch" "$APP/Contents/MacOS/agentboxd-launch"
+strip -S -x "$APP/Contents/MacOS/agentboxd-launch"
+# LaunchAgent do daemon (T1-24, 08 §0.1): plist em Contents/Library/LaunchAgents, __BUILD__ = CFBundleVersion. Selado pela
+# assinatura do app (assinar o app por último).
+mkdir -p "$APP/Contents/Library/LaunchAgents"
+sed "s/__BUILD__/$BUILD_NUMBER/g" "$ROOT/App/LaunchAgents/app.agentbox.ptyd.v1.plist" > "$APP/Contents/Library/LaunchAgents/app.agentbox.ptyd.v1.plist"
+plutil -lint "$APP/Contents/Library/LaunchAgents/app.agentbox.ptyd.v1.plist" >/dev/null || fail "plist do LaunchAgent inválido"
 
 SIGN_REF="$IDENT"; [ -z "$SIGN_KEYCHAIN" ] || SIGN_REF="$IDENT_NAME"
 sign() { # path identifier
@@ -90,11 +99,12 @@ sign() { # path identifier
 }
 sign "$APP/Contents/MacOS/agentbox" app.agentbox.cli
 sign "$APP/Contents/MacOS/agentboxd" app.agentbox.ptyd
+sign "$APP/Contents/MacOS/agentboxd-launch" app.agentbox.ptyd.launch
 sign "$APP" app.agentbox.mac
 
 echo "build: verificando assinatura"
 codesign --verify --strict --verbose=2 "$APP"
-for pair in "$APP/Contents/MacOS/agentbox:app.agentbox.cli" "$APP/Contents/MacOS/agentboxd:app.agentbox.ptyd" "$APP:app.agentbox.mac"; do
+for pair in "$APP/Contents/MacOS/agentbox:app.agentbox.cli" "$APP/Contents/MacOS/agentboxd:app.agentbox.ptyd" "$APP/Contents/MacOS/agentboxd-launch:app.agentbox.ptyd.launch" "$APP:app.agentbox.mac"; do
   p="${pair%%:*}"; id="${pair##*:}"
   codesign --verify --strict "$p"
   dr="$(codesign -dr - "$p" 2>&1 | grep 'designated =>' || true)"

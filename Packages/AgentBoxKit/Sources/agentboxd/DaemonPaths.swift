@@ -24,11 +24,12 @@ struct DaemonPaths: Sendable {
         return DaemonPaths(home: home, socketPath: socketOverride)
     }
 
-    /// Cria `AB`, `AB/run` e `AB/sessions` com `0700`.
-    func prepare() throws {
+    /// Cria `AB`, `AB/run` e `AB/sessions` com `0700`. Com o socket do launchd (sem `bind`), o diretório do socket é do launchd.
+    func prepare(includeSocketDirectory: Bool = true) throws {
         let manager = FileManager.default
         let socketDirectory = URL(fileURLWithPath: socketPath).deletingLastPathComponent()
-        for directory in [home, socketDirectory, sessionsDirectory] {
+        let runDirectory = home.appendingPathComponent("run", isDirectory: true)
+        for directory in includeSocketDirectory ? [home, socketDirectory, sessionsDirectory] : [home, runDirectory, sessionsDirectory] {
             try manager.createDirectory(at: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
             try manager.setAttributes([.posixPermissions: 0o700], ofItemAtPath: directory.path)
         }

@@ -342,6 +342,8 @@ extension A11yID {
     public static let overlayConfirmQuitKeepRunning = A11yID(unchecked: "overlay.confirmQuit.keepRunning")
     /// `overlay.confirmQuit.stopAll`
     public static let overlayConfirmQuitStopAll = A11yID(unchecked: "overlay.confirmQuit.stopAll")
+    /// `overlay.confirmQuit.stopAllConfirm`
+    public static let overlayConfirmQuitStopAllConfirm = A11yID(unchecked: "overlay.confirmQuit.stopAllConfirm")
     /// `overlay.confirmQuit.cancel`
     public static let overlayConfirmQuitCancel = A11yID(unchecked: "overlay.confirmQuit.cancel")
     /// `overlay.confirmQuit.dontAsk`
@@ -1422,6 +1424,7 @@ extension A11yID {
         A11yIDSpec(pattern: "overlay.confirmQuit", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmQuit.keepRunning", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmQuit.stopAll", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmQuit.stopAllConfirm", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmQuit.cancel", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmQuit.dontAsk", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmSkipPermissions.confirm", surface: "Dialogs"),

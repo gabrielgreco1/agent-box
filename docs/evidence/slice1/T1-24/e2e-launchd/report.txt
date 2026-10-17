@@ -1,0 +1,53 @@
+e2e-launchd N=e51bf label=app.agentbox.ptyd.test-e51bf bundle=app.agentbox.mac.teste51bf 2026-10-17T10:33:08Z
+macOS 27.0.1 (arm64); app: /Users/gabriel/orca/agent-box/.claude/worktrees/agent-a59f55fca5dd2120b/build/AgentBox/Agent Box.app
+assinatura da cópia: CodeDirectory v=20500 size=56059 flags=0x10002(adhoc,runtime) hashes=1745+3 location=embedded Signature=adhoc 
+
+== 1. registro e socket do launchd
+app PID 55517
+SMAppService: before: enabled 
+PASS  job app.agentbox.ptyd.test-e51bf carregado e em execução
+daemon PID 55587; processo do agente PID 55588; launchctl getenv AGENTBOX_PTYD_SOCK_TEST_E51BF => /var/run/com.apple.launchd.YyrnPogOcc/Listeners
+PASS  launchctl getenv devolve o caminho do socket
+PASS  o daemon é do launchd (pai = launchd, não o app)
+PASS  o agente é filho do daemon
+PASS  socket 0600 num diretório 0700 do launchd
+PASS  o daemon não fez bind em AB/run (modo launchd)
+
+== 2. ⌘Q com agente vivo: overlay, Keep Running, accessory
+fixture: terminais running marcados como claude no banco (1)
+PASS  overlay overlay.confirmQuit apareceu na janela (sem NSAlert)
+PASS  Keep Running: o app continua vivo (mesmo PID)
+PASS  Keep Running: o daemon continua o mesmo
+PASS  Keep Running: o agente continua vivo
+lsappinfo: [ NULL ]  [ NULL ]       bundleID=[ NULL ]      bundle path=[ NULL ]      executable path=[ NULL ]   !cgsConnection !signalled type="UIElement" flavor=[ NULL ]  Version=[ NULL ]  Arch=!!none   
+PASS  Keep Running: sem ícone no Dock (modo accessory)
+PASS  ctl segue respondendo em segundo plano (hooks e MCP seguem no app)
+
+== 3. Quit Completely e reabrir (reattach)
+PASS  o processo do app saiu
+PASS  daemon: mesmo PID depois do quit
+PASS  agente: mesmo PID depois do quit
+PASS  reabrir: o daemon é o mesmo (sem segundo daemon)
+PASS  reabrir: o agente é o mesmo processo
+PASS  reabrir: o pane do terminal voltou na árvore
+
+== 4. daemon novo (S-01: o launchd prende o job ao cdhash do BundleProgram, por isso o job usa o launcher estável)
+daemon em execução: app.agentbox.ptyd (PID 55587)
+PASS  bundle válido com o daemon novo
+PASS  o cdhash do launcher não mudou
+PASS  binário novo com sessão viva: o daemon antigo continua (nada foi morto)
+PASS  binário novo com sessão viva: o agente continua
+PASS  o daemon antigo saiu sozinho quando a última sessão terminou
+PASS  nova sessão sobe depois do upgrade
+daemon novo: PID 56000 app.agentbox.ptyd.upgradee51bf
+PASS  o daemon novo é outro processo
+PASS  o daemon novo é o binário novo (identificador de assinatura novo)
+PASS  o daemon novo é filho do launchd
+PASS  job sem spawn failed nem pendência de LWCR
+PASS  nenhum novo registro foi necessário (runs do job só contam spawns, sem recriação)
+
+fim dos passos
+--- limpeza
+launchctl getenv AGENTBOX_PTYD_SOCK_TEST_E51BF => []
+job app.agentbox.ptyd.test-e51bf ainda existe? nao
+RESULTADO: OK

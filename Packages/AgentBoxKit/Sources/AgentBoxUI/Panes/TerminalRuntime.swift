@@ -59,6 +59,8 @@ final class TerminalRuntime {
         var appSocketPath: String
         var appVersion = "0.1.0"
         var build = "1.0 (dev)"
+        /// LaunchAgent do daemon (T1-24). `nil`: sempre o daemon filho (testes, automação, execução fora do `.app`).
+        var backgroundAgent: BackgroundAgentHost?
         /// Env do shell de login. Padrão: captura única com cache.
         var loginEnvironment: @Sendable () async -> [String: String]
         /// Fatia ligada: a partir da 2 o Claude leva hooks de atividade por lançamento (06 §2.8). Nada é escrito em `~/.claude`.
@@ -87,6 +89,12 @@ final class TerminalRuntime {
     /// Menu de contexto de um pane (03 §4.5), montado por quem conhece as ações.
     var contextMenu: ((UUID) -> NSMenu?)?
     var onConnectionChange: ((Connection) -> Void)?
+    /// Onde o daemon roda (LaunchAgent ou filho) e, no fallback, por quê (Settings › General mostra o aviso de aprovação).
+    private(set) var hostMode: DaemonHostMode = .childProcess(reason: nil)
+    var onHostModeChange: ((DaemonHostMode) -> Void)?
+    /// Daemon do LaunchAgent com build mais antigo que o do app: pediu `drainWhenIdle` (Diagnostics mostra "update pending").
+    private(set) var daemonUpdatePending = false
+    private var daemonBuild: String?
     /// A conexão com o daemon voltou depois de uma queda (o daemon pode ser outro: sessões podem ter sumido, T1-23).
     var onDaemonRecovered: (() -> Void)?
     private var monitor: Task<Void, Never>?
@@ -101,6 +109,42 @@ final class TerminalRuntime {
     }
 
     var socketPath: String { daemon.socketPath }
+
+    /// Escolhe onde o daemon roda e aponta o cliente para o socket certo (launchd ou o do filho).
+    private func prepareHost() async {
+        guard let host = configuration.backgroundAgent else { return }
+        await apply(await host.prepare())
+    }
+
+    private func apply(_ mode: DaemonHostMode) async {
+        let changed = mode != hostMode
+        hostMode = mode
+        let path: String
+        switch mode {
+        case .launchAgent(let socket): path = socket
+        case .childProcess: path = daemon.socketPath
+        }
+        await client.updateSocketPath(path)
+        if changed {
+            let description = mode.isLaunchAgent ? "launch agent" : "child process (\(mode.fallbackReason?.summary ?? "chosen"))"
+            log.info("daemon host: \(description)")
+            onHostModeChange?(mode)
+        }
+    }
+
+    /// Sem LaunchAgent aprovado o app usa o daemon filho; o botão de Settings abre os Itens de Início (nunca sozinho).
+    var needsLoginItemApproval: Bool { hostMode.fallbackReason == .requiresApproval }
+
+    func openLoginItemsSettings() { configuration.backgroundAgent?.openLoginItemsSettings() }
+
+    /// Depois da conexão: compara os builds e, se o daemon do LaunchAgent for mais antigo, pede `drainWhenIdle` (06 §1.10).
+    private func checkDaemonUpgrade(build: String?) async {
+        guard hostMode.isLaunchAgent, let build else { return }
+        daemonBuild = build
+        guard DaemonUpgradePolicy.decide(appBuild: configuration.build, daemonBuild: build) == .drainWhenIdle else { return }
+        guard !daemonUpdatePending else { return }
+        daemonUpdatePending = (try? await client.drainWhenIdle()) != nil
+    }
     var daemonPID: Int32 { daemon.pid }
 
     /// Soma de resizes de PTY enviados ao daemon por todos os panes (04 MA6).
@@ -128,6 +172,7 @@ final class TerminalRuntime {
     /// Pergunta ao daemon o que ele mantém vivo **sem** subir um novo (reabertura do app): `nil` = não há daemon.
     func probeDaemon() async -> [SessionSummary]? {
         guard connection != .connected else { return try? await client.list() }
+        await prepareHost()
         guard (try? await client.start()) != nil else { return nil }
         setConnection(.connected)
         startMonitor()
@@ -145,8 +190,9 @@ final class TerminalRuntime {
             var respawn: Task<Void, Never>?
             for await state in await client.connectionStates() {
                 switch state {
-                case .connected:
+                case .connected(let daemonBuild, _):
                     respawn?.cancel()
+                    await self?.checkDaemonUpgrade(build: daemonBuild)
                     if lost {
                         lost = false
                         self?.setConnection(.connected)
@@ -170,6 +216,15 @@ final class TerminalRuntime {
     }
 
     private func respawnDaemon() {
+        if hostMode.isLaunchAgent, let host = configuration.backgroundAgent {
+            // LaunchAgent: o launchd relança o daemon na próxima conexão; antes, garante que o binário novo pode subir.
+            daemonUpdatePending = false
+            Task { [weak self] in
+                let mode = await host.recover()
+                await self?.apply(mode)
+            }
+            return
+        }
         guard let exe = configuration.daemonExecutable ?? ChildDaemon.defaultExecutable() else { return }
         do { try daemon.start(executable: exe, idleExitSeconds: 60) } catch { log.error("daemon respawn failed: \(error)") }
     }
@@ -182,6 +237,19 @@ final class TerminalRuntime {
 
     private func establish() async -> Bool {
         setConnection(.connecting)
+        await prepareHost()
+        if hostMode.isLaunchAgent {
+            // O launchd sobe o daemon na primeira conexão ao socket dele (o handshake espera até 2 s).
+            for _ in 0 ..< 3 {
+                if (try? await client.start()) != nil {
+                    setConnection(.connected)
+                    startMonitor()
+                    return true
+                }
+            }
+            log.error("launch agent did not answer; falling back to a child daemon")
+            await apply(.childProcess(reason: .daemonUnreachable))
+        }
         if (try? await client.start()) != nil {
             setConnection(.connected)
             startMonitor()
