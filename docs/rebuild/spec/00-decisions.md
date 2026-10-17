@@ -45,6 +45,8 @@ Fonte de verdade para todos os capítulos da spec. Data: 2026-10-16. Auditoria q
 
 | P23 | **Permissões do macOS: no máximo uma vez, e só quando o usuário pede a função.** O app nunca dispara diálogo de permissão sozinho (Gravação de Tela, Acessibilidade, Notificações, item de login, Keychain): cada um só aparece no primeiro uso explícito da função que precisa dele, com uma explicação dentro do app antes, e nunca de novo depois de concedido. Assinatura sempre estável (identidade fixa de desenvolvedor) para o macOS reconhecer o mesmo app entre builds e atualizações. Nada de helper privilegiado: o app nunca pede a senha do usuário. Daemon via LaunchAgent do próprio usuário, aprovado uma vez. Lint e teste garantem que nenhum caminho automático chama APIs de pedido de permissão. |
 
+| P24 | **Um container por computador.** Navegador (Xvfb/Chromium), terminal de trabalho e proxy/egress rodam no mesmo container (revoga a divisão runtime/work/egress de 07). Isolamento interno: agente como usuário sem privilégio; proxy, reqlog e contadores como outro usuário, arquivos fora do alcance do agente; regra de rede (iptables por uid) forçando todo tráfego do agente pelo proxy e bloqueando destinos privados. Na UI o computador é sempre uma entidade só. |
+
 ## Decisões técnicas (recomendações dos revisores adotadas)
 
 | # | Decisão |
