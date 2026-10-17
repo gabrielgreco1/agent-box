@@ -13,11 +13,13 @@ from typing import Any
 
 from . import API_VERSION
 from .browser import BrowserSession, OpError
+from .lease import Lease
+from .vnc import Tickets, VncBridge
 
-READS = {"read", "screenshot", "status", "eval"}
+READS = {"read", "screenshot", "status", "eval", "frame", "selection"}
 MAX_BODY = 48 * 1024 * 1024
 OPS = ("open", "read", "screenshot", "click", "type", "press", "select", "scroll", "wait", "eval", "cookies", "tabs", "back",
-       "forward", "reload", "download", "upload", "status", "mode")
+       "forward", "reload", "download", "upload", "status", "mode", "lease", "vnc_ticket", "frame", "selection")
 
 
 class RuntimeServer:
@@ -25,6 +27,9 @@ class RuntimeServer:
         self.browser = browser
         self.token = token
         self.display = display  # objeto com `.mode` e `set_mode(m)` (Openbox liga/desliga)
+        self.lease = Lease(browser.write_lock)
+        self.tickets = Tickets()
+        self.bridge = VncBridge(self.lease, self.tickets)
 
     def _authorized(self, headers: dict[str, str]) -> bool:
         supplied = headers.get("authorization", "")
@@ -45,6 +50,9 @@ class RuntimeServer:
                 if ":" in line:
                     k, _, v = line.partition(":")
                     headers[k.strip().lower()] = v.strip()
+            if method == "GET" and target.split("?")[0] == "/v1/vnc":
+                await self.bridge.serve(reader, writer, target, headers)  # autenticado pelo ticket, não pelo token
+                return
             length = int(headers.get("content-length", "0") or 0)
             if length > MAX_BODY:
                 await self._send(writer, 413, {"error": "invalid_argument", "message": "body too large"})
@@ -66,6 +74,18 @@ class RuntimeServer:
                       f"X-AgentBox-Runtime: {API_VERSION}\r\nConnection: close\r\n\r\n").encode() + data)
         await writer.drain()
 
+    async def _lease(self, args: dict) -> dict:
+        action = args.get("action", "status")
+        if action == "status":
+            return self.lease.snapshot()
+        if action in ("take", "force_take"):
+            return await self.lease.take(min(float(args.get("wait_s", 10)), 30.0), force=action == "force_take")
+        if action == "give":
+            return self.lease.give(args.get("note"))
+        if action == "consume_note":
+            return self.lease.consume_note()
+        raise OpError("invalid_argument", "action must be status, take, force_take, give or consume_note")
+
     async def route(self, method: str, path: str, headers: dict[str, str], body: bytes) -> tuple[int, Any]:
         if method == "GET" and path == "/v1/health":
             return 200, {"ok": True, "ready": self.browser.ready, "display": self.display.mode, "api": API_VERSION}
@@ -85,11 +105,17 @@ class RuntimeServer:
         try:
             if op == "mode":
                 return 200, await self.display.set_mode(args.get("display"))
+            if op == "vnc_ticket":
+                return 200, self.tickets.issue()
+            if op == "lease":
+                return 200, await self._lease(args)
             fn = getattr(self.browser, op)
             if op in READS or (op == "tabs" and args.get("action") == "list") or (op == "cookies" and args.get("action") in ("get", "export")):
-                return 200, await fn(args)
-            async with self.browser.write_lock:
-                return 200, await fn(args)
+                result = await fn(args)
+                if op == "status" and isinstance(result, dict):
+                    result = {**result, "lease": self.lease.state}
+                return 200, result
+            return 200, await self.lease.run_write(fn, args)
         except OpError as exc:
             return exc.status, {"error": exc.code, "message": exc.message, "details": exc.details}
         except Exception as exc:

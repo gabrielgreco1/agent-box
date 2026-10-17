@@ -254,6 +254,18 @@ class BrowserSession:
             png = await page.screenshot(type="png", full_page=bool(a.get("full_page", False)))
         return {"png_b64": base64.b64encode(png).decode(), "bytes": len(png), "url": page.url}
 
+    async def frame(self, a: dict) -> dict:
+        """Miniatura para a aba Computers (CS-403): JPEG da página, qualidade baixa. O app pede no máximo 1 por segundo."""
+        page = self._page()
+        quality = max(10, min(int(a.get("quality", 45)), 90))
+        jpeg = await page.screenshot(type="jpeg", quality=quality, scale="css", animations="allow", caret="initial")
+        return {"jpeg_b64": base64.b64encode(jpeg).decode(), "bytes": len(jpeg), "url": page.url, "title": await page.title()}
+
+    async def selection(self, a: dict) -> dict:
+        """`Copy Selection from Computer` (CS-422): só a seleção da página, só por ação explícita do humano."""
+        text = await self._page().evaluate("() => String(window.getSelection ? window.getSelection() : '')")
+        return {"text": text[:100000]}
+
     async def _settle(self, before: str, wait_s: float) -> dict:
         page = self._page()
         if wait_s > 0:

@@ -42,6 +42,8 @@ public final class AppEnvironment {
     public let keyBindings: KeyBindingRegistry
     /// Pane de terminal focado: destino das ações de zoom, busca, copiar/colar e limpar (T1-09).
     public let terminalRouter = TerminalActionRouter()
+    /// Computadores (T3-05): viewer, páginas Computers e Inbox, painel direito, pedido de ajuda e ações `computer.*`.
+    public let computers = ComputersController()
     public let automationEnabled: Bool
     public let fixture: String?
     public let socketPath: String
@@ -96,6 +98,24 @@ public final class AppEnvironment {
         if fixture == SidebarFixtures.screenID { registerSidebarDemo() }
         do { try terminalRouter.register(in: registry) } catch { log.publicError("duplicate terminal action registration") }
         wireSettings()
+        wireComputers()
+    }
+
+    /// Liga o controlador de computadores: ações `computer.*`, ⌘W fecha a página do viewer e a notificação de pedido de ajuda.
+    private func wireComputers() {
+        do { try computers.register(in: registry) } catch { log.publicError("duplicate computer action registration") }
+        workspace.pageCloser = { [computers] in
+            guard computers.page != .workspace else { return false }
+            computers.closePage()
+            return true
+        }
+        if !automationEnabled {
+            computers.notifier = SystemHelpNotifier(open: { [computers, registry] name, takeOver in
+                NSApp.activate()
+                computers.openViewer(name)
+                if takeOver { Task { _ = try? await registry.perform(.computerTakeOver, .select(name)) } }
+            }) ?? NoopHelpNotifier()
+        }
     }
 
     /// `AGENTBOX_SCREEN=setup-demo`: onboarding e Settings com CLIs de mentira (Claude logado, Codex deslogado, OpenCode ausente),
@@ -399,6 +419,8 @@ public final class AppEnvironment {
     /// Sobe o servidor `ctl` se a automação estiver ligada. Chamado uma vez, no primeiro `.task` da janela.
     public func start() async {
         await startStore()
+        computers.startRefreshing()
+        computers.startDemo(environment: environmentVariables)
         guard automationEnabled, ctl == nil else { return }
         let server = CtlServer(socketPath: socketPath, dispatcher: registry)
         do {
@@ -422,6 +444,8 @@ public final class AppEnvironment {
     public func stop() async {
         sidebar.detach()
         projects.detach()
+        computers.stopRefreshing()
+        await computers.tearDownDemo()
         await ctl?.stop()
         ctl = nil
     }

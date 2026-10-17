@@ -6,7 +6,8 @@
 #     momento do build e a imagem resultante é identificada pelo digest e pela tag de hash do contexto
 #     (`agentbox-box:ctx-<sha12>`, scripts/build-runtime-image.sh);
 #   - pacotes Python com versão exata em requirements.txt.
-# T3-03: papel `runtime` = Xvfb + Chromium headed + servidor de controle (`agentbox_runtime`); papel `work` = ferramentas
+# T3-03/T3-05: papel `runtime` = Xvfb + x11vnc (só loopback; ponte WebSocket com ticket no servidor de controle) + Chromium
+# headed + servidor de controle (`agentbox_runtime`); o noVNC é vendorizado no app, não vai na imagem; papel `work` = ferramentas
 # (`abx-http` com curl_cffi). O CDP nunca sai do processo do runtime; o `work` não tem token nem rota para fora.
 FROM mcr.microsoft.com/playwright/python:v1.63.0-noble@sha256:72bd171a9ffc2b4b59532aaa6210e21014d07093120dc25528870c0b840da1f0
 
@@ -14,7 +15,7 @@ ENV DEBIAN_FRONTEND=noninteractive PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 PIP_DIS
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        xvfb openbox tint2 x11vnc websockify novnc xdotool dtach curl jq ca-certificates \
+        xvfb openbox tint2 x11vnc xdotool dtach curl jq ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt /tmp/requirements.txt

@@ -1,0 +1,35 @@
+{
+  "abnt2_diag" : "\"{\\\"keys\\\":[\\\"a\\\",\\\"\\\\u0000\\\",\\\"\\\\u0000\\\",\\\"o\\\",\\\" \\\",\\\"\\\\u0000\\\",\\\" \\\",\\\"\\\\u0000\\\",\\\" \\\",\\\"\\\\u0000\\\",\\\" \\\",\\\"\\\\u0000\\\"],\\\"ev\\\":[\\\"mousedown:t\\\",\\\"focus:t\\\",\\\"focusin:t\\\"],\\\"active\\\":\\\"t\\\",\\\"focus\\\":true,\\\"spot\\\":[10,10,1288,1280,931,800]}\"",
+  "abnt2_typing" : {
+    "page_value" : "\"ação ç ã é €\"",
+    "typed" : "ação ç ã é €"
+  },
+  "runtime" : "desktop: Engine 29.6.2, aarch64",
+  "take_over_during_write" : {
+    "ack_after_seconds" : 4.8,
+    "agent_call_result" : "human_in_control",
+    "lease_after" : "human"
+  },
+  "thumbnail" : {
+    "jpeg_bytes" : 11822
+  },
+  "ticket" : {
+    "no_upgrade" : "400",
+    "server_init" : "1440x900",
+    "single_use" : true
+  },
+  "ws_fps_raw_640x400_animation" : {
+    "encoding" : "Raw (worst case for the bridge)",
+    "fps" : 35.4,
+    "frames" : 212,
+    "mb_per_s" : 3.9,
+    "seconds" : 6
+  },
+  "ws_input_latency_ms" : {
+    "max" : 124,
+    "p50" : 36,
+    "p95" : 51,
+    "samples" : 40
+  },
+  "x11vnc_from_work" : "not reachable (listens on the runtime loopback only)"
+}

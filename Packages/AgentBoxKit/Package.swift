@@ -55,8 +55,10 @@ let package = Package(
         lib("AgentBoxDocker", ["AgentBoxPlatform", "AgentBoxProtocol"]),
         lib("AgentBoxCore", ["AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxStore", "AgentBoxDocker"]),
         lib("AgentBoxDesignSystem", ["AgentBoxProtocol"], ui: true, resources: [.copy("Resources/Fonts"), .copy("Resources/AgentLogos")]),
+        // T3-05: viewer noVNC (vendorizado, v1.6.0) num WKWebView isolado, servido por esquema local (07 CS-401, 00 T8).
+        lib("AgentBoxViewerKit", [], ui: true, resources: [.copy("Resources/Viewer")]),
         lib(
-            "AgentBoxUI", ["AgentBoxCore", "AgentBoxStore", "AgentBoxDesignSystem", "AgentBoxTerminalCore", swiftTerm], ui: true,
+            "AgentBoxUI", ["AgentBoxCore", "AgentBoxStore", "AgentBoxDesignSystem", "AgentBoxTerminalCore", "AgentBoxViewerKit", swiftTerm], ui: true,
             resources: [.process("Resources")]  // String Catalog (lint-ui exige strings no catálogo)
         ),
         .executableTarget(
@@ -88,6 +90,7 @@ let package = Package(
             swiftSettings: nonisolatedSettings
         ),
         tests("DockerTests", ["AgentBoxDocker", "AgentBoxPlatform"], resources: [.copy("Fixtures")]),
+        .testTarget(name: "ViewerKitTests", dependencies: ["AgentBoxViewerKit"], swiftSettings: mainActorSettings),
         tests("TerminalCoreTests", ["AgentBoxTerminalCore", swiftTerm]),
         tests("DesignSystemTests", ["AgentBoxDesignSystem"]),
         tests("DaemonTests", ["AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxTerminalCore", "AgentBoxCore", "agentboxd", "peerprobe", swiftTerm]),
