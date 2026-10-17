@@ -78,9 +78,9 @@ let package = Package(
             swiftSettings: nonisolatedSettings
         ),
         tests("DockerTests", ["AgentBoxDocker"]),
-        tests("TerminalCoreTests", ["AgentBoxTerminalCore"]),
+        tests("TerminalCoreTests", ["AgentBoxTerminalCore", swiftTerm]),
         tests("DesignSystemTests", ["AgentBoxDesignSystem"]),
-        tests("DaemonTests", ["AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxTerminalCore"]),
+        tests("DaemonTests", ["AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxTerminalCore", "AgentBoxCore", "agentboxd", swiftTerm]),
         .testTarget(
             name: "UISnapshotTests",
             dependencies: ["AgentBoxUI", "AgentBoxDesignSystem", snapshotTesting],
