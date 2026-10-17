@@ -4,7 +4,7 @@ import Testing
 
 /// Extensões do navegador usadas pelo Quick Launch (03 §7): linha de fallback com o texto digitado e o modificador da ativação.
 @MainActor
-@Suite struct MenuNavigatorActivationTests {
+@Suite(.offscreenAppKit) struct MenuNavigatorActivationTests {
     private func navigator() -> DSMenuNavigator {
         let nav = DSMenuNavigator(
             entries: [.item(DSMenuItem("claude", "New Claude Code Tab")), .item(DSMenuItem("codex", "New Codex Tab")), .item(DSMenuItem("terminal", "New Terminal"))],

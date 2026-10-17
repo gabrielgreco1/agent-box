@@ -10,7 +10,7 @@ import Testing
 /// Arquivar, restaurar, apagar sessão de worktree/pasta/checkout e "Open in…" (T1-27; AC-T09, AC-1105, AC-502, AC-306).
 /// Repositórios e worktrees reais, mas só em diretórios temporários com HOME e config global isolados; nenhum editor é aberto.
 @MainActor
-@Suite(.serialized) struct SessionRemovalFlowTests {
+@Suite(.serialized, .offscreenAppKit) struct SessionRemovalFlowTests {
     struct Rig {
         let env: AppEnvironment
         let store: AgentBoxStore

@@ -44,7 +44,7 @@ struct ScriptedAgent {
     }
 }
 
-@Suite("T3-04 - orquestração real", .serialized, .enabled(if: LiveC.enabled))
+@Suite("T3-04 - orquestração real", .serialized, .enabled(if: LiveC.enabled), .tags(.integration), .timeLimit(.minutes(10)))
 struct LiveOrchestrationTests {
     static let evidenceFile = "slice3/T3-04/live-orchestration.json"
     static let claudeEnabled = ProcessInfo.processInfo.environment["AGENTBOX_TEST_CLAUDE"] == "1"

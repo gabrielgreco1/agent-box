@@ -8,7 +8,7 @@ import Testing
 
 /// Socket entregue por descritor (T1-24, S-01): o teste faz o papel do launchd. Cria e escuta o socket, passa o fd 3 ao
 /// `agentboxd` (como o launchd faz) e o daemon o adota sem `unlink` nem `bind`.
-@Suite(.serialized) struct LaunchdSocketTests {
+@Suite(.serialized, .tags(.integration), .timeLimit(.minutes(1))) struct LaunchdSocketTests {
     /// O que o launchd faria: socket em diretório privado, `0600`, `listen` feito por quem o criou.
     private final class FakeLaunchdSocket {
         let directory: URL
@@ -52,7 +52,7 @@ import Testing
         posix_spawn_file_actions_addopen(&actions, 1, "/dev/null", O_WRONLY, 0)
         posix_spawn_file_actions_addopen(&actions, 2, "/dev/null", O_WRONLY, 0)
         let binary = agentboxdBinary().path
-        let arguments = [binary, "--idle-exit", "\(idleExit)", "--home", home.path, "--socket-fd", "3"] + extra
+        let arguments = [binary, "--idle-exit", "\(idleExit == 0 ? 5 : idleExit)", "--home", home.path, "--socket-fd", "3"] + extra
         var argv: [UnsafeMutablePointer<CChar>?] = arguments.map { strdup($0) } + [nil]
         defer { for pointer in argv { free(pointer) } }
         var pid: pid_t = 0

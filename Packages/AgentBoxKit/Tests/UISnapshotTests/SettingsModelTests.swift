@@ -10,7 +10,7 @@ import Testing
 /// Estado, ações e persistência do Settings e do onboarding (T1-26): regra de salvamento de 03 §14.1 (sem Save, debounce de 300 ms,
 /// inválido não grava), perfis de lançamento, padrão por agente, deep link e seções por fatia. Store real em pasta temporária.
 @MainActor
-@Suite(.serialized) struct SettingsModelTests {
+@Suite(.serialized, .offscreenAppKit) struct SettingsModelTests {
     nonisolated final class ProbeLog: @unchecked Sendable {
         private let lock = NSLock()
         private var _calls: [String] = []

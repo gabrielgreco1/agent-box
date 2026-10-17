@@ -9,7 +9,7 @@ import Testing
 
 /// Tabs e panes com o `agentboxd` real: 2 panes com zsh, split sem recriar o PTY e um resize por transição (04 MA6).
 @MainActor
-@Suite(.serialized) struct WorkspaceIntegrationTests {
+@Suite(.serialized, .tags(.integration), .timeLimit(.minutes(1)), .offscreenAppKit) struct WorkspaceIntegrationTests {
     private func screen(_ model: WorkspaceModel, _ id: UUID) -> String {
         guard let entry = model.runtime.existingEntry(for: id) else { return "" }
         return String(decoding: entry.host.surface.getBufferAsData(kind: .active), as: UTF8.self)
@@ -17,6 +17,7 @@ import Testing
 
     @Test func twoPanesRunZshInTheRealDaemonAndSplitNeverRecreatesThePTY() async throws {
         let harness = try DaemonHarness()
+        defer { harness.terminateNow() }
         try await harness.start()
         let runtime = TerminalRuntime(
             configuration: .init(
@@ -31,7 +32,7 @@ import Testing
         let terminal = Terminal(id: termID, tabID: tabID, provider: .custom, title: "zsh", cwd: NSTemporaryDirectory(), launchSpec: spec)
         let tab = Tab(id: tabID, sessionID: session.id, title: "zsh", layout: .leaf(Pane(content: .terminal(termID))), focusedTerminalID: termID)
         let area = PaneAreaView(model: model, registry: nil, elements: nil, router: nil)
-        let window = NSWindow(contentRect: NSRect(x: -20000, y: -20000, width: 1200, height: 700), styleMask: [.borderless], backing: .buffered, defer: false)
+        let window = OffscreenAppKit.makeWindow(size: NSSize(width: 1200, height: 700), styleMask: [.borderless])
         window.isReleasedWhenClosed = false
         window.contentView = area
         area.frame = NSRect(x: 0, y: 0, width: 1200, height: 700)

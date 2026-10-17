@@ -71,8 +71,8 @@ public final class AppLifecycleCoordinator {
         var reply: (Bool) -> Void
     }
 
-    public init(registry: ActionRegistry, overlays: OverlayRouter) {
-        menuBar = MenuBarController(registry: registry)
+    public init(registry: ActionRegistry, overlays: OverlayRouter, statusBar: any StatusBarProviding = SystemStatusBar()) {
+        menuBar = MenuBarController(registry: registry, statusBar: statusBar)
         self.overlays = overlays
     }
 

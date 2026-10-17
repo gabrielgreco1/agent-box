@@ -6,7 +6,7 @@ import Testing
 
 /// M-101/M-102 variante A (04 §7.1.1): amostras puras contra a tabela de quadros e a geometria do protótipo.
 @MainActor
-@Suite struct OverlayMotionTests {
+@Suite(.offscreenAppKit) struct OverlayMotionTests {
     private func near(_ a: Double, _ b: Double, _ tol: Double = 0.02) -> Bool { abs(a - b) <= tol }
 
     @Test func enterFramesMatchTheSpecTable() {
@@ -69,7 +69,7 @@ import Testing
 }
 
 @MainActor
-@Suite struct ComponentSpecTests {
+@Suite(.offscreenAppKit) struct ComponentSpecTests {
     @Test func spinnerIsTwelveDiscreteStepsOneTurnPerSecondAtMostTwelveFps() {
         #expect(DSSpinnerSpec.steps == 12 && DSSpinnerSpec.period == 1 && DSSpinnerSpec.fps <= 12)
         #expect(DSSpinnerSpec.stepAngles.count == 12)

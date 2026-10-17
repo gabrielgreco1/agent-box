@@ -9,7 +9,7 @@ import Testing
 
 /// Snapshots de T1-12: combobox, painel de menu, tooltip e editor de prompt. Referências em `__Snapshots__/`.
 @MainActor
-@Suite(.serialized) struct MenuSnapshotTests {
+@Suite(.serialized, .offscreenAppKit) struct MenuSnapshotTests {
     func snap<V: View>(_ view: V, size: CGSize, name: String, line: UInt = #line) {
         DSFonts.registerIfNeeded()
         let env = ComponentSnapshotTests.env()

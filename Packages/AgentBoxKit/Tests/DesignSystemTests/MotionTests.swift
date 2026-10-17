@@ -4,7 +4,7 @@ import SwiftUI
 import Testing
 @testable import AgentBoxDesignSystem
 
-@Suite struct MotionTests {
+@Suite(.offscreenAppKit) struct MotionTests {
     /// 04 §3.3: progresso a 60 fps para conferir protótipo e app quadro a quadro.
     @Test func bezierProgressMatchesSpecTables() {
         func check(_ b: Bezier, durationFrames n: Double, _ samples: [(Double, Double)], _ name: String) {

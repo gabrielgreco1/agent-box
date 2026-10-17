@@ -127,7 +127,7 @@ private func handshakeFromTestProcess(socket: String) async throws -> String {
 }
 
 /// T1-07: peer auth ponta a ponta com o `agentboxd` real, assinado com certificado efêmero.
-@Suite(.serialized) struct PeerAuthDaemonTests {
+@Suite(.serialized, .tags(.integration), .timeLimit(.minutes(1))) struct PeerAuthDaemonTests {
     @Test func signedDaemonAcceptsOnlyTheAppIdentity() async throws {
         let signing = try EphemeralSigning()
         let daemonBinary = try signing.signedCopy(of: agentboxdBinary(), as: "agentboxd-signed", identifier: "app.agentbox.ptyd", identity: signing.identityA)
@@ -138,7 +138,7 @@ private func handshakeFromTestProcess(socket: String) async throws -> String {
 
         let harness = try DaemonHarness()
         try await harness.start(idleExit: 0, binary: daemonBinary)
-        defer { Task { await harness.stop() } }
+        defer { harness.terminateNow() }
 
         // Aceito: identificador do app + mesma folha do daemon.
         #expect(try await probe(app, socket: harness.socketPath) == "ACCEPTED")
@@ -159,7 +159,7 @@ private func handshakeFromTestProcess(socket: String) async throws -> String {
         let adhocPeer = try signing.signedCopy(of: peerprobeBinary(), as: "probe-adhoc", identifier: "anything", identity: nil)
         let harness = try DaemonHarness()
         try await harness.start(idleExit: 0, binary: adhocDaemon)
-        defer { Task { await harness.stop() } }
+        defer { harness.terminateNow() }
         #expect(try await probe(adhocPeer, socket: harness.socketPath) == "ACCEPTED")
         // E o próprio processo de teste (mesmo uid) também, como nos demais DaemonTests.
         #expect(try await handshakeFromTestProcess(socket: harness.socketPath) == "ACCEPTED")

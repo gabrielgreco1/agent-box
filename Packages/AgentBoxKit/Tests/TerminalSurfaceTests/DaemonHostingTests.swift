@@ -27,7 +27,7 @@ private struct StubLaunchd: LaunchdQuerying {
 
 /// Onde o daemon roda (T1-24): LaunchAgent quando aprovado; daemon filho (modo atual) quando exige aprovação ou não responde.
 @MainActor
-@Suite(.serialized) struct DaemonHostingTests {
+@Suite(.serialized, .tags(.integration), .timeLimit(.minutes(1)), .offscreenAppKit) struct DaemonHostingTests {
     private func makeHost(
         home: URL, after: BackgroundAgentStatus, socket: String?
     ) throws -> (BackgroundAgentHost, StubAgentService) {

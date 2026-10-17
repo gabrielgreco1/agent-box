@@ -5,7 +5,7 @@ import Testing
 @testable import AgentBoxDesignSystem
 
 /// Geist embutida e registrada em runtime (02 §4.1). Exige `scripts/bootstrap.sh --fonts` (baixa e confere o SHA-256).
-@MainActor @Suite struct FontTests {
+@MainActor @Suite(.offscreenAppKit) struct FontTests {
     private static let hint = "Geist[wght].ttf ausente em Resources/Fonts: rode scripts/bootstrap.sh --fonts"
 
     @Test func geistFileIsBundledWithLicense() throws {

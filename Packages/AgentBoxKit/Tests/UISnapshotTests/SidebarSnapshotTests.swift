@@ -10,7 +10,7 @@ import Testing
 /// Snapshots da sidebar com fixtures (T1-13): 3 projetos com sessões em vários estados, nomes longos (`F-LONG`), vazio e
 /// busca sem resultado. Referências em `__Snapshots__/`; gravar com `AB_RECORD_SNAPSHOTS=1`.
 @MainActor
-@Suite(.serialized) struct SidebarSnapshotTests {
+@Suite(.serialized, .offscreenAppKit) struct SidebarSnapshotTests {
     static let now = Date(timeIntervalSince1970: 1_900_000_000)
 
     func snap(

@@ -11,7 +11,7 @@ import Testing
 /// Reabertura com o `agentboxd` real (T1-23): matar o app e reabrir reanexa com o mesmo conteúdo; matar o daemon deixa os
 /// panes `interrupted` com o cold log esmaecido e nada é relançado; Resume reconstrói o argv do CLI.
 @MainActor
-@Suite(.serialized) struct RestoreIntegrationTests {
+@Suite(.serialized, .tags(.integration), .timeLimit(.minutes(1)), .offscreenAppKit) struct RestoreIntegrationTests {
     /// Uma "execução do app": runtime + modelo + área de panes ligados ao mesmo banco e ao mesmo daemon. `die()` descarta tudo
     /// do lado do app sem tocar no daemon, como um `kill -9` do app.
     private final class AppRun {
@@ -29,7 +29,7 @@ import Testing
                 registry: nil, elements: nil)
             model = WorkspaceModel(runtime: runtime)
             area = PaneAreaView(model: model, registry: nil, elements: nil, router: nil)
-            window = NSWindow(contentRect: NSRect(x: -20000, y: -20000, width: 1200, height: 700), styleMask: [.borderless], backing: .buffered, defer: false)
+            window = OffscreenAppKit.makeWindow(size: NSSize(width: 1200, height: 700), styleMask: [.borderless])
             window.isReleasedWhenClosed = false
             window.contentView = area
             area.frame = NSRect(x: 0, y: 0, width: 1200, height: 700)

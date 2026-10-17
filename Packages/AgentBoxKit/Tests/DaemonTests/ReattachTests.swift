@@ -6,7 +6,7 @@ import Testing
 /// Reattach (06 §1.5, S-04): cliente morto, cliente novo, mesma tela. Avaliação em duas etapas:
 /// (a) o replay antes do redraw reproduz a tela de quem ficou conectado; (b) depois do redraw `cols-1`/`cols`
 /// o cliente novo iguala o observador que recebeu os mesmos bytes.
-@Suite(.serialized) struct ReattachTests {
+@Suite(.serialized, .tags(.integration), .timeLimit(.minutes(3))) struct ReattachTests {
     struct Outcome {
         var before: String
         var replayOnly: String
@@ -79,7 +79,7 @@ import Testing
     {
         let harness = try DaemonHarness()
         try await harness.start()
-        defer { Task { await harness.stop() } }
+        defer { harness.terminateNow() }
         var failures: [String] = []
         for repetition in 1 ... repetitions {
             let outcome = try await cycle(harness, argv: argv, startup: startup, script: script, ringBytes: ringBytes)
@@ -123,7 +123,7 @@ import Testing
             "printf '\(esc)[?1049h\(esc)[?25l\(esc)[?1000h'; yes \"$(printf '\(esc)[H\(esc)[31mrow of alt content\(esc)[0m')\" | head -c 3000000; printf '\(esc)[3;5HFINAL MARKER'; exec sleep 600"
         let harness = try DaemonHarness()
         try await harness.start()
-        defer { Task { await harness.stop() } }
+        defer { harness.terminateNow() }
         var failures: [String] = []
         for repetition in 1 ... 5 {
             let outcome = try await cycle(harness, argv: ["/bin/sh", "-c", program], startup: .seconds(3), script: [], ringBytes: 1 << 20)

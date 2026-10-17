@@ -125,7 +125,9 @@ public final class AppEnvironment {
                 slice: slice2 ? .slice2 : .slice1, helperPath: slice2 ? Self.helperPath(environment) : nil),
             registry: registry, elements: elements)
         workspace = WorkspaceModel(runtime: runtime)
-        lifecycle = AppLifecycleCoordinator(registry: registry, overlays: overlays)
+        // Ícone real na barra de menus só no produto (`.app`): testes e execuções fora do bundle usam o item de mentira.
+        let statusBar: any StatusBarProviding = Bundle.main.bundleURL.pathExtension == "app" ? SystemStatusBar() : InMemoryStatusBar()
+        lifecycle = AppLifecycleCoordinator(registry: registry, overlays: overlays, statusBar: statusBar)
         registerShellActions()
         wireLifecycle()
         do { try sidebar.registerActions(in: registry) } catch { log.publicError("duplicate sidebar action registration") }
@@ -267,6 +269,8 @@ public final class AppEnvironment {
             sidebar: sidebar, settings: settings, overlays: overlays, toasts: toasts, elements: elements, launcher: sessionLauncher,
             automationEnabled: automationEnabled)
         composer = composerController
+        // Um só seletor de pasta: o do composer (fake nos testes) também atende "New Clean Session in Folder…".
+        clean.picker = CleanFolderPicker(base: { [weak composerController] in composerController?.picker ?? OpenPanelSessionFolderPicker() })
         do { try composerController.register(in: registry) } catch { log.publicError("duplicate composer registration") }
     }
 

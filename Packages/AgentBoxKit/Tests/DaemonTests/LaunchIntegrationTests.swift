@@ -17,7 +17,7 @@ private final class Events: @unchecked Sendable {  // SAFETY: estado sob `lock`.
 
 /// `LaunchCoordinator` contra o `agentboxd` real (T1-16): zsh de verdade, `claude -p --model haiku` de verdade (opt-in por
 /// custo) e CLI ausente. Verifica os estados running -> exited no daemon e os eventos de progresso reais.
-@Suite struct LaunchIntegrationTests {
+@Suite(.tags(.integration), .serialized, .timeLimit(.minutes(1))) struct LaunchIntegrationTests {
     private func coordinator(_ harness: DaemonHarness, client: PTYClient, login: @escaping @Sendable () async -> [String: String]) -> LaunchCoordinator {
         let gateway = PTYLaunchGateway(client: client, ensureConnected: { (try? await client.start()) != nil })
         return LaunchCoordinator(
@@ -38,6 +38,7 @@ private final class Events: @unchecked Sendable {  // SAFETY: estado sob `lock`.
 
     @Test func zshRunsThenExits() async throws {
         let harness = try DaemonHarness()
+        defer { harness.terminateNow() }
         try await harness.start()
         let client = harness.makeClient()
         try await client.start()
@@ -63,6 +64,7 @@ private final class Events: @unchecked Sendable {  // SAFETY: estado sob `lock`.
 
     @Test func missingCLIIsCouldntStart() async throws {
         let harness = try DaemonHarness()
+        defer { harness.terminateNow() }
         try await harness.start()
         let client = harness.makeClient()
         try await client.start()
@@ -87,6 +89,7 @@ private final class Events: @unchecked Sendable {  // SAFETY: estado sob `lock`.
     @Test(.enabled(if: ProcessInfo.processInfo.environment["AB_REAL_CLI"] == "1"))
     func claudeHaikuRunsThenExitsZero() async throws {
         let harness = try DaemonHarness()
+        defer { harness.terminateNow() }
         try await harness.start()
         let client = harness.makeClient()
         try await client.start()
@@ -116,6 +119,7 @@ private final class Events: @unchecked Sendable {  // SAFETY: estado sob `lock`.
 
     @Test func cleanSessionFolderIsTheCwdOfTheProcess() async throws {
         let harness = try DaemonHarness()
+        defer { harness.terminateNow() }
         try await harness.start()
         let client = harness.makeClient()
         try await client.start()
@@ -135,6 +139,7 @@ private final class Events: @unchecked Sendable {  // SAFETY: estado sob `lock`.
 
     @Test func zshRunsInACleanSessionFolder() async throws {
         let harness = try DaemonHarness()
+        defer { harness.terminateNow() }
         try await harness.start()
         let client = harness.makeClient()
         try await client.start()
@@ -155,6 +160,7 @@ private final class Events: @unchecked Sendable {  // SAFETY: estado sob `lock`.
     @Test(.enabled(if: ProcessInfo.processInfo.environment["AB_REAL_CLI"] == "1"))
     func claudeHaikuRunsInACleanSessionFolder() async throws {
         let harness = try DaemonHarness()
+        defer { harness.terminateNow() }
         try await harness.start()
         let client = harness.makeClient()
         try await client.start()

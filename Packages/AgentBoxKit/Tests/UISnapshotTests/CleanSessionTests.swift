@@ -10,7 +10,7 @@ import Testing
 /// Sessões limpas e Quick Launch ligados ao Store real e a um `AGENTBOX_HOME` temporário (T1-17, T1-21; AC-1101…1106, AC-1108,
 /// AC-313). Os terminais não chegam a lançar (sem janela, o pane nunca tem tamanho): o lançamento real é coberto pelo E2E com o app.
 @MainActor
-@Suite(.serialized) struct CleanSessionTests {
+@Suite(.serialized, .offscreenAppKit) struct CleanSessionTests {
     struct Rig {
         let env: AppEnvironment
         let store: AgentBoxStore

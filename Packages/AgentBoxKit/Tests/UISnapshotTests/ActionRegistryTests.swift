@@ -29,7 +29,7 @@ final class Flag {
 }
 
 @MainActor
-@Suite struct ActionRegistryTests {
+@Suite(.offscreenAppKit) struct ActionRegistryTests {
     private func make(slice: ReleaseSlice = .slice1) -> (ActionRegistry, FakeSurface) {
         let s = FakeSurface()
         return (ActionRegistry(flags: SliceFlags(current: slice), surface: s), s)

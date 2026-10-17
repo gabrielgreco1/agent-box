@@ -6,9 +6,10 @@ import Testing
 
 @testable import AgentBoxPlatform
 
-@Suite(.serialized) struct DaemonBehaviorTests {
+@Suite(.serialized, .tags(.integration), .timeLimit(.minutes(1))) struct DaemonBehaviorTests {
     private func withDaemon(idleExit: Int = 0, _ body: (DaemonHarness) async throws -> Void) async throws {
         let harness = try DaemonHarness()
+        defer { harness.terminateNow() }
         try await harness.start(idleExit: idleExit)
         do {
             try await body(harness)
@@ -365,6 +366,7 @@ import Testing
 
     @Test func clientSurvivesDaemonRestartAndReportsSessionGone() async throws {
         let harness = try DaemonHarness()
+        defer { harness.terminateNow() }
         try await harness.start()
         let client = harness.makeClient()
         try await client.start()
@@ -384,6 +386,7 @@ import Testing
 
     @Test func daemonExitsWhenIdle() async throws {
         let harness = try DaemonHarness()
+        defer { harness.terminateNow() }
         try await harness.start(idleExit: 1)
         let client = harness.makeClient()
         try await client.start()

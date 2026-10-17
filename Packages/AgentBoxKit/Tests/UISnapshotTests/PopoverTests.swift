@@ -9,7 +9,7 @@ import Testing
 /// Menus e comboboxes dentro da janela (02 §12.11, §12.15): foco, Esc, teclado pelo `NSWindow`, geometria, fatias.
 extension OverlayHostTests {
 @MainActor
-@Suite(.serialized) struct PopoverTests {
+@Suite(.serialized, .offscreenAppKit) struct PopoverTests {
     final class FakeTerminal: NSView {
         override var acceptsFirstResponder: Bool { true }
     }

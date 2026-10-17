@@ -109,8 +109,17 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
     @available(*, unavailable) required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
     /// Abre sem ativar o app (o chamador decide se traz para frente).
+    /// Testes desligam: a janela nunca é ordenada para a frente (o AppKit puxaria uma janela titulada para dentro da tela).
+    public var orderingEnabled = true
+
     public func present(activate: Bool) {
         guard let window else { return }
+        guard orderingEnabled else {
+            window.setFrameOrigin(NSPoint(x: -20000, y: -20000))
+            positioner?.apply()
+            updateMainFrame()
+            return
+        }
         if activate {
             showWindow(nil)
             NSApp.activate()

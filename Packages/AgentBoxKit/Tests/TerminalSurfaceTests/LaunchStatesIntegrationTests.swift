@@ -10,7 +10,7 @@ import Testing
 /// Estados do pane (T1-16) com o `agentboxd` real e CLI falso (`/bin/sh -c ...`): ignição só depois de 300 ms, running no
 /// primeiro byte, exited com código, "Couldn't start" (spawn e saída precoce) e Restart/Retry reconstruindo o argv.
 @MainActor
-@Suite(.serialized) struct LaunchStatesIntegrationTests {
+@Suite(.serialized, .tags(.integration), .timeLimit(.minutes(1)), .offscreenAppKit) struct LaunchStatesIntegrationTests {
     private final class Rig {
         let harness: DaemonHarness
         let runtime: TerminalRuntime
@@ -33,7 +33,7 @@ import Testing
                 registry: nil, elements: nil)
             model = WorkspaceModel(runtime: runtime)
             area = PaneAreaView(model: model, registry: nil, elements: nil, router: nil)
-            window = NSWindow(contentRect: NSRect(x: -20000, y: -20000, width: 1000, height: 600), styleMask: [.borderless], backing: .buffered, defer: false)
+            window = OffscreenAppKit.makeWindow(size: NSSize(width: 1000, height: 600), styleMask: [.borderless])
             window.isReleasedWhenClosed = false
             window.contentView = area
             area.frame = NSRect(x: 0, y: 0, width: 1000, height: 600)

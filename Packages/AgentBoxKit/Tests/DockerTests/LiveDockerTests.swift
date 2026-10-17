@@ -4,7 +4,7 @@ import Testing
 
 @testable import AgentBoxDocker
 
-@Suite("Docker real (AGENTBOX_TEST_DOCKER=1)", .serialized, .enabled(if: Live.enabled))
+@Suite("Docker real (AGENTBOX_TEST_DOCKER=1)", .serialized, .enabled(if: Live.enabled), .tags(.integration), .timeLimit(.minutes(10)))
 struct LiveDockerTests {
     // MARK: Runtime e capacidade
 

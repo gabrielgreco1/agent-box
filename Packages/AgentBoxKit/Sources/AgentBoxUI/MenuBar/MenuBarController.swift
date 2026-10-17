@@ -6,13 +6,63 @@ import AppKit
 /// "Quit Agent Box Completely". Servido pelo próprio processo do app (sem helper de login, R1 D-03). `NSStatusItem` porque
 /// a casca é AppKit puro (00 T5). Os itens disparam ações do registro, as mesmas de `ctl`.
 @MainActor
+public protocol StatusItemHosting: AnyObject {
+    var button: NSStatusBarButton? { get }
+    var menu: NSMenu? { get set }
+}
+
+extension NSStatusItem: StatusItemHosting {}
+
+/// Quem cria o item da barra de menus. Só `SystemStatusBar` toca `NSStatusBar.system` (regra do lint.sh): testes usam
+/// `InMemoryStatusBar` e nunca põem um ícone real na barra do dono.
+@MainActor
+public protocol StatusBarProviding {
+    func makeItem() -> any StatusItemHosting
+    func remove(_ item: any StatusItemHosting)
+}
+
+@MainActor
+public struct SystemStatusBar: StatusBarProviding {
+    public init() {}
+
+    public func makeItem() -> any StatusItemHosting { NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength) }
+
+    public func remove(_ item: any StatusItemHosting) {
+        if let item = item as? NSStatusItem { NSStatusBar.system.removeStatusItem(item) }
+    }
+}
+
+/// Item de mentira (sem ícone, sem botão): serve aos testes e a qualquer execução fora do `.app`.
+@MainActor
+public final class InMemoryStatusBar: StatusBarProviding {
+    @MainActor public final class Item: StatusItemHosting {
+        public var button: NSStatusBarButton? { nil }
+        public var menu: NSMenu?
+        init() {}
+    }
+
+    public private(set) var items: [Item] = []
+    public init() {}
+
+    public func makeItem() -> any StatusItemHosting {
+        let item = Item()
+        items.append(item)
+        return item
+    }
+
+    public func remove(_ item: any StatusItemHosting) { items.removeAll { $0 === item } }
+}
+
+@MainActor
 public final class MenuBarController: NSObject, NSMenuDelegate {
     private let registry: ActionRegistry
-    private var statusItem: NSStatusItem?
+    private let statusBar: any StatusBarProviding
+    private var statusItem: (any StatusItemHosting)?
     public private(set) var state = MenuBarState()
 
-    public init(registry: ActionRegistry) {
+    public init(registry: ActionRegistry, statusBar: any StatusBarProviding = SystemStatusBar()) {
         self.registry = registry
+        self.statusBar = statusBar
         super.init()
     }
 
@@ -32,7 +82,7 @@ public final class MenuBarController: NSObject, NSMenuDelegate {
 
     private func install() {
         guard statusItem == nil else { return }
-        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        let item = statusBar.makeItem()
         item.button?.image = Self.icon
         item.button?.imagePosition = .imageLeading
         item.button?.setAccessibilityIdentifier(A11yID.menuBarIcon.rawValue)
@@ -46,7 +96,7 @@ public final class MenuBarController: NSObject, NSMenuDelegate {
 
     private func remove() {
         guard let item = statusItem else { return }
-        NSStatusBar.system.removeStatusItem(item)
+        statusBar.remove(item)
         statusItem = nil
     }
 

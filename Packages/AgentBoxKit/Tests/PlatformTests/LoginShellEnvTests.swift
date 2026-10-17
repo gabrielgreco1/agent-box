@@ -328,7 +328,7 @@ private func exists(_ tool: String, in dirs: [String]) -> Bool {
     dirs.contains { FileManager.default.isExecutableFile(atPath: "\($0)/\(tool)") }
 }
 
-@Suite struct LoginShellEnvRealShellTests {
+@Suite(.tags(.integration), .serialized, .timeLimit(.minutes(1))) struct LoginShellEnvRealShellTests {
     // Pula quando `claude` ou `gh` não existem na máquina.
     @Test(.enabled(if: exists("claude", in: toolSearchDirs()) && exists("gh", in: toolSearchDirs())))
     func realLoginShellPathResolvesClaudeAndGh() async throws {

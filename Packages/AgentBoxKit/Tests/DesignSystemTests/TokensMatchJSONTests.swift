@@ -5,7 +5,7 @@ import Testing
 @testable import AgentBoxDesignSystem
 
 /// Tokens gerados (`DS.*`, `MotionTokens`, `tokens.js`) = JSON fonte.
-@Suite struct TokensMatchJSONTests {
+@Suite(.offscreenAppKit) struct TokensMatchJSONTests {
     @Test func colorsMatchJSON() {
         let (tokens, _) = ColorSource.load()
         #expect(tokens.count == DS.ColorSpec.all.count, "contagem de cores")

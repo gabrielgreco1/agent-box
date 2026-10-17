@@ -8,7 +8,7 @@ import Testing
 
 /// Modelo, ações e persistência da sidebar ligados ao Store real (banco temporário isolado).
 @MainActor
-@Suite(.serialized) struct SidebarModelTests {
+@Suite(.serialized, .offscreenAppKit) struct SidebarModelTests {
     static func tempPaths() throws -> StorePaths {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("agentbox-sidebar-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)

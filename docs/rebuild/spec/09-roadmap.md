@@ -511,3 +511,8 @@ Consolidadas de `review/E-*.md`, 07 §9, 08 §11 e R3 §12. Nenhuma bloqueia a F
 | 17 | Spikes de abertura da v1.1: S5 (15 Claude com setup-token + 3 Codex por 8 h) e S7 (`codex exec-server`) | 07 §9 | Rodar na abertura da v1.1 | V11-A |
 
 Já decididas e que os agentes **não** reabrem: lote na v1 (01 §4.1; contraria R1 D-06), "Insert Skill or Agent…" na v1 Fatia 4, nome "Sessions"/"New Clean Session", sem teto de orçamento de proxy (P13), `Take Over` / `Hand Back`, "Computer" na UI, ⌘Q com overlay e `Keep Running` padrão, raiz de worktree em `~/orca/workspaces`.
+
+
+## 8. Polimento obrigatório por fatia (feedback do dono, 2026-10-17)
+
+Antes de fechar qualquer fatia roda uma tarefa **TN-POLISH**: varredura de todos os controles e superfícies daquela fatia (cada linha da tabela 03 §24) com o app real em primeiro plano e captura fiel (Gravação de Tela concedida), conferindo hover, press, foco, menus de contexto (sempre `DSMenuPanel`, nunca NSMenu nativo), tooltips, popovers, estados vazio/erro/carregando, motion e "nada sai da caixa". Cada item reprovado vira correção na mesma tarefa. Lista viva de feedback do dono: `docs/evidence/slice1/OWNER-FEEDBACK.md`.

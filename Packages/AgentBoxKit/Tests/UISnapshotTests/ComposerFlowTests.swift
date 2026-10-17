@@ -10,7 +10,7 @@ import Testing
 /// por ações do registro (as mesmas dos cliques), criar e ver o overlay fechar na hora com a linha pendente na sidebar.
 /// Sem janela, o pane nunca tem tamanho: o agente não é lançado aqui (isso é coberto em `DaemonTests` e na evidência).
 @MainActor
-@Suite(.serialized) struct ComposerFlowTests {
+@Suite(.serialized, .offscreenAppKit) struct ComposerFlowTests {
     final class FakeFolderPicker: SessionFolderPicking {
         var next: URL?
         func chooseFolder(title: String, message: String, prompt: String) async -> URL? { next }

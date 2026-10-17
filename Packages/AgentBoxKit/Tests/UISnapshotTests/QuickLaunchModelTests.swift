@@ -8,7 +8,7 @@ import Testing
 
 /// Conteúdo e regras do Quick Launch (03 §7, AC-313): itens, atalhos, perfis, fallback com o texto e o que ↵, ⌘↵ e ⇧↵ fazem.
 @MainActor
-@Suite struct QuickLaunchModelTests {
+@Suite(.offscreenAppKit) struct QuickLaunchModelTests {
     private let allInstalled: (TerminalProvider) -> Bool? = { _ in true }
 
     private func model(default agent: TerminalProvider = .claude, installed: @escaping (TerminalProvider) -> Bool? = { _ in true }, profiles: [LaunchProfile]? = nil) -> QuickLaunchModel {

@@ -8,7 +8,7 @@ import Testing
 
 /// Contrato de foco e pilha do `OverlayPanelHost` (02 §12.17, AC-T06): foco preso e devolvido, Esc, scrim, pilha de um nível.
 @MainActor
-@Suite(.serialized) struct OverlayHostTests {
+@Suite(.serialized, .offscreenAppKit) struct OverlayHostTests {
     final class FakeTerminal: NSView {
         override var acceptsFirstResponder: Bool { true }
     }
@@ -163,7 +163,7 @@ import Testing
 }
 
 @MainActor
-@Suite(.serialized) struct ToastCenterTests {
+@Suite(.serialized, .offscreenAppKit) struct ToastCenterTests {
     static func instantMotion() -> MotionPolicy {
         let motion = MotionPolicy()
         motion.mode = .instant

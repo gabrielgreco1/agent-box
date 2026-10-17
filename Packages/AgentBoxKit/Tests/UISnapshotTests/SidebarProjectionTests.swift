@@ -8,7 +8,7 @@ import Testing
 
 /// Regras puras da sidebar (03 §2): filtro, busca, ordem, `Show more`, agregação de estado, estados vazios e ordem de teclado.
 @MainActor
-@Suite struct SidebarProjectionTests {
+@Suite(.offscreenAppKit) struct SidebarProjectionTests {
     static let now = Date(timeIntervalSince1970: 1_900_000_000)
     static let home = "/Users/test"
 

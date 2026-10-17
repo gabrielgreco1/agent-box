@@ -32,7 +32,7 @@ actor LeaseBackend: ComputerBackend {
 }
 
 @MainActor
-@Suite("T3-05 - controlador de computadores e ações", .serialized)
+@Suite("T3-05 - controlador de computadores e ações", .serialized, .offscreenAppKit)
 struct ComputersControllerTests {
     struct Fixture {
         let controller = ComputersController()

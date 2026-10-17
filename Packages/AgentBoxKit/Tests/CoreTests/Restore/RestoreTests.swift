@@ -6,7 +6,7 @@ import Testing
 @testable import AgentBoxCore
 
 /// Reabertura (T1-23, 06 §1.4 e §2.6): classificação do motivo, cold log, Resume/Start Fresh e a reconciliação com o daemon.
-@Suite struct RestoreTests {
+@Suite(.tags(.integration), .serialized, .timeLimit(.minutes(1))) struct RestoreTests {
     // MARK: Motivo da interrupção
 
     @Test func reasonFollowsBootTimeThenCleanExit() {

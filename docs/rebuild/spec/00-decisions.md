@@ -38,6 +38,12 @@ Fonte de verdade para todos os capítulos da spec. Data: 2026-10-16. Auditoria q
 
 | P20 | SwiftTerm: adotar **1.99.0 fixado na revisão `2dad6a1`** a partir da T1-09 (S-02: parse 5–11× mais rápido, 0–0,3% de quadros perdidos com 4 panes Metal vs 6–24% na 1.20.0, `feed`/`send` seguros fora do main). Condição: explicar a diferença de `getBufferAsData` no dump ANSI antes de fechar a T1-09; se não explicável, voltar para 1.20.0 com `feed` no main e orçamento AR-406. | **Ratificado na T1-09 (2026-10-17):** a diferença de `getBufferAsData` foi explicada (NUL de continuação de caractere largo e de célula vazia na 1.20.0; metade órfã de caractere largo limpa na 1.99.0; ver `docs/evidence/spikes/S-02/parity/README.md`), então a 1.99.0 fica; sem recuo para a 1.20.0.
 
+| P21 | **Nenhuma dependência nem referência ao Orca no produto.** Worktrees do Agent Box vivem em pasta própria: padrão `~/AgentBox/worktrees/<repo>/<nome>` (revoga a parte de P15 sobre `~/orca/workspaces`). Nenhum texto de UI menciona o Orca (ex.: "same as Orca"), nenhum default aponta para pastas do Orca. O Orca segue só como referência de design na documentação interna. **A importação do Orca é removida por completo** (revoga P3): sai o OrcaImporter, o detector de coexistência, a T2-08 e qualquer menção no onboarding/Settings. |
+
+| P22 | **Painel direito na v1** (spec `10-right-panel.md`): Files em cima (~2/3, árvore dinâmica que segue o cwd do agente + visualizador de código) e Insights embaixo (~1/3: uso de IA Claude/Codex com visualizações próprias, plano, tokens; monitor da máquina e dos computadores Docker; proxy). Tudo redimensionável, minimizável, com troca de posição por arrasto e botões claros na faixa de topo para abrir/fechar cada módulo. |
+
+| P23 | **Permissões do macOS: no máximo uma vez, e só quando o usuário pede a função.** O app nunca dispara diálogo de permissão sozinho (Gravação de Tela, Acessibilidade, Notificações, item de login, Keychain): cada um só aparece no primeiro uso explícito da função que precisa dele, com uma explicação dentro do app antes, e nunca de novo depois de concedido. Assinatura sempre estável (identidade fixa de desenvolvedor) para o macOS reconhecer o mesmo app entre builds e atualizações. Nada de helper privilegiado: o app nunca pede a senha do usuário. Daemon via LaunchAgent do próprio usuário, aprovado uma vez. Lint e teste garantem que nenhum caminho automático chama APIs de pedido de permissão. |
+
 ## Decisões técnicas (recomendações dos revisores adotadas)
 
 | # | Decisão |

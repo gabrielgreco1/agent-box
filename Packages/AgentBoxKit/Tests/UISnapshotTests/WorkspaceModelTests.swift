@@ -9,7 +9,7 @@ import Testing
 
 /// Tabs e panes ligados ao Store real (T1-14): split, fechar, foco, rename, reordenar, reabrir e persistência do layout.
 @MainActor
-@Suite(.serialized) struct WorkspaceModelTests {
+@Suite(.serialized, .tags(.integration), .timeLimit(.minutes(1)), .offscreenAppKit) struct WorkspaceModelTests {
     struct Rig {
         let env: AppEnvironment
         let store: AgentBoxStore
@@ -231,7 +231,7 @@ import Testing
 
 /// Tab row e panes: medidas da spec (03 §3, §4, DS §12.7, §12.23).
 @MainActor
-@Suite struct TabRowConformanceTests {
+@Suite(.offscreenAppKit) struct TabRowConformanceTests {
     @Test func metricsMatchTheSpec() {
         #expect(TabMetrics.rowHeight == 32)
         #expect(TabMetrics.dragStrip == 4)

@@ -6,7 +6,7 @@ import Testing
 
 /// `PromptEditor` (02 §12.10): ⌘↵ envia, Return quebra linha, IME, Esc, foco sem selecionar tudo, altura automática.
 @MainActor
-@Suite(.serialized) struct PromptEditorTests {
+@Suite(.serialized, .offscreenAppKit) struct PromptEditorTests {
     private func key(_ code: UInt16, chars: String, flags: NSEvent.ModifierFlags = []) -> NSEvent {
         NSEvent.keyEvent(
             with: .keyDown, location: .zero, modifierFlags: flags, timestamp: 0, windowNumber: 0, context: nil, characters: chars,
@@ -27,12 +27,11 @@ import Testing
         let binding = Binding(get: { box.text }, set: { box.text = $0 })
         let root = PromptEditor(text: binding, placeholder: "Describe the task", autofocus: autofocus, onSubmit: onSubmit, onEscape: onEscape)
             .frame(width: 400)
-        let window = NSWindow(contentRect: NSRect(x: -4000, y: -4000, width: 400, height: 300), styleMask: [.titled], backing: .buffered, defer: false)
+        let window = OffscreenAppKit.makeWindow(size: NSSize(width: 400, height: 300), styleMask: [.titled])
         window.isReleasedWhenClosed = false
         let host = NSHostingView(rootView: root)
         window.contentView = host
         host.frame = NSRect(x: 0, y: 0, width: 400, height: 300)
-        window.orderFront(nil)
         host.layoutSubtreeIfNeeded()
         try? await Task.sleep(for: .milliseconds(150))
         let view = Self.find(PromptTextView.self, in: host)!

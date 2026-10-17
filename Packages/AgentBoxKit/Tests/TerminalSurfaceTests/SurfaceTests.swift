@@ -7,7 +7,7 @@ import Testing
 
 @testable import AgentBoxUI
 
-@Suite(.serialized) struct SurfaceTests {
+@Suite(.serialized, .offscreenAppKit) struct SurfaceTests {
     private func make(_ id: String = "t1") -> (TerminalHostView, NSWindow, OutputCollector) {
         let host = TerminalHostView(terminalID: id)
         let window = makeWindow(hosting: host)

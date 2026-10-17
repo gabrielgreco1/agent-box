@@ -136,7 +136,7 @@ actor RFBConnection {
     }
 }
 
-@Suite("T3-05 - viewer com o Docker real", .serialized, .enabled(if: LiveC.enabled))
+@Suite("T3-05 - viewer com o Docker real", .serialized, .enabled(if: LiveC.enabled), .tags(.integration), .timeLimit(.minutes(10)))
 struct LiveViewerTests {
     static let evidenceFile = "slice3/T3-05/live-viewer.json"
     static let spikeFile = "spikes/S3/ws-results.json"

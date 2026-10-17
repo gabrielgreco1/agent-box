@@ -7,7 +7,7 @@ import Testing
 
 /// Medidas da janela e do chrome (03 §1, T1-10): semáforos, faixa de titlebar, largura da sidebar, tamanho mínimo.
 @MainActor
-@Suite struct LayoutConformanceTests {
+@Suite(.offscreenAppKit) struct LayoutConformanceTests {
     @Test func trafficLightGeometryMatchesTheSpec() {
         for h: CGFloat in [12, 14, 16, 20] {
             let origins = WindowGeometry.trafficLightOrigins(buttonSize: CGSize(width: h, height: h))

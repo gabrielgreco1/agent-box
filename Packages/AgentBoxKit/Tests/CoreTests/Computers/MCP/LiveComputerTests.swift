@@ -85,7 +85,7 @@ class H(http.server.BaseHTTPRequestHandler):
 http.server.ThreadingHTTPServer(("0.0.0.0", 8080), H).serve_forever()
 """#
 
-@Suite("T3-03 - computador real com ferramentas MCP", .serialized, .enabled(if: LiveC.enabled))
+@Suite("T3-03 - computador real com ferramentas MCP", .serialized, .enabled(if: LiveC.enabled), .tags(.integration), .timeLimit(.minutes(10)))
 struct LiveComputerTests {
     static let evidenceFile = "slice3/T3-03/live-mcp.json"
 

@@ -8,7 +8,7 @@ import Testing
 
 /// Fluxo de ⌘Q com agentes vivos (T1-24): overlay "Keep Running" na janela, accessory, "Stop All and Quit…" e a barra de menus.
 @MainActor
-@Suite(.serialized) struct AppLifecycleTests {
+@Suite(.serialized, .offscreenAppKit) struct AppLifecycleTests {
     /// Registro de tudo o que o coordenador pediu ao resto do app.
     final class Probe {
         var counts = LiveProcessCounts(agents: 3, shells: 2)

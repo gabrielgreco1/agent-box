@@ -3,6 +3,7 @@ import AgentBoxProtocol
 import Darwin
 import Foundation
 import SwiftTerm
+import Synchronization
 
 @testable import AgentBoxPlatform
 
@@ -12,6 +13,27 @@ func agentboxdBinary() -> URL {
         return bundle.bundleURL.deletingLastPathComponent().appendingPathComponent("agentboxd")
     }
     return URL(fileURLWithPath: ".build/debug/agentboxd")
+}
+
+/// Registro dos daemons que os testes subiram: o que sobrar no fim do processo de teste é morto (sem órfãos, F10).
+enum SpawnedDaemons {
+    private static let pids = Mutex<Set<pid_t>>([])
+    private static let installed = Mutex<Bool>(false)
+
+    static func add(_ pid: pid_t) {
+        installed.withLock { done in
+            guard !done else { return }
+            done = true
+            atexit { SpawnedDaemons.killAll() }
+        }
+        pids.withLock { _ = $0.insert(pid) }
+    }
+
+    static func remove(_ pid: pid_t) { pids.withLock { _ = $0.remove(pid) } }
+
+    static func killAll() {
+        for pid in pids.withLock({ $0 }) { Darwin.kill(pid, SIGKILL) }
+    }
 }
 
 /// `agentboxd` real como processo filho, com `AGENTBOX_HOME` isolado em `/tmp` (sun_path limita a 104 bytes).
@@ -31,7 +53,8 @@ final class DaemonHarness: @unchecked Sendable {  // SAFETY: `process` só muda 
     func start(idleExit: Int = 0, binary: URL? = nil) async throws {
         let process = Process()
         process.executableURL = binary ?? agentboxdBinary()
-        process.arguments = ["--idle-exit", "\(idleExit)"]
+        // Nunca `0`: um daemon órfão de um teste que travou some sozinho 5 s depois de ficar sem sessões.
+        process.arguments = ["--idle-exit", "\(idleExit == 0 ? 5 : idleExit)"]
         var environment = ProcessInfo.processInfo.environment
         environment["AGENTBOX_HOME"] = home.path
         process.environment = environment
@@ -39,6 +62,7 @@ final class DaemonHarness: @unchecked Sendable {  // SAFETY: `process` só muda 
         process.standardError = FileHandle.nullDevice
         try process.run()
         self.process = process
+        SpawnedDaemons.add(process.processIdentifier)
         for _ in 0 ..< 100 {
             if let connection = try? await UDSClient.connect(path: socketPath) {
                 connection.close()
@@ -56,6 +80,7 @@ final class DaemonHarness: @unchecked Sendable {  // SAFETY: `process` só muda 
         guard let process else { return }
         Darwin.kill(process.processIdentifier, SIGKILL)
         await waitForExit()
+        SpawnedDaemons.remove(process.processIdentifier)
         self.process = nil
     }
 
@@ -67,9 +92,26 @@ final class DaemonHarness: @unchecked Sendable {  // SAFETY: `process` só muda 
 
     var isRunning: Bool { process?.isRunning ?? false }
 
+    /// Encerramento síncrono e idempotente (`defer` e `deinit` dos testes): SIGKILL, espera o término e apaga o home.
+    func terminateNow(removeHome: Bool = true) {
+        if let process {
+            if process.isRunning {
+                Darwin.kill(process.processIdentifier, SIGKILL)
+                // Espera limitada: `waitUntilExit` pode travar numa thread sem run loop (o hang que o teto de tempo não resgata).
+                for _ in 0 ..< 100 where process.isRunning { Thread.sleep(forTimeInterval: 0.02) }
+            }
+            SpawnedDaemons.remove(process.processIdentifier)
+        }
+        process = nil
+        if removeHome { try? FileManager.default.removeItem(at: home) }
+    }
+
+    deinit { terminateNow() }
+
     func stop() async {
         if let process, process.isRunning { process.terminate() }
         await waitForExit()
+        if let process { SpawnedDaemons.remove(process.processIdentifier) }
         process = nil
         try? FileManager.default.removeItem(at: home)
     }

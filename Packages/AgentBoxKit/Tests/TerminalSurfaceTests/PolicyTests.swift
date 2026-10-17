@@ -6,7 +6,7 @@ import Testing
 
 @testable import AgentBoxUI
 
-@Suite struct ReplyAndPasteFilterTests {
+@Suite(.offscreenAppKit) struct ReplyAndPasteFilterTests {
     @Test func uiNeverAnswersAnOSC52Query() {
         let osc52 = Array("\u{1b}]52;c;\(Data("secret".utf8).base64EncodedString())\u{1b}\\".utf8)
         #expect(!UIReplyFilter.allows(osc52))
@@ -56,7 +56,7 @@ import Testing
 }
 
 /// AC-T08: tabela tecla -> bytes de 03 §21.
-@Suite struct KeyTableTests {
+@Suite(.offscreenAppKit) struct KeyTableTests {
     @Test func reservedChordsProduceTheDocumentedBytes() {
         #expect(TerminalKeyTable.bytes(key: .leftArrow, modifiers: [.command]) == [0x01])
         #expect(TerminalKeyTable.bytes(key: .rightArrow, modifiers: [.command]) == [0x05])
@@ -85,7 +85,7 @@ import Testing
 }
 
 /// AR-710: uma transição gera exatamente um resize; rajadas colapsam; tamanho igual não envia.
-@Suite struct ResizeCoordinatorTests {
+@Suite(.offscreenAppKit) struct ResizeCoordinatorTests {
     private actor Log {
         var sizes: [PTYResizeCoordinator.Size] = []
         func add(_ size: PTYResizeCoordinator.Size) { sizes.append(size) }

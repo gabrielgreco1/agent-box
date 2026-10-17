@@ -18,6 +18,10 @@ final class WindowRecorder {
         guard stream == nil else { throw CtlError(code: "recording_failed", message: "a recording is already running (\(path ?? ""))") }
         let url = URL(fileURLWithPath: outPath)
         unlink(outPath)
+        // Só consulta (nunca pede) a permissão de Gravação de Tela: sem ela o macOS abriria o prompt a cada execução.
+        guard CGPreflightScreenCaptureAccess() else {
+            throw CtlError(code: "recording_failed", message: "Screen Recording permission is not granted (grant it in System Settings; the app never asks)")
+        }
         do {
             let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
             let wid = CGWindowID(window.windowNumber)

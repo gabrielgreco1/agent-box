@@ -8,7 +8,7 @@ import Testing
 @testable import AgentBoxUI
 
 /// Integração com o `agentboxd` real: zsh num PTY do daemon, `TerminalHostView` anexado por `TerminalSessionBinding`.
-@Suite(.serialized) struct DaemonIntegrationTests {
+@Suite(.serialized, .tags(.integration), .timeLimit(.minutes(1)), .offscreenAppKit) struct DaemonIntegrationTests {
     private struct Rig {
         let harness: DaemonHarness
         let client: PTYClient
@@ -23,6 +23,7 @@ import Testing
         _ body: (Rig) async throws -> Void
     ) async throws {
         let harness = try DaemonHarness()
+        defer { harness.terminateNow() }
         try await harness.start()
         let client = harness.makeClient()
         var binding: TerminalSessionBinding?
@@ -149,6 +150,7 @@ import Testing
 
     @Test func reattachReplayDoesNotAnswerOldQueries() async throws {
         let harness = try DaemonHarness()
+        defer { harness.terminateNow() }
         try await harness.start()
         let client = harness.makeClient()
         try await client.start()
@@ -176,6 +178,7 @@ import Testing
 
     @Test func backlogOverTheLimitForcesASnapshot() async throws {
         let harness = try DaemonHarness()
+        defer { harness.terminateNow() }
         try await harness.start()
         let client = harness.makeClient(maxBacklogBytes: 64 << 10)
         try await client.start()

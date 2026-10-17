@@ -10,7 +10,7 @@ import Testing
 /// Snapshots e medidas de Settings e do onboarding (T1-26): nav 240, conteúdo até 720, controles de 240 e nada fora da caixa
 /// em 1440×900 e 760×480 (AC-T27). Referências em `__Snapshots__/`; gravar com `AB_RECORD_SNAPSHOTS=1`.
 @MainActor
-@Suite(.serialized) struct SettingsSnapshotTests {
+@Suite(.serialized, .offscreenAppKit) struct SettingsSnapshotTests {
     static let sizes = [CGSize(width: 1440, height: 900), CGSize(width: 760, height: 480)]
 
     static func demoEnv() -> AppEnvironment {

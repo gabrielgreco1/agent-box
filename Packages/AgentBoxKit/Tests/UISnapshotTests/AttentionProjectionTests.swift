@@ -10,7 +10,7 @@ import Testing
 /// Estado de atividade na projeção da sidebar (02 §2.6, 03 §2.6–§2.7, 01 §6.3): glifo, rótulo, linha de agente,
 /// agregação do card e não lido. Funções puras, sem janela.
 @MainActor
-@Suite struct AttentionProjectionTests {
+@Suite(.offscreenAppKit) struct AttentionProjectionTests {
     static let now = Date(timeIntervalSince1970: 1_900_000_000)
 
     func terminal(_ state: TerminalProcessState = .running, provider: TerminalProvider = .claude, exit: Int? = nil) -> Terminal {

@@ -3,7 +3,7 @@ import Testing
 @testable import AgentBoxDesignSystem
 
 /// Logos oficiais de agente (02 §2.10): PNGs em `Resources/AgentLogos`, proveniência em `sources.json`.
-@MainActor @Suite struct AgentLogoTests {
+@MainActor @Suite(.offscreenAppKit) struct AgentLogoTests {
     @Test func officialLogosAreBundledAtBothScales() throws {
         for name in ["claude", "codex", "opencode"] {
             _ = try #require(DSAgentLogoImages.image(named: name), "\(name)@3x.png ausente no bundle")

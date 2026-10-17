@@ -5,7 +5,7 @@ import Testing
 
 /// Spike S2 (07 §9, CS-110/111/112): rede `internal`, DNS entre containers, porta publicada só pelo egress.
 /// Roda no runtime detectado (aqui, Docker Desktop). OrbStack e Colima não estão instalados nesta máquina.
-@Suite("Spike S2 - rede internal e publicação pelo egress", .serialized, .enabled(if: Live.enabled))
+@Suite("Spike S2 - rede internal e publicação pelo egress", .serialized, .enabled(if: Live.enabled), .tags(.integration), .timeLimit(.minutes(10)))
 struct LiveNetworkTests {
     @Test func s2InternalNetworkDNSAndPortPublishedOnlyByEgress() async throws {
         try await Live.with { env in

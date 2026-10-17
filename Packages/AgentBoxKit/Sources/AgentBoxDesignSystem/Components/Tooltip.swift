@@ -77,6 +77,10 @@ public final class TooltipController {
     private var panel: NSPanel?
     private weak var parent: NSWindow?
 
+    /// Testes desligam: o painel nunca é ordenado na tela (o estado do tooltip continua igual, só não aparece janela).
+    // SAFETY: gravado uma vez no bootstrap dos testes (main actor), antes de qualquer tooltip; produção nunca escreve.
+    nonisolated(unsafe) public static var orderingEnabled = true
+
     public init() {}
 
     public var isVisible: Bool { visibleKey != nil }
@@ -155,6 +159,12 @@ public final class TooltipController {
         let limit = max(bubbleWidth / 2 - DS.Radius.control - DSMetrics.tooltipArrow, 0)
         model.arrowOffset = min(max(anchorRect.midX - bubbleMidX, -limit), limit)
         panel.setFrame(NSRect(x: x, y: y, width: size.width, height: size.height), display: false)
+        guard Self.orderingEnabled else {
+            visibleKey = key
+            shownCount += 1
+            model.visible = true
+            return
+        }
         if let window, panel.parent !== window {
             parent?.removeChildWindow(panel)
             window.addChildWindow(panel, ordered: .above)

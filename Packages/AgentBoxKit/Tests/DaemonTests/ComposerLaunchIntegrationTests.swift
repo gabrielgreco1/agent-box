@@ -8,7 +8,7 @@ import Testing
 /// Composer ponta a ponta no nível do Core (T1-20): repositório temporário -> projeto -> `SessionCreationService` cria a
 /// worktree e grava sessão/tab/terminal -> `LaunchCoordinator` lança o terminal gravado no `agentboxd` real, na pasta da
 /// worktree. zsh de verdade; `claude -p --model haiku "reply OK"` de verdade (opt-in por custo, `AB_REAL_CLI=1`).
-@Suite(.serialized) struct ComposerLaunchIntegrationTests {
+@Suite(.serialized, .tags(.integration), .timeLimit(.minutes(1))) struct ComposerLaunchIntegrationTests {
     private final class Events: @unchecked Sendable {  // SAFETY: estado sob `lock`.
         private let lock = NSLock()  // LOCK: seções curtas, sem await.
         private var items: [LaunchEvent] = []
@@ -91,6 +91,7 @@ import Testing
         let rig = try await makeRig()
         defer { try? FileManager.default.removeItem(at: rig.root) }
         let harness = try DaemonHarness()
+        defer { harness.terminateNow() }
         try await harness.start()
         let client = harness.makeClient()
         try await client.start()
@@ -126,6 +127,7 @@ import Testing
         let rig = try await makeRig()
         defer { try? FileManager.default.removeItem(at: rig.root) }
         let harness = try DaemonHarness()
+        defer { harness.terminateNow() }
         try await harness.start()
         let client = harness.makeClient()
         try await client.start()

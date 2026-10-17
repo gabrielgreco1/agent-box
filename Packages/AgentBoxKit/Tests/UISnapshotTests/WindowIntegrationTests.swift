@@ -6,7 +6,7 @@ import Testing
 @testable import AgentBoxUI
 
 @MainActor
-@Suite struct UIElementStoreTests {
+@Suite(.offscreenAppKit) struct UIElementStoreTests {
     @Test func snapshotBuildsHierarchyFromParentLinks() {
         let store = UIElementStore()
         let a = UUID(), b = UUID(), c = UUID()
@@ -57,13 +57,13 @@ import Testing
 
 /// A janela vazia lista os controles pelo registro (T1-02: "ctl ui tree lista a janela vazia").
 @MainActor
-@Suite struct EmptyWindowTreeTests {
+@Suite(.offscreenAppKit) struct EmptyWindowTreeTests {
     static func host(_ env: AppEnvironment, size: NSSize = NSSize(width: 760, height: 480)) async -> MainWindowController {
         let controller = MainWindowController(env: env, autosaveName: nil)
         let window = controller.window!
         window.setContentSize(size)
-        window.setFrameOrigin(NSPoint(x: -4000, y: -4000))
-        controller.present(activate: false)  // fora da tela; sem ativar o app nem roubar foco
+        controller.orderingEnabled = false  // nunca ordenada: nada na tela do dono, sem ativar o app nem roubar foco
+        controller.present(activate: false)
         window.contentView?.layoutSubtreeIfNeeded()
         for _ in 0..<80 {
             try? await Task.sleep(for: .milliseconds(25))

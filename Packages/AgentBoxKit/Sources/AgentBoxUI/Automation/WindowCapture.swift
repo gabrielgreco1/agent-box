@@ -18,6 +18,15 @@ enum WindowCapture {
     }
 
     static func capture(_ window: NSWindow) async throws -> Capture {
+        // Só consulta (nunca pede) a permissão de Gravação de Tela: sem ela, usa o render do AppKit e não abre prompt.
+        guard CGPreflightScreenCaptureAccess() else {
+            guard let image = viaAppKit(window) else {
+                throw CtlError(code: "screenshot_failed", message: "Screen Recording permission is not granted and the AppKit fallback produced no image")
+            }
+            return Capture(
+                image: image, fidelity: "appkit",
+                note: "Screen Recording permission not granted (the app never asks); AppKit render does not include Metal layers")
+        }
         do {
             return Capture(image: try await viaScreenCaptureKit(window), fidelity: "screencapturekit", note: nil)
         } catch {

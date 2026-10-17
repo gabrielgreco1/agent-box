@@ -12,7 +12,7 @@ import Testing
 /// `app.sock` do `AppEnvironment` da Fatia 2; o estado aparece no card e na tab, a notificação sai pelo centro falso e o
 /// badge do Dock acompanha. Nada toca o `UNUserNotificationCenter` real.
 @MainActor
-@Suite(.serialized) struct AttentionIntegrationTests {
+@Suite(.serialized, .tags(.integration), .timeLimit(.minutes(1)), .offscreenAppKit) struct AttentionIntegrationTests {
     // MARK: Hooks reais
 
     nonisolated static let spikes: URL = {

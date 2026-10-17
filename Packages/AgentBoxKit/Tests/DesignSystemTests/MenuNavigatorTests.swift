@@ -6,7 +6,7 @@ import Testing
 
 /// Teclado de menus e comboboxes (02 §12.11, §12.15): destaque, busca, type-ahead, submenu. Sem janela.
 @MainActor
-@Suite struct MenuNavigatorTests {
+@Suite(.offscreenAppKit) struct MenuNavigatorTests {
     private func item(_ id: String, _ title: String? = nil, disabled: Bool = false, pinned: Bool = false, sub: [DSMenuEntry] = []) -> DSMenuEntry {
         .item(DSMenuItem(id, title ?? id, disabledReason: disabled ? "Not installed" : nil, pinned: pinned, submenu: sub))
     }
@@ -160,7 +160,7 @@ func waitUntil(_ timeout: Double = 3, _ condition: @MainActor () -> Bool) async 
 }
 
 @MainActor
-@Suite struct TooltipPolicyTests {
+@Suite(.offscreenAppKit) struct TooltipPolicyTests {
     @Test func delaysComeFromTheTokens() {
         #expect(TooltipDelay.standard.seconds == 0.4)
         #expect(TooltipDelay.tab.seconds == 0.5)
@@ -190,7 +190,7 @@ func waitUntil(_ timeout: Double = 3, _ condition: @MainActor () -> Bool) async 
 
     @Test func showsAfterTheDelayAndNotBefore() async {
         let (controller, scheduler) = makeController()
-        let window = NSWindow(contentRect: NSRect(x: -4000, y: -4000, width: 200, height: 100), styleMask: [.titled], backing: .buffered, defer: false)
+        let window = OffscreenAppKit.makeWindow(size: NSSize(width: 200, height: 100), styleMask: [.titled])
         window.isReleasedWhenClosed = false
         defer { controller.dismiss(); window.close() }
         let key = UUID()
@@ -208,7 +208,7 @@ func waitUntil(_ timeout: Double = 3, _ condition: @MainActor () -> Bool) async 
 
     @Test func leavingBeforeTheDelayCancelsAndClickDismisses() async {
         let (controller, scheduler) = makeController()
-        let window = NSWindow(contentRect: NSRect(x: -4000, y: -4000, width: 200, height: 100), styleMask: [.titled], backing: .buffered, defer: false)
+        let window = OffscreenAppKit.makeWindow(size: NSSize(width: 200, height: 100), styleMask: [.titled])
         window.isReleasedWhenClosed = false
         defer { controller.dismiss(); window.close() }
         let key = UUID()
@@ -235,7 +235,7 @@ func waitUntil(_ timeout: Double = 3, _ condition: @MainActor () -> Bool) async 
 
     @Test func secondTooltipWithinTheChainWindowOpensImmediately() async {
         let (controller, scheduler) = makeController()
-        let window = NSWindow(contentRect: NSRect(x: -4000, y: -4000, width: 200, height: 100), styleMask: [.titled], backing: .buffered, defer: false)
+        let window = OffscreenAppKit.makeWindow(size: NSSize(width: 200, height: 100), styleMask: [.titled])
         window.isReleasedWhenClosed = false
         defer { controller.dismiss(); window.close() }
         let anchor: () -> NSRect? = { NSRect(x: -3900, y: -3950, width: 28, height: 28) }

@@ -6,27 +6,17 @@ import AgentBoxStore
 import AppKit
 import Foundation
 
-/// Seletor de pasta de "New Clean Session in Folder…" (03 §2.10): `NSOpenPanel` escuro. O app não cria nem apaga nada na pasta.
+/// Seletor de pasta de "New Clean Session in Folder…" (03 §2.10). Usa o mesmo seletor do composer (um só `NSOpenPanel`,
+/// e um só ponto que testes e automação trocam por um fake). O app não cria nem apaga nada na pasta.
 @MainActor
 struct CleanFolderPicker: FolderPicking {
+    let base: @MainActor () -> any SessionFolderPicking
+
     func chooseFolder() async -> URL? {
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = false
-        panel.allowsMultipleSelection = false
-        panel.canCreateDirectories = true
-        panel.appearance = NSAppearance(named: .darkAqua)
-        panel.title = String(localized: "New Clean Session in Folder", bundle: .module)
-        panel.message = String(localized: "Pick the folder the session works in. Agent Box won't create or delete anything in it.", bundle: .module)
-        panel.prompt = String(localized: "Start Session", bundle: .module)
-        let response: NSApplication.ModalResponse = await withCheckedContinuation { continuation in
-            if let window = NSApp.keyWindow {
-                panel.beginSheetModal(for: window) { continuation.resume(returning: $0) }
-            } else {
-                panel.begin { continuation.resume(returning: $0) }
-            }
-        }
-        return response == .OK ? panel.url : nil
+        await base().chooseFolder(
+            title: String(localized: "New Clean Session in Folder", bundle: .module),
+            message: String(localized: "Pick the folder the session works in. Agent Box won't create or delete anything in it.", bundle: .module),
+            prompt: String(localized: "Start Session", bundle: .module))
     }
 }
 
@@ -45,7 +35,7 @@ final class CleanSessionController {
     private let sessionsRoot: () -> URL
     private let runsRoot: () -> URL
     private let automationEnabled: Bool
-    var picker: any FolderPicking = CleanFolderPicker()
+    var picker: any FolderPicking = CleanFolderPicker(base: { OpenPanelSessionFolderPicker() })
     /// Move para o Lixo do macOS (recuperável); os testes trocam por um destino temporário.
     var trashItem: (URL) throws -> Void = CleanSessionFolders.systemTrash
     /// Checagem prévia e remoção de worktree (06 §5.2); os testes trocam pelo serviço de um sandbox.

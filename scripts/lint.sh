@@ -172,6 +172,19 @@ fi
 
 # --- (2) proibições ------------------------------------------------------------------------------
 run_rules
+# Testes nunca põem janela na tela do dono nem ativam o app: só o helper (`OffscreenAppKit.swift`) pode ordenar/ativar.
+TEST_WINDOW="$(cd "$ROOT" && rg -nP --no-heading --type swift -g '!**/OffscreenAppKit.swift' \
+  -e '\b(makeKeyAndOrderFront|orderFront(Regardless)?|orderFrontRegardless)\s*\(|\bNSApp(lication\.shared)?\??\.activate\(|activate\(ignoringOtherApps' \
+  Packages/AgentBoxKit/Tests 2>/dev/null | grep -vE '^[^:]+:[0-9]+:[[:space:]]*//' || true)"
+STATUS_BAR="$(cd "$ROOT" && rg -nP --no-heading --type swift -g '!**/MenuBarController.swift' -e 'NSStatusBar\.system' \
+  Packages App 2>/dev/null | grep -vE '^[^:]+:[0-9]+:[[:space:]]*//' || true)"
+report status-bar "NSStatusBar.system só em MenuBarController.swift (testes usam InMemoryStatusBar)" "$STATUS_BAR"
+SCREEN_CAPTURE="$(cd "$ROOT" && { rg -nP --no-heading --type swift -e 'CGRequestScreenCaptureAccess' Packages App 2>/dev/null; \
+  rg -nP --no-heading --type swift -e 'SCShareableContent|import ScreenCaptureKit|CGRequestScreenCaptureAccess' Packages/AgentBoxKit/Tests 2>/dev/null; \
+  rg -nP --no-heading --type swift -g '!**/Automation/WindowCapture.swift' -g '!**/Automation/WindowRecorder.swift' -e 'SCShareableContent' Packages/AgentBoxKit/Sources 2>/dev/null; } \
+  | grep -vE '^[^:]+:[0-9]+:[[:space:]]*//' || true)"
+report screen-capture "Gravação de Tela: nada pede a permissão (CGRequestScreenCaptureAccess proibido; só preflight) e testes não usam ScreenCaptureKit" "$SCREEN_CAPTURE"
+report test-window "Tests/ não pode usar makeKeyAndOrderFront/orderFront/activate (use OffscreenAppKit.makeWindow e window.makeKey())" "$TEST_WINDOW"
 if [ "$VIOLATIONS" -gt 0 ]; then
   echo "lint: FALHOU ($VIOLATIONS violação(ões))" >&2
   exit 1

@@ -4,7 +4,7 @@ import Testing
 
 /// Tokens do Agent Box = valores extraídos do Orca 1.4.219 (P17), em `docs/rebuild/reference/orca-1.4.219/tokens/`.
 /// Onde diverge, a divergência é declarada com `note` no JSON fonte (02 §0).
-@Suite struct OrcaParityTests {
+@Suite(.offscreenAppKit) struct OrcaParityTests {
     @Test func everyColorHasAnOrcaReferenceOrAJustification() {
         let (tokens, _) = ColorSource.load()
         for t in tokens where t.orca == nil {

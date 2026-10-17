@@ -4,7 +4,7 @@ import Testing
 @testable import AgentBoxUI
 
 @MainActor
-@Suite struct KeyBindingRegistryTests {
+@Suite(.offscreenAppKit) struct KeyBindingRegistryTests {
     /// AC-T03: um teste falha se a tabela canônica de 03 §21 tem atalho duplicado no mesmo escopo,
     /// Global contra a lista reservada ao terminal, ou Overlay contra Palette sem declaração.
     @Test func canonicalTableHasNoConflicts() throws {

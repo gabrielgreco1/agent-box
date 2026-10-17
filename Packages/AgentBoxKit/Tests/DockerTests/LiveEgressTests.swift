@@ -6,7 +6,7 @@ import Testing
 
 /// T3-02 com o Docker real (`AGENTBOX_TEST_DOCKER=1`): rede interna + egress, `work` sem rota para fora, reqlog, SSRF e
 /// encadeamento para proxies upstream HTTP (Basic) e SOCKS5 (usuário/senha). Só toca em recursos `agentbox.test=1` + `test_run`.
-@Suite("T3-02 - egress sidecar com Docker real", .serialized, .enabled(if: Live.enabled))
+@Suite("T3-02 - egress sidecar com Docker real", .serialized, .enabled(if: Live.enabled), .tags(.integration), .timeLimit(.minutes(10)))
 struct LiveEgressTests {
     static let file = "slice3/T3-02/live-egress.json"
 

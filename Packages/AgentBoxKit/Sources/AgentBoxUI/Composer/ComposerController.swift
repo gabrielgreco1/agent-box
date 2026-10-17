@@ -21,6 +21,7 @@ struct OpenPanelSessionFolderPicker: SessionFolderPicking {
         panel.canChooseFiles = false
         panel.allowsMultipleSelection = false
         panel.canCreateDirectories = true
+        panel.appearance = NSAppearance(named: .darkAqua)
         panel.title = title
         panel.message = message
         panel.prompt = prompt

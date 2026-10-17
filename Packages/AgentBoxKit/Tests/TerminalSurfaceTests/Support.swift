@@ -16,13 +16,34 @@ func agentboxdBinary() -> URL {
     return URL(fileURLWithPath: ".build/debug/agentboxd")
 }
 
+/// Registro dos daemons que os testes subiram: o que sobrar no fim do processo de teste é morto (sem órfãos, F10).
+nonisolated enum SpawnedDaemons {
+    private static let pids = Mutex<Set<pid_t>>([])
+    private static let installed = Mutex<Bool>(false)
+
+    static func add(_ pid: pid_t) {
+        installed.withLock { done in
+            guard !done else { return }
+            done = true
+            atexit { SpawnedDaemons.killAll() }
+        }
+        pids.withLock { _ = $0.insert(pid) }
+    }
+
+    static func remove(_ pid: pid_t) { pids.withLock { _ = $0.remove(pid) } }
+
+    static func killAll() {
+        for pid in pids.withLock({ $0 }) { Darwin.kill(pid, SIGKILL) }
+    }
+}
+
 enum HarnessError: Error { case daemonDidNotStart, timeout(String) }
 
 /// `agentboxd` real como processo filho, com `AGENTBOX_HOME` isolado em `/tmp` (sun_path limita a 104 bytes).
 final class DaemonHarness: @unchecked Sendable {  // SAFETY: `process` só muda em start/stop, chamados em sequência pelo teste.
     let home: URL
     let socketPath: String
-    private var process: Process?
+    nonisolated(unsafe) private var process: Process?
 
     init() throws {
         home = URL(fileURLWithPath: "/tmp/abt-\(UInt32.random(in: 0 ... 0xFFFFFF))", isDirectory: true)
@@ -33,7 +54,8 @@ final class DaemonHarness: @unchecked Sendable {  // SAFETY: `process` só muda 
     func start() async throws {
         let process = Process()
         process.executableURL = agentboxdBinary()
-        process.arguments = ["--idle-exit", "0"]
+        // Nunca `0`: 5 s sem sessões e o daemon de um teste que travou some sozinho (sem órfãos, F10).
+        process.arguments = ["--idle-exit", "5"]
         var environment = ProcessInfo.processInfo.environment
         environment["AGENTBOX_HOME"] = home.path
         process.environment = environment
@@ -41,6 +63,7 @@ final class DaemonHarness: @unchecked Sendable {  // SAFETY: `process` só muda 
         process.standardError = FileHandle.nullDevice
         try process.run()
         self.process = process
+        SpawnedDaemons.add(process.processIdentifier)
         for _ in 0 ..< 100 {
             if let connection = try? await UDSClient.connect(path: socketPath) {
                 connection.close()
@@ -57,6 +80,7 @@ final class DaemonHarness: @unchecked Sendable {  // SAFETY: `process` só muda 
             let deadline = ContinuousClock.now + .seconds(5)
             while process.isRunning, ContinuousClock.now < deadline { try? await Task.sleep(for: .milliseconds(50)) }
         }
+        if let process { SpawnedDaemons.remove(process.processIdentifier) }
         process = nil
         try? FileManager.default.removeItem(at: home)
     }
@@ -67,8 +91,25 @@ final class DaemonHarness: @unchecked Sendable {  // SAFETY: `process` só muda 
         Darwin.kill(process.processIdentifier, SIGKILL)
         let deadline = ContinuousClock.now + .seconds(5)
         while process.isRunning, ContinuousClock.now < deadline { try? await Task.sleep(for: .milliseconds(25)) }
+        SpawnedDaemons.remove(process.processIdentifier)
         self.process = nil
     }
+
+    /// Encerramento síncrono e idempotente (`defer` e `deinit` dos testes): SIGKILL, espera o término e apaga o home.
+    nonisolated func terminateNow(removeHome: Bool = true) {
+        if let process {
+            if process.isRunning {
+                Darwin.kill(process.processIdentifier, SIGKILL)
+                // Espera limitada: `waitUntilExit` pode travar numa thread sem run loop (o hang que o teto de tempo não resgata).
+                for _ in 0 ..< 100 where process.isRunning { Thread.sleep(forTimeInterval: 0.02) }
+            }
+            SpawnedDaemons.remove(process.processIdentifier)
+        }
+        process = nil
+        if removeHome { try? FileManager.default.removeItem(at: home) }
+    }
+
+    deinit { terminateNow() }
 
     func makeClient(maxBacklogBytes: Int = 4 << 20) -> PTYClient {
         PTYClient(configuration: PTYClientConfiguration(socketPath: socketPath, build: "test", maxBacklogBytes: maxBacklogBytes))
@@ -110,7 +151,7 @@ final class OutputCollector: Sendable {
 /// Janela fora da tela com o host dentro (não é exibida; serve de hierarquia para foco, layout e Metal).
 @MainActor
 func makeWindow(hosting host: TerminalHostView, size: NSSize = NSSize(width: 800, height: 500)) -> NSWindow {
-    let window = NSWindow(contentRect: NSRect(origin: NSPoint(x: -20000, y: -20000), size: size), styleMask: [.borderless], backing: .buffered, defer: false)
+    let window = OffscreenAppKit.makeWindow(size: size, styleMask: [.borderless])
     window.isReleasedWhenClosed = false
     window.contentView = host
     host.frame = NSRect(origin: .zero, size: size)

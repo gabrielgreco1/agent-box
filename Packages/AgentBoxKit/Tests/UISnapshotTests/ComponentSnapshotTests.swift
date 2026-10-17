@@ -10,7 +10,7 @@ import Testing
 
 /// Snapshot de cada componente base (T1-11, 02 §12). Referências em `__Snapshots__/`; gravar com `AB_RECORD_SNAPSHOTS=1`.
 @MainActor
-@Suite(.serialized) struct ComponentSnapshotTests {
+@Suite(.serialized, .offscreenAppKit) struct ComponentSnapshotTests {
     static let recording: SnapshotTestingConfiguration.Record = ProcessInfo.processInfo.environment["AB_RECORD_SNAPSHOTS"] == "1" ? .all : .missing
 
     /// Ambiente com as ações usadas pelos controles registradas (sem efeito), para o `ActionButton` renderizar habilitado.

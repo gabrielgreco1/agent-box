@@ -9,7 +9,7 @@ import Testing
 /// pelo ticket e pelo túnel do egress. Mede fps (página animada) e latência de input (humano no controle), com a janela visível
 /// e com ela fora da tela. Só toca em recursos `agentbox.test=1` + `agentbox.test_run=<id>`.
 @MainActor
-@Suite("T3-05 - noVNC no WKWebView com o Docker real", .serialized, .enabled(if: ProcessInfo.processInfo.environment["AGENTBOX_TEST_DOCKER"] == "1"))
+@Suite("T3-05 - noVNC no WKWebView com o Docker real", .serialized, .enabled(if: ProcessInfo.processInfo.environment["AGENTBOX_TEST_DOCKER"] == "1"), .tags(.integration), .timeLimit(.minutes(10)), .offscreenAppKit)
 struct LiveViewerWebViewTests {
     static var repoRoot: URL {
         var root = URL(fileURLWithPath: #filePath)
@@ -44,10 +44,9 @@ struct LiveViewerWebViewTests {
             if events.count < 40 { events.append("\(event)") }
             original(event)
         }
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1000, height: 640), styleMask: [.titled], backing: .buffered, defer: false)
+        let window = OffscreenAppKit.makeWindow(size: NSSize(width: 1000, height: 640), styleMask: [.titled])
         window.isReleasedWhenClosed = false
         window.contentView = controller.web
-        window.orderFront(nil)
         await controller.start()
         for _ in 0..<80 where controller.model.connection != .live { try await Task.sleep(for: .milliseconds(250)) }
         #expect(controller.model.connection == .live, "the viewer never went live: \(controller.model.connection) info \(controller.web.streamInfo) events \(events)")
