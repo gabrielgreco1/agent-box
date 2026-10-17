@@ -1,0 +1,4 @@
+{
+  "events" : "create,start,die,destroy",
+  "exit_code" : "3"
+}
