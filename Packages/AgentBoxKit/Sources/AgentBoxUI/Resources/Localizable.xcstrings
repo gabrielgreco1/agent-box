@@ -12,17 +12,6 @@
         }
       }
     },
-    "%@": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@"
-          }
-        }
-      }
-    },
     "%@ exited.": {
       "extractionState": "manual",
       "localizations": {
@@ -1086,17 +1075,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Custom prefix"
-          }
-        }
-      }
-    },
-    "Decline": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Decline"
           }
         }
       }

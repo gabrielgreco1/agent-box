@@ -94,6 +94,7 @@ class RfbClientFilter:
         self.pointer = (0, 0)
         self.dropped_inputs = 0
         self.forwarded_inputs = 0
+        self.trace: list[tuple[int, int]] | None = None  # (tipo, bytes) das primeiras mensagens, só para diagnóstico
 
     def feed(self, data: bytes) -> bytes:
         self.buf += data
@@ -159,7 +160,8 @@ class RfbClientFilter:
         if t == 5:
             return 6
         if t == 6:
-            return 8 + struct.unpack(">I", bytes(b[4:8]))[0] if len(b) >= 8 else None
+            # ClientCutText; comprimento negativo = Extended Clipboard (o noVNC o manda ao conectar): o corpo tem |comprimento| bytes
+            return 8 + abs(struct.unpack(">i", bytes(b[4:8]))[0]) if len(b) >= 8 else None
         if t == 150:
             return 10
         if t == 248:  # ClientFence: type, pad[3], flags[4], len[1], payload
@@ -169,6 +171,11 @@ class RfbClientFilter:
         raise Reject(f"unknown client message {t}")
 
     def _filter(self, t: int, msg: bytes) -> bytes:
+        if self.trace is not None and len(self.trace) < 60:
+            self.trace.append((t, len(msg)))
+        return self._filter_inner(t, msg)
+
+    def _filter_inner(self, t: int, msg: bytes) -> bytes:
         if t == 4:  # KeyEvent: down-flag, pad[2], keysym[4]
             down, keysym = msg[1], struct.unpack(">I", msg[4:8])[0]
             if not self.may_input():
@@ -255,7 +262,9 @@ class BridgeSession:
         self.bridge, self.reader, self.writer = bridge, reader, writer
         self.vr, self.vw = vnc_reader, vnc_writer
         self.filter = RfbClientFilter(lambda: bridge.lease.human_may_input)
+        self.filter.trace = []  # só conta (os primeiros 60 tipos); nada de conteúdo
         self.bytes_down = 0
+
 
     def release_inputs(self) -> None:
         data = self.filter.release_all()
@@ -268,6 +277,8 @@ class BridgeSession:
         try:
             await asyncio.wait({up, down}, return_when=asyncio.FIRST_COMPLETED)
         finally:
+            print(f"vnc: session ended; {self.bytes_down} bytes down; client messages {len(self.filter.trace or [])}+; "
+                  f"inputs forwarded {self.filter.forwarded_inputs}, dropped {self.filter.dropped_inputs}", flush=True)
             self.release_inputs()
             for task in (up, down):
                 task.cancel()

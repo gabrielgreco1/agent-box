@@ -1,0 +1,3011 @@
+[0/3] Write swift-version--58304C5D6DBC2206.txt
+[0/1] Planning build
+[1/1] Compiling plugin GenerateManual
+[2/2] Compiling plugin GenerateDoccReference
+[3/3] Compiling plugin SwiftTermBuildInfoPlugin
+Building for debugging...
+[3/14] Write sources
+[4/14] Write swift-version--58304C5D6DBC2206.txt
+[6/8] Emitting module UISnapshotTests
+[7/8] Compiling UISnapshotTests LiveViewerWebViewTests.swift
+[7/9] Write Objects.LinkFileList
+[8/9] Linking AgentBoxKitPackageTests
+Build complete! (12.07s)
+Test Suite 'All tests' started at 2026-10-17 07:08:44.475.
+Test Suite 'All tests' passed at 2026-10-17 07:08:44.476.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+◇ Test run started.
+↳ Testing Library Version: 1501
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite HandshakeTests started.
+◇ Suite ActionIDTests started.
+◇ Suite FixtureTests started.
+◇ Suite HookPayloadReducerTests started.
+◇ Suite A11yIDTests started.
+◇ Suite BackpressureTests started.
+◇ Suite HookWireTests started.
+◇ Suite SliceFlagsTests started.
+◇ Suite AppSockFrameTests started.
+◇ Suite HookTextSanitizerTests started.
+◇ Suite PaneLayoutOpsTests started.
+◇ Suite HTTPCodecTests started.
+◇ Suite DomainModelTests started.
+◇ Suite CtlWireTests started.
+◇ Suite "T3-02 - config do egress, segredos em arquivo e integridade do reqlog" started.
+◇ Suite ContainerSpecTests started.
+◇ Suite GarbageCollectorTests started.
+◇ Suite RoundTripTests started.
+◇ Suite ProtocolTestsSmoke started.
+◇ Suite DockerTestsSmoke started.
+◇ Suite LayoutTests started.
+◇ Suite FrameCodecTests started.
+◇ Suite "Spike S2 - rede internal e publicação pelo egress" started.
+◇ Suite "T3-05 - viewer isolado" started.
+◇ Suite CapacityPlannerTests started.
+◇ Suite "T3-02 - egress sidecar com Docker real" started.
+◇ Suite "Docker real (AGENTBOX_TEST_DOCKER=1)" started.
+◇ Suite ModelDecodingTests started.
+◇ Suite ProjectRenameRemoveTests started.
+◇ Suite ErrorMappingTests started.
+◇ Suite BuildContextTests started.
+◇ Suite LegacyImporterTests started.
+◇ Suite RuntimeDetectorTests started.
+◇ Suite GitWorktreeCreateTests started.
+◇ Suite CommandValidationTests started.
+◇ Suite RingBufferTests started.
+◇ Suite RoundTripTests started.
+◇ Suite ClientAgainstFakeDaemonTests started.
+◇ Suite TerminalCoreTestsSmoke started.
+◇ Suite "T3-05 - computadores, Inbox e notificação" started.
+◇ Suite SecretInjectionTests started.
+◇ Suite McpSocketTests started.
+◇ Suite ReplyAndPasteFilterTests started.
+◇ Suite "T3-05 - viewer com o Docker real" started.
+◇ Suite LaunchStatesIntegrationTests started.
+◇ Suite PersistenceDebounceTests started.
+◇ Suite HeadlessEmulatorHostTests started.
+◇ Suite GitErrorTests started.
+◇ Suite DaemonIntegrationTests started.
+◇ Suite HelpParsingTests started.
+◇ Suite CorruptionTests started.
+◇ Suite WorkspaceIntegrationTests started.
+◇ Suite VTTrackerTests started.
+◇ Suite ResizeCoordinatorTests started.
+◇ Suite ProjectWorktreeSyncTests started.
+◇ Suite ActivityProjectionTests started.
+◇ Suite KeyTableTests started.
+◇ Suite QueryReplyFilterTests started.
+◇ Suite ReplayIndexTests started.
+◇ Suite MigrationTests started.
+◇ Suite PeerAuthDaemonTests started.
+◇ Suite SurfaceTests started.
+◇ Suite VaultCatalogMigrationTests started.
+◇ Suite StoreTestsSmoke started.
+◇ Suite "T3-02 - ProxyService e importador da chave Zyte" started.
+◇ Suite ComputersMigrationTests started.
+◇ Suite ReattachTests started.
+◇ Suite ActivityServiceTests started.
+◇ Suite UISnapshotSmoke started.
+◇ Suite RestoreIntegrationTests started.
+◇ Suite FullMigrationChainTests started.
+◇ Suite DaemonSmoke started.
+◇ Suite DaemonBehaviorTests started.
+◇ Suite GitStatusRefresherTests started.
+◇ Suite ProxyStoreTests started.
+◇ Suite V2ActivityMigrationTests started.
+◇ Suite HalfCloseTests started.
+◇ Suite T210EvidenceTests started.
+◇ Suite WorkspaceModelTests started.
+◇ Suite ChainedLogTests started.
+◇ Suite VaultTests started.
+◇ Suite AgentEventStoreTests started.
+◇ Suite ObservationTests started.
+◇ Suite LaunchIntegrationTests started.
+◇ Suite ProjectAddTests started.
+◇ Suite LogFacadeTests started.
+◇ Suite TokensMatchJSONTests started.
+◇ Suite PeerAuthTests started.
+◇ Suite SidebarSnapshotTests started.
+◇ Suite HookSpoolTests started.
+◇ Suite LaunchGoldenTests started.
+◇ Suite MenuSnapshotTests started.
+◇ Suite LaunchTimelineTests started.
+◇ Suite AgentLogoTests started.
+◇ Suite BackupTests started.
+◇ Suite SidebarModelTests started.
+◇ Suite MenuNavigatorTests started.
+◇ Suite QuickLaunchModelTests started.
+◇ Suite ToastCenterTests started.
+◇ Suite ProxyRenderToolTests started.
+◇ Suite LoginShellEnvTests started.
+◇ Suite FramedDaemonTransportTests started.
+◇ Suite OverlayMotionTests started.
+◇ Suite CleanSessionTests started.
+◇ Suite RealOrcaDryRunTests started.
+◇ Suite MotionTests started.
+◇ Suite UDSTransportTests started.
+◇ Suite "T3-03 - computador real com ferramentas MCP" started.
+◇ Suite ProjectsControllerTests started.
+◇ Suite PromptEditorTests started.
+◇ Suite GitHubRealReadTests started.
+◇ Suite KeyBindingRegistryTests started.
+◇ Suite "T3-05 - modelo do viewer" started.
+◇ Suite ProcessRunnerTests started.
+◇ Suite FontTests started.
+◇ Suite ComponentSnapshotTests started.
+◇ Suite OrcaParityTests started.
+◇ Suite TooltipPolicyTests started.
+◇ Suite PlatformTestsSmoke started.
+◇ Suite SidebarProjectionTests started.
+◇ Suite "T3-05 - controlador de computadores e ações" started.
+◇ Suite SettingsModelTests started.
+◇ Suite CLIProberTests started.
+◇ Suite ProfileAndEnvTests started.
+◇ Suite ComponentSpecTests started.
+◇ Suite TabRowConformanceTests started.
+◇ Suite CatalogScannerTests started.
+◇ Suite LoginShellEnvEvidence started.
+◇ Suite ActionRegistryTests started.
+◇ Suite MenuNavigatorActivationTests started.
+◇ Suite LoginShellEnvRealShellTests started.
+◇ Suite AgentActivityMachineTests started.
+◇ Suite UIElementStoreTests started.
+◇ Suite ProfileEditingTests started.
+◇ Suite OverlayHostTests started.
+◇ Suite "T3-05 - noVNC no WKWebView com o Docker real" started.
+◇ Suite ToolSchemaTests started.
+◇ Suite ReducerRealPayloadTests started.
+◇ Suite LayoutConformanceTests started.
+◇ Suite GitDetectionAndStatusTests started.
+◇ Suite EmptyWindowTreeTests started.
+◇ Suite CheckFailureFormatterTests started.
+◇ Suite ResultValidatorTests started.
+◇ Suite TerminalProcessMachineTests started.
+◇ Suite PathGuardTests started.
+◇ Suite EvidenceToolTests started.
+◇ Suite RoutingTests started.
+◇ Suite BrowserToolTests started.
+◇ Suite ReqlogToolTests started.
+◇ Suite CodexHookConfigTests started.
+◇ Suite FrontmatterTests started.
+◇ Suite LaunchCoordinatorTests started.
+◇ Suite GitRunnerEnvironmentTests started.
+◇ Suite "T3-05 - lease e controle humano" started.
+◇ Suite HookCLITests started.
+◇ Suite Slice2GoldenTests started.
+◇ Suite SpoolIngestionTests started.
+◇ Suite GitWorktreeRemoveTests started.
+◇ Suite OrcaImportTests started.
+◇ Suite OrcaCoexistenceTests started.
+◇ Suite GitHubQueryTests started.
+◇ Suite RestoreTests started.
+◇ Suite SettingsSnapshotTests started.
+◇ Suite GitNamingTests started.
+◇ Suite HTTPToolTests started.
+➜ Suite RealCLIProbeTests skipped.
+◇ Suite GitHubAuthParserTests started.
+◇ Suite CtlServerTests started.
+◇ Suite HelpTests started.
+◇ Suite GitHubServiceTests started.
+◇ Suite GitParsersTests started.
+◇ Suite SessionLifecycleMachineTests started.
+◇ Suite HookTransportTests started.
+◇ Suite GitHubRemoteParserTests started.
+◇ Suite GitChangeWatcherTests started.
+◇ Suite CatalogServiceTests started.
+◇ Suite CleanSessionFoldersTests started.
+◇ Suite Slice2RealCodexTests started.
+◇ Suite MCPServerTests started.
+◇ Suite ActivityAggregationTests started.
+◇ Suite ClaudeHookSettingsTests started.
+◇ Suite CoreTestsSmoke started.
+◇ Suite NativeIDCaptureTests started.
+◇ Suite SecretFileTests started.
+◇ Suite CredentialStrippingTests started.
+◇ Suite McpHelperProcessTests started.
+◇ Suite GitHubCreatePullRequestTests started.
+◇ Suite ExecToolTests started.
+◇ Suite PromptDeliveryTests started.
+◇ Suite EgressRenderConfigTests started.
+◇ Suite GitEventRouterTests started.
+➜ Suite Slice2RealClaudeTests skipped.
+◇ Suite ReducerSyntheticTests started.
+◇ Test majorTwoHelloFixtureIsRejectedByMajorOneDaemon() started.
+◇ Test compatibilityResultIsFlaggedWhenDaemonMajorDiffersFromCurrent() started.
+◇ Test catalogIsUniqueAndComplete() started.
+◇ Test notNegotiatedCapabilityDisablesTheOperationWithNotCapable() started.
+◇ Test clientFlagsDaemonOlderThanMinimum() started.
+◇ Test capabilityIntersectionPreservesOrderAndDedupes() started.
+◇ Test codableRejectsUnknown() started.
+◇ Test lookupAndSpec() started.
+◇ Test noCommonCapabilitiesStillEstablishes() started.
+◇ Test olderMajorFromClientIsRejectedToo() started.
+◇ Test clientIntersectsAckCapabilitiesWithItsOwn() started.
+◇ Test capabilitiesAreTheIntersectionAndMinorIsTheMinimum() started.
+◇ Test slicesFollowTheVersionColumn() started.
+◇ Test secondHelloAfterEstablishedIsRejected() started.
+◇ Test protocolVersionOrdering() started.
+◇ Test fixtureAttachModesAndSubscribeScopes() started.
+◇ Test daemonNRejectsClientNMinus1AndClientNRejectsDaemonNMinus1WithoutCompat() started.
+◇ Test clientRejectsDaemonOfAnotherMajor() started.
+◇ Test timeoutFailsTheHandshake() started.
+◇ Test nMinus1FixturesNegotiateAgainstCurrentBuild() started.
+◇ Test frameLayoutIsLengthKindPayloadBigEndian() started.
+◇ Test clientAcceptsMatchingAck() started.
+◇ Test firstMessageMustBeHello() started.
+◇ Test everyV1FixtureDecodesAndReencodesToIdenticalBytes() started.
+◇ Test compatibilityFixturesTolerateUnknownFieldsAndCapabilities() started.
+◇ Test appNConnectsToDaemonNMinus1WithCompatibilityClient() started.
+◇ Test invalidFixturesAreRejectedAsMalformedControl() started.
+◇ Test spawnFailedFixtureCarriesErrnoAndPath() started.
+◇ Test stopCarriesTheLastAssistantMessageAndBashCarriesItsShortTarget() started.
+◇ Test binaryFrameFixturesHaveExpectedContent() started.
+◇ Test clientSurfacesDaemonErrorReply() started.
+◇ Test fixturesCoverEveryOpEventAndErrorCode() started.
+◇ Test sameVersionNegotiatesFullCapabilities() started.
+◇ Test sessionNeverBlocksOnASlowClient() started.
+◇ Test overflowDropsQueuedOutputAndEmitsResyncRequired() started.
+◇ Test controlFramesAreNeverDropped() started.
+◇ Test canonicalConstants() started.
+◇ Test realCodexPayloadsCarryRolloutPathAndTurnID() started.
+◇ Test pendingBytesAccountingStaysExactAcrossOverflow() started.
+◇ Test garbageAndOversizedInputsAreHandled() started.
+◇ Test clientValidatesReplyIDAndKind() started.
+◇ Test codableRoundTripAndRejection() started.
+◇ Test stopFailureErrorIsFoundUnderTheCandidateFieldNames() started.
+◇ Test oversizedFrameIsRejected() started.
+◇ Test connectionLevelErrorHasNoRequestID() started.
+◇ Test templatesProduceCanonicalIDs() started.
+◇ Test removeOutputForgetsPendingFramesAndResyncState() started.
+◇ Test sliceOneEnablesOnlySliceOne() started.
+◇ Test matchingSpecReportsTemplate() started.
+◇ Test partialAndMultipleFrames() started.
+◇ Test queueUnderLimitAcceptsAndPreservesOrder() started.
+◇ Test nonCanonicalIDsAreRejected() started.
+◇ Test environmentOverride() started.
+◇ Test higherSliceEnablesLowerOnes() started.
+◇ Test fixedConstantsAreCanonical() started.
+◇ Test segmentsNeverContainDots() started.
+◇ Test realClaudePayloadsKeepOnlyTheSpecFields() started.
+◇ Test oversizedFrameIsRejectedNotQueued() started.
+◇ Test emptyPayloadIsAFrame() started.
+◇ Test outputIsDiscardedWhileAwaitingResyncThenResumesAfterReattach() started.
+◇ Test roundTrip() started.
+◇ Test headParserRejectsGarbageStatusLine() started.
+◇ Test defaultLimitIsTwoMiB() started.
+◇ Test catalogIsLargeAndWithoutDuplicates() started.
+◇ Test upgradeStatusIsParsed() started.
+◇ Test requestHeadEscapesQueryAndAddsUpgradeOrClose() started.
+◇ Test demuxerHandlesZeroLengthFrame() started.
+◇ Test uiSizeParsing() started.
+◇ Test sessionStructuralRules() started.
+◇ Test appSockPathHonorsOverride() started.
+◇ Test responseRoundTripWithTreeAndScreenshot() started.
+◇ Test chunkedDecoderHandlesSplitsAndHexSizes() started.
+◇ Test controlFramesAreAcceptedEvenAboveTheLimit() started.
+◇ Test headParserSplitsHeadAndRestAcrossFeeds() started.
+◇ Test uuidV7IsVersion7AndOrdered() started.
+◇ Test stripsAnsiControlsAndCollapsesWhitespace() started.
+◇ Test envelopeRoundTripsAndMarkersAndGarbageAreClassified() started.
+◇ Test requestRoundTrip() started.
+◇ Test truncatesAtFiveHundredScalarsWithoutSplittingAGrapheme() started.
+◇ Test labelsAndDeterministicNames() started.
+◇ Test lineSplitterKeepsPartialLines() started.
+◇ Test errorsCarryReason() started.
+◇ Test zytePresetPutsTheKeyInTheUsernameWithEmptyPassword() started.
+◇ Test buildContextHashIgnoresPythonBytecode() started.
+◇ Test chunkedDecoderRejectsBadSize() started.
+◇ Test demuxerRejectsInvalidHeader() started.
+◇ Test launchSpecAndTerminalCodable() started.
+◇ Test secretFilesAre0400In0700AndReplaceAtomically() started.
+◇ Test genericProxyUsesUsernameAndSecretAsPassword() started.
+◇ Test eventMonitorResyncsOnConnectAndReconnectsWithSince() started.
+◇ Test everyControlMessageRoundTripsThroughJSON() started.
+◇ Test keepingOnlyOnePaneForCloseOthers() started.
+◇ Test directConfigHasNoUpstream() started.
+◇ Test majorMismatchIsRejectedWithErrorCode() started.
+◇ Test moduleLinks() started.
+◇ Test wireShapeMatchesSpecExamples() started.
+◇ Test everyControlMessageRoundTripsThroughFrames() started.
+◇ Test moduleLinks() started.
+◇ Test dividerIDsAreUnique() started.
+◇ Test fileToolsUseTheBaseNameAndSubagentPayloadsCarryAgentFields() started.
+◇ Test datesKeepMillisecondPrecisionAndAcceptNoFractionInput() started.
+◇ Test splitIsRefusedBelowTheMinimumPaneSize() started.
+◇ Test reqlogIntegrityVerifiesAndLocatesTampering() started.
+◇ Test secretFilesRejectPathTricks() started.
+◇ Test inputOriginRawValuesAreCanonical() started.
+◇ Test settingRatioByPathChangesOnlyThatSplit() started.
+◇ Test splitsAreUnlimited() started.
+◇ Test standardHardeningMatchesCS114() started.
+◇ Test inputByteCountsAccumulateAndSerializeByName() started.
+◇ Test arrangementCoversTheAreaWithoutOverlapAndWithThreePointDividers() started.
+◇ Test outputAndInputFramesRoundTripWithRandomPayloads() started.
+◇ Test closingAPaneLetsTheSiblingTakeItsSpaceAndMovesFocus() started.
+◇ Test removeComputerKeepsNamedProfileVolumes() started.
+◇ Test binaryFrameFixturesDecodeAndReencodeByteForByte() started.
+◇ Test samplesCoverEveryOpEventAndErrorCode() started.
+◇ Test terminalAppearsInAtMostOnePane() started.
+◇ Test splitAndRemove() started.
+◇ Test equalizingOneDividerLeavesTheOthers() started.
+◇ Test pythonEgressUnitSuitePasses() started.
+◇ Test nextAndPreviousPaneWrapAround() started.
+◇ Test admissionUsesSumOfEstimatesNotSingleProfile() started.
+◇ Test equalizeGivesEveryPaneTheSameShareAlongAChain() started.
+◇ Test eightGBVMFitsFourHeadlessAndQueuesTheFifth() started.
+◇ Test movingAverageNeedsTwentySamplesAndFixedModeIgnoresThem() started.
+◇ Test referenceTargetNeeds26GBAndLoadTestVMFits() started.
+◇ Test webViewLoadsLocallyAndCannotReachTheInternet() started.
+◇ Test eventsParseFromTheBridge() started.
+◇ Test replacingContentKeepsTheSlot() started.
+◇ Test sessionIDBinaryAndTextForms() started.
+◇ Test dragRatioKeepsBothSidesAtTheMinimum() started.
+◇ Test fuzzedBitFlipsInValidFramesNeverCrash() started.
+◇ Test ratioIsClampedAndValidated() started.
+◇ Test removeFolderProject() started.
+◇ Test inventoryAsksTheDaemonOnlyForLabelledResources() started.
+◇ Test egressIsolationReqlogSSRFAndUpstreamChaining() started.
+◇ Test vendoredNoVNCIsPinnedAndLicensed() started.
+◇ Test removeArchivesSessionsKeepsFilesAndReAddRestores() started.
+◇ Test realEventsDecodeWithBaseAction() started.
+◇ Test schemeServesOnlyFilesInsideTheVendoredFolder() started.
+◇ Test containerInspectExposesHardeningLabelsAndPublishedPort() started.
+◇ Test removalOrderIsContainersNetworksVolumesAndFailuresAreReported() started.
+◇ Test planKeepsKnownComputersAndSplitsOrphansByEphemeralAndFinished() started.
+◇ Test workEnvironmentPointsAtTheEgressAndHoldsNoSecrets() started.
+◇ Test lowDiskRejectsBeforeMemoryCheck() started.
+◇ Test onlyTheLocalSchemeMayNavigate() started.
+◇ Test demuxerSplitsStdoutAndStderrAcrossReads() started.
+◇ Test shortOutputAndInputPayloadsAreRejected() started.
+◇ Test drainReturnsValidFramesBeforeTheFirstInvalidOne() started.
+◇ Test s2InternalNetworkDNSAndPortPublishedOnlyByEgress() started.
+◇ Test renameAndEmptyNameFallsBackToFolder() started.
+◇ Test sequenceValidatorDetectsGapsAndOverlaps() started.
+◇ Test invalidInputOriginIsRejected() started.
+◇ Test frameOfExactlyOneMiBIsAccepted() started.
+◇ Test emptyNullFieldsDecodeAsEmpty() started.
+◇ Test truncatedErrorReportsExpectedAndAvailable() started.
+◇ Test goodFramesBeforeABadOneAreStillDelivered() started.
+◇ Test frameTooLargeMapsToErrorCode() started.
+◇ Test unknownKindIsRejected() started.
+◇ Test malformedControlJSONIsRejected() started.
+◇ Test limitsAreCanonical() started.
+◇ Test frameWithLengthAboveOneMiBIsRejectedOnEncode() started.
+◇ Test hashMatchesTheShellScriptUsedForLocalBuilds() started.
+◇ Test codableRoundTrip() started.
+◇ Test listNetworkVolumeImageDecode() started.
+◇ Test fuzzedGarbageNeverCrashesAndEitherFailsOrParses() started.
+◇ Test decoderRejectsHugeLengthsWithoutWaitingForPayload() started.
+◇ Test decoderCompactsItsBufferUnderSustainedLoad() started.
+◇ Test manyFramesInOneChunkAndRandomChunkBoundaries() started.
+◇ Test hashIsStableOrderIndependentAndContentSensitive() started.
+◇ Test tarIsDeterministic() started.
+◇ Test vmCapacityConfiguredGBAddsKernelSlack() started.
+◇ Test pullAndBuildStreamsDecode() started.
+◇ Test byteByByteFeedingReassemblesEveryFrame() started.
+◇ Test invalidUTF8ControlPayloadIsRejected() started.
+◇ Test zeroLengthFrameIsRejected() started.
+◇ Test tarIsReadableByBsdtarWithModesAndNestedDirs() started.
+◇ Test oversizedControlMessageIsRejectedOnEncode() started.
+◇ Test nonUnixEndpointsAreIgnoredAndMissingKnownSocketsSkipped() started.
+◇ Test realRuntimeContextHashMatchesScript() started.
+◇ Test duplicatesAreCollapsed() started.
+◇ Test dryRunReportsCountsWithoutWritingAnything() started.
+◇ Test realErrorBodiesMapToTypedErrors() started.
+◇ Test noRuntimeYieldsDockerUnavailableWithStartCommands() started.
+◇ Test dockerContextEnvironmentOverridesConfigAndDefaultMeansNoContext() started.
+◇ Test runtimeUnavailableMapsToReserveReason() started.
+◇ Test staleSocketFileIsSkippedInFavorOfLiveOne() started.
+◇ Test invalidLayoutFallsBackToASinglePane() started.
+◇ Test realImportIsIdempotentByFingerprintAndByRow() started.
+◇ Test contextDirectoryNameIsSha256OfNameAsDockerCLIStoresIt() started.
+◇ Test secretsAreReadFromTheOldKeychainOnlyPerConfirmationAndNeverLeak() started.
+◇ Test sourceDirectoryIsNeverWrittenEvenWhenReadOnly() started.
+◇ Test longPathsUseUstarPrefixAndTooLongFail() started.
+◇ Test realImportMapsEverythingAndCopiesSourcesFirst() started.
+◇ Test unknownBranchAndInvalidNames() started.
+◇ Test detectsActiveContextMatchingDockerContextInspectAndReadsVMCapacity() started.
+◇ Test randomizedAgainstModel() started.
+◇ Test resizeAttachSignalSubscribeTextSnapshotRejectBadFields() started.
+◇ Test emptyOrMissingSourceYieldsAnEmptyReport() started.
+◇ Test chunkLargerThanCapacityKeepsTail() started.
+◇ Test activeContextComesFromConfigWithoutTheCLIOrPATH() started.
+◇ Test explicitExistingBranchOffersUseExisting() started.
+◇ Test failedAddRollsBackBranchAndFolder() started.
+◇ Test emptyExistingFolderIsReused() started.
+◇ Test infoDecodesForThreeRuntimes() started.
+◇ Test cancelledCreationLeavesNothingBehind() started.
+◇ Test listWorktreesReportsMainAndLinked() started.
+◇ Test createdFromLinkedWorktreeAnchorsOnMainRepo() started.
+◇ Test shippedEgressContextIsPinnedByDigestAndHasNoPackageManagerPins() started.
+◇ Test fetchFailureOffersCreateWithoutFetching() started.
+◇ Test collisionAddsSuffixOnBothBranchAndFolder() started.
+◇ Test interruptedCreateThatLandsLateIsStillRemoved() started.
+◇ Test createRejectsBadFields() started.
+◇ Test withoutAVaultOrReaderNoSecretIsImported() started.
+◇ Test waitReturnsStatusCode() started.
+◇ Test execFailsClearlyWhenDaemonDoesNotUpgrade() started.
+◇ Test repositoryWithoutOriginUsesLocalDefaultBranch() started.
+◇ Test statusCodesMapToTypedErrorsAndIdempotentOperations() started.
+◇ Test everyStrictPrefixOfAFrameYieldsNothingAndTruncatedAtEOF() started.
+◇ Test useExistingRemoteBranchTracksIt() started.
+◇ Test newBranchFromFreshOriginMainWithPrefix() started.
+◇ Test hijackedExecEchoesStdinWithHalfCloseAndSeparatesStreams() started.
+◇ Test notARepositoryIsTyped() started.
+◇ Test twentyParallelSlowCallsDoNotBlockTheCooperativePool() started.
+◇ Test linearThenWraps() started.
+◇ Test orderIsEnvironmentThenContextThenKnownSockets() started.
+◇ Test killableExecWrapsCommandAndTerminateSignalsGroupThenKills() started.
+◇ Test eventsStreamParsesChunkedJSONLinesSplitAcrossChunks() started.
+◇ Test createTimeoutReconcilesWithForceRemoveByDeterministicName() started.
+◇ Test validCommandsPass() started.
+◇ Test filePermissionsAreOwnerOnly() started.
+◇ Test tolerantParseMarksCorruptFilesUnreadableAndKeepsGoing() started.
+◇ Test useExistingLocalBranch() started.
+◇ Test pingVersionInfoAndApiVersionInPath() started.
+◇ Test updatesAreUpsertsAndFiltersWork() started.
+◇ Test symlinkAndMissingDirectoryAreRejected() started.
+◇ Test deletingSessionCascadesAndDeletingProjectWithSessionsFails() started.
+◇ Test decoderRejectsOversizedLengthAsSoonAsThePrefixArrives() started.
+◇ Test folderOccupiedByUnrelatedFilesForcesSuffix() started.
+◇ Test branchCheckedOutInMainIsInUse() started.
+◇ Test invalidModelsAreRejectedBeforeWriting() started.
+◇ Test helpRequestFlowsToInboxDockBadgeAndOneNotificationPerRequest() started.
+◇ Test aLongHelpWaitDoesNotBlockOtherCallsOfTheSameChild() started.
+◇ Test outputSeqIsContiguousByteOffset() started.
+◇ Test logsDemultiplexStdoutAndStderrFromChunkedBody() started.
+◇ Test needsYouFirstThenRecentActivityThenName() started.
+◇ Test missingSocketIsRuntimeUnavailable() started.
+◇ Test terminalsByStateSupportBootReconciliation() started.
+◇ Test containerCreateSendsNameAndBodyAndReturnsId() started.
+◇ Test headlessFilterStillRefusesWhatTheUIAllows() started.
+◇ Test optionAsMetaAutoFollowsTheLayout() started.
+◇ Test linkPolicyOpensOnlySimpleSchemes() started.
+◇ Test declineGoesBackAsDeclinedWithTheReason() started.
+◇ Test notificationFollowsTheSpecAndCarriesNoPageContent() started.
+◇ Test repliesRespectPolicy() started.
+◇ Test closeFlushesPendingWrites() started.
+◇ Test realComputerStreamsFramesAcceptsHumanInputAndHonoursTheLease() started.
+◇ Test burstOfLayoutUpdatesCoalescesIntoOneWrite() started.
+◇ Test codexHelpAndResumeHelp() started.
+◇ Test slowStartShowsIgnitionWithRealStepsThenRunningOnFirstByte() started.
+◇ Test healthyDatabaseIsNeverTouchedByRecovery() started.
+◇ Test everySliceOneEntityRoundTrips() started.
+◇ Test flushWritesPendingImmediatelyAndSetLayoutCancelsPending() started.
+◇ Test pasteSanitizerRemovesEscapeAndControlsButKeepsTabAndNewline() started.
+◇ Test uiAnswersDeviceAndSizeQueries() started.
+◇ Test versionOrdering() started.
+◇ Test pullStreamsProgressAndSurfacesRegistryErrors() started.
+◇ Test uiNeverAnswersAnOSC52Query() started.
+◇ Test thumbnailsAreFetchedAtMostOncePerSecondPerComputer() started.
+◇ Test textSnapshotAndCursorMarks() started.
+◇ Test garbageHelpIsNotUsable() started.
+◇ Test openCodeHelp() started.
+◇ Test tableByVersionWhenHelpUnusable() started.
+◇ Test parsesVersions(text:expected:) started.
+◇ Test typeInZshAndSeeTheOutput() started.
+◇ Test titleCwdPromptBellEvents() started.
+◇ Test buildSendsTarContextAndReportsStepsAndFailures() started.
+◇ Test descriptionTextDoesNotLeakFlags() started.
+◇ Test claudeHelp() started.
+◇ Test noValidBackupStartsEmptyWithBanner() started.
+◇ Test corruptedFileIsMovedAndLatestBackupRestored(wholeFile:) started.
+◇ Test escInsideCSIRestartsTheSequence() started.
+◇ Test preambleRestoresModes() started.
+◇ Test invalidNewestBackupFallsBackToOlderValidOne() started.
+◇ Test bellTerminatingAnOSCIsNotABell() started.
+◇ Test oldClaudeWithoutEffortDisablesTheOption() started.
+◇ Test shellWordsTokenizer() started.
+◇ Test sequenceSplitAcrossChunksStillCuts() started.
+◇ Test helpWinsOverTable() started.
+◇ Test clearAndResetAreCuts() started.
+◇ Test branchSwitchedInTerminalIsPersistedFromStatus() started.
+◇ Test renamedSessionAndStartedSessionSurviveSync() started.
+◇ Test existingWorktreesBecomeUnstartedSessions() started.
+◇ Test modesEventOnlyOnChange() started.
+◇ Test skipsSidecarOnlyReservedExpiredAndInvalidNamesWithoutLeaking() started.
+◇ Test sameSizeAsAppliedSendsNothing() started.
+◇ Test closedCoordinatorNeverApplies() started.
+◇ Test bindingsOfProfileAndSessionResolveWithSessionWinning() started.
+◇ Test rejectsTextWithoutVersion() started.
+◇ Test mcpServiceRoutesByTheChildIdentityOverTheRealSocket() started.
+◇ Test moduleLinks() started.
+◇ Test burstCollapsesIntoOneTrailingResize() started.
+◇ Test childRunIDIsDeterministicAndPerChild() started.
+◇ Test blocksOSCAndDCSRepliesButAllowsDeviceReports() started.
+◇ Test virtualKeyCodes() started.
+◇ Test wrongCapabilityOrUnknownChildIsRefusedBeforeAnyTool() started.
+◇ Test twoPanesRunZshInTheRealDaemonAndSplitNeverRecreatesThePTY() started.
+◇ Test altScreenEntryIsACutAndSetsModes() started.
+◇ Test cutRecordsTheStateBeforeTheSequence() started.
+◇ Test aTransitionProducesExactlyOneResizeWhenItEnds() started.
+◇ Test signedDaemonAcceptsOnlyTheAppIdentity() started.
+◇ Test syncIsIdempotentAndPicksUpNewAndRemovedWorktrees() started.
+◇ Test injectsOnlySelectedSecretsIntoTheTerminalEnvironmentWithoutArgv() started.
+◇ Test reservedChordsProduceTheDocumentedBytes() started.
+◇ Test syncOfMissingRepoThrowsAndKeepsRecords() started.
+◇ Test failedMigrationRollsBackAndOpensReadOnly() started.
+◇ Test newConstraintsRejectInvalidValues() started.
+◇ Test projectionOfRealSubagentSequenceHasMainAndTwoChildren() started.
+◇ Test secretStoreRoundTripsBindingsAndCascades() started.
+◇ Test schemaIsStrictAndRejectsInconsistentSessions() started.
+◇ Test extraModifiersAndPlainKeysAreNotIntercepted() started.
+◇ Test newerDatabaseOpensReadOnlyAndIsNeverModified() started.
+◇ Test recoveryMapping() started.
+◇ Test newerDatabaseSuggestsPreMigrationBackup() started.
+◇ Test zyteImportReadsOnlyTheKeyAndRequiresConfirmation() started.
+◇ Test emptyDatabaseGetsAllTablesFromTheFullMigrationChain() started.
+◇ Test zyteImportFailsCleanlyWithoutFileOrKey() started.
+◇ Test checkpointsOnlyOutsideSequencesEvery64KiB() started.
+➜ Test importsFromTheRealCLIEnvFile() skipped.
+◇ Test updateWithoutSecretKeepsTheCurrentOne() started.
+◇ Test eachSecretOnlyBindsUnderAValidEnvName() started.
+◇ Test migratesFromV3KeepingRowsAndAddingDefaults() started.
+◇ Test foreignKeysCascadeOrNullAsDocumented() started.
+◇ Test nameMustBeUnique() started.
+◇ Test savingStoresSecretInVaultNotInPlaintext() started.
+◇ Test egressConfigReadsTheSecretOnlyForTheChosenProxy() started.
+◇ Test prefersLatestCutThenOldestCheckpointThenRingStart() started.
+◇ Test lateEventsOfAnOlderRunDoNotOverwriteTheTerminalMessage() started.
+◇ Test moduleLinks() started.
+◇ Test dotEnvParsingHandlesQuotesExportAndComments() started.
+◇ Test invalidRunIDIsRejected() started.
+◇ Test realClaudeTurnProjectsIntoRunAndTerminal() started.
+◇ Test v1DatabaseUpgradesThroughEveryMigrationToCurrent() started.
+◇ Test pendingMigrationCreatesBackupBeforeApplying() started.
+◇ Test versionFixturesMatchInstalledVersions() started.
+◇ Test checkConstraintsRejectInvalidValues() started.
+◇ Test killingTheAppAndReopeningReattachesTwoPanesWithTheSameContentAndPIDs() started.
+◇ Test burstOfRequestsCoalescesIntoOneStatus() started.
+◇ Test statusReadUsesOptionalLocksZero() started.
+◇ Test fullComputerRowRoundTripsEveryColumn() started.
+◇ Test daemonDependenciesLink() started.
+◇ Test seesChangesAndRespectsMinInterval() started.
+◇ Test outOfOrderArrivalConvergesToTheOrderedResult() started.
+◇ Test failingStatusDoesNotNotifyOrCrash() started.
+◇ Test vim20() started.
+◇ Test createAttachInputOutputAndIdempotentCreate() started.
+◇ Test stopBeforeSubagentStopsLeavesParentWaitingUntilTheLast() started.
+◇ Test replayingTheSameEventsIsIdempotent() started.
+◇ Test themeFollowsTheTokens() started.
+◇ Test immediateSkipsDebounceAndNeverRunsInParallel() started.
+◇ Test validationRejectsBadNameAndPort() started.
+◇ Test unknownPaneStillRecordsTheRunWithoutATerminal() started.
+◇ Test sliceOneDatabaseUpgradesWithDataIntactAndAPreMigrationBackup() started.
+◇ Test daemonExitAndLostPTYAreRecordedAsEvents() started.
+◇ Test tamperingIsDetectedWithTheLineNumber() started.
+◇ Test writeRealDryRuns() started.
+◇ Test onlyOneDefaultProxyAndDefaultCanBeCleared() started.
+◇ Test updatesStreamReportsEachTransition() started.
+◇ Test reopeningContinuesTheChain() started.
+◇ Test appendChainsAndVerifiesLikeTheEgressLog() started.
+◇ Test finishWritingWithLargePendingWriteDeliversEverythingFirst() started.
+◇ Test usageAccumulatesPerDayAndComputerWithoutAnyCutoff() started.
+◇ Test runOfAnUnknownTerminalIsStoredWithoutTerminal() started.
+◇ Test proxyTablesHaveNoBudgetOrLimitColumns() started.
+◇ Test roundTripKeepsEveryFieldAndNeverStoresTheSecretValue() started.
+◇ Test eventsComeBackInOccurrenceOrderNotArrivalOrder() started.
+◇ Test saveActivityUpdatesTerminalOnlyForTheCurrentRun() started.
+◇ Test reconcileHealsAProjectionThatLaggedBehindItsEvents() started.
+◇ Test everyActivityRoundTripsThroughStatusColumns() started.
+◇ Test v2ActivityIsRegisteredAfterV1AndTablesAreStrict() started.
+➜ Test claudeHaikuRunsThenExitsZero() skipped.
+◇ Test staleProjectionIsDetectedForReconcile() started.
+◇ Test zshRunsThenExits() started.
+◇ Test deletingTheTerminalKeepsRunsAndDeletingTheRunCascades() started.
+◇ Test operationsHaveDeadlineAndCancelClosesTheSocket() started.
+◇ Test v4IsChainedAfterV3AndOlderMigrationsAreUntouched() started.
+◇ Test retentionKeepsThirtyDaysAndTenThousandEventsPerRun() started.
+◇ Test revealTouchesLastUsedAt() started.
+◇ Test oversizedOrInvalidPayloadIsRefused() started.
+◇ Test eventsAreIdempotentPerRunAndSequenceIsMonotonic() started.
+◇ Test zshRunsInACleanSessionFolder() started.
+➜ Test claudeHaikuRunsInACleanSessionFolder() skipped.
+◇ Test secondProcessWithSameKeychainReadsExistingSecrets() started.
+◇ Test wrongMasterKeyFailsAuthentication() started.
+◇ Test rotateValueReplacesTheSecretAndStampsUpdatedAt() started.
+◇ Test rotateKeyVersionReencryptsEverythingAtomically() started.
+◇ Test snapshotsStreamEmitsInitialAndEveryChange() started.
+◇ Test missingCLIIsCouldntStart() started.
+◇ Test tokensJSMatchesSwiftAndJSON() started.
+◇ Test terminalThemeMatchesJSON() started.
+◇ Test secretValueNeverPrintsItself() started.
+◇ Test ciphertextSwappedBetweenRowsFailsBecauseIDIsAuthenticated() started.
+◇ Test addingTwiceOrFromALinkedWorktreeDoesNotDuplicate() started.
+◇ Test missingOrFileFolderIsRejected() started.
+◇ Test typographyMatchesJSON() started.
+◇ Test deleteRemovesSecretAndItsBindings() started.
+◇ Test repoWithoutCommitsOrOriginStillAdds() started.
+◇ Test peerSeesEOFAfterQueuedBytesAndStillAnswers() started.
+◇ Test signedPolicyRejectsPeerWithoutAuditToken() started.
+◇ Test migratesFromV3KeepingDataAndBackingUpFirst() started.
+◇ Test splitCreatesAPaneWithTheSameAgentAndFocusesIt() started.
+◇ Test masterKeyIsOneItemLoadedOncePerProcess() started.
+◇ Test uiModulesLink() started.
+◇ Test deleteRemovesTheVaultSecret() started.
+◇ Test sortIndexGrows() started.
+◇ Test rootInsideRepositoryIsRejected() started.
+◇ Test radiiMatchJSON() started.
+◇ Test signedPolicyRejectsMalformedRequirement() started.
+◇ Test generatedFilesAreUpToDate() started.
+◇ Test credentialsCarryUidPidAndAuditToken() started.
+◇ Test missingCredentialsAreRejected() started.
+◇ Test namesAreValidatedAndUnique() started.
+◇ Test folderWithoutGitBecomesFolderProject() started.
+◇ Test spaceAndLayoutMatchJSON() started.
+◇ Test testRunnerProcessFailsTheAppRequirementAndPassesItsOwn() started.
+◇ Test alphaColorsAreNeverPreMixed() started.
+◇ Test boxTokenIsDerivedFromTheMasterKeyAndGeneration() started.
+◇ Test deleteCascadesExtAndUsageAndDetachesComputers() started.
+◇ Test gitRepoIsDetectedWithRootNameBranchAndRemote() started.
+◇ Test proxyExtHasNoBudgetOrLimitColumns() started.
+◇ Test migratesFromV1FixtureKeepingDataAndBackingUpFirst() started.
+◇ Test motionFlatLeavesMatchJSON() started.
+◇ Test signedDaemonGetsRequirementBoundToItsOwnLeaf() started.
+◇ Test denyAllRejectsEvenTheSameUID() started.
+◇ Test rotateKeyVersionLeavesRowsUntouchedWhenOneCannotBeDecrypted() started.
+◇ Test cleanSessionFolderIsTheCwdOfTheProcess() started.
+◇ Test concurrentWritersAndADrainerLoseNothing() started.
+◇ Test appendCreatesOwnerOnlyFileAndOneLinePerEvent() started.
+◇ Test malformedMasterKeyIsRejected() started.
+◇ Test differentUIDIsRejectedInEveryMode() started.
+◇ Test missingMasterKeyNeverSilentlyCreatesANewOne() started.
+◇ Test takeAllIgnoresTemporariesAndReturnsLeftoverDrainingFiles() started.
+◇ Test expiredSecretsCannotBeRevealed() started.
+◇ Test colorsMatchJSON() started.
+◇ Test currentProcessIdentityIsReadable() started.
+◇ Test sameUIDIsAcceptedInAdhocDevelopmentMode() started.
+◇ Test provenanceFileTravelsWithTheLogos() started.
+◇ Test subsystemsMatchCanonicalIdentifiers() started.
+◇ Test adhocDaemonNeedsTheExplicitBuildOptIn() started.
+◇ Test failureIsRecordedOnTheRow() started.
+◇ Test facadeKeepsCategory() started.
+◇ Test officialLogosAreBundledAtBothScales() started.
+◇ Test appKitAndSwiftUIColorsFollowSpec() started.
+◇ Test createRevealRoundTripKeepsPlaintextOutOfTheDatabase() started.
+◇ Test argvMatchesGolden(_:) started.
+◇ Test comboboxStates() started.
+◇ Test threeProjectsSelectedAndPending() started.
+◇ Test shadowsMatchJSON() started.
+◇ Test unsafeRunIDsNeverBecomeFilenames() started.
+◇ Test firstOutputIsRemembered() started.
+◇ Test dailyBackupIsCreatedOncePerDayAndKeepsSeven() started.
+◇ Test listsAgentsAndTerminalWithTheDocumentedShortcuts() started.
+◇ Test startsOnTheSelectedItemOrTheFirstEnabledOne() started.
+◇ Test commandEnterStartsTheSelectedItemWithTheTextAsPrompt() started.
+◇ Test unreadableOwnSignatureDeniesEveryone() started.
+◇ Test motionTypedTokensMatchJSON() started.
+◇ Test notInstalledAgentsAreDisabledWithTheReason() started.
+◇ Test proxySetOnlyAmongAllowedProxiesAndLogsClosedTunnels() started.
+◇ Test preMigrationBackupsKeepFive() started.
+◇ Test disabledItemsNeverActivateAndHoverIgnoresThem() started.
+◇ Test onlyVisibleStepsBecomeRowsInCanonicalOrder() started.
+◇ Test requestRoundTripsAndFreeTextBecomesAPrompt() started.
+◇ Test enterActivatesTheHighlightedItemAndEscapeDismisses() started.
+◇ Test framesSplitAcrossManyWritesReassemble() started.
+◇ Test reduceMotionIsACrossfadeWithoutScaleOrOffset() started.
+◇ Test realZshWithNoisyRcIsIgnoredByMarkerAndFile() started.
+◇ Test appNTalksToDaemonNMinus1ThroughCompatibilityClient() started.
+◇ Test renderMapsNotSupportedAndReturnsCapturesWhenSupported() started.
+◇ Test overTheLimitDropsOldestAndWritesATruncatedMarker() started.
+◇ Test ac307ClaudeArgvExact() started.
+◇ Test theDefaultAgentComesFirst() started.
+◇ Test gitRowsComeBeforeConfigAndSkippedRowsDisappear() started.
+◇ Test oversizedFirstFrameDuringHandshakeIsRejected() started.
+◇ Test missingShellIsFailedWithReasons() started.
+◇ Test noMatchLeavesOnlyPinnedItemsAndReportsEmptyResult() started.
+◇ Test majorMismatchOverTheWire() started.
+◇ Test searchAppearsAboveSevenItems() started.
+◇ Test sidebarObservesTheStore() started.
+◇ Test corruptedFramesAreSurfacedNotSwallowed() started.
+◇ Test goodFramesBeforeCorruptionAreStillDelivered() started.
+◇ Test ac309CodexAndOpenCode() started.
+◇ Test exitFramesMatchTheSpecTable() started.
+◇ Test defaultHandshakeTimeoutIsTwoSeconds() started.
+◇ Test handshakeTimeoutClosesTheConnection() started.
+◇ Test enterOpensTheItemWithoutAPrompt() started.
+◇ Test nonHelloFirstFrameIsRejectedWithBadRequest() started.
+◇ Test multilineValuesSurviveByteForByte() started.
+◇ Test shiftEnterOpensInASplit() started.
+◇ Test interactiveExitWithoutMarkerFallsBackToNonInteractive() started.
+◇ Test secretNameDetector() started.
+◇ Test theFallbackRowStartsTheDefaultAgentWithTheText() started.
+◇ Test typeAheadJumpsByPrefixWithoutFilteringAndResetsAfterAPause() started.
+◇ Test tokensAreTheSameAsThePrototype() started.
+◇ Test allowlistBeatsDenylistAndExtraRulesApply() started.
+◇ Test manyConcurrentClientsEachHandshake() started.
+◇ Test clientNWithoutCompatRejectsDaemonNMinus1() started.
+◇ Test flagSummaryUsesModelEffortPermissionAndExtraArgs() started.
+◇ Test maxSizeFrameCrossesTheSocketIntact() started.
+◇ Test inputFramesComeBackAsContiguousOutput() started.
+◇ Test rowOffsetsUseFixedRowHeights() started.
+◇ Test keyCatcherTranslatesCommandSelectorsToKeys() started.
+◇ Test enterFramesMatchTheSpecTable() started.
+◇ Test compositionTextIsHeldUntilCommitted() started.
+◇ Test controlCharactersAreNotTyped() started.
+◇ Test bezierBoundariesAndLinear() started.
+◇ Test reducedCrossfadeTokensAreDefined() started.
+◇ Test secretValuesNeverAppearInDiagnosticsOrDescriptions() started.
+◇ Test bezierProgressMatchesSpecTables() started.
+◇ Test durationsFollowTheSpec() started.
+◇ Test handshakeThenPingAndListAgainstFakeDaemon() started.
+◇ Test hangingInteractiveRcIsKilledAfterFiveSecondsWithoutOrphanAndFallsBack() started.
+◇ Test submenuOpensWithRightEnterAndClosesWithLeftThenEscape() started.
+◇ Test typingFiltersWhenSearchableAndKeepsPinnedItems() started.
+◇ Test liveServerIsNotStolen() started.
+◇ Test concurrentCallsShareOneCapture() started.
+➜ Test dryRunAgainstRealOrca() skipped.
+◇ Test bothModesHangingYieldsFailedWithLaunchdFallbackAndNoOrphans() started.
+◇ Test originAnchorIsTheVectorIntersectionWithTheCardEdge() started.
+◇ Test connectToMissingSocketFails() started.
+◇ Test syntheticFastShellCapturesInteractiveFilteredEnv() started.
+◇ Test oversizedFrameGetsFrameTooLargeErrorAndDisconnect() started.
+◇ Test staleSocketFileIsReplaced() started.
+◇ Test cacheServesRepeatedCallsAndReloadInvalidates() started.
+◇ Test cancelledCaptureKillsTheShellQuickly() started.
+◇ Test closingTheListenerRemovesTheSocketAndEndsTheStream() started.
+◇ Test maxAgeExpiresTheCache() started.
+◇ Test policyAppliesPreferenceAndMode() started.
+➜ Test realReadAgainstPublicRepo() skipped.
+◇ Test newCleanSessionCreatesAManagedFolderAndOpensTheDefaultAgentWithoutADialog() started.
+◇ Test arrowsSkipDisabledItemsAndStopAtTheEnds() started.
+◇ Test profilesAppearWithFlagsInMonoAndNeverRepeatTheDefaults() started.
+◇ Test motionBuildersUseTokenValues() started.
+◇ Test heavyTransferDoesNotStarveTheCooperativePool() started.
+◇ Test resolutionFollowsReduceMotionAndMode() started.
+◇ Test truncatedFrameThenDisconnectIsReportedAtEndOfStream() started.
+◇ Test stoppedComputerShowsStoppedAndCannotBeTakenOver() started.
+◇ Test duplicateInTheSameScopeIsRejectedAtRegistration() started.
+◇ Test passesEnvironmentOverlay() started.
+◇ Test adoptedListeningDescriptorAcceptsWithoutBindOrUnlink() started.
+◇ Test projectActionsAreOfferedOnceRegistered() started.
+◇ Test globalAgainstTheTerminalReservedListIsReported() started.
+◇ Test concurrentReceiveIsRejected() started.
+◇ Test reduceMotionIsOROfSystemAndPreference() started.
+◇ Test parserHandlesNulSeparatedEntries() started.
+◇ Test outboundQueuePumpedToASlowSocketResyncsInsteadOfBlocking() started.
+◇ Test insecureDirectoryIsRejected() started.
+◇ Test deliberateGlobalExceptionsToTheTerminalAreNotConflicts() started.
+◇ Test cancellationKillsProcess() started.
+◇ Test resolveUsesTheMostSpecificActiveScope() started.
+◇ Test failedTakeOverGoesBackToAgentWithTheError() started.
+◇ Test missingExecutableIsLaunchFailure() started.
+◇ Test peerCloseYieldsEndOfStream() started.
+◇ Test declineGoesToTheComputerAndClearsTheBanner() started.
+◇ Test timeoutKillsProcess() started.
+◇ Test echoesLargePayloadThroughPartialWrites() started.
+◇ Test springsMatchSpecTables() started.
+◇ Test manyConcurrentProcessesDoNotStarveTheCooperativePool() started.
+◇ Test regularFileAtPathIsNotRemoved() started.
+◇ Test commandReturnSubmitsAndPlainReturnDoesNot() started.
+◇ Test everyBoundActionExistsInTheActionTable() started.
+◇ Test canonicalTableHasNoConflicts() started.
+◇ Test handBackWithNoteReleasesKeyboardAndClearsTheField() started.
+◇ Test backgroundGrandchildHoldingPipeDoesNotHangResult() started.
+◇ Test helpHeadlinesFollowTheNotificationFormat() started.
+◇ Test closeWakesPendingReceiveAndFailsLaterSends() started.
+◇ Test silenceOverTwoSecondsIsSlowConnectionAndRecovers() started.
+◇ Test keyboardIsOnlyCapturedWithHumanControl() started.
+◇ Test outputIsBounded() started.
+◇ Test failuresAreNotCached() started.
+◇ Test startsConnectingGoesLiveAndInputNeedsHumanPlusLiveStream() started.
+◇ Test loopFpsIsCappedAndDropsInLowPower() started.
+◇ Test clickWhileTheAgentControlsIsReported() started.
+◇ Test overlayVersusPaletteNeedsADeclaredOverride() started.
+◇ Test geistRegistersAndResolvesByFamilyName() started.
+◇ Test tabularDigitsKeepNumbersAligned() started.
+◇ Test lightColorsEqualOrcaExtractionWhereRegistered() started.
+◇ Test terminalUsesSFMono() started.
+◇ Test everyTextStyleResolvesToTheRightFamily() started.
+◇ Test defaultFilterMatchesSpecDenylist() started.
+◇ Test reconnectingEscalatesToDisconnectedAndNeverTouchesControlOrHelp() started.
+◇ Test geistFileIsBundledWithLicense() started.
+◇ Test showsAfterTheDelayAndNotBefore() started.
+◇ Test fontFamiliesAreGeistAndSFMono() started.
+◇ Test uiFontUsesGeistAndTheWeightAxis() started.
+◇ Test leavingBeforeTheDelayCancelsAndClickDismisses() started.
+◇ Test weightMappingIsMonotonic() started.
+◇ Test searchMatchesNameBranchFolderAndProjectAtItemLevel() started.
+◇ Test takeOverShowsRevokingThenForceAfterTenSecondsWithoutAck() started.
+◇ Test suppressedControllerNeverOpens() started.
+◇ Test typographyUsesOrcaSizesWeightsAndLineHeights() started.
+◇ Test chordParsing() started.
+◇ Test socketFileIsOwnerOnly() started.
+◇ Test buttons() started.
+◇ Test motionOriginatedInOrcaMatchesExtraction() started.
+◇ Test radiiUseOrcaValues() started.
+◇ Test bubbleSizesToItsContentAndCapsAt280() started.
+◇ Test capturesStdoutStderrAndExitCode() started.
+◇ Test moduleLinks() started.
+◇ Test largeOutputDoesNotDeadlock() started.
+◇ Test secondTooltipWithinTheChainWindowOpensImmediately() started.
+◇ Test sendSuspendsUntilThePeerDrains() started.
+◇ Test sessionOrderFollowsTheVisibleList() started.
+◇ Test divergencesFromSpec02AreIntentional() started.
+◇ Test darkColorsEqualOrcaExtraction() started.
+◇ Test actionsAreDisabledWithAReasonUntilThereIsAComputer() started.
+◇ Test toggleControlTakesOverThenOpensTheNoteField() started.
+◇ Test everyColorHasAnOrcaReferenceOrAJustification() started.
+◇ Test pendingRowsSitOnTopOfTheirProjectAndHideWhileSearching() started.
+◇ Test relativeTimeBuckets() started.
+◇ Test cancellingReceiveClosesTheConnection() started.
+◇ Test canonicalShortcutsMatchTheActionTableColumn() started.
+◇ Test sessionsAreOrderedByRecentActivityAndByName() started.
+◇ Test spinnerAnimationIsDiscreteAndPausesOutOfView() started.
+◇ Test searchDropsProjectsAndSectionsWithoutResultsAndReportsEmpty() started.
+◇ Test delaysComeFromTheTokens() started.
+◇ Test spacingUsesOrcaScale() started.
+◇ Test idleOverAWeekAndArchivedAreHiddenByDefault() started.
+◇ Test mainCheckoutsFilterAndSelectedSessionStaysVisible() started.
+◇ Test relaunchWithKeepsIdentityAndChangesModel() started.
+◇ Test searchIgnoresCollapseAndShowMoreLimit() started.
+◇ Test detectsInstalledVersionsFlagsAndLogin() started.
+◇ Test missingCLIIsReportedNotInstalled() started.
+◇ Test tabWidthShrinksFromBaseToTheMinimum() started.
+◇ Test chainedTooltipsOpenWithoutDelay() started.
+◇ Test revokingIsVisibleWhileWaitingForTheAck() started.
+◇ Test metricsMatchTheSpec() started.
+◇ Test environmentCompositionFollowsSpec() started.
+◇ Test bypassDefaultsAreAlwaysFlagged() started.
+◇ Test searchMatchesTerminalsAndShowsOnlyThemInTheCard() started.
+◇ Test hookKillingFlagsWarn() started.
+◇ Test manyAgentsCollapseIntoASummaryPill() started.
+◇ Test pathTooLongIsRejected() started.
+◇ Test probeTimeoutsAndGarbageFallBackToTable() started.
+◇ Test loginInterpretersHandleRealOutputs() started.
+◇ Test projectShowsFiveSessionsThenShowMore() started.
+◇ Test probesUseLoginEnvironmentAndNeutralDirectory() started.
+➜ Test writeEvidence() skipped.
+◇ Test specFieldsOverrideProfileAndExtraArgsAdd() started.
+◇ Test idleShellsGroupUnderAnAgentSession() started.
+◇ Test detectsMirrorsOutOfSyncBetweenMarkdownAndToml() started.
+◇ Test loggedOutIsDetectedWithoutRunningLogin() started.
+◇ Test legacyCodexSkillsLoseToSharedAgentsSkillsOfTheSameName() started.
+◇ Test cachesByPathAndModificationTimeAndForceRefreshes() started.
+◇ Test slicePolicyRejectsInjectionsInSlice1() started.
+◇ Test projectWinsOverUserAndShadowsAreMarkedPerClient() started.
+◇ Test extraArgsRepeatingStructuredFieldsWarnAndStructuredWins() started.
+◇ Test spinnerIsTwelveDiscreteStepsOneTurnPerSecondAtMostTwelveFps() started.
+◇ Test v11ActionsAreNeverRendered() started.
+◇ Test realLoginShellPathResolvesClaudeAndGh() started.
+◇ Test hiddenProjectsAreRemovedUnlessShown() started.
+◇ Test fixtureHasThreeProjectsAndCleanSessionsInRecentOrder() started.
+◇ Test indexesEverySourceByReferenceWithErrorsAndNamespacing() started.
+◇ Test dispatchingProtocolHopsToTheMainActor() started.
+◇ Test databaseRowsHoldMetadataAndHashOnlyNeverTheBody() started.
+◇ Test textThatMatchesNothingOffersTheFallbackRowAndHighlightsIt() started.
+◇ Test textThatMatchesAnItemKeepsTheMatchesAndHidesTheFallback() started.
+◇ Test unreadSessionsReadAsUnread() started.
+◇ Test collapsedProjectKeepsItsCountAndDropsItsRowsFromKeyboardOrder() started.
+◇ Test performRunsTheHandlerAndReturnsItsMessage() started.
+◇ Test processStateDrivesTheIndicatorWhileAgentActivityIsUnknown() started.
+◇ Test handlerFailuresBecomeActionErrors() started.
+◇ Test resolverPrefersSearchPathThenKnownDirectories() started.
+◇ Test scanNeverWritesToTheNativeFolders() started.
+◇ Test shellUsesLoginShellFromEnvironment() started.
+◇ Test maximumTwoBadges() started.
+◇ Test langDefaultsWhenAbsent() started.
+◇ Test missingFoldersAreReportedAbsentNotErrors() started.
+◇ Test activationRecordsTheModifier() started.
+◇ Test orphanParentBecomesRoot() started.
+◇ Test resolutionOrderTerminalProjectGlobalBuiltin() started.
+◇ Test snapshotBuildsHierarchyFromParentLinks() started.
+◇ Test tableCountIsStable() started.
+◇ Test futureSliceActionIsUnavailableEvenIfRegistered() started.
+◇ Test launchSpecPersistsNativeIDsForResume() started.
+◇ Test validTransitionsFromTable() started.
+◇ Test buttonColorsFollowTheVariantTable() started.
+◇ Test invalidPermissionModesThrow() started.
+◇ Test planNeverTouchesGlobalConfigOrInjects() started.
+◇ Test overrideWinsAndMustExist() started.
+◇ Test duplicateIDsAreDetected() started.
+◇ Test launchAlwaysRestartsToStarting() started.
+◇ Test indexListsEveryActionWithItsState() started.
+◇ Test serverInstructionsAreShortAndCarryTheUntrustedContentRule() started.
+◇ Test cardTextAndBadges() started.
+◇ Test unregisterRemovesTheElement() started.
+◇ Test unregisteredActionIsReportedNotSilentlyIgnored() started.
+◇ Test invalidTransitionsAreRejected() started.
+◇ Test slice1DerivationHasNoHooks() started.
+◇ Test settingTheDefaultTurnsOffOthersAndCopiesBuiltins() started.
+◇ Test slice1NavShowsOnlyAgentsGeneralTerminal() started.
+◇ Test aggregationWorstWins() started.
+◇ Test permissionRequestIsNeedsInputPermissionUntilTheTurnEnds() started.
+◇ Test disabledActionCarriesTheExactReasonAndDoesNotRun() started.
+◇ Test allowedFlagsExcludeIdentityAndStructuredFields() started.
+◇ Test inputSchemasAreWellFormedJSONSchemaObjects() started.
+◇ Test nestedStructuresAreValidated() started.
+◇ Test novncInTheIsolatedWebViewStreamsAnimationAndFollowsTheLease() started.
+◇ Test claudeTurnWithBashFollowsTheStateTable() started.
+◇ Test extraArgsValidation() started.
+◇ Test sidebarFramesFollowTheSpecInBothWindowSizes() started.
+◇ Test duplicateIsAnEditableUserCopy() started.
+◇ Test settingsRoundTrip() started.
+◇ Test controlStateComesFromTheActionEnablement() started.
+◇ Test bypassInExtraArgsIsFlaggedToo() started.
+◇ Test badArgumentsComeBackAsInvalidArgumentWithViolations() started.
+◇ Test validation() started.
+◇ Test schemaDefaultsMatchTheSpec() started.
+◇ Test sidebarWidthIsClamped() started.
+◇ Test nativeSubagentsRealSequenceEndsDoneWithChildrenTracked() started.
+◇ Test codexRealSessionStartAndPromptGiveIdleThenWorkingWithRolloutPath() started.
+◇ Test serverInstructionsCarryTheWorkerConductRules() started.
+◇ Test builtinSkipProfilesAreFlaggedAndOthersAreNot() started.
+◇ Test statusDetachedHead() started.
+◇ Test catalogCoversEveryToolOfTheSpecExceptTheDocumentedOnes() started.
+◇ Test everyToolMatchesItsSignatureInTheSpec() started.
+◇ Test defaultBranchAndUsernamePrefix() started.
+◇ Test symlinkedSkillFoldersAreFollowed() started.
+◇ Test titlebarStripIs36AndSidebarStartsAt280() started.
+◇ Test sidebarMetricsMatchTheSpecNumbers() started.
+◇ Test foldIsDeterministic() started.
+◇ Test toggleSidebarActionCollapsesAndExpands() started.
+◇ Test missingFolderIsTyped() started.
+◇ Test xorConstraintsAreEnforced() started.
+◇ Test orcaImportProfilesAreMarked() started.
+◇ Test emptyWorkspaceProjectWithoutSessionsAndFilteredOut() started.
+◇ Test errorCodeSetIsExactlyTheClosedSetOfTheSpec() started.
+◇ Test detectsRootFromSubfolderAndLinkedWorktree() started.
+◇ Test outOfOrderArrivalProducesTheSameStateWhenSortedByOccurrence() started.
+◇ Test defaultTemplateShape() started.
+◇ Test statusOutsideRepoIsTyped() started.
+◇ Test statusCleanDirtyUntracked() started.
+◇ Test plainFolderIsNotARepository() started.
+◇ Test windowListsItsCanonicalControls() started.
+◇ Test permissionChoicesMarkEveryBypassMode() started.
+◇ Test settingsDecodeToleratesMissingAndFutureKeys() started.
+◇ Test duplicateRegistrationThrows() started.
+◇ Test statusDoesNotTakeIndexLock() started.
+◇ Test hideAppNameActionRemovesTheLabelFromTheTree() started.
+◇ Test handwrittenResultFindsIdsByPattern() started.
+◇ Test focusIsTrappedInTheOverlayAndReturnedToTheOrigin() started.
+◇ Test fileCitationsAndReportedTrust() started.
+◇ Test parentStopWithLiveChildrenWaitsUntilTheLastSubagentStop() started.
+◇ Test requiredUnknownTypeEnumAndRangeAreEnforced() started.
+◇ Test cleanLogStripsAnsiTimestampsAndKeepsLastLines() started.
+◇ Test threeFieldsGetThreeStatuses() started.
+◇ Test windowIsConfiguredAndTrafficLightsSurviveResizeAndRelayout() started.
+◇ Test totalLogBudgetIs12KiB() started.
+◇ Test approvedPermissionReturnsToWorkingOnPostToolUse() started.
+◇ Test trafficLightGeometryMatchesTheSpec() started.
+◇ Test requestIDShape() started.
+◇ Test invalidPointersAreUsageErrors() started.
+◇ Test spawnFailureAndRestartCycle() started.
+◇ Test failureSelectionCoversConclusions() started.
+◇ Test fitKeepsTailAndMarksCut() started.
+◇ Test customTemplateAndMissingLink() started.
+◇ Test everyStateEventPair() started.
+◇ Test writeThroughAFileSymlinkDoesNotTouchTheTarget() started.
+◇ Test runningCannotBeRelaunchedWithoutStopping() started.
+◇ Test applyKeepsExitFieldsCoherent() started.
+◇ Test symlinkToAFileOutsideIsRejectedAndNeverRead() started.
+◇ Test aPointerCoversItsDescendantsAndDeepPointersAreListed() started.
+◇ Test labels() started.
+◇ Test toolResultsAreAlwaysTheSameShapeOnError() started.
+◇ Test secondClaimGetsAlreadyClaimedWithTheOwner() started.
+◇ Test symlinkedDirectoryIsRejectedForReadAndWrite() started.
+◇ Test aheadBehind() started.
+◇ Test resultSubmitWritesTheFileAndValidatesCitations() started.
+◇ Test realComputerWithBrowserExecHttpEvidenceAndHelp() started.
+◇ Test claimReturnsTheWorkPathsAndAllowedProxies() started.
+◇ Test rejectsEscapesAbsolutePathsAndNul() started.
+◇ Test unregisteredChildIsNotAuthorizedAndCapabilityMustMatch() started.
+◇ Test openNeverOverrunsFiftySecondsInTotal() started.
+◇ Test runtimeErrorMapperCoversTheWireCodes() started.
+◇ Test takeOverOnOneComputerDoesNotPauseTheOther() started.
+◇ Test claimWaitsForReadyAndReportsQueuedWhenItIsNot() started.
+◇ Test displayHttpHasNoBrowser() started.
+◇ Test downloadWritesUniqueFilesUnderWorkDownloads() started.
+◇ Test cookiesExportWritesAJarInWork() started.
+◇ Test trustOverrideUsesTheInlineTableFormAndTheSessionFlagsKeys() started.
+◇ Test runtimeErrorsKeepTheirCodes() started.
+◇ Test parsesTheAppServerResponseShapeAndIgnoresOtherSources() started.
+◇ Test realHooksListFixtureYieldsTheFiveProbedHashes() started.
+◇ Test hookOverridesDefineEveryCodexEventWithConstantCommandAndTimeout() started.
+◇ Test resultSubmitRefusesCitationsThroughSymlinksAndDotDot() started.
+◇ Test parsesScalarsBlocksListsAndKeepsNestedAsRaw() started.
+◇ Test argumentsWithoutHashesAreUntrustedSoTheCallerFallsBackToRolloutEstimated() started.
+◇ Test releaseThenUseGivesBoxReleasedAndUnknownComputerIsNotFound() started.
+◇ Test futureSliceActionsAreNotRegisteredNorRendered() started.
+◇ Test journalTracksDoingBlockedAndFeedsTheTimeline() started.
+◇ Test screenshotReturnsAnImageAndSaveAsIsConfined() started.
+◇ Test reportsErrorsWithLineNumbers() started.
+◇ Test resultJsonThatIsASymlinkIsNotFollowed() started.
+◇ Test queryFiltersLikeTheOldReqlog() started.
+◇ Test fileWithoutFrontmatterIsNotAnError() started.
+◇ Test readsAndWritesRegularFilesCreatingFolders() started.
+◇ Test automationBadgeAppearsOnlyWhenAutomationIsOn() started.
+◇ Test spawnErrorBecomesFailureWithPath() started.
+◇ Test eventSetsMatchTheSpec() started.
+◇ Test workspaceStepEmitsGitRowsAndFailureStopsBeforeSpawn() started.
+◇ Test historyControlsAreDisabledWithAReason() started.
+◇ Test indexReadsIdAndTrustFromTheRequestLog() started.
+◇ Test aChildOnlyOperatesTheComputerItClaimed() started.
+◇ Test daemonUnavailableFails() started.
+◇ Test getReturnsRecordAndPagedBodyAndIsConfinedToThisComputer() started.
+◇ Test firstOutputClosesCliExecOnce() started.
+◇ Test normalizesInsideTheRoot() started.
+◇ Test tomlReadsTopLevelStringsAndMultilineBodies() started.
+◇ Test noToolCanBlockLongerThanFiftySeconds() started.
+◇ Test rootThatIsItselfBehindASymlinkStillWorks() started.
+◇ Test asCurlDropsRedactedHeadersAndEmitsBothSnippets() started.
+◇ Test statusUsesReadKindAndFetchUsesWrite() started.
+◇ Test handBackResolvesTheOpenHelpRequestAndHelpWaitReturns() started.
+◇ Test uploadReadsOnlyRegularFilesInsideWork() started.
+◇ Test timeoutIsTypedWithOperation() started.
+◇ Test readCommandsDisableOptionalLocks() started.
+◇ Test takeOverAsksTheRuntimeAndPausesTheAgent() started.
+◇ Test thumbnailDecodesTheRuntimeJPEGAndRemembersTheURL() started.
+◇ Test missingGitIsTyped() started.
+◇ Test fetchTimeoutBecomesFetchFailed() started.
+◇ Test liveAppReceivesTheEventAndNothingIsSpooled() started.
+◇ Test hugeToolResponseIsReducedBeforeSpooling() started.
+◇ Test browserToolsMapToRuntimeOperationsWithTheirArguments() started.
+◇ Test codexTrustedInjectionHasHooksStateAndNoDaemon() started.
+◇ Test hungAppDoesNotBlockTheHelperBeyondItsDeadline() started.
+◇ Test emptyMCPAndPluginAreOmitted() started.
+◇ Test helperLatencyStaysWellUnderTheDeadlineWithTheAppLiveAndClosed() started.
+◇ Test claudeSettingsPathIsInsideTheLaunchDirectoryAndEnvCarriesTheRun() started.
+◇ Test unwritableSpoolStillExitsZero() started.
+◇ Test withoutAckTheComputerStaysRevokingAndForceCancelsTheWrite() started.
+◇ Test humanInControlErrorCarriesRetryAfterFromTheRuntime() started.
+◇ Test argvMatchesGolden(_:) started.
+◇ Test spoolDoesNotLeakThePromptOrToolOutput() started.
+◇ Test takeOverOnAnHTTPComputerNeedsNoRuntime() started.
+◇ Test slice1IgnoresInjectionAndStaysEmpty() started.
+◇ Test kqueueWatcherDrainsSpoolFilesWrittenWhileTheAppRuns() started.
+◇ Test unpublishedCommitsAreReportedButDoNotBlock() started.
+◇ Test resumeRegeneratesIdenticalFlagsAndFiles() started.
+◇ Test closingTheViewerNeverChangesLeaseOrRequest() started.
+◇ Test spoolFailureKeepsTheFileWhenTheDatabaseIsReadOnly() started.
+◇ Test spoolAndLiveEventsInterleavedOutOfOrderConverge() started.
+◇ Test appClosedTurnIsRecoveredOnOpen() started.
+◇ Test takingOverWithoutARequestWorksAndHandBackDeliversTheNoteOnTheNextCall() started.
+◇ Test drainingFileLeftByACrashIsReprocessedIdempotently() started.
+◇ Test runtimeFailureOnTakeOverLeavesTheAgentInControl() started.
+◇ Test firstOutputDuringAttachIsReplayedAfterRunning() started.
+◇ Test validatorRejectsSettingsOutsideTheLaunchDirectory() started.
+◇ Test withoutRunIDTheHelperIsInertAndSilent() started.
+◇ Test earlyExitBeforeOutputIsAStartFailure() started.
+◇ Test cleanWorktreeIsRemovedAndPruned() started.
+◇ Test forceRemovesDirtyWorktree() started.
+◇ Test lockedWorktreeIsRefused() started.
+◇ Test deleteBranchMergedAndUnmerged() started.
+◇ Test reimportKeepsLocalEditsUnlessOverwriteIsChosen() started.
+◇ Test noPythonNodeOrJQIsNeededOrTouched() started.
+◇ Test archivedProjectIsNotResurrectedWithoutOverwrite() started.
+◇ Test untrackedOnlyAlsoBlocks() started.
+◇ Test cancelDuringCreateKillsTheSession() started.
+◇ Test unknownDomainVersionIsSkippedWithANote() started.
+◇ Test garbageOrEmptyStdinStillExitsZeroAndRecordsTheEvent() started.
+◇ Test removalWorksWhenFolderWasDeletedByHand() started.
+◇ Test warnsWhenOrcaStillListsTheWorktree() started.
+◇ Test existingManualDefaultIsNotReplaced() started.
+◇ Test realImportMapsProjectsWorktreesAndLeavesSessionsNotStarted() started.
+◇ Test uncommittedChangesBlockRemoval() started.
+◇ Test mainWorktreeAndUnknownPathsAreRefused() started.
+◇ Test missingCLIFailsOnResolveStep() started.
+◇ Test agentDefaultsBecomeImportedProfilesMarkedAsBypass() started.
+◇ Test dryRunReportsCountsAndNamesAndWritesNothing() started.
+◇ Test readerOnlyTouchesATemporaryCopyAndCleansUp() started.
+◇ Test legacyJSONIsUsedWhenSQLiteIsMissingOrBroken() started.
+◇ Test appClosedEventGoesToTheSpoolAndTheAgentSeesEmptyJSONAndExitZero() started.
+◇ Test envValuesAreImportedOnlyWhenConfirmed() started.
+◇ Test corruptedLinesNeverBlockTheOnesAfterThem() started.
+◇ Test argumentsPassBranchesAsVariablesEvenWithQuotes() started.
+◇ Test selectPrefersMatchingHeadThenOpen() started.
+◇ Test orcaDefaultArgsTokenizeLikeAShell() started.
+◇ Test reasonFollowsBootTimeThenCleanExit() started.
+◇ Test locatorFindsProfileAndDetectCountsWithoutTouchingTheGit() started.
+◇ Test importIsIdempotentAndPicksUpNewWorktreesByPath() started.
+◇ Test textHasAliasesVariablesAndNoBranchNames() started.
+◇ Test defaultProbeReadsSingletonLockAndRejectsStalePid() started.
+◇ Test parsesStatusContextsAndOutcomes() started.
+◇ Test resumeWithoutACapturedIDFallsBackToContinueLast() started.
+◇ Test errorsAreClassified() started.
+◇ Test cookiesFromTheBrowserAreFilteredByHost() started.
+◇ Test reconcileWithoutADaemonInterruptsEverythingAndSeparatesRebootFromCrash() started.
+◇ Test bodyJsonFormAreMutuallyExclusiveAndUrlMustBeHttp() started.
+◇ Test inlineBodyIsCappedAndSaveBodyAsWritesInsideWorkOnly() started.
+◇ Test materializeWritesOwnerOnlyFilesInsideTheLaunchDirectoryOnly() started.
+◇ Test runningOrcaChangesTheVariant() started.
+◇ Test resumeArgvGolden() started.
+➜ Test probeInstalledCLIs() skipped.
+◇ Test reconcileKeepsLiveRecordsExitedAndInterruptsTheRestWithoutRelaunching() started.
+◇ Test emitsRealStepsInOrderAndRebuildsArgv() started.
+◇ Test parsesRealAnonymizedBatch() started.
+◇ Test malformedHashIsRefusedAndNeverReachesTheCommandLine() started.
+◇ Test coldLogTailJoinsTheRotatedSegment() started.
+◇ Test connectedPicksActiveAccountAndScopes() started.
+◇ Test loggedOutAndFailedAccounts() started.
+◇ Test togglesLimitWhatIsImported() started.
+◇ Test otherHostIsIgnored() started.
+◇ Test coldLogTailKeepsTheEndAndStartsOnALineBoundary() started.
+◇ Test modelNeverCarriesTheToken() started.
+◇ Test candidateSuffix() started.
+◇ Test takeOverPausesWritesUntilHandBack() started.
+◇ Test screenshotAndRecord() started.
+◇ Test transportFailureBecomesBlockedByPolicyWhenTheEgressRefusedTheDestination() started.
+◇ Test requestRunsAbxHttpAndIsRecordedAsObservedByTheApp() started.
+◇ Test waitAppearsWhenElementShowsUp() started.
+◇ Test waitGoneAndTimeout() started.
+◇ Test slugRules() started.
+◇ Test secondServerOnSamePathIsRefused() started.
+◇ Test concurrentClientsAreServed() started.
+◇ Test handshakeThenState() started.
+◇ Test defaultRootIsOrcaWorkspaces() started.
+◇ Test uiTreeWholeAndSubtree() started.
+◇ Test noOrcaFilesMeansNoProfiles() started.
+◇ Test actionFailuresMapToStableCodes() started.
+◇ Test cancelClosesTheRequestAndLiftsThePause() started.
+◇ Test moreThanTwentyBranchesAreChunked() started.
+◇ Test rateLimitBacksOffExponentiallyKeepingStaleState() started.
+◇ Test resolveRepoFromOrigin() started.
+◇ Test startFreshKeepsTheConfigurationButForgetsTheConversation() started.
+◇ Test duplicateBranchesAreQueriedOnce() started.
+◇ Test helpIsIdempotentWaitsRepeatAndResolveDeliversTheNote() started.
+◇ Test agentsSection() started.
+◇ Test waitEnabledStates() started.
+◇ Test otherServicesAreNotAvailableYet() started.
+◇ Test socketIsOwnerOnlyAndRemovedOnStop() started.
+◇ Test prefixNormalization() started.
+◇ Test failureReportCollectsLogsForActionsChecksOnly() started.
+◇ Test branchDidChangeRefreshesImmediately() started.
+◇ Test worktreeList() started.
+◇ Test confirmationOnlyWhenProcessesRunning() started.
+◇ Test statusAheadBehindAndEntries() started.
+◇ Test errorInOneRepoDoesNotAffectOthers() started.
+◇ Test plain403ThatTheEgressBlockedIsPolicyButASiteThatSays403IsNot() started.
+◇ Test parses(remote:host:owner:name:) started.
+◇ Test invalidAndOversizedFramesAreAckedAsErrors() started.
+◇ Test authStatusStates() started.
+◇ Test disabledChannelRefusesAtHandshake() started.
+◇ Test resumeDropsThePromptAndUsesTheCapturedID() started.
+◇ Test localHeadSelectsPullRequestAndFlagsMismatch() started.
+◇ Test lowRemainingSlowsPollingToFiveMinutes() started.
+◇ Test statusClean() started.
+◇ Test fakeRunnerReceivesNoMutatingCommands() started.
+◇ Test refusedHandshakeIsReportedAsRejected() started.
+◇ Test emptyPathListDoesNotStart() started.
+◇ Test noSocketIsUnavailableAlmostImmediately() started.
+◇ Test hookAndCtlServicesShareOneAppSock() started.
+◇ Test oversizedFrameClosesTheConnection() started.
+◇ Test tenSessionsInThreeReposMakeThreeRequests() started.
+◇ Test deletedIsTerminal() started.
+◇ Test serviceNeverWritesToNativeFolders() started.
+◇ Test neverReusesAnExistingFolder() started.
+◇ Test watchPicksUpANewAgentFileWithinTwoSeconds() started.
+◇ Test runFoldersAreMatchedBySessionID() started.
+◇ Test helpWaitLongPollsAndNeverExceedsTheCap() started.
+◇ Test cacheTTLActiveAndBackground() started.
+◇ Test missingOrcaMeansNoWarning() started.
+◇ Test rejects(remote:) started.
+◇ Test statusDetachedAndUnborn() started.
+◇ Test watchFollowsNewSkillFoldersAndEditsInsideThem() started.
+◇ Test appThatAcceptsButNeverAnswersHitsTheTwoHundredMillisecondDeadline() started.
+◇ Test actionByActionIDAndByControl() started.
+◇ Test everyStateEventPair() started.
+◇ Test disabledCtlDoesNotAffectTheHookService() started.
+◇ Test namesAreAdjectiveDashNoun() started.
+◇ Test commandFailureClassification() started.
+◇ Test notificationsGetNoReplyAndPingIsEmpty() started.
+◇ Test seenDoneBecomesIdleAfterThirtyMinutes() started.
+◇ Test unreadDoneOutranksInterruptedButReadDoneDoesNot() started.
+◇ Test uniqueFallsBackToASuffixWhenEverythingCollides() started.
+◇ Test createsTheRootAndManyDistinctFolders() started.
+◇ Test onlyActiveAndArchivedArePersistable() started.
+◇ Test outputIsDeterministicAndCarriesNoRunOrPaneIDs() started.
+◇ Test reportsFileChangesInsideWatchedFolder() started.
+◇ Test trashRefusesFoldersTheAppDidNotCreate() started.
+◇ Test hostileHelperPathsAreQuotedForTheShell() started.
+◇ Test launchFileIsOwnerOnlySettingsJSONAndArgvFormIsSeparate() started.
+◇ Test initializeNegotiatesTheVersionAndCarriesTheInstructions() started.
+◇ Test malformedAndUnknownMessagesGetJSONRPCErrors() started.
+◇ Test sessionsRootFollowsTheSettingAndStaysInsideAnIsolatedHome() started.
+◇ Test malformedRequestIsBadRequestNotACrash() started.
+◇ Test dryRunReportsWithoutTouchingAnyDatabase() started.
+◇ Test trashMovesAManagedFolder() started.
+◇ Test moduleLinks() started.
+◇ Test boxFileIsReadOnly0400AndOnlyForNonEnvDelivery() started.
+➜ Test hooksWithInlineTrustFireInARealRun() skipped: "Codex sem cota até 22/10/2026 (S-05: payloads PreToolUse/PostToolUse/Stop pendentes); só o argv é verificado por golden"
+◇ Test trashRefusesHomeRootAndTheSessionsRoot() started.
+◇ Test refreshReconcilesAddedChangedAndRemovedKeepingHistory() started.
+◇ Test rolloutIgnoresMalformedAndNonMetaFiles() started.
+◇ Test worstStateWinsInTheDocumentedOrder() started.
+◇ Test rolloutPastMidnightLooksAtAdjacentDay() started.
+◇ Test openCodeCaptureRunsOnlySessionList() started.
+◇ Test rolloutSymlinkedCwdMatches() started.
+◇ Test toolsListAnnouncesEveryToolWithItsExactSchema() started.
+◇ Test threadNameFromSessionIndexLastLineWins() started.
+◇ Test settingsRegisterEveryClaudeEventWithTheCanonicalCommandAndTimeout() started.
+◇ Test toolCallsReturnContentBlocksAndErrorsAreToolErrorsNotProtocolErrors() started.
+◇ Test stripsOnlyUrlCredentials() started.
+◇ Test openCodeNewSessionIsTheOneAddedInTheSameDirectory() started.
+◇ Test stdioInitializeListAndCallThroughTheRealHelper() started.
+◇ Test capturerGivesUpAfterTimeout() started.
+◇ Test wrongCapabilityComesBackAsAReadableJSONRPCError() started.
+◇ Test codexAndOpenCodeUseCaptureStrategies() started.
+◇ Test withoutTheAppToolCallsGetAReadableAppUnavailableNotACrash() started.
+◇ Test claudeIDIsGeneratedByTheAppBeforeSpawn() started.
+◇ Test capturerPollsUntilTheRolloutAppears() started.
+◇ Test realFixtureShapeParses() started.
+◇ Test rolloutMatchesCwdAndTimestamp() started.
+◇ Test openCodeSessionListParsesRealShape() started.
+◇ Test promotionOnlyLinksTheSession() started.
+◇ Test executeWithFakeRunnersWritesBodyThenCleansUp() started.
+◇ Test validation() started.
+◇ Test buildingThePlanRunsNothing() started.
+◇ Test pushNeedFromStatus() started.
+◇ Test pushFailureStopsBeforeCreateAndKeepsText() started.
+◇ Test draftAndNoPush() started.
+◇ Test titleWithQuotesIsQuotedInPreviewOnly() started.
+◇ Test planListsPushThenCreateWithPreview() started.
+◇ Test tailKeepsTheEndAndMarksTruncation() started.
+◇ Test jobsFinishedAndNeverPolledAreLoggedOnRelease() started.
+◇ Test timeoutReturnsThePartialOutputAndALogId() started.
+◇ Test execRunsInTheWorkContainerWithStdinAndLogsTheCommand() started.
+◇ Test execStartPollCancelFlowAndCommandLogging() started.
+◇ Test execRejectsBadPathsNamesAndShape() started.
+◇ Test secretCommandWrapperReadsFilesAndNeverPutsValuesInArgv() started.
+◇ Test emptyPromptAddsNothing() started.
+◇ Test resumeNeverRepeatsThePrompt() started.
+◇ Test promptFileFromSpecIsReferencedNotCopied() started.
+◇ Test thresholds(provider:) started.
+◇ Test writerCreatesPrivateFilesAndCleansUp() started.
+◇ Test nulByteForcesFile() started.
+◇ Test thresholdCountsUTF8BytesNotCharacters() started.
+◇ Test specialCharactersArriveLiterally(provider:) started.
+◇ Test theKeyNeverLeavesTheEgressFile() started.
+◇ Test profilesWithoutApiModeOrDirectHaveNoRender() started.
+◇ Test zyteApiProfileDeclaresRenderWithTheSameKey() started.
+◇ Test workingTreeEventSelectsOnlyThatWorktree() started.
+◇ Test gitMetadataEventsSelectEveryWorktreeOfTheProject() started.
+◇ Test noiseIsIgnored() started.
+➜ Test sessionStartAndStopReachTheTestServer() skipped.
+◇ Test stopFailureIsFailedWithReasonAndANewPromptRecovers() started.
+◇ Test unknownEventsAreIgnoredButCounted() started.
+◇ Test toolSubtitlesAndPermissionSummaries() started.
+◇ Test notificationTypesMapPerSpec() started.
+◇ Test childPermissionBlocksTheParentUntilTheChildToolReturns() started.
+◇ Test childWithoutSubagentStartDoesNotKeepTheParentWaiting() started.
+◇ Test sessionStartDoesNotRewindARunningTurn() started.
+◇ Test permissionOutranksQuestionOutranksOther() started.
+◇ Test daemonExitCodesAndInterruption() started.
+◇ Test askUserQuestionIsNeedsInputQuestionUntilTheToolReturns() started.
+◇ Test subagentStartAfterParentStopMovesDoneToWaiting() started.
+◇ Test case passing 2 arguments text → "2.1.302 (Claude Code)", expected → 2.1.302 to parsesVersions(text:expected:) started.
+◇ Test case passing 2 arguments text → "codex-cli 0.163.0", expected → 0.163.0 to parsesVersions(text:expected:) started.
+◇ Test case passing 2 arguments text → "1.18.34", expected → 1.18.34 to parsesVersions(text:expected:) started.
+◇ Test case passing 2 arguments text → "v3.4", expected → 3.4.0 to parsesVersions(text:expected:) started.
+◇ Test case passing 2 arguments text → "opencode 1.2.3-beta.1", expected → 1.2.3 to parsesVersions(text:expected:) started.
+◇ Test case passing 1 argument wholeFile → true to corruptedFileIsMovedAndLatestBackupRestored(wholeFile:) started.
+◇ Test case passing 1 argument wholeFile → false to corruptedFileIsMovedAndLatestBackupRestored(wholeFile:) started.
+◇ Test case passing 1 argument c → claude/default-bypass-hello to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → claude/default-bypass-hello-baseline to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → claude/plan-profile-hello to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → claude/no-prompt to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → claude/model-effort-adddir-extra to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → claude/effort-unsupported to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → claude/prompt-16kib-exact to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → claude/prompt-16kib-plus1 to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → claude/prompt-40kb to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → claude/prompt-starts-with-dash to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → claude/prompt-special-chars to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → claude/resume-id to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → claude/continue-last to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → claude/bare-extra-arg to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → codex/default-bypass-hello to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → codex/default-bypass-hello-baseline to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → codex/model-effort-sandbox to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → codex/approval-never-adddir to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → codex/no-daemon-unavailable to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → codex/forbidden-extra-args to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → codex/prompt-40kb to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → codex/resume-last to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → opencode/default-hello to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → opencode/model-auto to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → opencode/prompt-40kb to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → opencode/prompt-special-chars to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → opencode/resume-id to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → opencode/continue-last to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → shell/login to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → custom/npm-run-dev to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → codex/prompt-special-chars to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → codex/resume-id to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → claude/hooks-hello to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → claude/hooks-mcp-plugin-hello to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → claude/hooks-mcp-plugin-resume-id to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → claude/hooks-no-prompt to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → codex/hooks-trusted-hello to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → codex/hooks-untrusted-hello to argvMatchesGolden(_:) started.
+◇ Test case passing 1 argument c → codex/hooks-trusted-resume-id to argvMatchesGolden(_:) started.
+◇ Test case passing 4 arguments remote → "https://github.com/acme/widgets.git", host → "github.com", owner → "acme", name → "widgets" to parses(remote:host:owner:name:) started.
+◇ Test case passing 4 arguments remote → "https://github.com/acme/widgets", host → "github.com", owner → "acme", name → "widgets" to parses(remote:host:owner:name:) started.
+◇ Test case passing 4 arguments remote → "https://user:secret@github.com/acme/widgets.git/", host → "github.com", owner → "acme", name → "widgets" to parses(remote:host:owner:name:) started.
+◇ Test case passing 4 arguments remote → "git@github.com:acme/widgets.git", host → "github.com", owner → "acme", name → "widgets" to parses(remote:host:owner:name:) started.
+◇ Test case passing 4 arguments remote → "ssh://git@github.com:22/acme/widgets.git", host → "github.com", owner → "acme", name → "widgets" to parses(remote:host:owner:name:) started.
+◇ Test case passing 4 arguments remote → "https://GHE.Example.com/team/repo.name.git", host → "ghe.example.com", owner → "team", name → "repo.name" to parses(remote:host:owner:name:) started.
+◇ Test case passing 1 argument remote → "" to rejects(remote:) started.
+◇ Test case passing 1 argument remote → "/local/path/repo" to rejects(remote:) started.
+◇ Test case passing 1 argument remote → "https://github.com/onlyowner" to rejects(remote:) started.
+◇ Test case passing 1 argument remote → "https://github.com/a/b/c" to rejects(remote:) started.
+◇ Test case passing 1 argument remote → "file:///x" to rejects(remote:) started.
+✔ Test compatibilityResultIsFlaggedWhenDaemonMajorDiffersFromCurrent() passed after 1.684 seconds.
+✔ Test noCommonCapabilitiesStillEstablishes() passed after 1.716 seconds.
+✔ Test clientIntersectsAckCapabilitiesWithItsOwn() passed after 1.716 seconds.
+✔ Test olderMajorFromClientIsRejectedToo() passed after 1.723 seconds.
+✔ Test lookupAndSpec() passed after 1.724 seconds.
+✔ Test slicesFollowTheVersionColumn() passed after 1.724 seconds.
+✔ Test capabilitiesAreTheIntersectionAndMinorIsTheMinimum() passed after 1.724 seconds.
+✔ Test secondHelloAfterEstablishedIsRejected() passed after 1.726 seconds.
+✔ Test timeoutFailsTheHandshake() passed after 1.726 seconds.
+✔ Test codableRejectsUnknown() passed after 1.734 seconds.
+✔ Test capabilityIntersectionPreservesOrderAndDedupes() passed after 1.734 seconds.
+✔ Test clientAcceptsMatchingAck() passed after 1.736 seconds.
+✔ Test daemonNRejectsClientNMinus1AndClientNRejectsDaemonNMinus1WithoutCompat() passed after 1.736 seconds.
+✔ Test clientFlagsDaemonOlderThanMinimum() passed after 1.736 seconds.
+✔ Test clientRejectsDaemonOfAnotherMajor() passed after 1.736 seconds.
+✔ Test firstMessageMustBeHello() passed after 1.736 seconds.
+✔ Test notNegotiatedCapabilityDisablesTheOperationWithNotCapable() passed after 1.736 seconds.
+✔ Test protocolVersionOrdering() passed after 1.736 seconds.
+✔ Test appNConnectsToDaemonNMinus1WithCompatibilityClient() passed after 1.736 seconds.
+✔ Test sameVersionNegotiatesFullCapabilities() passed after 1.736 seconds.
+✔ Test clientSurfacesDaemonErrorReply() passed after 1.736 seconds.
+✔ Test catalogIsUniqueAndComplete() passed after 1.737 seconds.
+✔ Test overflowDropsQueuedOutputAndEmitsResyncRequired() passed after 1.737 seconds.
+✔ Test canonicalConstants() passed after 1.737 seconds.
+✔ Test controlFramesAreNeverDropped() passed after 1.737 seconds.
+✔ Test sessionNeverBlocksOnASlowClient() passed after 1.737 seconds.
+✔ Test pendingBytesAccountingStaysExactAcrossOverflow() passed after 1.738 seconds.
+✔ Test stopCarriesTheLastAssistantMessageAndBashCarriesItsShortTarget() passed after 1.738 seconds.
+✔ Test realCodexPayloadsCarryRolloutPathAndTurnID() passed after 1.738 seconds.
+✔ Test stopFailureErrorIsFoundUnderTheCandidateFieldNames() passed after 1.738 seconds.
+✔ Test clientValidatesReplyIDAndKind() passed after 1.739 seconds.
+✔ Test oversizedFrameIsRejected() passed after 1.739 seconds.
+✔ Test codableRoundTripAndRejection() passed after 1.739 seconds.
+✔ Test removeOutputForgetsPendingFramesAndResyncState() passed after 1.739 seconds.
+✔ Test sliceOneEnablesOnlySliceOne() passed after 1.739 seconds.
+✔ Test matchingSpecReportsTemplate() passed after 1.739 seconds.
+✔ Test partialAndMultipleFrames() passed after 1.739 seconds.
+✔ Test queueUnderLimitAcceptsAndPreservesOrder() passed after 1.739 seconds.
+✔ Test majorTwoHelloFixtureIsRejectedByMajorOneDaemon() passed after 1.740 seconds.
+✔ Test environmentOverride() passed after 1.740 seconds.
+✔ Test spawnFailedFixtureCarriesErrnoAndPath() passed after 1.751 seconds.
+✔ Test higherSliceEnablesLowerOnes() passed after 1.751 seconds.
+✔ Test segmentsNeverContainDots() passed after 1.754 seconds.
+✔ Test connectionLevelErrorHasNoRequestID() passed after 1.756 seconds.
+◇ Test case passing 1 argument provider → .claude to thresholds(provider:) started.
+◇ Test case passing 1 argument provider → .codex to thresholds(provider:) started.
+◇ Test case passing 1 argument provider → .opencode to thresholds(provider:) started.
+◇ Test case passing 1 argument provider → .claude to specialCharactersArriveLiterally(provider:) started.
+◇ Test case passing 1 argument provider → .codex to specialCharactersArriveLiterally(provider:) started.
+◇ Test case passing 1 argument provider → .opencode to specialCharactersArriveLiterally(provider:) started.
+✔ Test fixtureAttachModesAndSubscribeScopes() passed after 1.776 seconds.
+✔ Test emptyPayloadIsAFrame() passed after 1.775 seconds.
+✔ Test outputIsDiscardedWhileAwaitingResyncThenResumesAfterReattach() passed after 1.775 seconds.
+✔ Test roundTrip() passed after 1.775 seconds.
+✔ Test defaultLimitIsTwoMiB() passed after 1.775 seconds.
+✔ Test oversizedFrameIsRejectedNotQueued() passed after 1.775 seconds.
+✔ Test frameLayoutIsLengthKindPayloadBigEndian() passed after 1.776 seconds.
+✔ Test catalogIsLargeAndWithoutDuplicates() passed after 1.775 seconds.
+✔ Test headParserRejectsGarbageStatusLine() passed after 1.775 seconds.
+✔ Test upgradeStatusIsParsed() passed after 1.775 seconds.
+✔ Test realClaudePayloadsKeepOnlyTheSpecFields() passed after 1.776 seconds.
+✔ Test uiSizeParsing() passed after 1.776 seconds.
+✔ Test demuxerHandlesZeroLengthFrame() passed after 1.776 seconds.
+✔ Test requestHeadEscapesQueryAndAddsUpgradeOrClose() passed after 1.776 seconds.
+✔ Test appSockPathHonorsOverride() passed after 1.776 seconds.
+✔ Test sessionStructuralRules() passed after 1.776 seconds.
+✔ Test chunkedDecoderHandlesSplitsAndHexSizes() passed after 1.776 seconds.
+✔ Test headParserSplitsHeadAndRestAcrossFeeds() passed after 1.776 seconds.
+✔ Test uuidV7IsVersion7AndOrdered() passed after 1.776 seconds.
+✔ Test stripsAnsiControlsAndCollapsesWhitespace() passed after 1.776 seconds.
+✔ Test controlFramesAreAcceptedEvenAboveTheLimit() passed after 1.776 seconds.
+✔ Test binaryFrameFixturesHaveExpectedContent() passed after 1.776 seconds.
+✔ Test lineSplitterKeepsPartialLines() passed after 1.776 seconds.
+✔ Test nMinus1FixturesNegotiateAgainstCurrentBuild() passed after 1.777 seconds.
+✔ Test labelsAndDeterministicNames() passed after 1.776 seconds.
+✔ Test errorsCarryReason() passed after 1.776 seconds.
+✔ Test requestRoundTrip() passed after 1.776 seconds.
+✔ Test chunkedDecoderRejectsBadSize() passed after 1.776 seconds.
+✔ Test demuxerRejectsInvalidHeader() passed after 1.776 seconds.
+✔ Test truncatesAtFiveHundredScalarsWithoutSplittingAGrapheme() passed after 1.776 seconds.
+✔ Test compatibilityFixturesTolerateUnknownFieldsAndCapabilities() passed after 1.777 seconds.
+✔ Test fixedConstantsAreCanonical() passed after 1.776 seconds.
+✔ Test responseRoundTripWithTreeAndScreenshot() passed after 1.776 seconds.
+✔ Test launchSpecAndTerminalCodable() passed after 1.776 seconds.
+✔ Test keepingOnlyOnePaneForCloseOthers() passed after 1.776 seconds.
+✔ Test majorMismatchIsRejectedWithErrorCode() passed after 1.776 seconds.
+✔ Test moduleLinks() passed after 1.776 seconds.
+✔ Test wireShapeMatchesSpecExamples() passed after 1.776 seconds.
+✔ Test templatesProduceCanonicalIDs() passed after 1.777 seconds.
+✔ Test moduleLinks() passed after 1.776 seconds.
+✔ Test fileToolsUseTheBaseNameAndSubagentPayloadsCarryAgentFields() passed after 1.777 seconds.
+✔ Test everyControlMessageRoundTripsThroughJSON() passed after 1.776 seconds.
+✔ Test datesKeepMillisecondPrecisionAndAcceptNoFractionInput() passed after 1.776 seconds.
+✔ Test splitIsRefusedBelowTheMinimumPaneSize() passed after 1.776 seconds.
+✔ Test everyControlMessageRoundTripsThroughFrames() passed after 1.776 seconds.
+✔ Test dividerIDsAreUnique() passed after 1.776 seconds.
+✔ Test inputOriginRawValuesAreCanonical() passed after 1.776 seconds.
+✔ Test settingRatioByPathChangesOnlyThatSplit() passed after 1.776 seconds.
+✔ Test zytePresetPutsTheKeyInTheUsernameWithEmptyPassword() passed after 1.776 seconds.
+✔ Test nonCanonicalIDsAreRejected() passed after 1.777 seconds.
+✔ Test directConfigHasNoUpstream() passed after 1.776 seconds.
+✔ Test inputByteCountsAccumulateAndSerializeByName() passed after 1.776 seconds.
+✔ Test genericProxyUsesUsernameAndSecretAsPassword() passed after 1.776 seconds.
+✔ Test invalidFixturesAreRejectedAsMalformedControl() passed after 1.777 seconds.
+✔ Test splitsAreUnlimited() passed after 1.776 seconds.
+✔ Test arrangementCoversTheAreaWithoutOverlapAndWithThreePointDividers() passed after 1.776 seconds.
+✔ Test closingAPaneLetsTheSiblingTakeItsSpaceAndMovesFocus() passed after 1.776 seconds.
+✔ Test standardHardeningMatchesCS114() passed after 1.776 seconds.
+✔ Test samplesCoverEveryOpEventAndErrorCode() passed after 1.776 seconds.
+✔ Test terminalAppearsInAtMostOnePane() passed after 1.776 seconds.
+✔ Test equalizingOneDividerLeavesTheOthers() passed after 1.776 seconds.
+✔ Test admissionUsesSumOfEstimatesNotSingleProfile() passed after 1.776 seconds.
+✔ Test nextAndPreviousPaneWrapAround() passed after 1.776 seconds.
+✔ Test eightGBVMFitsFourHeadlessAndQueuesTheFifth() passed after 1.776 seconds.
+✔ Test splitAndRemove() passed after 1.776 seconds.
+✔ Test referenceTargetNeeds26GBAndLoadTestVMFits() passed after 1.776 seconds.
+✔ Test equalizeGivesEveryPaneTheSameShareAlongAChain() passed after 1.776 seconds.
+✔ Test replacingContentKeepsTheSlot() passed after 1.776 seconds.
+✔ Test dragRatioKeepsBothSidesAtTheMinimum() passed after 1.776 seconds.
+✔ Test sessionIDBinaryAndTextForms() passed after 1.776 seconds.
+✔ Test movingAverageNeedsTwentySamplesAndFixedModeIgnoresThem() passed after 1.776 seconds.
+✔ Test ratioIsClampedAndValidated() passed after 1.776 seconds.
+✔ Test secretFilesRejectPathTricks() passed after 1.777 seconds.
+✔ Test envelopeRoundTripsAndMarkersAndGarbageAreClassified() passed after 1.777 seconds.
+✔ Test buildContextHashIgnoresPythonBytecode() passed after 1.777 seconds.
+✔ Test planKeepsKnownComputersAndSplitsOrphansByEphemeralAndFinished() passed after 1.776 seconds.
+✔ Test workEnvironmentPointsAtTheEgressAndHoldsNoSecrets() passed after 1.776 seconds.
+✔ Test lowDiskRejectsBeforeMemoryCheck() passed after 1.776 seconds.
+✔ Test containerInspectExposesHardeningLabelsAndPublishedPort() passed after 1.776 seconds.
+✔ Test realEventsDecodeWithBaseAction() passed after 1.776 seconds.
+✔ Test demuxerSplitsStdoutAndStderrAcrossReads() passed after 1.776 seconds.
+✔ Test binaryFrameFixturesDecodeAndReencodeByteForByte() passed after 1.778 seconds.
+✔ Test drainReturnsValidFramesBeforeTheFirstInvalidOne() passed after 1.776 seconds.
+✔ Test sequenceValidatorDetectsGapsAndOverlaps() passed after 1.776 seconds.
+✔ Test invalidInputOriginIsRejected() passed after 1.777 seconds.
+✔ Test shortOutputAndInputPayloadsAreRejected() passed after 1.777 seconds.
+✔ Test emptyNullFieldsDecodeAsEmpty() passed after 1.777 seconds.
+✔ Test frameOfExactlyOneMiBIsAccepted() passed after 1.777 seconds.
+✔ Test goodFramesBeforeABadOneAreStillDelivered() passed after 1.777 seconds.
+✔ Test frameTooLargeMapsToErrorCode() passed after 1.777 seconds.
+✔ Test unknownKindIsRejected() passed after 1.777 seconds.
+✔ Test truncatedErrorReportsExpectedAndAvailable() passed after 1.777 seconds.
+✔ Test limitsAreCanonical() passed after 1.777 seconds.
+✔ Test frameWithLengthAboveOneMiBIsRejectedOnEncode() passed after 1.777 seconds.
+✔ Test reqlogIntegrityVerifiesAndLocatesTampering() passed after 1.777 seconds.
+✔ Test codableRoundTrip() passed after 1.777 seconds.
+✔ Test malformedControlJSONIsRejected() passed after 1.777 seconds.
+✔ Test decoderRejectsHugeLengthsWithoutWaitingForPayload() passed after 1.777 seconds.
+✔ Test listNetworkVolumeImageDecode() passed after 1.777 seconds.
+✔ Test fuzzedBitFlipsInValidFramesNeverCrash() passed after 1.777 seconds.
+✔ Test garbageAndOversizedInputsAreHandled() passed after 1.778 seconds.
+✔ Test vmCapacityConfiguredGBAddsKernelSlack() passed after 1.777 seconds.
+✔ Test secretFilesAre0400In0700AndReplaceAtomically() passed after 1.777 seconds.
+✔ Test fixturesCoverEveryOpEventAndErrorCode() passed after 1.778 seconds.
+✔ Test invalidUTF8ControlPayloadIsRejected() passed after 1.777 seconds.
+✔ Test zeroLengthFrameIsRejected() passed after 1.777 seconds.
+✔ Test everyV1FixtureDecodesAndReencodesToIdenticalBytes() passed after 1.778 seconds.
+✔ Test pullAndBuildStreamsDecode() passed after 1.777 seconds.
+✔ Test byteByByteFeedingReassemblesEveryFrame() passed after 1.777 seconds.
+✔ Test nonUnixEndpointsAreIgnoredAndMissingKnownSocketsSkipped() passed after 1.777 seconds.
+✔ Test decoderCompactsItsBufferUnderSustainedLoad() passed after 1.777 seconds.
+✔ Test duplicatesAreCollapsed() passed after 1.777 seconds.
+✔ Test tarIsDeterministic() passed after 1.777 seconds.
+✔ Test realErrorBodiesMapToTypedErrors() passed after 1.777 seconds.
+✔ Test noRuntimeYieldsDockerUnavailableWithStartCommands() passed after 1.777 seconds.
+✔ Test dockerContextEnvironmentOverridesConfigAndDefaultMeansNoContext() passed after 1.777 seconds.
+✔ Test runtimeUnavailableMapsToReserveReason() passed after 1.777 seconds.
+✔ Test contextDirectoryNameIsSha256OfNameAsDockerCLIStoresIt() passed after 1.777 seconds.
+✔ Test oversizedControlMessageIsRejectedOnEncode() passed after 1.777 seconds.
+✔ Test hashIsStableOrderIndependentAndContentSensitive() passed after 1.777 seconds.
+✔ Test manyFramesInOneChunkAndRandomChunkBoundaries() passed after 1.777 seconds.
+✔ Test fuzzedGarbageNeverCrashesAndEitherFailsOrParses() passed after 1.777 seconds.
+✔ Test resizeAttachSignalSubscribeTextSnapshotRejectBadFields() passed after 1.777 seconds.
+✔ Test randomizedAgainstModel() passed after 1.777 seconds.
+✔ Test chunkLargerThanCapacityKeepsTail() passed after 1.777 seconds.
+✔ Test activeContextComesFromConfigWithoutTheCLIOrPATH() passed after 1.777 seconds.
+✔ Test outputAndInputFramesRoundTripWithRandomPayloads() passed after 1.778 seconds.
+✔ Test infoDecodesForThreeRuntimes() passed after 1.777 seconds.
+✔ Test shippedEgressContextIsPinnedByDigestAndHasNoPackageManagerPins() passed after 1.777 seconds.
+✔ Test createRejectsBadFields() passed after 1.777 seconds.
+✔ Test linearThenWraps() passed after 1.777 seconds.
+✔ Test orderIsEnvironmentThenContextThenKnownSockets() passed after 1.777 seconds.
+✔ Test validCommandsPass() passed after 1.777 seconds.
+✔ Test decoderRejectsOversizedLengthAsSoonAsThePrefixArrives() passed after 1.778 seconds.
+✔ Test symlinkAndMissingDirectoryAreRejected() passed after 1.777 seconds.
+✔ Test outputSeqIsContiguousByteOffset() passed after 1.778 seconds.
+✔ Test everyStrictPrefixOfAFrameYieldsNothingAndTruncatedAtEOF() passed after 1.778 seconds.
+✔ Test codexHelpAndResumeHelp() passed after 1.781 seconds.
+✔ Test tarIsReadableByBsdtarWithModesAndNestedDirs() passed after 1.782 seconds.
+✔ Test longPathsUseUstarPrefixAndTooLongFail() passed after 1.782 seconds.
+✔ Test versionOrdering() passed after 1.781 seconds.
+✔ Test garbageHelpIsNotUsable() passed after 1.781 seconds.
+✔ Test openCodeHelp() passed after 1.781 seconds.
+✔ Test tableByVersionWhenHelpUnusable() passed after 1.781 seconds.
+✔ Test parsesVersions(text:expected:) with 5 test cases passed after 1.781 seconds.
+✔ Test titleCwdPromptBellEvents() passed after 1.781 seconds.
+✔ Test descriptionTextDoesNotLeakFlags() passed after 1.781 seconds.
+✔ Test claudeHelp() passed after 1.782 seconds.
+✔ Test escInsideCSIRestartsTheSequence() passed after 1.782 seconds.
+✔ Test preambleRestoresModes() passed after 1.782 seconds.
+✔ Test bellTerminatingAnOSCIsNotABell() passed after 1.783 seconds.
+✔ Test oldClaudeWithoutEffortDisablesTheOption() passed after 1.783 seconds.
+✔ Test shellWordsTokenizer() passed after 1.783 seconds.
+✔ Test sequenceSplitAcrossChunksStillCuts() passed after 1.783 seconds.
+✔ Test clearAndResetAreCuts() passed after 1.783 seconds.
+✔ Test helpWinsOverTable() passed after 1.783 seconds.
+✔ Test modesEventOnlyOnChange() passed after 1.783 seconds.
+✔ Test rejectsTextWithoutVersion() passed after 1.783 seconds.
+✔ Test moduleLinks() passed after 1.783 seconds.
+✔ Test childRunIDIsDeterministicAndPerChild() passed after 1.783 seconds.
+✔ Test blocksOSCAndDCSRepliesButAllowsDeviceReports() passed after 1.783 seconds.
+✔ Test altScreenEntryIsACutAndSetsModes() passed after 1.783 seconds.
+✔ Test cutRecordsTheStateBeforeTheSequence() passed after 1.783 seconds.
+✔ Test projectionOfRealSubagentSequenceHasMainAndTwoChildren() passed after 1.787 seconds.
+✔ Test recoveryMapping() passed after 1.787 seconds.
+✔ Test checkpointsOnlyOutsideSequencesEvery64KiB() passed after 1.788 seconds.
+✔ Test prefersLatestCutThenOldestCheckpointThenRingStart() passed after 1.796 seconds.
+✔ Test moduleLinks() passed after 1.796 seconds.
+✔ Test dotEnvParsingHandlesQuotesExportAndComments() passed after 1.796 seconds.
+✔ Test versionFixturesMatchInstalledVersions() passed after 1.848 seconds.
+✔ Test emptyDatabaseGetsAllTablesFromTheFullMigrationChain() passed after 1.847 seconds.
+✔ Test daemonDependenciesLink() passed after 1.847 seconds.
+✔ Test hashMatchesTheShellScriptUsedForLocalBuilds() passed after 1.850 seconds.
+✔ Test tamperingIsDetectedWithTheLineNumber() passed after 1.880 seconds.
+✔ Test invalidRunIDIsRejected() passed after 1.880 seconds.
+✔ Test reopeningContinuesTheChain() passed after 1.880 seconds.
+✔ Test appendChainsAndVerifiesLikeTheEgressLog() passed after 1.880 seconds.
+✔ Test v4IsChainedAfterV3AndOlderMigrationsAreUntouched() passed after 1.880 seconds.
+✔ Test realRuntimeContextHashMatchesScript() passed after 1.882 seconds.
+✔ Test tokensJSMatchesSwiftAndJSON() passed after 1.896 seconds.
+✔ Test terminalThemeMatchesJSON() passed after 1.896 seconds.
+✔ Test secretValueNeverPrintsItself() passed after 1.896 seconds.
+✔ Test typographyMatchesJSON() passed after 1.898 seconds.
+✔ Test signedPolicyRejectsPeerWithoutAuditToken() passed after 1.909 seconds.
+✔ Test radiiMatchJSON() passed after 1.970 seconds.
+✔ Test missingCredentialsAreRejected() passed after 1.972 seconds.
+✔ Test spaceAndLayoutMatchJSON() passed after 1.988 seconds.
+✔ Test alphaColorsAreNeverPreMixed() passed after 1.988 seconds.
+✔ Test motionFlatLeavesMatchJSON() passed after 1.989 seconds.
+✔ Test signedDaemonGetsRequirementBoundToItsOwnLeaf() passed after 1.989 seconds.
+✔ Test appendCreatesOwnerOnlyFileAndOneLinePerEvent() passed after 1.997 seconds.
+✔ Test currentProcessIdentityIsReadable() passed after 1.997 seconds.
+✔ Test colorsMatchJSON() passed after 1.997 seconds.
+✔ Test subsystemsMatchCanonicalIdentifiers() passed after 1.997 seconds.
+✔ Test adhocDaemonNeedsTheExplicitBuildOptIn() passed after 1.997 seconds.
+✔ Test failureIsRecordedOnTheRow() passed after 1.997 seconds.
+✔ Test facadeKeepsCategory() passed after 1.997 seconds.
+✔ Test appKitAndSwiftUIColorsFollowSpec() passed after 1.998 seconds.
+✔ Test argvMatchesGolden(_:) with 32 test cases passed after 1.999 seconds.
+✔ Test shadowsMatchJSON() passed after 1.999 seconds.
+✔ Test unsafeRunIDsNeverBecomeFilenames() passed after 1.999 seconds.
+✔ Test firstOutputIsRemembered() passed after 1.999 seconds.
+✔ Test unreadableOwnSignatureDeniesEveryone() passed after 2.012 seconds.
+✔ Test motionTypedTokensMatchJSON() passed after 2.012 seconds.
+✔ Test boxTokenIsDerivedFromTheMasterKeyAndGeneration() passed after 2.014 seconds.
+✔ Test onlyVisibleStepsBecomeRowsInCanonicalOrder() passed after 2.014 seconds.
+✔ Test generatedFilesAreUpToDate() passed after 2.014 seconds.
+✔ Test renderMapsNotSupportedAndReturnsCapturesWhenSupported() passed after 2.015 seconds.
+✔ Test ac307ClaudeArgvExact() passed after 2.015 seconds.
+✔ Test gitRowsComeBeforeConfigAndSkippedRowsDisappear() passed after 2.015 seconds.
+✔ Test ac309CodexAndOpenCode() passed after 2.032 seconds.
+✔ Test defaultHandshakeTimeoutIsTwoSeconds() passed after 2.033 seconds.
+✔ Test secretNameDetector() passed after 2.033 seconds.
+✔ Test takeAllIgnoresTemporariesAndReturnsLeftoverDrainingFiles() passed after 2.034 seconds.
+✔ Test reducedCrossfadeTokensAreDefined() passed after 2.034 seconds.
+✔ Test bezierBoundariesAndLinear() passed after 2.034 seconds.
+✔ Test bezierProgressMatchesSpecTables() passed after 2.034 seconds.
+✔ Suite RealOrcaDryRunTests passed after 2.043 seconds.
+✔ Suite GitHubRealReadTests passed after 2.044 seconds.
+✔ Test resolutionFollowsReduceMotionAndMode() passed after 2.035 seconds.
+✔ Test reduceMotionIsOROfSystemAndPreference() passed after 2.035 seconds.
+✔ Test parserHandlesNulSeparatedEntries() passed after 2.036 seconds.
+✔ Test springsMatchSpecTables() passed after 2.111 seconds.
+✔ Test loopFpsIsCappedAndDropsInLowPower() passed after 2.123 seconds.
+✔ Test defaultFilterMatchesSpecDenylist() passed after 2.123 seconds.
+✔ Test fontFamiliesAreGeistAndSFMono() passed after 2.123 seconds.
+✔ Test moduleLinks() passed after 2.123 seconds.
+✔ Test radiiUseOrcaValues() passed after 2.126 seconds.
+✔ Test divergencesFromSpec02AreIntentional() passed after 2.126 seconds.
+✔ Test everyColorHasAnOrcaReferenceOrAJustification() passed after 2.126 seconds.
+✔ Test proxySetOnlyAmongAllowedProxiesAndLogsClosedTunnels() passed after 2.128 seconds.
+✔ Test darkColorsEqualOrcaExtraction() passed after 2.126 seconds.
+✔ Test relaunchWithKeepsIdentityAndChangesModel() passed after 2.126 seconds.
+✔ Test motionOriginatedInOrcaMatchesExtraction() passed after 2.128 seconds.
+✔ Test environmentCompositionFollowsSpec() passed after 2.128 seconds.
+✔ Test missingCLIIsReportedNotInstalled() passed after 2.128 seconds.
+✔ Test bypassDefaultsAreAlwaysFlagged() passed after 2.128 seconds.
+✔ Test hookKillingFlagsWarn() passed after 2.128 seconds.
+✔ Suite LoginShellEnvEvidence passed after 2.138 seconds.
+✔ Test loginInterpretersHandleRealOutputs() passed after 2.128 seconds.
+✔ Test specFieldsOverrideProfileAndExtraArgsAdd() passed after 2.128 seconds.
+✔ Test typographyUsesOrcaSizesWeightsAndLineHeights() passed after 2.128 seconds.
+✔ Test slicePolicyRejectsInjectionsInSlice1() passed after 2.128 seconds.
+✔ Test missingExecutableIsLaunchFailure() passed after 2.129 seconds.
+✔ Test lightColorsEqualOrcaExtractionWhereRegistered() passed after 2.129 seconds.
+✔ Test legacyCodexSkillsLoseToSharedAgentsSkillsOfTheSameName() passed after 2.128 seconds.
+✔ Test extraArgsRepeatingStructuredFieldsWarnAndStructuredWins() passed after 2.128 seconds.
+✔ Test spacingUsesOrcaScale() passed after 2.129 seconds.
+✔ Test shellUsesLoginShellFromEnvironment() passed after 2.128 seconds.
+✔ Test langDefaultsWhenAbsent() passed after 2.128 seconds.
+✔ Test resolutionOrderTerminalProjectGlobalBuiltin() passed after 2.128 seconds.
+✔ Test tableCountIsStable() passed after 2.128 seconds.
+✔ Test launchSpecPersistsNativeIDsForResume() passed after 2.128 seconds.
+✔ Test missingFoldersAreReportedAbsentNotErrors() passed after 2.128 seconds.
+✔ Test resolverPrefersSearchPathThenKnownDirectories() passed after 2.128 seconds.
+✔ Test planNeverTouchesGlobalConfigOrInjects() passed after 2.128 seconds.
+✔ Test invalidPermissionModesThrow() passed after 2.128 seconds.
+✔ Test launchAlwaysRestartsToStarting() passed after 2.128 seconds.
+✔ Test serverInstructionsAreShortAndCarryTheUntrustedContentRule() passed after 2.128 seconds.
+✔ Test invalidTransitionsAreRejected() passed after 2.128 seconds.
+✔ Test slice1DerivationHasNoHooks() passed after 2.128 seconds.
+✔ Test settingTheDefaultTurnsOffOthersAndCopiesBuiltins() passed after 2.128 seconds.
+✔ Test aggregationWorstWins() passed after 2.128 seconds.
+✔ Test permissionRequestIsNeedsInputPermissionUntilTheTurnEnds() passed after 2.128 seconds.
+✔ Test allowedFlagsExcludeIdentityAndStructuredFields() passed after 2.128 seconds.
+✔ Test nestedStructuresAreValidated() passed after 2.128 seconds.
+✔ Test inputSchemasAreWellFormedJSONSchemaObjects() passed after 2.128 seconds.
+✔ Test extraArgsValidation() passed after 2.128 seconds.
+✔ Test duplicateIsAnEditableUserCopy() passed after 2.128 seconds.
+✔ Test settingsRoundTrip() passed after 2.128 seconds.
+✔ Test bypassInExtraArgsIsFlaggedToo() passed after 2.128 seconds.
+✔ Test badArgumentsComeBackAsInvalidArgumentWithViolations() passed after 2.128 seconds.
+✔ Test validation() passed after 2.128 seconds.
+✔ Test schemaDefaultsMatchTheSpec() passed after 2.128 seconds.
+✔ Test nativeSubagentsRealSequenceEndsDoneWithChildrenTracked() passed after 2.128 seconds.
+✔ Test serverInstructionsCarryTheWorkerConductRules() passed after 2.128 seconds.
+✔ Test builtinSkipProfilesAreFlaggedAndOthersAreNot() passed after 2.128 seconds.
+✔ Test codexRealSessionStartAndPromptGiveIdleThenWorkingWithRolloutPath() passed after 2.128 seconds.
+✔ Test validTransitionsFromTable() passed after 2.133 seconds.
+✔ Test catalogCoversEveryToolOfTheSpecExceptTheDocumentedOnes() passed after 2.132 seconds.
+✔ Test claudeTurnWithBashFollowsTheStateTable() passed after 2.133 seconds.
+✔ Test symlinkedSkillFoldersAreFollowed() passed after 2.151 seconds.
+✔ Test foldIsDeterministic() passed after 2.151 seconds.
+✔ Test xorConstraintsAreEnforced() passed after 2.151 seconds.
+✔ Test orcaImportProfilesAreMarked() passed after 2.151 seconds.
+✔ Test errorCodeSetIsExactlyTheClosedSetOfTheSpec() passed after 2.151 seconds.
+✔ Test missingFolderIsTyped() passed after 2.151 seconds.
+✔ Test everyToolMatchesItsSignatureInTheSpec() passed after 2.151 seconds.
+✔ Test outOfOrderArrivalProducesTheSameStateWhenSortedByOccurrence() passed after 2.151 seconds.
+✔ Test permissionChoicesMarkEveryBypassMode() passed after 2.151 seconds.
+✔ Test settingsDecodeToleratesMissingAndFutureKeys() passed after 2.151 seconds.
+✔ Test fileCitationsAndReportedTrust() passed after 2.151 seconds.
+✔ Test handwrittenResultFindsIdsByPattern() passed after 2.151 seconds.
+✔ Test requiredUnknownTypeEnumAndRangeAreEnforced() passed after 2.151 seconds.
+✔ Test cleanLogStripsAnsiTimestampsAndKeepsLastLines() passed after 2.151 seconds.
+✔ Test threeFieldsGetThreeStatuses() passed after 2.151 seconds.
+✔ Test parentStopWithLiveChildrenWaitsUntilTheLastSubagentStop() passed after 2.151 seconds.
+✔ Test approvedPermissionReturnsToWorkingOnPostToolUse() passed after 2.152 seconds.
+✔ Test requestIDShape() passed after 2.151 seconds.
+✔ Test invalidPointersAreUsageErrors() passed after 2.151 seconds.
+✔ Test spawnFailureAndRestartCycle() passed after 2.151 seconds.
+✔ Test failureSelectionCoversConclusions() passed after 2.151 seconds.
+✔ Test fitKeepsTailAndMarksCut() passed after 2.151 seconds.
+✔ Test customTemplateAndMissingLink() passed after 2.151 seconds.
+✔ Test totalLogBudgetIs12KiB() passed after 2.152 seconds.
+✔ Test everyStateEventPair() passed after 2.152 seconds.
+✔ Test runningCannotBeRelaunchedWithoutStopping() passed after 2.151 seconds.
+✔ Test applyKeepsExitFieldsCoherent() passed after 2.151 seconds.
+✔ Test writeThroughAFileSymlinkDoesNotTouchTheTarget() passed after 2.151 seconds.
+✔ Test aPointerCoversItsDescendantsAndDeepPointersAreListed() passed after 2.151 seconds.
+✔ Test labels() passed after 2.151 seconds.
+✔ Test symlinkToAFileOutsideIsRejectedAndNeverRead() passed after 2.151 seconds.
+✔ Test toolResultsAreAlwaysTheSameShapeOnError() passed after 2.151 seconds.
+✔ Test defaultTemplateShape() passed after 2.152 seconds.
+✔ Test secondClaimGetsAlreadyClaimedWithTheOwner() passed after 2.151 seconds.
+✔ Test resultSubmitWritesTheFileAndValidatesCitations() passed after 2.153 seconds.
+✔ Test rejectsEscapesAbsolutePathsAndNul() passed after 2.153 seconds.
+✔ Test runtimeErrorMapperCoversTheWireCodes() passed after 2.156 seconds.
+✔ Test claimReturnsTheWorkPathsAndAllowedProxies() passed after 2.156 seconds.
+✔ Test projectWinsOverUserAndShadowsAreMarkedPerClient() passed after 2.169 seconds.
+✔ Test downloadWritesUniqueFilesUnderWorkDownloads() passed after 2.167 seconds.
+✔ Test takeOverOnOneComputerDoesNotPauseTheOther() passed after 2.167 seconds.
+✔ Test trustOverrideUsesTheInlineTableFormAndTheSessionFlagsKeys() passed after 2.167 seconds.
+✔ Test parsesTheAppServerResponseShapeAndIgnoresOtherSources() passed after 2.167 seconds.
+✔ Test indexesEverySourceByReferenceWithErrorsAndNamespacing() passed after 2.169 seconds.
+✔ Test hookOverridesDefineEveryCodexEventWithConstantCommandAndTimeout() passed after 2.167 seconds.
+✔ Test realHooksListFixtureYieldsTheFiveProbedHashes() passed after 2.167 seconds.
+✔ Test parsesScalarsBlocksListsAndKeepsNestedAsRaw() passed after 2.167 seconds.
+✔ Test argumentsWithoutHashesAreUntrustedSoTheCallerFallsBackToRolloutEstimated() passed after 2.167 seconds.
+✔ Test unregisteredChildIsNotAuthorizedAndCapabilityMustMatch() passed after 2.167 seconds.
+✔ Test symlinkedDirectoryIsRejectedForReadAndWrite() passed after 2.168 seconds.
+✔ Test displayHttpHasNoBrowser() passed after 2.167 seconds.
+✔ Test reportsErrorsWithLineNumbers() passed after 2.167 seconds.
+✔ Test openNeverOverrunsFiftySecondsInTotal() passed after 2.168 seconds.
+✔ Test screenshotReturnsAnImageAndSaveAsIsConfined() passed after 2.167 seconds.
+✔ Test fileWithoutFrontmatterIsNotAnError() passed after 2.167 seconds.
+✔ Test resultJsonThatIsASymlinkIsNotFollowed() passed after 2.167 seconds.
+✔ Test spawnErrorBecomesFailureWithPath() passed after 2.167 seconds.
+✔ Test eventSetsMatchTheSpec() passed after 2.167 seconds.
+✔ Test workspaceStepEmitsGitRowsAndFailureStopsBeforeSpawn() passed after 2.167 seconds.
+✔ Test indexReadsIdAndTrustFromTheRequestLog() passed after 2.168 seconds.
+✔ Test queryFiltersLikeTheOldReqlog() passed after 2.167 seconds.
+✔ Test daemonUnavailableFails() passed after 2.167 seconds.
+✔ Test resultSubmitRefusesCitationsThroughSymlinksAndDotDot() passed after 2.168 seconds.
+✔ Test firstOutputClosesCliExecOnce() passed after 2.167 seconds.
+✔ Test normalizesInsideTheRoot() passed after 2.168 seconds.
+✔ Test tomlReadsTopLevelStringsAndMultilineBodies() passed after 2.167 seconds.
+✔ Test noToolCanBlockLongerThanFiftySeconds() passed after 2.167 seconds.
+✔ Test readsAndWritesRegularFilesCreatingFolders() passed after 2.167 seconds.
+✔ Test releaseThenUseGivesBoxReleasedAndUnknownComputerIsNotFound() passed after 2.168 seconds.
+✔ Test rootThatIsItselfBehindASymlinkStillWorks() passed after 2.167 seconds.
+✔ Test statusUsesReadKindAndFetchUsesWrite() passed after 2.167 seconds.
+✔ Test cookiesExportWritesAJarInWork() passed after 2.168 seconds.
+✔ Test detectsMirrorsOutOfSyncBetweenMarkdownAndToml() passed after 2.170 seconds.
+✔ Test uploadReadsOnlyRegularFilesInsideWork() passed after 2.168 seconds.
+✔ Test missingGitIsTyped() passed after 2.167 seconds.
+✔ Test thumbnailDecodesTheRuntimeJPEGAndRemembersTheURL() passed after 2.167 seconds.
+✔ Test asCurlDropsRedactedHeadersAndEmitsBothSnippets() passed after 2.174 seconds.
+✔ Test journalTracksDoingBlockedAndFeedsTheTimeline() passed after 2.174 seconds.
+✔ Test codexTrustedInjectionHasHooksStateAndNoDaemon() passed after 2.174 seconds.
+✔ Test emptyMCPAndPluginAreOmitted() passed after 2.173 seconds.
+✔ Test claudeSettingsPathIsInsideTheLaunchDirectoryAndEnvCarriesTheRun() passed after 2.173 seconds.
+✔ Test humanInControlErrorCarriesRetryAfterFromTheRuntime() passed after 2.174 seconds.
+✔ Test takeOverAsksTheRuntimeAndPausesTheAgent() passed after 2.174 seconds.
+✔ Test argvMatchesGolden(_:) with 7 test cases passed after 2.174 seconds.
+✔ Test getReturnsRecordAndPagedBodyAndIsConfinedToThisComputer() passed after 2.181 seconds.
+✔ Test databaseRowsHoldMetadataAndHashOnlyNeverTheBody() passed after 2.183 seconds.
+✔ Test slice1IgnoresInjectionAndStaysEmpty() passed after 2.180 seconds.
+✔ Test takeOverOnAnHTTPComputerNeedsNoRuntime() passed after 2.180 seconds.
+✔ Test browserToolsMapToRuntimeOperationsWithTheirArguments() passed after 2.181 seconds.
+✔ Test scanNeverWritesToTheNativeFolders() passed after 2.183 seconds.
+✔ Test withoutAckTheComputerStaysRevokingAndForceCancelsTheWrite() passed after 2.180 seconds.
+✔ Test takingOverWithoutARequestWorksAndHandBackDeliversTheNoteOnTheNextCall() passed after 2.180 seconds.
+✔ Test firstOutputDuringAttachIsReplayedAfterRunning() passed after 2.181 seconds.
+✔ Test validatorRejectsSettingsOutsideTheLaunchDirectory() passed after 2.180 seconds.
+✔ Test earlyExitBeforeOutputIsAStartFailure() passed after 2.181 seconds.
+✔ Test resumeRegeneratesIdenticalFlagsAndFiles() passed after 2.180 seconds.
+✔ Test runtimeFailureOnTakeOverLeavesTheAgentInControl() passed after 2.181 seconds.
+✔ Test overTheLimitDropsOldestAndWritesATruncatedMarker() passed after 2.187 seconds.
+✔ Test missingCLIFailsOnResolveStep() passed after 2.192 seconds.
+✔ Test argumentsPassBranchesAsVariablesEvenWithQuotes() passed after 2.191 seconds.
+✔ Test selectPrefersMatchingHeadThenOpen() passed after 2.191 seconds.
+✔ Test orcaDefaultArgsTokenizeLikeAShell() passed after 2.191 seconds.
+✔ Test reasonFollowsBootTimeThenCleanExit() passed after 2.191 seconds.
+✔ Test textHasAliasesVariablesAndNoBranchNames() passed after 2.191 seconds.
+✔ Test defaultProbeReadsSingletonLockAndRejectsStalePid() passed after 2.191 seconds.
+✔ Test parsesStatusContextsAndOutcomes() passed after 2.191 seconds.
+✔ Test resumeWithoutACapturedIDFallsBackToContinueLast() passed after 2.191 seconds.
+✔ Test errorsAreClassified() passed after 2.191 seconds.
+✔ Test cookiesFromTheBrowserAreFilteredByHost() passed after 2.191 seconds.
+✔ Test materializeWritesOwnerOnlyFilesInsideTheLaunchDirectoryOnly() passed after 2.192 seconds.
+✔ Test resumeArgvGolden() passed after 2.191 seconds.
+✔ Test emitsRealStepsInOrderAndRebuildsArgv() passed after 2.198 seconds.
+✔ Test parsesRealAnonymizedBatch() passed after 2.198 seconds.
+✔ Test malformedHashIsRefusedAndNeverReachesTheCommandLine() passed after 2.198 seconds.
+✔ Test bodyJsonFormAreMutuallyExclusiveAndUrlMustBeHttp() passed after 2.198 seconds.
+✔ Test connectedPicksActiveAccountAndScopes() passed after 2.198 seconds.
+✔ Test loggedOutAndFailedAccounts() passed after 2.198 seconds.
+✔ Test otherHostIsIgnored() passed after 2.198 seconds.
+✔ Test dailyBackupIsCreatedOncePerDayAndKeepsSeven() passed after 2.204 seconds.
+✔ Test modelNeverCarriesTheToken() passed after 2.198 seconds.
+✔ Test candidateSuffix() passed after 2.198 seconds.
+✔ Test coldLogTailKeepsTheEndAndStartsOnALineBoundary() passed after 2.198 seconds.
+✔ Test slugRules() passed after 2.198 seconds.
+✔ Test defaultRootIsOrcaWorkspaces() passed after 2.199 seconds.
+✔ Test inlineBodyIsCappedAndSaveBodyAsWritesInsideWorkOnly() passed after 2.199 seconds.
+✔ Test noOrcaFilesMeansNoProfiles() passed after 2.199 seconds.
+✔ Test cancelClosesTheRequestAndLiftsThePause() passed after 2.199 seconds.
+✔ Test startFreshKeepsTheConfigurationButForgetsTheConversation() passed after 2.199 seconds.
+✔ Test rateLimitBacksOffExponentiallyKeepingStaleState() passed after 2.199 seconds.
+✔ Test duplicateBranchesAreQueriedOnce() passed after 2.199 seconds.
+✔ Test takeOverPausesWritesUntilHandBack() passed after 2.199 seconds.
+✔ Test failureReportCollectsLogsForActionsChecksOnly() passed after 2.199 seconds.
+✔ Test prefixNormalization() passed after 2.199 seconds.
+✔ Test statusAheadBehindAndEntries() passed after 2.199 seconds.
+✔ Test errorInOneRepoDoesNotAffectOthers() passed after 2.200 seconds.
+✔ Test parses(remote:host:owner:name:) with 6 test cases passed after 2.200 seconds.
+✔ Test authStatusStates() passed after 2.203 seconds.
+✔ Test resumeDropsThePromptAndUsesTheCapturedID() passed after 2.203 seconds.
+✔ Test localHeadSelectsPullRequestAndFlagsMismatch() passed after 2.203 seconds.
+✔ Test moreThanTwentyBranchesAreChunked() passed after 2.204 seconds.
+✔ Test statusClean() passed after 2.203 seconds.
+✔ Test emptyPathListDoesNotStart() passed after 2.203 seconds.
+✔ Test fakeRunnerReceivesNoMutatingCommands() passed after 2.203 seconds.
+✔ Test coldLogTailJoinsTheRotatedSegment() passed after 2.205 seconds.
+✔ Test deletedIsTerminal() passed after 2.204 seconds.
+✔ Test tenSessionsInThreeReposMakeThreeRequests() passed after 2.204 seconds.
+✔ Test lowRemainingSlowsPollingToFiveMinutes() passed after 2.204 seconds.
+✔ Test runFoldersAreMatchedBySessionID() passed after 2.204 seconds.
+✔ Test rejects(remote:) with 5 test cases passed after 2.204 seconds.
+✔ Test statusDetachedAndUnborn() passed after 2.204 seconds.
+✔ Test cacheTTLActiveAndBackground() passed after 2.204 seconds.
+✔ Test missingOrcaMeansNoWarning() passed after 2.204 seconds.
+✔ Test branchDidChangeRefreshesImmediately() passed after 2.204 seconds.
+✔ Test commandFailureClassification() passed after 2.204 seconds.
+✔ Test notificationsGetNoReplyAndPingIsEmpty() passed after 2.204 seconds.
+✔ Test seenDoneBecomesIdleAfterThirtyMinutes() passed after 2.204 seconds.
+✔ Test unreadDoneOutranksInterruptedButReadDoneDoesNot() passed after 2.204 seconds.
+✔ Test uniqueFallsBackToASuffixWhenEverythingCollides() passed after 2.204 seconds.
+✔ Test neverReusesAnExistingFolder() passed after 2.206 seconds.
+✔ Test onlyActiveAndArchivedArePersistable() passed after 2.206 seconds.
+✔ Test outputIsDeterministicAndCarriesNoRunOrPaneIDs() passed after 2.206 seconds.
+✔ Test namesAreAdjectiveDashNoun() passed after 2.206 seconds.
+✔ Test requestRunsAbxHttpAndIsRecordedAsObservedByTheApp() passed after 2.207 seconds.
+✔ Test hostileHelperPathsAreQuotedForTheShell() passed after 2.206 seconds.
+✔ Test launchFileIsOwnerOnlySettingsJSONAndArgvFormIsSeparate() passed after 2.206 seconds.
+✔ Test confirmationOnlyWhenProcessesRunning() passed after 2.210 seconds.
+✔ Test helpIsIdempotentWaitsRepeatAndResolveDeliversTheNote() passed after 2.210 seconds.
+✔ Test moduleLinks() passed after 2.209 seconds.
+✔ Test trashMovesAManagedFolder() passed after 2.209 seconds.
+✔ Test malformedAndUnknownMessagesGetJSONRPCErrors() passed after 2.209 seconds.
+✔ Test trashRefusesHomeRootAndTheSessionsRoot() passed after 2.209 seconds.
+✔ Test sessionsRootFollowsTheSettingAndStaysInsideAnIsolatedHome() passed after 2.209 seconds.
+✔ Test rolloutIgnoresMalformedAndNonMetaFiles() passed after 2.209 seconds.
+✔ Test worstStateWinsInTheDocumentedOrder() passed after 2.209 seconds.
+✔ Suite Slice2RealCodexTests passed after 2.224 seconds.
+✔ Test initializeNegotiatesTheVersionAndCarriesTheInstructions() passed after 2.209 seconds.
+✔ Test openCodeCaptureRunsOnlySessionList() passed after 2.209 seconds.
+✔ Test rolloutSymlinkedCwdMatches() passed after 2.209 seconds.
+✔ Test settingsRegisterEveryClaudeEventWithTheCanonicalCommandAndTimeout() passed after 2.209 seconds.
+✔ Test toolsListAnnouncesEveryToolWithItsExactSchema() passed after 2.209 seconds.
+✔ Test stripsOnlyUrlCredentials() passed after 2.208 seconds.
+✔ Test openCodeNewSessionIsTheOneAddedInTheSameDirectory() passed after 2.208 seconds.
+✔ Test toolCallsReturnContentBlocksAndErrorsAreToolErrorsNotProtocolErrors() passed after 2.209 seconds.
+✔ Test capturerGivesUpAfterTimeout() passed after 2.208 seconds.
+✔ Test codexAndOpenCodeUseCaptureStrategies() passed after 2.208 seconds.
+✔ Test claudeIDIsGeneratedByTheAppBeforeSpawn() passed after 2.209 seconds.
+✔ Test realFixtureShapeParses() passed after 2.208 seconds.
+✔ Test capturerPollsUntilTheRolloutAppears() passed after 2.208 seconds.
+✔ Test openCodeSessionListParsesRealShape() passed after 2.209 seconds.
+✔ Test promotionOnlyLinksTheSession() passed after 2.209 seconds.
+✔ Test executeWithFakeRunnersWritesBodyThenCleansUp() passed after 2.208 seconds.
+✔ Test validation() passed after 2.208 seconds.
+✔ Test buildingThePlanRunsNothing() passed after 2.208 seconds.
+✔ Test pushNeedFromStatus() passed after 2.208 seconds.
+✔ Test pushFailureStopsBeforeCreateAndKeepsText() passed after 2.207 seconds.
+✔ Test draftAndNoPush() passed after 2.206 seconds.
+✔ Test titleWithQuotesIsQuotedInPreviewOnly() passed after 2.206 seconds.
+✔ Test planListsPushThenCreateWithPreview() passed after 2.206 seconds.
+✔ Test tailKeepsTheEndAndMarksTruncation() passed after 2.206 seconds.
+✔ Test jobsFinishedAndNeverPolledAreLoggedOnRelease() passed after 2.206 seconds.
+✔ Test trashRefusesFoldersTheAppDidNotCreate() passed after 2.210 seconds.
+✔ Test rolloutPastMidnightLooksAtAdjacentDay() passed after 2.209 seconds.
+✔ Test secretCommandWrapperReadsFilesAndNeverPutsValuesInArgv() passed after 2.206 seconds.
+✔ Test emptyPromptAddsNothing() passed after 2.206 seconds.
+✔ Test execStartPollCancelFlowAndCommandLogging() passed after 2.206 seconds.
+✔ Test promptFileFromSpecIsReferencedNotCopied() passed after 2.206 seconds.
+✔ Test timeoutReturnsThePartialOutputAndALogId() passed after 2.206 seconds.
+✔ Test rolloutMatchesCwdAndTimestamp() passed after 2.209 seconds.
+✔ Test thresholds(provider:) with 3 test cases passed after 2.206 seconds.
+✔ Test everyStateEventPair() passed after 2.210 seconds.
+✔ Test nulByteForcesFile() passed after 2.205 seconds.
+✔ Test resumeNeverRepeatsThePrompt() passed after 2.206 seconds.
+✔ Test theKeyNeverLeavesTheEgressFile() passed after 2.205 seconds.
+✔ Test profilesWithoutApiModeOrDirectHaveNoRender() passed after 2.205 seconds.
+✔ Test zyteApiProfileDeclaresRenderWithTheSameKey() passed after 2.205 seconds.
+✔ Test workingTreeEventSelectsOnlyThatWorktree() passed after 2.205 seconds.
+✔ Test gitMetadataEventsSelectEveryWorktreeOfTheProject() passed after 2.205 seconds.
+✔ Test noiseIsIgnored() passed after 2.205 seconds.
+✔ Test stopFailureIsFailedWithReasonAndANewPromptRecovers() passed after 2.130 seconds.
+✔ Test unknownEventsAreIgnoredButCounted() passed after 2.130 seconds.
+✔ Test toolSubtitlesAndPermissionSummaries() passed after 2.130 seconds.
+✔ Test notificationTypesMapPerSpec() passed after 2.130 seconds.
+✔ Test childPermissionBlocksTheParentUntilTheChildToolReturns() passed after 2.130 seconds.
+✔ Test childWithoutSubagentStartDoesNotKeepTheParentWaiting() passed after 2.130 seconds.
+✔ Test sessionStartDoesNotRewindARunningTurn() passed after 2.130 seconds.
+✔ Test permissionOutranksQuestionOutranksOther() passed after 2.130 seconds.
+✔ Test daemonExitCodesAndInterruption() passed after 2.130 seconds.
+✔ Test askUserQuestionIsNeedsInputQuestionUntilTheToolReturns() passed after 2.130 seconds.
+✔ Test subagentStartAfterParentStopMovesDoneToWaiting() passed after 2.130 seconds.
+✔ Test thresholdCountsUTF8BytesNotCharacters() passed after 2.206 seconds.
+✔ Test writerCreatesPrivateFilesAndCleansUp() passed after 2.208 seconds.
+✔ Test execRejectsBadPathsNamesAndShape() passed after 2.208 seconds.
+✔ Test createsTheRootAndManyDistinctFolders() passed after 2.217 seconds.
+✔ Test filePermissionsAreOwnerOnly() passed after 2.227 seconds.
+✔ Test execRunsInTheWorkContainerWithStdinAndLogsTheCommand() passed after 2.213 seconds.
+✔ Test specialCharactersArriveLiterally(provider:) with 3 test cases passed after 2.214 seconds.
+✔ Test threadNameFromSessionIndexLastLineWins() passed after 2.224 seconds.
+✔ Test worktreeList() passed after 2.246 seconds.
+✔ Test notARepositoryIsTyped() passed after 2.262 seconds.
+✔ Test oversizedOrInvalidPayloadIsRefused() passed after 2.292 seconds.
+✔ Test connectToMissingSocketFails() passed after 2.292 seconds.
+✔ Test policyAppliesPreferenceAndMode() passed after 2.292 seconds.
+✔ Test proxyExtHasNoBudgetOrLimitColumns() passed after 2.298 seconds.
+✔ Test motionBuildersUseTokenValues() passed after 2.297 seconds.
+✔ Test regularFileAtPathIsNotRemoved() passed after 2.441 seconds.
+✔ Test socketFileIsOwnerOnly() passed after 2.442 seconds.
+✔ Test passesEnvironmentOverlay() passed after 2.442 seconds.
+✔ Test capturesStdoutStderrAndExitCode() passed after 2.450 seconds.
+✔ Test newerDatabaseSuggestsPreMigrationBackup() passed after 2.456 seconds.
+✔ Test outputIsBounded() passed after 2.454 seconds.
+✔ Test largeOutputDoesNotDeadlock() passed after 2.455 seconds.
+✔ Test pendingMigrationCreatesBackupBeforeApplying() passed after 2.460 seconds.
+✔ Test performRunsTheHandlerAndReturnsItsMessage() passed after 2.457 seconds.
+✔ Test unwritableSpoolStillExitsZero() passed after 2.469 seconds.
+✔ Test appClosedEventGoesToTheSpoolAndTheAgentSeesEmptyJSONAndExitZero() passed after 2.470 seconds.
+✔ Test hugeToolResponseIsReducedBeforeSpooling() passed after 2.471 seconds.
+✔ Test spoolDoesNotLeakThePromptOrToolOutput() passed after 2.471 seconds.
+✔ Test noSocketIsUnavailableAlmostImmediately() passed after 2.469 seconds.
+✔ Suite HandshakeTests passed after 2.485 seconds.
+✔ Suite ActionIDTests passed after 2.486 seconds.
+✔ Suite BackpressureTests passed after 2.486 seconds.
+✔ Suite HookWireTests passed after 2.486 seconds.
+✔ Suite HookPayloadReducerTests passed after 2.486 seconds.
+✔ Suite AppSockFrameTests passed after 2.486 seconds.
+✔ Suite A11yIDTests passed after 2.486 seconds.
+✔ Suite SliceFlagsTests passed after 2.486 seconds.
+✔ Test withoutTheAppToolCallsGetAReadableAppUnavailableNotACrash() passed after 2.468 seconds.
+✔ Suite FixtureTests passed after 2.486 seconds.
+✔ Suite HTTPCodecTests passed after 2.486 seconds.
+✔ Suite CtlWireTests passed after 2.486 seconds.
+✔ Suite DomainModelTests passed after 2.486 seconds.
+✔ Suite HookTextSanitizerTests passed after 2.486 seconds.
+✔ Suite ContainerSpecTests passed after 2.486 seconds.
+✔ Suite ProtocolTestsSmoke passed after 2.486 seconds.
+✔ Suite PaneLayoutOpsTests passed after 2.486 seconds.
+✔ Suite RoundTripTests passed after 2.486 seconds.
+✔ Suite DockerTestsSmoke passed after 2.486 seconds.
+✔ Suite LayoutTests passed after 2.486 seconds.
+✔ Suite CapacityPlannerTests passed after 2.486 seconds.
+✔ Suite ModelDecodingTests passed after 2.486 seconds.
+✔ Suite FrameCodecTests passed after 2.486 seconds.
+✔ Suite BuildContextTests passed after 2.486 seconds.
+✔ Suite ErrorMappingTests passed after 2.486 seconds.
+✔ Suite CommandValidationTests passed after 2.486 seconds.
+✔ Suite RingBufferTests passed after 2.486 seconds.
+✔ Test repliesRespectPolicy() passed after 2.480 seconds.
+✔ Suite HelpParsingTests passed after 2.486 seconds.
+✔ Test textSnapshotAndCursorMarks() passed after 2.480 seconds.
+✔ Suite VTTrackerTests passed after 2.486 seconds.
+✔ Suite TerminalCoreTestsSmoke passed after 2.486 seconds.
+✔ Suite ActivityProjectionTests passed after 2.486 seconds.
+✔ Suite QueryReplyFilterTests passed after 2.486 seconds.
+✔ Suite GitErrorTests passed after 2.487 seconds.
+✔ Suite ReplayIndexTests passed after 2.487 seconds.
+✔ Suite StoreTestsSmoke passed after 2.487 seconds.
+✔ Test invalidModelsAreRejectedBeforeWriting() passed after 2.483 seconds.
+✔ Test plainFolderIsNotARepository() passed after 2.477 seconds.
+✔ Suite DaemonSmoke passed after 2.489 seconds.
+✔ Test zyteImportFailsCleanlyWithoutFileOrKey() passed after 2.482 seconds.
+✔ Test failedMigrationRollsBackAndOpensReadOnly() passed after 2.482 seconds.
+✔ Suite ChainedLogTests passed after 2.489 seconds.
+✔ Test validationRejectsBadNameAndPort() passed after 2.482 seconds.
+✔ Suite TokensMatchJSONTests passed after 2.496 seconds.
+✔ Test credentialsCarryUidPidAndAuditToken() passed after 2.496 seconds.
+✔ Test statusOutsideRepoIsTyped() passed after 2.492 seconds.
+✔ Test failingStatusDoesNotNotifyOrCrash() passed after 2.496 seconds.
+✔ Test newerDatabaseOpensReadOnlyAndIsNeverModified() passed after 2.497 seconds.
+✔ Test denyAllRejectsEvenTheSameUID() passed after 2.496 seconds.
+✔ Test differentUIDIsRejectedInEveryMode() passed after 2.502 seconds.
+✔ Test sameUIDIsAcceptedInAdhocDevelopmentMode() passed after 2.502 seconds.
+✔ Suite LogFacadeTests passed after 2.510 seconds.
+✔ Suite LaunchTimelineTests passed after 2.510 seconds.
+✔ Suite LaunchGoldenTests passed after 2.510 seconds.
+✔ Test signedPolicyRejectsMalformedRequirement() passed after 2.502 seconds.
+✔ Suite ProxyRenderToolTests passed after 2.510 seconds.
+✔ Test staleSocketFileIsReplaced() passed after 2.502 seconds.
+✔ Test missingOrFileFolderIsRejected() passed after 2.505 seconds.
+✔ Test v2ActivityIsRegisteredAfterV1AndTablesAreStrict() passed after 2.506 seconds.
+✔ Test insecureDirectoryIsRejected() passed after 2.504 seconds.
+✔ Test testRunnerProcessFailsTheAppRequirementAndPassesItsOwn() passed after 2.508 seconds.
+✔ Suite OrcaParityTests passed after 2.516 seconds.
+✔ Suite PlatformTestsSmoke passed after 2.516 seconds.
+✔ Suite ProfileAndEnvTests passed after 2.516 seconds.
+✔ Test pathTooLongIsRejected() passed after 2.506 seconds.
+✔ Suite CatalogScannerTests passed after 2.516 seconds.
+✔ Suite AgentActivityMachineTests passed after 2.516 seconds.
+✔ Suite ToolSchemaTests passed after 2.516 seconds.
+✔ Suite ProfileEditingTests passed after 2.516 seconds.
+✔ Suite ReducerRealPayloadTests passed after 2.516 seconds.
+✔ Test overrideWinsAndMustExist() passed after 2.507 seconds.
+✔ Suite ResultValidatorTests passed after 2.517 seconds.
+✔ Suite CheckFailureFormatterTests passed after 2.518 seconds.
+✔ Suite TerminalProcessMachineTests passed after 2.518 seconds.
+✔ Suite PathGuardTests passed after 2.518 seconds.
+✔ Suite EvidenceToolTests passed after 2.518 seconds.
+✔ Suite CodexHookConfigTests passed after 2.518 seconds.
+✔ Suite FrontmatterTests passed after 2.518 seconds.
+✔ Suite ReqlogToolTests passed after 2.518 seconds.
+✔ Suite Slice2GoldenTests passed after 2.518 seconds.
+✔ Test spoolFailureKeepsTheFileWhenTheDatabaseIsReadOnly() passed after 2.507 seconds.
+✔ Suite GitHubQueryTests passed after 2.521 seconds.
+✔ Suite GitHubAuthParserTests passed after 2.523 seconds.
+✔ Suite GitNamingTests passed after 2.523 seconds.
+✔ Test probeTimeoutsAndGarbageFallBackToTable() passed after 2.513 seconds.
+✔ Suite GitParsersTests passed after 2.523 seconds.
+✔ Test socketIsOwnerOnlyAndRemovedOnStop() passed after 2.509 seconds.
+✔ Suite GitHubRemoteParserTests passed after 2.523 seconds.
+✔ Test secondServerOnSamePathIsRefused() passed after 2.510 seconds.
+✔ Suite SessionLifecycleMachineTests passed after 2.524 seconds.
+✔ Suite CleanSessionFoldersTests passed after 2.524 seconds.
+✔ Suite MCPServerTests passed after 2.524 seconds.
+✔ Suite ActivityAggregationTests passed after 2.524 seconds.
+✔ Suite ClaudeHookSettingsTests passed after 2.524 seconds.
+✔ Suite CoreTestsSmoke passed after 2.524 seconds.
+✔ Suite NativeIDCaptureTests passed after 2.524 seconds.
+✔ Suite CredentialStrippingTests passed after 2.524 seconds.
+✔ Suite GitHubCreatePullRequestTests passed after 2.524 seconds.
+✔ Suite ExecToolTests passed after 2.524 seconds.
+✔ Suite PromptDeliveryTests passed after 2.525 seconds.
+✔ Suite EgressRenderConfigTests passed after 2.526 seconds.
+✔ Suite GitEventRouterTests passed after 2.526 seconds.
+✔ Suite ReducerSyntheticTests passed after 2.525 seconds.
+✔ Test readCommandsDisableOptionalLocks() passed after 2.514 seconds.
+✔ Test probesUseLoginEnvironmentAndNeutralDirectory() passed after 2.518 seconds.
+✔ Test migratesFromV3KeepingRowsAndAddingDefaults() passed after 2.522 seconds.
+✔ Suite MotionTests passed after 2.528 seconds.
+✔ Test liveServerIsNotStolen() passed after 2.520 seconds.
+✔ Test newConstraintsRejectInvalidValues() passed after 2.522 seconds.
+✔ Test runOfAnUnknownTerminalIsStoredWithoutTerminal() passed after 2.522 seconds.
+✔ Test withoutRunIDTheHelperIsInertAndSilent() passed after 2.515 seconds.
+✔ Test healthyDatabaseIsNeverTouchedByRecovery() passed after 2.524 seconds.
+✔ Test proxyTablesHaveNoBudgetOrLimitColumns() passed after 2.525 seconds.
+✔ Test concurrentWritersAndADrainerLoseNothing() passed after 2.525 seconds.
+✔ Test appThatAcceptsButNeverAnswersHitsTheTwoHundredMillisecondDeadline() passed after 2.520 seconds.
+✔ Suite HeadlessEmulatorHostTests passed after 2.536 seconds.
+✔ Suite PeerAuthTests passed after 2.549 seconds.
+✔ Test corruptedFramesAreSurfacedNotSwallowed() passed after 2.545 seconds.
+✔ Test cancellationKillsProcess() passed after 2.559 seconds.
+✔ Test missingSocketIsRuntimeUnavailable() passed after 2.571 seconds.
+✔ Test schemaIsStrictAndRejectsInconsistentSessions() passed after 2.571 seconds.
+✔ Test handBackResolvesTheOpenHelpRequestAndHelpWaitReturns() passed after 2.564 seconds.
+✔ Test cancelDuringCreateKillsTheSession() passed after 2.565 seconds.
+✔ Test truncatedFrameThenDisconnectIsReportedAtEndOfStream() passed after 2.597 seconds.
+✔ Test nameMustBeUnique() passed after 2.600 seconds.
+✔ Test goodFramesBeforeCorruptionAreStillDelivered() passed after 2.612 seconds.
+✔ Test closingTheListenerRemovesTheSocketAndEndsTheStream() passed after 2.611 seconds.
+✔ Test waitReturnsStatusCode() passed after 2.615 seconds.
+✔ Suite HookSpoolTests passed after 2.632 seconds.
+✔ Test v1DatabaseUpgradesThroughEveryMigrationToCurrent() passed after 2.629 seconds.
+✔ Test oversizedFrameClosesTheConnection() passed after 2.620 seconds.
+✔ Test detectsInstalledVersionsFlagsAndLogin() passed after 2.628 seconds.
+✔ Test closeFlushesPendingWrites() passed after 2.634 seconds.
+✔ Test outboundQueuePumpedToASlowSocketResyncsInsteadOfBlocking() passed after 2.633 seconds.
+✔ Test cachesByPathAndModificationTimeAndForceRefreshes() passed after 2.632 seconds.
+✔ Test malformedMasterKeyIsRejected() passed after 2.635 seconds.
+✔ Test otherServicesAreNotAvailableYet() passed after 2.627 seconds.
+✔ Test garbageOrEmptyStdinStillExitsZeroAndRecordsTheEvent() passed after 2.629 seconds.
+✔ Suite MigrationTests passed after 2.643 seconds.
+✔ Suite LaunchCoordinatorTests passed after 2.642 seconds.
+✔ Test disabledChannelRefusesAtHandshake() passed after 2.628 seconds.
+✔ Test staleProjectionIsDetectedForReconcile() passed after 2.635 seconds.
+✔ Test refusedHandshakeIsReportedAsRejected() passed after 2.627 seconds.
+✔ Test migratesFromV3KeepingDataAndBackingUpFirst() passed after 2.635 seconds.
+✔ Test wrongMasterKeyFailsAuthentication() passed after 2.637 seconds.
+✔ Test wrongCapabilityOrUnknownChildIsRefusedBeforeAnyTool() passed after 2.639 seconds.
+✔ Test saveActivityUpdatesTerminalOnlyForTheCurrentRun() passed after 2.638 seconds.
+✔ Test wrongCapabilityComesBackAsAReadableJSONRPCError() passed after 2.630 seconds.
+✔ Test peerSeesEOFAfterQueuedBytesAndStillAnswers() passed after 2.639 seconds.
+✔ Suite FullMigrationChainTests passed after 2.648 seconds.
+✔ Test eventsComeBackInOccurrenceOrderNotArrivalOrder() passed after 2.641 seconds.
+✔ Test missingMasterKeyNeverSilentlyCreatesANewOne() passed after 2.641 seconds.
+✔ Test concurrentReceiveIsRejected() passed after 2.644 seconds.
+✔ Test adoptedListeningDescriptorAcceptsWithoutBindOrUnlink() passed after 2.674 seconds.
+✔ Test handshakeThenState() passed after 2.675 seconds.
+✔ Test peerCloseYieldsEndOfStream() passed after 2.687 seconds.
+✔ Test hungAppDoesNotBlockTheHelperBeyondItsDeadline() passed after 2.685 seconds.
+✔ Test loggedOutIsDetectedWithoutRunningLogin() passed after 2.688 seconds.
+✔ Test folderWithoutGitBecomesFolderProject() passed after 2.699 seconds.
+✔ Test secondProcessWithSameKeychainReadsExistingSecrets() passed after 2.702 seconds.
+✔ Test closeWakesPendingReceiveAndFailsLaterSends() passed after 2.700 seconds.
+✔ Test cancellingReceiveClosesTheConnection() passed after 2.699 seconds.
+✔ Test concurrentClientsAreServed() passed after 2.695 seconds.
+✔ Test namesAreValidatedAndUnique() passed after 2.737 seconds.
+✔ Test containerCreateSendsNameAndBodyAndReturnsId() passed after 2.746 seconds.
+✔ Test helpWaitLongPollsAndNeverExceedsTheCap() passed after 2.738 seconds.
+✔ Test noValidBackupStartsEmptyWithBanner() passed after 2.747 seconds.
+✔ Test aLongHelpWaitDoesNotBlockOtherCallsOfTheSameChild() passed after 2.747 seconds.
+✔ Test terminalsByStateSupportBootReconciliation() passed after 2.760 seconds.
+✔ Test secretStoreRoundTripsBindingsAndCascades() passed after 2.760 seconds.
+✔ Test deleteCascadesExtAndUsageAndDetachesComputers() passed after 2.759 seconds.
+✔ Test oversizedFirstFrameDuringHandshakeIsRejected() passed after 2.758 seconds.
+✔ Suite CLIProberTests passed after 2.778 seconds.
+✔ Test expiredSecretsCannotBeRevealed() passed after 2.772 seconds.
+✔ Test eachSecretOnlyBindsUnderAValidEnvName() passed after 2.777 seconds.
+✔ Test sliceOneDatabaseUpgradesWithDataIntactAndAPreMigrationBackup() passed after 2.767 seconds.
+✔ Test waitAppearsWhenElementShowsUp() passed after 2.778 seconds.
+✔ Test revealTouchesLastUsedAt() passed after 2.786 seconds.
+✔ Test removeFolderProject() passed after 2.788 seconds.
+✔ Test stdioInitializeListAndCallThroughTheRealHelper() passed after 2.777 seconds.
+✔ Test nonHelloFirstFrameIsRejectedWithBadRequest() passed after 2.785 seconds.
+✔ Test corruptedLinesNeverBlockTheOnesAfterThem() passed after 2.779 seconds.
+✔ Test fullComputerRowRoundTripsEveryColumn() passed after 2.787 seconds.
+✔ Test roundTripKeepsEveryFieldAndNeverStoresTheSecretValue() passed after 2.786 seconds.
+✔ Test migratesFromV1FixtureKeepingDataAndBackingUpFirst() passed after 2.796 seconds.
+✔ Suite HelpTests passed after 2.803 seconds.
+✔ Suite VaultCatalogMigrationTests passed after 2.804 seconds.
+✔ Test logsDemultiplexStdoutAndStderrFromChunkedBody() passed after 2.798 seconds.
+✔ Test clientNWithoutCompatRejectsDaemonNMinus1() passed after 2.795 seconds.
+✔ Test claimWaitsForReadyAndReportsQueuedWhenItIsNot() passed after 2.793 seconds.
+✔ Test majorMismatchOverTheWire() passed after 2.798 seconds.
+✔ Suite V2ActivityMigrationTests passed after 2.826 seconds.
+✔ Suite McpHelperProcessTests passed after 2.825 seconds.
+✔ Test appNTalksToDaemonNMinus1ThroughCompatibilityClient() passed after 2.819 seconds.
+✔ Test eventsAreIdempotentPerRunAndSequenceIsMonotonic() passed after 2.822 seconds.
+✔ Test updatesAreUpsertsAndFiltersWork() passed after 2.832 seconds.
+✔ Test createRevealRoundTripKeepsPlaintextOutOfTheDatabase() passed after 2.852 seconds.
+✔ Test updatesStreamReportsEachTransition() passed after 2.857 seconds.
+✔ Test plain403ThatTheEgressBlockedIsPolicyButASiteThatSays403IsNot() passed after 2.852 seconds.
+✔ Test injectsOnlySelectedSecretsIntoTheTerminalEnvironmentWithoutArgv() passed after 2.867 seconds.
+✔ Test deletingSessionCascadesAndDeletingProjectWithSessionsFails() passed after 2.868 seconds.
+✔ Test operationsHaveDeadlineAndCancelClosesTheSocket() passed after 2.866 seconds.
+✔ Test malformedRequestIsBadRequestNotACrash() passed after 2.858 seconds.
+✔ Test disabledCtlDoesNotAffectTheHookService() passed after 2.858 seconds.
+✔ Test manyConcurrentClientsEachHandshake() passed after 2.865 seconds.
+✔ Test handshakeThenPingAndListAgainstFakeDaemon() passed after 2.865 seconds.
+✔ Test oversizedFrameGetsFrameTooLargeErrorAndDisconnect() passed after 2.865 seconds.
+✔ Test actionByActionIDAndByControl() passed after 2.861 seconds.
+✔ Test deleteRemovesSecretAndItsBindings() passed after 2.877 seconds.
+✔ Test execFailsClearlyWhenDaemonDoesNotUpgrade() passed after 2.883 seconds.
+✔ Test reconcileKeepsLiveRecordsExitedAndInterruptsTheRestWithoutRelaunching() passed after 2.875 seconds.
+✔ Test flushWritesPendingImmediatelyAndSetLayoutCancelsPending() passed after 2.883 seconds.
+✔ Test savingStoresSecretInVaultNotInPlaintext() passed after 2.883 seconds.
+✔ Test deleteRemovesTheVaultSecret() passed after 2.884 seconds.
+✔ Test deletingTheTerminalKeepsRunsAndDeletingTheRunCascades() passed after 2.885 seconds.
+✔ Test inputFramesComeBackAsContiguousOutput() passed after 2.895 seconds.
+✔ Test unknownPaneStillRecordsTheRunWithoutATerminal() passed after 2.897 seconds.
+✔ Test snapshotsStreamEmitsInitialAndEveryChange() passed after 2.900 seconds.
+✔ Test onlyOneDefaultProxyAndDefaultCanBeCleared() passed after 2.903 seconds.
+✔ Test uiTreeWholeAndSubtree() passed after 2.896 seconds.
+✔ Suite ObservationTests passed after 2.938 seconds.
+✔ Test runtimeErrorsKeepTheirCodes() passed after 2.926 seconds.
+✔ Test masterKeyIsOneItemLoadedOncePerProcess() passed after 2.931 seconds.
+✔ Test kqueueWatcherDrainsSpoolFilesWrittenWhileTheAppRuns() passed after 2.932 seconds.
+✔ Test rotateValueReplacesTheSecretAndStampsUpdatedAt() passed after 2.938 seconds.
+✔ Test handshakeTimeoutClosesTheConnection() passed after 2.940 seconds.
+✔ Test egressConfigReadsTheSecretOnlyForTheChosenProxy() passed after 2.948 seconds.
+✔ Test checkConstraintsRejectInvalidValues() passed after 2.948 seconds.
+✔ Suite BrowserToolTests passed after 2.955 seconds.
+✔ Test retentionKeepsThirtyDaysAndTenThousandEventsPerRun() passed after 2.949 seconds.
+✔ Test foreignKeysCascadeOrNullAsDocumented() passed after 2.950 seconds.
+✔ Test inventoryAsksTheDaemonOnlyForLabelledResources() passed after 2.987 seconds.
+✔ Suite ComputersMigrationTests passed after 2.992 seconds.
+✔ Test mcpServiceRoutesByTheChildIdentityOverTheRealSocket() passed after 2.987 seconds.
+✔ Test ciphertextSwappedBetweenRowsFailsBecauseIDIsAuthenticated() passed after 2.985 seconds.
+✔ Test invalidNewestBackupFallsBackToOlderValidOne() passed after 2.987 seconds.
+✔ Test invalidAndOversizedFramesAreAckedAsErrors() passed after 2.978 seconds.
+✔ Test eventMonitorResyncsOnConnectAndReconnectsWithSince() passed after 2.989 seconds.
+✔ Test noPythonNodeOrJQIsNeededOrTouched() passed after 2.980 seconds.
+✔ Test pingVersionInfoAndApiVersionInPath() passed after 2.988 seconds.
+✔ Test appClosedTurnIsRecoveredOnOpen() passed after 2.982 seconds.
+✔ Suite McpSocketTests passed after 2.996 seconds.
+✔ Test waitEnabledStates() passed after 2.981 seconds.
+✔ Test waitGoneAndTimeout() passed after 2.981 seconds.
+✔ Test drainingFileLeftByACrashIsReprocessedIdempotently() passed after 2.995 seconds.
+✔ Test spoolAndLiveEventsInterleavedOutOfOrderConverge() passed after 2.998 seconds.
+✔ Test burstOfLayoutUpdatesCoalescesIntoOneWrite() passed after 3.008 seconds.
+✔ Suite SpoolIngestionTests passed after 3.015 seconds.
+✔ Test screenshotAndRecord() passed after 3.005 seconds.
+✔ Test buildSendsTarContextAndReportsStepsAndFailures() passed after 3.022 seconds.
+✔ Suite PersistenceDebounceTests passed after 3.029 seconds.
+✔ Test rotateKeyVersionLeavesRowsUntouchedWhenOneCannotBeDecrypted() passed after 3.022 seconds.
+✔ Test removalOrderIsContainersNetworksVolumesAndFailuresAreReported() passed after 3.026 seconds.
+✔ Test removeComputerKeepsNamedProfileVolumes() passed after 3.029 seconds.
+✔ Test hijackedExecEchoesStdinWithHalfCloseAndSeparatesStreams() passed after 3.028 seconds.
+✔ Test staleSocketFileIsSkippedInFavorOfLiveOne() passed after 3.029 seconds.
+✔ Test killableExecWrapsCommandAndTerminateSignalsGroupThenKills() passed after 3.032 seconds.
+✔ Suite GarbageCollectorTests passed after 3.039 seconds.
+✔ Test reconcileWithoutADaemonInterruptsEverythingAndSeparatesRebootFromCrash() passed after 3.025 seconds.
+✔ Suite RuntimeDetectorTests passed after 3.040 seconds.
+✔ Suite RestoreTests passed after 3.042 seconds.
+✔ Test realClaudeTurnProjectsIntoRunAndTerminal() passed after 3.042 seconds.
+✔ Test updateWithoutSecretKeepsTheCurrentOne() passed after 3.060 seconds.
+✔ Test reconcileHealsAProjectionThatLaggedBehindItsEvents() passed after 3.064 seconds.
+✔ Test skipsSidecarOnlyReservedExpiredAndInvalidNamesWithoutLeaking() passed after 3.065 seconds.
+✔ Test daemonExitAndLostPTYAreRecordedAsEvents() passed after 3.068 seconds.
+✔ Test actionFailuresMapToStableCodes() passed after 3.063 seconds.
+✔ Test bindingsOfProfileAndSessionResolveWithSessionWinning() passed after 3.073 seconds.
+✔ Test pullStreamsProgressAndSurfacesRegistryErrors() passed after 3.077 seconds.
+✔ Suite CtlServerTests passed after 3.093 seconds.
+✔ Test boxFileIsReadOnly0400AndOnlyForNonEnvDelivery() passed after 3.078 seconds.
+✔ Suite SecretInjectionTests passed after 3.094 seconds.
+✔ Test hookAndCtlServicesShareOneAppSock() passed after 3.081 seconds.
+✔ Test zyteImportReadsOnlyTheKeyAndRequiresConfirmation() passed after 3.089 seconds.
+✔ Test everySliceOneEntityRoundTrips() passed after 3.090 seconds.
+✔ Suite SecretFileTests passed after 3.095 seconds.
+✔ Suite HookTransportTests passed after 3.095 seconds.
+✔ Suite "T3-02 - ProxyService e importador da chave Zyte" passed after 3.096 seconds.
+✔ Suite RoundTripTests passed after 3.097 seconds.
+✔ Test rotateKeyVersionReencryptsEverythingAtomically() passed after 3.100 seconds.
+✔ Suite VaultTests passed after 3.111 seconds.
+✔ Test lateEventsOfAnOlderRunDoNotOverwriteTheTerminalMessage() passed after 3.104 seconds.
+✔ Test detectsActiveContextMatchingDockerContextInspectAndReadsVMCapacity() passed after 3.113 seconds.
+◇ Test pullByDigestBuildFromTarContextAndHashTaggedEnsure() started.
+✔ Test everyActivityRoundTripsThroughStatusColumns() passed after 3.103 seconds.
+✔ Suite AgentEventStoreTests passed after 3.122 seconds.
+✔ Test createAttachInputOutputAndIdempotentCreate() passed after 3.130 seconds.
+◇ Test outputSeqIsContinuousAcrossFrames() started.
+✔ Test stopBeforeSubagentStopsLeavesParentWaitingUntilTheLast() passed after 3.136 seconds.
+✔ Test replayingTheSameEventsIsIdempotent() passed after 3.151 seconds.
+✔ Test statusCodesMapToTypedErrorsAndIdempotentOperations() passed after 3.159 seconds.
+✔ Test eventsStreamParsesChunkedJSONLinesSplitAcrossChunks() passed after 3.159 seconds.
+✔ Test liveAppReceivesTheEventAndNothingIsSpooled() passed after 3.172 seconds.
+✔ Test zshRunsThenExits() passed after 3.181 seconds.
+✔ Test outOfOrderArrivalConvergesToTheOrderedResult() passed after 3.191 seconds.
+✔ Suite ActivityServiceTests passed after 3.198 seconds.
+✔ Test zshRunsInACleanSessionFolder() passed after 3.196 seconds.
+✔ Test aChildOnlyOperatesTheComputerItClaimed() passed after 3.240 seconds.
+✔ Suite RoutingTests passed after 3.253 seconds.
+✔ Test cleanSessionFolderIsTheCwdOfTheProcess() passed after 3.302 seconds.
+✔ Test maxSizeFrameCrossesTheSocketIntact() passed after 3.350 seconds.
+✔ Test finishWritingWithLargePendingWriteDeliversEverythingFirst() passed after 3.371 seconds.
+✔ Suite HalfCloseTests passed after 3.379 seconds.
+✔ Test preMigrationBackupsKeepFive() passed after 3.477 seconds.
+✔ Suite BackupTests passed after 3.486 seconds.
+✔ Test manyConcurrentProcessesDoNotStarveTheCooperativePool() passed after 3.498 seconds.
+✔ Test interruptedCreateThatLandsLateIsStillRemoved() passed after 3.644 seconds.
+✔ Test emptyOrMissingSourceYieldsAnEmptyReport() passed after 3.737 seconds.
+✔ Test framesSplitAcrossManyWritesReassemble() passed after 3.752 seconds.
+✔ Suite FramedDaemonTransportTests passed after 3.760 seconds.
+✔ Test timeoutKillsProcess() passed after 3.804 seconds.
+✔ Test timeoutIsTypedWithOperation() passed after 3.804 seconds.
+✔ Test tolerantParseMarksCorruptFilesUnreadableAndKeepsGoing() passed after 3.833 seconds.
+✔ Test reportsFileChangesInsideWatchedFolder() passed after 3.842 seconds.
+✔ Suite GitChangeWatcherTests passed after 3.857 seconds.
+✔ Test corruptedFileIsMovedAndLatestBackupRestored(wholeFile:) with 2 test cases passed after 3.911 seconds.
+✔ Suite CorruptionTests passed after 3.917 seconds.
+✔ Test dryRunReportsCountsWithoutWritingAnything() passed after 3.958 seconds.
+✔ Test usageAccumulatesPerDayAndComputerWithoutAnyCutoff() passed after 3.980 seconds.
+✔ Suite ProxyStoreTests passed after 3.987 seconds.
+✔ Test backgroundGrandchildHoldingPipeDoesNotHangResult() passed after 4.061 seconds.
+✔ Suite ProcessRunnerTests passed after 4.070 seconds.
+✔ Test transportFailureBecomesBlockedByPolicyWhenTheEgressRefusedTheDestination() passed after 4.068 seconds.
+✔ Suite HTTPToolTests passed after 4.082 seconds.
+✔ Test failuresAreNotCached() passed after 4.146 seconds.
+✔ Test missingShellIsFailedWithReasons() passed after 4.178 seconds.
+✔ Test sendSuspendsUntilThePeerDrains() passed after 4.198 seconds.
+✔ Test dryRunReportsWithoutTouchingAnyDatabase() passed after 4.227 seconds.
+✔ Test multilineValuesSurviveByteForByte() passed after 4.260 seconds.
+✔ Test withoutAVaultOrReaderNoSecretIsImported() passed after 4.269 seconds.
+✔ Test secretValuesNeverAppearInDiagnosticsOrDescriptions() passed after 4.290 seconds.
+✔ Test realImportMapsEverythingAndCopiesSourcesFirst() passed after 4.331 seconds.
+✔ Test invalidLayoutFallsBackToASinglePane() passed after 4.333 seconds.
+✔ Test syntheticFastShellCapturesInteractiveFilteredEnv() passed after 4.384 seconds.
+✔ Test cancelledCaptureKillsTheShellQuickly() passed after 4.398 seconds.
+✔ Test allowlistBeatsDenylistAndExtraRulesApply() passed after 4.409 seconds.
+✔ Test interactiveExitWithoutMarkerFallsBackToNonInteractive() passed after 4.409 seconds.
+✔ Test concurrentCallsShareOneCapture() passed after 4.419 seconds.
+✔ Test realLoginShellPathResolvesClaudeAndGh() passed after 4.483 seconds.
+✔ Suite LoginShellEnvRealShellTests passed after 4.494 seconds.
+✔ Test sortIndexGrows() passed after 4.545 seconds.
+✔ Test cacheServesRepeatedCallsAndReloadInvalidates() passed after 4.567 seconds.
+✔ Test secretsAreReadFromTheOldKeychainOnlyPerConfirmationAndNeverLeak() passed after 4.575 seconds.
+✔ Test refreshReconcilesAddedChangedAndRemovedKeepingHistory() passed after 4.584 seconds.
+✔ Test serviceNeverWritesToNativeFolders() passed after 4.620 seconds.
+✔ Test realImportIsIdempotentByFingerprintAndByRow() passed after 4.636 seconds.
+✔ Test echoesLargePayloadThroughPartialWrites() passed after 4.641 seconds.
+✔ Test sourceDirectoryIsNeverWrittenEvenWhenReadOnly() passed after 4.732 seconds.
+✔ Suite LegacyImporterTests passed after 4.738 seconds.
+✔ Test missingCLIIsCouldntStart() passed after 4.839 seconds.
+✔ Suite LaunchIntegrationTests passed after 4.847 seconds.
+✔ Test maxAgeExpiresTheCache() passed after 4.854 seconds.
+✔ Test watchFollowsNewSkillFoldersAndEditsInsideThem() passed after 4.914 seconds.
+✔ Test outputSeqIsContinuousAcrossFrames() passed after 1.911 seconds.
+◇ Test killLeavesNoOrphans() started.
+✔ Test realZshWithNoisyRcIsIgnoredByMarkerAndFile() passed after 5.110 seconds.
+✔ Test watchPicksUpANewAgentFileWithinTwoSeconds() passed after 5.136 seconds.
+✔ Suite CatalogServiceTests passed after 5.151 seconds.
+✔ Test createTimeoutReconcilesWithForceRemoveByDeterministicName() passed after 5.498 seconds.
+✔ Test writeRealDryRuns() passed after 5.583 seconds.
+✔ Suite T210EvidenceTests passed after 5.591 seconds.
+✔ Test killLeavesNoOrphans() passed after 0.570 seconds.
+◇ Test slowClientGetsResyncRequired() started.
+✔ Test heavyTransferDoesNotStarveTheCooperativePool() passed after 5.882 seconds.
+✔ Suite UDSTransportTests passed after 5.904 seconds.
+✔ Test bothModesHangingYieldsFailedWithLaunchdFallbackAndNoOrphans() passed after 6.086 seconds.
+✔ Test twentyParallelSlowCallsDoNotBlockTheCooperativePool() passed after 6.681 seconds.
+✔ Suite ClientAgainstFakeDaemonTests passed after 6.688 seconds.
+✔ Test signedDaemonAcceptsOnlyTheAppIdentity() passed after 6.948 seconds.
+◇ Test adhocDevelopmentDaemonAcceptsSameUIDPeers() started.
+✔ Test s2InternalNetworkDNSAndPortPublishedOnlyByEgress() passed after 8.077 seconds.
+✔ Suite "Spike S2 - rede internal e publicação pelo egress" passed after 8.082 seconds.
+✔ Test immediateSkipsDebounceAndNeverRunsInParallel() passed after 8.224 seconds.
+✔ Test hangingInteractiveRcIsKilledAfterFiveSecondsWithoutOrphanAndFallsBack() passed after 9.092 seconds.
+✔ Suite LoginShellEnvTests passed after 9.101 seconds.
+✔ Test futureSliceActionsAreNotRegisteredNorRendered() passed after 9.131 seconds.
+✔ Test slowClientGetsResyncRequired() passed after 3.961 seconds.
+◇ Test twoConnectionsSeeTheSameSessionIndependently() started.
+✔ Test seesChangesAndRespectsMinInterval() passed after 9.870 seconds.
+✔ Test twoConnectionsSeeTheSameSessionIndependently() passed after 0.322 seconds.
+◇ Test exitEventAndAttachToExitedSession() started.
+✔ Test statusDoesNotTakeIndexLock() passed after 10.121 seconds.
+✔ Test statusReadUsesOptionalLocksZero() passed after 10.344 seconds.
+✔ Test exitEventAndAttachToExitedSession() passed after 0.556 seconds.
+◇ Test errorsAreTyped() started.
+✔ Test pythonEgressUnitSuitePasses() passed after 10.476 seconds.
+✔ Suite "T3-02 - config do egress, segredos em arquivo e integridade do reqlog" passed after 10.482 seconds.
+✔ Test burstOfRequestsCoalescesIntoOneStatus() passed after 10.577 seconds.
+✔ Suite GitStatusRefresherTests passed after 10.584 seconds.
+✔ Test errorsAreTyped() passed after 0.192 seconds.
+◇ Test headlessAnswersDeviceQueriesButNeverOSC52() started.
+✔ Test locatorFindsProfileAndDetectCountsWithoutTouchingTheGit() passed after 10.756 seconds.
+✔ Test repoWithoutCommitsOrOriginStillAdds() passed after 10.992 seconds.
+✔ Test statusDetachedHead() passed after 11.789 seconds.
+✔ Test adhocDevelopmentDaemonAcceptsSameUIDPeers() passed after 5.383 seconds.
+✔ Suite PeerAuthDaemonTests passed after 12.337 seconds.
+✔ Test keyboardIsOnlyCapturedWithHumanControl() passed after 12.772 seconds.
+✔ Test startsConnectingGoesLiveAndInputNeedsHumanPlusLiveStream() passed after 12.772 seconds.
+✔ Test statusCleanDirtyUntracked() passed after 12.915 seconds.
+✔ Test pullByDigestBuildFromTarContextAndHashTaggedEnsure() passed after 9.969 seconds.
+➜ Test buildsTheRealRuntimeBoxImageThroughEngineAPI() skipped.
+◇ Test containerLifecycleHardeningLabelsAndEvents() started.
+✔ Test toggleControlTakesOverThenOpensTheNoteField() passed after 13.339 seconds.
+✔ Test futureSliceActionIsUnavailableEvenIfRegistered() passed after 13.350 seconds.
+✔ Test unregisteredActionIsReportedNotSilentlyIgnored() passed after 13.353 seconds.
+✔ Test disabledActionCarriesTheExactReasonAndDoesNotRun() passed after 13.353 seconds.
+✔ Test sameSizeAsAppliedSendsNothing() passed after 13.358 seconds.
+✔ Test closedCoordinatorNeverApplies() passed after 13.358 seconds.
+✔ Test burstCollapsesIntoOneTrailingResize() passed after 13.358 seconds.
+✔ Test commandReturnSubmitsAndPlainReturnDoesNot() passed after 13.376 seconds.
+◇ Test commandReturnIsIgnoredWhileComposingWithAnIME() started.
+✔ Test headlessAnswersDeviceQueriesButNeverOSC52() passed after 2.842 seconds.
+◇ Test coldLogKeepsOutputWithRotationAndNoEnvValues() started.
+✔ Test toggleSidebarActionCollapsesAndExpands() passed after 13.910 seconds.
+✔ Test focusIsTrappedInTheOverlayAndReturnedToTheOrigin() passed after 13.913 seconds.
+◇ Test focusReturnsAtTheStartOfTheExitNotAtTheEnd() started.
+✔ Test warnsWhenOrcaStillListsTheWorktree() passed after 14.082 seconds.
+✔ Test schemeServesOnlyFilesInsideTheVendoredFolder() passed after 14.116 seconds.
+✔ Test optionAsMetaAutoFollowsTheLayout() passed after 14.115 seconds.
+✔ Test linkPolicyOpensOnlySimpleSchemes() passed after 14.115 seconds.
+✔ Test notificationFollowsTheSpecAndCarriesNoPageContent() passed after 14.115 seconds.
+✔ Test vendoredNoVNCIsPinnedAndLicensed() passed after 14.116 seconds.
+✔ Test pasteSanitizerRemovesEscapeAndControlsButKeepsTabAndNewline() passed after 14.115 seconds.
+✔ Test uiAnswersDeviceAndSizeQueries() passed after 14.115 seconds.
+✔ Test uiNeverAnswersAnOSC52Query() passed after 14.115 seconds.
+✔ Test needsYouFirstThenRecentActivityThenName() passed after 14.116 seconds.
+✔ Test eventsParseFromTheBridge() passed after 14.118 seconds.
+✔ Test headlessFilterStillRefusesWhatTheUIAllows() passed after 14.115 seconds.
+✔ Suite ReplyAndPasteFilterTests passed after 14.123 seconds.
+✔ Test virtualKeyCodes() passed after 14.119 seconds.
+✔ Test reservedChordsProduceTheDocumentedBytes() passed after 14.119 seconds.
+✔ Test extraModifiersAndPlainKeysAreNotIntercepted() passed after 14.119 seconds.
+✔ Suite KeyTableTests passed after 14.126 seconds.
+✔ Test onlyTheLocalSchemeMayNavigate() passed after 14.122 seconds.
+✔ Test themeFollowsTheTokens() passed after 14.134 seconds.
+✔ Test uiModulesLink() passed after 14.134 seconds.
+✔ Test officialLogosAreBundledAtBothScales() passed after 14.133 seconds.
+✔ Test comboboxStates() passed after 14.133 seconds.
+✔ Test threeProjectsSelectedAndPending() passed after 14.133 seconds.
+✔ Test startsOnTheSelectedItemOrTheFirstEnabledOne() passed after 14.133 seconds.
+✔ Test disabledItemsNeverActivateAndHoverIgnoresThem() passed after 14.133 seconds.
+✔ Test enterActivatesTheHighlightedItemAndEscapeDismisses() passed after 14.133 seconds.
+✔ Test reduceMotionIsACrossfadeWithoutScaleOrOffset() passed after 14.133 seconds.
+✔ Test searchAppearsAboveSevenItems() passed after 14.133 seconds.
+✔ Test exitFramesMatchTheSpecTable() passed after 14.133 seconds.
+✔ Test typeAheadJumpsByPrefixWithoutFilteringAndResetsAfterAPause() passed after 14.133 seconds.
+✔ Test rowOffsetsUseFixedRowHeights() passed after 14.133 seconds.
+✔ Test tokensAreTheSameAsThePrototype() passed after 14.133 seconds.
+✔ Test keyCatcherTranslatesCommandSelectorsToKeys() passed after 14.133 seconds.
+✔ Test enterFramesMatchTheSpecTable() passed after 14.133 seconds.
+✔ Test compositionTextIsHeldUntilCommitted() passed after 14.133 seconds.
+✔ Test controlCharactersAreNotTyped() passed after 14.133 seconds.
+✔ Test durationsFollowTheSpec() passed after 14.133 seconds.
+✔ Test submenuOpensWithRightEnterAndClosesWithLeftThenEscape() passed after 14.133 seconds.
+✔ Test typingFiltersWhenSearchableAndKeepsPinnedItems() passed after 14.133 seconds.
+✔ Test originAnchorIsTheVectorIntersectionWithTheCardEdge() passed after 14.133 seconds.
+✔ Test arrowsSkipDisabledItemsAndStopAtTheEnds() passed after 14.133 seconds.
+✔ Test duplicateInTheSameScopeIsRejectedAtRegistration() passed after 14.132 seconds.
+✔ Test globalAgainstTheTerminalReservedListIsReported() passed after 14.132 seconds.
+✔ Test deliberateGlobalExceptionsToTheTerminalAreNotConflicts() passed after 14.132 seconds.
+✔ Test failedTakeOverGoesBackToAgentWithTheError() passed after 14.132 seconds.
+✔ Test provenanceFileTravelsWithTheLogos() passed after 14.134 seconds.
+✔ Suite UISnapshotSmoke passed after 14.142 seconds.
+✔ Test noMatchLeavesOnlyPinnedItemsAndReportsEmptyResult() passed after 14.133 seconds.
+✔ Suite OverlayMotionTests passed after 14.142 seconds.
+✔ Suite AgentLogoTests passed after 14.142 seconds.
+◇ Test metalRendererIsOn() started.
+◇ Test longNamesAndShowMoreOpen() started.
+◇ Test showsAtMostThreeAndCollapsesTheRest() started.
+✔ Suite MenuNavigatorTests passed after 14.142 seconds.
+◇ Test comboboxOpenWithAgentIcons() started.
+✔ Test resolveRepoFromOrigin() passed after 14.159 seconds.
+✔ Suite GitHubServiceTests passed after 14.173 seconds.
+✔ Test projectActionsAreOfferedOnceRegistered() passed after 14.217 seconds.
+✔ Test everyBoundActionExistsInTheActionTable() passed after 14.217 seconds.
+✔ Test helpHeadlinesFollowTheNotificationFormat() passed after 14.217 seconds.
+✔ Test resolveUsesTheMostSpecificActiveScope() passed after 14.217 seconds.
+✔ Test silenceOverTwoSecondsIsSlowConnectionAndRecovers() passed after 14.217 seconds.
+✔ Test canonicalTableHasNoConflicts() passed after 14.217 seconds.
+✔ Test clickWhileTheAgentControlsIsReported() passed after 14.217 seconds.
+✔ Test geistRegistersAndResolvesByFamilyName() passed after 14.217 seconds.
+✔ Test tabularDigitsKeepNumbersAligned() passed after 14.217 seconds.
+✔ Test terminalUsesSFMono() passed after 14.217 seconds.
+✔ Test everyTextStyleResolvesToTheRightFamily() passed after 14.217 seconds.
+✔ Test geistFileIsBundledWithLicense() passed after 14.217 seconds.
+✔ Test uiFontUsesGeistAndTheWeightAxis() passed after 14.217 seconds.
+✔ Test searchMatchesNameBranchFolderAndProjectAtItemLevel() passed after 14.217 seconds.
+✔ Test overlayVersusPaletteNeedsADeclaredOverride() passed after 14.217 seconds.
+✔ Test chordParsing() passed after 14.217 seconds.
+✔ Test bubbleSizesToItsContentAndCapsAt280() passed after 14.217 seconds.
+✔ Test sessionOrderFollowsTheVisibleList() passed after 14.217 seconds.
+✔ Test pendingRowsSitOnTopOfTheirProjectAndHideWhileSearching() passed after 14.217 seconds.
+✔ Test relativeTimeBuckets() passed after 14.217 seconds.
+✔ Test canonicalShortcutsMatchTheActionTableColumn() passed after 14.217 seconds.
+✔ Test sessionsAreOrderedByRecentActivityAndByName() passed after 14.217 seconds.
+✔ Test spinnerAnimationIsDiscreteAndPausesOutOfView() passed after 14.217 seconds.
+✔ Test searchDropsProjectsAndSectionsWithoutResultsAndReportsEmpty() passed after 14.217 seconds.
+✔ Test delaysComeFromTheTokens() passed after 14.217 seconds.
+✔ Test mainCheckoutsFilterAndSelectedSessionStaysVisible() passed after 14.217 seconds.
+✔ Test buttons() passed after 14.217 seconds.
+✔ Test searchIgnoresCollapseAndShowMoreLimit() passed after 14.217 seconds.
+✔ Test chainedTooltipsOpenWithoutDelay() passed after 14.217 seconds.
+✔ Test tabWidthShrinksFromBaseToTheMinimum() passed after 14.217 seconds.
+✔ Test searchMatchesTerminalsAndShowsOnlyThemInTheCard() passed after 14.216 seconds.
+✔ Test manyAgentsCollapseIntoASummaryPill() passed after 14.216 seconds.
+✔ Test metricsMatchTheSpec() passed after 14.217 seconds.
+✔ Test v11ActionsAreNeverRendered() passed after 14.216 seconds.
+✔ Test idleOverAWeekAndArchivedAreHiddenByDefault() passed after 14.217 seconds.
+✔ Test fixtureHasThreeProjectsAndCleanSessionsInRecentOrder() passed after 14.217 seconds.
+✔ Test hiddenProjectsAreRemovedUnlessShown() passed after 14.216 seconds.
+✔ Test textThatMatchesAnItemKeepsTheMatchesAndHidesTheFallback() passed after 14.216 seconds.
+✔ Test textThatMatchesNothingOffersTheFallbackRowAndHighlightsIt() passed after 14.216 seconds.
+✔ Test unreadSessionsReadAsUnread() passed after 14.216 seconds.
+✔ Test collapsedProjectKeepsItsCountAndDropsItsRowsFromKeyboardOrder() passed after 14.216 seconds.
+✔ Test processStateDrivesTheIndicatorWhileAgentActivityIsUnknown() passed after 14.216 seconds.
+✔ Test handlerFailuresBecomeActionErrors() passed after 14.216 seconds.
+✔ Test maximumTwoBadges() passed after 14.216 seconds.
+✔ Test activationRecordsTheModifier() passed after 14.217 seconds.
+✔ Test snapshotBuildsHierarchyFromParentLinks() passed after 14.216 seconds.
+✔ Test orphanParentBecomesRoot() passed after 14.216 seconds.
+✔ Test buttonColorsFollowTheVariantTable() passed after 14.217 seconds.
+✔ Test duplicateIDsAreDetected() passed after 14.216 seconds.
+✔ Test indexListsEveryActionWithItsState() passed after 14.216 seconds.
+✔ Test unregisterRemovesTheElement() passed after 14.216 seconds.
+✔ Test cardTextAndBadges() passed after 14.217 seconds.
+✔ Test slice1NavShowsOnlyAgentsGeneralTerminal() passed after 14.216 seconds.
+✔ Test projectShowsFiveSessionsThenShowMore() passed after 14.217 seconds.
+✔ Suite KeyBindingRegistryTests passed after 14.227 seconds.
+✔ Suite TabRowConformanceTests passed after 14.227 seconds.
+◇ Test addProjectThroughThePickerShowsProjectAndUnstartedSessions() started.
+✔ Suite MenuNavigatorActivationTests passed after 14.227 seconds.
+◇ Test iconButtons() started.
+◇ Test groupsFollowTheSpecOrder() started.
+✔ Test weightMappingIsMonotonic() passed after 14.217 seconds.
+✔ Test spinnerIsTwelveDiscreteStepsOneTurnPerSecondAtMostTwelveFps() passed after 14.217 seconds.
+✔ Suite ComponentSpecTests passed after 14.227 seconds.
+✔ Suite FontTests passed after 14.227 seconds.
+✔ Test idleShellsGroupUnderAnAgentSession() passed after 14.216 seconds.
+✔ Test controlStateComesFromTheActionEnablement() passed after 14.225 seconds.
+✔ Test sidebarMetricsMatchTheSpecNumbers() passed after 14.225 seconds.
+✔ Test emptyWorkspaceProjectWithoutSessionsAndFilteredOut() passed after 14.225 seconds.
+✔ Suite UIElementStoreTests passed after 14.236 seconds.
+✔ Suite SidebarProjectionTests passed after 14.236 seconds.
+✔ Test sidebarWidthIsClamped() passed after 14.225 seconds.
+✔ Test aTransitionProducesExactlyOneResizeWhenItEnds() passed after 14.231 seconds.
+✔ Test duplicateRegistrationThrows() passed after 14.227 seconds.
+✔ Suite ResizeCoordinatorTests passed after 14.239 seconds.
+✔ Test detectsRootFromSubfolderAndLinkedWorktree() passed after 14.651 seconds.
+✔ Test trafficLightGeometryMatchesTheSpec() passed after 14.914 seconds.
+✔ Test explicitExistingBranchOffersUseExisting() passed after 15.064 seconds.
+✔ Test branchCheckedOutInMainIsInUse() passed after 15.190 seconds.
+✔ Test renamedSessionAndStartedSessionSurviveSync() passed after 15.315 seconds.
+agentbox hook latency, binary=/Users/gabriel/orca/agent-box/.claude/worktrees/agent-afabb8c64edd326a9/Packages/AgentBoxKit/.build/debug/agentbox
+agentbox hook latency (60 runs, app closed/spool): p50=101.750166 ms p95=175.736375 ms
+agentbox hook latency (60 runs, app live/socket): p50=105.801291 ms p95=155.54875 ms
+✔ Test helperLatencyStaysWellUnderTheDeadlineWithTheAppLiveAndClosed() passed after 15.475 seconds.
+✔ Suite HookCLITests passed after 15.487 seconds.
+✔ Test containerLifecycleHardeningLabelsAndEvents() passed after 2.843 seconds.
+◇ Test duplicateNameConflictAndCreateTimeoutLeavesNoOrphan() started.
+✔ Test renameAndEmptyNameFallsBackToFolder() passed after 16.424 seconds.
+✔ Test notInstalledAgentsAreDisabledWithTheReason() passed after 17.126 seconds.
+✔ Test theDefaultAgentComesFirst() passed after 17.126 seconds.
+✔ Test requestRoundTripsAndFreeTextBecomesAPrompt() passed after 17.126 seconds.
+✔ Test listsAgentsAndTerminalWithTheDocumentedShortcuts() passed after 17.126 seconds.
+✔ Test stoppedComputerShowsStoppedAndCannotBeTakenOver() passed after 17.125 seconds.
+✔ Test shiftEnterOpensInASplit() passed after 17.126 seconds.
+✔ Test theFallbackRowStartsTheDefaultAgentWithTheText() passed after 17.126 seconds.
+✔ Test profilesAppearWithFlagsInMonoAndNeverRepeatTheDefaults() passed after 17.126 seconds.
+✔ Test commandEnterStartsTheSelectedItemWithTheTextAsPrompt() passed after 17.126 seconds.
+✔ Test enterOpensTheItemWithoutAPrompt() passed after 17.126 seconds.
+✔ Test flagSummaryUsesModelEffortPermissionAndExtraArgs() passed after 17.126 seconds.
+✔ Suite QuickLaunchModelTests passed after 17.134 seconds.
+✔ Test defaultBranchAndUsernamePrefix() passed after 17.212 seconds.
+✔ Test runningOrcaChangesTheVariant() passed after 17.364 seconds.
+✔ Suite OrcaCoexistenceTests passed after 17.377 seconds.
+✔ Test rootInsideRepositoryIsRejected() passed after 17.371 seconds.
+✔ Test reconnectingEscalatesToDisconnectedAndNeverTouchesControlOrHelp() passed after 17.369 seconds.
+✔ Test unknownDomainVersionIsSkippedWithANote() passed after 17.369 seconds.
+✔ Test actionsAreDisabledWithAReasonUntilThereIsAComputer() passed after 17.398 seconds.
+✔ Test titlebarStripIs36AndSidebarStartsAt280() passed after 17.397 seconds.
+◇ Test openingTheViewerAndClosingItNeverTouchesLeaseOrComputer() started.
+✔ Test readerOnlyTouchesATemporaryCopyAndCleansUp() passed after 17.460 seconds.
+✔ Test windowListsItsCanonicalControls() passed after 17.667 seconds.
+✔ Test commandReturnIsIgnoredWhileComposingWithAnIME() passed after 4.451 seconds.
+◇ Test escapeGoesToTheCallerOrDownTheResponderChain() started.
+✔ Test automationBadgeAppearsOnlyWhenAutomationIsOn() passed after 17.827 seconds.
+✔ Test syncIsIdempotentAndPicksUpNewAndRemovedWorktrees() passed after 17.918 seconds.
+✔ Test syncOfMissingRepoThrowsAndKeepsRecords() passed after 18.064 seconds.
+✔ Test historyControlsAreDisabledWithAReason() passed after 18.064 seconds.
+✔ Test newBranchFromFreshOriginMainWithPrefix() passed after 18.436 seconds.
+✔ Test legacyJSONIsUsedWhenSQLiteIsMissingOrBroken() passed after 18.450 seconds.
+✔ Test togglesLimitWhatIsImported() passed after 18.538 seconds.
+✔ Test forceRemovesDirtyWorktree() passed after 18.683 seconds.
+✔ Test fetchFailureOffersCreateWithoutFetching() passed after 18.728 seconds.
+✔ Test uncommittedChangesBlockRemoval() passed after 18.786 seconds.
+✔ Test existingWorktreesBecomeUnstartedSessions() passed after 18.873 seconds.
+✔ Test lockedWorktreeIsRefused() passed after 18.973 seconds.
+✔ Test takeOverShowsRevokingThenForceAfterTenSecondsWithoutAck() passed after 19.020 seconds.
+✔ Test handBackWithNoteReleasesKeyboardAndClearsTheField() passed after 19.020 seconds.
+✔ Test windowIsConfiguredAndTrafficLightsSurviveResizeAndRelayout() passed after 19.178 seconds.
+✔ Test failedAddRollsBackBranchAndFolder() passed after 19.244 seconds.
+✔ Test realImportMapsProjectsWorktreesAndLeavesSessionsNotStarted() passed after 19.454 seconds.
+✔ Test gitRepoIsDetectedWithRootNameBranchAndRemote() passed after 19.887 seconds.
+✔ Test repositoryWithoutOriginUsesLocalDefaultBranch() passed after 20.106 seconds.
+✔ Test cancelledCreationLeavesNothingBehind() passed after 20.113 seconds.
+✔ Test mainWorktreeAndUnknownPathsAreRefused() passed after 20.487 seconds.
+✔ Test fetchTimeoutBecomesFetchFailed() passed after 20.502 seconds.
+✔ Suite GitRunnerEnvironmentTests passed after 20.515 seconds.
+✔ Test agentsSection() passed after 20.514 seconds.
+◇ Test agentsSectionWithAProfileOpenForEditing() started.
+✔ Test declineGoesToTheComputerAndClearsTheBanner() passed after 20.526 seconds.
+✔ Test showsAtMostThreeAndCollapsesTheRest() passed after 6.393 seconds.
+✔ Test longNamesAndShowMoreOpen() passed after 6.393 seconds.
+✔ Test comboboxOpenWithAgentIcons() passed after 6.393 seconds.
+◇ Test comboboxSearchFiltersAndKeepsPinnedItem() started.
+◇ Test collapsedProjectAndEmptyProject() started.
+◇ Test timerDismissesAndHoverPausesIt() started.
+✔ Test metalRendererIsOn() passed after 6.393 seconds.
+◇ Test surfaceIsInsetByFourPointsAndOwnsFocus() started.
+✔ Test iconButtons() passed after 6.309 seconds.
+✔ Test groupsFollowTheSpecOrder() passed after 6.309 seconds.
+◇ Test badgesAndKeycaps() started.
+◇ Test changesSaveWithoutSaveButtonAndSurviveReopening() started.
+✔ Test branchSwitchedInTerminalIsPersistedFromStatus() passed after 20.720 seconds.
+✔ Suite ProjectWorktreeSyncTests passed after 20.727 seconds.
+✔ Test unpublishedCommitsAreReportedButDoNotBlock() passed after 20.810 seconds.
+✔ Test duplicateNameConflictAndCreateTimeoutLeavesNoOrphan() passed after 5.038 seconds.
+◇ Test execStdinStdoutStderrExitCodeAndHalfClose() started.
+✔ Test revokingIsVisibleWhileWaitingForTheAck() passed after 21.177 seconds.
+✔ Suite "T3-05 - modelo do viewer" passed after 21.187 seconds.
+✔ Test escapeGoesToTheCallerOrDownTheResponderChain() passed after 3.410 seconds.
+◇ Test focusingDoesNotSelectTheText() started.
+✔ Test dispatchingProtocolHopsToTheMainActor() passed after 21.277 seconds.
+✔ Suite ActionRegistryTests passed after 21.288 seconds.
+✔ Test addingTwiceOrFromALinkedWorktreeDoesNotDuplicate() passed after 21.662 seconds.
+✔ Suite ProjectAddTests passed after 21.670 seconds.
+✔ Test closingTheViewerNeverChangesLeaseOrRequest() passed after 22.218 seconds.
+✔ Suite "T3-05 - lease e controle humano" passed after 22.231 seconds.
+✔ Test collapsedProjectAndEmptyProject() passed after 1.697 seconds.
+✔ Test focusingDoesNotSelectTheText() passed after 0.985 seconds.
+✔ Test comboboxSearchFiltersAndKeepsPinnedItem() passed after 1.698 seconds.
+◇ Test emptyWorkspace() started.
+◇ Test typingFlowsBackToTheBinding() started.
+◇ Test menuPanelWithShortcutsSeparatorsAndStates() started.
+✔ Test importIsIdempotentAndPicksUpNewWorktreesByPath() passed after 22.384 seconds.
+✔ Test reimportKeepsLocalEditsUnlessOverwriteIsChosen() passed after 22.484 seconds.
+✔ Test folderOccupiedByUnrelatedFilesForcesSuffix() passed after 22.921 seconds.
+✔ Test aheadBehind() passed after 22.973 seconds.
+✔ Suite GitDetectionAndStatusTests passed after 22.985 seconds.
+✔ Test envValuesAreImportedOnlyWhenConfirmed() passed after 23.291 seconds.
+✔ Test useExistingLocalBranch() passed after 23.310 seconds.
+✔ Test unknownBranchAndInvalidNames() passed after 23.480 seconds.
+✔ Test existingManualDefaultIsNotReplaced() passed after 23.601 seconds.
+✔ Test dryRunReportsCountsAndNamesAndWritesNothing() passed after 23.632 seconds.
+✔ Test agentsSectionWithAProfileOpenForEditing() passed after 3.247 seconds.
+◇ Test generalSection() started.
+✔ Test surfaceIsInsetByFourPointsAndOwnsFocus() passed after 3.249 seconds.
+◇ Test osc52ReadIsNeverAnswered() started.
+✔ Test badgesAndKeycaps() passed after 3.251 seconds.
+◇ Test inputs() started.
+✔ Test execStdinStdoutStderrExitCodeAndHalfClose() passed after 2.830 seconds.
+◇ Test s9TerminateKillsTheProcessGroupAndEscalatesToSigkill() started.
+✔ Test emptyExistingFolderIsReused() passed after 23.831 seconds.
+✔ Test useExistingRemoteBranchTracksIt() passed after 23.831 seconds.
+✔ Test sidebarFramesFollowTheSpecInBothWindowSizes() passed after 23.924 seconds.
+✔ Suite LayoutConformanceTests passed after 23.935 seconds.
+✔ Test archivedProjectIsNotResurrectedWithoutOverwrite() passed after 23.988 seconds.
+✔ Test openingTheViewerAndClosingItNeverTouchesLeaseOrComputer() passed after 6.603 seconds.
+◇ Test takeOverFromOutsideOpensTheViewerThenTakesControlAndHandBackReturnsIt() started.
+✔ Test hideAppNameActionRemovesTheLabelFromTheTree() passed after 24.004 seconds.
+✔ Suite EmptyWindowTreeTests passed after 24.015 seconds.
+✔ Test menuPanelWithShortcutsSeparatorsAndStates() passed after 1.791 seconds.
+✔ Test emptyWorkspace() passed after 1.791 seconds.
+◇ Test menuPanelWithOpenSubmenu() started.
+◇ Test emptyWorkspaceMinimumWidth() started.
+✔ Test declineGoesBackAsDeclinedWithTheReason() passed after 24.046 seconds.
+✔ Test typingFlowsBackToTheBinding() passed after 1.821 seconds.
+◇ Test placeholderIsOnlyDrawnWhenEmpty() started.
+✔ Test removeArchivesSessionsKeepsFilesAndReAddRestores() passed after 24.149 seconds.
+✔ Suite ProjectRenameRemoveTests passed after 24.154 seconds.
+✔ Test listWorktreesReportsMainAndLinked() passed after 24.226 seconds.
+✔ Test inputs() passed after 0.464 seconds.
+◇ Test segmentedSwitchCheckbox() started.
+✔ Test typeInZshAndSeeTheOutput() passed after 24.262 seconds.
+◇ Test coloredOutputKeepsAttributes() started.
+✔ Test agentDefaultsBecomeImportedProfilesMarkedAsBypass() passed after 24.324 seconds.
+✔ Suite OrcaImportTests passed after 24.338 seconds.
+✔ Test generalSection() passed after 0.740 seconds.
+◇ Test generalSectionWithCustomPrefixAndInvalidFolder() started.
+✔ Test menuPanelWithOpenSubmenu() passed after 0.530 seconds.
+✔ Test emptyWorkspaceMinimumWidth() passed after 0.530 seconds.
+◇ Test tooltips() started.
+◇ Test fullStructureWithSearchAndNav() started.
+✔ Test osc52ReadIsNeverAnswered() passed after 0.815 seconds.
+◇ Test osc52ReadNeverReachesThePasteboardEvenWithATextClipboard() started.
+✔ Test placeholderIsOnlyDrawnWhenEmpty() passed after 0.548 seconds.
+◇ Test heightGrowsWithTheContentAndIsClamped() started.
+✔ Test thumbnailsAreFetchedAtMostOncePerSecondPerComputer() passed after 24.617 seconds.
+✔ Test segmentedSwitchCheckbox() passed after 0.371 seconds.
+◇ Test listRows() started.
+✔ Test untrackedOnlyAlsoBlocks() passed after 24.894 seconds.
+✔ Test cleanWorktreeIsRemovedAndPruned() passed after 24.904 seconds.
+✔ Test removalWorksWhenFolderWasDeletedByHand() passed after 24.909 seconds.
+✔ Test generalSectionWithCustomPrefixAndInvalidFolder() passed after 0.550 seconds.
+◇ Test terminalSection() started.
+✔ Test tooltips() passed after 0.515 seconds.
+◇ Test promptEditorStates() started.
+✔ Test heightGrowsWithTheContentAndIsClamped() passed after 0.471 seconds.
+✔ Suite PromptEditorTests passed after 25.075 seconds.
+✔ Test fullStructureWithSearchAndNav() passed after 0.523 seconds.
+◇ Test searchFiltersAndHighlights() started.
+✔ Test osc52ReadNeverReachesThePasteboardEvenWithATextClipboard() passed after 0.496 seconds.
+◇ Test osc52WriteFollowsTheSetting() started.
+✔ Test helpRequestFlowsToInboxDockBadgeAndOneNotificationPerRequest() passed after 25.098 seconds.
+✔ Suite "T3-05 - computadores, Inbox e notificação" passed after 25.104 seconds.
+✔ Test listRows() passed after 0.479 seconds.
+◇ Test toasts() started.
+✔ Test newCleanSessionCreatesAManagedFolderAndOpensTheDefaultAgentWithoutADialog() passed after 25.195 seconds.
+◇ Test eachCleanSessionGetsItsOwnFolder() started.
+✔ Test promptEditorStates() passed after 0.254 seconds.
+✔ Test searchFiltersAndHighlights() passed after 0.246 seconds.
+◇ Test keyHintsInButtons() started.
+◇ Test searchWithoutResults() started.
+✔ Test createdFromLinkedWorktreeAnchorsOnMainRepo() passed after 25.533 seconds.
+✔ Test takeOverFromOutsideOpensTheViewerThenTakesControlAndHandBackReturnsIt() passed after 1.553 seconds.
+◇ Test withoutAckTheForceActionTakesOver() started.
+✔ Test toasts() passed after 0.461 seconds.
+◇ Test emptyStates() started.
+✔ Test suppressedControllerNeverOpens() passed after 25.556 seconds.
+✔ Test changesSaveWithoutSaveButtonAndSurviveReopening() passed after 5.032 seconds.
+◇ Test stepperTapsCoalesceIntoOneDebouncedWrite() started.
+✔ Test terminalSection() passed after 0.555 seconds.
+◇ Test terminalSectionWithBarCursorAndLargeFont() started.
+✔ Test webViewLoadsLocallyAndCannotReachTheInternet() passed after 25.653 seconds.
+✔ Suite "T3-05 - viewer isolado" passed after 25.659 seconds.
+✔ Test keyHintsInButtons() passed after 0.335 seconds.
+✔ Test searchWithoutResults() passed after 0.335 seconds.
+◇ Test fullWidthSegmentedAndCompactSwitch() started.
+◇ Test renamingInline() started.
+✔ Test collisionAddsSuffixOnBothBranchAndFolder() passed after 25.665 seconds.
+✔ Suite GitWorktreeCreateTests passed after 25.671 seconds.
+✔ Test emptyStates() passed after 0.118 seconds.
+◇ Test spinnersAtRest() started.
+✔ Test terminalSectionWithBarCursorAndLargeFont() passed after 0.172 seconds.
+◇ Test onboardingChecklist() started.
+✔ Test focusReturnsAtTheStartOfTheExitNotAtTheEnd() passed after 11.980 seconds.
+◇ Test backgroundHostsRefuseFirstResponderWhileAnOverlayIsOpen() started.
+✔ Test splitCreatesAPaneWithTheSameAgentAndFocusesIt() passed after 25.909 seconds.
+◇ Test splitOfATerminalLaunchedWithABuiltinProfileIsPersisted() started.
+✔ Test osc52WriteFollowsTheSetting() passed after 0.848 seconds.
+◇ Test deviceAttributesAreAnsweredWithTheReplyOrigin() started.
+✔ Test fullWidthSegmentedAndCompactSwitch() passed after 0.298 seconds.
+✔ Test renamingInline() passed after 0.298 seconds.
+◇ Test renamingProjectInline() started.
+✔ Suite MenuSnapshotTests passed after 25.960 seconds.
+✔ Test spinnersAtRest() passed after 0.438 seconds.
+◇ Test confirmationOverlayCard() started.
+✔ Test backgroundHostsRefuseFirstResponderWhileAnOverlayIsOpen() passed after 0.252 seconds.
+◇ Test escapeKeyClosesTheTopOverlay() started.
+✔ Test deviceAttributesAreAnsweredWithTheReplyOrigin() passed after 0.220 seconds.
+◇ Test repliesAreSilentWhileReplayingASnapshot() started.
+✔ Test coloredOutputKeepsAttributes() passed after 1.901 seconds.
+◇ Test resizeReachesThePTYOncePerTransition() started.
+✔ Test renamingProjectInline() passed after 0.519 seconds.
+✔ Suite SidebarSnapshotTests passed after 26.479 seconds.
+✔ Test onboardingChecklist() passed after 0.782 seconds.
+◇ Test onboardingWhileChecking() started.
+✔ Test withoutAckTheForceActionTakesOver() passed after 1.016 seconds.
+◇ Test helpRequestReachesInboxBadgeAndNotificationOnceAndOpeningMarksItRead() started.
+✔ Test escapeKeyClosesTheTopOverlay() passed after 0.425 seconds.
+◇ Test escapeRunsTheCancelActionWhenItIsRegistered() started.
+✔ Test confirmationOverlayCard() passed after 0.467 seconds.
+◇ Test composerSampleCard() started.
+✔ Test deleteBranchMergedAndUnmerged() passed after 26.711 seconds.
+✔ Suite GitWorktreeRemoveTests passed after 26.724 seconds.
+✔ Test onboardingWhileChecking() passed after 0.239 seconds.
+✔ Test repliesAreSilentWhileReplayingASnapshot() passed after 0.649 seconds.
+◇ Test onboardingSkipConfirmation() started.
+◇ Test typedTextGoesOutAsKeyOrigin() started.
+✔ Test composerSampleCard() passed after 0.232 seconds.
+✔ Test sidebarObservesTheStore() passed after 26.814 seconds.
+◇ Test selectingASessionThroughTheActionMarksItReadAndPersists() started.
+✔ Suite ComponentSnapshotTests passed after 26.822 seconds.
+✔ Test escapeRunsTheCancelActionWhenItIsRegistered() passed after 0.243 seconds.
+◇ Test stackAllowsOneSubOverlayAndPopReturnsToTheParent() started.
+✔ Test typedTextGoesOutAsKeyOrigin() passed after 0.047 seconds.
+◇ Test reservedChordsAreSentThroughTheKeyTable() started.
+✔ Test reservedChordsAreSentThroughTheKeyTable() passed after 0.137 seconds.
+◇ Test blockedInputDoesNotSendKeysAndRefusesFocus() started.
+✔ Test onboardingSkipConfirmation() passed after 0.280 seconds.
+◇ Test settingsFillsTheWindowAndNothingLeavesItsBox() started.
+✔ Test stackAllowsOneSubOverlayAndPopReturnsToTheParent() passed after 0.298 seconds.
+◇ Test scrimClickClosesOnlyWhenThereIsNoTypedData() started.
+✔ Test twoPanesRunZshInTheRealDaemonAndSplitNeverRecreatesThePTY() passed after 27.322 seconds.
+✔ Suite WorkspaceIntegrationTests passed after 27.329 seconds.
+✔ Test slowStartShowsIgnitionWithRealStepsThenRunningOnFirstByte() passed after 27.329 seconds.
+◇ Test fakeClaudeThatPrintsAndExitsEndsExitedAndCapturesTheID() started.
+✔ Test blockedInputDoesNotSendKeysAndRefusesFocus() passed after 0.335 seconds.
+◇ Test pasteUsesBracketedPasteWhenTheProgramEnabledIt() started.
+✔ Test scrimClickClosesOnlyWhenThereIsNoTypedData() passed after 0.225 seconds.
+◇ Test motionEventsFollowBeginSettledEnd() started.
+✔ Test coldLogKeepsOutputWithRotationAndNoEnvValues() passed after 13.930 seconds.
+◇ Test sessionEnvIsExactlyWhatCreateSent() started.
+✔ Test pasteUsesBracketedPasteWhenTheProgramEnabledIt() passed after 0.150 seconds.
+◇ Test pasteWithoutBracketedModeTurnsNewlinesIntoReturns() started.
+✔ Test secondTooltipWithinTheChainWindowOpensImmediately() passed after 27.508 seconds.
+✔ Test pasteWithoutBracketedModeTurnsNewlinesIntoReturns() passed after 0.055 seconds.
+◇ Test pasteFromPasteboardUsesThePasteboardText() started.
+✔ Test leavingBeforeTheDelayCancelsAndClickDismisses() passed after 27.566 seconds.
+✔ Test showsAfterTheDelayAndNotBefore() passed after 27.569 seconds.
+✔ Suite TooltipPolicyTests passed after 27.578 seconds.
+✔ Test motionEventsFollowBeginSettledEnd() passed after 0.232 seconds.
+◇ Test originFrameComesFromTheButtonThatOpenedTheOverlay() started.
+✔ Test sessionEnvIsExactlyWhatCreateSent() passed after 0.166 seconds.
+◇ Test clientReconnectsAndResumesWithSinceSeq() started.
+✔ Test pasteFromPasteboardUsesThePasteboardText() passed after 0.073 seconds.
+◇ Test selectAllAndCopyTrimTrailingWhitespace() started.
+✔ Test selectAllAndCopyTrimTrailingWhitespace() passed after 0.133 seconds.
+◇ Test linkActivationOpensOnlyAllowedSchemes() started.
+✔ Test originFrameComesFromTheButtonThatOpenedTheOverlay() passed after 0.175 seconds.
+◇ Test overlayLayerIsAboveEverythingAndPassesClicksThroughWhenEmpty() started.
+✔ Test clientReconnectsAndResumesWithSinceSeq() passed after 0.192 seconds.
+◇ Test clientSurvivesDaemonRestartAndReportsSessionGone() started.
+✔ Test overlayLayerIsAboveEverythingAndPassesClicksThroughWhenEmpty() passed after 0.149 seconds.
+◇ Suite PopoverTests started.
+◇ Test popoverFromTheTitlebarCapturesTheKeyboardAndReturnsItToTheTerminal() started.
+2026-10-17 07:09:12.550 swiftpm-testing-helper[15651:12043540] View <AgentBoxUI.ChromeContainerView: 0x7a9e0ade00> has 1 views pointing at it that can't be found.
+2026-10-17 07:09:12.550 swiftpm-testing-helper[15651:12043540] View <AgentBoxUI.OverlayHostingView: 0x7aa10c8a00> has 16380 views pointing at it that can't be found.
+✔ Test linkActivationOpensOnlyAllowedSchemes() passed after 0.165 seconds.
+◇ Test zoomStepsAndClamps() started.
+✔ Test helpRequestReachesInboxBadgeAndNotificationOnceAndOpeningMarksItRead() passed after 1.338 seconds.
+◇ Test pagesTogglePanelOpensAndTheCloseHookWorks() started.
+✔ Test timerDismissesAndHoverPausesIt() passed after 7.386 seconds.
+◇ Test errorsAreAnnouncedAsUrgent() started.
+✔ Test pagesTogglePanelOpensAndTheCloseHookWorks() passed after 0.092 seconds.
+✔ Suite "T3-05 - controlador de computadores e ações" passed after 28.012 seconds.
+✔ Test clientSurvivesDaemonRestartAndReportsSessionGone() passed after 0.276 seconds.
+◇ Test daemonExitsWhenIdle() started.
+✔ Test s9TerminateKillsTheProcessGroupAndEscalatesToSigkill() passed after 4.275 seconds.
+◇ Test garbageCollectorRemovesOnlyLabelledResourcesAndKeepsNamedProfiles() started.
+✔ Test zoomStepsAndClamps() passed after 0.208 seconds.
+◇ Test zoomChangesTheGridSize() started.
+✔ Test errorsAreAnnouncedAsUrgent() passed after 0.221 seconds.
+✔ Suite ToastCenterTests passed after 28.143 seconds.
+✔ Test splitOfATerminalLaunchedWithABuiltinProfileIsPersisted() passed after 2.226 seconds.
+◇ Test splitsAreUnlimitedAndRefusedOnlyBelowTheMinimumSize() started.
+✔ Test eachCleanSessionGetsItsOwnFolder() passed after 2.940 seconds.
+◇ Test newCleanSessionHonorsTheDefaultAgentSetting() started.
+✔ Test popoverFromTheTitlebarCapturesTheKeyboardAndReturnsItToTheTerminal() passed after 0.288 seconds.
+◇ Test escapeClosesThePopoverFirstAndThenTheOverlay() started.
+✔ Test zoomChangesTheGridSize() passed after 0.085 seconds.
+◇ Test findHonorsCaseSensitivityAndRegexAndClosesCleanly() started.
+✔ Test addProjectThroughThePickerShowsProjectAndUnstartedSessions() passed after 14.002 seconds.
+◇ Test cancelingThePickerDoesNothing() started.
+✔ Test stepperTapsCoalesceIntoOneDebouncedWrite() passed after 2.661 seconds.
+◇ Test invalidTextKeepsTheSavedValueAndShowsTheMessage() started.
+✔ Test resizeReachesThePTYOncePerTransition() passed after 2.151 seconds.
+◇ Test pasteReachesTheShellWithTheUserPasteOrigin() started.
+✔ Test findHonorsCaseSensitivityAndRegexAndClosesCleanly() passed after 0.146 seconds.
+◇ Test commandFOpensFindAndEscapeClosesIt() started.
+✔ Test escapeClosesThePopoverFirstAndThenTheOverlay() passed after 0.220 seconds.
+◇ Test popoverClosesWhenItsOverlayCloses() started.
+✔ Test commandFOpensFindAndEscapeClosesIt() passed after 0.069 seconds.
+✔ Suite SurfaceTests passed after 28.429 seconds.
+✔ Test cancelingThePickerDoesNothing() passed after 0.204 seconds.
+◇ Test folderPathArgumentIsAutomationOnly() started.
+✔ Test invalidTextKeepsTheSavedValueAndShowsTheMessage() passed after 0.301 seconds.
+◇ Test sizeStopsAtTheLimits() started.
+✔ Test popoverClosesWhenItsOverlayCloses() passed after 0.247 seconds.
+◇ Test openingAnotherPopoverReplacesTheFirst() started.
+✔ Test garbageCollectorRemovesOnlyLabelledResourcesAndKeepsNamedProfiles() passed after 0.638 seconds.
+◇ Test twentyConcurrentInspectsAndExecsStayResponsive() started.
+✔ Test sizeStopsAtTheLimits() passed after 0.587 seconds.
+◇ Test customPrefixIsDisabledUntilCustomIsChosen() started.
+✔ Test openingAnotherPopoverReplacesTheFirst() passed after 0.464 seconds.
+◇ Test motionEventsRecordM105() started.
+✔ Test splitsAreUnlimitedAndRefusedOnlyBelowTheMinimumSize() passed after 1.152 seconds.
+◇ Test closingPanesAndTheLastTabKeepsTheSession() started.
+✔ Test newCleanSessionHonorsTheDefaultAgentSetting() passed after 1.151 seconds.
+◇ Test newCleanSessionInFolderUsesTheChosenFolderAndTouchesNothingInIt() started.
+✔ Test twentyConcurrentInspectsAndExecsStayResponsive() passed after 0.824 seconds.
+✔ Suite "Docker real (AGENTBOX_TEST_DOCKER=1)" passed after 29.541 seconds.
+✔ Test motionEventsRecordM105() passed after 0.431 seconds.
+◇ Test arrowsAndReturnChooseAnItemAndRunItsAction() started.
+✔ Test daemonExitsWhenIdle() passed after 1.589 seconds.
+◇ Test drainWhenIdleExitsAfterLastSession() started.
+✔ Test selectingASessionThroughTheActionMarksItReadAndPersists() passed after 2.845 seconds.
+◇ Test selectingAnUnknownSessionFails() started.
+✔ Test fakeClaudeThatPrintsAndExitsEndsExitedAndCapturesTheID() passed after 2.346 seconds.
+◇ Test fastStartSkipsTheIgnition() started.
+✔ Test customPrefixIsDisabledUntilCustomIsChosen() passed after 0.564 seconds.
+◇ Test resetConfirmationsTurnsThemBackOn() started.
+✔ Test selectingAnUnknownSessionFails() passed after 0.021 seconds.
+◇ Test keyboardNavigationActionsFollowTheVisibleOrder() started.
+✔ Test pasteReachesTheShellWithTheUserPasteOrigin() passed after 1.466 seconds.
+◇ Test osc52ReadFromTheProgramIsNeverAnswered() started.
+✔ Test killingTheAppAndReopeningReattachesTwoPanesWithTheSameContentAndPIDs() passed after 29.794 seconds.
+◇ Test killingTheDaemonWhileTheAppIsClosedLeavesInterruptedPanesWithTheColdLogAndRelaunchesNothing() started.
+✔ Test resetConfirmationsTurnsThemBackOn() passed after 0.167 seconds.
+◇ Test writeFailureRevertsToTheSavedValueAndToasts() started.
+✔ Test arrowsAndReturnChooseAnItemAndRunItsAction() passed after 0.310 seconds.
+◇ Test downArrowSkipsDisabledItemsAndFooterItemRunsItsOwnAction() started.
+✔ Test newCleanSessionInFolderUsesTheChosenFolderAndTouchesNothingInIt() passed after 0.704 seconds.
+◇ Test cancellingTheFolderPanelCreatesNothing() started.
+✔ Test writeFailureRevertsToTheSavedValueAndToasts() passed after 0.226 seconds.
+◇ Test settingsOpensOnTheLastSectionAndAgentSettingsDeepLinks() started.
+✔ Test closingPanesAndTheLastTabKeepsTheSession() passed after 0.820 seconds.
+◇ Test nextAndPreviousPaneMoveFocus() started.
+✔ Test keyboardNavigationActionsFollowTheVisibleOrder() passed after 0.431 seconds.
+◇ Test collapsingAProjectPersistsAndCollapseAllHidesAgentRows() started.
+✔ Test fastStartSkipsTheIgnition() passed after 0.442 seconds.
+◇ Test exitWithCodeAfterOutputIsExitedAndRestartRebuildsTheLaunch() started.
+✔ Test cancellingTheFolderPanelCreatesNothing() passed after 0.138 seconds.
+◇ Test renamingKeepsTheFolderName() started.
+✔ Test downArrowSkipsDisabledItemsAndFooterItemRunsItsOwnAction() passed after 0.315 seconds.
+◇ Test typingJumpsByPrefixAndEscapeChoosesNothing() started.
+✔ Test settingsOpensOnTheLastSectionAndAgentSettingsDeepLinks() passed after 0.277 seconds.
+◇ Test detectionReportsInstalledLoggedOutAndAbsentWithoutLoggingIn() started.
+✔ Test nextAndPreviousPaneMoveFocus() passed after 0.257 seconds.
+◇ Test dividerDragWritesAtMostTwiceAndKeepsTheFinalRatio() started.
+✔ Test detectionReportsInstalledLoggedOutAndAbsentWithoutLoggingIn() passed after 0.024 seconds.
+◇ Test defaultAgentRejectsMissingCLIAndPersistsTheChoice() started.
+✔ Test folderPathArgumentIsAutomationOnly() passed after 1.982 seconds.
+◇ Test nonRepoFolderAndInvalidPathReportErrors() started.
+✔ Test renamingKeepsTheFolderName() passed after 0.279 seconds.
+◇ Test archiveAsksThenStopsAndKeepsTheFolder() started.
+✔ Test defaultAgentRejectsMissingCLIAndPersistsTheChoice() passed after 0.049 seconds.
+◇ Test installHelpOpensTheInstallPage() started.
+✔ Test installHelpOpensTheInstallPage() passed after 0.031 seconds.
+◇ Test pickPathUsesTheChosenFolderAndIgnoresCancel() started.
+✔ Test collapsingAProjectPersistsAndCollapseAllHidesAgentRows() passed after 0.349 seconds.
+◇ Test hidingAProjectRemovesItFromTheSidebar() started.
+✔ Test nonRepoFolderAndInvalidPathReportErrors() passed after 0.081 seconds.
+◇ Test removeProjectAsksThenArchivesWithoutDeletingFiles() started.
+✔ Test exitWithCodeAfterOutputIsExitedAndRestartRebuildsTheLaunch() passed after 0.380 seconds.
+◇ Test earlyExitWithoutOutputIsCouldntStart() started.
+✔ Test archiveAsksThenStopsAndKeepsTheFolder() passed after 0.095 seconds.
+◇ Test deleteMovesAManagedFolderToTheTrashAndKeepsRunFolders() started.
+✔ Test pickPathUsesTheChosenFolderAndIgnoresCancel() passed after 0.064 seconds.
+◇ Test profileLifecycleListCreateDuplicateEditDelete() started.
+✔ Test osc52ReadFromTheProgramIsNeverAnswered() passed after 0.963 seconds.
+◇ Test deviceAttributesAreAnsweredExactlyOnceByTheUI() started.
+✔ Test typingJumpsByPrefixAndEscapeChoosesNothing() passed after 0.565 seconds.
+◇ Test commandKeysStillReachTheMenuBar() started.
+✔ Test settingsFillsTheWindowAndNothingLeavesItsBox() passed after 3.899 seconds.
+◇ Test controlsAre240WideWhenThereIsRoom() started.
+✔ Test commandKeysStillReachTheMenuBar() passed after 0.381 seconds.
+◇ Test placementOpensBelowAndFlipsAboveNearTheBottom() started.
+2026-10-17 07:09:15.777 swiftpm-testing-helper[15651:12043540] View <AgentBoxUI.ChromeContainerView: 0x7aa1072d00> has 1 views pointing at it that can't be found.
+2026-10-17 07:09:15.784 swiftpm-testing-helper[15651:12043540] View <AgentBoxUI.OverlayHostingView: 0x7aa10c8000> has 16380 views pointing at it that can't be found.
+✔ Test placementOpensBelowAndFlipsAboveNearTheBottom() passed after 0.070 seconds.
+◇ Test placementClampsToTheWindowAndSupportsTrailingAlignment() started.
+✔ Test placementClampsToTheWindowAndSupportsTrailingAlignment() passed after 0.001 seconds.
+◇ Test resolveDisablesUnregisteredActionsAndDropsFutureSlices() started.
+✔ Test resolveDisablesUnregisteredActionsAndDropsFutureSlices() passed after 0.003 seconds.
+◇ Test appNameMenuListsTheSpecItems() started.
+✔ Test appNameMenuListsTheSpecItems() passed after 0.001 seconds.
+◇ Test appNameClickPresentsTheMenuPanel() started.
+✔ Test drainWhenIdleExitsAfterLastSession() passed after 1.612 seconds.
+✔ Suite DaemonBehaviorTests passed after 31.266 seconds.
+✔ Test appNameClickPresentsTheMenuPanel() passed after 0.132 seconds.
+✔ Suite PopoverTests passed after 3.434 seconds.
+✔ Suite OverlayHostTests passed after 31.342 seconds.
+2026-10-17 07:09:15.985 swiftpm-testing-helper[15651:12043540] View <AgentBoxUI.ChromeContainerView: 0x7a9c92aa80> has 1 views pointing at it that can't be found.
+2026-10-17 07:09:15.985 swiftpm-testing-helper[15651:12043540] View <AgentBoxUI.OverlayHostingView: 0x7aa10c8000> has 16380 views pointing at it that can't be found.
+✔ Test hidingAProjectRemovesItFromTheSidebar() passed after 0.885 seconds.
+◇ Test renameCommitsToTheStoreWithoutTouchingBranchOrFolder() started.
+✔ Test profileLifecycleListCreateDuplicateEditDelete() passed after 0.840 seconds.
+◇ Test defaultProfilePerAgentPersistsAndResolves() started.
+✔ Test deleteMovesAManagedFolderToTheTrashAndKeepsRunFolders() passed after 0.864 seconds.
+◇ Test deleteCanAlsoRemoveRunFoldersAndSkipTheTrash() started.
+✔ Test defaultProfilePerAgentPersistsAndResolves() passed after 0.053 seconds.
+◇ Test profilesOfTheShellAndInvalidProviderAreRejected() started.
+✔ Test deleteCanAlsoRemoveRunFoldersAndSkipTheTrash() passed after 0.067 seconds.
+◇ Test deleteOfAChosenFolderLeavesItOnDisk() started.
+✔ Test profilesOfTheShellAndInvalidProviderAreRejected() passed after 0.031 seconds.
+◇ Test onboardingShowsOnFirstRunOnlyAndRemembersDone() started.
+✔ Test renameCommitsToTheStoreWithoutTouchingBranchOrFolder() passed after 0.102 seconds.
+◇ Test emptyRenameFallsBackToTheAutomaticNameAndEscCancels() started.
+✔ Test onboardingShowsOnFirstRunOnlyAndRemembersDone() passed after 0.035 seconds.
+◇ Test skipAsksInlineAndKeepSettingUpGoesBack() started.
+✔ Test deleteOfAChosenFolderLeavesItOnDisk() passed after 0.060 seconds.
+◇ Test dontAskAgainTurnsTheConfirmationOff() started.
+✔ Test skipAsksInlineAndKeepSettingUpGoesBack() passed after 0.027 seconds.
+◇ Test logInIsDisabledWithReasonUntilAPaneExistsThenRunsTheOfficialCommand() started.
+✔ Test logInIsDisabledWithReasonUntilAPaneExistsThenRunsTheOfficialCommand() passed after 0.002 seconds.
+◇ Test onboardingListsOnlyWhatSlice1Shows() started.
+✔ Test onboardingListsOnlyWhatSlice1Shows() passed after 0.001 seconds.
+✔ Suite SettingsModelTests passed after 31.520 seconds.
+✔ Test controlsAre240WideWhenThereIsRoom() passed after 0.553 seconds.
+◇ Test onboardingOverlayStaysInsideTheWindowAtMinimumWidth() started.
+✔ Test emptyRenameFallsBackToTheAutomaticNameAndEscCancels() passed after 0.193 seconds.
+◇ Test renamingTheSelectedSessionWithoutArgumentWorksAndFailsWithoutSelection() started.
+✔ Test renamingTheSelectedSessionWithoutArgumentWorksAndFailsWithoutSelection() passed after 0.004 seconds.
+◇ Test pendingLifecycleAndCancel() started.
+✔ Test removeProjectAsksThenArchivesWithoutDeletingFiles() passed after 1.170 seconds.
+◇ Test renameProjectInlineFlowPersists() started.
+✔ Test pendingLifecycleAndCancel() passed after 0.034 seconds.
+◇ Test sortAndFilterActionsChangeTheProjection() started.
+✔ Test dontAskAgainTurnsTheConfirmationOff() passed after 0.184 seconds.
+◇ Test moveToProjectLinksTheSessionWithoutMovingFiles() started.
+✔ Test sortAndFilterActionsChangeTheProjection() passed after 0.007 seconds.
+◇ Test searchAndNavItemsDoNotRenderInSliceOneButDoFromSliceTwoOrFour() started.
+✔ Test killingTheDaemonWhileTheAppIsClosedLeavesInterruptedPanesWithTheColdLogAndRelaunchesNothing() passed after 2.233 seconds.
+◇ Test killingTheDaemonWhileTheAppIsOpenInterruptsTheRunningPanes() started.
+✔ Test moveToProjectLinksTheSessionWithoutMovingFiles() passed after 0.463 seconds.
+◇ Test convertToProjectUsesTheFolderAsTheRoot() started.
+2026-10-17 07:09:17.012 swiftpm-testing-helper[15651:12043540] View <AgentBoxUI.ChromeContainerView: 0x7a9cdf9b80> has 1 views pointing at it that can't be found.
+2026-10-17 07:09:17.013 swiftpm-testing-helper[15651:12043540] View <AgentBoxUI.OverlayHostingView: 0x7a9cd4e800> has 16289 views pointing at it that can't be found.
+2026-10-17 07:09:17.020 swiftpm-testing-helper[15651:12043540] View <SwiftUI.KeyViewProxy: 0x7aabdb0c00> has 94 views pointing at it that can't be found.
+✔ Test searchAndNavItemsDoNotRenderInSliceOneButDoFromSliceTwoOrFour() passed after 0.703 seconds.
+◇ Test systemActionsCopyPathBranchAndReveal() started.
+✔ Test systemActionsCopyPathBranchAndReveal() passed after 0.041 seconds.
+◇ Test actionsWithoutAnOwnerAreNotOffered() started.
+✔ Test convertToProjectUsesTheFolderAsTheRoot() passed after 0.289 seconds.
+◇ Test onlyCleanSessionsCanBeMovedToAProject() started.
+✔ Test actionsWithoutAnOwnerAreNotOffered() passed after 0.024 seconds.
+◇ Test revealCurrentNeedsASelection() started.
+✔ Test revealCurrentNeedsASelection() passed after 0.008 seconds.
+✔ Suite SidebarModelTests passed after 32.478 seconds.
+✔ Test renameProjectInlineFlowPersists() passed after 0.860 seconds.
+◇ Test gitRefreshInBackgroundFeedsStatusAndBranch() started.
+✔ Test onlyCleanSessionsCanBeMovedToAProject() passed after 0.096 seconds.
+◇ Test quickLaunchActionsOpenTabsInTheCurrentSession() started.
+✔ Test dividerDragWritesAtMostTwiceAndKeepsTheFinalRatio() passed after 2.379 seconds.
+◇ Test renameLocksTheTitleAndEmptyRestoresTheDynamicOne() started.
+✔ Test renameLocksTheTitleAndEmptyRestoresTheDynamicOne() passed after 0.028 seconds.
+◇ Test reorderingTabsPersistsTheOrder() started.
+✔ Test quickLaunchActionsOpenTabsInTheCurrentSession() passed after 0.249 seconds.
+◇ Test quickLaunchSplitOpensToTheRightOfTheFocusedPane() started.
+✔ Test deviceAttributesAreAnsweredExactlyOnceByTheUI() passed after 2.056 seconds.
+◇ Test reattachReplayDoesNotAnswerOldQueries() started.
+✔ Test quickLaunchSplitOpensToTheRightOfTheFocusedPane() passed after 0.028 seconds.
+◇ Test quickLaunchOpensAnchoredPopoverAndNeedsASession() started.
+✔ Test reorderingTabsPersistsTheOrder() passed after 0.059 seconds.
+◇ Test tabNavigationAndRecent() started.
+✔ Test quickLaunchOpensAnchoredPopoverAndNeedsASession() passed after 0.063 seconds.
+✔ Suite CleanSessionTests passed after 32.886 seconds.
+✔ Test tabNavigationAndRecent() passed after 0.096 seconds.
+◇ Test closedTabCanBeReopened() started.
+✔ Test onboardingOverlayStaysInsideTheWindowAtMinimumWidth() passed after 1.494 seconds.
+✔ Suite SettingsSnapshotTests passed after 33.045 seconds.
+2026-10-17 07:09:17.688 swiftpm-testing-helper[15651:12043540] View <AgentBoxUI.ChromeContainerView: 0x7a9d4eb200> has 1 views pointing at it that can't be found.
+2026-10-17 07:09:17.690 swiftpm-testing-helper[15651:12043540] View <AgentBoxUI.OverlayHostingView: 0x7a9d3bf200> has 16224 views pointing at it that can't be found.
+2026-10-17 07:09:17.698 swiftpm-testing-helper[15651:12043540] View <SwiftUI.KeyViewProxy: 0x7aa9ecf000> has 159 views pointing at it that can't be found.
+✔ Test closedTabCanBeReopened() passed after 0.181 seconds.
+◇ Test expandHidesTheOthersAndEqualizeResetsRatios() started.
+✔ Test expandHidesTheOthersAndEqualizeResetsRatios() passed after 0.089 seconds.
+◇ Test actionsAreDisabledWithoutASession() started.
+✔ Test actionsAreDisabledWithoutASession() passed after 0.003 seconds.
+◇ Test actionsDriveTheModelThroughTheRegistry() started.
+✔ Test actionsDriveTheModelThroughTheRegistry() passed after 0.264 seconds.
+✔ Suite WorkspaceModelTests passed after 33.478 seconds.
+✔ Test reattachReplayDoesNotAnswerOldQueries() passed after 1.348 seconds.
+◇ Test backlogOverTheLimitForcesASnapshot() started.
+✔ Test backlogOverTheLimitForcesASnapshot() passed after 0.359 seconds.
+✔ Suite DaemonIntegrationTests passed after 34.515 seconds.
+✔ Test killingTheDaemonWhileTheAppIsOpenInterruptsTheRunningPanes() passed after 3.920 seconds.
+◇ Test resumeRebuildsTheArgvWithTheNativeIDAndStartFreshStartsANewConversation() started.
+✔ Test gitRefreshInBackgroundFeedsStatusAndBranch() passed after 3.740 seconds.
+✔ Suite ProjectsControllerTests passed after 36.271 seconds.
+✔ Test resumeRebuildsTheArgvWithTheNativeIDAndStartFreshStartsANewConversation() passed after 0.875 seconds.
+✔ Suite RestoreIntegrationTests passed after 36.831 seconds.
+✔ Test egressIsolationReqlogSSRFAndUpstreamChaining() passed after 45.228 seconds.
+✔ Suite "T3-02 - egress sidecar com Docker real" passed after 45.233 seconds.
+✘ Test earlyExitWithoutOutputIsCouldntStart() recorded an issue at LaunchStatesIntegrationTests.swift:118:6: Caught error: timeout("failed")
+✘ Test earlyExitWithoutOutputIsCouldntStart() failed after 30.457 seconds with 1 issue.
+◇ Test spawnFailureIsCouldntStartAndRetryTriesAgain() started.
+✔ Test spawnFailureIsCouldntStartAndRetryTriesAgain() passed after 0.181 seconds.
+◇ Test cancelDuringIgnitionRemovesThePane() started.
+✔ Test cancelDuringIgnitionRemovesThePane() passed after 0.467 seconds.
+✘ Suite LaunchStatesIntegrationTests failed after 61.614 seconds with 1 issue.
+↳ /// Estados do pane (T1-16) com o `agentboxd` real e CLI falso (`/bin/sh -c ...`): ignição só depois de 300 ms, running no
+↳ /// primeiro byte, exited com código, "Couldn't start" (spawn e saída precoce) e Restart/Retry reconstruindo o argv.
+✔ Test vim20() passed after 67.106 seconds.
+◇ Test miniTUI20() started.
+✔ Test realComputerWithBrowserExecHttpEvidenceAndHelp() passed after 83.986 seconds.
+✔ Suite "T3-03 - computador real com ferramentas MCP" passed after 83.998 seconds.
+✔ Test novncInTheIsolatedWebViewStreamsAnimationAndFollowsTheLease() passed after 86.191 seconds.
+✔ Suite "T3-05 - noVNC no WKWebView com o Docker real" passed after 86.201 seconds.
+✔ Test realComputerStreamsFramesAcceptsHumanInputAndHonoursTheLease() passed after 109.041 seconds.
+✔ Suite "T3-05 - viewer com o Docker real" passed after 109.047 seconds.
+✔ Test miniTUI20() passed after 46.439 seconds.
+◇ Test shellWithBracketedPaste20() started.
+✔ Test shellWithBracketedPaste20() passed after 52.581 seconds.
+◇ Test altScreenOverflowUsesCheckpoint() started.
+✔ Test altScreenOverflowUsesCheckpoint() passed after 23.292 seconds.
+✔ Suite ReattachTests passed after 189.426 seconds.
+✘ Test run with 1267 tests in 194 suites failed after 189.427 seconds with 1 issue.

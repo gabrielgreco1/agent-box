@@ -17,6 +17,8 @@ public enum ViewerEvent: Sendable, Equatable {
     case desktopName(String)
     /// Navegação ou carga recusada pela política de isolamento (qualquer coisa fora do esquema local).
     case blockedNavigation(String)
+    /// Erro de JavaScript dentro da página do viewer (diagnóstico).
+    case jsError(String)
 
     static func parse(_ body: Any) -> ViewerEvent? {
         guard let dict = body as? [String: Any], let type = dict["type"] as? String else { return nil }
@@ -28,6 +30,7 @@ public enum ViewerEvent: Sendable, Equatable {
             return .stats(fps: number("fps"), frames: Int(number("frames")), silentMs: Int(number("silentMs")), sinceFrameMs: Int(number("sinceFrameMs")))
         case "keyboard": return .keyboard(captured: (dict["captured"] as? Bool) ?? false)
         case "reserved": return (dict["action"] as? String).map { .reserved($0) }
+        case "jserror": return .jsError((dict["detail"] as? String) ?? "")
         case "blocked-input": return .blockedInput
         case "error": return .error((dict["detail"] as? String) ?? "error")
         case "desktopname": return .desktopName((dict["name"] as? String) ?? "")
@@ -71,7 +74,13 @@ private final class WeakMessageHandler: NSObject, WKScriptMessageHandler {
     init(_ target: ComputerViewerWebView) { self.target = target }
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let event = ViewerEvent.parse(message.body) else { return }
-        MainActor.assumeIsolated { target?.deliver(event) }
+        let body = message.body as? [String: Any]
+        MainActor.assumeIsolated {
+            if let body, body["type"] as? String == "stats" {
+                target?.streamInfo = (messages: (body["wsMessages"] as? Int) ?? 0, bytes: (body["wsBytes"] as? Int) ?? 0, hidden: (body["hidden"] as? Bool) ?? false)
+            }
+            target?.deliver(event)
+        }
     }
 }
 
@@ -81,6 +90,8 @@ public final class ComputerViewerWebView: NSView, WKNavigationDelegate, WKUIDele
     private let web: ViewerWKWebView
     public var onEvent: (ViewerEvent) -> Void = { _ in }
     public private(set) var isReady = false
+    /// Contadores do WebSocket dentro da página (diagnóstico do stream): mensagens, bytes e se o WebKit marcou a página como oculta.
+    public internal(set) var streamInfo: (messages: Int, bytes: Int, hidden: Bool) = (0, 0, false)
     private var pending: [String] = []
 
     public override init(frame: NSRect) {
@@ -185,6 +196,12 @@ public final class ComputerViewerWebView: NSView, WKNavigationDelegate, WKUIDele
     /// Para o teste de isolamento: executa JS arbitrário e devolve o resultado (nunca usado em produção).
     func evaluateForTesting(_ body: String) async -> Any? {
         try? await web.callAsyncJavaScript(body, arguments: [:], contentWorld: .page)
+    }
+
+    /// Estado interno do noVNC (fila de renderização, imagem pendente) para diagnóstico.
+    public func debugState() async -> String {
+        let value = try? await web.callAsyncJavaScript("return JSON.stringify(window.agentboxViewer.debug())", arguments: [:], contentWorld: .page)
+        return (value as? String) ?? "{}"
     }
 
     /// Imagem do WebView (evidência: o canvas do noVNC não aparece na captura AppKit da janela).

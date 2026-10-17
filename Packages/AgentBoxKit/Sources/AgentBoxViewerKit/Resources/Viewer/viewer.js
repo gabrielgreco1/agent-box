@@ -14,7 +14,22 @@ let keepAliveAt = 0;
 let statsTimer = null;
 let keepAliveTimer = null;
 let flipWaiters = [];
+let wsMessages = 0;
+let wsBytes = 0;
+let wsEncodings = new Set();
 let window1s = { frames: 0, at: performance.now() };
+
+// Diagnóstico do stream: contagem de mensagens e bytes do WebSocket e erros de JS (ficam no `stats` e em `jserror`).
+// O noVNC confere as propriedades do próprio prototype do canal, então o WebSocket nativo não pode ser subclassado.
+function countSocket() {
+  const ws = rfb && rfb._sock && rfb._sock._websocket;
+  if (ws && !ws.__abxCounted) {
+    ws.__abxCounted = true;
+    ws.addEventListener('message', (e) => { wsMessages += 1; wsBytes += (e.data && e.data.byteLength) || 0; });
+  }
+}
+window.addEventListener('error', (e) => post({ type: 'jserror', detail: String(e.message || e) }));
+window.addEventListener('unhandledrejection', (e) => post({ type: 'jserror', detail: 'rejection: ' + String(e.reason && (e.reason.stack || e.reason)) }));
 
 function state(value, detail) { post({ type: 'state', value, detail: detail || null }); }
 
@@ -44,6 +59,8 @@ function connect(url) {
   rfb.resizeSession = false;
   rfb.clipViewport = false;
   rfb.focusOnClick = true;
+  countSocket();
+  setTimeout(countSocket, 0);
   rfb.viewOnly = !inputEnabled;
   rfb.background = '#0a0a0a';
   rfb.addEventListener('connect', () => { frames = 0; lastServerAt = performance.now(); state('live'); startTimers(); });
@@ -75,7 +92,7 @@ function startTimers() {
     const now = performance.now();
     const fps = (frames - window1s.frames) * 1000 / Math.max(1, now - window1s.at);
     window1s = { frames, at: now };
-    post({ type: 'stats', fps: Math.round(fps * 10) / 10, frames, silentMs: Math.round(now - lastServerAt), sinceFrameMs: Math.round(now - lastFrameAt) });
+    post({ type: 'stats', fps: Math.round(fps * 10) / 10, frames, silentMs: Math.round(now - lastServerAt), sinceFrameMs: Math.round(now - lastFrameAt), wsMessages, wsBytes, hidden: document.hidden });
   }, 1000);
   // Keepalive: pedido NÃO incremental de 1 pixel. Em tela parada o x11vnc não manda nada, então sem isso "sem quadro há 2 s"
   // não distinguiria tela estática de stream caído (CS-404).
@@ -165,6 +182,13 @@ window.agentboxViewer = {
   release() { if (rfb) { rfb.blur(); } post({ type: 'keyboard', captured: false }); },
   typeText,
   probeLatency,
+  debug() {
+    const q = rfb && rfb._display && rfb._display._renderQ;
+    const first = q && q[0];
+    return { queue: q ? q.length : -1, first: first ? first.type : null, imgComplete: first && first.img ? first.img.complete : null,
+             flushing: rfb ? rfb._flushing : null, state: rfb ? rfb._rfbConnectionState : null, hidden: document.hidden, vis: document.visibilityState,
+             fbu: rfb ? rfb._FBU.rects : null, encodings: Array.from(wsEncodings), msgs: wsMessages, bytes: wsBytes };
+  },
   stats() { return { frames, lastFrameAt, silentMs: Math.round(performance.now() - lastServerAt) }; },
 };
 post({ type: 'ready' });

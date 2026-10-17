@@ -1,4 +1,5 @@
 import AgentBoxCore
+import AgentBoxPlatform
 import AgentBoxViewerKit
 import AppKit
 import Foundation
@@ -15,6 +16,9 @@ public struct ViewerMeasurement: Codable, Sendable, Equatable {
     public var appActive = false
     public var windowVisible = false
     public var note = ""
+    public var wsMessages = 0
+    public var wsBytes = 0
+    public var pageHidden = false
 }
 
 /// Liga o modelo do viewer ao `WKWebView` (noVNC): pede o ticket, conecta, reconecta com recuo, repassa o lease ao WebView
@@ -28,6 +32,7 @@ public final class ComputerViewerController {
     public private(set) var lastError: String?
     /// Estado das medições do S3 (só com `AGENTBOX_VIEWER_MEASURE`).
     public private(set) var measurement: ViewerMeasurement?
+    @ObservationIgnored private let log = LogFacade(.app, category: "viewer")
     @ObservationIgnored private var ticker: Task<Void, Never>?
     @ObservationIgnored private var reconnect: Task<Void, Never>?
     @ObservationIgnored private var started = false
@@ -109,6 +114,8 @@ public final class ComputerViewerController {
             model.blockedClick()
         case .error(let detail):
             model.streamError(detail)
+        case .jsError(let detail):
+            log.error("viewer js error: \(detail)")
         case .blockedNavigation, .desktopName:
             break
         }
@@ -206,6 +213,9 @@ public final class ComputerViewerController {
             result.latencyP50Ms = samples[samples.count / 2]
             result.latencyP95Ms = samples[max(0, Int((Double(samples.count) * 0.95).rounded(.up)) - 1)]
         }
+        result.wsMessages = web.streamInfo.messages
+        result.wsBytes = web.streamInfo.bytes
+        result.pageHidden = web.streamInfo.hidden
         result.appActive = NSApp.isActive
         result.windowVisible = web.window?.occlusionState.contains(.visible) ?? false
         measurement = result

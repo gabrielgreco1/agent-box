@@ -189,6 +189,11 @@ public final class ComputersController {
         }
         try registry.register(.computerHandBack, enablement: viewerOpen) { [unowned self] arg in
             guard let controller = viewer(for: arg) else { return nil }
+            if arg.kind == .set, controller.model.control == .human {  // `ctl ui action computer.handBack set "<nota>"`
+                controller.model.handBackNote = arg.value ?? ""
+                await controller.handBack()
+                return controller.model.control.rawValue
+            }
             switch arg.value {
             case "confirm": await controller.handBack()
             case "cancel": controller.model.cancelHandBackNote()

@@ -841,7 +841,7 @@ Fechadas nesta revisão: Q2 (pai colando com Enter em filho que criou) por **P12
 |---|---|---|
 | S1 | `mcpServers` inline por subagente e `agent_id` nos hooks na 2.1.302 (identidade por filho; define o modelo do modo leve) | **Concluído em 2026-10-17** (09 S-08): funciona, com `mcpServers` em array; evidência em `docs/evidence/spikes/S-08/`. Pendente barato (Fatia 3): filho chamando a ferramenta do irmão, `--resume` com `--agents` regenerado, agentes vindos de plugin/arquivo |
 | S2 | Publicação de porta só pelo egress e DNS em rede `internal` no Docker Desktop, OrbStack e Colima | **Concluído no Docker Desktop em 2026-10-17** (T3-01): DNS por alias, sem rota para fora, só o egress publica em `127.0.0.1`, reverse proxy até o runtime pela rede internal; evidência em `docs/evidence/spikes/S2/`. Pendente barato: OrbStack e Colima (não instalados na máquina do spike) |
-| S3 | noVNC em `WKWebView` atingindo ≥ 20 fps e p95 < 100 ms | Fatia 3 |
+| S3 | noVNC em `WKWebView` atingindo ≥ 20 fps e p95 < 100 ms | **Concluído no Docker Desktop em 2026-10-17** (T3-05): ponte WebSocket com ticket até o x11vnc do runtime; WebSocket puro (Raw, pior caso) 35 fps e p95 51 ms; números dentro do WKWebView com o noVNC real em `docs/evidence/spikes/S3/` |
 | S4 | `deny` de `Skill(agentbox)` por `--settings`, inclusive com `--dangerously-skip-permissions` | Fatia 3 (ou junto do V3 de 06) |
 | S5 | 15 Claude com setup-token + 3 Codex com volume compartilhado por 8 h (CA-502) | Abertura da v1.1 |
 | S6 | Uso reportado pelo provedor no preset Zyte (existe API de uso por chave?) e diferença para a contagem do egress | Fatia 3 |

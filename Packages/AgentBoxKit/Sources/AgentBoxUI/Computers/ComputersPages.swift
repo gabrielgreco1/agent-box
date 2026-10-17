@@ -308,7 +308,7 @@ struct InboxRow: View {
             Spacer(minLength: DS.Space.s2)
             if item.phase == .needsYou {
                 ForEach(item.summary.options, id: \.self) { option in
-                    DSButton(.computerOpenViewer, "\(option)", variant: .outline, size: .xs, argument: .select(item.computer))
+                    DSButton(.computerOpenViewer, LocalizedStringKey(option), variant: .outline, size: .xs, argument: .select(item.computer))
                 }
                 ActionButton(.inboxMarkRead, id: .inboxItemMarkRead(item.id), argument: .select(item.id), tooltip: String(localized: "Mark as Read", bundle: .module)) {
                     Image(systemName: "checkmark")

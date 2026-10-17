@@ -178,6 +178,16 @@ class FilterTests(unittest.TestCase):
         self.assertEqual(f.feed(cut_text(b"secret from the mac")), b"")
         self.assertEqual(f.feed(struct.pack(">BxHHBx", 251, 800, 600, 0)), b"")
 
+    def test_extended_clipboard_with_negative_length_is_consumed_and_dropped(self):
+        # o noVNC manda, ao conectar, um ClientCutText com comprimento negativo (Extended Clipboard); travar nele paralisava o stream
+        f, _ = self.make(human=True)
+        f.feed(HANDSHAKE)
+        body = struct.pack(">II", 0x01000003, 0x000000F0)  # flags + capacidades
+        extended = struct.pack(">Bxxxi", 6, -len(body)) + body
+        self.assertEqual(f.feed(extended[:5]), b"")  # parcial: espera
+        self.assertEqual(f.feed(extended[5:] + key(1, 0x61)), key(1, 0x61))  # engole a mensagem e segue para a próxima
+        self.assertEqual(f.feed(update_request()), update_request())
+
     def test_messages_split_across_frames_are_reassembled(self):
         f, _ = self.make(human=True)
         data = HANDSHAKE + key(1, 0x41) + struct.pack(">BxH", 2, 2) + struct.pack(">ii", 0, 7)
