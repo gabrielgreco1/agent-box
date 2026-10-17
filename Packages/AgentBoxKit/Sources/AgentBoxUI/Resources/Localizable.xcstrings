@@ -1,28 +1,50 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "Agent Box" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Agent Box"
+  "sourceLanguage": "en",
+  "strings": {
+    "Agent Box": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agent Box"
           }
         }
       }
     },
-    "Automation on" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Automation on"
+    "Automation on": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automation on"
+          }
+        }
+      }
+    },
+    "Hide App Name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide App Name"
+          }
+        }
+      }
+    },
+    "Run Claude Code, Codex and OpenCode side by side, each in its own folder.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run Claude Code, Codex and OpenCode side by side, each in its own folder."
           }
         }
       }
     }
   },
-  "version" : "1.0"
+  "version": "1.0"
 }
