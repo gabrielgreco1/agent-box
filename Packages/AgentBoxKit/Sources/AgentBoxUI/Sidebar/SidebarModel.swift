@@ -65,6 +65,8 @@ final class SidebarModel {
 
     /// Chamada quando o usuário cancela uma sessão em criação (o orquestrador de lançamento aborta o trabalho).
     var onCancelPending: (UUID) -> Void = { _ in }
+    /// `session.cancelLaunch` com o ID de um terminal em ignição (Cancel do pane): `true` se alguém cuidou.
+    @ObservationIgnored var cancelLaunchFallback: (UUID) -> Bool = { _ in false }
 
     init() {}
 

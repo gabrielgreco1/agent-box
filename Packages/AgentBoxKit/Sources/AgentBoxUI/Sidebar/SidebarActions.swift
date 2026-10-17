@@ -161,7 +161,8 @@ extension SidebarModel {
             return raw
         }
         try registry.register(.sessionCancelLaunch) { [unowned self] arg in
-            guard cancel(pending: try uuid(arg, .sessionCancelLaunch)) else {
+            let id = try uuid(arg, .sessionCancelLaunch)
+            guard cancel(pending: id) || cancelLaunchFallback(id) else {
                 throw ActionError.failed(.sessionCancelLaunch, message: "Session already created")
             }
             return nil

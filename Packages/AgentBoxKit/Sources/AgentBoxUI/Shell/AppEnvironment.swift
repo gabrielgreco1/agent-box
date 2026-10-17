@@ -47,6 +47,8 @@ public final class AppEnvironment {
     public let socketPath: String
     private var ctl: CtlServer?
     private var store: AgentBoxStore?
+    /// `session.launch`: sessão com o agente já rodando (P9, M-501).
+    private var launcher: SessionLauncher?
     private let environmentVariables: [String: String]
     private let log = LogFacade(.app, category: "ui")
 
@@ -168,6 +170,16 @@ public final class AppEnvironment {
         } catch {
             log.publicError("duplicate workspace action registration")
         }
+        sidebar.cancelLaunchFallback = { [workspace] id in
+            guard workspace.terminal(id) != nil else { return false }
+            workspace.cancelLaunch(id)
+            return true
+        }
+        let sessionLauncher = SessionLauncher(
+            sidebar: sidebar, workspace: workspace, elements: elements,
+            sessionsRoot: StorePaths.default(environment: environmentVariables).root.appendingPathComponent("sessions", isDirectory: true))
+        launcher = sessionLauncher
+        do { try sessionLauncher.register(in: registry) } catch { log.publicError("duplicate session.launch registration") }
     }
 
     /// Ações reais da casca vazia; as demais entram com a tela que as possui.
@@ -305,6 +317,7 @@ public final class AppEnvironment {
                     sidebar.beginPending(PendingLaunch(name: String(localized: "Add retry logic", bundle: .module), projectID: pid, phase: .fetching))
                 }
             }
+            launcher?.attach(store: opened)
             await workspace.attach(store: opened)
             await sidebar.attach(store: opened)
             await settings.attach(store: opened)

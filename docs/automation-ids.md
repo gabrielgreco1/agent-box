@@ -501,6 +501,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `session.useExistingBranch` | Use Existing Branch | — | slice1 |
 | `session.createWithoutFetch` | Create Without Fetching | — | slice1 |
 | `session.discardPending` | Discard (sessão que falhou ao criar) | — | slice1 |
+| `session.launch` | Launch Session (automação) | — | slice1 |
 | `tab.quickLaunch` | New Tab… (Quick Launch) | ⌥⌘N | slice1 |
 | `tab.newAgent` | New Agent Tab | ⌥⌘T | slice1 |
 | `tab.newTerminal` | New Terminal | ⌘T | slice1 |

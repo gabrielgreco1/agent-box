@@ -73,6 +73,15 @@ final class WorkspaceModel {
     /// Pane expandido por tab (⇧⌘↵); só em memória.
     private(set) var expandedPanes: [UUID: UUID] = [:]
     private(set) var runStates: [UUID: PaneRunState] = [:]
+    /// Checklist da ignição por terminal (T1-16): alimentada só por eventos reais do `LaunchCoordinator`.
+    private(set) var launchTimelines: [UUID: LaunchTimeline] = [:]
+    /// Terminais cuja ignição já passou de `ignitionSkip` (0,3 s) sem primeiro byte: só então o placeholder aparece (M-506).
+    private(set) var ignitionVisible: Set<UUID> = []
+    /// Cada evento de lançamento, para quem acompanha de fora (linha pendente da sidebar, M-501).
+    @ObservationIgnored var onLaunchEvent: ((UUID, LaunchEvent) -> Void)?
+    @ObservationIgnored private var launchDirectories: [UUID: URL] = [:]
+    @ObservationIgnored private var currentRuns: [UUID: UUID] = [:]
+    @ObservationIgnored private var ignitionTimers: [UUID: Task<Void, Never>] = [:]
     var renamingTab: UUID?
     private(set) var pendingClose: PendingClose?
     /// Pane que acabou de receber foco por atalho ou ação (anel de 120 ms, M-309).
@@ -667,6 +676,9 @@ final class WorkspaceModel {
         states[sid]?.terminals[terminalID] = nil
         removedTerminalIDs.insert(terminalID)
         runStates[terminalID] = nil
+        retire(run: terminalID)
+        launchTimelines[terminalID] = nil
+        ignitionVisible.remove(terminalID)
         runtime.dispose(terminalID)
         if let layout = tab.layout.removing(paneID: pane.id) {
             let successor = tab.layout.focusSuccessor(afterRemoving: pane.id)
@@ -766,40 +778,107 @@ final class WorkspaceModel {
         }
     }
 
+    /// Duração máxima sem primeiro byte antes de mostrar o terminal mesmo assim (comando silencioso).
+    static let silentLaunchFallback: Duration = .seconds(10)
+
     private func launch(_ terminal: Terminal) {
         let id = terminal.id
         launching.insert(id)
         runStates[id] = .starting
+        let agent = ProviderAdapters.name(terminal.provider)
+        launchTimelines[id] = LaunchTimeline(agentName: terminal.provider.isAgent ? agent : String(localized: "Terminal", bundle: .module))
+        ignitionVisible.remove(id)
+        ignitionTimers[id]?.cancel()
+        ignitionTimers[id] = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(MotionTokens.Delay.ignitionSkip))
+            guard !Task.isCancelled, let self, case .starting = self.paneState(id) else { return }
+            self.ignitionVisible.insert(id)
+            self.notify()
+            try? await Task.sleep(for: Self.silentLaunchFallback)
+            guard !Task.isCancelled, case .starting = self.paneState(id), self.launchTimelines[id]?.rows.last?.key == .cliExec,
+                  self.launchTimelines[id]?.rows.last?.status == .running else { return }
+            self.runStates[id] = .running
+            self.notify()
+        }
         update(terminal: id) { $0.state = .launching }
         save(terminal: id)
         Task { @MainActor in
             defer { launching.remove(id) }
             guard let current = self.terminal(id) else { return }
             do {
-                let outcome = try await runtime.launch(current)
+                let result = try await runtime.launch(current) { [weak self] event in
+                    Task { @MainActor in self?.apply(launchEvent: event, terminalID: id) }
+                }
                 guard self.terminal(id) != nil else { return }
+                currentRuns[id] = result.runID
+                launchDirectories[id] = result.plan.launchDirectory
                 update(terminal: id) { t in
                     t.state = .running
-                    t.ptySessionID = outcome.summary.sessionID.description
-                    t.resolvedArgv = outcome.plan.argv
-                    t.envKeys = outcome.plan.envKeys
-                    t.launchSpec = outcome.plan.spec
-                    t.nativeConversationID = outcome.plan.nativeConversationID ?? t.nativeConversationID
+                    t.ptySessionID = result.summary.sessionID.description
+                    t.resolvedArgv = result.plan.argv
+                    t.envKeys = result.plan.envKeys
+                    t.launchSpec = result.plan.spec
+                    t.nativeConversationID = result.plan.nativeConversationID ?? t.nativeConversationID
+                    t.currentRunID = result.runID
                     t.startedAt = Date()
                     t.endedAt = nil
                     t.exitCode = nil
                     t.exitSignal = nil
                 }
-                runStates[id] = .running
+                // Continua `.starting` até o primeiro byte (`apply(launchEvent:)` → `.running`).
                 save(terminal: id)
-                if id == focusedTerminalID { runtime.existingEntry(for: id)?.host.focusTerminal() }
+            } catch let failure as LaunchFailure {
+                guard self.terminal(id) != nil, failure != .cancelled else { return }
+                fail(launch: id, detail: failure.errorDescription ?? "\(failure)")
             } catch {
-                update(terminal: id) { $0.state = .failedToStart }
-                runStates[id] = .failed((error as? LocalizedError)?.errorDescription ?? "\(error)")
-                save(terminal: id)
+                guard self.terminal(id) != nil else { return }
+                fail(launch: id, detail: "\(error)")
             }
             notify()
         }
+    }
+
+    private func fail(launch id: UUID, detail: String) {
+        ignitionTimers[id]?.cancel()
+        update(terminal: id) { $0.state = .failedToStart }
+        runStates[id] = .failed(detail)
+        save(terminal: id)
+        notify()
+    }
+
+    /// Evento real do coordenador: atualiza a checklist, encerra a ignição no primeiro byte e captura o ID nativo.
+    private func apply(launchEvent event: LaunchEvent, terminalID id: UUID) {
+        guard terminal(id) != nil else { return }
+        launchTimelines[id]?.apply(event)
+        switch event {
+        case .firstOutput:
+            ignitionTimers[id]?.cancel()
+            if case .starting = paneState(id) { runStates[id] = .running }
+            if id == focusedTerminalID { runtime.existingEntry(for: id)?.host.focusTerminal() }
+        case .nativeID(_, let nativeID):
+            update(terminal: id) { $0.nativeConversationID = nativeID }
+            save(terminal: id)
+        case .step:
+            break
+        }
+        onLaunchEvent?(id, event)
+        notify()
+    }
+
+    /// Cancel da ignição (`session.cancelLaunch` com o ID do terminal): aborta o que falta, mata a sessão criada e remove o pane.
+    func cancelLaunch(_ terminalID: UUID) {
+        guard terminal(terminalID) != nil else { return }
+        Task { @MainActor in
+            await runtime.coordinator.cancel(terminalID: terminalID)
+            guard terminal(terminalID) != nil else { return }
+            finalizeRemoval(of: terminalID)
+        }
+    }
+
+    /// `true` se o pane ainda está na ignição (estado `starting`).
+    func isIgniting(_ terminalID: UUID) -> Bool {
+        if case .starting = paneState(terminalID) { return ignitionVisible.contains(terminalID) }
+        return false
     }
 
     private func reattach(_ terminal: Terminal) {
@@ -827,6 +906,7 @@ final class WorkspaceModel {
     func restart(_ terminalID: UUID) {
         guard let t = terminal(terminalID) else { return }
         runtime.existingEntry(for: terminalID)?.unbind()
+        retire(run: terminalID)
         update(terminal: terminalID) { t in
             t.state = .notStarted
             t.ptySessionID = nil
@@ -867,6 +947,20 @@ final class WorkspaceModel {
             finalizeRemoval(of: id)
             return
         }
+        let timeline = launchTimelines[id]
+        if let t = terminal(id), case .starting = paneState(id) {
+            // Saída com erro antes de qualquer byte: o processo nunca chegou a funcionar ("Couldn't start", M-505).
+            let verdict = LaunchExitClassifier.classify(
+                firstOutputSeen: timeline?.hasSeenFirstOutput ?? false, code: info?.code.map(Int.init), signal: info?.signal.map(Int.init),
+                agent: ProviderAdapters.name(t.provider))
+            if case .failedToStart(let detail) = verdict {
+                retire(run: id)
+                fail(launch: id, detail: detail)
+                return
+            }
+        }
+        ignitionTimers[id]?.cancel()
+        retire(run: id)
         update(terminal: id) { t in
             t.state = info?.signal != nil ? .killed : .exited
             t.exitCode = info?.code.map(Int.init)
@@ -876,6 +970,16 @@ final class WorkspaceModel {
         runStates[id] = .exited(code: info?.code.map(Int.init), signal: info?.signal.map(Int.init))
         save(terminal: id)
         notify()
+    }
+
+    /// Fim de uma execução: apaga o diretório do lançamento (06 §2.8) e solta o estado do coordenador.
+    private func retire(run terminalID: UUID) {
+        ignitionTimers[terminalID]?.cancel()
+        if let dir = launchDirectories.removeValue(forKey: terminalID) { LaunchFileWriter.cleanup(launchDirectory: dir) }
+        if let run = currentRuns.removeValue(forKey: terminalID) {
+            let coordinator = runtime.coordinator
+            Task { await coordinator.finish(runID: run) }
+        }
     }
 
     private func debouncedSave(_ id: UUID) {
