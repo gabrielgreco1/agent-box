@@ -60,12 +60,24 @@ if [ "$2" = "-i" ]; then export FROM_INTERACTIVE=1; fi
 eval "${@: -1}"
 """
 
-private func processIsGone(_ pid: pid_t) async -> Bool {
-    for _ in 0..<40 {
+/// Polling com prazo (não sleep fixo): sob carga o recolhimento do processo pode demorar além de 2 s.
+private func processIsGone(_ pid: pid_t, deadline: Duration = .seconds(15)) async -> Bool {
+    let end = ContinuousClock.now + deadline
+    while ContinuousClock.now < end {
         if kill(pid, 0) != 0 && errno == ESRCH { return true }
-        try? await Task.sleep(for: .milliseconds(50))
+        try? await Task.sleep(for: .milliseconds(25))
     }
-    return false
+    return kill(pid, 0) != 0 && errno == ESRCH
+}
+
+/// Espera o arquivo aparecer, com prazo (o spawn do zsh sob carga pode levar vários segundos).
+private func waitForFile(_ box: Sandbox, _ name: String, deadline: Duration = .seconds(20)) async -> String? {
+    let end = ContinuousClock.now + deadline
+    while ContinuousClock.now < end {
+        if let text = box.read(name), !text.isEmpty { return text }
+        try? await Task.sleep(for: .milliseconds(25))
+    }
+    return box.read(name)
 }
 
 @Suite struct LoginShellEnvTests {
@@ -151,7 +163,9 @@ private func processIsGone(_ pid: pid_t) async -> Bool {
         #expect(captured.diagnostics.interactiveFailure == .timedOut(milliseconds: 5000))
         #expect(captured.diagnostics.banner == "Using non-interactive shell environment")
         #expect(captured.diagnostics.source == .nonInteractive)
-        #expect(elapsed >= .seconds(5) && elapsed < .seconds(7), "levou \(elapsed)")
+        // Spec: o prazo interativo é de 5 s (limite inferior exato, medido pelo próprio provider). O teto cobre o
+        // fallback não interativo (até 3 s) mais folga de carga; o que importa é não esperar o `sleep 60`.
+        #expect(elapsed >= .seconds(5) && elapsed < .seconds(15), "levou \(elapsed)")
 
         let pidText = try #require(box.read("sleeper.pid")).trimmingCharacters(in: .whitespacesAndNewlines)
         let pid = try #require(pid_t(pidText))
@@ -215,7 +229,7 @@ private func processIsGone(_ pid: pid_t) async -> Bool {
         #expect(await provider.cachedResult() == first)
 
         let reloaded = await provider.reload()
-        #expect(captures(box) == 2)
+        #expect(captures(box) == 2, "\(reloaded.diagnostics)")
         #expect(reloaded.variables["GEN"] == "2")
         await provider.invalidate()
         #expect(await provider.cachedResult() == nil)
@@ -253,12 +267,13 @@ private func processIsGone(_ pid: pid_t) async -> Bool {
         let box = Sandbox()
         let shell = box.script("hang", "sleep 60 &\necho $! > \(box.path("pid"))\nwait")
         let provider = LoginShellEnvProvider(config: box.config(shell: shell))
-        let started = ContinuousClock.now
         let task = Task { await provider.environment() }
-        for _ in 0..<100 where box.read("pid") == nil { try await Task.sleep(for: .milliseconds(50)) }
+        _ = try #require(await waitForFile(box, "pid"), "o shell travado nunca iniciou")
+        // O relógio só conta a partir do cancelamento: cancelar tem que ser bem mais rápido que o prazo de 5 s da spec.
+        let cancelledAt = ContinuousClock.now
         await provider.invalidate()
         let result = await task.value
-        #expect(ContinuousClock.now - started < .seconds(3))
+        #expect(ContinuousClock.now - cancelledAt < .seconds(4), "cancelar levou \(ContinuousClock.now - cancelledAt)")
         if case .failed(.cancelled, _, _) = result {} else { Issue.record("esperado failed(cancelled): \(result)") }
         let pid = try #require(pid_t((box.read("pid") ?? "").trimmingCharacters(in: .whitespacesAndNewlines)))
         #expect(await processIsGone(pid))

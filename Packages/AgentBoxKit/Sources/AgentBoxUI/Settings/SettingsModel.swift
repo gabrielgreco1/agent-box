@@ -1,0 +1,257 @@
+import AgentBoxCore
+import AgentBoxPlatform
+import AgentBoxProtocol
+import AgentBoxStore
+import Foundation
+import Observation
+
+/// Estado do Settings em página inteira (03 §14): seção aberta, configuração, perfis e agentes detectados.
+/// Toda mudança passa por uma ação do registro e salva sozinha (03 §14.1): sem Save nem Apply, com debounce de 300 ms no Store.
+@MainActor @Observable
+public final class SettingsModel {
+    public static let sectionStateKey = "settings.section"
+
+    public private(set) var settings = AppSettings()
+    public private(set) var isOpen = false
+    public private(set) var section: String
+    public private(set) var agents: [AgentInfo] = AgentCatalog.providers.map { AgentInfo(provider: $0) }
+    /// Perfis gravados (os prontos entram por `catalog`).
+    public private(set) var profiles: [LaunchProfile] = []
+    public private(set) var editingProfileID: UUID?
+    /// Mensagem de validação por campo (`general.worktreeFolder`, `agents.profileArgs`...): o valor salvo continua valendo.
+    public private(set) var fieldErrors: [String: String] = [:]
+
+    public let flags: SliceFlags
+    @ObservationIgnored let sections: [SettingsSectionSpec]
+    @ObservationIgnored public var onPresentationChange: @MainActor (Bool) -> Void = { _ in }
+    @ObservationIgnored public weak var toasts: ToastCenter?
+    @ObservationIgnored var probe: AgentProbe
+    @ObservationIgnored var system: SettingsSystemActions
+    @ObservationIgnored var clock: () -> Date = { Date() }
+
+    @ObservationIgnored private var store: AgentBoxStore?
+    @ObservationIgnored private var persisted = AppSettings()
+    @ObservationIgnored private var pending: [Task<Void, Never>] = []
+    @ObservationIgnored private var detecting: [TerminalProvider: Task<Void, Never>] = [:]
+    @ObservationIgnored private let log = LogFacade(.app, category: "settings")
+
+    public init(
+        flags: SliceFlags, probe: @escaping AgentProbe, system: SettingsSystemActions = SettingsSystemActions(),
+        sections: [SettingsSectionSpec] = SettingsCatalog.all, implemented: Set<String> = SettingsCatalog.implemented
+    ) {
+        self.flags = flags
+        self.probe = probe
+        self.system = system
+        self.sections = SettingsCatalog.visible(flags: flags, among: sections, implemented: implemented)
+        self.section = self.sections.first?.id ?? "general"
+    }
+
+    // MARK: Leitura
+
+    public var visibleSections: [SettingsSectionSpec] { sections }
+    public var catalog: ProfileCatalog { ProfileCatalog(userProfiles: profiles) }
+    public func agent(_ provider: TerminalProvider) -> AgentInfo? { agents.first { $0.provider == provider } }
+
+    /// Perfis de um provider: os do usuário primeiro, depois os prontos que ele não sobrescreveu.
+    public func profiles(for provider: TerminalProvider) -> [LaunchProfile] { catalog.profiles.filter { $0.provider == provider } }
+
+    /// Perfil padrão global efetivo do provider (`ProfileCatalog.resolve`).
+    public func defaultProfile(for provider: TerminalProvider) -> LaunchProfile? {
+        catalog.resolve(provider: provider, explicitID: nil, projectID: nil)
+    }
+
+    public var editingProfile: LaunchProfile? { editingProfileID.flatMap { id in catalog.profiles.first { $0.id == id } } }
+
+    // MARK: Navegação
+
+    /// `app.settings` abre na última seção; `agent.openSettings` abre direto na do agente.
+    public func open(section: String? = nil) {
+        if let section { select(section) }
+        guard !isOpen else { return }
+        isOpen = true
+        onPresentationChange(true)
+        Task { await refreshAgents(force: false) }
+    }
+
+    public func close() {
+        guard isOpen else { return }
+        // Campo inválido descartado sem perguntar (03 §14.1 regra 3).
+        fieldErrors = [:]
+        isOpen = false
+        onPresentationChange(false)
+    }
+
+    @discardableResult
+    public func select(_ id: String) -> Bool {
+        guard sections.contains(where: { $0.id == id }) else { return false }
+        if id != section { editingProfileID = nil }
+        section = id
+        fieldErrors = [:]
+        persistSection()
+        return true
+    }
+
+    // MARK: Store
+
+    public func attach(store: AgentBoxStore) async {
+        self.store = store
+        if let saved = try? await store.setting(AppSettings.storeKey, as: AppSettings.self) {
+            settings = saved
+            persisted = saved
+        }
+        if let id = try? await store.uiState(Self.sectionStateKey, as: String.self), sections.contains(where: { $0.id == id }) { section = id }
+        await reloadProfiles()
+    }
+
+    func reloadProfiles() async {
+        guard let store else { return }
+        do { profiles = try await store.profiles() } catch { log.error("could not load launch profiles: \(error)") }
+    }
+
+    /// Espera as gravações já agendadas (testes e ⌘Q).
+    public func settle() async {
+        let tasks = pending
+        pending = []
+        for task in tasks { await task.value }
+        try? await store?.flush()
+    }
+
+    private func persistSection() {
+        guard let store else { return }
+        let id = section
+        Task { try? await store.scheduleUIState(Self.sectionStateKey, id) }
+    }
+
+    /// Aplica a mudança na hora (o controle reflete o novo valor) e grava com debounce; se a gravação falha, volta ao salvo.
+    func change(_ name: String, _ mutate: (inout AppSettings) -> Void) {
+        mutate(&settings)
+        guard settings != persisted else { return }
+        let value = settings
+        persisted = value
+        guard let store else { return }
+        let task = Task { [weak self] in
+            do {
+                try await store.scheduleSetting(AppSettings.storeKey, value)
+            } catch {
+                self?.revert(name, error)
+            }
+        }
+        pending.append(task)
+    }
+
+    private func revert(_ name: String, _ error: any Error) {
+        log.error("could not save setting: \(error)")
+        // O que está gravado no banco é o valor anterior; recarrega para o controle mostrar o valor salvo.
+        Task { [weak self] in
+            guard let self, let store else { return }
+            let saved = (try? await store.setting(AppSettings.storeKey, as: AppSettings.self)) ?? AppSettings()
+            settings = saved
+            persisted = saved
+        }
+        toasts?.show(kind: .error, title: String(localized: "Couldn't save \(name).", bundle: .module), detail: "\(error)")
+    }
+
+    // MARK: Perfis
+
+    private func save(_ profile: LaunchProfile) async throws {
+        guard let store else { throw SettingsError.noStore }
+        try await store.save(profile)
+        await reloadProfiles()
+    }
+
+    func newProfile(provider: TerminalProvider) async throws {
+        guard provider.isAgent else { throw SettingsError.invalid("Profiles are for Claude Code, Codex and OpenCode.") }
+        let names = Set(profiles(for: provider).map(\.name))
+        var name = "New profile"
+        var n = 2
+        while names.contains(name) { name = "New profile \(n)"; n += 1 }
+        let profile = LaunchProfile(name: name, provider: provider, createdAt: clock(), updatedAt: clock())
+        try await save(profile)
+        editingProfileID = profile.id
+    }
+
+    func duplicateProfile(id: UUID) async throws {
+        guard let source = catalog.profiles.first(where: { $0.id == id }) else { throw SettingsError.invalid("Profile not found.") }
+        let copy = source.duplicated(now: clock())
+        try await save(copy)
+        editingProfileID = copy.id
+    }
+
+    func toggleEditing(id: UUID) throws {
+        guard let profile = catalog.profiles.first(where: { $0.id == id }) else { throw SettingsError.invalid("Profile not found.") }
+        guard !profile.isBuiltin else { throw SettingsError.invalid(Self.builtinEditReason) }
+        editingProfileID = editingProfileID == id ? nil : id
+        fieldErrors = [:]
+    }
+
+    func deleteProfile(id: UUID) async throws {
+        guard let profile = catalog.profiles.first(where: { $0.id == id }) else { throw SettingsError.invalid("Profile not found.") }
+        guard !profile.isBuiltin else { throw SettingsError.invalid(Self.builtinDeleteReason) }
+        guard let store else { throw SettingsError.noStore }
+        try await store.deleteProfile(id: id)
+        if editingProfileID == id { editingProfileID = nil }
+        await reloadProfiles()
+    }
+
+    func setDefaultProfile(id: UUID) async throws {
+        guard let store else { throw SettingsError.noStore }
+        let writes = ProfileDefaults.assigning(profileID: id, saved: profiles, now: clock())
+        guard !writes.isEmpty else { throw SettingsError.invalid("Profile not found.") }
+        for profile in writes { try await store.save(profile) }
+        await reloadProfiles()
+    }
+
+    /// Edita o perfil aberto. Valor inválido deixa o salvo como está e mostra a mensagem no campo.
+    func editProfile(field: String, _ mutate: (inout LaunchProfile) throws -> Void) async throws {
+        guard var profile = editingProfile, !profile.isBuiltin else { throw SettingsError.invalid("Open a profile to edit it.") }
+        do { try mutate(&profile) } catch let error as SettingsError {
+            if case .invalid(let message) = error { fieldErrors[field] = message }
+            throw error
+        }
+        fieldErrors[field] = nil
+        profile.updatedAt = clock()
+        try await save(profile)
+    }
+
+    static let builtinEditReason = "Built-in profiles can't be edited. Duplicate it to change flags."
+    static let builtinDeleteReason = "Built-in profiles can't be deleted."
+
+    // MARK: Campos de texto
+
+    func fail(_ key: String, _ error: SettingsValidationError) -> SettingsError {
+        fieldErrors[key] = error.message
+        return .invalid(error.message)
+    }
+
+    func clearError(_ key: String) { fieldErrors[key] = nil }
+
+    // MARK: Agentes
+
+    /// Refaz a detecção (instalação, versão, login) de todos ou de um. Nunca roda `login`.
+    public func refreshAgents(force: Bool, only provider: TerminalProvider? = nil) async {
+        let targets = provider.map { [$0] } ?? AgentCatalog.providers
+        for p in targets { setAgent(AgentInfo(provider: p, phase: .checking), keepIfKnown: !force) }
+        let probe = self.probe
+        await withTaskGroup(of: (TerminalProvider, CLIProbeResult).self) { group in
+            for p in targets { group.addTask { (p, await probe(p, force)) } }
+            for await (p, result) in group { setAgent(AgentInfo(provider: p, result: result), keepIfKnown: false) }
+        }
+    }
+
+    private func setAgent(_ info: AgentInfo, keepIfKnown: Bool) {
+        guard let index = agents.firstIndex(where: { $0.provider == info.provider }) else { return }
+        // Primeiro abrir: mostra `Checking…`; reabrir: mantém o último resultado até o novo chegar.
+        if keepIfKnown, info.phase == .checking, agents[index].phase != .checking { return }
+        agents[index] = info
+    }
+}
+
+public nonisolated enum AgentCatalog {
+    /// Agentes com CLI detectável (03 §14.2). O Blank Terminal é só uma escolha de padrão.
+    public static let providers: [TerminalProvider] = [.claude, .codex, .opencode]
+}
+
+public nonisolated enum SettingsError: Error, Equatable {
+    case invalid(String)
+    case noStore
+}

@@ -17,6 +17,13 @@ public nonisolated final class TerminalFrameObserver: Sendable {
     }
 }
 
+/// Contador de resizes enviados ao daemon (escrito na thread do coordenador, lido no main).
+nonisolated final class ResizeCounter: Sendable {
+    private let value = Mutex(0)
+    var count: Int { value.withLock { $0 } }
+    func increment() { value.withLock { $0 += 1 } }
+}
+
 /// Liga um `TerminalHostView` a uma sessão do daemon (06 §1, 08 AR-406/AR-709):
 /// - saída: uma `Task` fora do main consome `PTYAttachment.updates` e chama `feed` (seguro em qualquer thread na
 ///   SwiftTerm 1.99); o main só desenha. O backlog por pane (`PTYBacklogGauge`) é do `PTYClient`, que pede `snapshot`
@@ -36,6 +43,9 @@ public final class TerminalSessionBinding {
     /// Eventos do daemon para este pane (título, cwd, bell, prompt, `sessionGone`), entregues no main.
     public var onEvent: ((EventPayload) -> Void)?
     public let frameObserver = TerminalFrameObserver()
+    /// Resizes de PTY realmente enviados ao daemon por este binding (04 MA6: um por transição de layout).
+    private let resizeCounter = ResizeCounter()
+    public var appliedResizeCount: Int { resizeCounter.count }
 
     public init(client: PTYClient, sessionID: SessionID, host: TerminalHostView) {
         self.client = client
@@ -58,7 +68,9 @@ public final class TerminalSessionBinding {
 
         let client = self.client
         let sessionID = self.sessionID
+        let counter = resizeCounter
         let resizer = PTYResizeCoordinator(initial: size) { applied in
+            counter.increment()
             try? await client.resize(sessionID: sessionID, cols: applied.cols, rows: applied.rows)
         }
         self.resizer = resizer

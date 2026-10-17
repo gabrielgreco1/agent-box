@@ -54,7 +54,7 @@ let package = Package(
         lib("AgentBoxStore", ["AgentBoxPlatform", "AgentBoxProtocol", grdb]),
         lib("AgentBoxDocker", ["AgentBoxPlatform", "AgentBoxProtocol"]),
         lib("AgentBoxCore", ["AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxStore", "AgentBoxDocker"]),
-        lib("AgentBoxDesignSystem", ["AgentBoxProtocol"], ui: true, resources: [.copy("Resources/Fonts")]),
+        lib("AgentBoxDesignSystem", ["AgentBoxProtocol"], ui: true, resources: [.copy("Resources/Fonts"), .copy("Resources/AgentLogos")]),
         lib(
             "AgentBoxUI", ["AgentBoxCore", "AgentBoxStore", "AgentBoxDesignSystem", "AgentBoxTerminalCore", swiftTerm], ui: true,
             resources: [.process("Resources")]  // String Catalog (lint-ui exige strings no catálogo)
@@ -93,7 +93,7 @@ let package = Package(
         tests("DaemonTests", ["AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxTerminalCore", "AgentBoxCore", "agentboxd", "peerprobe", swiftTerm]),
         .testTarget(
             name: "TerminalSurfaceTests",
-            dependencies: ["AgentBoxUI", "AgentBoxCore", "AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxTerminalCore", "AgentBoxDesignSystem", "agentboxd", swiftTerm],
+            dependencies: ["AgentBoxUI", "AgentBoxCore", "AgentBoxStore", "AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxTerminalCore", "AgentBoxDesignSystem", "agentboxd", swiftTerm],
             swiftSettings: mainActorSettings
         ),
         .testTarget(

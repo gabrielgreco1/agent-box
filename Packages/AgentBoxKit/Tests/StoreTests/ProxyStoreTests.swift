@@ -4,24 +4,24 @@ import GRDB
 import Testing
 @testable import AgentBoxStore
 
-/// `v4_proxy_ext` (migração nova, encadeada após `v3_computers`) e a persistência de `ProxyProfile` (T3-02, P13).
+/// `v5_proxy_ext` (migração nova, encadeada após `v3_computers`) e a persistência de `ProxyProfile` (T3-02, P13).
 @Suite struct ProxyStoreTests {
     private func sample(_ name: String = "zyte-us", default isDefault: Bool = false) -> ProxyProfile {
         ProxyProfile(
             name: name, preset: .zyte, scheme: .http, host: "proxy.zyte.com", port: 8011, username: nil, secretID: "proxy-abc",
-            secretStorage: .file, geo: ProxyGeo(country: "us", mode: .suffix, template: "-country-{cc}"), apiMode: true,
+            secretStorage: .vault, geo: ProxyGeo(country: "us", mode: .suffix, template: "-country-{cc}"), apiMode: true,
             renderEndpoint: "https://api.zyte.com/v1/extract", caPEM: "-----BEGIN CERTIFICATE-----\nX\n-----END CERTIFICATE-----",
             pricePerRequestMicros: 130, pricePerRenderMicros: 1500, isDefault: isDefault, createdAt: Fixture.t0)
     }
 
     @Test func v4IsChainedAfterV3AndOlderMigrationsAreUntouched() {
         let ids = StoreMigrations.all.map(\.id)
-        #expect(ids == ["v1_initial", "v2_activity", "v3_computers", "v4_proxy_ext"])
+        #expect(ids == ["v1_initial", "v2_activity", "v3_computers", "v4_vault_catalog", "v5_proxy_ext"])
     }
 
     @Test func migratesFromV3KeepingDataAndBackingUpFirst() async throws {
         let home = try TempHome(); defer { home.remove() }
-        let v3 = [StoreMigrations.v1Initial, StoreMigrations.v2Activity, StoreMigrations.v3Computers]
+        let v3 = [StoreMigrations.v1Initial, StoreMigrations.v2Activity, StoreMigrations.v3Computers, StoreMigrations.v4VaultCatalog]
         let before = try await home.openStore(day: 0, migrations: v3)
         try await before.save(Fixture.project())
         // um proxy gravado direto na tabela de v3 (sem proxy_ext), como existiria antes da T3-02
@@ -35,10 +35,10 @@ import Testing
         let after = try await home.openStore(day: 1)
         #expect(after.openNotices.isEmpty)
         let legacy = try #require(try await after.proxy(id: id))
-        #expect(legacy.name == "legacy" && legacy.scheme == .socks5 && legacy.secretStorage == .file && legacy.geo == nil && legacy.caPEM == nil)
+        #expect(legacy.name == "legacy" && legacy.scheme == .socks5 && legacy.secretStorage == .vault && legacy.geo == nil && legacy.caPEM == nil)
         #expect(try await after.projects().count == 1, "dados de N-1 preservados")
         try await after.close()
-        #expect(home.backups.filter { $0.hasPrefix("pre-migration-v4_proxy_ext-") }.count == 1)
+        #expect(home.backups.filter { $0.hasPrefix("pre-migration-v5_proxy_ext-") }.count == 1)
         #expect(try tableNames(at: home.paths.databaseFile).contains("proxy_ext"))
     }
 

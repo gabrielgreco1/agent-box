@@ -13,9 +13,8 @@
     "price_per_render_micros" : 10000,
     "price_per_request_micros" : 2000,
     "scheme" : "http",
-    "secret_storage" : "file"
+    "secret_storage" : "vault"
   },
-  "secret" : "armazenado em arquivo 0600 (TODO T2-10: Vault); valor NÃO registrado aqui",
-  "secret_file_mode" : "600",
+  "secret" : "armazenado no Vault (kind proxyCredential, entrega sidecarOnly); valor NÃO registrado aqui",
   "source" : "~\/orca\/projects\/agentbox\/.env (somente leitura; arquivo não modificado)"
 }

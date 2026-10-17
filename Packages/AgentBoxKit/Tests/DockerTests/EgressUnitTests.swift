@@ -84,25 +84,6 @@ struct EgressUnitTests {
         }
     }
 
-    @Test func proxySecretFileStoreKeeps0600AndRefusesLooseFiles() throws {
-        let root = try tempRoot(); defer { try? FileManager.default.removeItem(at: root) }
-        let store = ProxySecretFileStore(root: root)
-        let id = ProxySecretFileStore.secretID(proxyID: UUID())
-        #expect(try store.load(secretID: id) == nil)
-        try store.store("hunter2", secretID: id)
-        #expect(try store.load(secretID: id) == "hunter2")
-        let path = store.directory.appendingPathComponent(id).path
-        #expect(((try FileManager.default.attributesOfItem(atPath: path)[.posixPermissions]) as? NSNumber)?.intValue == 0o600)
-        #expect(((try FileManager.default.attributesOfItem(atPath: store.directory.path)[.posixPermissions]) as? NSNumber)?.intValue == 0o700)
-        try store.store("rotated", secretID: id)
-        #expect(try store.load(secretID: id) == "rotated")
-        try FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: path)
-        #expect(throws: BoxSecretFilesError.self) { try store.load(secretID: id) }
-        try store.remove(secretID: id)
-        #expect(try store.load(secretID: id) == nil)
-        #expect(throws: BoxSecretFilesError.self) { try store.load(secretID: "../../etc/passwd") }
-    }
-
     // MARK: integridade do reqlog
 
     private func chain(_ count: Int, tamperAt: Int? = nil) -> String {

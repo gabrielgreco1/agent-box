@@ -4,7 +4,12 @@ import SwiftUI
 // Painel de menu próprio (02 §12.15): dropdowns ricos, combobox e menus dentro da janela. Visual e teclado; quem abre o
 // painel (posição, animação M-105, ações) é o `OverlayRouter` em AgentBoxUI.
 
-/// Logo de agente (02 §2.10, §12.6). Claude mantém `#D97757`; os demais são template.
+/// Logo de agente (02 §2.10, §12.6): ÚNICO componente de logo. Logos oficiais em `Resources/AgentLogos/`
+/// (de `legacy/design/assets/brands/`, proveniência em `sources.json`).
+/// - Claude: monocromático, template em `#D97757` (nunca recolorido além disso).
+/// - OpenCode: monocromático após remover o fundo opaco do arquivo; template em `textPrimary`.
+/// - Codex: ícone de app colorido; mantém as cores originais (template o achataria numa silhueta).
+/// - Shell: SF Symbol `terminal` em `textSecondary`.
 public struct DSAgentLogo: View {
     private let kind: DSAgentKind
     private let size: CGFloat
@@ -21,13 +26,9 @@ public struct DSAgentLogo: View {
     public var body: some View {
         Group {
             switch kind {
-            case .claude:
-                ClaudeSpark().stroke(Self.claudeColor.color, style: StrokeStyle(lineWidth: size * 0.15, lineCap: .round))
-                    .frame(width: size, height: size)
-            case .codex:
-                Image(systemName: "chevron.left.forwardslash.chevron.right").font(.system(size: size * 0.85)).foregroundStyle(DS.Color.textPrimary)
-            case .opencode:
-                Image(systemName: "curlybraces").font(.system(size: size * 0.9)).foregroundStyle(DS.Color.textPrimary)
+            case .claude: brandImage("claude", template: true, tint: Self.claudeColor.color)
+            case .codex: brandImage("codex", template: false, tint: DS.Color.textPrimary)
+            case .opencode: brandImage("opencode", template: true, tint: DS.Color.textPrimary)
             case .shell:
                 Image(systemName: "terminal").font(.system(size: size * 0.9)).foregroundStyle(DS.Color.textSecondary)
             }
@@ -36,21 +37,37 @@ public struct DSAgentLogo: View {
         .opacity(dimmed ? 0.7 : 1)
         .accessibilityHidden(true)
     }
+
+    @ViewBuilder private func brandImage(_ name: String, template: Bool, tint: Color) -> some View {
+        if let nsImage = DSAgentLogoImages.image(named: name) {
+            Image(nsImage: nsImage)
+                .renderingMode(template ? .template : .original)
+                .resizable()
+                .interpolation(.high)
+                .aspectRatio(contentMode: .fit)
+                .foregroundStyle(tint)
+        } else {
+            // Recurso ausente no bundle: `AgentLogoTests` falha antes de isso chegar à UI.
+            Image(systemName: "questionmark.square.dashed").font(.system(size: size * 0.9)).foregroundStyle(DS.Color.textSecondary)
+        }
+    }
 }
 
-/// Faísca de 4 traços cruzados (o glifo do Claude Code é um asterisco de 8 pontas).
-private struct ClaudeSpark: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        let c = CGPoint(x: rect.midX, y: rect.midY)
-        let r = min(rect.width, rect.height) / 2 * 0.86
-        for i in 0..<4 {
-            let angle = Double(i) * .pi / 4
-            let dx = CGFloat(cos(angle)) * r, dy = CGFloat(sin(angle)) * r
-            path.move(to: CGPoint(x: c.x - dx, y: c.y - dy))
-            path.addLine(to: CGPoint(x: c.x + dx, y: c.y + dy))
-        }
-        return path
+/// Carrega os PNGs oficiais (`@3x`, 60 px, cobre até 20 pt) do bundle do módulo.
+@MainActor
+enum DSAgentLogoImages {
+    static func image(named name: String) -> NSImage? {
+        guard let url = fileURL(name, scale: 3) else { return nil }
+        return NSImage(contentsOf: url)
+    }
+
+    static func fileURL(_ name: String, scale: Int) -> URL? {
+        Bundle.module.url(forResource: "\(name)@\(scale)x", withExtension: "png", subdirectory: "AgentLogos")
+    }
+
+    /// `sources.json` (proveniência dos logos, copiada junto).
+    static var provenanceURL: URL? {
+        Bundle.module.url(forResource: "sources", withExtension: "json", subdirectory: "AgentLogos")
     }
 }
 

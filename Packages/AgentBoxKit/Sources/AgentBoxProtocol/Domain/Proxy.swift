@@ -59,7 +59,7 @@ public struct ProxyProfile: Codable, Hashable, Sendable, Identifiable {
 
     public init(
         id: UUID = .v7(), name: String, preset: ProxyPreset = .custom, scheme: ProxyScheme, host: String, port: Int,
-        username: String? = nil, secretID: String? = nil, secretStorage: ProxySecretStorage = .file, geo: ProxyGeo? = nil,
+        username: String? = nil, secretID: String? = nil, secretStorage: ProxySecretStorage = .vault, geo: ProxyGeo? = nil,
         apiMode: Bool = false, renderEndpoint: String? = nil, caPEM: String? = nil, pricePerRequestMicros: Int64? = nil,
         pricePerRenderMicros: Int64? = nil, isDefault: Bool = false, createdAt: Date = Date(), updatedAt: Date? = nil
     ) {

@@ -1,4 +1,5 @@
 import AgentBoxDocker
+import AgentBoxPlatform
 import AgentBoxProtocol
 import AgentBoxStore
 import Foundation
@@ -6,22 +7,22 @@ import Testing
 
 @testable import AgentBoxCore
 
-/// `ProxyService` (T3-02): cadastro com segredo fora do SQLite e `Import from agentbox CLI…`.
+/// `ProxyService` (T3-02): cadastro com segredo no Vault e `Import from agentbox CLI…`.
 @Suite("T3-02 - ProxyService e importador da chave Zyte")
 struct ProxyServiceTests {
     struct Env {
         let root: URL
         let store: AgentBoxStore
         let service: ProxyService
-        let secrets: ProxySecretFileStore
+        let vault: SecretVault
     }
 
     private func make() async throws -> Env {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("abx-proxysvc-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         let store = try await AgentBoxStore.open(paths: StorePaths(root: root))
-        let secrets = ProxySecretFileStore(root: root)
-        return Env(root: root, store: store, service: ProxyService(store: store, secrets: secrets), secrets: secrets)
+        let vault = SecretVault(store: store, keyring: VaultKeyring(backend: InMemoryMasterKeyBackend()))
+        return Env(root: root, store: store, service: ProxyService(store: store, vault: vault), vault: vault)
     }
 
     private func writeEnv(_ env: Env, _ text: String) throws -> URL {
@@ -31,11 +32,14 @@ struct ProxyServiceTests {
         return url
     }
 
-    @Test func savingStoresSecretInFileNotInSQLite() async throws {
+    @Test func savingStoresSecretInVaultNotInPlaintext() async throws {
         let env = try await make(); defer { try? FileManager.default.removeItem(at: env.root) }
         let saved = try await env.service.save(ProxyProfile(name: "corp", scheme: .http, host: "p.example", port: 3128, username: "bob"), secret: "TOPSECRETVALUE")
-        #expect(saved.secretID == ProxySecretFileStore.secretID(proxyID: saved.id) && saved.secretStorage == .file)
-        #expect(try env.secrets.load(secretID: try #require(saved.secretID)) == "TOPSECRETVALUE")
+        #expect(saved.secretStorage == .vault)
+        let secretID = try #require(saved.secretID.flatMap(UUID.init(uuidString:)))
+        #expect(try await env.vault.reveal(id: secretID).text == "TOPSECRETVALUE")
+        let info = try await env.vault.info(id: secretID)
+        #expect(info.kind == "proxyCredential" && info.delivery == "sidecarOnly", "credencial de proxy só vai para o sidecar")
         // nenhum byte do banco (nem WAL) contém o valor
         try await env.store.close()
         let dbDir = env.root.appendingPathComponent("db")
@@ -50,9 +54,11 @@ struct ProxyServiceTests {
         var saved = try await env.service.save(ProxyProfile(name: "corp", scheme: .http, host: "p.example", port: 3128, username: "bob"), secret: "v1")
         saved.host = "other.example"
         saved = try await env.service.save(saved)
-        #expect(try env.secrets.load(secretID: try #require(saved.secretID)) == "v1")
+        let id = try #require(saved.secretID.flatMap(UUID.init(uuidString:)))
+        #expect(try await env.vault.reveal(id: id).text == "v1")
         _ = try await env.service.save(saved, secret: "v2")
-        #expect(try env.secrets.load(secretID: try #require(saved.secretID)) == "v2")
+        #expect(try await env.vault.reveal(id: id).text == "v2")
+        #expect(try await env.vault.list().filter { $0.kind == "proxyCredential" }.count == 1, "rotação, não duplicação")
     }
 
     @Test func nameMustBeUnique() async throws {
@@ -63,12 +69,12 @@ struct ProxyServiceTests {
         }
     }
 
-    @Test func deleteRemovesTheSecretFile() async throws {
+    @Test func deleteRemovesTheVaultSecret() async throws {
         let env = try await make(); defer { try? FileManager.default.removeItem(at: env.root) }
         let saved = try await env.service.save(ProxyProfile(name: "gone", scheme: .socks5, host: "a", port: 1, username: "u"), secret: "pw")
-        let secretID = try #require(saved.secretID)
+        let secretID = try #require(saved.secretID.flatMap(UUID.init(uuidString:)))
         try await env.service.delete(id: saved.id)
-        #expect(try env.secrets.load(secretID: secretID) == nil)
+        await #expect(throws: SecretError.notFound) { _ = try await env.vault.reveal(id: secretID) }
         #expect(try await env.store.proxy(id: saved.id) == nil)
     }
 
@@ -80,7 +86,7 @@ struct ProxyServiceTests {
         let chosen = try await env.service.egressConfig(for: saved.id, allowCIDRs: ["172.30.0.0/24"])
         #expect(chosen.config.via == "corp" && chosen.config.upstream?.password == "pw-123456" && chosen.config.upstream?.username == "bob")
         #expect(chosen.config.allowCIDRs == ["172.30.0.0/24"])
-        try env.secrets.remove(secretID: try #require(saved.secretID))
+        try await env.vault.delete(id: try #require(saved.secretID.flatMap(UUID.init(uuidString:))))
         await #expect(throws: ProxyServiceError.secretMissing(proxy: "corp")) { _ = try await env.service.egressConfig(for: saved.id) }
     }
 
@@ -105,9 +111,12 @@ struct ProxyServiceTests {
         let proxy = result.proxy
         #expect(proxy.preset == .zyte && proxy.host == "proxy.zyte.com" && proxy.port == 8011 && proxy.scheme == .http && proxy.name == "zyte")
         #expect(proxy.pricePerRequestMicros == 130 && proxy.pricePerRenderMicros == 1500, "preços são informativos")
-        #expect(try env.secrets.load(secretID: try #require(proxy.secretID)) == "abcdef0123456789abcdef0123456789")
+        let vaultID = try #require(proxy.secretID.flatMap(UUID.init(uuidString:)))
+        let stored = try await env.vault.reveal(id: vaultID).text
+        #expect(stored == "abcdef0123456789abcdef0123456789")
+        #expect(try await env.vault.info(id: vaultID).delivery == "sidecarOnly")
         // nada além da chave foi importado: o token do Claude e o teto de orçamento ficam de fora (P13)
-        let stored = try String(contentsOf: env.secrets.directory.appendingPathComponent(try #require(proxy.secretID)), encoding: .utf8)
+        #expect(try await env.vault.list().count == 1)
         #expect(!stored.contains("SHOULDNEVERBEIMPORTED"))
         let upstream = EgressUpstream(profile: proxy, secret: stored)
         #expect(upstream.username == stored && upstream.password == "")
@@ -120,7 +129,7 @@ struct ProxyServiceTests {
         let again = try await env.service.importZyteFromCLI(envFile: file, confirmed: true)
         #expect(again.updatedExisting && again.proxy.id == proxy.id && again.proxy.pricePerRequestMicros == 130)
         #expect(try await env.store.proxies().count == 1)
-        #expect(try env.secrets.load(secretID: try #require(proxy.secretID)) == "ffffffffffffffffffffffffffffffff")
+        #expect(try await env.vault.reveal(id: vaultID).text == "ffffffffffffffffffffffffffffffff")
     }
 
     @Test func zyteImportFailsCleanlyWithoutFileOrKey() async throws {
@@ -151,12 +160,8 @@ struct ProxyServiceTests {
         let result = try await env.service.importZyteFromCLI(envFile: real, confirmed: true)
         let after = try FileManager.default.attributesOfItem(atPath: real.path)[.modificationDate] as? Date
         #expect(before == after, "o .env do CLI não foi modificado")
-        let secretID = try #require(result.proxy.secretID)
-        let value = try #require(try env.secrets.load(secretID: secretID))
-        #expect(!value.isEmpty)
-        let secretPath = env.secrets.directory.appendingPathComponent(secretID).path
-        let mode = (try FileManager.default.attributesOfItem(atPath: secretPath)[.posixPermissions] as? NSNumber)?.intValue
-        #expect(mode == 0o600)
+        let secretID = try #require(result.proxy.secretID.flatMap(UUID.init(uuidString:)))
+        #expect(!(try await env.vault.reveal(id: secretID).text).isEmpty)
         if let dir = ProcessInfo.processInfo.environment["AGENTBOX_EVIDENCE_DIR"] {
             let out = URL(fileURLWithPath: dir).appendingPathComponent("slice3/T3-02/zyte-import.json")
             try FileManager.default.createDirectory(at: out.deletingLastPathComponent(), withIntermediateDirectories: true)
@@ -165,8 +170,7 @@ struct ProxyServiceTests {
                 "proxy": ["name": result.proxy.name, "preset": result.proxy.preset.rawValue, "host": result.proxy.host, "port": result.proxy.port,
                           "scheme": result.proxy.scheme.rawValue, "price_per_request_micros": result.proxy.pricePerRequestMicros as Any,
                           "price_per_render_micros": result.proxy.pricePerRenderMicros as Any, "secret_storage": result.proxy.secretStorage.rawValue],
-                "secret": "armazenado em arquivo 0600 (TODO T2-10: Vault); valor NÃO registrado aqui",
-                "secret_file_mode": String(mode ?? 0, radix: 8),
+                "secret": "armazenado no Vault (kind proxyCredential, entrega sidecarOnly); valor NÃO registrado aqui",
                 "imported_only": ["ZYTE_API_KEY", "ZYTE_USD_PER_REQUEST", "ZYTE_USD_PER_RENDER"],
                 "ignored": "demais chaves do .env (token do Claude, concorrência, ZYTE_BUDGET_USD): sem teto de orçamento (P13)",
             ]

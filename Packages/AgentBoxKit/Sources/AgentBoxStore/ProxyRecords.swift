@@ -2,7 +2,7 @@ import AgentBoxProtocol
 import Foundation
 import GRDB
 
-// Records do proxy (T3-02): `proxy` (v3_computers), `proxy_ext` (v4_proxy_ext). Internos; a API pública usa `ProxyProfile`.
+// Records do proxy (T3-02): `proxy` (v3_computers), `proxy_ext` (v5_proxy_ext). Internos; a API pública usa `ProxyProfile`.
 
 struct ProxyRecord: Codable, FetchableRecord, PersistableRecord, Sendable {
     static let databaseTableName = "proxy"
@@ -58,7 +58,7 @@ extension ProxyRecord {
         return ProxyProfile(
             id: try RowCodec.id(id, table: "proxy"), name: name, preset: try RowCodec.enumValue(preset, ProxyPreset.self, table: "proxy"),
             scheme: try RowCodec.enumValue(scheme, ProxyScheme.self, table: "proxy"), host: host, port: port, username: username,
-            secretID: secretId, secretStorage: try RowCodec.enumValue(ext?.secretStorage ?? "file", ProxySecretStorage.self, table: "proxy_ext"),
+            secretID: secretId, secretStorage: try RowCodec.enumValue(ext?.secretStorage ?? "vault", ProxySecretStorage.self, table: "proxy_ext"),
             geo: geo, apiMode: apiMode == 1, renderEndpoint: ext?.renderEndpoint, caPEM: ext?.caPem,
             pricePerRequestMicros: ext?.pricePerRequestMicros, pricePerRenderMicros: ext?.pricePerRenderMicros,
             isDefault: isDefault == 1, createdAt: RowCodec.date(createdAt as Int64) as Date, updatedAt: RowCodec.date(updatedAt as Int64) as Date)

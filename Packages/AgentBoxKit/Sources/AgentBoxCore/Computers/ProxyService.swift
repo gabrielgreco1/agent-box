@@ -18,28 +18,34 @@ public struct ZyteImportResult: Sendable, Equatable {
     public var updatedExisting: Bool
 }
 
-/// Proxies configurados pelo usuário (T3-02, 07 §2.6, P13): cadastro, segredo em arquivo 0600 (TODO T2-10: Vault), montagem
+/// Proxies configurados pelo usuário (T3-02, 07 §2.6, P13): cadastro, segredo no Vault (T2-10), montagem
 /// da config do egress e o importador `Import from agentbox CLI…`. Sem teto de orçamento em nenhum ponto.
 public struct ProxyService: Sendable {
     public let store: AgentBoxStore
-    public let secrets: ProxySecretFileStore
+    public let vault: SecretVault
 
-    public init(store: AgentBoxStore, secrets: ProxySecretFileStore) {
+    public init(store: AgentBoxStore, vault: SecretVault) {
         self.store = store
-        self.secrets = secrets
+        self.vault = vault
     }
 
-    /// Cria ou atualiza um proxy. `secret` (senha, ou a chave no preset Zyte) vai para o armazenamento, nunca para o SQLite.
+    /// Cria ou atualiza um proxy. `secret` (senha, ou a chave no preset Zyte) vai para o Vault, nunca para o SQLite.
     /// `secret == nil` mantém o segredo atual.
     @discardableResult
     public func save(_ profile: ProxyProfile, secret: String? = nil) async throws -> ProxyProfile {
         var profile = profile
         if let other = try await store.proxy(named: profile.name), other.id != profile.id { throw ProxyServiceError.nameInUse(profile.name) }
         if let secret, !secret.isEmpty {
-            let id = profile.secretID ?? ProxySecretFileStore.secretID(proxyID: profile.id)
-            try secrets.store(secret, secretID: id)
-            profile.secretID = id
-            profile.secretStorage = .file
+            if let existing = profile.secretID.flatMap(UUID.init(uuidString:)), (try? await vault.info(id: existing)) != nil {
+                try await vault.rotate(id: existing, newValue: secret)
+            } else {
+                // Vault (T2-10): cifrado, `sidecarOnly` = nunca chega ao terminal do agente; vai só para o egress, por arquivo 0400.
+                let created = try await vault.create(NewSecret(
+                    name: "proxy:\(profile.name)", value: secret, kind: .proxyCredential, scope: .global, delivery: .sidecarOnly,
+                    note: "Proxy credential for \(profile.name)"))
+                profile.secretID = created.id.uuidString
+            }
+            profile.secretStorage = .vault
         }
         profile.updatedAt = Date()
         try await store.save(profile)
@@ -47,8 +53,8 @@ public struct ProxyService: Sendable {
     }
 
     public func delete(id: UUID) async throws {
-        if let profile = try await store.proxy(id: id), let secretID = profile.secretID, profile.secretStorage == .file {
-            try secrets.remove(secretID: secretID)
+        if let profile = try await store.proxy(id: id), let secretID = profile.secretID.flatMap(UUID.init(uuidString:)) {
+            try? await vault.delete(id: secretID)
         }
         try await store.deleteProxy(id: id)
     }
@@ -60,9 +66,10 @@ public struct ProxyService: Sendable {
         }
         var secret: String?
         if let secretID = profile.secretID {
-            guard profile.secretStorage == .file else { throw ProxyServiceError.secretMissing(proxy: profile.name) }  // TODO(T2-10): ler do Vault
-            secret = try secrets.load(secretID: secretID)
-            if secret == nil { throw ProxyServiceError.secretMissing(proxy: profile.name) }
+            guard let id = UUID(uuidString: secretID), let value = try? await vault.reveal(id: id) else {
+                throw ProxyServiceError.secretMissing(proxy: profile.name)
+            }
+            secret = value.text
         }
         return (EgressConfigFile.make(profile: profile, secret: secret, allowCIDRs: allowCIDRs, allowHosts: allowHosts), profile.caPEM)
     }

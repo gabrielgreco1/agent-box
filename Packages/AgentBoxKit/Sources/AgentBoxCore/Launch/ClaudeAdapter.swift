@@ -4,7 +4,7 @@ import Foundation
 
 /// Claude Code (06 §2.2, conferido no `--help` da 2.1.302).
 /// Ordem do argv: `executable`, `identity` (`--session-id <uuid>` | `--resume <id>` | `-c`), `profile`
-/// (modelo, esforço, permissão, `--add-dir`, `extraArgs`), `injected` (vazio na Fatia 1), `prompt` (posicional).
+/// (modelo, esforço, permissão, `--add-dir`, `extraArgs`), `injected` (vazio na Fatia 1; `--settings`/`--mcp-config`/`--plugin-dir` na Fatia 2), `prompt` (posicional).
 public struct ClaudeAdapter: ProviderAdapter {
     public init() {}
 
@@ -105,19 +105,27 @@ public struct ClaudeAdapter: ProviderAdapter {
         }
 
         // Prompt só no primeiro start (resume nunca repete).
-        var prompt: [String] = []
+        // Injeções por lançamento (Fatia 2): regeneradas idênticas em start e resume; nunca em `~/.claude`.
+        var injected: [String] = []
         var files: [LaunchFile] = []
+        if let injection = context.injection {
+            let built = try injection.claudeInjection(launchDirectory: context.launchDirectory)
+            injected = built.injected
+            files += built.files
+        }
+
+        var prompt: [String] = []
         if !resuming {
             let delivery = PromptDelivery.resolve(prompt: launch.initialPrompt, promptFile: launch.initialPromptFile, launchDirectory: context.launchDirectory)
             if let text = delivery.argumentText {
                 // `--add-dir`, `--allowedTools`, `--mcp-config` etc. são variádicos no Claude: sem `--` engoliriam o prompt.
-                if !launch.addDirs.isEmpty || !filtered.kept.isEmpty { prompt.append("--") }
+                if !launch.addDirs.isEmpty || !filtered.kept.isEmpty || injected.contains("--mcp-config") || injected.contains("--plugin-dir") { prompt.append("--") }
                 prompt.append(text)
             }
-            files = delivery.files
+            files += delivery.files
         }
 
-        let argv = ResolvedArgv(executable: [context.executablePath], identity: identity, profile: profile, injected: [], prompt: prompt)
+        let argv = ResolvedArgv(executable: [context.executablePath], identity: identity, profile: profile, injected: injected, prompt: prompt)
         return AdapterOutput(
             argv: argv, nativeConversationID: nativeID, capture: capture,
             skipsPermissions: AdapterKit.skipIndicator(in: profile), warnings: warnings, files: files

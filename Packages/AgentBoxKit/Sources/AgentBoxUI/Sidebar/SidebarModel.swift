@@ -34,7 +34,13 @@ final class SidebarModel {
     private(set) var hiddenProjects: Set<UUID> = []
     private(set) var collapsedSessions: Set<UUID> = []
     private(set) var expandedSummaries: Set<UUID> = []
-    private(set) var selectedSession: UUID?
+    private(set) var selectedSession: UUID? {
+        didSet { if oldValue != selectedSession { onSelectionChange?(selectedSession) } }
+    }
+    /// Avisa quem mostra o conteúdo da sessão (tabs e panes, T1-14) quando a seleção muda.
+    @ObservationIgnored var onSelectionChange: ((UUID?) -> Void)?
+    /// Avisa a cada snapshot novo do Store (o workspace carrega a sessão selecionada quando ela chega).
+    @ObservationIgnored var onSnapshot: ((StoreSnapshot) -> Void)?
     private(set) var pending: [PendingLaunch] = []
     /// Sessão em edição inline (03 §2.11): no máximo uma.
     private(set) var renamingSession: UUID?
@@ -101,6 +107,7 @@ final class SidebarModel {
     /// Aplica um snapshot novo. Mantém a seleção válida: se a sessão selecionada sumiu, a seleção é limpa.
     func apply(_ snap: StoreSnapshot) {
         snapshot = snap
+        onSnapshot?(snap)
         if let s = selectedSession, !snap.sessions.contains(where: { $0.id == s }) { selectedSession = nil }
         if let r = renamingSession, !snap.sessions.contains(where: { $0.id == r }) { renamingSession = nil }
         if let r = renamingProject, !snap.projects.contains(where: { $0.id == r }) { renamingProject = nil }

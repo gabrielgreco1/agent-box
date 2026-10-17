@@ -176,8 +176,20 @@ func waitUntil(_ timeout: Double = 3, _ condition: @MainActor () -> Bool) async 
         #expect(TooltipController.effectiveDelay(base: base, tooltipVisible: false, hiddenAgo: 0.31) == base)
     }
 
-    @Test func showsAfterTheDelayAndNotBefore() async {
+    /// Controlador com agendador e relógio virtuais: o atraso é cumprido por ordem de eventos, não por tempo real.
+    func makeController() -> (TooltipController, ManualScheduler) {
+        let scheduler = ManualScheduler()
         let controller = TooltipController()
+        controller.sleep = scheduler.sleep
+        controller.clock = { scheduler.now }
+        let motion = MotionPolicy()
+        motion.mode = .instant
+        controller.motion = motion
+        return (controller, scheduler)
+    }
+
+    @Test func showsAfterTheDelayAndNotBefore() async {
+        let (controller, scheduler) = makeController()
         let window = NSWindow(contentRect: NSRect(x: -4000, y: -4000, width: 200, height: 100), styleMask: [.titled], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
         defer { controller.dismiss(); window.close() }
@@ -186,13 +198,16 @@ func waitUntil(_ timeout: Double = 3, _ condition: @MainActor () -> Bool) async 
             NSRect(x: -3900, y: -3950, width: 28, height: 28)
         }
         #expect(!controller.isVisible, "ainda dentro do atraso")
-        #expect(await waitUntil { controller.visibleKey == key })
+        await scheduler.waitForSleepers()
+        await scheduler.advance(by: 0.19)
+        #expect(!controller.isVisible, "o atraso de 0,2 s ainda não venceu")
+        await scheduler.advance(by: 0.02)
         #expect(controller.visibleKey == key)
         #expect(controller.currentContent == TooltipContent("Split Right", shortcut: "⌘D"))
     }
 
     @Test func leavingBeforeTheDelayCancelsAndClickDismisses() async {
-        let controller = TooltipController()
+        let (controller, scheduler) = makeController()
         let window = NSWindow(contentRect: NSRect(x: -4000, y: -4000, width: 200, height: 100), styleMask: [.titled], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
         defer { controller.dismiss(); window.close() }
@@ -200,34 +215,38 @@ func waitUntil(_ timeout: Double = 3, _ condition: @MainActor () -> Bool) async 
         let anchor: () -> NSRect? = { NSRect(x: -3900, y: -3950, width: 28, height: 28) }
         controller.hoverBegan(key: key, content: TooltipContent("Back"), delay: 0.15, side: .bottom, window: window, anchor: anchor)
         controller.hoverEnded(key: key)
-        try? await Task.sleep(for: .milliseconds(300))
+        await scheduler.advance(by: 1)
         #expect(!controller.isVisible, "saiu antes do atraso")
         controller.hoverBegan(key: key, content: TooltipContent("Back"), delay: 0.05, side: .bottom, window: window, anchor: anchor)
-        #expect(await waitUntil { controller.isVisible })
+        await scheduler.waitForSleepers()
+        await scheduler.advance(by: 0.05)
+        #expect(controller.isVisible)
         controller.dismiss()
         #expect(!controller.isVisible, "clique, rolagem ou tecla fecham")
     }
 
     @Test func suppressedControllerNeverOpens() async {
-        let controller = TooltipController()
+        let (controller, scheduler) = makeController()
         controller.isSuppressed = { true }
         controller.hoverBegan(key: UUID(), content: TooltipContent("x"), delay: 0, side: .top, window: nil) { .zero }
-        try? await Task.sleep(for: .milliseconds(80))
+        await scheduler.advance(by: 1)
         #expect(!controller.isVisible && controller.pendingKey == nil)
     }
 
     @Test func secondTooltipWithinTheChainWindowOpensImmediately() async {
-        let controller = TooltipController()
+        let (controller, scheduler) = makeController()
         let window = NSWindow(contentRect: NSRect(x: -4000, y: -4000, width: 200, height: 100), styleMask: [.titled], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
         defer { controller.dismiss(); window.close() }
         let anchor: () -> NSRect? = { NSRect(x: -3900, y: -3950, width: 28, height: 28) }
         let a = UUID(), b = UUID()
         controller.hoverBegan(key: a, content: TooltipContent("A"), delay: 0, side: .bottom, window: window, anchor: anchor)
-        #expect(await waitUntil { controller.visibleKey == a })
+        await scheduler.advance(by: 0)
+        #expect(controller.visibleKey == a)
         controller.hoverEnded(key: a)
         controller.hoverBegan(key: b, content: TooltipContent("B"), delay: 5, side: .bottom, window: window, anchor: anchor)
-        #expect(await waitUntil(1) { controller.visibleKey == b }, "base de 5 s ignorada: um tooltip acabou de fechar")
+        await scheduler.advance(by: 0)
+        #expect(controller.visibleKey == b, "base de 5 s ignorada: um tooltip acabou de fechar, sem avançar o tempo")
     }
 
     @Test func bubbleSizesToItsContentAndCapsAt280() {

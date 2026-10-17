@@ -78,6 +78,10 @@ public final class OverlayRouter {
     @ObservationIgnored public private(set) var popoverFrame: CGRect?
     private var popoverRemoval: Task<Void, Never>?
 
+    /// Política de motion e espera injetáveis (padrão: globais); testes passam instâncias próprias.
+    @ObservationIgnored public var motion: MotionPolicy = .shared
+    @ObservationIgnored public var sleep: DSSleep = dsSystemSleep
+
     public init() {}
 
     /// Overlays visíveis e interativos (os que estão saindo não contam).
@@ -161,7 +165,7 @@ public final class OverlayRouter {
         if restoreFocus {
             if live.isEmpty { focus?.restore() } else { focus?.restorePopover() }
         }
-        let wait = animated ? Self.popoverExitWait() : 0
+        let wait = animated ? popoverExitWait() : 0
         if wait <= 0 {
             popover = nil
             popoverFrame = nil
@@ -171,8 +175,9 @@ public final class OverlayRouter {
         entry.isClosing = true
         popover = entry
         let id = entry.id
+        let delay = self.sleep
         popoverRemoval = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(wait))
+            await delay(wait)
             guard !Task.isCancelled, let self, self.popover?.id == id else { return }
             self.popover = nil
             self.popoverFrame = nil
@@ -180,8 +185,8 @@ public final class OverlayRouter {
         }
     }
 
-    static func popoverExitWait() -> Double {
-        switch MotionPolicy.shared.resolution {
+    func popoverExitWait() -> Double {
+        switch motion.resolution {
         case .none: 0
         case .crossfade(let d): d
         case .normal(let scale): OverlayMotion.popoverExitDuration * scale
@@ -215,13 +220,14 @@ public final class OverlayRouter {
     // MARK: Tempo
 
     private func scheduleRemoval(of id: UUID) {
-        let wait = Self.exitWait()
+        let wait = exitWait()
         if wait <= 0 {
             finishRemoval(id)
             return
         }
+        let delay = self.sleep
         pendingRemovals[id] = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(wait))
+            await delay(wait)
             guard !Task.isCancelled else { return }
             self?.finishRemoval(id)
         }
@@ -235,23 +241,24 @@ public final class OverlayRouter {
     }
 
     private func scheduleOpenEvents() {
-        let scale = Self.durationScale()
+        let scale = durationScale()
         guard let scale else {
             record("M-101 settled")
             record("M-101 end")
             return
         }
+        let delay = self.sleep
         Task { [weak self] in
-            try? await Task.sleep(for: .seconds(OverlayMotion.enterDuration * scale))
+            await delay(OverlayMotion.enterDuration * scale)
             self?.record("M-101 settled")
-            try? await Task.sleep(for: .seconds(OverlayMotion.endTime * scale - OverlayMotion.enterDuration * scale))
+            await delay(OverlayMotion.endTime * scale - OverlayMotion.enterDuration * scale)
             self?.record("M-101 end")
         }
     }
 
     /// Duração real da saída sob a política de motion (0 = sem animação).
-    static func exitWait() -> Double {
-        switch MotionPolicy.shared.resolution {
+    func exitWait() -> Double {
+        switch motion.resolution {
         case .none: 0
         case .crossfade(let d): d
         case .normal(let scale): OverlayMotion.exitDuration * scale
@@ -259,8 +266,8 @@ public final class OverlayRouter {
     }
 
     /// Escala de duração da entrada; `nil` = instantâneo.
-    static func durationScale() -> Double? {
-        switch MotionPolicy.shared.resolution {
+    func durationScale() -> Double? {
+        switch motion.resolution {
         case .none: nil
         case .crossfade: 1
         case .normal(let scale): scale

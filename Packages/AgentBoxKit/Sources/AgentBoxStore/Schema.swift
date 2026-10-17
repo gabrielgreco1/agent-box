@@ -367,14 +367,37 @@ enum StoreMigrations {
         """)
     }
 
-    /// `v4_proxy_ext` (T3-02, 07 §2.6): campos do `ProxyProfile` que `v3_computers` não tem. Tabela 1:1 em vez de ALTER, para não
+    /// `v4_vault_catalog` (T2-10): metadados do Vault (`secret`, 01 §5.13) e do catálogo por referência
+    /// (`catalog_item`, 06 §4.1). Só `ALTER TABLE ADD COLUMN`; as tabelas de `v2_activity` ficam como publicadas.
+    /// `catalog_item.id` = hash de fonte + caminho; `missing_at` marca o item cuja origem sumiu (nunca apagamos o histórico).
+    static let v4VaultCatalog = StoreMigration(id: "v4_vault_catalog") { db in
+        try db.execute(sql: """
+        ALTER TABLE secret ADD COLUMN kind TEXT NOT NULL DEFAULT 'envVar'
+            CHECK (kind IN ('proxyCredential','envVar','claudeSetupToken','codexBoxIdentity','githubPAT','boxMasterKey'));
+        ALTER TABLE secret ADD COLUMN scope TEXT NOT NULL DEFAULT 'global' CHECK (scope IN ('global','project'));
+        ALTER TABLE secret ADD COLUMN delivery TEXT NOT NULL DEFAULT 'profileEnv'
+            CHECK (delivery IN ('sidecarOnly','profileEnv','boxFileReadOnly'));
+        ALTER TABLE secret ADD COLUMN expires_at INTEGER;
+        ALTER TABLE secret ADD COLUMN imported_from TEXT;
+
+        ALTER TABLE catalog_item ADD COLUMN scope TEXT NOT NULL DEFAULT 'user' CHECK (scope IN ('user','project','plugin'));
+        ALTER TABLE catalog_item ADD COLUMN mtime INTEGER;
+        ALTER TABLE catalog_item ADD COLUMN frontmatter_json TEXT CHECK (frontmatter_json IS NULL OR json_valid(frontmatter_json));
+        ALTER TABLE catalog_item ADD COLUMN parse_error TEXT;
+        ALTER TABLE catalog_item ADD COLUMN shadowed_by TEXT;
+        CREATE INDEX catalog_item_name ON catalog_item(kind, name);
+        """)
+    }
+
+
+    /// `v5_proxy_ext` (T3-02, 07 §2.6): campos do `ProxyProfile` que `v3_computers` não tem (encadeada após `v4_vault_catalog`). Tabela 1:1 em vez de ALTER, para não
     /// tocar nas tabelas publicadas. Continua sem teto de orçamento (P13): preço é informativo.
-    /// `secret_storage`: `file` = arquivo 0600 em App Support até o Vault (T2-10); `vault` = item do Vault.
-    static let v4ProxyExt = StoreMigration(id: "v4_proxy_ext") { db in
+    /// `secret_storage`: `vault` = item do Vault (T2-10).
+    static let v5ProxyExt = StoreMigration(id: "v5_proxy_ext") { db in
         try db.execute(sql: """
         CREATE TABLE proxy_ext (
             proxy_id TEXT PRIMARY KEY NOT NULL REFERENCES proxy(id) ON DELETE CASCADE,
-            secret_storage TEXT NOT NULL DEFAULT 'file' CHECK (secret_storage IN ('vault','file')),
+            secret_storage TEXT NOT NULL DEFAULT 'vault' CHECK (secret_storage IN ('vault','file')),
             geo_json TEXT CHECK (geo_json IS NULL OR json_valid(geo_json)),
             render_endpoint TEXT,
             ca_pem TEXT,
@@ -384,7 +407,8 @@ enum StoreMigrations {
         """)
     }
 
-    static let all: [StoreMigration] = [v1Initial, v2Activity, v3Computers, v4ProxyExt]
+
+    static let all: [StoreMigration] = [v1Initial, v2Activity, v3Computers, v4VaultCatalog, v5ProxyExt]
 
     static func migrator(_ migrations: [StoreMigration]) -> DatabaseMigrator {
         var m = DatabaseMigrator()
