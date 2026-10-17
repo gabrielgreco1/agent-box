@@ -1,0 +1,36 @@
+### v120 main metal=1 ansi
+views=4 metalActive=4 mode=main workload=ansi screen=120Hz
+RESULT mode=main metal=1 workload=ansi frames=1161 interval_ms p50=8.34 p95=14.55 p99=16.71 max=42.85 dropped(>1.5x 8.3ms)=74  mainWork_ms p50=5.51 p99=6.44 max=6.85  fed=139.2 MiB (13.9 MiB/s total, 3.5/pane)
+### v120 main metal=0 ansi
+views=4 metalActive=0 mode=main workload=ansi screen=120Hz
+RESULT mode=main metal=0 workload=ansi frames=1263 interval_ms p50=8.33 p95=10.45 p99=16.67 max=75.02 dropped(>1.5x 8.3ms)=33  mainWork_ms p50=5.40 p99=6.27 max=6.76  fed=143.1 MiB (14.3 MiB/s total, 3.6/pane)
+### v199 main metal=1 ansi
+views=4 metalActive=4 mode=main workload=ansi screen=120Hz
+RESULT mode=main metal=1 workload=ansi frames=1310 interval_ms p50=8.33 p95=8.35 p99=8.39 max=19.68 dropped(>1.5x 8.3ms)=4  mainWork_ms p50=2.74 p99=3.35 max=5.42  fed=294.0 MiB (29.4 MiB/s total, 7.3/pane)
+### v199 main metal=0 ansi
+views=4 metalActive=0 mode=main workload=ansi screen=120Hz
+RESULT mode=main metal=0 workload=ansi frames=1124 interval_ms p50=9.47 p95=12.19 p99=13.92 max=20.02 dropped(>1.5x 8.3ms)=41  mainWork_ms p50=2.31 p99=3.03 max=6.56  fed=247.8 MiB (24.8 MiB/s total, 6.2/pane)
+### v199 bg metal=1 ansi
+views=4 metalActive=4 mode=bg workload=ansi screen=120Hz
+RESULT mode=bg metal=1 workload=ansi frames=1310 interval_ms p50=8.33 p95=8.35 p99=8.36 max=15.67 dropped(>1.5x 8.3ms)=2  mainWork_ms p50=0.00 p99=0.00 max=0.01  fed=4318.3 MiB (431.8 MiB/s total, 108.0/pane)
+### v199 bg metal=0 ansi
+views=4 metalActive=0 mode=bg workload=ansi screen=120Hz
+RESULT mode=bg metal=0 workload=ansi frames=1201 interval_ms p50=8.79 p95=10.97 p99=13.61 max=17.48 dropped(>1.5x 8.3ms)=16  mainWork_ms p50=0.00 p99=0.00 max=0.00  fed=4273.4 MiB (427.3 MiB/s total, 106.8/pane)
+### v120 main metal=1 scroll
+views=4 metalActive=4 mode=main workload=scroll screen=120Hz
+RESULT mode=main metal=1 workload=scroll frames=1010 interval_ms p50=8.34 p95=16.66 p99=16.68 max=16.74 dropped(>1.5x 8.3ms)=239  mainWork_ms p50=7.65 p99=8.04 max=8.81  fed=110.0 MiB (11.0 MiB/s total, 2.7/pane)
+### v120 main metal=0 scroll
+views=4 metalActive=0 mode=main workload=scroll screen=120Hz
+RESULT mode=main metal=0 workload=scroll frames=1057 interval_ms p50=8.34 p95=16.67 p99=16.68 max=16.68 dropped(>1.5x 8.3ms)=252  mainWork_ms p50=7.58 p99=8.04 max=8.35  fed=112.2 MiB (11.2 MiB/s total, 2.8/pane)
+### v199 main metal=1 scroll
+views=4 metalActive=4 mode=main workload=scroll screen=120Hz
+RESULT mode=main metal=1 workload=scroll frames=1313 interval_ms p50=8.33 p95=8.35 p99=8.35 max=8.61 dropped(>1.5x 8.3ms)=0  mainWork_ms p50=1.89 p99=2.33 max=2.42  fed=294.5 MiB (29.5 MiB/s total, 7.4/pane)
+### v199 main metal=0 scroll
+views=4 metalActive=0 mode=main workload=scroll screen=120Hz
+RESULT mode=main metal=0 workload=scroll frames=1299 interval_ms p50=8.33 p95=8.63 p99=9.92 max=18.65 dropped(>1.5x 8.3ms)=5  mainWork_ms p50=1.49 p99=1.81 max=2.10  fed=290.8 MiB (29.1 MiB/s total, 7.3/pane)
+### v199 bg metal=1 scroll
+views=4 metalActive=4 mode=bg workload=scroll screen=120Hz
+RESULT mode=bg metal=1 workload=scroll frames=1311 interval_ms p50=8.33 p95=8.34 p99=8.35 max=8.61 dropped(>1.5x 8.3ms)=0  mainWork_ms p50=0.00 p99=0.00 max=0.01  fed=5864.7 MiB (586.5 MiB/s total, 146.6/pane)
+### v199 bg metal=0 scroll
+views=4 metalActive=0 mode=bg workload=scroll screen=120Hz
+RESULT mode=bg metal=0 workload=scroll frames=1301 interval_ms p50=8.34 p95=8.85 p99=9.15 max=16.39 dropped(>1.5x 8.3ms)=2  mainWork_ms p50=0.00 p99=0.00 max=0.01  fed=5940.9 MiB (594.1 MiB/s total, 148.5/pane)

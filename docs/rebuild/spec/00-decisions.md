@@ -36,6 +36,8 @@ Fonte de verdade para todos os capítulos da spec. Data: 2026-10-16. Auditoria q
 | P18 | D-Codex-1 = **opção B**: o app passa o trust dos próprios hooks via `-c 'hooks.state=…'` inline (S-05), sem escrever em `~/.codex`. Fallback: rollout com estado `estimated`. Adapter Codex usa `--no-daemon` por padrão. |
 | P19 | Desenvolvimento por agentes Haiku 5.5 (tarefas mecânicas/checagens) e Sonnet 5.5 (código), gerenciados pela sessão principal. Gate P14 (OK do dono por tela) passa a ser: comparação lado a lado gerada e revisada pela sessão principal; o dono revisa o conjunto ao fim de cada fatia. |
 
+| P20 | SwiftTerm: adotar **1.99.0 fixado na revisão `2dad6a1`** a partir da T1-09 (S-02: parse 5–11× mais rápido, 0–0,3% de quadros perdidos com 4 panes Metal vs 6–24% na 1.20.0, `feed`/`send` seguros fora do main). Condição: explicar a diferença de `getBufferAsData` no dump ANSI antes de fechar a T1-09; se não explicável, voltar para 1.20.0 com `feed` no main e orçamento AR-406. |
+
 ## Decisões técnicas (recomendações dos revisores adotadas)
 
 | # | Decisão |

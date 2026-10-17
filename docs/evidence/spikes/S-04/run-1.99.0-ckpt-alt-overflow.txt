@@ -1,0 +1,24 @@
+  alt-overflow rep 1: replay=true redraw=true daemonRef=true snap=4064310..8258104 ckpt gap=false
+  alt-overflow rep 2: replay=true redraw=true daemonRef=true snap=4064502..8258104 ckpt gap=false
+  alt-overflow rep 3: replay=true redraw=true daemonRef=true snap=4064438..8258104 ckpt gap=false
+  alt-overflow rep 4: replay=true redraw=true daemonRef=true snap=4064342..8258104 ckpt gap=false
+  alt-overflow rep 5: replay=true redraw=true daemonRef=true snap=4064470..8258104 ckpt gap=false
+  alt-overflow rep 6: replay=true redraw=true daemonRef=true snap=4064278..8258104 ckpt gap=false
+  alt-overflow rep 7: replay=true redraw=true daemonRef=true snap=4064086..8258104 ckpt gap=false
+  alt-overflow rep 8: replay=true redraw=true daemonRef=true snap=4064726..8258104 ckpt gap=false
+  alt-overflow rep 9: replay=true redraw=true daemonRef=true snap=4064342..8258104 ckpt gap=false
+  alt-overflow rep 10: replay=true redraw=true daemonRef=true snap=4066614..8258104 ckpt gap=false
+  alt-overflow rep 11: replay=true redraw=true daemonRef=true snap=4064502..8258104 ckpt gap=false
+  alt-overflow rep 12: replay=true redraw=true daemonRef=true snap=4073014..8258104 ckpt gap=false
+  alt-overflow rep 13: replay=true redraw=true daemonRef=true snap=4064470..8258104 ckpt gap=false
+  alt-overflow rep 14: replay=true redraw=true daemonRef=true snap=4064854..8258104 ckpt gap=false
+  alt-overflow rep 15: replay=true redraw=true daemonRef=true snap=4065078..8258104 ckpt gap=false
+  alt-overflow rep 16: replay=true redraw=true daemonRef=true snap=4064790..8258104 ckpt gap=false
+  alt-overflow rep 17: replay=true redraw=true daemonRef=true snap=4065494..8258104 ckpt gap=false
+  alt-overflow rep 18: replay=true redraw=true daemonRef=true snap=4064598..8258104 ckpt gap=false
+  alt-overflow rep 19: replay=true redraw=true daemonRef=true snap=4064822..8258104 ckpt gap=false
+  alt-overflow rep 20: replay=true redraw=true daemonRef=true snap=4065558..8258104 ckpt gap=false
+SUMMARY alt-overflow: replay-only 20/20, after-redraw 20/20, daemon-ref==A 20/20  (last attach: 4065558..8258104 ckpt)
+
+==== ALL ====
+SUMMARY alt-overflow: replay-only 20/20, after-redraw 20/20, daemon-ref==A 20/20  (last attach: 4065558..8258104 ckpt)
