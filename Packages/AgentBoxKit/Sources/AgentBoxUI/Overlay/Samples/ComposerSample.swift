@@ -44,7 +44,7 @@ struct ComposerSampleContent: View {
             .overlayGroup(1)
             VStack(alignment: .leading, spacing: DS.Space.s3) {
                 HStack(alignment: .top, spacing: DS.Space.s3) {
-                    field("Agent") { fauxSelect(symbol: "terminal", text: "Claude Code", detail: nil) }
+                    field("Agent") { fauxSelect(symbol: nil, provider: .claude, text: "Claude Code", detail: nil) }
                     field("Profile") { fauxSelect(symbol: nil, text: "Claude · Skip permissions", detail: nil) }
                 }
                 field("Prompt") {
@@ -75,8 +75,9 @@ struct ComposerSampleContent: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func fauxSelect(symbol: String?, text: String, detail: String?) -> some View {
+    private func fauxSelect(symbol: String?, provider: TerminalProvider? = nil, text: String, detail: String?) -> some View {
         HStack(spacing: DS.Space.s2) {
+            if let provider { DSAgentLogo(provider, size: DS.Space.s3 + DS.Space.s0_5) }
             if let symbol { Image(systemName: symbol).font(.system(size: DS.Space.s3 + DS.Space.s0_5)).foregroundStyle(DS.Color.textSecondary) }
             Text(verbatim: text).dsFont(DS.Font.input).foregroundStyle(DS.Color.textPrimary)
             if let detail { Text(verbatim: detail).dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textTertiary) }
