@@ -13,18 +13,22 @@ final class ChromeContainerView: NSView {
     let overlay: NSView
     /// Settings em página inteira (03 §14): cobre sidebar, centro e painel; a faixa da titlebar fica por cima.
     let settings: NSView
+    /// Botões Files · Insights · painel no canto superior direito (10-right-panel §1): fixos sobre a tab row ou a barra do painel.
+    let panelButtons: NSView
     var stripWidth: () -> CGFloat = { 0 }
 
-    init(split: NSView, strip: NSView, overlay: NSView, settings: NSView) {
+    init(split: NSView, strip: NSView, overlay: NSView, settings: NSView, panelButtons: NSView) {
         self.split = split
         self.strip = strip
         self.overlay = overlay
         self.settings = settings
+        self.panelButtons = panelButtons
         super.init(frame: .zero)
         settings.isHidden = true
         addSubview(split)
         addSubview(settings)
         addSubview(strip)
+        addSubview(panelButtons)
         addSubview(overlay)
     }
 
@@ -37,6 +41,8 @@ final class ChromeContainerView: NSView {
         overlay.frame = bounds
         let h = DS.Layout.titlebarHeight
         strip.frame = NSRect(x: 0, y: bounds.height - h, width: min(stripWidth(), bounds.width), height: h)
+        let buttonsWidth = min(RightPanelMetrics.stripButtons, bounds.width)
+        panelButtons.frame = NSRect(x: bounds.width - buttonsWidth, y: bounds.height - h, width: buttonsWidth, height: h)
     }
 }
 
@@ -48,6 +54,7 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
     private let split: MainSplitViewController
     private let container: ChromeContainerView
     private let strip: ChromeHostingView
+    private let panelButtons: ChromeHostingView
     private let overlayHost: OverlayHostingView
     private let settingsHost: ChromeHostingView
     private let overlayFocus = OverlayFocusCoordinator()
@@ -63,6 +70,11 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
             content: TitlebarStrip(env: env).environment(\.elementStore, env.elements).environment(\.a11yParent, .windowMain))
         strip.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
         self.strip = strip
+        let panelButtons = ChromeHostingView(
+            content: RightPanelStripButtons(controller: env.rightPanel).environment(\.elementStore, env.elements)
+                .environment(\.actionRegistry, env.registry).environment(\.a11yParent, .windowMain))
+        panelButtons.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
+        self.panelButtons = panelButtons
         let overlayHost = OverlayHostingView(router: env.overlays, toasts: env.toasts, registry: env.registry, elements: env.elements)
         self.overlayHost = overlayHost
         let settingsHost = ChromeHostingView(
@@ -70,7 +82,7 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
                 .environment(\.overlayRouter, env.overlays).environment(\.a11yParent, .windowMain))
         settingsHost.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
         self.settingsHost = settingsHost
-        container = ChromeContainerView(split: split.view, strip: strip, overlay: overlayHost, settings: settingsHost)
+        container = ChromeContainerView(split: split.view, strip: strip, overlay: overlayHost, settings: settingsHost, panelButtons: panelButtons)
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: DS.Layout.windowDefaultWidth, height: DS.Layout.windowDefaultHeight),
@@ -135,6 +147,7 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
             previous(open)
             guard let self else { return }
             self.split.view.isHidden = open
+            self.panelButtons.isHidden = open
             self.settingsHost.isHidden = !open
             self.container.needsLayout = true
             if open { self.window?.makeFirstResponder(self.settingsHost) }

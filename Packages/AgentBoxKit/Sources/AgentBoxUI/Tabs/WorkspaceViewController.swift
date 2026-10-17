@@ -101,7 +101,7 @@ final class WorkspaceViewController: NSViewController {
                 .environment(\.actionRegistry, env.registry).environment(\.a11yParent, .windowMain))
         landing.inputBlocked = blocked
         let tabRow = ChromeHostingView(
-            content: TabRowView(model: env.workspace).environment(\.elementStore, env.elements)
+            content: TabRowView(model: env.workspace, rightPanel: env.rightPanel).environment(\.elementStore, env.elements)
                 .environment(\.actionRegistry, env.registry).environment(\.a11yParent, .windowMain))
         tabRow.inputBlocked = blocked
         let area = PaneAreaView(model: env.workspace, registry: env.registry, elements: env.elements, router: env.terminalRouter)

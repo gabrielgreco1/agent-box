@@ -27,7 +27,7 @@ import Testing
         let binding = Binding(get: { box.text }, set: { box.text = $0 })
         let root = PromptEditor(text: binding, placeholder: "Describe the task", autofocus: autofocus, onSubmit: onSubmit, onEscape: onEscape)
             .frame(width: 400)
-        let window = NSWindow(contentRect: NSRect(x: -4000, y: -4000, width: 400, height: 300), styleMask: [.titled], backing: .buffered, defer: false)
+        let window = NSWindow(contentRect: NSRect(x: -20000, y: -20000, width: 400, height: 300), styleMask: [.titled], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
         let host = NSHostingView(rootView: root)
         window.contentView = host

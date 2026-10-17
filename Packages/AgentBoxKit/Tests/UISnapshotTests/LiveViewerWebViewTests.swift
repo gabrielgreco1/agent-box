@@ -44,7 +44,7 @@ struct LiveViewerWebViewTests {
             if events.count < 40 { events.append("\(event)") }
             original(event)
         }
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1000, height: 640), styleMask: [.titled], backing: .buffered, defer: false)
+        let window = NSWindow(contentRect: NSRect(x: -20000, y: -20000, width: 1000, height: 640), styleMask: [.titled], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
         window.contentView = controller.web
         window.orderFront(nil)

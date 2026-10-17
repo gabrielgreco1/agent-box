@@ -190,7 +190,7 @@ func waitUntil(_ timeout: Double = 3, _ condition: @MainActor () -> Bool) async 
 
     @Test func showsAfterTheDelayAndNotBefore() async {
         let (controller, scheduler) = makeController()
-        let window = NSWindow(contentRect: NSRect(x: -4000, y: -4000, width: 200, height: 100), styleMask: [.titled], backing: .buffered, defer: false)
+        let window = NSWindow(contentRect: NSRect(x: -20000, y: -20000, width: 200, height: 100), styleMask: [.titled], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
         defer { controller.dismiss(); window.close() }
         let key = UUID()
@@ -208,7 +208,7 @@ func waitUntil(_ timeout: Double = 3, _ condition: @MainActor () -> Bool) async 
 
     @Test func leavingBeforeTheDelayCancelsAndClickDismisses() async {
         let (controller, scheduler) = makeController()
-        let window = NSWindow(contentRect: NSRect(x: -4000, y: -4000, width: 200, height: 100), styleMask: [.titled], backing: .buffered, defer: false)
+        let window = NSWindow(contentRect: NSRect(x: -20000, y: -20000, width: 200, height: 100), styleMask: [.titled], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
         defer { controller.dismiss(); window.close() }
         let key = UUID()
@@ -235,7 +235,7 @@ func waitUntil(_ timeout: Double = 3, _ condition: @MainActor () -> Bool) async 
 
     @Test func secondTooltipWithinTheChainWindowOpensImmediately() async {
         let (controller, scheduler) = makeController()
-        let window = NSWindow(contentRect: NSRect(x: -4000, y: -4000, width: 200, height: 100), styleMask: [.titled], backing: .buffered, defer: false)
+        let window = NSWindow(contentRect: NSRect(x: -20000, y: -20000, width: 200, height: 100), styleMask: [.titled], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
         defer { controller.dismiss(); window.close() }
         let anchor: () -> NSRect? = { NSRect(x: -3900, y: -3950, width: 28, height: 28) }

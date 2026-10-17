@@ -122,6 +122,55 @@ final class OpenInController {
         return list
     }
 
+    // MARK: Arquivos (visualizador do painel Files)
+
+    /// Entradas do menu `Open in…` de um arquivo: Finder, app padrão do sistema e editores instalados.
+    func fileEntries() -> [DSMenuEntry] {
+        var list: [DSMenuEntry] = [
+            .item(DSMenuItem("finder", String(localized: "Reveal in Finder", bundle: .module), icon: .symbol("folder"), action: .filesOpenInTarget, argument: .select("finder"))),
+            .item(DSMenuItem("default", String(localized: "Default App", bundle: .module), icon: .symbol("arrow.up.forward.app"), action: .filesOpenInTarget, argument: .select("default"))),
+        ]
+        let editors = installedEditors()
+        if !editors.isEmpty {
+            list.append(.separator("editors"))
+            for app in editors {
+                list.append(.item(DSMenuItem(app.id, app.name, icon: .symbol("chevron.left.forwardslash.chevron.right"), action: .filesOpenInTarget, argument: .select(app.id))))
+            }
+        }
+        return list
+    }
+
+    /// Abre um arquivo: `target` nil = editor preferido (senão o app padrão); `default` = app padrão; ou o id de um editor.
+    func openFile(_ url: URL, target: String?) async throws -> String {
+        let action = ActionID.filesOpenInTarget
+        if target == "default" || (target == nil && preferredEditor() == nil) {
+            let opened = await MainActor.run { NSWorkspace.shared.open(url) }
+            guard opened else { throw ActionError.failed(action, message: String(localized: "Couldn't open the file.", bundle: .module)) }
+            return "default"
+        }
+        let app: ExternalApp
+        if let target {
+            guard let found = ExternalAppCatalog.app(forTarget: target) else { throw ActionError.failed(action, message: "unknown target \(target)") }
+            app = found
+        } else if let preferred = preferredEditor() {
+            app = preferred
+        } else {
+            throw ActionError.failed(action, message: String(localized: "Choose an editor in Settings › General.", bundle: .module))
+        }
+        guard let appURL = system.applicationURL(app.bundleID) else {
+            throw ActionError.failed(action, message: String(localized: "\(app.name) isn't installed.", bundle: .module))
+        }
+        do {
+            try await system.open(url, appURL)
+        } catch {
+            log.error("open file in \(app.bundleID) failed: \(error)")
+            toasts.show(kind: .error, title: String(localized: "Couldn't open in \(app.name).", bundle: .module), detail: error.localizedDescription)
+            throw ActionError.failed(action, message: error.localizedDescription)
+        }
+        if app.kind == .editor { rememberEditor(app) }
+        return app.id
+    }
+
     // MARK: Abrir
 
     func open(itemID id: UUID, target: String) async throws -> String {

@@ -62,8 +62,9 @@ import Testing
         let controller = MainWindowController(env: env, autosaveName: nil)
         let window = controller.window!
         window.setContentSize(size)
-        window.setFrameOrigin(NSPoint(x: -4000, y: -4000))
-        controller.present(activate: false)  // fora da tela; sem ativar o app nem roubar foco
+        // Nunca aparece para o dono: app sem presença visível, janela muito fora da tela, sem orderFront nem ativação.
+        NSApp.setActivationPolicy(.prohibited)
+        window.setFrameOrigin(NSPoint(x: -20000, y: -20000))
         window.contentView?.layoutSubtreeIfNeeded()
         for _ in 0..<80 {
             try? await Task.sleep(for: .milliseconds(25))

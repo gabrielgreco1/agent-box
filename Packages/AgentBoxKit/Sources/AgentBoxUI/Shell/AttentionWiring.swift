@@ -19,6 +19,10 @@ extension AppEnvironment {
         let service = ActivityService(store: store, spoolDirectory: HookSpool.directory(forSocketPath: socketPath))
         do { try await service.start() } catch { LogFacade(.app, category: "attention").error("activity service failed to start: \(error)") }
         activity = service
+        // O `cwd` dos hooks (o Claude Code não emite OSC 7) alimenta o módulo Files (10-right-panel §2).
+        await service.setCwdObserver { [files] terminal, path in
+            await MainActor.run { files.noteCwd(path, terminal: terminal, source: .hook) }
+        }
         await attention.start(activity: service, store: store)
     }
 

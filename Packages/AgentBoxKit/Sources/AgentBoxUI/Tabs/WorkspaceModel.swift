@@ -100,6 +100,8 @@ final class WorkspaceModel {
     private(set) var rimFlash: (terminalID: UUID, nonce: Int)?
     /// Atenção (Fatia 2): estado de atividade dos agentes e não lido. `nil` na Fatia 1.
     @ObservationIgnored var attention: AttentionCoordinator?
+    /// `cwd` novo de um terminal (OSC 7): o módulo Files acompanha (10-right-panel §2).
+    @ObservationIgnored var onCwd: ((UUID, String) -> Void)?
     /// BEL em um terminal (06 §3.6).
     @ObservationIgnored var onBell: ((UUID) -> Void)?
 
@@ -1071,6 +1073,7 @@ final class WorkspaceModel {
         case .cwd(let e):
             update(terminal: terminalID) { $0.cwd = e.path }
             debouncedSave(terminalID)
+            onCwd?(terminalID, e.path)
         case .bell:
             onBell?(terminalID)
         case .stillAlive:

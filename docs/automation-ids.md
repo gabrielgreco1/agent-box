@@ -254,6 +254,41 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `rightPanel.context.item.<kind>.<id>.insert`
 - `rightPanel.computer.<id>.tab.<name>`
 
+### Painel direito (contêiner e módulos, 10-right-panel)
+
+- `rightPanel.module.<id>`
+- `rightPanel.module.<id>.header`
+- `rightPanel.module.<id>.minimize`
+- `rightPanel.divider`
+- `rightPanel.insights.empty`
+- `tabs.filesToggle`
+- `tabs.insightsToggle`
+
+### Painel direito (Files, 10-right-panel §2)
+
+- `rightPanel.files`
+- `rightPanel.files.chip`
+- `rightPanel.files.root`
+- `rightPanel.files.sessionFolder`
+- `rightPanel.files.showIgnored`
+- `rightPanel.files.refresh`
+- `rightPanel.files.tree`
+- `rightPanel.files.empty`
+- `rightPanel.files.row.<path>`
+- `rightPanel.files.viewer`
+- `rightPanel.files.viewer.back`
+- `rightPanel.files.viewer.name`
+- `rightPanel.files.viewer.find`
+- `rightPanel.files.viewer.findField`
+- `rightPanel.files.viewer.findCount`
+- `rightPanel.files.viewer.findNext`
+- `rightPanel.files.viewer.findPrevious`
+- `rightPanel.files.viewer.findClose`
+- `rightPanel.files.viewer.openIn`
+- `rightPanel.files.viewer.copyPath`
+- `rightPanel.files.viewer.code`
+- `rightPanel.files.viewer.empty`
+
 ### Viewer
 
 - `viewer.<computerId>`
@@ -770,3 +805,25 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `dialog.about.copy` | Copy Version Info (§16.14) | — | slice1 |
 | `dialog.newBatch.confirm` | Start Batch | ⌘↵ | slice3 |
 | `dialog.newBatch.importCSV` | Import CSV… (§16.15) | ⌘↵ | slice3 |
+| `rightPanel.toggleFiles` | Toggle Files | ⌥⌘1 | slice1 |
+| `rightPanel.toggleInsights` | Toggle Insights | ⌥⌘2 | slice1 |
+| `rightPanel.toggle` | Toggle Right Panel | ⌥⌘0 | slice1 |
+| `rightPanel.minimize` | Minimize Module | — | slice1 |
+| `rightPanel.move` | Move Module | — | slice1 |
+| `rightPanel.swap` | Swap Modules | — | slice1 |
+| `rightPanel.setWidth` | Set Panel Width | — | slice1 |
+| `rightPanel.setSplit` | Set Panel Split | — | slice1 |
+| `files.open` | Open File or Folder | — | slice1 |
+| `files.openExternal` | Open in External Editor | — | slice1 |
+| `files.closeFile` | Back to Files | — | slice1 |
+| `files.togglePin` | Pin Folder / Follow Terminal | — | slice1 |
+| `files.showSessionFolder` | Show Session Folder | — | slice1 |
+| `files.toggleIgnored` | Show / Hide Ignored Files | — | slice1 |
+| `files.refresh` | Refresh (Files) | — | slice1 |
+| `files.find` | Find in File | — | slice1 |
+| `files.findNext` | Find Next | — | slice1 |
+| `files.findPrevious` | Find Previous | — | slice1 |
+| `files.findClose` | Close Find | — | slice1 |
+| `files.copyPath` | Copy Path | — | slice1 |
+| `files.openIn` | Open in… | — | slice1 |
+| `files.openInTarget` | Open in Target | — | slice1 |

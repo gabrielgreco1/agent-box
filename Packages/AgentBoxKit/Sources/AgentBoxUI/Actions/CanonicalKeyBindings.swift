@@ -83,6 +83,9 @@ extension KeyBindingRegistry {
         // Panels e pages
         try add("⌘B", .global, .viewToggleSidebar, "Toggle Sidebar")
         try add("⌘L", .global, .viewToggleRightPanel, "Toggle Right Panel")
+        try add("⌥⌘1", .global, .rightPanelToggleFiles, "Toggle Files")
+        try add("⌥⌘2", .global, .rightPanelToggleInsights, "Toggle Insights")
+        try add("⌥⌘0", .global, .rightPanelToggle, "Toggle Right Panel (all modules)")
         try add("⇧⌘G", .global, .panelSourceControl, "Source Control")
         try add("⇧⌘C", .global, .panelComputers, "Computers panel")
         try add("⇧⌘H", .global, .panelConversations, "Conversations")

@@ -70,6 +70,10 @@ public actor ActivityService {
     private var childObserver: (@Sendable (ChildHook) async -> Void)?
     public func setChildObserver(_ observer: (@Sendable (ChildHook) async -> Void)?) { childObserver = observer }
 
+    /// `cwd` informado por um hook de um terminal (a árvore de arquivos do painel direito acompanha o agente, 10-right-panel §2).
+    private var cwdObserver: (@Sendable (UUID, String) async -> Void)?
+    public func setCwdObserver(_ observer: (@Sendable (UUID, String) async -> Void)?) { cwdObserver = observer }
+
     private var busy = false
     private var waiters: [CheckedContinuation<Void, Never>] = []
     private var watchTask: Task<Void, Never>?
@@ -171,6 +175,9 @@ public actor ActivityService {
             let projection = ActivityProjector.projection(runID: runID, terminalID: effectiveTerminal, provider: provider, state: state)
             try await store.saveActivity(projection)
             publish(runID: runID, terminalID: effectiveTerminal, state: state)
+            if inserted, let observer = cwdObserver, let cwd = payload.cwd, !cwd.isEmpty, let terminal = effectiveTerminal {
+                await observer(terminal, cwd)
+            }
             if inserted, let observer = childObserver, let agent = payload.agentID, !agent.isEmpty {
                 await observer(ChildHook(parentRunID: runID, event: name, agentID: agent, mcpServer: payload.mcpServer))
             }

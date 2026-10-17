@@ -50,6 +50,10 @@ public final class AppEnvironment {
     public let terminalRouter = TerminalActionRouter()
     /// Computadores (T3-05): viewer, página Computers, painel direito, pedido de ajuda e ações `computer.*`.
     public let computers = ComputersController()
+    /// Painel direito (10-right-panel): contêiner dos módulos Files, Insights e Computers.
+    public let rightPanel = RightPanelController()
+    /// Módulo Files: árvore do diretório da sessão que acompanha o cwd do terminal focado.
+    let files: FilesController
     /// ⌘Q com agentes vivos, modo accessory e barra de menus (T1-24).
     public private(set) var lifecycle: AppLifecycleCoordinator!
     public let automationEnabled: Bool
@@ -125,6 +129,7 @@ public final class AppEnvironment {
                 slice: slice2 ? .slice2 : .slice1, helperPath: slice2 ? Self.helperPath(environment) : nil),
             registry: registry, elements: elements)
         workspace = WorkspaceModel(runtime: runtime)
+        files = Self.makeFilesController(workspace: workspace)
         lifecycle = AppLifecycleCoordinator(registry: registry, overlays: overlays)
         registerShellActions()
         wireLifecycle()
@@ -138,6 +143,45 @@ public final class AppEnvironment {
         wireSettings()
         wireAttention(environment: environment)
         wireComputers()
+        wireRightPanel()
+    }
+
+    /// Fonte do módulo Files: sessão selecionada, pasta dela e terminal focado (nome curto do agente e último cwd conhecido).
+    private static func makeFilesController(workspace: WorkspaceModel) -> FilesController {
+        FilesController(
+            source: FilesSource(
+                sessionID: { workspace.currentSessionID },
+                sessionRoot: { workspace.currentSessionID.flatMap { workspace.sessionLookup($0)?.folderPath } },
+                focusedTerminal: {
+                    guard let id = workspace.focusedTerminalID, let terminal = workspace.terminal(id) else { return nil }
+                    let agent: String? =
+                        switch terminal.provider {
+                        case .claude: "Claude"
+                        case .codex: "Codex"
+                        case .opencode: "OpenCode"
+                        case .shell, .custom: "Terminal"
+                        }
+                    return FilesFocusedTerminal(id: id, agent: agent, fallbackCwd: terminal.cwd)
+                }))
+    }
+
+    /// Liga o painel direito: módulos, ações `rightPanel.*` e `files.*`, e o seguimento do cwd (OSC 7 e hooks).
+    private func wireRightPanel() {
+        rightPanel.toasts = toasts
+        files.toasts = toasts
+        files.externalOpen = { [openIn] url, target in
+            guard let openIn else { throw ActionError.failed(.filesOpenInTarget, message: "Open in… isn't available.") }
+            return try await openIn.openFile(url, target: target)
+        }
+        files.revealInFinder = { [openIn] url in openIn?.system.reveal(url) }
+        RightPanelModules.registerAll(into: rightPanel, env: self)
+        do { try rightPanel.register(in: registry) } catch { log.publicError("duplicate right panel registration") }
+        do { try files.register(in: registry, openIn: openIn, overlays: overlays, elements: elements) } catch {
+            log.publicError("duplicate files registration")
+        }
+        workspace.addListener { [files] in files.recompute() }
+        workspace.onCwd = { [files] terminal, path in files.noteCwd(path, terminal: terminal, source: .osc7) }
+        files.recompute()
     }
 
     /// Liga o controlador de computadores: ações `computer.*`, ⌘W fecha a página do viewer e a notificação de pedido de ajuda.
@@ -470,6 +514,8 @@ public final class AppEnvironment {
                     sidebar.beginPending(PendingLaunch(name: String(localized: "Add retry logic", bundle: .module), projectID: pid, phase: .fetching))
                 }
             }
+            await rightPanel.attach(store: opened)
+            await files.attach(store: opened)
             launcher?.attach(store: opened)
             cleanSessions?.attach(store: opened)
             openIn?.attach(store: opened)
