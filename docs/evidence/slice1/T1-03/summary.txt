@@ -1,0 +1,38 @@
+T1-03 Tokens e fontes - evidencia [T] [L]
+
+Comandos (saida completa nos arquivos ao lado):
+  scripts/bootstrap.sh --fonts   -> bootstrap.txt (Geist 1.8.1 SHA-256 conferido; Geist[wght].ttf + OFL.txt em Resources/Fonts)
+  scripts/gen.sh                 -> gen.txt
+  scripts/gen-tokens.py / --check -> gen-tokens.txt (7 arquivos; --check sai 0 quando em dia)
+  scripts/lint.sh (+ --self-test) -> lint.txt (Swift 6 estrito, warnings como erro: OK)
+  swift test (Packages/AgentBoxKit) -> tests.txt (47 testes, 13 suites, 0 falhas; 37 sao de DesignSystemTests)
+
+Testes de DesignSystemTests:
+  TokensMatchJSONTests : DS.ColorSpec/Color/NS, Terminal, Font, Space, Layout, Radius, Shadow, MotionTokens (tipado e flat)
+                         = design/tokens/*.json e design/motion/tokens.json; tokens.js (JavaScriptCore) = Swift = JSON;
+                         gen-tokens.py --check roda dentro do teste.
+  OrcaParityTests      : cada cor com referencia do Orca resolve para o mesmo valor em
+                         docs/rebuild/reference/orca-1.4.219/tokens/colors.json (dark; 'light' registrado confere);
+                         espacos na escala do Orca; raios = --radius e derivados; tamanhos, pesos e line-heights
+                         dentro do CSS do Orca; duracoes e curvas herdadas do Orca presentes na extracao.
+  FontTests            : Geist registrada em runtime, NSFont(name: "Geist") resolve, eixo wght (400/450/500/600),
+                         OFL.txt no bundle, terminal em SF Mono.
+  MotionTests          : Bezier e SpringSpec contra as tabelas de 04 §3.3/§3.4; regras de Reduce Motion, modo instant/slow,
+                         teto de fps em Low Power.
+
+Divergencias intencionais de 02 (P17: o valor extraido do Orca vence; cada uma tem 'note' no JSON fonte):
+  warning  #eab308 (--status-warning)  [02 listava #edb200, que fica em agentWorking/agentWaitingOnSubagents = yellow-500]
+  border   #ffffff12 (7,06%)  [02: white/7]      input #ffffff26 (14,9%)  [02: white/15]
+  paneTitle* usam os valores #ffffff85/b3/0a/61/0f do Orca (02: white/52, /70, /4, /6)
+Tokens sem variavel no CSS do Orca (orca=null, com note): overlayCard alfa .96, menuMaterial, scrim, scrimReducedTransparency,
+  terminalBackground, fg5..fg20 (derivados de --foreground), borderStrong.
+Line-heights que so existem em 02 (nao no CSS do Orca), marcados lineHeightSource=spec: keycap, micro, microNumeric, monoMicro, display.
+
+Nao feito nesta tarefa:
+  - Pagina de amostras lado a lado com o Orca e OK do dono (SxS, P14): exige janela/captura; fica para quando houver tela (T1-11).
+  - lib/motion.js (solver de bezier/spring em JS) e a comparacao de 101 amostras JS x Swift (04 §9.4); hoje a paridade
+    cobre os VALORES (tokens.js = Swift = JSON), nao o solver.
+  - Embutir o bundle de recursos AgentBoxKit_AgentBoxDesignSystem.bundle no .app: o app ainda so linka AgentBoxPlatform
+    (project.yml); entra quando AgentBoxDesignSystem for dependencia do app (T1-10/T1-11).
+  - lint-ui.sh (T1-02) ainda e esqueleto: as regras de literais fora de DS.* nao rodam.
+  - Light theme: so registrado no JSON ('light'), nao gerado em Swift (DS13).

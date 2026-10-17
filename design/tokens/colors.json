@@ -1,0 +1,509 @@
+{
+  "schema": "agentbox.tokens.colors",
+  "version": 1,
+  "_nota": "Fonte dos tokens de cor (02 §2, P17). 'dark' e o valor do app (v1 so escuro). 'orca' = variavel do CSS extraido (docs/rebuild/reference/orca-1.4.219/tokens/colors.json) ou 'palette:--color-*'; null exige 'note'. 'opacity' compoe sobre a superficie (nunca pre-misturar). 'light' e registro (DS13), nao gerado.",
+  "groups": [
+    {
+      "name": "surfaces",
+      "tokens": {
+        "canvas": {
+          "dark": "#0a0a0a",
+          "orca": "--background",
+          "light": "#ffffff"
+        },
+        "chrome": {
+          "dark": "#171717",
+          "orca": "--card",
+          "light": "#ffffff"
+        },
+        "sidebar": {
+          "dark": "#2a2a2a",
+          "orca": "--worktree-sidebar",
+          "light": "#f5f5f5"
+        },
+        "sidebarSelected": {
+          "dark": "#353535",
+          "orca": "--worktree-sidebar-accent",
+          "light": "#eaeaea"
+        },
+        "panel": {
+          "dark": "#171717",
+          "orca": "--sidebar",
+          "light": "#fafafa"
+        },
+        "panelSelected": {
+          "dark": "#262626",
+          "orca": "--sidebar-accent",
+          "light": "#f5f5f5"
+        },
+        "secondary": {
+          "dark": "#262626",
+          "orca": "--secondary",
+          "light": "#f5f5f5"
+        },
+        "accent": {
+          "dark": "#404040",
+          "orca": "--accent",
+          "light": "#f5f5f5"
+        },
+        "editor": {
+          "dark": "#1e1e1e",
+          "orca": "--editor-surface",
+          "light": "#ffffff"
+        },
+        "overlayCard": {
+          "dark": "#171717",
+          "opacity": 0.96,
+          "orca": "--popover",
+          "light": "#ffffff",
+          "note": "alpha 0.96 vem de dialog.tsx (02 §2.1); base = popover"
+        },
+        "overlaySolid": {
+          "dark": "#171717",
+          "orca": "--popover",
+          "light": "#ffffff",
+          "note": "Reduce Transparency (02 §8)"
+        },
+        "menuMaterial": {
+          "dark": "#000000",
+          "opacity": 0.72,
+          "orca": null,
+          "note": "sem variavel no CSS extraido (02 §0)"
+        },
+        "menuSolid": {
+          "dark": "#171717",
+          "orca": "--popover",
+          "light": "#ffffff",
+          "note": "Reduce Transparency (02 §8)"
+        },
+        "scrim": {
+          "dark": "#000000",
+          "opacity": 0.55,
+          "orca": null,
+          "note": "black/55 de dialog.tsx; sem variavel no CSS"
+        },
+        "scrimReducedTransparency": {
+          "dark": "#000000",
+          "opacity": 0.7,
+          "orca": null,
+          "note": "02 §8, Reduce Transparency"
+        },
+        "terminalBackground": {
+          "dark": "#282c34",
+          "orca": null,
+          "note": "tema do dono (Ghostty Default Style Dark); sem variavel no CSS"
+        }
+      }
+    },
+    {
+      "name": "text",
+      "tokens": {
+        "textPrimary": {
+          "dark": "#fafafa",
+          "orca": "--foreground",
+          "light": "#0a0a0a"
+        },
+        "textSecondary": {
+          "dark": "#a1a1a1",
+          "orca": "--muted-foreground",
+          "light": "#737373"
+        },
+        "textTertiary": {
+          "dark": "#a1a1a1",
+          "opacity": 0.6,
+          "orca": "--muted-foreground",
+          "light": "#737373"
+        },
+        "textQuaternary": {
+          "dark": "#a1a1a1",
+          "opacity": 0.45,
+          "orca": "--muted-foreground",
+          "light": "#737373"
+        },
+        "primary": {
+          "dark": "#e5e5e5",
+          "orca": "--primary",
+          "light": "#171717",
+          "note": "fundo do botao primario"
+        },
+        "textOnPrimary": {
+          "dark": "#171717",
+          "orca": "--primary-foreground",
+          "light": "#fafafa"
+        },
+        "navText": {
+          "dark": "#fafafa",
+          "opacity": 0.6,
+          "orca": "--foreground",
+          "light": "#0a0a0a"
+        },
+        "navIcon": {
+          "dark": "#fafafa",
+          "opacity": 0.3,
+          "orca": "--foreground",
+          "light": "#0a0a0a"
+        },
+        "paneTitle": {
+          "dark": "#ffffff85",
+          "orca": "--terminal-pane-title-on-dark-fg"
+        },
+        "paneTitleInput": {
+          "dark": "#ffffffb3",
+          "orca": "--terminal-pane-title-on-dark-input-fg"
+        },
+        "paneTitleInputBackground": {
+          "dark": "#ffffff0a",
+          "orca": "--terminal-pane-title-on-dark-input-bg"
+        },
+        "paneTitlePlaceholder": {
+          "dark": "#ffffff61",
+          "orca": "--terminal-pane-title-on-dark-placeholder"
+        },
+        "paneTitleSeparator": {
+          "dark": "#ffffff0f",
+          "orca": "--terminal-pane-title-on-dark-separator"
+        }
+      }
+    },
+    {
+      "name": "fgOpacity",
+      "tokens": {
+        "fg5": {
+          "dark": "#fafafa",
+          "opacity": 0.05,
+          "orca": null,
+          "note": "fg = #fafafa (--foreground) com opacidade; derivado, sem variavel"
+        },
+        "fg6": {
+          "dark": "#fafafa",
+          "opacity": 0.06,
+          "orca": null,
+          "note": "idem"
+        },
+        "fg8": {
+          "dark": "#fafafa",
+          "opacity": 0.08,
+          "orca": null,
+          "note": "idem"
+        },
+        "fg10": {
+          "dark": "#fafafa",
+          "opacity": 0.1,
+          "orca": null,
+          "note": "idem"
+        },
+        "fg18": {
+          "dark": "#fafafa",
+          "opacity": 0.18,
+          "orca": null,
+          "note": "idem"
+        },
+        "fg20": {
+          "dark": "#fafafa",
+          "opacity": 0.2,
+          "orca": null,
+          "note": "idem"
+        },
+        "hoverRow": {
+          "dark": "#262626",
+          "opacity": 0.4,
+          "orca": "--sidebar-accent",
+          "light": "#f5f5f5"
+        },
+        "hoverAgentRow": {
+          "dark": "#404040",
+          "opacity": 0.18,
+          "orca": "--accent",
+          "light": "#f5f5f5"
+        }
+      }
+    },
+    {
+      "name": "lines",
+      "tokens": {
+        "border": {
+          "dark": "#ffffff12",
+          "orca": "--border",
+          "light": "#e5e5e5",
+          "note": "Orca: #ffffff12 (7,06%); 02 diz white/7"
+        },
+        "borderStrong": {
+          "dark": "#ffffff",
+          "opacity": 0.14,
+          "orca": null,
+          "note": "white/14 de 02 §2.4; sem variavel"
+        },
+        "input": {
+          "dark": "#ffffff26",
+          "orca": "--input",
+          "light": "#e5e5e5",
+          "note": "Orca: #ffffff26 (14,9%); 02 diz white/15"
+        },
+        "ring": {
+          "dark": "#737373",
+          "orca": "--ring",
+          "light": "#a1a1a1"
+        },
+        "paneDivider": {
+          "dark": "#3f3f46",
+          "orca": "palette:--color-zinc-700",
+          "light": "#d4d4d8"
+        },
+        "groupDivider": {
+          "dark": "#71717a",
+          "orca": "--tab-group-split-divider",
+          "light": "#868690"
+        },
+        "groupDividerStrong": {
+          "dark": "#a1a1aa",
+          "orca": "--tab-group-split-divider-strong",
+          "light": "#71717a"
+        }
+      }
+    },
+    {
+      "name": "semantic",
+      "tokens": {
+        "destructive": {
+          "dark": "#ff6568",
+          "orca": "--destructive",
+          "light": "#e40014"
+        },
+        "destructiveFill": {
+          "dark": "#ff6568",
+          "opacity": 0.6,
+          "orca": "--destructive",
+          "light": "#e40014"
+        },
+        "destructiveBackground": {
+          "dark": "#ff6568",
+          "opacity": 0.1,
+          "orca": "--destructive",
+          "light": "#e40014"
+        },
+        "destructiveBorder": {
+          "dark": "#ff6568",
+          "opacity": 0.4,
+          "orca": "--destructive",
+          "light": "#e40014"
+        },
+        "success": {
+          "dark": "#86efac",
+          "orca": "--status-success",
+          "light": "#15803d"
+        },
+        "warning": {
+          "dark": "#eab308",
+          "orca": "--status-warning",
+          "light": "#ca8a04",
+          "note": "P17: extraido vence; 02 listava #edb200 (yellow-500), que e agentWorking"
+        },
+        "warningBackground": {
+          "dark": "#eab308",
+          "opacity": 0.1,
+          "orca": "--status-warning",
+          "light": "#ca8a04"
+        },
+        "warningBorder": {
+          "dark": "#eab308",
+          "opacity": 0.25,
+          "orca": "--status-warning",
+          "light": "#ca8a04"
+        },
+        "locate": {
+          "dark": "#54a2ff",
+          "orca": "--terminal-pane-locate",
+          "light": "#155dfc"
+        },
+        "aiAccent": {
+          "dark": "#a685ff",
+          "orca": "--ai-action-accent",
+          "light": "#8d54ff"
+        }
+      }
+    },
+    {
+      "name": "agentState",
+      "tokens": {
+        "agentStarting": {
+          "dark": "#a1a1a1",
+          "orca": "--muted-foreground",
+          "light": "#737373"
+        },
+        "agentWorking": {
+          "dark": "#edb200",
+          "orca": "palette:--color-yellow-500"
+        },
+        "agentNeedsInput": {
+          "dark": "#fe6e00",
+          "orca": "--agent-question",
+          "light": "#f05100"
+        },
+        "agentNeedsInputText": {
+          "dark": "#ffb96d",
+          "orca": "--agent-question-text",
+          "light": "#c53c00"
+        },
+        "agentWaitingOnSubagents": {
+          "dark": "#edb200",
+          "orca": "palette:--color-yellow-500"
+        },
+        "agentDone": {
+          "dark": "#00bb7f",
+          "orca": "palette:--color-emerald-500"
+        },
+        "agentFailed": {
+          "dark": "#fb2c36",
+          "orca": "palette:--color-red-500"
+        },
+        "agentInterrupted": {
+          "dark": "#a1a1a1",
+          "orca": "--muted-foreground",
+          "light": "#737373"
+        },
+        "agentIdle": {
+          "dark": "#737373",
+          "opacity": 0.4,
+          "orca": "palette:--color-neutral-500"
+        },
+        "agentUnknown": {
+          "dark": "#f99c00",
+          "orca": "palette:--color-amber-500"
+        },
+        "processExited": {
+          "dark": "#737373",
+          "orca": "palette:--color-neutral-500"
+        },
+        "unread": {
+          "dark": "#f99c00",
+          "orca": "palette:--color-amber-500"
+        },
+        "unreadTabOverlay": {
+          "dark": "#f99c00",
+          "opacity": 0.1,
+          "orca": "palette:--color-amber-500"
+        }
+      }
+    },
+    {
+      "name": "git",
+      "tokens": {
+        "gitAdded": {
+          "dark": "#81b88b",
+          "orca": "--git-decoration-added",
+          "light": "#587c0c"
+        },
+        "gitModified": {
+          "dark": "#e2c08d",
+          "orca": "--git-decoration-modified",
+          "light": "#895503"
+        },
+        "gitDeleted": {
+          "dark": "#c74e39",
+          "orca": "--git-decoration-deleted",
+          "light": "#ad0707"
+        },
+        "gitUntracked": {
+          "dark": "#73c991",
+          "orca": "--git-decoration-untracked",
+          "light": "#007100"
+        },
+        "gitRenamed": {
+          "dark": "#73c991",
+          "orca": "--git-decoration-renamed",
+          "light": "#007acc"
+        },
+        "diffAddedBg": {
+          "dark": "#81b88b",
+          "opacity": 0.16,
+          "orca": "--git-decoration-added",
+          "light": "#587c0c"
+        },
+        "diffAddedGutter": {
+          "dark": "#81b88b",
+          "opacity": 0.3,
+          "orca": "--git-decoration-added",
+          "light": "#587c0c"
+        },
+        "diffRemovedBg": {
+          "dark": "#c74e39",
+          "opacity": 0.18,
+          "orca": "--git-decoration-deleted",
+          "light": "#ad0707"
+        },
+        "diffRemovedGutter": {
+          "dark": "#c74e39",
+          "opacity": 0.32,
+          "orca": "--git-decoration-deleted",
+          "light": "#ad0707"
+        },
+        "prOpen": {
+          "dark": "#00bb7f",
+          "opacity": 0.8,
+          "orca": "palette:--color-emerald-500"
+        },
+        "prDraft": {
+          "dark": "#a1a1a1",
+          "opacity": 0.5,
+          "orca": "--muted-foreground",
+          "light": "#737373"
+        },
+        "prMerged": {
+          "dark": "#c07eff",
+          "opacity": 0.7,
+          "orca": "palette:--color-purple-400"
+        },
+        "prClosed": {
+          "dark": "#a1a1a1",
+          "opacity": 0.6,
+          "orca": "--muted-foreground",
+          "light": "#737373"
+        },
+        "checksFailing": {
+          "dark": "#ff2357",
+          "opacity": 0.85,
+          "orca": "palette:--color-rose-500"
+        },
+        "checksPending": {
+          "dark": "#f99c00",
+          "opacity": 0.85,
+          "orca": "palette:--color-amber-500"
+        },
+        "checksPassing": {
+          "dark": "#00bb7f",
+          "opacity": 0.8,
+          "orca": "palette:--color-emerald-500"
+        },
+        "conflict": {
+          "dark": "#f99c00",
+          "orca": "palette:--color-amber-500"
+        }
+      }
+    }
+  ],
+  "terminal": {
+    "background": "#282c34",
+    "foreground": "#ffffff",
+    "cursor": "#ffffff",
+    "cursorText": "#282c34",
+    "selectionBackground": "#5a7898",
+    "ansi": [
+      "#1d1f21",
+      "#cc6666",
+      "#b5bd68",
+      "#f0c674",
+      "#81a2be",
+      "#b294bb",
+      "#8abeb7",
+      "#c5c8c6",
+      "#666666",
+      "#d54e53",
+      "#b9ca4a",
+      "#e7c547",
+      "#7aa6da",
+      "#c397d8",
+      "#70c0b1",
+      "#eaeaea"
+    ]
+  }
+}
