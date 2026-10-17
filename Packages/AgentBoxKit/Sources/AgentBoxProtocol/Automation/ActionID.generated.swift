@@ -94,6 +94,7 @@ extension ActionID {
     public static let sessionUseExistingBranch = ActionID(unchecked: "session.useExistingBranch")
     public static let sessionCreateWithoutFetch = ActionID(unchecked: "session.createWithoutFetch")
     public static let sessionDiscardPending = ActionID(unchecked: "session.discardPending")
+    public static let sessionLaunch = ActionID(unchecked: "session.launch")
     public static let tabQuickLaunch = ActionID(unchecked: "tab.quickLaunch")
     public static let tabNewAgent = ActionID(unchecked: "tab.newAgent")
     public static let tabNewTerminal = ActionID(unchecked: "tab.newTerminal")
@@ -432,6 +433,7 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "session.useExistingBranch"), label: "Use Existing Branch", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "session.createWithoutFetch"), label: "Create Without Fetching", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "session.discardPending"), label: "Discard (sessão que falhou ao criar)", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "session.launch"), label: "Launch Session (automação)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "tab.quickLaunch"), label: "New Tab… (Quick Launch)", shortcut: "⌥⌘N", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "tab.newAgent"), label: "New Agent Tab", shortcut: "⌥⌘T", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "tab.newTerminal"), label: "New Terminal", shortcut: "⌘T", slice: .slice1),

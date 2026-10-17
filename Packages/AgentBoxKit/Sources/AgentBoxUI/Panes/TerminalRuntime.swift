@@ -4,32 +4,7 @@ import AgentBoxProtocol
 import AppKit
 import Darwin
 import Foundation
-
-/// Erros de lançamento mostrados no estado "Couldn't start" do pane (03 §4.6).
-enum TerminalRuntimeError: Error, Equatable {
-    case daemonUnavailable
-    case cliNotFound(String)
-    case plan(String)
-}
-
-extension TerminalRuntimeError: LocalizedError {
-    var errorDescription: String? {
-        // Sempre consultado no main (o modelo do workspace); `Bundle.module` é isolado ao MainActor neste alvo.
-        MainActor.assumeIsolated {
-            switch self {
-            case .daemonUnavailable: String(localized: "The background service isn't running.", bundle: .module)
-            case .cliNotFound(let name): String(localized: "\(name) isn't installed or isn't on your PATH.", bundle: .module)
-            case .plan(let detail): detail
-            }
-        }
-    }
-}
-
-/// Resultado de lançar um terminal no daemon (T1-14): o plano usado e a sessão criada.
-struct LaunchOutcome {
-    var plan: LaunchPlan
-    var summary: SessionSummary
-}
+import Synchronization
 
 /// Resultado de religar um terminal que já tinha sessão no daemon (reabrir o app).
 enum ReattachOutcome {
@@ -198,42 +173,28 @@ final class TerminalRuntime {
 
     // MARK: Lançamento
 
-    /// Lança o terminal: resolve o CLI, gera o plano, cria a sessão no daemon e anexa a view.
-    func launch(_ terminal: Terminal) async throws -> LaunchOutcome {
-        guard await connect() else { throw TerminalRuntimeError.daemonUnavailable }
+    /// Coordenador de lançamento (T1-16): o mesmo caminho para o primeiro start, Restart e Try Again.
+    private(set) lazy var coordinator: LaunchCoordinator = {
+        let gateway = PTYLaunchGateway(client: client, ensureConnected: { [weak self] in await self?.connect() ?? false })
+        let login = configuration.loginEnvironment
+        return LaunchCoordinator(
+            daemon: gateway,
+            configuration: .init(
+                launchRoot: configuration.daemonHome.appendingPathComponent("run/launch", isDirectory: true),
+                appSocketPath: configuration.appSocketPath, appVersion: configuration.appVersion, loginEnvironment: login))
+    }()
+
+    /// Lança o terminal pelo `LaunchCoordinator`: resolve o CLI, gera o plano, cria a sessão no daemon e anexa a view.
+    /// `onEvent` recebe o progresso real (qualquer thread).
+    func launch(_ terminal: Terminal, onEvent: @escaping @Sendable (LaunchEvent) -> Void) async throws -> LaunchResult {
         let entry = entry(for: terminal.id)
-        let login = await configuration.loginEnvironment()
-        let runID = UUID.v7()
-        let adapter = ProviderAdapters.adapter(for: terminal.provider)
-        var executable = terminal.launchSpec.customArgv?.first ?? ""
-        if let name = adapter.executableName {
-            guard let found = CLIExecutableResolver.resolve(name: name, searchPath: login["PATH"]) else {
-                throw TerminalRuntimeError.cliNotFound(adapter.displayName)
-            }
-            executable = found
-        } else if terminal.provider == .custom, !executable.contains("/") {
-            executable = CLIExecutableResolver.resolve(name: executable, searchPath: login["PATH"]) ?? executable
-        }
-        let launchDirectory = configuration.daemonHome.appendingPathComponent("run/launch/\(runID.uuidString.lowercased())", isDirectory: true)
-        let plan: LaunchPlan
-        do {
-            plan = try LaunchPlanner.plan(
-                LaunchPlanInput(
-                    spec: terminal.launchSpec, terminalID: terminal.id, runID: runID, cwd: terminal.cwd,
-                    terminalAddDirs: terminal.addDirs, executablePath: executable, loginEnvironment: login,
-                    launchDirectory: launchDirectory, appVersion: configuration.appVersion, appSocketPath: configuration.appSocketPath))
-            try LaunchFileWriter.materialize(plan)
-        } catch {
-            throw TerminalRuntimeError.plan("\(error)")
-        }
         let dims = entry.host.surface.terminalDimensions
-        let request = CreateRequest(
-            sessionID: SessionID(), argv: plan.flattenedArgv, cwd: plan.cwd, env: plan.environment,
-            cols: UInt16(clamping: dims.cols), rows: UInt16(clamping: dims.rows), coldLog: terminal.coldLog,
-            owner: SessionOwner(terminalID: terminal.id.uuidString.lowercased(), runID: runID.uuidString.lowercased()))
-        let created = try await client.create(request)
-        try await attach(entry, session: created.session.sessionID, mode: .snapshot)
-        return LaunchOutcome(plan: plan, summary: created.session)
+        let job = LaunchJob(
+            terminalID: terminal.id, spec: terminal.launchSpec, cwd: terminal.cwd, addDirs: terminal.addDirs, coldLog: terminal.coldLog,
+            cols: UInt16(clamping: dims.cols), rows: UInt16(clamping: dims.rows))
+        return try await coordinator.launch(
+            job, onEvent: onEvent,
+            attach: { [weak self] summary, runID in try await self?.attach(entry, session: summary.sessionID, mode: .snapshot, runID: runID) })
     }
 
     /// Religa um terminal cuja sessão o daemon manteve viva (reabrir o app).
@@ -251,11 +212,20 @@ final class TerminalRuntime {
         }
     }
 
-    private func attach(_ entry: TerminalEntry, session: SessionID, mode: AttachMode) async throws {
+    private func attach(_ entry: TerminalEntry, session: SessionID, mode: AttachMode, runID: UUID? = nil) async throws {
         entry.unbind()
         let binding = TerminalSessionBinding(client: client, sessionID: session, host: entry.host)
         let terminalID = entry.terminalID
         binding.onEvent = { [weak self] event in self?.onEvent?(terminalID, event) }
+        if let runID {
+            // Primeiro byte do PTY: fecha a ignição (M-504). Uma vez só; o observador roda na thread de parse.
+            let coordinator = coordinator
+            let fired = Mutex(false)
+            binding.frameObserver.set { _ in
+                guard fired.withLock({ let was = $0; $0 = true; return !was }) else { return }
+                Task { await coordinator.noteFirstOutput(runID: runID) }
+            }
+        }
         try await binding.start(mode: mode)
         entry.bind(binding, session: session)
     }

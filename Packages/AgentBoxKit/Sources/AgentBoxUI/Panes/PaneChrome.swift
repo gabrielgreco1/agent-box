@@ -13,6 +13,10 @@ enum PaneMetrics {
     static let dividerHit = PaneLayout.dividerThickness + 2 * DS.Layout.paneDividerHitSlop
     static let separator: CGFloat = 1
     static let logo = DS.Space.s3
+    static let ignitionLogo = DS.Space.s8
+    static let ignitionHalo = DS.Space.s10 + DS.Space.s6
+    static let phaseGlyph = DS.Space.s3
+    static let phaseListWidth: CGFloat = 200
 }
 
 /// Dados que o container do pane entrega às views SwiftUI do chrome (cabeçalho, botões, banners).
@@ -28,6 +32,7 @@ final class PaneChromeModel {
     var hovering = false
     var state: PaneRunState = .running
     var errorDetail = ""
+    var timeline: LaunchTimeline?
 
     var id: String { terminalID.uuidString }
     var agentName: String { provider.isAgent ? ProviderAdapters.name(provider) : String(localized: "Terminal", bundle: .module) }
@@ -121,6 +126,9 @@ struct PaneBannerView: View {
             case .closing:
                 DSButton(.terminalForceQuit, id: .paneClosingForceQuit(model.id), "Force Quit", variant: .outline, size: .xs, argument: arg)
                 DSButton(.terminalCancelClose, "Cancel", variant: .ghost, size: .xs, argument: arg)
+            case .interrupted where model.provider.isAgent:
+                DSButton(.terminalRestart, "Start Fresh", variant: .outline, size: .xs, argument: arg)
+                DSButton(.paneClose, "Close", variant: .ghost, size: .xs, argument: arg)
             default:
                 DSButton(.terminalRestart, "Restart", variant: .outline, size: .xs, argument: arg)
                 DSButton(.paneClose, "Close", variant: .ghost, size: .xs, argument: arg)
@@ -174,6 +182,9 @@ struct PaneCardView: View {
                     .lineLimit(6)
                 HStack(spacing: DS.Space.s2) {
                     Spacer(minLength: 0)
+                    if model.provider.isAgent {
+                        DSButton(.agentOpenSettings, "Open Agent Settings", variant: .ghost, size: .sm, argument: .select(model.provider.rawValue))
+                    }
                     DSButton(.terminalCopyStartError, "Copy Details", variant: .ghost, size: .sm, argument: arg)
                     DSButton(.terminalRetryStart, "Try Again", variant: .primary, size: .sm, argument: arg)
                 }

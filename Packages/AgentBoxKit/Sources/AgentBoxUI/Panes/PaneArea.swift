@@ -1,3 +1,4 @@
+import AgentBoxCore
 import AgentBoxDesignSystem
 import AgentBoxProtocol
 import AppKit
@@ -32,12 +33,15 @@ final class PaneContainerView: NSView {
     let terminalID: UUID
     let entry: TerminalEntry
     let chrome = PaneChromeModel()
-    private enum Chrome: CaseIterable { case header, floating, banner, card }
+    private enum Chrome: CaseIterable { case header, floating, banner, card, ignition }
     /// Views SwiftUI do chrome: só existem enquanto aparecem (uma hosting view criada já registra seus controles).
     private var hosts: [Chrome: NSHostingView<AnyView>] = [:]
     private let registry: ActionRegistry?
     private let elementStore: UIElementStore?
     private let dim = NSView()
+    /// `PaneCover` (M-504/M-506): cor do canvas do terminal sobre a view até o primeiro byte, para o terminal nunca piscar vazio.
+    private let cover = NSView()
+    private var coverFading = false
     private var tracking: NSTrackingArea?
     private var registrations: [ElementRegistration] = []
     private let elements: UIElementStore?
@@ -57,6 +61,8 @@ final class PaneContainerView: NSView {
         layer?.masksToBounds = true
         dim.wantsLayer = true
         dim.layer?.backgroundColor = NSColor.black.withAlphaComponent(MotionTokens.Opacity.exitedDim).cgColor
+        cover.wantsLayer = true
+        cover.layer?.backgroundColor = DS.ColorSpec.terminalBackground.nsColor.cgColor
         addSubview(entry.host)
         updateTracking()
     }
@@ -104,13 +110,17 @@ final class PaneContainerView: NSView {
     // MARK: Estado
 
     /// `multiPane`: a tab tem 2+ panes, então o cabeçalho de 24 aparece; com 1 pane só os botões flutuantes.
-    func apply(title: String, provider: TerminalProvider, glyph: DSIndicatorGlyph, focused: Bool, multiPane: Bool, expanded: Bool, state: PaneRunState) {
+    func apply(
+        title: String, provider: TerminalProvider, glyph: DSIndicatorGlyph, focused: Bool, multiPane: Bool, expanded: Bool, state: PaneRunState,
+        timeline: LaunchTimeline? = nil, ignition: Bool = false
+    ) {
         chrome.title = title
         chrome.provider = provider
         chrome.glyph = glyph
         chrome.focused = focused
         chrome.expanded = expanded
         chrome.state = state
+        chrome.timeline = timeline
         if case .failed(let detail) = state { chrome.errorDetail = detail }
         showsHeader = multiPane
         present(.header, multiPane)
@@ -125,6 +135,13 @@ final class PaneContainerView: NSView {
         }
         present(.banner, banner)
         present(.card, card)
+        var starting = false
+        var failed = false
+        if case .starting = state { starting = true }
+        if case .failed = state { failed = true }
+        presentCover(starting || failed)
+        present(.ignition, starting && ignition)
+        raiseChrome()
         var dimmed = false
         if card, case .exited = state { dimmed = true }
         presentDim(dimmed)
@@ -139,6 +156,7 @@ final class PaneContainerView: NSView {
         case .floating: content = AnyView(PaneFloatingButtons(model: chrome))
         case .banner: content = AnyView(PaneBannerView(model: chrome))
         case .card: content = AnyView(PaneCardView(model: chrome))
+        case .ignition: content = AnyView(PaneIgnitionView(model: chrome))
         }
         let h = NSHostingView(
             rootView: AnyView(content.environment(\.actionRegistry, registry).environment(\.elementStore, elementStore).environment(\.a11yParent, nil)))
@@ -156,7 +174,47 @@ final class PaneContainerView: NSView {
                 needsLayout = true
             }
         } else if let h = hosts.removeValue(forKey: kind) {
-            h.removeFromSuperview()
+            if kind == .ignition { fadeOut(h, duration: MotionTokens.Duration.hover) } else { h.removeFromSuperview() }
+        }
+    }
+
+    /// M-504: ignição e cobertura somem em fade (checklist 0,12 s, cobertura 0,16 s; Reduce Motion: crossfade). Sem janela, na hora.
+    private func fadeOut(_ view: NSView, duration: Double, completion: (@MainActor () -> Void)? = nil) {
+        guard window != nil, MotionPolicy.shared.mode != .instant else {
+            view.removeFromSuperview()
+            completion?()
+            return
+        }
+        let seconds = MotionPolicy.shared.reduceMotion ? MotionTokens.Policy.reducedCrossfade : duration
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = seconds
+            context.timingFunction = Motion.caTiming(MotionTokens.Easing.exit)
+            view.animator().alphaValue = 0
+        } completionHandler: {
+            MainActor.assumeIsolated {
+                view.removeFromSuperview()
+                view.alphaValue = 1
+                completion?()
+            }
+        }
+    }
+
+    private func presentCover(_ on: Bool) {
+        if on {
+            coverFading = false
+            cover.layer?.removeAllAnimations()
+            cover.alphaValue = 1
+            if cover.superview == nil { addSubview(cover, positioned: .above, relativeTo: entry.host) }
+        } else if cover.superview != nil, !coverFading {
+            coverFading = true
+            fadeOut(cover, duration: MotionTokens.Duration.paneOpacity + 0.02) { [weak self] in self?.coverFading = false }
+        }
+    }
+
+    /// O cabeçalho, os botões, o banner e o cartão ficam acima da cobertura e da ignição.
+    private func raiseChrome() {
+        for kind in [Chrome.ignition, .header, .floating, .banner, .card] {
+            if let h = hosts[kind] { addSubview(h, positioned: .above, relativeTo: nil) }
         }
     }
 
@@ -196,6 +254,8 @@ final class PaneContainerView: NSView {
         let top = showsHeader ? PaneMetrics.headerHeight : 0
         hosts[.banner]?.frame = NSRect(x: 0, y: top, width: w, height: PaneMetrics.banner)
         dim.frame = bounds
+        cover.frame = bounds
+        hosts[.ignition]?.frame = NSRect(x: 0, y: top, width: w, height: max(0, bounds.height - top))
         if let card = hosts[.card] {
             let cardSize = card.fittingSize
             card.frame = NSRect(
@@ -401,7 +461,8 @@ final class PaneAreaView: NSView {
             container.apply(
                 title: model.displayTitleOfPane(terminalID), provider: terminal.provider,
                 glyph: SidebarProjector.glyph(for: terminal).glyph, focused: model.focusedTerminalID == terminalID,
-                multiPane: multi, expanded: expandedPane != nil, state: model.paneState(terminalID))
+                multiPane: multi, expanded: expandedPane != nil, state: model.paneState(terminalID),
+                timeline: model.launchTimelines[terminalID], ignition: model.ignitionVisible.contains(terminalID))
             order.append(terminalID)
         }
         if expandedPane == nil {

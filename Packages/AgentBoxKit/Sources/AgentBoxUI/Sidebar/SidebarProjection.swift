@@ -41,9 +41,11 @@ struct PendingLaunch: Identifiable, Equatable {
     var phase: Phase
     /// Mensagem curta da falha (`Couldn't create worktree`); não nula = estado de erro (M-205).
     var failure: String?
+    /// Sessão já gravada no Store que esta linha esconde até ficar pronta (a linha vira o card, M-501).
+    var sessionID: UUID?
 
-    init(id: UUID = .v7(), name: String, projectID: UUID?, phase: Phase = .preparing, failure: String? = nil) {
-        self.id = id; self.name = name; self.projectID = projectID; self.phase = phase; self.failure = failure
+    init(id: UUID = .v7(), name: String, projectID: UUID?, phase: Phase = .preparing, failure: String? = nil, sessionID: UUID? = nil) {
+        self.id = id; self.name = name; self.projectID = projectID; self.phase = phase; self.failure = failure; self.sessionID = sessionID
     }
 
     var phaseText: String {
@@ -364,7 +366,8 @@ enum SidebarProjector {
             }
         }
 
-        let liveSessions = snap.sessions.filter { $0.lifecycle != .deleted }
+        let hiddenByPending = Set(input.pending.compactMap(\.sessionID))
+        let liveSessions = snap.sessions.filter { $0.lifecycle != .deleted && !hiddenByPending.contains($0.id) }
         var out = SidebarProjection()
 
         // Projetos

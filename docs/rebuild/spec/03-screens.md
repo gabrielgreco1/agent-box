@@ -1628,6 +1628,7 @@ Toda interação da UI é uma ação do registro (`ActionRegistry`: `ActionID` �
 | Use Existing Branch | `session.useExistingBranch` | — | Reaproveita a branch que já existe em vez de criar (§6.4) | Sem conflito de branch: não aparece | v1 | `testAction_session_useExistingBranch` |
 | Create Without Fetching | `session.createWithoutFetch` | — | Cria a worktree a partir da base local sem `git fetch` (§6.4) | Fetch não falhou: não aparece | v1 | `testAction_session_createWithoutFetch` |
 | Discard (sessão que falhou ao criar) | `session.discardPending` | — | Remove a linha pendente com erro e não cria a sessão (§6.4) | — | v1 | `testAction_session_discardPending` |
+| Launch Session (automação) | `session.launch` | — | Cria uma sessão limpa com o agente já rodando (P9): linha pendente, chip M-501, tab em ignição. Argumento `set(<json>)` com `provider`, `prompt`, `model`, `name`, `cwd`, `args`, `origin`; devolve os IDs. Mesmo caminho do composer (T1-20); existe para `ctl` e testes | JSON inválido: `expected set(<json>)` | v1 | `testAction_session_launch` |
 
 ### 24.3 Tabs, panes e terminal
 
