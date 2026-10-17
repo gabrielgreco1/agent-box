@@ -296,7 +296,7 @@ private func waitForFile(_ box: Sandbox, _ name: String, deadline: Duration = .s
         let f = EnvFilter.default
         let parent = [
             "CLAUDE_CODE_CHILD_SESSION": "1", "CLAUDE_CODE_ENTRYPOINT": "cli", "CLAUDE_CODE_EXECPATH": "/x", "CLAUDECODE": "1",
-            "CLAUDE_AGENT_SDK_VERSION": "1", "ORCA_PANE_KEY": "p", "AGENTBOX_APP_SOCK": "/s", "TERM_PROGRAM": "iTerm.app",
+            "CLAUDE_AGENT_SDK_VERSION": "1", "KITTY_PANE_KEY": "p", "AGENTBOX_APP_SOCK": "/s", "TERM_PROGRAM": "iTerm.app",
             "TERM_PROGRAM_VERSION": "3", "CODEX_THREAD_ID": "t", "CODEX_SANDBOX": "seatbelt", "CODEX_SANDBOX_NETWORK_DISABLED": "1",
             "CODEX_CI": "1", "CODEX_SESSION_ID": "s",
             // o que o usuário configurou continua
