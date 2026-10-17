@@ -39,9 +39,10 @@ let package = Package(
         .library(name: "AgentBoxUI", targets: ["AgentBoxUI"]),
         .executable(name: "agentboxd", targets: ["agentboxd"]),
         .executable(name: "agentbox", targets: ["agentbox"]),
+        .executable(name: "agentbox-bench", targets: ["AgentBoxBench"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/migueldeicaza/SwiftTerm.git", exact: "1.20.0"),
+        .package(url: "https://github.com/migueldeicaza/SwiftTerm.git", exact: "1.99.0"),
         .package(url: "https://github.com/groue/GRDB.swift.git", exact: "7.11.1"),
         .package(url: "https://github.com/apple/swift-argument-parser.git", exact: "1.8.2"),
         .package(url: "https://github.com/pointfreeco/swift-snapshot-testing.git", exact: "1.19.6"),
@@ -68,6 +69,11 @@ let package = Package(
             dependencies: ["AgentBoxProtocol", "AgentBoxPlatform", argumentParser],
             swiftSettings: nonisolatedSettings
         ),
+        .executableTarget(
+            name: "AgentBoxBench",
+            dependencies: ["AgentBoxUI", "AgentBoxCore", "AgentBoxProtocol", "AgentBoxPlatform", swiftTerm],
+            swiftSettings: mainActorSettings
+        ),
         tests("ProtocolTests", ["AgentBoxProtocol"], resources: [.copy("Fixtures")]),
         tests("PlatformTests", ["AgentBoxPlatform", "AgentBoxProtocol"]),
         tests("StoreTests", ["AgentBoxStore", "AgentBoxProtocol", "AgentBoxPlatform", grdb]),
@@ -81,6 +87,11 @@ let package = Package(
         tests("TerminalCoreTests", ["AgentBoxTerminalCore", swiftTerm]),
         tests("DesignSystemTests", ["AgentBoxDesignSystem"]),
         tests("DaemonTests", ["AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxTerminalCore", "AgentBoxCore", "agentboxd", swiftTerm]),
+        .testTarget(
+            name: "TerminalSurfaceTests",
+            dependencies: ["AgentBoxUI", "AgentBoxCore", "AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxTerminalCore", "AgentBoxDesignSystem", "agentboxd", swiftTerm],
+            swiftSettings: mainActorSettings
+        ),
         .testTarget(
             name: "UISnapshotTests",
             dependencies: ["AgentBoxUI", "AgentBoxDesignSystem", snapshotTesting],

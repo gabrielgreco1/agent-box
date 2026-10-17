@@ -89,6 +89,8 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
             showWindow(nil)
             NSApp.activate()
         } else {
+            // Sem ativar (open -g, automação): sem a animação de entrada, que congela no meio com o app em segundo plano.
+            window.animationBehavior = .none
             window.orderFront(nil)
         }
         positioner?.apply()

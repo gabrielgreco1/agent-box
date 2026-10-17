@@ -1,6 +1,7 @@
 import AgentBoxPlatform
 import AgentBoxProtocol
 import Foundation
+import Synchronization
 
 public enum PTYClientError: Error, Sendable, Equatable {
     case notConnected
@@ -21,9 +22,21 @@ public enum PTYUpdate: Sendable, Equatable {
     case disconnected
 }
 
+/// Bytes de saída entregues ao `updates` de um pane e ainda não consumidos (08 AR-406: backlog de 4 MiB por pane).
+/// O cliente soma ao entregar; o consumidor (a view) subtrai ao alimentar o emulador.
+public final class PTYBacklogGauge: Sendable {
+    private let value = Mutex(0)
+    public init() {}
+    public var pending: Int { value.withLock { $0 } }
+    func added(_ count: Int) -> Int { value.withLock { $0 += count; return $0 } }
+    /// Chamado pelo consumidor depois de alimentar `count` bytes.
+    public func consumed(_ count: Int) { value.withLock { $0 = max(0, $0 - count) } }
+}
+
 public struct PTYAttachment: Sendable {
     public let snapshot: AttachSnapshot
     public let updates: AsyncStream<PTYUpdate>
+    public let backlog: PTYBacklogGauge
 }
 
 public enum PTYConnectionState: Sendable, Equatable {
@@ -40,11 +53,15 @@ public struct PTYClientConfiguration: Sendable {
     public var reconnectMaxDelay: Duration
     /// `nil`: tenta para sempre.
     public var reconnectMaxAttempts: Int?
+    /// Backlog por pane acima do qual a fila é abandonada e o cliente pede `snapshot` (08 AR-406).
+    public var maxBacklogBytes: Int
 
     public init(
         socketPath: String, build: String = "1.0 (dev)", requestTimeout: Duration = .seconds(10),
-        reconnectInitialDelay: Duration = .milliseconds(50), reconnectMaxDelay: Duration = .seconds(2), reconnectMaxAttempts: Int? = nil
+        reconnectInitialDelay: Duration = .milliseconds(50), reconnectMaxDelay: Duration = .seconds(2), reconnectMaxAttempts: Int? = nil,
+        maxBacklogBytes: Int = 4 << 20
     ) {
+        self.maxBacklogBytes = maxBacklogBytes
         self.socketPath = socketPath
         self.build = build
         self.requestTimeout = requestTimeout
@@ -63,6 +80,9 @@ public actor PTYClient {
         var rows: UInt16
         var validator = OutputSequenceValidator()
         var awaitingSnapshot = true
+        let backlog = PTYBacklogGauge()
+        /// Fim do replay do último snapshot: só quadros ao vivo (`seq` >= isto) contam para o limite de backlog.
+        var replayEndSeq: UInt64 = 0
     }
 
     private let configuration: PTYClientConfiguration
@@ -328,7 +348,7 @@ public actor PTYClient {
             throw error
         }
         guard case .attachSnapshot(_, let snapshot) = reply else { throw PTYClientError.unexpectedReply }
-        return PTYAttachment(snapshot: snapshot, updates: stream)
+        return PTYAttachment(snapshot: snapshot, updates: stream, backlog: routes[sessionID]?.backlog ?? PTYBacklogGauge())
     }
 
     /// Pede um `snapshot` novo (o consumidor recebe `.snapshot` e refaz o emulador).
@@ -373,6 +393,7 @@ public actor PTYClient {
             // Os frames de replay começam em `startSeq` e continuam, sem buraco, no ao vivo.
             route.validator = OutputSequenceValidator(expectedSeq: snapshot.startSeq)
             route.awaitingSnapshot = false
+            route.replayEndSeq = snapshot.endSeq
             routes[snapshot.sessionID] = route
             route.continuation.yield(.snapshot(snapshot))
         }
@@ -401,6 +422,17 @@ public actor PTYClient {
         guard var route = routes[output.sessionID], !route.awaitingSnapshot else { return }
         switch route.validator.accept(output) {
         case .continuous:
+            let pending = route.backlog.added(output.bytes.count)
+            if pending > configuration.maxBacklogBytes, output.seq >= route.replayEndSeq {
+                // O consumidor não acompanha: abandona o que falta (ele recebe o `.snapshot` depois dos quadros já
+                // enfileirados, que consome rápido por não renderizar) e refaz do snapshot.
+                route.awaitingSnapshot = true
+                routes[output.sessionID] = route
+                route.continuation.yield(.event(.resyncRequired))
+                let id = output.sessionID
+                Task { [weak self] in try? await self?.resync(sessionID: id) }
+                return
+            }
             routes[output.sessionID] = route
             route.continuation.yield(.output(output))
         case .gap, .overlap:

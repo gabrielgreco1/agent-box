@@ -35,10 +35,16 @@ final class MainSplitViewController: NSSplitViewController {
         self.env = env
         let sidebarVC = NSViewController()
         sidebarVC.view = ChromeHostingView(content: SidebarView().environment(\.elementStore, env.elements).environment(\.a11yParent, .windowMain))
-        let contentVC = NSViewController()
-        contentVC.view = ChromeHostingView(
-            content: LandingView(automationOn: env.automationEnabled).environment(\.elementStore, env.elements).environment(\.actionRegistry, env.registry)
-                .environment(\.a11yParent, .windowMain))
+        let contentVC: NSViewController
+        if env.fixture == "terminal-demo" {
+            // Tela de dev da T1-09 (um pane de terminal real); o pane do produto chega com a T1-15.
+            contentVC = TerminalDemoViewController(env: env)
+        } else {
+            contentVC = NSViewController()
+            contentVC.view = ChromeHostingView(
+                content: LandingView(automationOn: env.automationEnabled).environment(\.elementStore, env.elements).environment(\.actionRegistry, env.registry)
+                    .environment(\.a11yParent, .windowMain))
+        }
         sidebarItem = NSSplitViewItem(viewController: sidebarVC)
         contentItem = NSSplitViewItem(viewController: contentVC)
         super.init(nibName: nil, bundle: nil)

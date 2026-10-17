@@ -34,6 +34,17 @@
         }
       }
     },
+    "No results": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No results"
+          }
+        }
+      }
+    },
     "Run Claude Code, Codex and OpenCode side by side, each in its own folder.": {
       "extractionState": "manual",
       "localizations": {
@@ -41,6 +52,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Run Claude Code, Codex and OpenCode side by side, each in its own folder."
+          }
+        }
+      }
+    },
+    "Search…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search…"
           }
         }
       }

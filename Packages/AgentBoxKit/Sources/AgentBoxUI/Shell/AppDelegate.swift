@@ -13,7 +13,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     public func applicationDidFinishLaunching(_ notification: Notification) {
         log.publicInfo("launch")
         NSApp.appearance = NSAppearance(named: .darkAqua)
-        let controller = MainWindowController(env: env)
+        // Telas de fixture (dev e evidência) não leem nem gravam o frame salvo do usuário.
+        let controller = MainWindowController(env: env, autosaveName: env.fixture == nil ? "workspace" : nil)
         windowController = controller
         NSApp.mainMenu = MainMenu.build(registry: env.registry)
         // Com a automação ligada o app abre sem tirar o foco de quem o lançou (`open -g`).

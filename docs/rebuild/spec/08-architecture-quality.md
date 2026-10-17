@@ -217,7 +217,7 @@ O alvo `AgentBox` (app) fica no `project.yml` e só contém `@main`, `Info.plist
 
 | Dependência | Uso | Regra |
 |---|---|---|
-| SwiftTerm **1.20.0 exato** (rev `5d14406`) | Emulador na UI (Metal) e headless no daemon | Não subir para "o último 1.x": a tag `v1.99.0` (2026-10-08) é pré-release da v2, com API nova. Avaliação da 1.99/2.x só no spike S-02, em paralelo, e a troca só com decisão escrita aqui. Na UI, só `TerminalView` com delegate próprio; **proibido `LocalProcessTerminalView`** (devolve o pasteboard em `clipboardRead`, violando T6) e a find bar privada `TerminalFindBarView`/`performFindPanelAction` (a busca usa a API pública, 02 §16). Sem fork; patch vai upstream com revisão fixada |
+| SwiftTerm **1.99.0 exato** (rev `2dad6a1`, P20, T1-09) | Emulador na UI (Metal) e headless no daemon | Pré-release da v2: a troca para a 2.0 final exige decisão escrita aqui; `Package.resolved` fixa a revisão. `feed(byteArray:)` e `send(data:)` são `nonisolated` (fora do main; não chamar de callback do delegate); `terminal` não é público na view. Paridade com a 1.20.0 explicada em `docs/evidence/spikes/S-02/parity`. Na UI, só `TerminalView` com delegate próprio; **proibido `LocalProcessTerminalView`** (devolve o pasteboard em `clipboardRead`, violando T6) e a find bar privada `TerminalFindBarView`/`performFindPanelAction` (a busca usa a API pública, 02 §16). Sem fork; patch vai upstream com revisão fixada |
 | GRDB 7.x | SQLite, migrações, `ValueObservation`, backup | Única dependência de persistência |
 | swift-argument-parser | CLI `agentbox` | Declarada explicitamente no `Package.swift` (hoje é pin órfão `1.8.2` no `Package.resolved`, R3 §1) |
 | swift-snapshot-testing | Só em testes | — |
