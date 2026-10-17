@@ -112,8 +112,10 @@ final class PaneContainerView: NSView {
     /// `multiPane`: a tab tem 2+ panes, então o cabeçalho de 24 aparece; com 1 pane só os botões flutuantes.
     func apply(
         title: String, provider: TerminalProvider, glyph: DSIndicatorGlyph, focused: Bool, multiPane: Bool, expanded: Bool, state: PaneRunState,
-        timeline: LaunchTimeline? = nil, ignition: Bool = false
+        timeline: LaunchTimeline? = nil, ignition: Bool = false, interruption: InterruptionReason = .unexpected, exactResume: Bool = true
     ) {
+        chrome.interruption = interruption
+        chrome.exactResume = exactResume
         chrome.title = title
         chrome.provider = provider
         chrome.glyph = glyph
@@ -145,7 +147,10 @@ final class PaneContainerView: NSView {
         var dimmed = false
         if card, case .exited = state { dimmed = true }
         presentDim(dimmed)
-        setHostAlpha(focused || multiPane == false ? 1 : MotionTokens.Opacity.inactivePane)
+        var interrupted = false
+        if case .interrupted = state { interrupted = true }
+        // Interrupted: o último scrollback fica a 50% (03 §4.6, M-002); senão o pane inativo a 0,8.
+        setHostAlpha(interrupted ? MotionTokens.Opacity.interruptedContent : (focused || multiPane == false ? 1 : MotionTokens.Opacity.inactivePane))
         needsLayout = true
     }
 
@@ -462,7 +467,8 @@ final class PaneAreaView: NSView {
                 title: model.displayTitleOfPane(terminalID), provider: terminal.provider,
                 glyph: SidebarProjector.glyph(for: terminal).glyph, focused: model.focusedTerminalID == terminalID,
                 multiPane: multi, expanded: expandedPane != nil, state: model.paneState(terminalID),
-                timeline: model.launchTimelines[terminalID], ignition: model.ignitionVisible.contains(terminalID))
+                timeline: model.launchTimelines[terminalID], ignition: model.ignitionVisible.contains(terminalID),
+                interruption: model.interruptionReasons[terminalID] ?? .unexpected, exactResume: RestorePlanner.hasExactResume(terminal))
             order.append(terminalID)
         }
         if expandedPane == nil {

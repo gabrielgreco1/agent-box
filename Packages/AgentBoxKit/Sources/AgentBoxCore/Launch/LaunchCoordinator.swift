@@ -105,11 +105,15 @@ public struct LaunchJob: Sendable {
     public var rows: UInt16
     public var catalog: ProfileCatalog
     public var workspace: LaunchWorkspaceStep?
+    /// `.resume`/`.continueLast` no Resume depois de reabrir (T1-23); `.automatic` no start normal.
+    public var mode: LaunchMode
 
     public init(
         terminalID: UUID, spec: LaunchSpec, cwd: String, addDirs: [String] = [], projectID: UUID? = nil, coldLog: Bool = true,
-        cols: UInt16 = 100, rows: UInt16 = 30, catalog: ProfileCatalog = ProfileCatalog(), workspace: LaunchWorkspaceStep? = nil
+        cols: UInt16 = 100, rows: UInt16 = 30, catalog: ProfileCatalog = ProfileCatalog(), workspace: LaunchWorkspaceStep? = nil,
+        mode: LaunchMode = .automatic
     ) {
+        self.mode = mode
         self.terminalID = terminalID; self.spec = spec; self.cwd = cwd; self.addDirs = addDirs; self.projectID = projectID
         self.coldLog = coldLog; self.cols = cols; self.rows = rows; self.catalog = catalog; self.workspace = workspace
     }
@@ -244,7 +248,7 @@ public actor LaunchCoordinator {
                     LaunchPlanInput(
                         spec: job.spec, terminalID: job.terminalID, runID: runID, cwd: job.cwd, projectID: job.projectID,
                         terminalAddDirs: job.addDirs, catalog: job.catalog, executablePath: executable, capabilities: capabilities,
-                        loginEnvironment: login, launchDirectory: launchDirectory, appVersion: configuration.appVersion,
+                        loginEnvironment: login, launchDirectory: launchDirectory, mode: job.mode, appVersion: configuration.appVersion,
                         appSocketPath: configuration.appSocketPath))
                 try LaunchFileWriter.materialize(plan)
             } catch {

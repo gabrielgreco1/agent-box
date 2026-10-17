@@ -33,6 +33,9 @@ final class PaneChromeModel {
     var state: PaneRunState = .running
     var errorDetail = ""
     var timeline: LaunchTimeline?
+    /// Interrupted (T1-23): por que o processo sumiu e se o Resume usa o ID nativo (senão vira "Continue Last").
+    var interruption: InterruptionReason = .unexpected
+    var exactResume = true
 
     var id: String { terminalID.uuidString }
     var agentName: String { provider.isAgent ? ProviderAdapters.name(provider) : String(localized: "Terminal", bundle: .module) }
@@ -127,7 +130,12 @@ struct PaneBannerView: View {
                 DSButton(.terminalForceQuit, id: .paneClosingForceQuit(model.id), "Force Quit", variant: .outline, size: .xs, argument: arg)
                 DSButton(.terminalCancelClose, "Cancel", variant: .ghost, size: .xs, argument: arg)
             case .interrupted where model.provider.isAgent:
-                DSButton(.terminalRestart, "Start Fresh", variant: .outline, size: .xs, argument: arg)
+                if model.exactResume {
+                    DSButton(.terminalResume, id: .paneInterruptedResume(model.id), "Resume", variant: .primary, size: .xs, argument: arg)
+                } else {
+                    DSButton(.terminalResume, id: .paneInterruptedResume(model.id), "Continue Last", variant: .primary, size: .xs, argument: arg)
+                }
+                DSButton(.terminalStartFresh, "Start Fresh", variant: .outline, size: .xs, argument: arg)
                 DSButton(.paneClose, "Close", variant: .ghost, size: .xs, argument: arg)
             default:
                 DSButton(.terminalRestart, "Restart", variant: .outline, size: .xs, argument: arg)
@@ -153,7 +161,12 @@ struct PaneBannerView: View {
     private var text: String {
         switch model.state {
         case .closing: String(localized: "The process didn't exit.", bundle: .module)
-        case .interrupted: String(localized: "This terminal stopped unexpectedly.", bundle: .module)
+        case .interrupted:
+            switch model.interruption {
+            case .macRestarted: String(localized: "This terminal stopped when your Mac restarted.", bundle: .module)
+            case .appClosed: String(localized: "This terminal stopped while Agent Box was closed.", bundle: .module)
+            case .unexpected: String(localized: "This terminal stopped unexpectedly.", bundle: .module)
+            }
         default:
             model.provider.isAgent
                 ? String(localized: "\(model.agentName) exited.", bundle: .module) : String(localized: "pane.exited.shell", bundle: .module)

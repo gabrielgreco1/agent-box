@@ -194,6 +194,16 @@ extension WorkspaceModel {
             restart(id)
             return id.uuidString
         }
+        try reg(.terminalResume, enablement: hasTab) { [unowned self] arg in
+            guard let id = uuid(arg) ?? focusedTerminalID, terminal(id) != nil else { throw ActionError.failed(.terminalResume, message: "Terminal not found") }
+            resume(id)
+            return id.uuidString
+        }
+        try reg(.terminalStartFresh, enablement: hasTab) { [unowned self] arg in
+            guard let id = uuid(arg) ?? focusedTerminalID, terminal(id) != nil else { throw ActionError.failed(.terminalStartFresh, message: "Terminal not found") }
+            startFresh(id)
+            return id.uuidString
+        }
         try reg(.terminalRetryStart, enablement: hasTab) { [unowned self] arg in
             guard let id = uuid(arg) ?? focusedTerminalID else { throw ActionError.failed(.terminalRetryStart, message: "Terminal not found") }
             restart(id)

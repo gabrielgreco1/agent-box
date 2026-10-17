@@ -318,6 +318,7 @@ public final class AppEnvironment {
                 }
             }
             launcher?.attach(store: opened)
+            await restoreSessions(store: opened)
             await workspace.attach(store: opened)
             await sidebar.attach(store: opened)
             await settings.attach(store: opened)
@@ -325,6 +326,15 @@ public final class AppEnvironment {
             projects.attach(store: opened)
         } catch {
             log.error("store failed to open: \(error)")
+        }
+    }
+
+    /// Reabertura (T1-23): ver `WorkspaceModel.restoreSessions`. Avisa uma vez quantos terminais voltaram vivos.
+    private func restoreSessions(store: AgentBoxStore) async {
+        guard let report = await workspace.restoreSessions(store: store) else { return }
+        log.info("restore: \(report.alive.count) alive, \(report.exited.count) exited, \(report.interrupted.count) interrupted")
+        if !report.alive.isEmpty {
+            toasts.show(kind: .info, title: String(localized: "Reconnected to \(report.alive.count) running terminals.", bundle: .module))
         }
     }
 
@@ -384,6 +394,11 @@ public final class AppEnvironment {
     /// Encerra o daemon filho se esta execução o possui (automação, testes, `AGENTBOX_STOP_DAEMON_ON_QUIT=1`).
     public func shutdownSync() {
         workspace.runtime.shutdown()
+    }
+
+    /// Saída limpa (T1-23): a próxima abertura distingue "parou com o app fechado" de "parou sem aviso".
+    public func markCleanExit() async {
+        if let store { await SessionReconciler.markCleanExit(store: store) }
     }
 
     public func stop() async {
