@@ -48,6 +48,7 @@ struct ProjectMenuItems: View {
                     MenuEntry(action: .projectNewSessionFromRef, title: String(localized: "New Session from Branch or PR…", bundle: .module), argument: arg),
                 ],
                 [
+                    MenuEntry(action: .itemOpenIn, title: String(localized: "Open in…", bundle: .module), argument: arg),
                     MenuEntry(action: .itemOpenInEditor, title: String(localized: "Open in Editor", bundle: .module), argument: arg),
                     MenuEntry(action: .itemRevealInFinder, title: String(localized: "Reveal in Finder", bundle: .module), argument: arg),
                 ] + (hasGitHub ? [MenuEntry(action: .itemOpenOnGitHub, title: String(localized: "Open on GitHub", bundle: .module), argument: arg)] : [])
@@ -87,6 +88,7 @@ struct SessionMenuItems: View {
                     MenuEntry(action: .sessionEditNote, title: String(localized: "Edit Note…", bundle: .module), argument: arg),
                 ],
                 [
+                    MenuEntry(action: .itemOpenIn, title: String(localized: "Open in…", bundle: .module), argument: arg),
                     MenuEntry(action: .itemOpenInEditor, title: String(localized: "Open in Editor", bundle: .module), argument: arg),
                     MenuEntry(action: .itemRevealInFinder, title: String(localized: "Reveal in Finder", bundle: .module), argument: arg),
                     MenuEntry(action: .itemCopyPath, title: String(localized: "Copy Path", bundle: .module), argument: arg),
@@ -103,7 +105,9 @@ struct SessionMenuItems: View {
                             MenuEntry(action: .sessionConvertToProject, title: String(localized: "Convert to Project…", bundle: .module), argument: arg),
                         ] : []),
                 [
-                    MenuEntry(action: .sessionArchive, title: String(localized: "Archive Session…", bundle: .module), argument: arg),
+                    s.archivedAt != nil || s.lifecycle == .archived
+                        ? MenuEntry(action: .sessionRestore, title: String(localized: "Restore Session", bundle: .module), argument: arg)
+                        : MenuEntry(action: .sessionArchive, title: String(localized: "Archive Session…", bundle: .module), argument: arg),
                     MenuEntry(action: .sessionDelete, title: String(localized: "Delete Session…", bundle: .module), argument: arg),
                 ],
                 optionHeld()

@@ -64,6 +64,11 @@ extension ActionID {
     public static let sessionMoveFolderIntoProject = ActionID(unchecked: "session.moveFolderIntoProject")
     public static let sessionArchive = ActionID(unchecked: "session.archive")
     public static let sessionDelete = ActionID(unchecked: "session.delete")
+    public static let sessionRestore = ActionID(unchecked: "session.restore")
+    public static let sessionUndoArchive = ActionID(unchecked: "session.undoArchive")
+    public static let sessionUndoDelete = ActionID(unchecked: "session.undoDelete")
+    public static let itemOpenIn = ActionID(unchecked: "item.openIn")
+    public static let itemOpenInTarget = ActionID(unchecked: "item.openInTarget")
     public static let sessionLocateFolder = ActionID(unchecked: "session.locateFolder")
     public static let sidebarRevealCurrent = ActionID(unchecked: "sidebar.revealCurrent")
     public static let sessionNextNeedingAttention = ActionID(unchecked: "session.nextNeedingAttention")
@@ -404,6 +409,11 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "session.moveFolderIntoProject"), label: "Move Folder into Project…", shortcut: "", slice: .v11),
         ActionSpec(id: ActionID(unchecked: "session.archive"), label: "Archive Session…", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "session.delete"), label: "Delete Session…", shortcut: "⇧⌘⌫", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "session.restore"), label: "Restore Session", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "session.undoArchive"), label: "Undo (toast `Session archived.`)", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "session.undoDelete"), label: "Undo (toast `Session deleted.`)", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "item.openIn"), label: "Open in…", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "item.openInTarget"), label: "Open in <app> (item do menu `Open in…`)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "session.locateFolder"), label: "Locate Folder…", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "sidebar.revealCurrent"), label: "Reveal Current Session", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "session.nextNeedingAttention"), label: "Next Needing Attention", shortcut: "⇧⌘A", slice: .slice2),

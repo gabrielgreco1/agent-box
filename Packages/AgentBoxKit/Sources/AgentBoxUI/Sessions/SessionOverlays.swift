@@ -1,3 +1,4 @@
+import AgentBoxCore
 import AgentBoxDesignSystem
 import AgentBoxProtocol
 import Observation
@@ -21,21 +22,91 @@ final class DeleteSessionState {
     let title: String
     /// Sessão limpa com pasta criada pelo app: oferece "Move folder to Trash" e "Also delete run folders" (AC-1108).
     let managedFolder: Bool
+    /// Sessão de worktree: o diálogo lista o que se perde e remove a pasta do worktree (06 §5.2).
+    let isWorktree: Bool
+    /// Branch do worktree (`nil` = sem branch, o checkbox `Keep the branch` não aparece).
+    let branch: String?
+    /// Leitura feita antes de abrir o diálogo (`GitService.inspectRemoval`); `nil` fora de worktree.
+    let preview: SessionRemovalPreview?
+    var keepBranch = false
     var trashFolder = true
     var deleteRuns = false
     var dontAsk = false
 
-    init(sessionID: UUID, title: String, managedFolder: Bool) {
+    init(
+        sessionID: UUID, title: String, managedFolder: Bool, isWorktree: Bool = false, branch: String? = nil,
+        preview: SessionRemovalPreview? = nil
+    ) {
         self.sessionID = sessionID
         self.title = title
         self.managedFolder = managedFolder
+        self.isWorktree = isWorktree
+        self.branch = (branch ?? "").isEmpty ? nil : branch
+        self.preview = preview
     }
 
-    /// Texto do diálogo: pasta criada pelo app × pasta escolhida que fica no disco (AC-1105).
+    /// Há trabalho que só existe neste worktree: aviso `destructive`, sem `Don't ask again`.
+    var losesData: Bool { preview?.losesData ?? false }
+    var showsKeepBranch: Bool { isWorktree && branch != nil && preview?.missingOnDisk != true }
+    var showsDontAsk: Bool { !losesData }
+
+    /// Texto do diálogo: worktree (remove a pasta), pasta criada pelo app × pasta escolhida que fica no disco (AC-1105).
     var message: String {
-        managedFolder
+        if isWorktree {
+            if preview?.missingOnDisk == true {
+                return String(localized: "Stops its terminals and computers. The worktree folder is already gone.", bundle: .module)
+            }
+            guard let branch, showsKeepBranch else {
+                return String(localized: "Stops its terminals and computers and removes the worktree folder.", bundle: .module)
+            }
+            return keepBranch
+                ? String(localized: "Stops its terminals and computers and removes the worktree folder. The branch \"\(branch)\" stays.", bundle: .module)
+                : String(localized: "Stops its terminals and computers, removes the worktree folder and deletes the local branch \"\(branch)\".", bundle: .module)
+        }
+        return managedFolder
             ? String(localized: "Stops its terminals and computers.", bundle: .module)
             : String(localized: "Stops its terminals and computers. The folder stays on disk.", bundle: .module)
+    }
+}
+
+/// Aviso `destructive` do diálogo de apagar worktree: contagens e os primeiros arquivos que se perdem (03 §16.5).
+struct DeleteSessionLossView: View {
+    let preview: SessionRemovalPreview
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DS.Space.s1) {
+            HStack(alignment: .top, spacing: DS.Space.s2) {
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.system(size: DS.Space.s4 - DS.Space.s0_5))
+                    .foregroundStyle(DS.Color.destructive)
+                    .accessibilityHidden(true)
+                Text(verbatim: preview.lossSummary ?? "")
+                    .dsFont(DS.Font.label)
+                    .foregroundStyle(DS.Color.destructive)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if !preview.samplePaths.isEmpty {
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(preview.samplePaths, id: \.self) { path in
+                        Text(verbatim: path)
+                            .dsFont(DS.Font.monoMicro)
+                            .foregroundStyle(DS.Color.textSecondary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
+                    if preview.uncommittedFiles > preview.samplePaths.count {
+                        Text(verbatim: String(localized: "and \(preview.uncommittedFiles - preview.samplePaths.count) more", bundle: .module))
+                            .dsFont(DS.Font.monoMicro)
+                            .foregroundStyle(DS.Color.textTertiary)
+                    }
+                }
+                .padding(.leading, DS.Space.s4 + DS.Space.s1)
+            }
+        }
+        .padding(DS.Space.s3)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: DS.Radius.md).fill(DS.Color.destructiveBackground))
+        .a11y(.overlayConfirmDeleteChanges, kind: "container", label: preview.lossSummary ?? "")
     }
 }
 
@@ -64,14 +135,20 @@ struct DeleteSessionOverlayContent: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
+            if let preview = state.preview, preview.losesData { DeleteSessionLossView(preview: preview) }
             if state.managedFolder {
                 VStack(alignment: .leading, spacing: DS.Space.s2) {
                     DSCheckbox(isOn: state.trashFolder, action: .dialogDeleteSessionTrashFolder, id: .overlayConfirmDeleteTrashFolder, "Move folder to Trash")
                     DSCheckbox(isOn: state.deleteRuns, action: .dialogDeleteSessionDeleteRuns, id: .overlayConfirmDeleteDeleteRuns, "Also delete run folders")
                 }
             }
+            if state.showsKeepBranch {
+                DSCheckbox(isOn: state.keepBranch, action: .dialogDeleteSessionKeepBranch, id: .overlayConfirmDeleteKeepBranch, "Keep the branch")
+            }
             HStack(spacing: DS.Space.s2) {
-                DSCheckbox(isOn: state.dontAsk, action: .dialogDeleteSessionDontAsk, id: .overlayConfirmDeleteDontAsk, "Don't ask again")
+                if state.showsDontAsk {
+                    DSCheckbox(isOn: state.dontAsk, action: .dialogDeleteSessionDontAsk, id: .overlayConfirmDeleteDontAsk, "Don't ask again")
+                }
                 Spacer(minLength: DS.Space.s2)
                 DSButton(.dialogDeleteSessionCancel, id: .overlayConfirmDeleteCancel, "Cancel", variant: .outline)
                 // O catálogo já tem "Delete Session…" (menu) e o Xcode recusa duas chaves com o mesmo símbolo: o texto vem de `String(localized:)`.

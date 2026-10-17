@@ -7,10 +7,12 @@ import SwiftUI
 public struct ToastAction: Equatable, Sendable {
     public let action: ActionID
     public let title: String
+    public let argument: ActionArgument
 
-    public init(_ action: ActionID, title: String) {
+    public init(_ action: ActionID, title: String, argument: ActionArgument = .press) {
         self.action = action
         self.title = title
+        self.argument = argument
     }
 }
 
@@ -184,7 +186,7 @@ private struct ToastView: View {
     private func card(fraction: Double?) -> some View {
         DSToastCard(kind: item.kind, title: item.title, detail: item.detail, timeFraction: fraction) {
             if let action = item.action {
-                ActionButton(action.action, id: .toastAction(item.kind.rawValue)) {
+                ActionButton(action.action, id: .toastAction(item.kind.rawValue), argument: action.argument) {
                     Text(verbatim: action.title)
                 }
                 .buttonStyle(DSButtonStyle(.ghost, .xs))

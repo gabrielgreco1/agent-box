@@ -52,6 +52,8 @@ public final class AppEnvironment {
     /// Sessões limpas (⇧⌘N, ⌥⇧⌘N, arquivar, apagar, mover) e Quick Launch (⌥⌘N, "+" da tab row) — T1-17 e T1-21.
     private(set) var cleanSessions: CleanSessionController?
     private var quickLaunch: QuickLaunchController?
+    /// "Open in…" e "Open in Editor" (T1-27).
+    private(set) var openIn: OpenInController?
     private let environmentVariables: [String: String]
     private let log = LogFacade(.app, category: "ui")
 
@@ -194,6 +196,9 @@ public final class AppEnvironment {
             runsRoot: { CleanSessionPaths.runsRoot(isolatedHome: isolatedHome) }, automationEnabled: automationEnabled)
         cleanSessions = clean
         do { try clean.register(in: registry) } catch { log.publicError("duplicate clean session registration") }
+        let open = OpenInController(sidebar: sidebar, overlays: overlays, toasts: toasts, elements: elements)
+        openIn = open
+        do { try open.register(in: registry) } catch { log.publicError("duplicate open-in registration") }
         let quick = QuickLaunchController(workspace: workspace, overlays: overlays, elements: elements, settings: settings)
         quickLaunch = quick
         do { try quick.register(in: registry) } catch { log.publicError("duplicate quick launch registration") }
@@ -336,6 +341,7 @@ public final class AppEnvironment {
             }
             launcher?.attach(store: opened)
             cleanSessions?.attach(store: opened)
+            openIn?.attach(store: opened)
             await restoreSessions(store: opened)
             await workspace.attach(store: opened)
             await sidebar.attach(store: opened)

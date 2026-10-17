@@ -62,6 +62,30 @@ public struct GitService: Sendable {
         return GitParsers.parseStatus(out)
     }
 
+    /// Remove do Git as referências de worktrees que já não existem no disco.
+    public func pruneWorktrees(in repositoryURL: URL) async throws {
+        _ = try await runner.run(["worktree", "prune"], in: repositoryURL, kind: .write, timeout: timeouts.write)
+    }
+
+    /// Caminhos alterados ou não rastreados (`status --porcelain=v1 -z`), para listar no diálogo de apagar (06 §5.2).
+    /// Devolve no máximo `limit`; o total vem de `status(at:)`.
+    public func changedPaths(at checkoutURL: URL, limit: Int = 8) async throws -> [String] {
+        let out = try await checked(["status", "--porcelain=v1", "-z", "--untracked-files=normal"],
+                                    in: checkoutURL, kind: .read, timeout: timeouts.read, notRepository: true)
+        var paths: [String] = []
+        var skipNext = false
+        for record in out.split(separator: "\0", omittingEmptySubsequences: true) {
+            if skipNext { skipNext = false; continue }
+            let line = String(record)
+            guard line.count > 3 else { continue }
+            let code = line.prefix(2)
+            if code.contains("R") || code.contains("C") { skipNext = true }
+            paths.append(String(line.dropFirst(3)))
+            if paths.count >= limit { break }
+        }
+        return paths
+    }
+
     /// Branch atual; nil com HEAD destacado.
     public func currentBranch(at checkoutURL: URL) async throws -> String? {
         try await status(at: checkoutURL).branch
