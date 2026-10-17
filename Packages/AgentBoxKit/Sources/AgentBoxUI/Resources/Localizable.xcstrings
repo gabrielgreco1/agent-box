@@ -2399,17 +2399,6 @@
         }
       }
     },
-    "Imported from Orca": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Imported from Orca"
-          }
-        }
-      }
-    },
     "Inbox": {
       "extractionState": "manual",
       "localizations": {

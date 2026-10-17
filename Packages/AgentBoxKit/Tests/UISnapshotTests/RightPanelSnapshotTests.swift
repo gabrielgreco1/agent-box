@@ -54,7 +54,7 @@ import Testing
     func panel(files: FilesController, size: CGSize, hide: PanelModuleID? = nil) -> NSHostingView<some View> {
         let controller = RightPanelController()
         controller.register(FilesModule(controller: files))
-        controller.register(InsightsPlaceholderModule())
+        controller.register(InsightsModule(model: InsightsPreviewData.model()))
         controller.isContentVisible = true
         controller.updateWindow(width: 1440, sidebarWidth: 280)
         if let hide { controller.hide(hide) }

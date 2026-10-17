@@ -54,6 +54,8 @@ public final class AppEnvironment {
     public let rightPanel = RightPanelController()
     /// Módulo Files: árvore do diretório da sessão que acompanha o cwd do terminal focado.
     let files: FilesController
+    /// Módulo Insights: uso de IA (transcripts do Claude/Codex) e máquina; só amostra enquanto a view está em cena.
+    let insights: InsightsModel
     /// ⌘Q com agentes vivos, modo accessory e barra de menus (T1-24).
     public private(set) var lifecycle: AppLifecycleCoordinator!
     public let automationEnabled: Bool
@@ -131,6 +133,7 @@ public final class AppEnvironment {
             registry: registry, elements: elements)
         workspace = WorkspaceModel(runtime: runtime)
         files = Self.makeFilesController(workspace: workspace)
+        insights = InsightsModel(service: InsightsService(config: .standard(supportDirectory: storeRoot)))
         // Ícone real na barra de menus só no produto (`.app`): testes e execuções fora do bundle usam o item de mentira.
         let statusBar: any StatusBarProviding = Bundle.main.bundleURL.pathExtension == "app" ? SystemStatusBar() : InMemoryStatusBar()
         lifecycle = AppLifecycleCoordinator(registry: registry, overlays: overlays, statusBar: statusBar)

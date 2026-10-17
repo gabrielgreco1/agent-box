@@ -12,45 +12,25 @@ enum RightPanelModules {
         controller.register(ComputersModule(controller: env.computers))
     }
 
-    /// PONTO DE TROCA: o módulo Insights (uso de IA e máquina) substitui o placeholder aqui. Mantém `id == .insights`,
-    /// `toggleAction == .rightPanelToggleInsights` e `stripButtonID == .tabsInsightsToggle` para o botão da faixa de topo.
     static func makeInsightsModule(env: AppEnvironment) -> any RightPanelModule {
-        InsightsPlaceholderModule()
+        InsightsModule(model: env.insights)
     }
 }
 
-/// Placeholder do Insights até o módulo real chegar: título, ícone e botão da faixa já funcionam.
+/// Insights (uso de IA e máquina) como módulo do painel; mantém o botão da faixa de topo.
 @MainActor
-final class InsightsPlaceholderModule: RightPanelModule {
+final class InsightsModule: RightPanelModule {
     let id = PanelModuleID.insights
     let title = String(localized: "Insights", bundle: .module)
     let icon = "chart.xyaxis.line"
     let toggleAction: ActionID? = .rightPanelToggleInsights
     let stripButtonID: A11yID? = .tabsInsightsToggle
+    private let model: InsightsModel
+
+    init(model: InsightsModel) { self.model = model }
 
     func makeView(context: RightPanelModuleContext) -> AnyView {
-        AnyView(InsightsPlaceholderView(compact: context.isCompact))
-    }
-}
-
-private struct InsightsPlaceholderView: View {
-    let compact: Bool
-
-    var body: some View {
-        VStack(spacing: DS.Space.s2) {
-            Image(systemName: "chart.xyaxis.line")
-                .font(.system(size: DS.Space.s6, weight: .regular))
-                .foregroundStyle(DS.Color.textTertiary)
-            if !compact {
-                Text("Usage and machine insights will appear here.", bundle: .module)
-                    .font(DS.Font.small.font)
-                    .foregroundStyle(DS.Color.textTertiary)
-                    .multilineTextAlignment(.center)
-            }
-        }
-        .padding(DS.Space.s4)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .a11y(.rightPanelInsightsEmpty, kind: "text")
+        AnyView(InsightsModuleView(model: model, compact: context.isCompact))
     }
 }
 
