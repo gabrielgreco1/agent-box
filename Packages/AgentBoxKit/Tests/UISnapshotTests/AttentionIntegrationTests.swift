@@ -89,7 +89,7 @@ import Testing
     }
 
     static func rig() async throws -> Rig {
-        _ = NSApplication.shared
+        NSApplication.shared.setActivationPolicy(.accessory)  // testes nunca ativam nem mostram o app
         let home = URL(fileURLWithPath: "/tmp/abt-\(UInt32.random(in: 0 ... 0xFFFFFF))", isDirectory: true)
         try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
         let socket = home.appendingPathComponent("run/app.sock").path
@@ -247,11 +247,11 @@ import Testing
     }
 
     @Test func slice1KeepsTheAgentsAtStatusUnavailableAndHasNoAttention() async throws {
-        _ = NSApplication.shared
+        NSApplication.shared.setActivationPolicy(.accessory)  // testes nunca ativam nem mostram o app
         let home = URL(fileURLWithPath: "/tmp/abt-\(UInt32.random(in: 0 ... 0xFFFFFF))", isDirectory: true)
         try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: home) }
-        let env = AppEnvironment(environment: ["AGENTBOX_HOME": home.path, "AGENTBOX_APP_SOCK": home.appendingPathComponent("a.sock").path])
+        let env = AppEnvironment(environment: ["AGENTBOX_SLICE": "1", "AGENTBOX_HOME": home.path, "AGENTBOX_APP_SOCK": home.appendingPathComponent("a.sock").path])
         #expect(env.attention == nil && env.fakeNotifier == nil)
         #expect(!env.registry.isRendered(.pageInbox) && !env.registry.isRendered(.sessionNextNeedingAttention))
         let cast = AttentionFixtures.cast(home: "/Users/test")

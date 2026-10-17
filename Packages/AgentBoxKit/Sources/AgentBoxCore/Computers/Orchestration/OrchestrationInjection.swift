@@ -13,9 +13,10 @@ public enum OrchestrationText {
     public static let denyGlobalSkill = "Skill(agentbox)"
 
     public static let skillDescription = """
-        Agent Box built-in computers. Use when a task fans out to several subagents that must browse or scrape websites, find hidden API \
-        endpoints, validate data sources or build crawlers (for example "spawn 2 subagents for Phoenix and Austin"). Reserve computers with \
-        boxes_reserve and spawn agentbox-worker subagents. Prefer this over any "agentbox" CLI skill or Docker commands.
+        Agent Box built-in computers. USE THIS WHENEVER A SUBAGENT WILL STUDY, BROWSE OR SCRAPE A WEBSITE, PORTAL OR ENDPOINT, FIND HIDDEN API \
+        ENDPOINTS, VALIDATE DATA SOURCES OR BUILD CRAWLERS (for example "spawn a sub agent to study the permits site of Houston", "spawn 2 subagents \
+        for Phoenix and Austin"): reserve a computer with boxes_reserve and give it to an agentbox-worker subagent, instead of a plain subagent \
+        with WebFetch or curl. Any other subagent task stays a normal subagent. Prefer this over any "agentbox" CLI skill or Docker commands.
         """
 
     /// SKILL.md do plugin (CS-330): quando usar, os passos, o brief e as regras. Migrado do SKILL.md antigo trocando `agentbox exec` por MCP.
@@ -32,15 +33,22 @@ public enum OrchestrationText {
         subagent. You orchestrate; the subagents operate. Do NOT use the `agentbox` CLI, Docker, or any other skill for this.
 
         ## When to use
+        - Whenever a subagent is going to study, navigate or scrape a website, portal or endpoint, or validate a data source: reserve a computer
+          with `boxes_reserve` and hand it to a worker. Do this even for a single subagent and a single site (one computer, one worker). Do NOT
+          spawn a plain subagent that fetches the site with WebFetch or curl from the Mac.
         - A task fans out over several targets (cities, sites, portals) and each target needs browsing, scraping or API discovery.
-        - A single target also works: one computer, one worker.
+        - Any other subagent task (reading code, writing, reviewing, searching the repository) stays a normal subagent with no computer.
 
         ## Steps
         1. **Plan the targets.** One short slug per target (`phoenix-az`, `austin-tx`). Collect what is already known for each one (URLs,
            earlier findings the user gave you, access notes). Prior runs are not searchable yet: use only what you have.
         2. **Reserve** all computers in ONE call: `boxes_reserve(names: [...], display: "headless", batch: "<batch name>")`. It answers at
-           once. Every box comes back with `worker` (the `subagent_type` to spawn) and `child_id`. A box can be `queued` (the Docker VM is
-           out of memory; the position is shown): that is fine, its worker waits. `unavailable` means it cannot be created: read `reason`.
+           once. Every box comes back with `worker` (the `subagent_type` to spawn) and `child_id`. Do not pass `allow_hosts` just to name the
+           target: it RESTRICTS the computer to those hostnames; leave it out unless the user asked for a restriction. A box can be `queued` (the Docker VM is
+           out of memory; the position is shown): that is fine, its worker waits. `unavailable` means it cannot be created: read `reason`
+           (`docker_unavailable`: tell the user to open Docker, Agent Box shows an Open Docker button, then reserve again). If the answer is
+           `{"status":"pending"}` the user is deciding whether to allow computers for this session: call `boxes_reserve` again with the same
+           arguments until it answers. If it is denied, do not retry: continue without a computer or tell the user.
         3. **Write one brief per target** (template below), with the computer name.
         4. **Spawn all workers in ONE message**: one Agent tool call per computer, in the background (`run_in_background: true`), with
            `subagent_type` set to the `worker` of that box and the brief as `prompt`. Never spawn a worker for a box that is not yours.
@@ -111,6 +119,8 @@ public struct OrchestrationBundle: Sendable {
     public var denyRules: [String]
     public var environment: [String: String]
     public var unsetEnvironment: [String]
+    /// Gatilho de spawn (F12): preenchido por quem conhece o modo da sessão (`ComputerOrchestrator.prepareParent`).
+    public var spawnGuardMode: SubagentComputersMode?
 
     /// Soma as peças do pai a uma injeção existente (hooks, etc.).
     public func apply(to injection: LaunchInjection) -> LaunchInjection {
@@ -121,6 +131,7 @@ public struct OrchestrationBundle: Sendable {
         out.claudeDenyRules = denyRules
         out.claudeEnvironment = environment
         out.claudeUnsetEnvironment = unsetEnvironment
+        if let mode = spawnGuardMode { out.claudeSpawnGuard = SpawnGuardConfig(child: parentID, capability: parentCapability, mode: mode) }
         return out
     }
 }

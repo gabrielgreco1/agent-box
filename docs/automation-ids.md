@@ -71,6 +71,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `sidebar.session.<id>.rename`
 - `sidebar.session.<id>.revealGlow`
 - `sidebar.session.<id>.showMore`
+- `sidebar.session.<id>.computers`
+- `sidebar.session.<id>.restartToApply`
 - `sidebar.session.<id>.pin`
 - `sidebar.session.<id>.agent.<terminalId>`
 - `sidebar.session.<id>.agent.<terminalId>.status`
@@ -80,6 +82,11 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `sidebar.session.<id>.child.<childId>.status`
 - `sidebar.session.<id>.child.<childId>.glyph`
 - `sidebar.session.<id>.child.<childId>.connector`
+- `sidebar.session.<id>.child.<childId>.title`
+- `sidebar.session.<id>.child.<childId>.elapsed`
+- `sidebar.session.<id>.child.<childId>.hoverCard`
+- `sidebar.session.<id>.child.<childId>.preview`
+- `sidebar.session.<id>.child.<childId>.openViewer`
 - `sidebar.pending.<id>`
 - `sidebar.pending.<id>.cancel`
 - `sidebar.cleanSessions`
@@ -117,6 +124,11 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `pane.<id>.attention`
 - `pane.<id>.zoomPill`
 - `pane.<id>.feedbackPill`
+- `pane.<id>.computers`
+- `pane.<id>.approval`
+- `pane.<id>.approval.allow`
+- `pane.<id>.approval.allowSession`
+- `pane.<id>.approval.deny`
 - `pane.<id>.ignition`
 - `pane.<id>.ignition.cancel`
 - `pane.<id>.ignition.step.<stepKey>`
@@ -227,6 +239,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `inbox.item.<eventId>`
 - `inbox.item.<eventId>.markRead`
 - `inbox.item.<eventId>.takeOver`
+- `inbox.item.<eventId>.allow`
+- `inbox.item.<eventId>.deny`
 
 ### Painel direito
 
@@ -478,6 +492,9 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `session.newClean` | New Clean Session | ⇧⌘N | slice1 |
 | `session.newCleanInFolder` | New Clean Session in Folder… | ⌥⇧⌘N | slice1 |
 | `project.add` | Add Project… | — | slice1 |
+| `session.setSubagentComputers` | Subagent computers (card, header do pane) | — | slice3 |
+| `agent.toggleChildren` | Collapse / Expand Subagents (chevron da linha do agente) | — | slice3 |
+| `session.restartToApply` | Restart to apply | — | slice3 |
 | `sidebar.sortFilter` | Sort and Filter | — | slice1 |
 | `sidebar.resetFilters` | Reset | — | slice1 |
 | `sidebar.clearSearch` | Clear Search | — | slice2 |
@@ -673,6 +690,10 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `computer.paste` | Paste to Computer | — | slice3 |
 | `computer.copySelection` | Copy Selection from Computer | — | slice3 |
 | `computer.reconnect` | Reconnect | — | slice3 |
+| `computer.showPreview` | Show Preview (hover card do subagente) | — | slice3 |
+| `computer.allowRequest` | Allow | — | slice3 |
+| `computer.allowRequestSession` | Allow for this session | — | slice3 |
+| `computer.denyRequest` | Deny (pedido de computador) | — | slice3 |
 | `computer.start` | Start Computer | — | slice3 |
 | `computer.stop` | Stop Computer… | — | slice3 |
 | `computer.delete` | Delete Computer… | — | slice3 |
@@ -705,6 +726,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `settings.general.cleanSessionFolder` | Clean session folder | — | slice1 |
 | `settings.pickPath` | Change… | — | slice1 |
 | `settings.resetConfirmations` | Reset | — | slice1 |
+| `settings.computers.defaultSubagentMode` | Subagent computers (padrão das novas sessões) | — | slice3 |
 | `settings.agents.defaultAgent` | Default agent | — | slice1 |
 | `settings.agents.defaultProfile` | Default profile | — | slice1 |
 | `settings.agents.profileNew` | New Profile | — | slice1 |
@@ -750,6 +772,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `composer.manageAgents` | Manage Agents… (rodapé do combobox de agente) | — | slice1 |
 | `composer.setProfile` | Profile (combobox) | — | slice1 |
 | `composer.editProfiles` | Edit Profiles… (rodapé do combobox de perfil) | — | slice1 |
+| `composer.setSubagentComputers` | Subagent computers (segmented) | — | slice3 |
 | `composer.setPrompt` | Prompt | — | slice1 |
 | `composer.toggleAdvanced` | Advanced (disclosure) | — | slice1 |
 | `composer.setSessionName` | Session name | — | slice1 |

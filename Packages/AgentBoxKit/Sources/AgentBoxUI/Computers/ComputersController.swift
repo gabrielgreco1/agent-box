@@ -22,7 +22,9 @@ extension CenterPage {
 @Observable
 public final class ComputersController {
     public let model = ComputersModel()
-    @ObservationIgnored public let hub = ComputerHub()
+    /// O hub do app: o mesmo que o MCP usa. `useOrchestrator` troca pelo do orquestrador (F12).
+    @ObservationIgnored public private(set) var hub = ComputerHub()
+    @ObservationIgnored public private(set) var orchestrator: ComputerOrchestrator?
     public private(set) var page: CenterPage = .workspace
     public private(set) var panelOpen = false
     public private(set) var viewers: [String: ComputerViewerController] = [:]
@@ -33,12 +35,23 @@ public final class ComputersController {
     @ObservationIgnored private var refresher: Task<Void, Never>?
     @ObservationIgnored private var popOuts: [String: ViewerPopOut] = [:]
     @ObservationIgnored private var demoRig: DemoComputerRig?
+    /// O hover card de um subagente está aberto: só então a miniatura corre (≤ 1 fps) fora do painel e da página Computers.
+    @ObservationIgnored private var hoverPreviewOpen = false
+    /// O hover card dos subagentes (ligado pelo `AppEnvironment`).
+    @ObservationIgnored var hoverCards: SubagentHoverCardController?
+
+    public func setHoverPreview(open: Bool) { hoverPreviewOpen = open }
 
     public init() {
         // Sem coordenador de atenção (Fatia 1) o próprio controlador mantém o badge; com ele, `AppEnvironment` religa isto
         // e o badge é a soma única (agentes + pedidos de ajuda) em `AttentionCoordinator.refreshDock`.
         model.onAttentionChange = { count in
             NSApp?.dockTile.badgeLabel = count > 0 ? "\(count)" : ""
+        }
+        model.onApprovalRequested = { [weak self] request in
+            guard let self else { return }
+            self.notifier.notify(approval: request)
+            if NSApp?.isActive == false { NSApp.requestUserAttention(.informationalRequest) }
         }
         model.onHelpRequested = { [weak self] item, content in
             guard let self else { return }
@@ -48,6 +61,23 @@ public final class ComputersController {
     }
 
     // MARK: Computadores
+
+    /// F12: os computadores que o scheduler cria no `boxes_reserve` chegam aqui (linha filha da sidebar, viewer) e saem quando liberados.
+    public func useOrchestrator(_ orchestrator: ComputerOrchestrator) async {
+        self.orchestrator = orchestrator
+        hub = orchestrator.hub
+        let model = model
+        await hub.setObservers(
+            onRegister: { computer in
+                Task { @MainActor in
+                    await model.attach(computer)
+                    model.sessionIDs[computer.name] = await orchestrator.sessionID(ofComputer: computer.name)
+                }
+            },
+            onRemove: { name in Task { @MainActor in model.detach(name: name) } })
+        await orchestrator.approvals.setObserver { requests in Task { @MainActor in model.setApprovals(requests) } }
+        model.decide = { id, decision in Task { await orchestrator.approvals.decide(id: id, decision) } }
+    }
 
     public func add(_ computer: ManagedComputer) async {
         await hub.register(computer)
@@ -60,7 +90,7 @@ public final class ComputersController {
             while !Task.isCancelled {
                 guard let self else { return }
                 // Miniaturas só quando alguém as vê (painel aberto ou página Computers) e ≤ 1 fps por computador (CS-403).
-                let visible = self.panelOpen || self.page == .computers || (self.page.isViewer && self.model.rows.count > 1)
+                let visible = self.panelOpen || self.page == .computers || self.hoverPreviewOpen
                 await self.model.refresh(withThumbnails: visible)
                 try? await Task.sleep(for: .seconds(1))
             }
@@ -232,6 +262,37 @@ public final class ComputersController {
         }
         try registry.register(.computerCopySelection, enablement: viewerOpen) { [unowned self] _ in
             await activeViewer?.copySelection() == true ? "copied" : "empty"
+        }
+        // F12, modo Ask: o card de aprovação, o item do Inbox e a notificação disparam estas ações.
+        let waiting: ActionRegistry.Enablement = { [unowned self] in
+            model.approvals.isEmpty ? .disabled(reason: String(localized: "No computer request is waiting.", bundle: .module)) : .enabled
+        }
+        func decision(_ id: ActionID, _ decision: ComputerApprovalDecision) throws {
+            try registry.register(id, enablement: waiting) { [unowned self] arg in
+                guard let request = arg.value.flatMap({ value in model.approvals.first { $0.id == value } }) ?? model.approvals.first else {
+                    throw ActionError.failed(id, message: "No computer request is waiting.")
+                }
+                model.decide(request.id, decision)
+                return request.id
+            }
+        }
+        try decision(.computerAllowRequest, .allow)
+        try decision(.computerAllowRequestSession, .allowForSession)
+        try decision(.computerDenyRequest, .deny)
+        try registry.register(.computerShowPreview, enablement: hasComputer) { [unowned self] arg in
+            guard arg.kind == .select, let name = arg.value else {
+                hoverCards?.hide()
+                return "closed"
+            }
+            guard hoverCards?.present(computer: name, window: NSApp.windows.first { $0.canBecomeMain }) == true else {
+                throw ActionError.failed(.computerShowPreview, message: "No subagent row shows \(name)")
+            }
+            return name
+        }
+        // "Open Docker": a linha do computador e o Settings oferecem quando o Docker está parado (07 CS-104).
+        try registry.register(.dockerStart) { _ in
+            DockerLauncher.open()
+            return "opening"
         }
     }
 

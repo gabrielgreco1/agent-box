@@ -36,6 +36,10 @@ final class PaneChromeModel {
     /// Interrupted (T1-23): por que o processo sumiu e se o Resume usa o ID nativo (senão vira "Continue Last").
     var interruption: InterruptionReason = .unexpected
     var exactResume = true
+    /// "Subagent computers" da sessão do pane (F12): só Claude. `nil` = sem controle.
+    var subagentSession: UUID?
+    var subagentMode: SubagentComputersMode = .off
+    var subagentRestart = false
 
     var id: String { terminalID.uuidString }
     var agentName: String { provider.isAgent ? ProviderAdapters.name(provider) : String(localized: "Terminal", bundle: .module) }
@@ -55,6 +59,7 @@ struct PaneHeaderView: View {
                 .lineLimit(1)
                 .truncationMode(.tail)
             Spacer(minLength: DS.Space.s2)
+            PaneComputersToggle(model: model)
             PaneButtons(model: model)
         }
         .padding(.horizontal, PaneMetrics.headerPaddingH)
@@ -102,14 +107,38 @@ struct PaneButtons: View {
     }
 }
 
+/// Ícone "Subagent computers" do pane (F12): sempre visível com o modo ligado (ou com "Restart to apply" pendente); desligado só aparece
+/// no hover ou com o pane em foco.
+struct PaneComputersToggle: View {
+    let model: PaneChromeModel
+
+    var body: some View {
+        if let session = model.subagentSession {
+            let visible = model.subagentMode.isOn || model.subagentRestart || model.hovering || model.focused
+            HStack(spacing: DS.Space.s1) {
+                if model.subagentRestart {
+                    RestartToApplyPill(sessionID: session, id: nil)
+                }
+                SubagentToggleButton(sessionID: session, mode: model.subagentMode, id: .paneComputers(model.id), restartPending: model.subagentRestart, style: .pane)
+                    .opacity(visible ? 1 : 0)
+            }
+            .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: visible)
+            .animation(MotionPolicy.shared.animation(MotionTokens.Springs.snappy), value: model.subagentRestart)
+        }
+    }
+}
+
 /// Variante chromeless (1 pane): só os botões no canto superior direito, visíveis no hover.
 struct PaneFloatingButtons: View {
     let model: PaneChromeModel
 
     var body: some View {
-        PaneButtons(model: model)
-            .opacity(model.hovering ? 1 : 0)
-            .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: model.hovering)
+        HStack(spacing: PaneMetrics.buttonGap) {
+            PaneComputersToggle(model: model)
+            PaneButtons(model: model)
+                .opacity(model.hovering ? 1 : 0)
+        }
+        .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: model.hovering)
     }
 }
 

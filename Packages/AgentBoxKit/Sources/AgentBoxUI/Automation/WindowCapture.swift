@@ -17,6 +17,10 @@ enum WindowCapture {
         var note: String?
     }
 
+    /// `true` só se o usuário já concedeu a Gravação de Tela a este app. Nunca pede (nem toca no ScreenCaptureKit) sem isso: o pedido
+    /// do sistema só aparece por ação explícita do usuário, nunca por um `ctl screenshot` de teste.
+    static var screenCaptureGranted: Bool { CGPreflightScreenCaptureAccess() }
+
     static func capture(_ window: NSWindow) async throws -> Capture {
         // Só consulta (nunca pede) a permissão de Gravação de Tela: sem ela, usa o render do AppKit e não abre prompt.
         guard CGPreflightScreenCaptureAccess() else {

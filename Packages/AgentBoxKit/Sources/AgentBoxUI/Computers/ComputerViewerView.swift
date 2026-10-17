@@ -354,7 +354,7 @@ struct ControlPill: View {
     private var text: String {
         if model.control == .human { return String(localized: "You're in control", bundle: .module) }
         if model.control == .revoking { return String(localized: "Requesting control…", bundle: .module) }
-        if model.help != nil { return String(localized: "Needs you", bundle: .module) }
+        if model.help != nil { return String(localized: "Needs You", bundle: .module) }
         if model.connection == .stopped { return String(localized: "Idle", bundle: .module) }
         return String(localized: "Claude is using", bundle: .module)
     }

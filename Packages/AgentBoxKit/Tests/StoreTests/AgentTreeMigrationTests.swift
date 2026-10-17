@@ -11,7 +11,7 @@ import Testing
 
     @Test func migratesFromV5KeepingDataAndBackingUpFirst() async throws {
         let home = try TempHome(); defer { home.remove() }
-        let chain = Array(StoreMigrations.all.dropLast())
+        let chain = Array(StoreMigrations.all.prefix(5))
         #expect(chain.last?.id == "v5_proxy_ext")
         let before = try await home.openStore(day: 0, migrations: chain)
         try await before.save(Fixture.project())

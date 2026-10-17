@@ -40,7 +40,7 @@ public enum SettingsCatalog {
     ]
 
     /// Seções com conteúdo construído (T1-26: General, Agents, Terminal; T2-04: Notifications).
-    public static let implemented: Set<String> = ["agents", "general", "terminal", "notifications"]
+    public static let implemented: Set<String> = ["agents", "general", "terminal", "notifications", "computers"]
 
     public static func visible(flags: SliceFlags, among specs: [SettingsSectionSpec] = all, implemented: Set<String> = implemented) -> [SettingsSectionSpec] {
         specs.filter { flags.isEnabled($0.slice) && implemented.contains($0.id) }

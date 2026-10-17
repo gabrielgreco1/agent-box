@@ -44,6 +44,15 @@ public struct ComputerMCPServer: Sendable {
         case "tools/list":
             let isParent = await tools.hub.role(of: child) == .parent
             return Self.reply(id, result: ["tools": .array((isParent ? ToolCatalog.parentTools : ToolCatalog.all).map(\.mcpJSON))])
+        case "agentbox/spawn_guard":
+            // Hook PreToolUse do pai (F12): `{decision: allow|block, reason?}`. Só o pai pergunta.
+            guard await tools.hub.role(of: child) == .parent else { return Self.fail(id, code: -32601, "Method not found") }
+            let input = SubagentSpawnGuard.Input(
+                subagentType: params?["subagent_type"]?.string, prompt: params?["prompt"]?.string ?? "", description: params?["description"]?.string ?? "")
+            switch await tools.spawnGuard(parent: child, input: input) {
+            case .allow: return Self.reply(id, result: ["decision": "allow"])
+            case .block(let reason): return Self.reply(id, result: ["decision": "block", "reason": .string(reason)])
+            }
         case "tools/call":
             guard let name = params?["name"]?.string else { return Self.fail(id, code: -32602, "Invalid tool call: name is required") }
             let arguments = params?["arguments"] ?? [:]

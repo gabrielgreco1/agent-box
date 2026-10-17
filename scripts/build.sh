@@ -87,6 +87,15 @@ mkdir -p "$APP/Contents/Library/LaunchAgents"
 sed "s/__BUILD__/$BUILD_NUMBER/g" "$ROOT/App/LaunchAgents/app.agentbox.ptyd.v1.plist" > "$APP/Contents/Library/LaunchAgents/app.agentbox.ptyd.v1.plist"
 plutil -lint "$APP/Contents/Library/LaunchAgents/app.agentbox.ptyd.v1.plist" >/dev/null || fail "plist do LaunchAgent inválido"
 
+# Contextos de build das imagens do computador e do egress (F12): a primeira reserva de um computador constrói as imagens a partir daqui
+# (`RuntimeContextLocator`). Dados dentro de Contents/Resources: selados pela assinatura do app.
+mkdir -p "$APP/Contents/Resources/runtime"
+for ctx in box egress; do
+  rm -rf "$APP/Contents/Resources/runtime/$ctx"
+  ditto "$ROOT/runtime/$ctx" "$APP/Contents/Resources/runtime/$ctx"
+done
+find "$APP/Contents/Resources/runtime" \( -name .DS_Store -o -name '*.pyc' -o -name __pycache__ \) -prune -exec rm -rf {} + 2>/dev/null || true
+
 SIGN_REF="$IDENT"; [ -z "$SIGN_KEYCHAIN" ] || SIGN_REF="$IDENT_NAME"
 sign() { # path identifier
   if [ "$IDENT" = "-" ]; then

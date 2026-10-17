@@ -22,7 +22,7 @@ import Testing
             let q = try DatabaseQueue(path: home.paths.databaseFile.path, configuration: c)
             return try q.read { try String.fetchAll($0, sql: "SELECT identifier FROM grdb_migrations") }
         }()
-        #expect(ids == ["v1_initial", "v2_activity", "v3_computers", "v4_vault_catalog", "v5_proxy_ext", "v6_agent_tree"])
+        #expect(ids == ["v1_initial", "v2_activity", "v3_computers", "v4_vault_catalog", "v5_proxy_ext", "v6_agent_tree", "v7_subagent_computers"])
     }
 
     @Test func schemaIsStrictAndRejectsInconsistentSessions() async throws {
@@ -462,7 +462,7 @@ import Testing
 
 @Suite struct FullMigrationChainTests {
     @Test func v1DatabaseUpgradesThroughEveryMigrationToCurrent() async throws {
-        #expect(StoreMigrations.all.map(\.id) == ["v1_initial", "v2_activity", "v3_computers", "v4_vault_catalog", "v5_proxy_ext", "v6_agent_tree"])
+        #expect(StoreMigrations.all.map(\.id) == ["v1_initial", "v2_activity", "v3_computers", "v4_vault_catalog", "v5_proxy_ext", "v6_agent_tree", "v7_subagent_computers"])
         let home = try TempHome(); defer { home.remove() }
         let v1 = try await home.openStore(day: 0, migrations: [StoreMigrations.v1Initial])
         let project = Fixture.project()

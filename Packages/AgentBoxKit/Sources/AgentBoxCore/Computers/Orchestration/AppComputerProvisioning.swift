@@ -1,0 +1,185 @@
+import AgentBoxDocker
+import AgentBoxPlatform
+import Foundation
+
+// F12 item 4: a primeira vez sem imagens Docker o app constrói (ou baixa) a imagem do computador e a do egress em segundo plano,
+// mostrando o progresso na linha do computador; Docker parado vira um erro claro com "Open Docker". 07 §2.3 (CS-120, CS-121).
+
+public enum ComputerSetupError: Error, LocalizedError, Equatable, Sendable {
+    case dockerNotRunning
+    case runtimeFilesMissing(String)
+
+    /// Prefixo estável: a UI mostra o botão "Open Docker" quando o detalhe do computador começa por ele.
+    public static let dockerNotRunningMessage = "Docker isn't running"
+
+    public var errorDescription: String? {
+        switch self {
+        case .dockerNotRunning: "\(Self.dockerNotRunningMessage). Open Docker, then reserve the computer again."
+        case .runtimeFilesMissing(let path): "The computer image files are missing (\(path))."
+        }
+    }
+}
+
+/// Onde estão os contextos de build (`box/`, `egress/`): `AGENTBOX_RUNTIME_ROOT`, o checkout (`AGENTBOX_REPO_ROOT`, dev) ou o bundle.
+public enum RuntimeContextLocator {
+    public static func root(environment: [String: String], bundleURL: URL) -> URL? {
+        var candidates: [URL] = []
+        if let value = environment["AGENTBOX_RUNTIME_ROOT"], !value.isEmpty { candidates.append(URL(fileURLWithPath: value, isDirectory: true)) }
+        if let value = environment["AGENTBOX_REPO_ROOT"], !value.isEmpty {
+            candidates.append(URL(fileURLWithPath: value, isDirectory: true).appendingPathComponent("runtime", isDirectory: true))
+        }
+        candidates.append(bundleURL.appendingPathComponent("Contents/Resources/runtime", isDirectory: true))
+        return candidates.first { FileManager.default.fileExists(atPath: $0.appendingPathComponent("box/Dockerfile").path) }
+    }
+}
+
+/// Estado do preparo das imagens, para a linha do computador.
+public enum ComputerSetupState: Sendable, Equatable {
+    case idle
+    case building(image: String, step: Int, of: Int)
+    case pulling(image: String, done: Int, of: Int)
+    case ready
+    case failed(String)
+
+    /// `"Building computer image… 3 of 14"` enquanto trabalha; `nil` parado, pronto ou com erro.
+    public var label: String? {
+        switch self {
+        case .building(let image, let step, let total): total > 0 ? "Building \(image) image… \(step) of \(total)" : "Building \(image) image…"
+        case .pulling(let image, let done, let total): total > 0 ? "Downloading \(image) image… \(done) of \(total)" : "Downloading \(image) image…"
+        case .idle, .ready, .failed: nil
+        }
+    }
+}
+
+public actor AppComputerProvisioning: ComputerProvisioning {
+    public struct Config: Sendable {
+        public var runtimeRoot: URL?
+        public var secretsRoot: URL
+        public var owner: String
+        /// Sufixo do repositório das imagens (testes: `-test-<id>`).
+        public var repositorySuffix = ""
+        public var extraLabels: [String: String] = [:]
+        public var isTest = false
+        public var bridgeNetwork = EgressOrchestrator.sharedBridgeName
+        public var allowCIDRs: [String] = []
+        public var resolver: ProxyConfigResolver?
+        /// Troca a detecção do runtime (testes que já têm o cliente).
+        public var client: DockerClient?
+
+        public init(runtimeRoot: URL?, secretsRoot: URL, owner: String) {
+            self.runtimeRoot = runtimeRoot; self.secretsRoot = secretsRoot; self.owner = owner
+        }
+    }
+
+    private var config: Config
+    private var cachedClient: DockerClient?
+    private var imageTask: Task<(box: String, egress: String), Error>?
+    public private(set) var state: ComputerSetupState = .idle
+    private var observer: (@Sendable (ComputerSetupState) -> Void)?
+    private var problem: (@Sendable (ComputerSetupError) -> Void)?
+
+    public init(config: Config) {
+        self.config = config
+        self.cachedClient = config.client
+    }
+
+    public func setObserver(state: (@Sendable (ComputerSetupState) -> Void)?, problem: (@Sendable (ComputerSetupError) -> Void)?) {
+        observer = state
+        self.problem = problem
+        state?(self.state)
+    }
+
+    private func set(_ new: ComputerSetupState) {
+        guard new != state else { return }
+        state = new
+        observer?(new)
+    }
+
+    // MARK: Docker
+
+    private func client() async throws -> DockerClient {
+        if let cachedClient { return cachedClient }
+        do {
+            let detected = try await RuntimeDetector().detect()
+            let client = DockerClient(runtime: detected.runtime, defaultTimeout: .seconds(60))
+            cachedClient = client
+            return client
+        } catch {
+            throw ComputerSetupError.dockerNotRunning
+        }
+    }
+
+    public func preflight() async throws {
+        do {
+            try await client().ping()
+        } catch {
+            cachedClient = config.client
+            problem?(.dockerNotRunning)
+            throw ComputerSetupError.dockerNotRunning
+        }
+    }
+
+    /// `M` e CPUs da VM; sem Docker, 8 GB (a admissão não trava, o preflight já avisou).
+    public func vmCapacity() async -> VMCapacity {
+        if let client = try? await client(), let info = try? await client.info() { return VMCapacity(memTotalBytes: info.memTotal, cpuCount: info.cpuCount) }
+        return VMCapacity(memTotalBytes: 8 << 30, cpuCount: 4)
+    }
+
+    // MARK: Imagens
+
+    /// Garante as duas imagens uma vez para todos os computadores que estão subindo (a primeira vez constrói; as seguintes só conferem).
+    public func ensureImages() async throws -> (box: String, egress: String) {
+        if let imageTask { return try await imageTask.value }
+        guard let root = config.runtimeRoot else {
+            let error = ComputerSetupError.runtimeFilesMissing("runtime/box")
+            set(.failed(error.localizedDescription))
+            throw error
+        }
+        let client = try await client()
+        let config = config
+        let owner = self
+        let task = Task<(box: String, egress: String), Error> {
+            let manager = ImageManager(client: client)
+            func ensure(_ name: String, label: String) async throws -> String {
+                let source = ImageSource(
+                    repository: "agentbox-\(name)\(config.repositorySuffix)", contextDirectory: root.appendingPathComponent(name, isDirectory: true),
+                    extraLabels: config.extraLabels)
+                let ensured = try await manager.ensure(source) { progress in
+                    switch progress {
+                    case .building(let step, let total): Task { await owner.set(.building(image: label, step: step, of: total)) }
+                    case .pulling(let done, let total, _): Task { await owner.set(.pulling(image: label, done: done, of: total)) }
+                    case .log: break
+                    }
+                }
+                return ensured.tag
+            }
+            let box = try await ensure("box", label: "computer")
+            let egress = try await ensure("egress", label: "egress")
+            return (box, egress)
+        }
+        imageTask = task
+        do {
+            let tags = try await task.value
+            set(.ready)
+            return tags
+        } catch {
+            imageTask = nil
+            let text = (error as? LocalizedError)?.errorDescription ?? "\(error)"
+            set(.failed(text))
+            throw error
+        }
+    }
+
+    // MARK: ComputerProvisioning
+
+    public func provision(_ spec: ComputerSpec) async throws -> ProvisionedHandle {
+        observer?(state)
+        let tags = try await ensureImages()
+        let client = try await client()
+        let inner = DockerComputerProvisioning(
+            client: client, boxImage: tags.box, egressImage: tags.egress, secrets: BoxSecretFiles(root: config.secretsRoot), owner: config.owner,
+            bridgeNetwork: config.bridgeNetwork, allowCIDRs: config.allowCIDRs, extraLabels: config.extraLabels, isTest: config.isTest,
+            resolver: config.resolver)
+        return try await inner.provision(spec)
+    }
+}

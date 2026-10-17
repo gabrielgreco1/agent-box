@@ -22,11 +22,13 @@ public actor ActivityService {
         public var statusReason: String?
         public var subtitle: String?
         public var liveChildren: Int
+        public var children: [SubagentInfo] = []
 
         public init(
             runID: UUID, terminalID: UUID?, activity: AgentActivity, lastMessage: String? = nil, statusReason: String? = nil,
-            subtitle: String? = nil, liveChildren: Int = 0
+            subtitle: String? = nil, liveChildren: Int = 0, children: [SubagentInfo] = []
         ) {
+            self.children = children
             self.runID = runID; self.terminalID = terminalID; self.activity = activity; self.lastMessage = lastMessage
             self.statusReason = statusReason; self.subtitle = subtitle; self.liveChildren = liveChildren
         }
@@ -280,7 +282,7 @@ public actor ActivityService {
     private func publish(runID: UUID, terminalID: UUID?, state: ActivityState) {
         updateContinuation.yield(Update(
             runID: runID, terminalID: terminalID, activity: state.activity, lastMessage: state.lastMessage,
-            statusReason: state.statusReason, subtitle: state.subtitle, liveChildren: state.liveChildCount))
+            statusReason: state.statusReason, subtitle: state.subtitle, liveChildren: state.liveChildCount, children: state.subagentInfos))
     }
 
     /// Exclusão mútua assíncrona: uma ingestão por vez, para que a projeção gravada seja sempre a do estado mais novo.

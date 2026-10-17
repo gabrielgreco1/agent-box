@@ -54,6 +54,7 @@ final class ComposerModel {
         }
         let wanted = initial.provider.flatMap { installed($0) ? $0 : nil } ?? settings.settings.agents.defaultAgent
         draft.provider = wanted
+        draft.subagentComputers = settings.settings.computers.defaultSubagentMode
         draft.profileID = initial.profileID.flatMap { id in settings.profiles(for: wanted).contains { $0.id == id } ? id : nil }
             ?? settings.defaultProfile(for: wanted)?.id
         self.draft = draft

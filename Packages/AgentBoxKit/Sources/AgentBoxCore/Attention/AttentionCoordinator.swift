@@ -113,7 +113,7 @@ public final class AttentionCoordinator {
         let now = clock()
         let status = TerminalActivity(
             terminalID: terminalID, runID: update.runID, activity: update.activity, lastMessage: update.lastMessage,
-            reason: update.statusReason, subtitle: update.subtitle, liveChildren: update.liveChildren, changedAt: now)
+            reason: update.statusReason, subtitle: update.subtitle, liveChildren: update.liveChildren, changedAt: now, children: update.children)
         let item = center.apply(status, context: context, now: now)
         if let item {
             persistUnread(sessionID: item.sessionID, kind: item.kind)

@@ -17,7 +17,7 @@ import Testing
         let project = Fixture.project()
         try await before.save(project)
         let session = Fixture.cleanSession()
-        try await before.save(session)
+        try await before.savePreV7(session)
         try await before.close()
         #expect(!(try tableNames(at: home.paths.databaseFile)).contains("computer"))
 

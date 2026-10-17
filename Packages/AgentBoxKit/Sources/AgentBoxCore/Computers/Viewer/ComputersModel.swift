@@ -11,6 +11,10 @@ public struct ComputerRow: Identifiable, Sendable, Equatable {
     public var owner: String?
     public var lastActivity: Date
     public var needsYou: Bool { snapshot.help != nil }
+
+    public init(snapshot: ViewerSnapshot, thumbnail: Data? = nil, sessionTitle: String? = nil, owner: String? = nil, lastActivity: Date = Date()) {
+        self.snapshot = snapshot; self.thumbnail = thumbnail; self.sessionTitle = sessionTitle; self.owner = owner; self.lastActivity = lastActivity
+    }
 }
 
 /// Item do Inbox para pedidos de ajuda de computador (03 §9.1): um por `request_id`.
@@ -45,9 +49,19 @@ public struct HelpNotificationContent: Sendable, Equatable {
 public final class ComputersModel {
     public private(set) var rows: [ComputerRow] = []
     public private(set) var inbox: [InboxItem] = []
-    /// Pedidos abertos e não resolvidos: o número do badge do Dock (03 §9.3).
-    public var attentionCount: Int { inbox.filter { $0.phase == .needsYou }.count }
+    /// Pedidos de computador esperando o usuário no modo Ask (F12): card no pane, item no Inbox e notificação.
+    public private(set) var approvals: [ComputerApprovalRequest] = []
+    /// Qual sessão do app é dona de cada computador (linha filha da sidebar).
+    public var sessionIDs: [String: UUID] = [:]
+    /// Computador de cada subagente nativo (`agent_id` dos hooks -> nome), ligado quando o filho chama a primeira ferramenta.
+    public var agentComputers: [String: String] = [:]
+    /// Pedidos de ajuda abertos e pedidos de computador sem decisão: o número do badge do Dock (03 §9.3).
+    public var attentionCount: Int { inbox.filter { $0.phase == .needsYou }.count + approvals.count }
     public var sessionTitle: (String) -> String? = { _ in nil }
+    /// Decisão do usuário sobre um pedido (o app liga ao `ComputerApprovalCenter`).
+    @ObservationIgnored public var decide: (String, ComputerApprovalDecision) -> Void = { _, _ in }
+    @ObservationIgnored public var onApprovalRequested: (ComputerApprovalRequest) -> Void = { _ in }
+    private var announcedApprovals: Set<String> = []
     @ObservationIgnored public var onHelpRequested: (InboxItem, HelpNotificationContent) -> Void = { _, _ in }
     @ObservationIgnored public var onAttentionChange: (Int) -> Void = { _ in }
 
@@ -60,6 +74,16 @@ public final class ComputersModel {
     public init() {}
 
     public func computer(named name: String) -> ManagedComputer? { computers[name] }
+
+    /// Lista atual de pedidos abertos do `ComputerApprovalCenter`; cada pedido novo gera a notificação uma vez.
+    public func setApprovals(_ requests: [ComputerApprovalRequest]) {
+        approvals = requests
+        for request in requests where announcedApprovals.insert(request.id).inserted { onApprovalRequested(request) }
+        onAttentionChange(attentionCount)
+    }
+
+    /// Computadores da sessão, na ordem de criação.
+    public func rows(forSession id: UUID) -> [ComputerRow] { rows.filter { sessionIDs[$0.id] == id } }
 
     /// Passa a acompanhar um computador: eventos (pedido de ajuda, controle) chegam aqui.
     public func attach(_ computer: ManagedComputer) async {
@@ -74,6 +98,7 @@ public final class ComputersModel {
 
     public func detach(name: String) {
         computers[name] = nil
+        sessionIDs[name] = nil
         rows.removeAll { $0.id == name }
     }
 

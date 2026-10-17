@@ -13,18 +13,23 @@ struct InboxView: View {
         let feed = model.inboxFeed
         Section {
             let help = model.helpItems
-            if feed.isEmpty, help.isEmpty {
+            let approvals = model.approvalItems
+            if feed.isEmpty, help.isEmpty, approvals.isEmpty {
                 DSEmptyState(String(localized: "Nothing needs you.", bundle: .module)) { EmptyView() }
                     .padding(.top, DS.Space.s6)
                     .a11y(.inboxEmpty, kind: "container", label: String(localized: "Nothing needs you.", bundle: .module))
             }
-            if !help.isEmpty, !feed.groups.contains(where: { $0.group == .needsYou }) {
+            if !help.isEmpty || !approvals.isEmpty, !feed.groups.contains(where: { $0.group == .needsYou }) {
                 groupHeader(.needsYou)
+                approvalRows(approvals)
                 helpRows(help)
             }
             ForEach(feed.groups, id: \.group) { entry in
                 groupHeader(entry.group)
-                if entry.group == .needsYou { helpRows(help) }
+                if entry.group == .needsYou {
+                    approvalRows(approvals)
+                    helpRows(help)
+                }
                 ForEach(entry.rows) { row in
                     InboxRowView(row: row, now: model.clock())
                         .transition(.opacity.combined(with: .offset(y: -DS.Space.s2)))
@@ -35,6 +40,12 @@ struct InboxView: View {
         }
         .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.base), value: feed.rows.map(\.id))
         .a11y(.inbox, kind: "container", label: String(localized: "Inbox", bundle: .module))
+    }
+
+    private func approvalRows(_ items: [ComputerApprovalRequest]) -> some View {
+        ForEach(items) { request in
+            ComputerApprovalRowView(request: request).transition(.opacity.combined(with: .offset(y: -DS.Space.s2)))
+        }
     }
 
     private func helpRows(_ items: [InboxItem]) -> some View {

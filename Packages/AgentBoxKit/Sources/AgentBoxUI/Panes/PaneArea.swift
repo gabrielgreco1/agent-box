@@ -122,8 +122,11 @@ final class PaneContainerView: NSView {
     func apply(
         title: String, provider: TerminalProvider, glyph: DSIndicatorGlyph, focused: Bool, multiPane: Bool, expanded: Bool, state: PaneRunState,
         timeline: LaunchTimeline? = nil, ignition: Bool = false, interruption: InterruptionReason = .unexpected, exactResume: Bool = true,
-        needsAttention: Bool = false
+        needsAttention: Bool = false, subagent: (session: UUID, mode: SubagentComputersMode, restart: Bool)? = nil
     ) {
+        chrome.subagentSession = subagent?.session
+        chrome.subagentMode = subagent?.mode ?? .off
+        chrome.subagentRestart = subagent?.restart ?? false
         // M-310: agente do pane em `needs input` e pane fora de foco: borda laranja estática até o foco.
         rim.setAttention(needsAttention && !focused)
         chrome.interruption = interruption
@@ -585,7 +588,7 @@ final class PaneAreaView: NSView {
                 multiPane: multi, expanded: expandedPane != nil, state: model.paneState(terminalID),
                 timeline: model.launchTimelines[terminalID], ignition: model.ignitionVisible.contains(terminalID),
                 interruption: model.interruptionReasons[terminalID] ?? .unexpected, exactResume: RestorePlanner.hasExactResume(terminal),
-                needsAttention: status.glyph == .needsInput)
+                needsAttention: status.glyph == .needsInput, subagent: model.subagentHeader(for: terminal))
             if let flash = model.rimFlash, flash.terminalID == terminalID, container.lastFlashNonce != flash.nonce {
                 container.lastFlashNonce = flash.nonce
                 container.flashRim()

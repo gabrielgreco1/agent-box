@@ -288,6 +288,12 @@ public actor AgentBoxStore {
         try await write { try $0.execute(sql: "UPDATE session SET unread = ? WHERE id = ?", arguments: [unread ? 1 : 0, key]) }
     }
 
+    /// "Subagent computers" da sessão (F12). Só a coluna: nada mais da sessão muda.
+    public func setSubagentComputers(sessionID: UUID, mode: SubagentComputersMode) async throws {
+        let key = sessionID.uuidString
+        try await write { try $0.execute(sql: "UPDATE session SET subagent_computers = ? WHERE id = ?", arguments: [mode.rawValue, key]) }
+    }
+
     /// Apaga o registro (e tabs/terminais em cascata). Arquivos em disco nunca são tocados aqui.
     public func deleteSession(id: UUID) async throws {
         let key = id.uuidString

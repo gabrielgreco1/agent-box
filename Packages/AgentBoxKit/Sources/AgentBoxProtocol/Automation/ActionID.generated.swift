@@ -33,6 +33,9 @@ extension ActionID {
     public static let sessionNewClean = ActionID(unchecked: "session.newClean")
     public static let sessionNewCleanInFolder = ActionID(unchecked: "session.newCleanInFolder")
     public static let projectAdd = ActionID(unchecked: "project.add")
+    public static let sessionSetSubagentComputers = ActionID(unchecked: "session.setSubagentComputers")
+    public static let agentToggleChildren = ActionID(unchecked: "agent.toggleChildren")
+    public static let sessionRestartToApply = ActionID(unchecked: "session.restartToApply")
     public static let sidebarSortFilter = ActionID(unchecked: "sidebar.sortFilter")
     public static let sidebarResetFilters = ActionID(unchecked: "sidebar.resetFilters")
     public static let sidebarClearSearch = ActionID(unchecked: "sidebar.clearSearch")
@@ -228,6 +231,10 @@ extension ActionID {
     public static let computerPaste = ActionID(unchecked: "computer.paste")
     public static let computerCopySelection = ActionID(unchecked: "computer.copySelection")
     public static let computerReconnect = ActionID(unchecked: "computer.reconnect")
+    public static let computerShowPreview = ActionID(unchecked: "computer.showPreview")
+    public static let computerAllowRequest = ActionID(unchecked: "computer.allowRequest")
+    public static let computerAllowRequestSession = ActionID(unchecked: "computer.allowRequestSession")
+    public static let computerDenyRequest = ActionID(unchecked: "computer.denyRequest")
     public static let computerStart = ActionID(unchecked: "computer.start")
     public static let computerStop = ActionID(unchecked: "computer.stop")
     public static let computerDelete = ActionID(unchecked: "computer.delete")
@@ -260,6 +267,7 @@ extension ActionID {
     public static let settingsGeneralCleanSessionFolder = ActionID(unchecked: "settings.general.cleanSessionFolder")
     public static let settingsPickPath = ActionID(unchecked: "settings.pickPath")
     public static let settingsResetConfirmations = ActionID(unchecked: "settings.resetConfirmations")
+    public static let settingsComputersDefaultSubagentMode = ActionID(unchecked: "settings.computers.defaultSubagentMode")
     public static let settingsAgentsDefaultAgent = ActionID(unchecked: "settings.agents.defaultAgent")
     public static let settingsAgentsDefaultProfile = ActionID(unchecked: "settings.agents.defaultProfile")
     public static let settingsAgentsProfileNew = ActionID(unchecked: "settings.agents.profileNew")
@@ -305,6 +313,7 @@ extension ActionID {
     public static let composerManageAgents = ActionID(unchecked: "composer.manageAgents")
     public static let composerSetProfile = ActionID(unchecked: "composer.setProfile")
     public static let composerEditProfiles = ActionID(unchecked: "composer.editProfiles")
+    public static let composerSetSubagentComputers = ActionID(unchecked: "composer.setSubagentComputers")
     public static let composerSetPrompt = ActionID(unchecked: "composer.setPrompt")
     public static let composerToggleAdvanced = ActionID(unchecked: "composer.toggleAdvanced")
     public static let composerSetSessionName = ActionID(unchecked: "composer.setSessionName")
@@ -410,6 +419,9 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "session.newClean"), label: "New Clean Session", shortcut: "⇧⌘N", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "session.newCleanInFolder"), label: "New Clean Session in Folder…", shortcut: "⌥⇧⌘N", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "project.add"), label: "Add Project…", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "session.setSubagentComputers"), label: "Subagent computers (card, header do pane)", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "agent.toggleChildren"), label: "Collapse / Expand Subagents (chevron da linha do agente)", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "session.restartToApply"), label: "Restart to apply", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "sidebar.sortFilter"), label: "Sort and Filter", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "sidebar.resetFilters"), label: "Reset", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "sidebar.clearSearch"), label: "Clear Search", shortcut: "", slice: .slice2),
@@ -605,6 +617,10 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "computer.paste"), label: "Paste to Computer", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "computer.copySelection"), label: "Copy Selection from Computer", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "computer.reconnect"), label: "Reconnect", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "computer.showPreview"), label: "Show Preview (hover card do subagente)", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "computer.allowRequest"), label: "Allow", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "computer.allowRequestSession"), label: "Allow for this session", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "computer.denyRequest"), label: "Deny (pedido de computador)", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "computer.start"), label: "Start Computer", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "computer.stop"), label: "Stop Computer…", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "computer.delete"), label: "Delete Computer…", shortcut: "", slice: .slice3),
@@ -637,6 +653,7 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "settings.general.cleanSessionFolder"), label: "Clean session folder", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.pickPath"), label: "Change…", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.resetConfirmations"), label: "Reset", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.computers.defaultSubagentMode"), label: "Subagent computers (padrão das novas sessões)", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "settings.agents.defaultAgent"), label: "Default agent", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.agents.defaultProfile"), label: "Default profile", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.agents.profileNew"), label: "New Profile", shortcut: "", slice: .slice1),
@@ -682,6 +699,7 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "composer.manageAgents"), label: "Manage Agents… (rodapé do combobox de agente)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "composer.setProfile"), label: "Profile (combobox)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "composer.editProfiles"), label: "Edit Profiles… (rodapé do combobox de perfil)", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "composer.setSubagentComputers"), label: "Subagent computers (segmented)", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "composer.setPrompt"), label: "Prompt", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "composer.toggleAdvanced"), label: "Advanced (disclosure)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "composer.setSessionName"), label: "Session name", shortcut: "", slice: .slice1),

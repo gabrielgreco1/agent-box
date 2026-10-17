@@ -102,6 +102,45 @@ enum SidebarLine2: Equatable {
     case missingFolder
 }
 
+/// Linha de um subagente sob o agente pai (hooks `SubagentStart`/`SubagentStop`, com ou sem computador).
+struct SubagentRowData: Identifiable, Equatable {
+    var id: String
+    var title: String
+    var phase: SubagentInfo.Phase
+    var startedAt: Date
+    var endedAt: Date?
+    var subtitle: String?
+    /// Computador do subagente (hover com a pré-visualização e o viewer).
+    var computer: String?
+
+    var glyph: DSIndicatorGlyph {
+        switch phase {
+        case .running: .working
+        case .needsInput: .needsInput
+        case .done: .done
+        case .failed: .dot(DS.ColorSpec.agentFailed)
+        }
+    }
+
+    var stateLabel: String {
+        switch phase {
+        case .running: String(localized: "Running", bundle: .module)
+        case .needsInput: String(localized: "Needs input", bundle: .module)
+        case .done: String(localized: "Done", bundle: .module)
+        case .failed: String(localized: "Failed", bundle: .module)
+        }
+    }
+
+    /// `42s`, `38m`, `1h`, `2d`: tempo decorrido (parado no fim quando o subagente terminou).
+    func elapsedText(now: Date) -> String {
+        let seconds = max(0, Int((endedAt ?? now).timeIntervalSince(startedAt)))
+        if seconds < 60 { return "\(seconds)s" }
+        if seconds < 3600 { return "\(seconds / 60)m" }
+        if seconds < 86400 { return "\(seconds / 3600)h" }
+        return "\(seconds / 86400)d"
+    }
+}
+
 struct AgentRowData: Identifiable, Equatable {
     var id: UUID
     var sessionID: UUID
@@ -115,6 +154,9 @@ struct AgentRowData: Identifiable, Equatable {
     var unread = false
     /// Texto inteiro da última mensagem, para o tooltip da linha (03 §2.7).
     var fullMessage: String = ""
+    /// Subagentes do agente (o chevron da linha recolhe e expande).
+    var children: [SubagentRowData] = []
+    var childrenCollapsed = false
 }
 
 /// Grupo da pílula-resumo (03 §2.6): estado + contagem.
@@ -147,6 +189,13 @@ struct SessionCardData: Identifiable, Equatable {
     var branch: String?
     var folderPath: String
     var a11yLabel: String
+    /// "Subagent computers" da sessão (F12) e se o card oferece o ícone (sessões só de shell ou de outros agentes não).
+    var subagent: SubagentComputersMode = .off
+    var offersSubagentToggle = false
+    /// O Claude vivo foi lançado com outro modo: `Restart to apply`.
+    var restartToApply = false
+    /// Computadores da sessão (linhas filhas, 07 CS-320).
+    var computers: [ComputerChildRow] = []
 }
 
 struct PendingRowData: Identifiable, Equatable {
@@ -206,6 +255,13 @@ struct SidebarInput {
     var home = NSHomeDirectory()
     /// Estado de atividade e leitura dos terminais (Fatia 2). Vazio na Fatia 1: o agente vivo fica `Status unavailable`.
     var attention = AttentionCenter()
+    /// Computadores por sessão (F12) e as sessões com "Restart to apply" pendente.
+    var computers: [UUID: [ComputerChildRow]] = [:]
+    var restartPending: Set<UUID> = []
+    var offersSubagentToggle: Set<UUID> = []
+    /// Agentes com as linhas de subagentes recolhidas e o computador de cada subagente (`agent_id` -> nome).
+    var collapsedChildren: Set<UUID> = []
+    var agentComputers: [String: String] = [:]
 }
 
 enum SidebarProjector {
@@ -398,7 +454,14 @@ enum SidebarProjector {
                 return AgentRowData(
                     id: t.id, sessionID: s.id, provider: t.provider, glyph: g.glyph, lead: lead, trail: trail,
                     timeText: relativeTime(since: since, now: input.now), stateLabel: g.label,
-                    unread: input.attention.unread.contains(t.id), fullMessage: lead)
+                    unread: input.attention.unread.contains(t.id), fullMessage: lead,
+                    children: (t.state == .running ? input.attention.statuses[t.id]?.children : nil).map { list in
+                        list.map {
+                            SubagentRowData(
+                                id: $0.agentID, title: $0.displayTitle, phase: $0.phase, startedAt: $0.startedAt, endedAt: $0.endedAt,
+                                subtitle: $0.subtitle, computer: input.agentComputers[$0.agentID])
+                        }
+                    } ?? [], childrenCollapsed: input.collapsedChildren.contains(t.id))
             }
 
             var badges: [SidebarBadge] = []
@@ -433,7 +496,9 @@ enum SidebarProjector {
                 notStarted: notStarted, glyph: cardGlyph(agg.glyph), stateLabel: agg.label, unread: anyUnread,
                 selected: s.id == input.selectedSession, note: note, agentRows: agentRows, groupedTerminals: grouped,
                 summary: summary, summaryExpanded: expandedSummary, agentsCollapsed: input.collapsedSessions.contains(s.id),
-                branch: branch, folderPath: s.folderPath, a11yLabel: label)
+                branch: branch, folderPath: s.folderPath, a11yLabel: label, subagent: s.subagentComputers,
+                offersSubagentToggle: input.offersSubagentToggle.contains(s.id), restartToApply: input.restartPending.contains(s.id),
+                computers: (input.computers[s.id] ?? []).filter { row in !input.agentComputers.values.contains(row.id) })
         }
 
         func sorted(_ sessions: [Session]) -> [Session] {

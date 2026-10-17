@@ -1,11 +1,13 @@
 import AgentBoxUI
 import AppKit
+import Foundation
 
 // Casca AppKit (00 T5): sem cena SwiftUI; a janela é um NSWindow configurado à mão.
 MainActor.assumeIsolated {
     let app = NSApplication.shared
     let delegate = AppDelegate()
     app.delegate = delegate
-    app.setActivationPolicy(.regular)
+    // AGENTBOX_TEST_HEADLESS=1 (testes e evidência): sem Dock, sem janela à frente, sem item na barra de menus, sem notificações do sistema.
+    app.setActivationPolicy(ProcessInfo.processInfo.environment["AGENTBOX_TEST_HEADLESS"] == "1" ? .prohibited : .regular)
     app.run()
 }

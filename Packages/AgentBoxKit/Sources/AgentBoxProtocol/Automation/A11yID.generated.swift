@@ -585,6 +585,16 @@ extension A11yID {
         A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).showMore")
     }
 
+    /// `sidebar.session.<id>.computers`
+    public static func sidebarSessionComputers(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).computers")
+    }
+
+    /// `sidebar.session.<id>.restartToApply`
+    public static func sidebarSessionRestartToApply(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).restartToApply")
+    }
+
     /// `sidebar.session.<id>.pin`
     public static func sidebarSessionPin(_ id: String) -> A11yID {
         A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).pin")
@@ -628,6 +638,31 @@ extension A11yID {
     /// `sidebar.session.<id>.child.<childId>.connector`
     public static func sidebarSessionChildConnector(_ id: String, _ childId: String) -> A11yID {
         A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).child.\(A11yID.segment(childId)).connector")
+    }
+
+    /// `sidebar.session.<id>.child.<childId>.title`
+    public static func sidebarSessionChildTitle(_ id: String, _ childId: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).child.\(A11yID.segment(childId)).title")
+    }
+
+    /// `sidebar.session.<id>.child.<childId>.elapsed`
+    public static func sidebarSessionChildElapsed(_ id: String, _ childId: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).child.\(A11yID.segment(childId)).elapsed")
+    }
+
+    /// `sidebar.session.<id>.child.<childId>.hoverCard`
+    public static func sidebarSessionChildHoverCard(_ id: String, _ childId: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).child.\(A11yID.segment(childId)).hoverCard")
+    }
+
+    /// `sidebar.session.<id>.child.<childId>.preview`
+    public static func sidebarSessionChildPreview(_ id: String, _ childId: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).child.\(A11yID.segment(childId)).preview")
+    }
+
+    /// `sidebar.session.<id>.child.<childId>.openViewer`
+    public static func sidebarSessionChildOpenViewer(_ id: String, _ childId: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).child.\(A11yID.segment(childId)).openViewer")
     }
 
     /// `sidebar.pending.<id>`
@@ -728,6 +763,31 @@ extension A11yID {
     /// `pane.<id>.feedbackPill`
     public static func paneFeedbackPill(_ id: String) -> A11yID {
         A11yID(unchecked: "pane.\(A11yID.segment(id)).feedbackPill")
+    }
+
+    /// `pane.<id>.computers`
+    public static func paneComputers(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).computers")
+    }
+
+    /// `pane.<id>.approval`
+    public static func paneApproval(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).approval")
+    }
+
+    /// `pane.<id>.approval.allow`
+    public static func paneApprovalAllow(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).approval.allow")
+    }
+
+    /// `pane.<id>.approval.allowSession`
+    public static func paneApprovalAllowSession(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).approval.allowSession")
+    }
+
+    /// `pane.<id>.approval.deny`
+    public static func paneApprovalDeny(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).approval.deny")
     }
 
     /// `pane.<id>.ignition`
@@ -883,6 +943,16 @@ extension A11yID {
     /// `inbox.item.<eventId>.takeOver`
     public static func inboxItemTakeOver(_ eventId: String) -> A11yID {
         A11yID(unchecked: "inbox.item.\(A11yID.segment(eventId)).takeOver")
+    }
+
+    /// `inbox.item.<eventId>.allow`
+    public static func inboxItemAllow(_ eventId: String) -> A11yID {
+        A11yID(unchecked: "inbox.item.\(A11yID.segment(eventId)).allow")
+    }
+
+    /// `inbox.item.<eventId>.deny`
+    public static func inboxItemDeny(_ eventId: String) -> A11yID {
+        A11yID(unchecked: "inbox.item.\(A11yID.segment(eventId)).deny")
     }
 
     /// `rightPanel.tab.<name>`
@@ -1223,6 +1293,8 @@ extension A11yID {
         A11yIDSpec(pattern: "sidebar.session.<id>.rename", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.session.<id>.revealGlow", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.session.<id>.showMore", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.computers", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.restartToApply", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.session.<id>.pin", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.session.<id>.agent.<terminalId>", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.session.<id>.agent.<terminalId>.status", surface: "Sidebar"),
@@ -1232,6 +1304,11 @@ extension A11yID {
         A11yIDSpec(pattern: "sidebar.session.<id>.child.<childId>.status", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.session.<id>.child.<childId>.glyph", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.session.<id>.child.<childId>.connector", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.child.<childId>.title", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.child.<childId>.elapsed", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.child.<childId>.hoverCard", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.child.<childId>.preview", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.child.<childId>.openViewer", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.pending.<id>", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.pending.<id>.cancel", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.cleanSessions", surface: "Sidebar"),
@@ -1263,6 +1340,11 @@ extension A11yID {
         A11yIDSpec(pattern: "pane.<id>.attention", surface: "Panes"),
         A11yIDSpec(pattern: "pane.<id>.zoomPill", surface: "Panes"),
         A11yIDSpec(pattern: "pane.<id>.feedbackPill", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.computers", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.approval", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.approval.allow", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.approval.allowSession", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.approval.deny", surface: "Panes"),
         A11yIDSpec(pattern: "pane.<id>.ignition", surface: "Panes"),
         A11yIDSpec(pattern: "pane.<id>.ignition.cancel", surface: "Panes"),
         A11yIDSpec(pattern: "pane.<id>.ignition.step.<stepKey>", surface: "Panes"),
@@ -1352,6 +1434,8 @@ extension A11yID {
         A11yIDSpec(pattern: "inbox.item.<eventId>", surface: "Inbox"),
         A11yIDSpec(pattern: "inbox.item.<eventId>.markRead", surface: "Inbox"),
         A11yIDSpec(pattern: "inbox.item.<eventId>.takeOver", surface: "Inbox"),
+        A11yIDSpec(pattern: "inbox.item.<eventId>.allow", surface: "Inbox"),
+        A11yIDSpec(pattern: "inbox.item.<eventId>.deny", surface: "Inbox"),
         A11yIDSpec(pattern: "rightPanel", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.tab.<name>", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.tabs.indicator", surface: "Painel direito"),

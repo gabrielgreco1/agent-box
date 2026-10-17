@@ -94,6 +94,17 @@ public protocol LaunchDaemonGateway: Sendable {
 /// Etapa opcional de Git/worktree (T1-18) que roda antes do terminal. Recebe um emissor para `git.fetch` e `git.worktree`.
 public typealias LaunchWorkspaceStep = @Sendable (_ emit: @Sendable (LaunchStepKey, LaunchStepStatus, String?) -> Void) async throws -> Void
 
+/// "Subagent computers" da sessão dona do terminal (F12): com Ask ou Full o lançamento do Claude leva o MCP do app, a skill de
+/// orquestração e os slots de worker (`LaunchCoordinator.Configuration.prepareOrchestration`).
+public struct SubagentLaunch: Sendable, Equatable {
+    public var sessionID: UUID?
+    public var sessionTitle: String
+    public var mode: SubagentComputersMode
+    public init(sessionID: UUID?, sessionTitle: String, mode: SubagentComputersMode) {
+        self.sessionID = sessionID; self.sessionTitle = sessionTitle; self.mode = mode
+    }
+}
+
 public struct LaunchJob: Sendable {
     public var terminalID: UUID
     public var spec: LaunchSpec
@@ -107,12 +118,15 @@ public struct LaunchJob: Sendable {
     public var workspace: LaunchWorkspaceStep?
     /// `.resume`/`.continueLast` no Resume depois de reabrir (T1-23); `.automatic` no start normal.
     public var mode: LaunchMode
+    /// Atributo "Subagent computers" da sessão (F12). `nil` = sem computadores.
+    public var subagent: SubagentLaunch?
 
     public init(
         terminalID: UUID, spec: LaunchSpec, cwd: String, addDirs: [String] = [], projectID: UUID? = nil, coldLog: Bool = true,
         cols: UInt16 = 100, rows: UInt16 = 30, catalog: ProfileCatalog = ProfileCatalog(), workspace: LaunchWorkspaceStep? = nil,
-        mode: LaunchMode = .automatic
+        mode: LaunchMode = .automatic, subagent: SubagentLaunch? = nil
     ) {
+        self.subagent = subagent
         self.mode = mode
         self.terminalID = terminalID; self.spec = spec; self.cwd = cwd; self.addDirs = addDirs; self.projectID = projectID
         self.coldLog = coldLog; self.cols = cols; self.rows = rows; self.catalog = catalog; self.workspace = workspace
@@ -160,6 +174,11 @@ public actor LaunchCoordinator {
         public var slice: LaunchSlice
         /// Conteúdo das injeções por provider. `nil` = sem injeção (Codex sem hashes de trust sondados, helper ausente).
         public var injection: @Sendable (TerminalProvider) -> LaunchInjection?
+        /// F12: gera e registra as peças de orquestração do pai (`--mcp-config`, `--plugin-dir`, `--agents`, deny) quando a sessão tem
+        /// "Subagent computers" ligado. `nil` = o app não tem orquestrador (testes da Fatia 1).
+        public var prepareOrchestration: (@Sendable (ParentInfo) async -> OrchestrationBundle?)?
+        /// O pai terminou (saiu, restart, fechou): solta o que ele reservou.
+        public var endOrchestration: (@Sendable (String) async -> Void)?
 
         public init(
             launchRoot: URL, appSocketPath: String, appVersion: String = "0.1.0",
@@ -168,8 +187,11 @@ public actor LaunchCoordinator {
             capabilities: @escaping @Sendable (TerminalProvider, String) async -> CLICapabilities? = { _, _ in nil },
             capturer: NativeIDCapturer = NativeIDCapturer(), codexRoot: URL = CodexRolloutScanner.defaultRoot(),
             clock: @escaping @Sendable () -> Date = { Date() }, slice: LaunchSlice = .slice1,
-            injection: @escaping @Sendable (TerminalProvider) -> LaunchInjection? = { _ in nil }
+            injection: @escaping @Sendable (TerminalProvider) -> LaunchInjection? = { _ in nil },
+            prepareOrchestration: (@Sendable (ParentInfo) async -> OrchestrationBundle?)? = nil,
+            endOrchestration: (@Sendable (String) async -> Void)? = nil
         ) {
+            self.prepareOrchestration = prepareOrchestration; self.endOrchestration = endOrchestration
             self.slice = slice; self.injection = injection
             self.launchRoot = launchRoot; self.appSocketPath = appSocketPath; self.appVersion = appVersion
             self.loginEnvironment = loginEnvironment; self.resolveExecutable = resolveExecutable; self.capabilities = capabilities
@@ -185,6 +207,8 @@ public actor LaunchCoordinator {
     private var running: [UUID: Task<Void, Never>] = [:]
     private var sessions: [UUID: SessionID] = [:]
     private var cancelled: Set<UUID> = []
+    /// Execuções cujo pai foi registrado no orquestrador (precisam do `endOrchestration` ao terminar).
+    private var orchestrated: Set<UUID> = []
 
     public init(daemon: any LaunchDaemonGateway, configuration: Configuration) {
         self.daemon = daemon
@@ -250,13 +274,22 @@ public actor LaunchCoordinator {
             let plan: LaunchPlan
             do {
                 let capabilities = await configuration.capabilities(job.spec.provider, executable)
+                var injection = configuration.injection(job.spec.provider)
+                if job.spec.provider == .claude, let sub = job.subagent, sub.mode.isOn, let base = injection,
+                   let prepare = configuration.prepareOrchestration {
+                    let info = ParentInfo(parentID: runID.uuidString.lowercased(), sessionID: sub.sessionID, sessionTitle: sub.sessionTitle, mode: sub.mode)
+                    if let bundle = await prepare(info) {
+                        injection = bundle.apply(to: base)
+                        orchestrated.insert(runID)
+                    }
+                }
                 plan = try LaunchPlanner.plan(
                     LaunchPlanInput(
                         spec: job.spec, terminalID: job.terminalID, runID: runID, cwd: job.cwd, projectID: job.projectID,
                         terminalAddDirs: job.addDirs, catalog: job.catalog, executablePath: executable, capabilities: capabilities,
                         loginEnvironment: login, launchDirectory: launchDirectory, mode: job.mode, slice: configuration.slice,
                         appVersion: configuration.appVersion, appSocketPath: configuration.appSocketPath,
-                        injection: configuration.injection(job.spec.provider)))
+                        injection: injection))
                 try LaunchFileWriter.materialize(plan)
             } catch {
                 throw LaunchFailure.plan("\(error)")
@@ -307,6 +340,10 @@ public actor LaunchCoordinator {
         } catch {
             let failure = (error as? LaunchFailure) ?? .plan("\(error)")
             emit(failure.step, .failed, failure.errorDescription)
+            if orchestrated.remove(runID) != nil, let end = configuration.endOrchestration {
+                let parent = runID.uuidString.lowercased()
+                Task { await end(parent) }
+            }
             sinks[runID] = nil
             execStarted.remove(runID)
             throw failure
@@ -331,6 +368,10 @@ public actor LaunchCoordinator {
 
     /// Fim do ciclo de vida de uma execução (exit, restart, fechar): solta sinks e a captura de ID.
     public func finish(runID: UUID) {
+        if orchestrated.remove(runID) != nil, let end = configuration.endOrchestration {
+            let parent = runID.uuidString.lowercased()
+            Task { await end(parent) }
+        }
         sinks[runID] = nil
         running[runID]?.cancel()
         running[runID] = nil

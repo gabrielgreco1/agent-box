@@ -71,6 +71,8 @@ final class WorkspaceModel {
     @ObservationIgnored let confirmationState = ConfirmationState()
     /// ⌘W com uma página ou o viewer de computador no centro fecha a página (03 §11.6), não um terminal. Devolve `true` se tratou.
     @ObservationIgnored var pageCloser: () -> Bool = { false }
+    /// "Subagent computers" (F12): o modo com que cada Claude é lançado e o `Restart to apply`.
+    @ObservationIgnored weak var subagent: SubagentComputersController?
 
     private(set) var currentSessionID: UUID?
     private(set) var states: [UUID: SessionState] = [:]
@@ -231,6 +233,40 @@ final class WorkspaceModel {
     }
 
     func tab(_ id: UUID) -> Tab? { tabs.first { $0.id == id } }
+
+    func isLoaded(session id: UUID) -> Bool { states[id] != nil }
+
+    /// A sessão dona do terminal (qualquer sessão do Store, carregada ou não).
+    func sessionID(of terminal: Terminal) -> UUID? {
+        snapshot.tabs.first { $0.id == terminal.tabID }?.sessionID ?? locate(terminal: terminal.id)?.sid
+    }
+
+    /// Modo "Subagent computers" da sessão do terminal, só para Claude (os outros agentes não recebem a injeção).
+    func subagentLaunch(for terminal: Terminal) -> SubagentLaunch? {
+        guard terminal.provider == .claude, let sid = sessionID(of: terminal), let session = sessionLookup(sid) else { return nil }
+        return SubagentLaunch(sessionID: sid, sessionTitle: session.title, mode: session.subagentComputers)
+    }
+
+    /// O que o header do pane precisa do "Subagent computers" da sessão (só Claude).
+    func subagentHeader(for terminal: Terminal) -> (session: UUID, mode: SubagentComputersMode, restart: Bool)? {
+        guard terminal.provider == .claude, let sid = sessionID(of: terminal), let session = sessionLookup(sid) else { return nil }
+        return (sid, session.subagentComputers, subagent?.restartPending(session: sid) ?? false)
+    }
+
+    /// `Restart to apply`: mata o Claude com calma e o relança com Resume, para o lançamento levar o modo novo.
+    func relaunchApplyingSettings(_ id: UUID) async {
+        guard let t = terminal(id), t.provider == .claude else { return }
+        await runtime.kill(t, mode: .graceful)
+        for _ in 0 ..< 80 {
+            guard let current = terminal(id), current.state == .running || current.state == .launching else { break }
+            try? await Task.sleep(for: .milliseconds(100))
+        }
+        if let current = terminal(id), current.state == .running || current.state == .launching {
+            await runtime.kill(current, mode: .force)
+            try? await Task.sleep(for: .seconds(1))
+        }
+        resume(id)
+    }
 
     /// A tab (de qualquer sessão carregada) que contém o terminal.
     func tabContaining(terminalID: UUID) -> Tab? { locate(terminal: terminalID)?.tab }
@@ -889,12 +925,14 @@ final class WorkspaceModel {
         Task { @MainActor in
             defer { launching.remove(id) }
             guard let current = self.terminal(id) else { return }
+            let subagent = self.subagentLaunch(for: current)
             do {
-                let result = try await runtime.launch(current, mode: mode, catalog: ProfileCatalog(userProfiles: self.snapshot.profiles)) { [weak self] event in
+                let result = try await runtime.launch(current, mode: mode, catalog: ProfileCatalog(userProfiles: self.snapshot.profiles), subagent: subagent) { [weak self] event in
                     Task { @MainActor in self?.apply(launchEvent: event, terminalID: id) }
                 }
                 guard self.terminal(id) != nil else { return }
                 currentRuns[id] = result.runID
+                if current.provider == .claude { self.subagent?.noteLaunched(terminal: id, mode: subagent?.mode ?? .off) }
                 launchDirectories[id] = result.plan.launchDirectory
                 update(terminal: id) { t in
                     t.state = .running

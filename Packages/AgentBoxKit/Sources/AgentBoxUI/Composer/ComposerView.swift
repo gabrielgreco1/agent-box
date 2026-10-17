@@ -53,6 +53,7 @@ struct ComposerView: View {
                             .id(model.focusPromptNonce)
                     }
                 }
+                if model.draft.provider == .claude { subagentComputers }
                 advanced
                 summary
                 if let issue = model.boxIssue { errorBox(issue) }
@@ -135,6 +136,33 @@ struct ComposerView: View {
             .foregroundStyle(DS.Color.textTertiary)
         }
         .buttonStyle(.plain)
+    }
+
+    // MARK: Subagent computers (F12)
+
+    /// Linha "Subagent computers" com `Off` / `Ask` / `Full access`: o Claude pode dar um computador (navegador, shell, log de
+    /// requisições) a cada subagente que vai estudar sites. A explicação muda com a escolha, com transição suave.
+    private var subagentComputers: some View {
+        field("Subagent computers") {
+            VStack(alignment: .leading, spacing: DS.Space.s1_5) {
+                DSSegmented(
+                    SubagentComputersMode.allCases.map { .init($0.rawValue, $0.segmentTitle) },
+                    selection: model.draft.subagentComputers.rawValue, action: .composerSetSubagentComputers, id: .overlayComposerComputers,
+                    fillWidth: true, height: DSMetrics.segmentedHeightComposer)
+                HStack(spacing: DS.Space.s1_5) {
+                    Image(systemName: model.draft.subagentComputers.isOn ? "desktopcomputer" : "desktopcomputer.trianglebadge.exclamationmark")
+                        .font(.system(size: DS.Space.s3))
+                        .foregroundStyle(model.draft.subagentComputers.isOn ? DS.Color.textSecondary : DS.Color.textQuaternary)
+                        .contentTransition(.symbolEffect(.replace))
+                    Text(verbatim: model.draft.subagentComputers.explanation)
+                        .dsFont(DS.Font.small)
+                        .foregroundStyle(DS.Color.textTertiary)
+                        .id(model.draft.subagentComputers)
+                        .transition(MotionPolicy.shared.reduceMotion ? .opacity : .opacity.combined(with: .offset(y: DS.Space.s1)))
+                }
+                .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.base), value: model.draft.subagentComputers)
+            }
+        }
     }
 
     // MARK: Advanced

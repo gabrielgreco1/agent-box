@@ -59,6 +59,8 @@ import Testing
 @MainActor
 @Suite(.offscreenAppKit) struct EmptyWindowTreeTests {
     static func host(_ env: AppEnvironment, size: NSSize = NSSize(width: 760, height: 480)) async -> MainWindowController {
+        NSApplication.shared.setActivationPolicy(.accessory)  // testes nunca ativam nem mostram o app
+        MainWindowController.invisibleForTests = true
         let controller = MainWindowController(env: env, autosaveName: nil)
         let window = controller.window!
         window.setContentSize(size)
@@ -124,8 +126,19 @@ import Testing
     }
 
     @Test func futureSliceActionsAreNotRegisteredNorRendered() async {
-        let env = AppEnvironment(environment: [:])
+        let env = AppEnvironment(environment: ["AGENTBOX_SLICE": "1"])
         #expect(env.registry.availability(of: .viewToggleRightPanel) == .unavailable(.slice2))
         #expect(!env.registry.isRendered(.pageInbox))
+    }
+
+    /// F13: sem `AGENTBOX_SLICE` o app liga tudo o que as Fatias 1 a 3 já implementam; o gating fica só para controles sem handler.
+    @Test func defaultLaunchEnablesDeliveredSlicesAndGatesOnlyControlsWithoutHandler() async {
+        let env = AppEnvironment(environment: [:])
+        #expect(env.flags.current == .slice3 && !env.flags.restricted)
+        #expect(env.attention != nil, "Slice 2 attention is on")
+        #expect(env.registry.isRendered(.pageInbox) && env.registry.isRendered(.sessionSetSubagentComputers))
+        #expect(env.registry.availability(of: .sessionSetSubagentComputers).isEnabled || env.registry.availability(of: .sessionSetSubagentComputers) != .unavailable(.slice3))
+        // Fatia 4 e v1.1 seguem escondidas; controle sem handler de Fatia 3 não vira botão morto.
+        #expect(!env.registry.isRendered(.computerNew))
     }
 }

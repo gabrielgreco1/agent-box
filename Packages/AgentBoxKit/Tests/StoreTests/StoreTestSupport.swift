@@ -115,3 +115,21 @@ func rowCount(at url: URL, table: String) throws -> Int {
     defer { try? q.close() }
     return try q.read { try Int.fetchOne($0, sql: "SELECT COUNT(*) FROM \(table)") ?? 0 }
 }
+
+
+extension AgentBoxStore {
+    /// `true` quando o schema já tem `session.subagent_computers` (v7). Testes de migração sobre cadeias antigas gravam a sessão por SQL.
+    func hasSubagentColumn() async throws -> Bool {
+        try await writer.read { db in try db.columns(in: "session").contains { $0.name == "subagent_computers" } }
+    }
+
+    /// Grava uma sessão num banco anterior à v7 (sem a coluna nova): só o que os testes de migração conferem.
+    func savePreV7(_ session: Session) async throws {
+        try await writer.write { db in
+            try db.execute(
+                sql: "INSERT INTO session (id, kind, folder_path, managed_folder, title, unread, sort_index, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                arguments: [session.id.uuidString, session.kind.rawValue, session.folderPath, session.managedFolder, session.title, session.unread, session.sortIndex,
+                            Int64(session.createdAt.timeIntervalSince1970 * 1000)])
+        }
+    }
+}

@@ -11,7 +11,13 @@ private func seedTerminal(_ store: AgentBoxStore, currentRunID: UUID? = nil) asy
         tabID: tabID, provider: .claude, title: "Claude", cwd: "/x", launchSpec: LaunchSpec(provider: .claude),
         currentRunID: currentRunID, state: .running, createdAt: Fixture.t0)
     let tab = Tab(id: tabID, sessionID: session.id, title: "Agent", layout: .leaf(Pane(content: .terminal(terminal.id))), createdAt: Fixture.t0)
-    try await store.saveBundle(session: session, tabs: [tab], terminals: [terminal])
+    if try await store.hasSubagentColumn() {
+        try await store.saveBundle(session: session, tabs: [tab], terminals: [terminal])
+    } else {
+        try await store.savePreV7(session)
+        try await store.save(tab)
+        try await store.save(terminal)
+    }
     return terminal
 }
 
@@ -41,7 +47,7 @@ private func event(_ run: UUID, _ id: String, type: String = "Stop", atNs: Int64
     }
 
     @Test func v2ActivityIsRegisteredAfterV1AndTablesAreStrict() async throws {
-        #expect(StoreMigrations.all.map(\.id) == ["v1_initial", "v2_activity", "v3_computers", "v4_vault_catalog", "v5_proxy_ext", "v6_agent_tree"])
+        #expect(StoreMigrations.all.map(\.id) == ["v1_initial", "v2_activity", "v3_computers", "v4_vault_catalog", "v5_proxy_ext", "v6_agent_tree", "v7_subagent_computers"])
         let home = try TempHome(); defer { home.remove() }
         let store = try await home.openStore()
         await #expect(throws: DatabaseError.self) {

@@ -238,6 +238,11 @@ final class ComposerController {
             _ = try await self.registry?.perform(.settingsOpenSection, .select("agents"))
             return "settings"
         }
+        try edit(.composerSetSubagentComputers) { model, arg in
+            guard model.draft.provider == .claude else { throw ActionError.failed(.composerSetSubagentComputers, message: "Subagent computers works with Claude Code.") }
+            if let value = arg.value, let mode = SubagentComputersMode(rawValue: value) { model.draft.subagentComputers = mode }
+            return model.draft.subagentComputers.rawValue
+        }
         try edit(.composerSetProfile) { model, arg in
             if let value = arg.value { model.draft.profileID = UUID(uuidString: value) }
             return model.draft.profileID?.uuidString

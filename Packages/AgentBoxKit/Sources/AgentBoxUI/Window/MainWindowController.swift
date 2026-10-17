@@ -154,6 +154,8 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
         host.surface.keyDown(with: event)
         return true
     }
+    /// Testes: a janela nunca aparece para o usuário (transparente, sem mouse, atrás de tudo e fora da tela).
+    public static var invisibleForTests = false
 
     /// Abre sem ativar o app (o chamador decide se traz para frente).
     /// Testes desligam: a janela nunca é ordenada para a frente (o AppKit puxaria uma janela titulada para dentro da tela).
@@ -161,7 +163,12 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
 
     public func present(activate: Bool) {
         guard let window else { return }
-        guard orderingEnabled else {
+        guard orderingEnabled, !Self.invisibleForTests else {
+            if Self.invisibleForTests {
+                window.alphaValue = 0
+                window.ignoresMouseEvents = true
+                window.animationBehavior = .none
+            }
             window.setFrameOrigin(NSPoint(x: -20000, y: -20000))
             positioner?.apply()
             updateMainFrame()

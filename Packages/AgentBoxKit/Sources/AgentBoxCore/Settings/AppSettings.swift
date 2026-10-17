@@ -10,6 +10,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var agents = Agents()
     public var terminal = Terminal()
     public var notifications = Notifications()
+    public var computers = Computers()
 
     public init() {}
 
@@ -19,6 +20,19 @@ public struct AppSettings: Codable, Equatable, Sendable {
         agents = try c.decodeIfPresent(Agents.self, forKey: .agents) ?? Agents()
         terminal = try c.decodeIfPresent(Terminal.self, forKey: .terminal) ?? Terminal()
         notifications = try c.decodeIfPresent(Notifications.self, forKey: .notifications) ?? Notifications()
+        computers = try c.decodeIfPresent(Computers.self, forKey: .computers) ?? Computers()
+    }
+
+    /// Settings › Computers (F12): padrão de "Subagent computers" das novas sessões. Sessões existentes não mudam.
+    public struct Computers: Codable, Equatable, Sendable {
+        public var defaultSubagentMode = SubagentComputersMode.off
+
+        public init() {}
+
+        public init(from decoder: any Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            defaultSubagentMode = try c.decodeIfPresent(SubagentComputersMode.self, forKey: .defaultSubagentMode) ?? .off
+        }
     }
 
     public enum BranchPrefixMode: String, Codable, Sendable, CaseIterable { case gitUser, custom, none }

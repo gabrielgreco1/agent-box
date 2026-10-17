@@ -15,16 +15,36 @@ final class WorkspaceRootView: NSView {
     private(set) var page: NSView?
     private var workspaceVisible = false
     private var pendingVisible = false
+    /// Cards de aprovação do modo Ask (F12): sobre o topo do pane da sessão, sem modal. Só ocupa a faixa dos cards.
+    let approvals: NSView
+    private var approvalCount = 0
 
     override var isFlipped: Bool { true }
 
-    init(landing: NSView, tabRow: NSView, area: PaneAreaView, pending: NSView) {
+    init(landing: NSView, tabRow: NSView, area: PaneAreaView, pending: NSView, approvals: NSView) {
         self.landing = landing
         self.tabRow = tabRow
         self.area = area
         self.pending = pending
+        self.approvals = approvals
         super.init(frame: .zero)
+        approvals.isHidden = true
         setWorkspaceVisible(false)
+    }
+
+    /// Quantos cards a sessão selecionada tem esperando. Com 0 a faixa some depois da animação de saída.
+    func setApprovalCount(_ count: Int) {
+        approvalCount = count
+        if count > 0 {
+            approvals.isHidden = false
+            if approvals.superview == nil { addSubview(approvals) }
+        } else {
+            DispatchQueue.main.asyncAfter(deadline: .now() + MotionTokens.Duration.base * 2) { [weak self] in
+                guard let self, self.approvalCount == 0 else { return }
+                self.approvals.isHidden = true
+            }
+        }
+        needsLayout = true
     }
 
     @available(*, unavailable) required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }  // required init?(coder:) não usado
@@ -84,6 +104,11 @@ final class WorkspaceRootView: NSView {
         pending.frame = bounds
         tabRow.frame = NSRect(x: 0, y: 0, width: bounds.width, height: TabMetrics.chromeHeight)
         area.frame = NSRect(x: 0, y: TabMetrics.chromeHeight, width: bounds.width, height: max(0, bounds.height - TabMetrics.chromeHeight))
+        let strip = SubagentMetrics.cardWidth + DS.Space.s3 * 2
+        let height = CGFloat(min(max(approvalCount, 1), 3)) * SubagentMetrics.cardHeight + SubagentMetrics.cardTop * 2
+        let width = min(strip, bounds.width)
+        approvals.frame = NSRect(x: (bounds.width - width) / 2, y: TabMetrics.chromeHeight, width: width, height: height)
+        if approvals.superview != nil { addSubview(approvals, positioned: .above, relativeTo: nil) }
     }
 }
 
@@ -91,6 +116,26 @@ final class WorkspaceRootView: NSView {
 @MainActor
 final class WorkspaceViewController: NSViewController {
     private let env: AppEnvironment
+    private weak var root: WorkspaceRootView?
+
+    /// Reavalia o número de cards da sessão selecionada sempre que os pedidos ou a seleção mudam.
+    private func trackApprovals() {
+        withObservationTracking {
+            _ = env.computers.model.approvals
+            _ = env.sidebar.selectedSession
+        } onChange: { [weak self] in
+            Task { @MainActor in
+                self?.refreshApprovals()
+                self?.trackApprovals()
+            }
+        }
+        refreshApprovals()
+    }
+
+    private func refreshApprovals() {
+        let selected = env.sidebar.selectedSession
+        root?.setApprovalCount(env.computers.model.approvals.filter { $0.sessionID == selected || $0.sessionID == nil }.count)
+    }
 
     init(env: AppEnvironment) {
         self.env = env
@@ -109,8 +154,14 @@ final class WorkspaceViewController: NSViewController {
             content: PendingSessionView(model: env.sidebar).environment(\.elementStore, env.elements)
                 .environment(\.actionRegistry, env.registry).environment(\.a11yParent, .windowMain))
         pending.inputBlocked = blocked
-        let root = WorkspaceRootView(landing: landing, tabRow: tabRow, area: area, pending: pending)
+        let approvals = ChromeHostingView(
+            content: ComputerApprovalStack(model: env.computers.model, session: nil, selection: { [weak env] in env?.sidebar.selectedSession })
+                .environment(\.elementStore, env.elements).environment(\.actionRegistry, env.registry).environment(\.a11yParent, .windowMain))
+        approvals.inputBlocked = blocked
+        let root = WorkspaceRootView(landing: landing, tabRow: tabRow, area: area, pending: pending, approvals: approvals)
         view = root
+        self.root = root
+        trackApprovals()
         root.setWorkspaceVisible(env.workspace.currentSessionID != nil)
         env.workspace.addListener { [weak root, weak env] in
             guard let root, let env else { return }

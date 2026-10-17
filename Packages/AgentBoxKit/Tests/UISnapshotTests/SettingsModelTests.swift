@@ -70,7 +70,7 @@ import Testing
         #expect(SettingsCatalog.visible(flags: SliceFlags(current: .slice1)).map(\.id) == ["agents", "general", "terminal"])
         // Fatias futuras ficam escondidas mesmo com a flag subida, enquanto não têm conteúdo (Notifications entra na Fatia 2).
         #expect(SettingsCatalog.visible(flags: SliceFlags(current: .slice2)).map(\.id) == ["agents", "general", "terminal", "notifications"])
-        #expect(SettingsCatalog.visible(flags: SliceFlags(current: .slice3)).map(\.id) == ["agents", "general", "terminal", "notifications"])
+        #expect(SettingsCatalog.visible(flags: SliceFlags(current: .slice3)).map(\.id) == ["agents", "general", "computers", "terminal", "notifications"])
         // E uma seção de fatia futura só aparece quando a flag chega à fatia dela.
         let specs = SettingsCatalog.all
         let ids: Set<String> = ["agents", "general", "terminal", "accounts"]

@@ -24,10 +24,13 @@ public struct TooltipContent: Equatable, Sendable {
     public var text: String
     /// Atalho em `textQuaternary` invertido, separado por 8 pt (`Split Right   ⌘D`).
     public var shortcut: String?
+    /// Miniatura acima do texto (hover de um computador na sidebar, 07 CS-403). JPEG ou PNG.
+    public var thumbnail: Data?
 
-    public init(_ text: String, shortcut: String? = nil) {
+    public init(_ text: String, shortcut: String? = nil, thumbnail: Data? = nil) {
         self.text = text
         self.shortcut = shortcut?.isEmpty == true ? nil : shortcut
+        self.thumbnail = thumbnail
     }
 }
 
@@ -298,19 +301,29 @@ public struct TooltipBubble: View {
         self.arrowOffset = arrowOffset
     }
 
-    private var compact: Bool { content.shortcut == nil && !content.text.contains(" ") }
+    private static let thumbnailRatio: CGFloat = 0.6
+    private var compact: Bool { content.shortcut == nil && content.thumbnail == nil && !content.text.contains(" ") }
 
     public var body: some View {
-        HStack(spacing: DS.Space.s2) {
-            Text(verbatim: content.text)
-                .dsFont(DS.Font.tab)
-                .foregroundStyle(DS.Color.canvas)
-                .fixedSize(horizontal: false, vertical: true)
-            if let shortcut = content.shortcut {
-                Text(verbatim: shortcut)
+        VStack(alignment: .leading, spacing: DS.Space.s1_5) {
+            if let data = content.thumbnail, let image = NSImage(data: data) {
+                Image(nsImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: DS.Layout.tooltipMaxWidth, maxHeight: DS.Layout.tooltipMaxWidth * Self.thumbnailRatio)
+                    .clipShape(RoundedRectangle(cornerRadius: DS.Radius.sm))
+            }
+            HStack(spacing: DS.Space.s2) {
+                Text(verbatim: content.text)
                     .dsFont(DS.Font.tab)
-                    .foregroundStyle(DS.ColorSpec.canvas.scaled(0.55).color)
-                    .fixedSize()
+                    .foregroundStyle(DS.Color.canvas)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let shortcut = content.shortcut {
+                    Text(verbatim: shortcut)
+                        .dsFont(DS.Font.tab)
+                        .foregroundStyle(DS.ColorSpec.canvas.scaled(0.55).color)
+                        .fixedSize()
+                }
             }
         }
         .padding(.horizontal, compact ? DS.Space.s2 : DSMetrics.tooltipPaddingH)
@@ -400,11 +413,12 @@ private struct TooltipTracker: NSViewRepresentable {
 public extension View {
     /// Tooltip do DS (02 §12.14): nome da ação + atalho, 400 ms, some ao clicar. Texto vazio ou `enabled == false`: nada.
     func dsTooltip(
-        _ text: String, shortcut: String? = nil, delay: TooltipDelay = .standard, side: TooltipSide = .bottom, enabled: Bool = true
+        _ text: String, shortcut: String? = nil, delay: TooltipDelay = .standard, side: TooltipSide = .bottom, enabled: Bool = true,
+        thumbnail: Data? = nil
     ) -> some View {
         background {
             if enabled, !text.isEmpty {
-                TooltipTracker(content: TooltipContent(text, shortcut: shortcut), delay: delay.seconds, side: side)
+                TooltipTracker(content: TooltipContent(text, shortcut: shortcut, thumbnail: thumbnail), delay: delay.seconds, side: side)
             }
         }
     }
