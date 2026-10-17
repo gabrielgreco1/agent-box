@@ -55,7 +55,7 @@ let package = Package(
         lib("AgentBoxCore", ["AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxStore", "AgentBoxDocker"]),
         lib("AgentBoxDesignSystem", ["AgentBoxProtocol"], ui: true, resources: [.copy("Resources/Fonts")]),
         lib(
-            "AgentBoxUI", ["AgentBoxCore", "AgentBoxDesignSystem", "AgentBoxTerminalCore", swiftTerm], ui: true,
+            "AgentBoxUI", ["AgentBoxCore", "AgentBoxStore", "AgentBoxDesignSystem", "AgentBoxTerminalCore", swiftTerm], ui: true,
             resources: [.process("Resources")]  // String Catalog (lint-ui exige strings no catálogo)
         ),
         .executableTarget(
@@ -83,7 +83,7 @@ let package = Package(
         tests("DaemonTests", ["AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxTerminalCore", "AgentBoxCore", "agentboxd", swiftTerm]),
         .testTarget(
             name: "UISnapshotTests",
-            dependencies: ["AgentBoxUI", "AgentBoxDesignSystem", snapshotTesting],
+            dependencies: ["AgentBoxUI", "AgentBoxDesignSystem", "AgentBoxStore", snapshotTesting],
             exclude: ["__Snapshots__"],  // referências PNG do swift-snapshot-testing, lidas por caminho
             swiftSettings: mainActorSettings
         ),

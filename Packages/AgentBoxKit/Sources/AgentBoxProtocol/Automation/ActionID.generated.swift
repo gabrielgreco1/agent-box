@@ -78,6 +78,8 @@ extension ActionID {
     public static let sessionSelect8 = ActionID(unchecked: "session.select8")
     public static let sessionSelect9 = ActionID(unchecked: "session.select9")
     public static let sidebarFocus = ActionID(unchecked: "sidebar.focus")
+    public static let sessionSelect = ActionID(unchecked: "session.select")
+    public static let sessionToggleAgents = ActionID(unchecked: "session.toggleAgents")
     public static let childAskParentToRelaunch = ActionID(unchecked: "child.askParentToRelaunch")
     public static let childShowTranscript = ActionID(unchecked: "child.showTranscript")
     public static let childShowComputer = ActionID(unchecked: "child.showComputer")
@@ -379,6 +381,8 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "session.select8"), label: "Previous / Next Session, Select Session 1–9, Focus Session List", shortcut: "⌘8", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "session.select9"), label: "Previous / Next Session, Select Session 1–9, Focus Session List", shortcut: "⌘9", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "sidebar.focus"), label: "Previous / Next Session, Select Session 1–9, Focus Session List", shortcut: "⇧⌘↑ / ⇧⌘↓ / ⌘1…⌘9 / ⇧⌘0", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "session.select"), label: "Select Session (clique no card)", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "session.toggleAgents"), label: "Expand / Collapse Agent Rows (pílula-resumo, → / ← no card)", shortcut: "→ / ←", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "child.askParentToRelaunch"), label: "Ask Parent to Relaunch", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "child.showTranscript"), label: "Show Transcript", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "child.showComputer"), label: "Show Computer", shortcut: "", slice: .slice3),

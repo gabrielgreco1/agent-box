@@ -1,6 +1,7 @@
 import AgentBoxCore
 import AgentBoxPlatform
 import AgentBoxProtocol
+import AgentBoxStore
 import AppKit
 import Foundation
 import Observation
@@ -30,11 +31,14 @@ public final class AppEnvironment {
     public let registry: ActionRegistry
     public let overlays = OverlayRouter()
     public let toasts = ToastCenter()
+    let sidebar = SidebarModel()
     public let keyBindings: KeyBindingRegistry
     public let automationEnabled: Bool
     public let fixture: String?
     public let socketPath: String
     private var ctl: CtlServer?
+    private var store: AgentBoxStore?
+    private let environmentVariables: [String: String]
     private let log = LogFacade(.app, category: "ui")
 
     /// `AGENTBOX_AUTOMATION=1` liga o canal `ctl` (o toggle em Settings > Advanced chega com T1-26).
@@ -45,6 +49,7 @@ public final class AppEnvironment {
         self.automationEnabled = environment["AGENTBOX_AUTOMATION"] == "1"
         self.fixture = environment["AGENTBOX_SCREEN"]
         self.socketPath = AppSockPath.resolve(environment: environment)
+        self.environmentVariables = environment
         let surface = WindowAutomation(store: elements, flags: flags, fixture: fixture, automationEnabled: automationEnabled)
         self.registry = ActionRegistry(flags: flags, surface: surface)
         var bindings = KeyBindingRegistry()
@@ -53,8 +58,10 @@ public final class AppEnvironment {
         self.keyBindings = bindings
         elements.enablement = { [registry] id in registry.availability(of: id) }
         registerShellActions()
+        do { try sidebar.registerActions(in: registry) } catch { log.publicError("duplicate sidebar action registration") }
         wireOverlays()
-        if fixture == Self.overlayDemoFixture { registerOverlayDemo() }
+        if fixture == Self.overlayDemoFixture || fixture == SidebarFixtures.screenID { registerOverlayDemo() }
+        if fixture == SidebarFixtures.screenID { registerSidebarDemo() }
     }
 
     /// Ações reais da casca vazia; as demais entram com a tela que as possui.
@@ -152,8 +159,39 @@ public final class AppEnvironment {
         }
     }
 
+    /// Fixture `AGENTBOX_SCREEN=sidebar-demo`: controles cujo fluxo é de outra tarefa (composer, adicionar projeto, Settings,
+    /// páginas) ganham handlers de exemplo para a evidência visual mostrar a sidebar completa. Nada disso roda em uso normal.
+    private func registerSidebarDemo() {
+        for id in [ActionID.projectAdd, .sessionNewClean, .appSettings, .projectNewSession, .pageInbox, .pageComputers, .pageLibrary] {
+            try? registry.register(id) { _ in "demo" }
+        }
+    }
+
+    /// Abre o Store (em `AGENTBOX_HOME` se definido) e liga a sidebar a ele (T1-05). Sem Store a sidebar fica vazia, nunca trava a UI.
+    private func startStore() async {
+        guard store == nil else { return }
+        do {
+            let opened = try await AgentBoxStore.open(paths: .default(environment: environmentVariables))
+            store = opened
+            if fixture == SidebarFixtures.screenID {
+                let cast = SidebarFixtures.full()
+                try await SidebarFixtures.seed(cast, into: opened)
+                if try await opened.uiState(SidebarModel.uiStateKey, as: SidebarPersistedState.self) == nil {
+                    try await opened.setUIState(SidebarModel.uiStateKey, SidebarPersistedState(selectedSession: cast.selectedSessionID))
+                }
+                if sidebar.pending.isEmpty, let pid = cast.pendingProjectID {
+                    sidebar.beginPending(PendingLaunch(name: String(localized: "Add retry logic", bundle: .module), projectID: pid, phase: .fetching))
+                }
+            }
+            await sidebar.attach(store: opened)
+        } catch {
+            log.error("store failed to open: \(error)")
+        }
+    }
+
     /// Sobe o servidor `ctl` se a automação estiver ligada. Chamado uma vez, no primeiro `.task` da janela.
     public func start() async {
+        await startStore()
         guard automationEnabled, ctl == nil else { return }
         let server = CtlServer(socketPath: socketPath, dispatcher: registry)
         do {
@@ -165,6 +203,7 @@ public final class AppEnvironment {
     }
 
     public func stop() async {
+        sidebar.detach()
         await ctl?.stop()
         ctl = nil
     }

@@ -98,4 +98,72 @@ import Testing
         #expect(r2.message == "expanded")
         #expect(!env.shell.sidebarCollapsed)
     }
+
+    // MARK: Sidebar (03 §2, T1-13)
+
+    @Test func sidebarMetricsMatchTheSpecNumbers() {
+        #expect(SidebarMetrics.searchHeight == 32 && SidebarMetrics.navHeight == 32)
+        #expect(SidebarMetrics.sectionHeaderHeight == 32)
+        #expect(SidebarMetrics.projectRowHeight == 28)
+        #expect(SidebarMetrics.agentRowHeight == 24)
+        #expect(SidebarMetrics.pendingHeight == 32)
+        #expect(SidebarMetrics.footerHeight == 32)
+        #expect(SidebarMetrics.cardRadius == 10)
+        #expect(SidebarMetrics.cardPaddingV == 6 && SidebarMetrics.cardPaddingVTitleOnly == 8)
+        #expect(SidebarMetrics.cardMarginLeading == 4 && SidebarMetrics.cardMarginTrailing == 6)
+        #expect(SidebarMetrics.statusColumn == 20 && SidebarMetrics.line1Height == 20 && SidebarMetrics.line2Height == 14)
+        #expect(SidebarMetrics.paddingH == 8 && SidebarMetrics.paddingTop == 8 && SidebarMetrics.paddingBottom == 4 && SidebarMetrics.navGap == 2)
+        #expect(SidebarMetrics.projectPaddingLeading == 10)
+        #expect(SidebarMetrics.sessionsBeforeShowMore == 5 && SidebarMetrics.agentRowsBeforeSummary == 4)
+    }
+
+    @Test func sidebarFramesFollowTheSpecInBothWindowSizes() async throws {
+        for size in [NSSize(width: 1440, height: 900), NSSize(width: 760, height: 480)] {
+            let env = AppEnvironment(environment: ["AGENTBOX_SLICE": "4", "AGENTBOX_SCREEN": SidebarFixtures.screenID])
+            let cast = SidebarFixtures.full()
+            env.sidebar.apply(cast.snapshot)
+            env.sidebar.select(cast.selectedSessionID!)
+            env.sidebar.beginPending(PendingLaunch(name: "Add retry logic", projectID: cast.pendingProjectID, phase: .fetching))
+            let controller = await EmptyWindowTreeTests.host(env, size: size)
+            defer { controller.window?.close() }
+            try await Task.sleep(for: .milliseconds(300))
+            let tree = await env.registry.uiTree(root: nil)
+            let note = "\(Int(size.width))x\(Int(size.height))"
+
+            let search = try #require(tree.find(.sidebarSearch)?.frame, "search \(note)")
+            #expect(search.height == 32 && search.x == 8 && search.width == 264 && search.y == 44, "search \(note): \(search)")
+            var previous = search
+            for id in [A11yID.sidebarNavInbox, .sidebarNavComputers, .sidebarNavLibrary] {
+                let nav = try #require(tree.find(id)?.frame, "\(id.rawValue) \(note)")
+                #expect(nav.height == 32 && nav.x == 8 && nav.width == 264, "\(id.rawValue) \(note)")
+                #expect(nav.y == previous.y + previous.height + 2, "gap 2 antes de \(id.rawValue) \(note)")
+                previous = nav
+            }
+
+            let motion = cast.projects[0], otter = cast.projects[1]
+            if size.height >= 900 {
+            let row = try #require(tree.find(.sidebarProject(motion.id.uuidString))?.frame, "project row \(note)")
+            #expect(row.height == 28 && row.x == 8 && row.width == 264, "project row \(note): \(row)")
+
+            // O primeiro card do projeto começa 6 pt (padding vertical) abaixo da linha do projeto.
+            let main = try #require(tree.find(.sidebarSession(cast.selectedSessionID!.uuidString))?.frame, "card header \(note)")
+            #expect(main.y == row.y + row.height + 6, "padding vertical do card \(note): \(main.y) vs \(row.y + row.height)")
+            #expect(main.height == 40, "linha 1 (20) + gap 6 + linha 2 (14) \(note)")
+            #expect(main.x == 8 + 4 + 8, "margem 4 + padding \(note)")
+            #expect(main.width == 280 - 16 - 4 - 6 - 16, "margem direita 6 \(note)")
+
+            let agent = cast.terminals.first { t in cast.tabs.first { $0.id == t.tabID }?.sessionID == cast.selectedSessionID }!
+            let agentRow = try #require(tree.find(.sidebarSessionAgent(cast.selectedSessionID!.uuidString, agent.id.uuidString))?.frame, "agent row \(note)")
+            #expect(agentRow.height == 24, "linha de agente \(note)")
+            }
+
+            let pending = try #require(tree.find(.sidebarPending(env.sidebar.pending[0].id.uuidString))?.frame, "pending \(note)")
+            #expect(pending.height == 32 + 14, "linha pendente: 32 + fase \(note)")
+            let otterRow = try #require(tree.find(.sidebarProject(otter.id.uuidString))?.frame)
+            #expect(pending.y == otterRow.y + otterRow.height, "pendente é a primeira linha do projeto \(note)")
+
+            let reveal = try #require(tree.find(.sidebarFooterReveal)?.frame, "footer \(note)")
+            #expect(reveal.y + reveal.height <= Double(size.height) && reveal.y >= Double(size.height) - 32 - 1, "rodapé de 32 \(note): \(reveal)")
+        }
+    }
 }
