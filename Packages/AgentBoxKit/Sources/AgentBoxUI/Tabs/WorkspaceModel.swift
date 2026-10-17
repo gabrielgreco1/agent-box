@@ -806,7 +806,7 @@ final class WorkspaceModel {
             defer { launching.remove(id) }
             guard let current = self.terminal(id) else { return }
             do {
-                let result = try await runtime.launch(current) { [weak self] event in
+                let result = try await runtime.launch(current, catalog: ProfileCatalog(userProfiles: self.snapshot.profiles)) { [weak self] event in
                     Task { @MainActor in self?.apply(launchEvent: event, terminalID: id) }
                 }
                 guard self.terminal(id) != nil else { return }

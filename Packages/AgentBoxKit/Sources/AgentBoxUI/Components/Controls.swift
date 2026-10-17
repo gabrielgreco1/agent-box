@@ -263,14 +263,16 @@ public struct DSTextField: View {
     private let multiline: Bool
     private let autofocus: Bool
     private let compact: Bool
+    private let mono: Bool
     @FocusState private var focused: Bool
     @Environment(\.actionRegistry) private var registry
     @Environment(\.isEnabled) private var isEnabled
 
     public init(
         _ placeholder: LocalizedStringKey, text: Binding<String>, id: A11yID, action: ActionID? = nil, error: String? = nil,
-        multiline: Bool = false, autofocus: Bool = false, compact: Bool = false
+        multiline: Bool = false, autofocus: Bool = false, compact: Bool = false, mono: Bool = false
     ) {
+        self.mono = mono
         self.placeholder = placeholder
         self._text = text
         self.id = id
@@ -285,7 +287,7 @@ public struct DSTextField: View {
         VStack(alignment: .leading, spacing: DS.Space.s1) {
             field
                 .textFieldStyle(.plain)
-                .dsFont(compact ? DS.Font.inputCompact : DS.Font.input)
+                .dsFont(mono ? DS.Font.monoPane : (compact ? DS.Font.inputCompact : DS.Font.input))
                 .foregroundStyle(DS.Color.textPrimary)
                 .focused($focused)
                 .padding(.vertical, multiline ? DS.Space.s2 : .zero)

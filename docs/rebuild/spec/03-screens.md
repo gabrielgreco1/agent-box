@@ -1483,7 +1483,7 @@ Atalhos reservados para o terminal (nunca capturados pelo app): ⌃ + letra, ⌥
 | Find | `find.field`, `find.count`, `find.caseSensitive`, `find.regex`, `find.previous`, `find.next`, `find.close` |
 | Status bar | `statusBar`, `statusBar.usage.claude`, `statusBar.usage.codex`, `statusBar.agents`, `statusBar.computers`, `statusBar.proxyUsage`, `statusBar.docker`, `statusBar.background` |
 | Overlays (geral) | `overlay.scrim`, `overlay.<name>`, `overlay.<name>.advanced`, `overlay.<name>.<field>.error`, `overlay.<name>.submit`, `overlay.<name>.cancel` |
-| Composer | `overlay.composer`, `.project`, `.where`, `.createFrom`, `.baseRef`, `.reuseBranch`, `.worktree`, `.folder`, `.agent`, `.profile`, `.prompt`, `.advanced`, `.name`, `.branch`, `.location`, `.computers`, `.proxy`, `.watchSubagents`, `.createMore`, `.cancel`, `.submit`, `.launchChip`, `.<field>.error` |
+| Composer | `overlay.composer`, `.project`, `.where`, `.createFrom`, `.baseRef`, `.reuseBranch`, `.worktree`, `.folder`, `.agent`, `.profile`, `.prompt`, `.advanced`, `.name`, `.branch`, `.location`, `.computers`, `.proxy`, `.watchSubagents`, `.summary`, `.createMore`, `.cancel`, `.submit`, `.launchChip`, `.<field>.error` |
 | Quick launch | `overlay.quickLaunch`, `overlay.quickLaunch.input`, `overlay.quickLaunch.item.<agent>`, `overlay.quickLaunch.profile.<id>`, `overlay.quickLaunch.resume`, `overlay.quickLaunch.openComputer`, `overlay.quickLaunch.agentSettings` |
 | Palette | `overlay.palette`, `overlay.palette.input`, `overlay.palette.row.<kind>.<id>`, `overlay.palette.filter`, `overlay.palette.insertMode` |
 | Inbox | `inbox`, `inbox.filter`, `inbox.markAllRead`, `inbox.empty`, `inbox.item.<eventId>[.markRead/.takeOver]` |

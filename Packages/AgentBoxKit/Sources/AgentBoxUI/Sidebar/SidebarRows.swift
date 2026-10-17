@@ -166,6 +166,30 @@ struct PendingRowView: View {
     var body: some View {
         let pid = data.id.uuidString
         ZStack(alignment: .trailing) {
+            ActionButton(.sessionSelect, argument: .select(pid)) {
+                pendingContent
+            }
+            .buttonStyle(.plain)
+            if hovering || data.failed {
+                if let registry, registry.isOffered(data.failed ? .sessionDiscardPending : .sessionCancelLaunch) {
+                    DSIconButton(
+                        data.failed ? .sessionDiscardPending : .sessionCancelLaunch, id: .sidebarPendingCancel(pid),
+                        symbol: "xmark", name: data.failed ? String(localized: "Discard", bundle: .module) : String(localized: "Cancel", bundle: .module),
+                        variant: .row)
+                    .padding(.trailing, SidebarMetrics.cardPaddingH)
+                }
+            }
+        }
+        .padding(.leading, SidebarMetrics.cardMarginLeading)
+        .padding(.trailing, SidebarMetrics.cardMarginTrailing)
+        .onHover { hovering = $0 }
+        .a11y(.sidebarPending(pid), kind: "row", label: data.name)
+        .overlay { focusRing(model.keyboardFocus == .pending(data.id), radius: SidebarMetrics.cardRadius) }
+    }
+
+    private var pendingContent: some View {
+        let pid = data.id.uuidString
+        return ZStack(alignment: .trailing) {
             HStack(alignment: .center, spacing: SidebarMetrics.statusGap) {
                 ZStack {
                     if data.failed {
@@ -195,26 +219,13 @@ struct PendingRowView: View {
             .padding(.horizontal, SidebarMetrics.cardPaddingH)
             .frame(height: SidebarMetrics.pendingHeight + SidebarMetrics.line2Height)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
             .background(RoundedRectangle(cornerRadius: SidebarMetrics.cardRadius).fill(hovering ? DS.Color.hoverRow : Color.clear))
             .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.fast), value: data.phaseText)
             .animation(MotionPolicy.shared.animation(MotionTokens.Easing.expoOut, MotionTokens.Duration.disclosure), value: data.failed)
             .accessibilityElement(children: .combine)
             .accessibilityLabel(Text(verbatim: "\(data.name), \(data.phaseText)"))
-            if hovering || data.failed {
-                if let registry, registry.isOffered(data.failed ? .sessionDiscardPending : .sessionCancelLaunch) {
-                    DSIconButton(
-                        data.failed ? .sessionDiscardPending : .sessionCancelLaunch, id: .sidebarPendingCancel(pid),
-                        symbol: "xmark", name: data.failed ? String(localized: "Discard", bundle: .module) : String(localized: "Cancel", bundle: .module),
-                        variant: .row)
-                    .padding(.trailing, SidebarMetrics.cardPaddingH)
-                }
-            }
         }
-        .padding(.leading, SidebarMetrics.cardMarginLeading)
-        .padding(.trailing, SidebarMetrics.cardMarginTrailing)
-        .onHover { hovering = $0 }
-        .a11y(.sidebarPending(pid), kind: "row", label: data.name)
-        .overlay { focusRing(model.keyboardFocus == .pending(data.id), radius: SidebarMetrics.cardRadius) }
     }
 }
 

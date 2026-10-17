@@ -34,11 +34,11 @@ extension OverlayHostTests {
         env.overlays.motion = motion
         env.toasts.motion = motion
         let recorder = Recorder()
-        try? env.registry.register(.composerSetAgent) { arg in
+        env.registry.replace(.composerSetAgent) { arg in
             recorder.calls.append("setAgent:\(arg.value ?? "-")")
             return nil
         }
-        try? env.registry.register(.composerManageAgents) { _ in
+        env.registry.replace(.composerManageAgents) { _ in
             recorder.calls.append("manage")
             return nil
         }
