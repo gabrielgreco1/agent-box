@@ -19,6 +19,9 @@ public final class UDSConnection: @unchecked Sendable {
     /// Tamanho máximo de uma leitura do fd.
     public static let readChunkSize = 64 << 10
 
+    /// Credenciais do peer lidas no `accept` (só conexões aceitas por `UDSListener`; `nil` no lado cliente).
+    public let peer: PeerCredentials?
+
     private let fd: Int32
     private let queue = DispatchQueue(label: "app.agentbox.uds.connection")
     private let readSource: any DispatchSourceRead
@@ -33,8 +36,9 @@ public final class UDSConnection: @unchecked Sendable {
     private var writeFailure: UDSError?
 
     /// Assume a posse do descritor (já não bloqueante, `CLOEXEC`, `NOSIGPIPE`).
-    init(adopting fd: Int32) {
+    init(adopting fd: Int32, peer: PeerCredentials? = nil) {
         self.fd = fd
+        self.peer = peer
         readSource = DispatchSource.makeReadSource(fileDescriptor: fd, queue: queue)
         writeSource = DispatchSource.makeWriteSource(fileDescriptor: fd, queue: queue)
         readSource.setEventHandler { [self] in handleReadable() }

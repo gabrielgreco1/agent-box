@@ -1,0 +1,11 @@
+--- Release ad-hoc COM flag (build.sh, modo dono)
+daemon codesign: CodeDirectory v=20500 size=13106 flags=0x10002(adhoc,runtime) hashes=404+2 location=embedded
+peerprobe -> ACCEPTED
+2026-10-17 01:45:20.703 I  agentboxd[81118:915589] [app.agentbox.ptyd:auth] peer auth: ad-hoc development mode (uid only)
+--- Release ad-hoc SEM flag (deny-all)
+daemon codesign: CodeDirectory v=20400 size=51618 flags=0x20002(adhoc,linker-signed) hashes=1610+0 location=embedded
+peerprobe -> REJECTED peerRejected
+2026-10-17 01:46:17.102 E  agentboxd[85053:917938] [app.agentbox.ptyd:auth] peer auth: DENY ALL, every connection will be refused
+2026-10-17 01:46:17.102 E  agentboxd[85053:917938] [app.agentbox.ptyd:auth] <private>
+2026-10-17 01:46:18.002 E  agentboxd[85053:917939] [app.agentbox.ptyd:auth] peer rejected
+2026-10-17 01:46:18.002 E  agentboxd[85053:917939] [app.agentbox.ptyd:auth] <private>

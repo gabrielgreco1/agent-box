@@ -61,13 +61,17 @@ let package = Package(
         .executableTarget(
             name: "agentboxd",
             dependencies: ["AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxTerminalCore"],
-            swiftSettings: nonisolatedSettings
+            // Modo ad-hoc de desenvolvimento do peer auth (S-03/T1-07): só em debug por padrão; build.sh liga em Release
+            // apenas quando assina ad-hoc. O daemon ainda confere que ele próprio é ad-hoc antes de usar o modo.
+            swiftSettings: nonisolatedSettings + [.define("AGENTBOX_ALLOW_ADHOC_PEERS", .when(configuration: .debug))]
         ),
         .executableTarget(
             name: "agentbox",
             dependencies: ["AgentBoxProtocol", "AgentBoxPlatform", argumentParser],
             swiftSettings: nonisolatedSettings
         ),
+        // Cliente de teste do peer auth (T1-07); fora de `products`, só os testes o usam.
+        .executableTarget(name: "peerprobe", dependencies: ["AgentBoxProtocol", "AgentBoxPlatform"], swiftSettings: nonisolatedSettings),
         tests("ProtocolTests", ["AgentBoxProtocol"], resources: [.copy("Fixtures")]),
         tests("PlatformTests", ["AgentBoxPlatform", "AgentBoxProtocol"]),
         tests("StoreTests", ["AgentBoxStore", "AgentBoxProtocol", "AgentBoxPlatform", grdb]),
@@ -80,7 +84,7 @@ let package = Package(
         tests("DockerTests", ["AgentBoxDocker"]),
         tests("TerminalCoreTests", ["AgentBoxTerminalCore", swiftTerm]),
         tests("DesignSystemTests", ["AgentBoxDesignSystem"]),
-        tests("DaemonTests", ["AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxTerminalCore", "AgentBoxCore", "agentboxd", swiftTerm]),
+        tests("DaemonTests", ["AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxTerminalCore", "AgentBoxCore", "agentboxd", "peerprobe", swiftTerm]),
         .testTarget(
             name: "UISnapshotTests",
             dependencies: ["AgentBoxUI", "AgentBoxDesignSystem", snapshotTesting],

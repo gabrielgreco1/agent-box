@@ -28,9 +28,9 @@ final class DaemonHarness: @unchecked Sendable {  // SAFETY: `process` só muda 
 
     var sessionsDirectory: URL { home.appendingPathComponent("sessions") }
 
-    func start(idleExit: Int = 0) async throws {
+    func start(idleExit: Int = 0, binary: URL? = nil) async throws {
         let process = Process()
-        process.executableURL = agentboxdBinary()
+        process.executableURL = binary ?? agentboxdBinary()
         process.arguments = ["--idle-exit", "\(idleExit)"]
         var environment = ProcessInfo.processInfo.environment
         environment["AGENTBOX_HOME"] = home.path

@@ -80,7 +80,7 @@ public final class UDSListener: @unchecked Sendable {
                 Darwin.close(fd)
                 continue
             }
-            continuation.yield(UDSConnection(adopting: fd))
+            continuation.yield(UDSConnection(adopting: fd, peer: PeerCredentials.read(from: fd)))
         }
     }
 

@@ -1,0 +1,17 @@
+1 identity imported.
+AGENTBOX_EPHEMERAL_KEYCHAIN=/private/tmp/claude-501/s03//agentbox-ci-85326.keychain-db
+AE546F70509CDD38B0657C3A81991826C467FF46
+keychain=/private/tmp/claude-501/s03//agentbox-ci-85326.keychain-db sha=AE546F70509CDD38B0657C3A81991826C467FF46
+build.sh exit=0
+Identifier=app.agentbox.mac
+CodeDirectory v=20500 size=27153 flags=0x10000(runtime) hashes=842+3 location=embedded
+TeamIdentifier=not set
+build: OK -> /private/tmp/claude-501/s03/build-cert/Agent Box.app
+designated => identifier "app.agentbox.ptyd" and certificate leaf = H"ae546f70509cdd38b0657c3a81991826c467ff46"
+/private/tmp/claude-501/s03/probe-app: replacing existing signature
+peerprobe signed as app.agentbox.mac with the same cert -> ACCEPTED
+peerprobe linker-signed ad-hoc -> REJECTED peerRejected
+2026-10-17 01:48:12.411 I  agentboxd[88221:91a27a] [app.agentbox.ptyd:auth] peer auth: signed (uid + code requirement)
+2026-10-17 01:48:13.843 E  agentboxd[88221:91a279] [app.agentbox.ptyd:auth] peer rejected
+2026-10-17 01:48:13.843 E  agentboxd[88221:91a279] [app.agentbox.ptyd:auth] <private>
+    "/Users/gabriel/Library/Keychains/login.keychain-db"
