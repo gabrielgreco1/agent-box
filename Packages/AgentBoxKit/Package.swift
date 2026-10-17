@@ -98,7 +98,8 @@ let package = Package(
         ),
         .testTarget(
             name: "UISnapshotTests",
-            dependencies: ["AgentBoxUI", "AgentBoxDesignSystem", "AgentBoxStore", snapshotTesting],
+            // `agentbox` e Core: a integração de atenção dispara eventos de hook reais pelo helper contra o app em processo.
+            dependencies: ["AgentBoxUI", "AgentBoxDesignSystem", "AgentBoxStore", "AgentBoxCore", "AgentBoxProtocol", "AgentBoxPlatform", "agentbox", snapshotTesting],
             exclude: ["__Snapshots__"],  // referências PNG do swift-snapshot-testing, lidas por caminho
             swiftSettings: mainActorSettings
         ),

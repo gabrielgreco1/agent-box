@@ -94,6 +94,12 @@ final class WorkspaceModel {
     private(set) var focusPulse: (terminalID: UUID, nonce: Int)?
     /// Tab que acabou de ser aberta (largura 0 → cheia, M-301).
     private(set) var recentlyOpenedTab: UUID?
+    /// Rim flash do pane (M-309): `nonce` muda a cada pedido, mesmo para o mesmo pane.
+    private(set) var rimFlash: (terminalID: UUID, nonce: Int)?
+    /// Atenção (Fatia 2): estado de atividade dos agentes e não lido. `nil` na Fatia 1.
+    @ObservationIgnored var attention: AttentionCoordinator?
+    /// BEL em um terminal (06 §3.6).
+    @ObservationIgnored var onBell: ((UUID) -> Void)?
 
     init(runtime: TerminalRuntime) {
         self.runtime = runtime
@@ -469,13 +475,29 @@ final class WorkspaceModel {
     }
 
     /// Foco por atalho ou ação: seleciona a tab, foca o pane e o terminal da AppKit (rim flash, M-309).
-    func show(terminalID: UUID) {
+    func show(terminalID: UUID, flash: Bool = false) {
         guard let tab = tabContaining(terminalID: terminalID) else { return }
         if activeTabID != tab.id { selectTab(tab.id) }
         focus(terminalID: terminalID)
         pulse(terminalID)
+        if flash { rimFlash = (terminalID, (rimFlash?.nonce ?? 0) + 1) }
         runtime.existingEntry(for: terminalID)?.host.focusTerminal()
+        notify()
     }
+
+    /// Panes na tela agora: os da tab ativa (ou só o expandido). Decide visto/não lido e a supressão de notificações.
+    var visibleTerminalIDs: Set<UUID> {
+        guard let tab = activeTab else { return [] }
+        if let expanded = expandedPane(in: tab), case .terminal(let id)? = tab.layout.pane(withID: expanded)?.content { return [id] }
+        return Set(tab.layout.terminalIDs)
+    }
+
+    /// Estado do agente do terminal para o indicador da tab e do header do pane (Fatia 2); sem hooks, o do processo.
+    func status(of terminal: Terminal) -> SidebarProjector.StatusSample {
+        SidebarProjector.status(for: terminal, center: attention?.center ?? AttentionCenter(), now: Date())
+    }
+
+    func isUnread(_ terminalID: UUID) -> Bool { attention?.center.unread.contains(terminalID) ?? false }
 
     private func pulse(_ terminalID: UUID) {
         focusPulse = (terminalID, (focusPulse?.nonce ?? 0) + 1)
@@ -723,6 +745,7 @@ final class WorkspaceModel {
         launchTimelines[terminalID] = nil
         ignitionVisible.remove(terminalID)
         runtime.dispose(terminalID)
+        attention?.terminalClosed(terminalID)
         if let layout = tab.layout.removing(paneID: pane.id) {
             let successor = tab.layout.focusSuccessor(afterRemoving: pane.id)
             update(tab: tab.id) { tab in
@@ -1046,6 +1069,8 @@ final class WorkspaceModel {
         case .cwd(let e):
             update(terminal: terminalID) { $0.cwd = e.path }
             debouncedSave(terminalID)
+        case .bell:
+            onBell?(terminalID)
         case .stillAlive:
             if case .closing = paneState(terminalID) { runStates[terminalID] = .closing(stuck: true); notify() }
         case .sessionGone:

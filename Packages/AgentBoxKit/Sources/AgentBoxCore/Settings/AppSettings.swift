@@ -9,6 +9,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public var general = General()
     public var agents = Agents()
     public var terminal = Terminal()
+    public var notifications = Notifications()
 
     public init() {}
 
@@ -17,6 +18,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         general = try c.decodeIfPresent(General.self, forKey: .general) ?? General()
         agents = try c.decodeIfPresent(Agents.self, forKey: .agents) ?? Agents()
         terminal = try c.decodeIfPresent(Terminal.self, forKey: .terminal) ?? Terminal()
+        notifications = try c.decodeIfPresent(Notifications.self, forKey: .notifications) ?? Notifications()
     }
 
     public enum BranchPrefixMode: String, Codable, Sendable, CaseIterable { case gitUser, custom, none }
@@ -55,6 +57,32 @@ public struct AppSettings: Codable, Equatable, Sendable {
         public init(from decoder: any Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
             defaultAgent = try c.decodeIfPresent(TerminalProvider.self, forKey: .defaultAgent) ?? .claude
+        }
+    }
+
+    public enum NotificationSound: String, Codable, Sendable, CaseIterable { case system, none }
+
+    /// Settings › Notifications (03 §14.2, 06 §3.5). A permissão do sistema não vive aqui: só o usuário a pede, pelo botão da seção.
+    public struct Notifications: Codable, Equatable, Sendable {
+        public var needsInput = true
+        public var finished = true
+        public var failed = true
+        public var terminalBell = false
+        public var suppressWhenVisible = true
+        public var sound = NotificationSound.system
+        public var dockBadge = true
+
+        public init() {}
+
+        public init(from decoder: any Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            needsInput = try c.decodeIfPresent(Bool.self, forKey: .needsInput) ?? true
+            finished = try c.decodeIfPresent(Bool.self, forKey: .finished) ?? true
+            failed = try c.decodeIfPresent(Bool.self, forKey: .failed) ?? true
+            terminalBell = try c.decodeIfPresent(Bool.self, forKey: .terminalBell) ?? false
+            suppressWhenVisible = try c.decodeIfPresent(Bool.self, forKey: .suppressWhenVisible) ?? true
+            sound = try c.decodeIfPresent(NotificationSound.self, forKey: .sound) ?? .system
+            dockBadge = try c.decodeIfPresent(Bool.self, forKey: .dockBadge) ?? true
         }
     }
 

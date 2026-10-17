@@ -156,6 +156,10 @@ public actor LaunchCoordinator {
         public var capturer: NativeIDCapturer
         public var codexRoot: URL
         public var clock: @Sendable () -> Date
+        /// Fatia ligada (`AGENTBOX_SLICE`): a partir da 2, o lançamento leva as injeções por lançamento (hooks de atividade).
+        public var slice: LaunchSlice
+        /// Conteúdo das injeções por provider. `nil` = sem injeção (Codex sem hashes de trust sondados, helper ausente).
+        public var injection: @Sendable (TerminalProvider) -> LaunchInjection?
 
         public init(
             launchRoot: URL, appSocketPath: String, appVersion: String = "0.1.0",
@@ -163,8 +167,10 @@ public actor LaunchCoordinator {
             resolveExecutable: @escaping @Sendable (String, String?) -> String? = { CLIExecutableResolver.resolve(name: $0, searchPath: $1) },
             capabilities: @escaping @Sendable (TerminalProvider, String) async -> CLICapabilities? = { _, _ in nil },
             capturer: NativeIDCapturer = NativeIDCapturer(), codexRoot: URL = CodexRolloutScanner.defaultRoot(),
-            clock: @escaping @Sendable () -> Date = { Date() }
+            clock: @escaping @Sendable () -> Date = { Date() }, slice: LaunchSlice = .slice1,
+            injection: @escaping @Sendable (TerminalProvider) -> LaunchInjection? = { _ in nil }
         ) {
+            self.slice = slice; self.injection = injection
             self.launchRoot = launchRoot; self.appSocketPath = appSocketPath; self.appVersion = appVersion
             self.loginEnvironment = loginEnvironment; self.resolveExecutable = resolveExecutable; self.capabilities = capabilities
             self.capturer = capturer; self.codexRoot = codexRoot; self.clock = clock
@@ -248,8 +254,9 @@ public actor LaunchCoordinator {
                     LaunchPlanInput(
                         spec: job.spec, terminalID: job.terminalID, runID: runID, cwd: job.cwd, projectID: job.projectID,
                         terminalAddDirs: job.addDirs, catalog: job.catalog, executablePath: executable, capabilities: capabilities,
-                        loginEnvironment: login, launchDirectory: launchDirectory, mode: job.mode, appVersion: configuration.appVersion,
-                        appSocketPath: configuration.appSocketPath))
+                        loginEnvironment: login, launchDirectory: launchDirectory, mode: job.mode, slice: configuration.slice,
+                        appVersion: configuration.appVersion, appSocketPath: configuration.appSocketPath,
+                        injection: configuration.injection(job.spec.provider)))
                 try LaunchFileWriter.materialize(plan)
             } catch {
                 throw LaunchFailure.plan("\(error)")

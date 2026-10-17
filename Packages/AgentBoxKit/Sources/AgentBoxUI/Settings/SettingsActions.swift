@@ -240,6 +240,52 @@ extension SettingsModel {
             return url.absoluteString
         }
 
+        // Notifications (T2-04)
+        func notificationFlag(_ id: ActionID, _ keyPath: WritableKeyPath<AppSettings.Notifications, Bool>, name: String) throws {
+            try registry.register(id) { [unowned self] arg in
+                change(name) { $0.notifications[keyPath: keyPath] = flag(arg, current: $0.notifications[keyPath: keyPath]) }
+                attention?.refreshDock()
+                return settings.notifications[keyPath: keyPath] ? "on" : "off"
+            }
+        }
+        try notificationFlag(.settingsNotificationsNeedsInput, \.needsInput, name: "Agent needs input")
+        try notificationFlag(.settingsNotificationsFinished, \.finished, name: "Agent finished")
+        try notificationFlag(.settingsNotificationsFailed, \.failed, name: "Agent failed")
+        try notificationFlag(.settingsNotificationsTerminalBell, \.terminalBell, name: "Terminal bell")
+        try notificationFlag(.settingsNotificationsSuppressWhenVisible, \.suppressWhenVisible, name: "Suppress when visible")
+        try notificationFlag(.settingsNotificationsDockBadge, \.dockBadge, name: "Dock badge")
+        try registry.register(.settingsNotificationsSound) { [unowned self] arg in
+            guard let raw = arg.value, let sound = AppSettings.NotificationSound(rawValue: raw) else {
+                throw ActionError.failed(.settingsNotificationsSound, message: "expected system or none")
+            }
+            change("Notification sound") { $0.notifications.sound = sound }
+            return sound.rawValue
+        }
+        try registry.register(
+            .notificationsRequest,
+            enablement: { [unowned self] in notificationAuthorization == .authorized ? .disabled(reason: "Notifications are on.") : .enabled }
+        ) { [unowned self] _ in
+            let result = await requestNotificationAuthorization()
+            return result.rawValue
+        }
+        try registry.register(.appOpenSystemSettings) { [unowned self] arg in
+            system.openSystemSettings(arg.value ?? "notifications")
+            return arg.value ?? "notifications"
+        }
+        try registry.register(
+            .settingsTestNotification,
+            enablement: { [unowned self] in
+                notificationAuthorization == .authorized ? .enabled : .disabled(reason: "Notifications are off for Agent Box.")
+            }
+        ) { [unowned self] _ in
+            let result = await attention?.sendTest() ?? .notDetermined
+            await refreshNotificationAuthorization()
+            guard result == .authorized else {
+                throw ActionError.failed(.settingsTestNotification, message: "Notifications are off for Agent Box.")
+            }
+            return "sent"
+        }
+
         // Terminal
         try registry.register(.settingsTerminalFont) { [unowned self] arg in
             let family = try value(arg, .settingsTerminalFont)

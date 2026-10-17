@@ -40,6 +40,7 @@ struct SettingsView: View {
                 case "agents": AgentsSettingsView(model: model)
                 case "general": GeneralSettingsView(model: model)
                 case "terminal": TerminalSettingsView(model: model)
+                case "notifications": NotificationsSettingsView(model: model)
                 default: EmptyView()
                 }
             }

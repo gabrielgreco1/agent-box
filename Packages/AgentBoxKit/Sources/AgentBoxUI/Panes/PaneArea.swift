@@ -46,6 +46,11 @@ final class PaneContainerView: NSView {
     private var registrations: [ElementRegistration] = []
     private let elements: UIElementStore?
     private(set) var showsHeader = false
+    /// Bordas de atenção e de localizar (M-310, M-309): camadas sobre o terminal que não recebem clique.
+    private let rim = PaneRimView()
+    private var rimRegistration: ElementRegistration?
+    /// Último `rimFlash.nonce` já exibido neste pane.
+    var lastFlashNonce = 0
 
     override var isFlipped: Bool { true }
 
@@ -64,6 +69,7 @@ final class PaneContainerView: NSView {
         cover.wantsLayer = true
         cover.layer?.backgroundColor = DS.ColorSpec.terminalBackground.nsColor.cgColor
         addSubview(entry.host)
+        addSubview(rim)
         updateTracking()
     }
 
@@ -79,6 +85,7 @@ final class PaneContainerView: NSView {
                 ElementRegistration(store: elements, id: .pane(id), kind: "pane", label: nil, parent: .windowMain),
                 ElementRegistration(store: elements, id: .paneTerminal(id), kind: "terminal", label: nil, parent: .pane(id)),
             ]
+            rimRegistration = ElementRegistration(store: elements, id: .paneRimFlash(id), kind: "rim", label: nil, parent: .pane(id))
             needsLayout = true
         }
     }
@@ -86,6 +93,8 @@ final class PaneContainerView: NSView {
     func teardown() {
         registrations.forEach { $0.remove() }
         registrations = []
+        rimRegistration?.remove()
+        rimRegistration = nil
     }
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
@@ -112,8 +121,11 @@ final class PaneContainerView: NSView {
     /// `multiPane`: a tab tem 2+ panes, então o cabeçalho de 24 aparece; com 1 pane só os botões flutuantes.
     func apply(
         title: String, provider: TerminalProvider, glyph: DSIndicatorGlyph, focused: Bool, multiPane: Bool, expanded: Bool, state: PaneRunState,
-        timeline: LaunchTimeline? = nil, ignition: Bool = false, interruption: InterruptionReason = .unexpected, exactResume: Bool = true
+        timeline: LaunchTimeline? = nil, ignition: Bool = false, interruption: InterruptionReason = .unexpected, exactResume: Bool = true,
+        needsAttention: Bool = false
     ) {
+        // M-310: agente do pane em `needs input` e pane fora de foco: borda laranja estática até o foco.
+        rim.setAttention(needsAttention && !focused)
         chrome.interruption = interruption
         chrome.exactResume = exactResume
         chrome.title = title
@@ -216,8 +228,12 @@ final class PaneContainerView: NSView {
         }
     }
 
+    /// Rim flash (M-309) em `blue-400`; o erro de lançamento usa vermelho (M-313).
+    func flashRim(color: DSRGBA = DS.ColorSpec.locate) { rim.flash(color: color.nsColor) }
+
     /// O cabeçalho, os botões, o banner e o cartão ficam acima da cobertura e da ignição.
     private func raiseChrome() {
+        addSubview(rim, positioned: .above, relativeTo: entry.host)
         for kind in [Chrome.ignition, .header, .floating, .banner, .card] {
             if let h = hosts[kind] { addSubview(h, positioned: .above, relativeTo: nil) }
         }
@@ -260,6 +276,7 @@ final class PaneContainerView: NSView {
         hosts[.banner]?.frame = NSRect(x: 0, y: top, width: w, height: PaneMetrics.banner)
         dim.frame = bounds
         cover.frame = bounds
+        rim.frame = bounds
         hosts[.ignition]?.frame = NSRect(x: 0, y: top, width: w, height: max(0, bounds.height - top))
         if let card = hosts[.card] {
             let cardSize = card.fittingSize
@@ -269,8 +286,106 @@ final class PaneContainerView: NSView {
         if registrations.count == 2 {
             registrations[0].updateFrame(of: self)
             registrations[1].updateFrame(of: entry.host.surface)
+            rimRegistration?.updateFrame(of: rim)
         }
     }
+}
+
+/// Camadas de atenção do pane (M-309 rim flash, M-310 atenção persistente). Não recebem clique.
+/// Rim flash: borda 1,5 pt a 68%, anel 2 pt a 34% e glow de 18 pt a 36%; opacidade 1 → 0,42 (24%) → 0 (46%) em 1,5 s.
+/// Reduce Motion: borda estática por 0,6 s.
+@MainActor
+final class PaneRimView: NSView {
+    private let border = CALayer()
+    private let ring = CALayer()
+    private let attention = CALayer()
+    private let attentionHalo = CALayer()
+    static let animationKey = "ds.rimFlash"
+    private(set) var flashCount = 0
+    private(set) var attentionOn = false
+
+    override var isFlipped: Bool { true }
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        wantsLayer = true
+        layer?.masksToBounds = true
+        for l in [border, ring] {
+            l.opacity = 0
+            l.backgroundColor = nil
+            layer?.addSublayer(l)
+        }
+        border.borderWidth = 1.5
+        ring.borderWidth = 2
+        border.shadowRadius = 18
+        border.shadowOffset = .zero
+        let orange = DS.ColorSpec.agentNeedsInput.nsColor
+        attention.borderWidth = 1.5
+        attention.borderColor = orange.withAlphaComponent(0.64).cgColor
+        attentionHalo.borderWidth = 3
+        attentionHalo.borderColor = orange.withAlphaComponent(0.18).cgColor
+        for l in [attentionHalo, attention] {
+            l.opacity = 0
+            layer?.addSublayer(l)
+        }
+    }
+
+    @available(*, unavailable) required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
+
+    override func layout() {
+        super.layout()
+        for l in [border, attention] { l.frame = bounds }
+        ring.frame = bounds.insetBy(dx: 1.5, dy: 1.5)
+        attentionHalo.frame = bounds.insetBy(dx: 1.5, dy: 1.5)
+    }
+
+    func setAttention(_ on: Bool) {
+        guard on != attentionOn else { return }
+        attentionOn = on
+        let value: Float = on ? 1 : 0
+        for l in [attention, attentionHalo] {
+            if window != nil, !MotionPolicy.shared.reduceMotion {
+                let a = CABasicAnimation(keyPath: "opacity")
+                a.fromValue = l.presentation()?.opacity ?? l.opacity
+                a.toValue = value
+                a.duration = MotionTokens.Duration.fast
+                a.timingFunction = Motion.caTiming(MotionTokens.Easing.ease)
+                l.add(a, forKey: "ds.attention")
+            }
+            l.opacity = value
+        }
+    }
+
+    func flash(color: NSColor) {
+        flashCount += 1
+        border.borderColor = color.withAlphaComponent(0.68).cgColor
+        ring.borderColor = color.withAlphaComponent(0.34).cgColor
+        border.shadowColor = color.cgColor
+        border.shadowOpacity = 0.36
+        let reduced = MotionPolicy.shared.reduceMotion
+        for l in [border, ring] {
+            l.removeAnimation(forKey: Self.animationKey)
+            let a = CAKeyframeAnimation(keyPath: "opacity")
+            if reduced {
+                a.values = [1, 1, 0]
+                a.keyTimes = [0, 0.95, 1]
+                a.duration = 0.6
+            } else {
+                let keys = MotionTokens.Keyframes.rimFlash.tracks["opacity"] ?? []
+                a.values = keys.map { Float($0[1]) }
+                a.keyTimes = keys.map { NSNumber(value: $0[0]) }
+                a.duration = MotionTokens.Keyframes.rimFlash.duration ?? MotionTokens.Duration.flash
+            }
+            a.calculationMode = .linear
+            a.isRemovedOnCompletion = true
+            l.opacity = 0
+            l.add(a, forKey: Self.animationKey)
+        }
+    }
+
+    /// `true` enquanto o flash ainda corre (testes e `ctl`).
+    var isFlashing: Bool { border.animation(forKey: Self.animationKey) != nil }
 }
 
 /// Divisor entre dois panes: 3 pt visíveis (`paneDivider`), 9 de hit, cursor de resize por `addCursorRect`, arrasto imediato,
@@ -463,12 +578,18 @@ final class PaneAreaView: NSView {
             container.isHidden = false
             container.setTreeVisible(true)
             if container.frame != frame { container.frame = frame }
+            let status = model.status(of: terminal)
             container.apply(
                 title: model.displayTitleOfPane(terminalID), provider: terminal.provider,
-                glyph: SidebarProjector.glyph(for: terminal).glyph, focused: model.focusedTerminalID == terminalID,
+                glyph: status.glyph, focused: model.focusedTerminalID == terminalID,
                 multiPane: multi, expanded: expandedPane != nil, state: model.paneState(terminalID),
                 timeline: model.launchTimelines[terminalID], ignition: model.ignitionVisible.contains(terminalID),
-                interruption: model.interruptionReasons[terminalID] ?? .unexpected, exactResume: RestorePlanner.hasExactResume(terminal))
+                interruption: model.interruptionReasons[terminalID] ?? .unexpected, exactResume: RestorePlanner.hasExactResume(terminal),
+                needsAttention: status.glyph == .needsInput)
+            if let flash = model.rimFlash, flash.terminalID == terminalID, container.lastFlashNonce != flash.nonce {
+                container.lastFlashNonce = flash.nonce
+                container.flashRim()
+            }
             order.append(terminalID)
         }
         if expandedPane == nil {

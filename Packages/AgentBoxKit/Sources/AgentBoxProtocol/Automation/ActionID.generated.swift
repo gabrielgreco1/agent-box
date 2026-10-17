@@ -188,6 +188,9 @@ extension ActionID {
     public static let pageClose = ActionID(unchecked: "page.close")
     public static let inboxMarkRead = ActionID(unchecked: "inbox.markRead")
     public static let inboxMarkAllRead = ActionID(unchecked: "inbox.markAllRead")
+    public static let inboxFilter = ActionID(unchecked: "inbox.filter")
+    public static let notificationsRequest = ActionID(unchecked: "notifications.request")
+    public static let appOpenSystemSettings = ActionID(unchecked: "app.openSystemSettings")
     public static let notificationOpen = ActionID(unchecked: "notification.open")
     public static let settingsTestNotification = ActionID(unchecked: "settings.testNotification")
     public static let notificationsPause = ActionID(unchecked: "notifications.pause")
@@ -264,6 +267,13 @@ extension ActionID {
     public static let settingsTerminalTheme = ActionID(unchecked: "settings.terminal.theme")
     public static let settingsTerminalCursor = ActionID(unchecked: "settings.terminal.cursor")
     public static let settingsTerminalCursorBlink = ActionID(unchecked: "settings.terminal.cursorBlink")
+    public static let settingsNotificationsNeedsInput = ActionID(unchecked: "settings.notifications.needsInput")
+    public static let settingsNotificationsFinished = ActionID(unchecked: "settings.notifications.finished")
+    public static let settingsNotificationsFailed = ActionID(unchecked: "settings.notifications.failed")
+    public static let settingsNotificationsTerminalBell = ActionID(unchecked: "settings.notifications.terminalBell")
+    public static let settingsNotificationsSuppressWhenVisible = ActionID(unchecked: "settings.notifications.suppressWhenVisible")
+    public static let settingsNotificationsDockBadge = ActionID(unchecked: "settings.notifications.dockBadge")
+    public static let settingsNotificationsSound = ActionID(unchecked: "settings.notifications.sound")
     public static let agentDetect = ActionID(unchecked: "agent.detect")
     public static let agentInstallHelp = ActionID(unchecked: "agent.installHelp")
     public static let onboardingKeepSettingUp = ActionID(unchecked: "onboarding.keepSettingUp")
@@ -528,6 +538,9 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "page.close"), label: "Close page", shortcut: "Esc", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "inbox.markRead"), label: "Mark as Read", shortcut: "", slice: .slice2),
         ActionSpec(id: ActionID(unchecked: "inbox.markAllRead"), label: "Mark All as Read", shortcut: "", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "inbox.filter"), label: "Inbox: filtro", shortcut: "", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "notifications.request"), label: "Allow Notifications", shortcut: "", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "app.openSystemSettings"), label: "Open System Settings", shortcut: "", slice: .slice2),
         ActionSpec(id: ActionID(unchecked: "notification.open"), label: "Open (notificação)", shortcut: "", slice: .slice2),
         ActionSpec(id: ActionID(unchecked: "settings.testNotification"), label: "Send Test Notification", shortcut: "", slice: .slice2),
         ActionSpec(id: ActionID(unchecked: "notifications.pause"), label: "Pause / Resume Notifications for 1 Hour", shortcut: "", slice: .v11),
@@ -604,6 +617,13 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "settings.terminal.theme"), label: "Theme", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.terminal.cursor"), label: "Cursor", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.terminal.cursorBlink"), label: "Cursor", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.notifications.needsInput"), label: "Agent needs input", shortcut: "", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "settings.notifications.finished"), label: "Agent finished", shortcut: "", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "settings.notifications.failed"), label: "Agent failed", shortcut: "", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "settings.notifications.terminalBell"), label: "Terminal bell", shortcut: "", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "settings.notifications.suppressWhenVisible"), label: "Suppress when the session is visible", shortcut: "", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "settings.notifications.dockBadge"), label: "Dock badge", shortcut: "", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "settings.notifications.sound"), label: "Notification sound", shortcut: "", slice: .slice2),
         ActionSpec(id: ActionID(unchecked: "agent.detect"), label: "Detect Again / Check Again", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "agent.installHelp"), label: "Install…", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "onboarding.keepSettingUp"), label: "Keep Setting Up", shortcut: "", slice: .slice1),

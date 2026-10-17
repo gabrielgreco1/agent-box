@@ -111,6 +111,10 @@ struct AgentRowData: Identifiable, Equatable {
     var trail: String?
     var timeText: String
     var stateLabel: String
+    /// Terminal com `done`, `failed` ou BEL ainda não visto: texto em 600 (03 §2.7).
+    var unread = false
+    /// Texto inteiro da última mensagem, para o tooltip da linha (03 §2.7).
+    var fullMessage: String = ""
 }
 
 /// Grupo da pílula-resumo (03 §2.6): estado + contagem.
@@ -200,6 +204,8 @@ struct SidebarInput {
     var pending: [PendingLaunch] = []
     var now = Date()
     var home = NSHomeDirectory()
+    /// Estado de atividade e leitura dos terminais (Fatia 2). Vazio na Fatia 1: o agente vivo fica `Status unavailable`.
+    var attention = AttentionCenter()
 }
 
 enum SidebarProjector {
@@ -256,19 +262,65 @@ enum SidebarProjector {
         }
     }
 
-    /// Ordem de gravidade da agregação (02 §2.6): maior primeiro.
+    /// Um terminal na agregação: glifo, rótulo e posição na ordem de 01 §6.3 (maior primeiro).
+    struct StatusSample: Equatable {
+        var glyph: DSIndicatorGlyph
+        var label: String
+        var rank: Int
+    }
+
+    /// Ordem de gravidade da agregação só por glifo (processo e Fatia 1). A escala é a de 01 §6.3:
+    /// needsInput > failed > blocked > working > waiting > done não lido > interrupted > starting > done lido > idle > unknown.
     private static func rank(_ g: DSIndicatorGlyph) -> Int {
         switch g {
-        case .alert: 6
-        case .dot(let c): c == DS.ColorSpec.agentFailed ? 5 : (c == DS.ColorSpec.agentInterrupted ? 2 : 1)
-        case .spinner: 4
-        case .unknown: 3
+        case .needsInput: 100
+        case .alert: 95
+        case .dot(let c):
+            c == DS.ColorSpec.agentFailed ? 91 : (c == DS.ColorSpec.agentInterrupted ? 50 : (c == DS.ColorSpec.agentDone ? 30 : 25))
+        case .working: 80
+        case .waiting: 70
+        case .done: 60
+        case .spinner: 40
+        case .unknown: 10
         case .none: 0
         }
     }
 
     static func aggregate(_ items: [(glyph: DSIndicatorGlyph, label: String)]) -> (glyph: DSIndicatorGlyph, label: String) {
         items.max { rank($0.glyph) < rank($1.glyph) } ?? (.none, "")
+    }
+
+    static func aggregate(_ samples: [StatusSample]) -> StatusSample? {
+        samples.max { $0.rank < $1.rank }
+    }
+
+    /// Estado de um terminal com atividade de hooks (Fatia 2): vale só para agente com o processo vivo; o resto é do processo.
+    static func status(for t: Terminal, center: AttentionCenter, now: Date) -> StatusSample {
+        let process = glyph(for: t)
+        let base = StatusSample(glyph: process.glyph, label: process.label, rank: rank(process.glyph))
+        guard t.provider.isAgent, t.state == .running, let activity = center.effectiveActivity(of: t.id, now: now),
+              let info = center.statuses[t.id] else { return base }
+        let unread = center.unread.contains(t.id)
+        switch activity {
+        case .starting: return StatusSample(glyph: .spinner, label: String(localized: "Starting…", bundle: .module), rank: 40)
+        case .idle: return StatusSample(glyph: .dot(DS.ColorSpec.agentIdle), label: String(localized: "Idle", bundle: .module), rank: 20)
+        case .working: return StatusSample(glyph: .working, label: String(localized: "Working", bundle: .module), rank: 80)
+        case .needsInput: return StatusSample(glyph: .needsInput, label: String(localized: "Needs input", bundle: .module), rank: 100)
+        case .waitingOnSubagents:
+            let n = info.liveChildren
+            let label = n == 1 ? String(localized: "Waiting on 1 subagent", bundle: .module) : String(localized: "Waiting on \(n) subagents", bundle: .module)
+            return StatusSample(glyph: .waiting, label: label, rank: 70)
+        case .done: return StatusSample(glyph: .done, label: String(localized: "Done", bundle: .module), rank: unread ? 60 : 30)
+        case .failed: return StatusSample(glyph: .dot(DS.ColorSpec.agentFailed), label: String(localized: "Failed", bundle: .module), rank: 91)
+        case .blocked: return StatusSample(glyph: .dot(DS.ColorSpec.agentFailed), label: String(localized: "Blocked", bundle: .module), rank: 90)
+        case .interrupted: return StatusSample(glyph: .dot(DS.ColorSpec.agentInterrupted), label: String(localized: "Interrupted", bundle: .module), rank: 50)
+        case .unknown: return StatusSample(glyph: .unknown, label: String(localized: "Status unavailable", bundle: .module), rank: 10)
+        }
+    }
+
+    /// Na coluna de status do card o `done` vira bolinha (02 §2.6); o resto mantém o glifo.
+    static func cardGlyph(_ glyph: DSIndicatorGlyph) -> DSIndicatorGlyph {
+        glyph == .done ? .dot(DS.ColorSpec.agentDone) : glyph
     }
 
     // MARK: Construção
@@ -316,8 +368,9 @@ enum SidebarProjector {
                 rows = selfMatch ? all : matching
             }
 
-            let states = all.map(glyph(for:))
-            let agg = aggregate(states)
+            let samples = all.map { status(for: $0, center: input.attention, now: input.now) }
+            let agg = aggregate(samples) ?? StatusSample(glyph: .none, label: "", rank: 0)
+            let anyUnread = s.unread || all.contains { input.attention.unread.contains($0.id) }
             let agents = rows.filter { $0.provider.isAgent }
             // Shells só viram linha rodando comando (título OSC) ou quando a sessão não tem agentes (03 §2.6).
             let shellRows = rows.filter { !$0.provider.isAgent && ($0.titleSource == .osc || agents.isEmpty) }
@@ -325,12 +378,27 @@ enum SidebarProjector {
             let grouped = rows.count - shown.count
 
             let agentRows = shown.map { t -> AgentRowData in
-                let g = glyph(for: t)
+                let g = status(for: t, center: input.attention, now: input.now)
                 let live = t.state == .running || t.state == .launching
+                let info = t.state == .running ? input.attention.statuses[t.id] : nil
+                var lead = t.lastMessage ?? t.title
+                var trail: String? = live ? nil : g.label
+                var since = t.startedAt ?? t.createdAt
+                if let info {
+                    since = info.changedAt
+                    switch input.attention.effectiveActivity(of: t.id, now: input.now) {
+                    // Permissão: "Wants to run: `git push origin …`" no lugar da última mensagem (06 §3.4).
+                    case .needsInput: if let reason = info.reason, !reason.isEmpty { lead = reason }; trail = nil
+                    case .working: trail = info.subtitle
+                    case .waitingOnSubagents: trail = g.label
+                    case .failed: trail = AttentionText.failureText(info.reason)
+                    default: trail = nil
+                    }
+                }
                 return AgentRowData(
-                    id: t.id, sessionID: s.id, provider: t.provider, glyph: g.glyph,
-                    lead: t.lastMessage ?? t.title, trail: live ? nil : g.label,
-                    timeText: relativeTime(since: t.startedAt ?? t.createdAt, now: input.now), stateLabel: g.label)
+                    id: t.id, sessionID: s.id, provider: t.provider, glyph: g.glyph, lead: lead, trail: trail,
+                    timeText: relativeTime(since: since, now: input.now), stateLabel: g.label,
+                    unread: input.attention.unread.contains(t.id), fullMessage: lead)
             }
 
             var badges: [SidebarBadge] = []
@@ -342,7 +410,7 @@ enum SidebarProjector {
             else { line2 = .folder(abbreviate(path: s.folderPath, home: input.home)) }
 
             let notStarted = all.allSatisfy { $0.state == .notStarted }
-            let label = a11yLabel(title: s.title, line2: line2, badges: badges, notStarted: notStarted, state: agg.label, unread: s.unread, rows: agentRows.count)
+            let label = a11yLabel(title: s.title, line2: line2, badges: badges, notStarted: notStarted, state: agg.label, unread: anyUnread, rows: agentRows.count)
 
             let expandedSummary = input.expandedSummaries.contains(s.id)
             var summary: [SummaryGroup]?
@@ -362,7 +430,7 @@ enum SidebarProjector {
             return SessionCardData(
                 id: s.id, title: s.title, projectID: s.projectID, kind: s.kind, badges: Array(badges.prefix(2)),
                 timeText: relativeTime(since: s.lastActiveAt ?? s.createdAt, now: input.now), line2: line2,
-                notStarted: notStarted, glyph: agg.glyph, stateLabel: agg.label, unread: s.unread,
+                notStarted: notStarted, glyph: cardGlyph(agg.glyph), stateLabel: agg.label, unread: anyUnread,
                 selected: s.id == input.selectedSession, note: note, agentRows: agentRows, groupedTerminals: grouped,
                 summary: summary, summaryExpanded: expandedSummary, agentsCollapsed: input.collapsedSessions.contains(s.id),
                 branch: branch, folderPath: s.folderPath, a11yLabel: label)

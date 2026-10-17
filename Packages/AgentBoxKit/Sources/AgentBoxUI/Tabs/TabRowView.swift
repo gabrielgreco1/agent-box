@@ -17,6 +17,7 @@ enum TabMetrics {
     static let gap = DS.Space.s1
     static let indicatorHeight = CGFloat(MotionTokens.Distance.hairline)
     static let logo = DS.Space.s3
+    static let unreadDot: CGFloat = 6
     static let fade = DS.Space.s6
     static let chevron = CGSize(width: DS.Space.s4 + DS.Space.s1, height: DS.Space.s6)
     static let hairline: CGFloat = 1
@@ -201,11 +202,13 @@ struct TabItemView: View {
 
     var body: some View {
         let terminal = model.primaryTerminal(of: tab)
-        let glyph = terminal.map(SidebarProjector.glyph(for:))
+        let glyph = terminal.map { model.status(of: $0) }
+        let unread = tab.layout.terminalIDs.contains { model.isUnread($0) }
+        let bell = tab.layout.terminalIDs.contains { model.attention?.center.bells.contains($0) ?? false }
         let title = model.displayTitle(of: tab)
         let renaming = model.renamingTab == tab.id
         ZStack(alignment: .bottom) {
-            tabBody(terminal: terminal, glyph: glyph?.glyph, title: title, renaming: renaming)
+            tabBody(terminal: terminal, glyph: glyph?.glyph, title: title, renaming: renaming, unread: unread, bell: bell)
             if isActive {
                 DS.Color.textPrimary
                     .frame(height: TabMetrics.indicatorHeight)
@@ -215,6 +218,8 @@ struct TabItemView: View {
         }
         .frame(width: width, height: TabMetrics.rowHeight)
         .background(isActive ? DS.Color.fg6 : Color.clear)
+        // Tab com `done`, `failed` ou BEL não vistos: overlay âmbar a 10% e ponto (02 §2.6, 06 §3.6).
+        .background(unread && !isActive ? DS.Color.unreadTabOverlay : Color.clear)
         .overlay(alignment: .trailing) { DS.Color.border.frame(width: TabMetrics.hairline) }
         .overlay { MiddleClickCatcher { perform(.tabClose, .select(tabID)) } }
         .scaleEffect(dragging ? MotionTokens.Scale.dragLift : 1)
@@ -259,7 +264,7 @@ struct TabItemView: View {
     }
 
     @ViewBuilder
-    private func tabBody(terminal: Terminal?, glyph: DSIndicatorGlyph?, title: String, renaming: Bool) -> some View {
+    private func tabBody(terminal: Terminal?, glyph: DSIndicatorGlyph?, title: String, renaming: Bool, unread: Bool, bell: Bool) -> some View {
         let showClose = isActive || hovering
         ZStack(alignment: .trailing) {
             if renaming {
@@ -281,6 +286,13 @@ struct TabItemView: View {
                             .lineLimit(1)
                             .truncationMode(.tail)
                             .a11y(.tabsTabTitle(tabID), kind: "text", label: title)
+                        if unread {
+                            if bell {
+                                Image(systemName: "bell.fill").font(.system(size: TabMetrics.unreadDot + 3)).foregroundStyle(DS.Color.unread)
+                            } else {
+                                Circle().fill(DS.Color.unread).frame(width: TabMetrics.unreadDot, height: TabMetrics.unreadDot)
+                            }
+                        }
                         Spacer(minLength: 0)
                     }
                     .padding(.horizontal, TabMetrics.paddingH)

@@ -227,6 +227,18 @@ extension AgentBoxStore {
         }
     }
 
+    /// A execução principal mais recente de cada terminal (a UI semeia o estado de atividade com elas ao abrir).
+    public func latestMainRuns() async throws -> [AgentRun] {
+        try await read { db in
+            try AgentRunRecord.fetchAll(db, sql: """
+                SELECT r.* FROM agent_run r
+                WHERE r.parent_run_id IS NULL AND r.terminal_id IS NOT NULL
+                  AND r.id = (SELECT r2.id FROM agent_run r2 WHERE r2.terminal_id = r.terminal_id AND r2.parent_run_id IS NULL
+                              ORDER BY r2.started_at DESC, r2.id DESC LIMIT 1)
+                """).map { try $0.domain() }
+        }
+    }
+
     /// Execuções principais cuja projeção ficou para trás dos eventos gravados (crash entre os dois passos).
     public func runsNeedingReconcile() async throws -> [UUID] {
         try await read { db in

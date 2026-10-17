@@ -13,6 +13,14 @@ public enum DSIndicatorGlyph: Equatable, Sendable {
     case dot(DSRGBA)
     /// Falha de criação (linha pendente com erro): `AlertCircle` `destructive`.
     case alert
+    /// `working` (02 §2.6): arco de 270° amarelo, 12 passos/s, fase global (M-401).
+    case working
+    /// `needsInput`: balão com `?` laranja (M-402).
+    case needsInput
+    /// `waitingOnSubagents`: glifo de atividade, estático (M-405).
+    case waiting
+    /// `done` em tabs, linhas e Inbox: check em círculo esmeralda (M-403). Na coluna do card vira bolinha (`.dot`).
+    case done
 }
 
 /// Caixa do indicador (02 §2.6): `sm` 10 · `md` 12 · `lg` 16.
@@ -63,8 +71,24 @@ public struct DSAgentIndicator: View {
                 Image(systemName: "exclamationmark.circle")
                     .font(.system(size: size.box))
                     .foregroundStyle(DS.Color.destructive)
+            case .working:
+                DSSpinner(kind: .agentWorking, size: size.box, delayed: false)
+            case .needsInput:
+                Image(systemName: "questionmark.bubble")
+                    .font(.system(size: size.box, weight: .medium))
+                    .foregroundStyle(DS.Color.agentNeedsInput)
+            case .waiting:
+                Image(systemName: "waveform.path.ecg")
+                    .font(.system(size: size.box, weight: .medium))
+                    .foregroundStyle(DS.Color.agentWaitingOnSubagents)
+            case .done:
+                Image(systemName: "checkmark.circle")
+                    .font(.system(size: size.box, weight: .medium))
+                    .foregroundStyle(DS.Color.agentDone)
             }
         }
+        // M-408: toda troca de glifo é um crossfade de 0,18 s; Reduce Motion usa o crossfade curto da política.
+        .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.disclosure), value: glyph)
         .frame(width: size.box, height: size.box)
         .accessibilityHidden(true)
     }

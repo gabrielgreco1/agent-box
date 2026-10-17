@@ -106,13 +106,19 @@ public nonisolated struct AgentInfo: Equatable, Sendable, Identifiable {
 public nonisolated struct SettingsSystemActions: Sendable {
     public var pickFolder: @MainActor @Sendable (_ current: String) async -> String?
     public var openURL: @MainActor @Sendable (URL) -> Void
+    /// Abre System Settings na página do app (`notifications`).
+    public var openSystemSettings: @MainActor @Sendable (_ pane: String) -> Void
 
     public init(
         pickFolder: @escaping @MainActor @Sendable (String) async -> String? = SettingsSystemActions.openPanel,
-        openURL: @escaping @MainActor @Sendable (URL) -> Void = { NSWorkspace.shared.open($0) }
+        openURL: @escaping @MainActor @Sendable (URL) -> Void = { NSWorkspace.shared.open($0) },
+        openSystemSettings: @escaping @MainActor @Sendable (String) -> Void = { _ in
+            if let url = URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension") { NSWorkspace.shared.open(url) }
+        }
     ) {
         self.pickFolder = pickFolder
         self.openURL = openURL
+        self.openSystemSettings = openSystemSettings
     }
 
     @MainActor

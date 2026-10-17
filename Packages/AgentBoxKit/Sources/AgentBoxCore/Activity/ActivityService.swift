@@ -22,6 +22,14 @@ public actor ActivityService {
         public var statusReason: String?
         public var subtitle: String?
         public var liveChildren: Int
+
+        public init(
+            runID: UUID, terminalID: UUID?, activity: AgentActivity, lastMessage: String? = nil, statusReason: String? = nil,
+            subtitle: String? = nil, liveChildren: Int = 0
+        ) {
+            self.runID = runID; self.terminalID = terminalID; self.activity = activity; self.lastMessage = lastMessage
+            self.statusReason = statusReason; self.subtitle = subtitle; self.liveChildren = liveChildren
+        }
     }
 
     public struct DrainReport: Sendable, Equatable {

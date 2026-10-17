@@ -44,6 +44,15 @@ IDENT="-"; SHA=""; SIGN_KEYCHAIN="${AGENTBOX_SIGN_KEYCHAIN:-}"
 if [ "$IDENT_NAME" != "-" ]; then
   SHA="$(security find-certificate -c "$IDENT_NAME" -Z ${SIGN_KEYCHAIN:+"$SIGN_KEYCHAIN"} 2>/dev/null | awk '/^SHA-1 hash:/{print $3; exit}' || true)"
   if [ -n "$SHA" ]; then IDENT="$SHA"; fi
+  # Sem o certificado local e sem identidade explícita: usa a primeira "Apple Development" válida do Keychain do dono.
+  if [ -z "$SHA" ] && [ -z "${AGENTBOX_SIGN_IDENTITY:-}" ] && [ -z "$SIGN_KEYCHAIN" ]; then
+    DEV_LINE="$(security find-identity -v -p codesigning 2>/dev/null | grep -m1 '"Apple Development:' || true)"
+    if [ -n "$DEV_LINE" ]; then
+      SHA="$(echo "$DEV_LINE" | awk '{print $2}')"; IDENT="$SHA"
+      IDENT_NAME="$(echo "$DEV_LINE" | sed -E 's/.*"(.*)".*/\1/')"
+      echo "build: assinando com '$IDENT_NAME'"
+    fi
+  fi
 fi
 if [ "$IDENT" = "-" ]; then
   echo "AVISO: identidade '$IDENT_NAME' ausente; assinando AD-HOC (rode scripts/make-dev-cert.sh uma vez para assinatura estável)." >&2

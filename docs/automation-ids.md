@@ -601,6 +601,9 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `page.close` | Close page | Esc | slice1 |
 | `inbox.markRead` | Mark as Read | — | slice2 |
 | `inbox.markAllRead` | Mark All as Read | — | slice2 |
+| `inbox.filter` | Inbox: filtro | — | slice2 |
+| `notifications.request` | Allow Notifications | — | slice2 |
+| `app.openSystemSettings` | Open System Settings | — | slice2 |
 | `notification.open` | Open (notificação) | — | slice2 |
 | `settings.testNotification` | Send Test Notification | — | slice2 |
 | `notifications.pause` | Pause / Resume Notifications for 1 Hour | — | v11 |
@@ -677,6 +680,13 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `settings.terminal.theme` | Theme | — | slice1 |
 | `settings.terminal.cursor` | Cursor | — | slice1 |
 | `settings.terminal.cursorBlink` | Cursor | — | slice1 |
+| `settings.notifications.needsInput` | Agent needs input | — | slice2 |
+| `settings.notifications.finished` | Agent finished | — | slice2 |
+| `settings.notifications.failed` | Agent failed | — | slice2 |
+| `settings.notifications.terminalBell` | Terminal bell | — | slice2 |
+| `settings.notifications.suppressWhenVisible` | Suppress when the session is visible | — | slice2 |
+| `settings.notifications.dockBadge` | Dock badge | — | slice2 |
+| `settings.notifications.sound` | Notification sound | — | slice2 |
 | `agent.detect` | Detect Again / Check Again | — | slice1 |
 | `agent.installHelp` | Install… | — | slice1 |
 | `onboarding.keepSettingUp` | Keep Setting Up | — | slice1 |
