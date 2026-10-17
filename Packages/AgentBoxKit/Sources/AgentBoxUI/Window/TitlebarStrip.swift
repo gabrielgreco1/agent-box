@@ -32,7 +32,10 @@ struct TitlebarStrip: View {
             ActionButton(.viewToggleSidebar, id: .windowSidebarToggle) {
                 Image(systemName: "sidebar.left")
             }
-            .buttonStyle(StripButtonStyle(size: StripMetrics.toggleSize, icon: StripMetrics.toggleIcon, secondary: true))
+            .buttonStyle(
+                StripButtonStyle(
+                    size: StripMetrics.toggleSize, icon: StripMetrics.toggleIcon, secondary: true,
+                    active: env.overlays.originActive == .windowSidebarToggle))
             if shell.sidebarCollapsed {
                 Color.clear.frame(width: DS.Space.s3, height: DS.Layout.titlebarHeight)
             } else {
@@ -81,18 +84,23 @@ struct StripButtonStyle: ButtonStyle {
     let size: CGSize
     let icon: CGFloat
     let secondary: Bool
+    /// Origem de um overlay aberto: mantém o fundo "ativo" enquanto o overlay existe (M-101), sai em `hover` 0,12 s.
+    var active = false
     @Environment(\.isEnabled) private var isEnabled
     @State private var hovering = false
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: icon, weight: .regular))
-            .foregroundStyle(hovering && isEnabled ? DS.Color.textPrimary : DS.Color.textSecondary)
+            .foregroundStyle((hovering || active) && isEnabled ? DS.Color.textPrimary : DS.Color.textSecondary)
             .frame(width: size.width, height: size.height)
             .background(
                 RoundedRectangle(cornerRadius: StripMetrics.buttonRadius)
-                    .fill(hovering && isEnabled ? DS.Color.accent : Color.clear)
+                    .fill(active ? DS.Color.fg10 : (hovering && isEnabled ? DS.Color.accent : Color.clear))
             )
+            .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: active)
+            .scaleEffect(configuration.isPressed && !MotionPolicy.shared.reduceMotion ? MotionTokens.Scale.press : 1)
+            .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.press), value: configuration.isPressed)
             .opacity(isEnabled ? 1 : StripMetrics.disabledOpacity)
             .contentShape(Rectangle())
             .onHover { hovering = $0 }

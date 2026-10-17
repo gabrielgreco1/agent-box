@@ -84,6 +84,7 @@ let package = Package(
         .testTarget(
             name: "UISnapshotTests",
             dependencies: ["AgentBoxUI", "AgentBoxDesignSystem", snapshotTesting],
+            exclude: ["__Snapshots__"],  // referências PNG do swift-snapshot-testing, lidas por caminho
             swiftSettings: mainActorSettings
         ),
     ],

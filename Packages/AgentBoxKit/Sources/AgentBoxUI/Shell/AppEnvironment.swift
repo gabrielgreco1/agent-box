@@ -28,6 +28,8 @@ public final class AppEnvironment {
     public let shell = ShellModel()
     public let elements = UIElementStore()
     public let registry: ActionRegistry
+    public let overlays = OverlayRouter()
+    public let toasts = ToastCenter()
     public let keyBindings: KeyBindingRegistry
     public let automationEnabled: Bool
     public let fixture: String?
@@ -51,6 +53,8 @@ public final class AppEnvironment {
         self.keyBindings = bindings
         elements.enablement = { [registry] id in registry.availability(of: id) }
         registerShellActions()
+        wireOverlays()
+        if fixture == Self.overlayDemoFixture { registerOverlayDemo() }
     }
 
     /// Ações reais da casca vazia; as demais entram com a tela que as possui.
@@ -74,6 +78,77 @@ public final class AppEnvironment {
             }
         } catch {
             log.publicError("duplicate action registration")
+        }
+    }
+
+    /// Fixture de desenvolvimento (`AGENTBOX_SCREEN=overlay-demo`): liga ações que abrem overlays e toasts de exemplo.
+    public static let overlayDemoFixture = "overlay-demo"
+
+    /// Liga o roteador de overlays ao registro (Esc dispara o Cancel) e à árvore de UI (origem da animação).
+    private func wireOverlays() {
+        overlays.performAction = { [registry] id in
+            guard registry.availability(of: id).isEnabled else { return false }
+            Task { _ = try? await registry.perform(id, .press) }
+            return true
+        }
+        overlays.frameOf = { [elements] id in elements.frame(of: id) }
+    }
+
+    /// Ações de exemplo do overlay (só no fixture): `session.new` abre a amostra do composer a partir do botão da sidebar,
+    /// `pane.close` abre "Close this terminal?" e `app.checkProblems` mostra toasts. Os handlers de `composer.*`
+    /// e `dialog.closeTerminal.*` gravam nos modelos da amostra.
+    private func registerOverlayDemo() {
+        let composer = ComposerSampleModel()
+        let confirmation = ConfirmationModel.closeTerminal(
+            message: String(localized: "Claude Code is still working. Closing ends the process; you can resume the conversation later.", bundle: .module))
+        let router = overlays, toasts = toasts
+        func add(_ id: ActionID, _ handler: @escaping @MainActor (ActionArgument) async throws -> String?) {
+            try? registry.register(id, handler: handler)
+        }
+        add(.sessionNew) { _ in
+            router.present(.composerSample(composer), from: .windowSidebarToggle) ? "opened" : "stack full"
+        }
+        add(.paneClose) { _ in
+            router.present(.confirmation(confirmation), from: nil) ? "opened" : "stack full"
+        }
+        add(.composerSetWhere) { arg in
+            composer.whereValue = arg.value ?? composer.whereValue
+            return composer.whereValue
+        }
+        add(.composerSetPrompt) { arg in
+            composer.prompt = arg.value ?? ""
+            return nil
+        }
+        add(.composerCreateMore) { arg in
+            composer.createMore = arg.value == "on"
+            return composer.createMore ? "on" : "off"
+        }
+        add(.composerCancel) { _ in
+            router.dismiss(.action)
+            return nil
+        }
+        add(.composerSubmit) { _ in
+            router.dismiss(.action)
+            return nil
+        }
+        add(.dialogCloseTerminalCancel) { _ in
+            router.dismiss(.action)
+            return nil
+        }
+        add(.dialogCloseTerminalConfirm) { _ in
+            router.dismiss(.action)
+            return nil
+        }
+        add(.dialogCloseTerminalDontAsk) { arg in
+            confirmation.state.dontAsk = arg.value == "on"
+            return nil
+        }
+        add(.appCheckProblems) { _ in
+            toasts.show(kind: .error, title: String(localized: "Couldn't save setting.", bundle: .module),
+                        detail: String(localized: "The file is read-only.", bundle: .module), duration: 6)
+            toasts.show(kind: .success, title: String(localized: "Session archived.", bundle: .module),
+                        action: ToastAction(.appCheckProblems, title: String(localized: "Undo", bundle: .module)), undo: true)
+            return nil
         }
     }
 
