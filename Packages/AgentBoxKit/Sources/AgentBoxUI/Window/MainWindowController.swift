@@ -154,7 +154,6 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
     static func acceptsTyping(_ responder: NSResponder?) -> Bool {
         guard let responder else { return false }
         if responder is TerminalSurfaceView || responder is NSText || responder is NSTextView { return true }
-        if responder is NSHostingView<AnyView> || responder is OverlayHostingView { return true }
         if let view = responder as? NSView {
             var node: NSView? = view
             while let current = node {
@@ -165,11 +164,37 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
         return false
     }
 
+    /// Esc numa página do centro (viewer, Computers) volta à sessão. Com o teclado capturado pelo viewer o Esc é do computador.
+    private func closePageOnEscape(_ event: NSEvent) -> Bool {
+        guard event.keyCode == Self.escapeKeyCode, event.modifierFlags.intersection([.command, .option, .shift, .control]).isEmpty,
+            !env.overlays.blocksTerminalInput, settingsHost.isHidden, env.computers.page != .workspace
+        else { return false }
+        if case .viewer = env.computers.page, env.computers.activeViewer?.model.keyboardCaptured == true { return false }
+        env.computers.closePage()
+        return true
+    }
+
+    static let escapeKeyCode: UInt16 = 53
+
+    /// Responders do SwiftUI (hosting views e o `KeyViewProxy` que fica com o foco depois de uma lista): navegação por setas,
+    /// Return e Esc são deles; texto digitado não é de ninguém ali e vai para o terminal.
+    static func isSwiftUIHosted(_ responder: NSResponder?) -> Bool {
+        guard let responder else { return false }
+        return responder is NSHostingView<AnyView> || responder is OverlayHostingView || String(describing: type(of: responder)).hasPrefix("SwiftUI.")
+    }
+
+    static func isPrintable(_ event: NSEvent) -> Bool {
+        guard let scalar = event.characters?.unicodeScalars.first else { return false }
+        return scalar.value >= 0x20 && scalar.value != 0x7f && !(0xF700 ... 0xF8FF).contains(scalar.value)
+    }
+
     func redirectStrayKey(_ event: NSEvent) -> Bool {
+        if closePageOnEscape(event) { return true }
         guard let window, !event.modifierFlags.contains(.command), !event.modifierFlags.contains(.control) else { return false }
         guard !env.overlays.blocksTerminalInput, settingsHost.isHidden, env.computers.page == .workspace else { return false }
         let responder = window.firstResponder
         guard !Self.acceptsTyping(responder), let host = env.workspace.focusedHost() else { return false }
+        if Self.isSwiftUIHosted(responder), !Self.isPrintable(event) { return false }
         let name = responder.map { String(describing: type(of: $0)) } ?? "nil"
         focusLog.publicError("keyDown went to a responder that is not a terminal or text field; redirected to the terminal")
         focusLog.error("responder=\(name)")

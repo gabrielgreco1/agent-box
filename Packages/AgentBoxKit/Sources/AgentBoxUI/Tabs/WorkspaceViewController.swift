@@ -197,7 +197,8 @@ final class WorkspaceViewController: NSViewController {
         case .computers: content = AnyView(ComputersPageView(controller: controller))
         case .viewer(let name):
             guard let viewer = controller.ensureViewer(name) else { return nil }
-            content = AnyView(ComputerViewerView(controller: viewer, computers: controller))
+            let origin = env.sidebar.selectedSession.flatMap { env.sidebar.session($0)?.title }
+            content = AnyView(ComputerViewerView(controller: viewer, computers: controller, backTitle: origin ?? String(localized: "workspace", bundle: .module)))
         }
         let host = ChromeHostingView(
             content: content.environment(\.elementStore, env.elements).environment(\.actionRegistry, env.registry).environment(\.a11yParent, .windowMain))

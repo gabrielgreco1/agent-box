@@ -73,6 +73,8 @@ final class WorkspaceModel {
     @ObservationIgnored let confirmationState = ConfirmationState()
     /// ⌘W com uma página ou o viewer de computador no centro fecha a página (03 §11.6), não um terminal. Devolve `true` se tratou.
     @ObservationIgnored var pageCloser: () -> Bool = { false }
+    /// Pedido explícito para mostrar um terminal (sidebar, tab, atalho): fecha a página do centro que o esconde.
+    @ObservationIgnored var onShowTerminal: () -> Void = {}
     /// "Subagent computers" (F12): o modo com que cada Claude é lançado e o `Restart to apply`.
     @ObservationIgnored weak var subagent: SubagentComputersController?
 
@@ -520,6 +522,7 @@ final class WorkspaceModel {
     /// Foco por atalho ou ação: seleciona a tab, foca o pane e o terminal da AppKit (rim flash, M-309).
     func show(terminalID: UUID, flash: Bool = false) {
         guard let tab = tabContaining(terminalID: terminalID) else { return }
+        onShowTerminal()
         if activeTabID != tab.id { selectTab(tab.id) }
         focus(terminalID: terminalID)
         pulse(terminalID)

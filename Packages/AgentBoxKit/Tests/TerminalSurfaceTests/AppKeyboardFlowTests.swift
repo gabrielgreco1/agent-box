@@ -127,12 +127,14 @@ actor FocusFlowBackend: ComputerBackend {
     static func settle(_ ms: Int = 250) async { try? await Task.sleep(for: .milliseconds(ms)) }
 
     /// Estado exigido depois de cada sequência.
-    static func assertTyping(_ label: String, _ rig: Rig, sourceLocation: SourceLocation = #_sourceLocation) async throws {
+    static func assertTyping(_ label: String, _ rig: Rig, strictResponder: Bool = true, sourceLocation: SourceLocation = #_sourceLocation) async throws {
         await settle(400)
         let responder = rig.window.firstResponder.map { String(describing: Swift.type(of: $0)) } ?? "nil"
         #expect(NSApp.keyWindow == nil || NSApp.keyWindow === rig.window, "\(label): outra janela é key: \(String(describing: NSApp.keyWindow))", sourceLocation: sourceLocation)
         #expect(rig.window.childWindows?.contains { $0.isKeyWindow } != true, "\(label): janela-filha key", sourceLocation: sourceLocation)
-        #expect(rig.window.firstResponder === rig.surface, "\(label): first responder deve ser a surface (é \(responder))", sourceLocation: sourceLocation)
+        if strictResponder {
+            #expect(rig.window.firstResponder === rig.surface, "\(label): first responder deve ser a surface (é \(responder))", sourceLocation: sourceLocation)
+        }
         #expect(!(rig.surface?.hasMarkedText() ?? false), "\(label): texto marcado preso na surface", sourceLocation: sourceLocation)
         #expect(try await type("x", rig), "\(label): a tecla deve chegar ao daemon (responder=\(responder))", sourceLocation: sourceLocation)
     }

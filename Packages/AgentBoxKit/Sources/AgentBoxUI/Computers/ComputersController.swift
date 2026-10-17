@@ -29,6 +29,8 @@ public final class ComputersController {
     public private(set) var panelOpen = false
     public private(set) var viewers: [String: ComputerViewerController] = [:]
     @ObservationIgnored public var onPageChange: () -> Void = {}
+    /// Histórico de navegação: a página do centro mudou (independe do `onPageChange`, que a janela já usa).
+    @ObservationIgnored var onNavigate: () -> Void = {}
     @ObservationIgnored public var onPanelChange: (Bool) -> Void = { _ in }
     @ObservationIgnored public var notifier: any HelpNotifying = NoopHelpNotifier()
     @ObservationIgnored private let log = LogFacade(.app, category: "computers")
@@ -108,6 +110,7 @@ public final class ComputersController {
         if case .viewer(let name) = old, old != page { closeViewer(name) }
         if case .viewer(let name) = page { ensureViewer(name) }
         onPageChange()
+        onNavigate()
     }
 
     public func closePage() {
@@ -171,6 +174,7 @@ public final class ComputersController {
         if page == .viewer(name) {
             page = .workspace
             onPageChange()
+            onNavigate()
         }
         popOut.show()
     }
