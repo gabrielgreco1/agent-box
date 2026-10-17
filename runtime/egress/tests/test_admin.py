@@ -1,0 +1,106 @@
+"""Admin API: autenticação por token, usage, reqlog, corpo e reload (troca de proxy)."""
+import asyncio
+import json
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from agentbox_egress.admin import AdminServer  # noqa: E402
+from agentbox_egress.config import Config, load_config  # noqa: E402
+from agentbox_egress.proxy import EgressProxy  # noqa: E402
+
+TOKEN = "t0ken-abcdefabcdefabcdef"
+
+
+async def http(port, method, path, token=None):
+    r, w = await asyncio.open_connection("127.0.0.1", port)
+    auth = f"Authorization: Bearer {token}\r\n" if token else ""
+    w.write(f"{method} {path} HTTP/1.1\r\nHost: x\r\n{auth}\r\n".encode())
+    await w.drain()
+    data = await asyncio.wait_for(r.read(), 5)
+    w.close()
+    head, _, body = data.partition(b"\r\n\r\n")
+    return int(head.split()[1]), body
+
+
+class AdminTests(unittest.TestCase):
+    def run_with_admin(self, fn):
+        async def body():
+            with tempfile.TemporaryDirectory() as tmp:
+                secrets = Path(tmp) / "run"
+                logs = Path(tmp) / "logs"
+                secrets.mkdir()
+                logs.mkdir()
+
+                def write_cfg(**extra):
+                    data = {"bind": "127.0.0.1", "logs_dir": str(logs), "via": "direct", **extra}
+                    (secrets / "egress.json").write_text(json.dumps(data))
+
+                write_cfg()
+                proxy = EgressProxy(load_config(secrets), logs)
+                admin = AdminServer(proxy, TOKEN, config_loader=lambda: load_config(secrets))
+                server = await asyncio.start_server(admin.handle, "127.0.0.1", 0)
+                try:
+                    await fn(server.sockets[0].getsockname()[1], proxy, write_cfg, logs)
+                finally:
+                    server.close()
+
+        asyncio.run(body())
+
+    def test_auth_required_except_health(self):
+        async def fn(port, proxy, write_cfg, logs):
+            self.assertEqual((await http(port, "GET", "/v1/health"))[0], 200)
+            for path in ["/v1/usage", "/v1/reqlog", "/v1/proxy"]:
+                self.assertEqual((await http(port, "GET", path))[0], 401)
+                self.assertEqual((await http(port, "GET", path, "wrong-token"))[0], 401)
+                self.assertEqual((await http(port, "GET", path, TOKEN))[0], 200)
+            self.assertEqual((await http(port, "POST", "/v1/proxy/reload"))[0], 401)
+
+        self.run_with_admin(fn)
+
+    def test_no_token_configured_locks_everything_but_health(self):
+        async def body():
+            with tempfile.TemporaryDirectory() as tmp:
+                proxy = EgressProxy(Config.parse({"bind": "127.0.0.1", "logs_dir": tmp}), Path(tmp))
+                server = await asyncio.start_server(AdminServer(proxy, None).handle, "127.0.0.1", 0)
+                port = server.sockets[0].getsockname()[1]
+                self.assertEqual((await http(port, "GET", "/v1/usage", ""))[0], 401)
+                self.assertEqual((await http(port, "GET", "/v1/usage", "anything"))[0], 401)
+                server.close()
+
+        asyncio.run(body())
+
+    def test_reload_switches_via_and_reports_closed_tunnels(self):
+        async def fn(port, proxy, write_cfg, logs):
+            write_cfg(via="other", allow_cidrs=["10.0.0.0/8"])
+            status, body = await http(port, "POST", "/v1/proxy/reload", TOKEN)
+            self.assertEqual(status, 200, body)
+            payload = json.loads(body)
+            self.assertEqual((payload["applied"], payload["via"], payload["closed_tunnels"]), (True, "other", 0))
+            self.assertEqual(json.loads((await http(port, "GET", "/v1/proxy", TOKEN))[1])["via"], "other")
+            self.assertTrue((logs / "usage.json").exists())
+
+        self.run_with_admin(fn)
+
+    def test_reload_with_bad_config_returns_500_and_keeps_old(self):
+        async def fn(port, proxy, write_cfg, logs):
+            write_cfg(upstream={"scheme": "ftp", "host": "x", "port": 1})
+            status, _ = await http(port, "POST", "/v1/proxy/reload", TOKEN)
+            self.assertEqual(status, 500)
+            self.assertEqual(proxy.config.via, "direct")
+
+        self.run_with_admin(fn)
+
+    def test_body_route_is_confined(self):
+        async def fn(port, proxy, write_cfg, logs):
+            self.assertEqual((await http(port, "GET", "/v1/reqlog/NOPE/body", TOKEN))[0], 404)
+            self.assertEqual((await http(port, "GET", "/v1/reqlog/../../etc/passwd/body", TOKEN))[0], 404)
+
+        self.run_with_admin(fn)
+
+
+if __name__ == "__main__":
+    unittest.main()

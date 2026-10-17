@@ -35,7 +35,7 @@ done
 context_hash() {
   (
     cd "$CONTEXT"
-    find . -type f ! -name .DS_Store -print | sed 's|^\./||' | LC_ALL=C sort | while IFS= read -r f; do
+    find . -type f ! -name .DS_Store ! -name '*.pyc' ! -path '*/__pycache__/*' -print | sed 's|^\./||' | LC_ALL=C sort | while IFS= read -r f; do
       mode=644
       [ -n "$(find "$f" -maxdepth 0 -perm -u+x)" ] && mode=755
       printf '%s\0%s\0%s\n' "$f" "$mode" "$(shasum -a 256 "$f" | cut -d' ' -f1)"

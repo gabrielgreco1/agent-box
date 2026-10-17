@@ -41,7 +41,7 @@ private func event(_ run: UUID, _ id: String, type: String = "Stop", atNs: Int64
     }
 
     @Test func v2ActivityIsRegisteredAfterV1AndTablesAreStrict() async throws {
-        #expect(StoreMigrations.all.map(\.id) == ["v1_initial", "v2_activity", "v3_computers"])
+        #expect(StoreMigrations.all.map(\.id) == ["v1_initial", "v2_activity", "v3_computers", "v4_proxy_ext"])
         let home = try TempHome(); defer { home.remove() }
         let store = try await home.openStore()
         await #expect(throws: DatabaseError.self) {

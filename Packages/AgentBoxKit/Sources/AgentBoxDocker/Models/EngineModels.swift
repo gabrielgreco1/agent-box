@@ -324,9 +324,11 @@ public struct NetworkInspect: Sendable, Equatable, Decodable {
     public var isInternal: Bool
     public var labels: [String: String]
     public var containerIDs: [String]
+    /// Sub-redes do IPAM (`172.18.0.0/16`).
+    public var subnets: [String]
 
     enum CodingKeys: String, CodingKey {
-        case id = "Id", name = "Name", driver = "Driver", isInternal = "Internal", labels = "Labels", containers = "Containers"
+        case id = "Id", name = "Name", driver = "Driver", isInternal = "Internal", labels = "Labels", containers = "Containers", ipam = "IPAM"
     }
 
     public init(from decoder: any Decoder) throws {
@@ -338,6 +340,11 @@ public struct NetworkInspect: Sendable, Equatable, Decodable {
         labels = try c.decodeIfPresent([String: String].self, forKey: .labels) ?? [:]
         struct Member: Decodable {}
         containerIDs = (try c.decodeIfPresent([String: Member].self, forKey: .containers) ?? [:]).keys.sorted()
+        struct IPAM: Decodable {
+            struct Entry: Decodable { let Subnet: String? }
+            let Config: [Entry]?
+        }
+        subnets = (try c.decodeIfPresent(IPAM.self, forKey: .ipam)?.Config ?? []).compactMap(\.Subnet)
     }
 }
 

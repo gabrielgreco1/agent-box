@@ -1,0 +1,21 @@
+{
+  "ignored" : "demais chaves do .env (token do Claude, concorrência, ZYTE_BUDGET_USD): sem teto de orçamento (P13)",
+  "imported_only" : [
+    "ZYTE_API_KEY",
+    "ZYTE_USD_PER_REQUEST",
+    "ZYTE_USD_PER_RENDER"
+  ],
+  "proxy" : {
+    "host" : "proxy.zyte.com",
+    "name" : "zyte",
+    "port" : 8011,
+    "preset" : "zyte",
+    "price_per_render_micros" : 10000,
+    "price_per_request_micros" : 2000,
+    "scheme" : "http",
+    "secret_storage" : "file"
+  },
+  "secret" : "armazenado em arquivo 0600 (TODO T2-10: Vault); valor NÃO registrado aqui",
+  "secret_file_mode" : "600",
+  "source" : "~\/orca\/projects\/agentbox\/.env (somente leitura; arquivo não modificado)"
+}
