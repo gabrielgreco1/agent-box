@@ -3389,17 +3389,6 @@
         }
       }
     },
-    "Needs you": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Needs you"
-          }
-        }
-      }
-    },
     "Network": {
       "extractionState": "manual",
       "localizations": {
