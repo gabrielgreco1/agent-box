@@ -183,7 +183,8 @@ import Testing
         try? await Task.sleep(for: .milliseconds(300))
         #expect(c.items.count == 1, "pausado pelo hover")
         c.resume(id)
-        try? await Task.sleep(for: .milliseconds(300))
+        // Sob carga do suite inteiro o timer pode atrasar; espera até 3 s.
+        for _ in 0..<60 where !c.items.isEmpty { try? await Task.sleep(for: .milliseconds(50)) }
         #expect(c.items.isEmpty)
     }
 
