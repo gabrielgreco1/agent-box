@@ -1,0 +1,2 @@
+lint: swift build (Swift 6 estrito, warnings como erro)
+lint: OK
