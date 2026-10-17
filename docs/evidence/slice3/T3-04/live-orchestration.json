@@ -1,0 +1,183 @@
+{
+  "claude_run": {
+    "agent_subagent_types": [
+      "agentbox-worker-1",
+      "agentbox-worker-2"
+    ],
+    "agentbox_mcp_server_present": true,
+    "app_skills_loaded": [
+      "agentbox",
+      "agentbox-app:agentbox-boxes"
+    ],
+    "bash_commands": [],
+    "cost_usd": 0.017838579999999996,
+    "exit": 0,
+    "final_text": "Both subagents are done. Each one opened http://origin:8080/ and reported the same result:\n\n- **Phoenix:** page title \"Origin Page\", page loaded (HTTP 200). Computer released.\n- **Austin:** page title \"Origin Page\", page loaded (HTTP 200). Computer released.",
+    "other_mcp_servers_count": 38,
+    "parent_tool_uses": [
+      "ToolSearch",
+      "mcp__agentbox__boxes_reserve",
+      "Agent",
+      "Agent"
+    ],
+    "skill_invocations": [],
+    "skills_loaded_by_the_model": [],
+    "tool_errors": [],
+    "turns": 1,
+    "worker_tool_uses": [
+      "mcp__abx-370f5450-w1__box_claim",
+      "mcp__abx-370f5450-w2__box_claim",
+      "mcp__abx-370f5450-w1__journal",
+      "mcp__abx-370f5450-w1__box_status",
+      "mcp__abx-370f5450-w2__journal",
+      "mcp__abx-370f5450-w2__journal",
+      "mcp__abx-370f5450-w2__browser_open",
+      "mcp__abx-370f5450-w1__journal",
+      "mcp__abx-370f5450-w1__browser_open",
+      "mcp__abx-370f5450-w2__result_submit",
+      "mcp__abx-370f5450-w1__journal",
+      "mcp__abx-370f5450-w1__result_submit",
+      "mcp__abx-370f5450-w2__box_release",
+      "mcp__abx-370f5450-w1__result_submit",
+      "mcp__abx-370f5450-w1__box_release"
+    ]
+  },
+  "cleanup": {
+    "leftover_images": 0,
+    "leftover_resources": 0
+  },
+  "image_build_seconds": 60,
+  "parent_boxes_status": {
+    "batch": "permits-oct",
+    "child_id": "370f5450-w1",
+    "display": "headless",
+    "lease": "agent",
+    "name": "phoenix-az",
+    "owner": "370f5450-w1",
+    "proxy": "direct",
+    "runtime_s": 3,
+    "started_at": "2026-10-17T09:30:04Z",
+    "state": "in_use",
+    "usage": {
+      "bytes": 589,
+      "renders": 0,
+      "requests": 4,
+      "tunnels": 2
+    },
+    "worker": "agentbox-worker-1"
+  },
+  "queue_admission": "q-three admitted after q-one was released; worker ran exec on it",
+  "queue_reserve": {
+    "reply": {
+      "batch_id": "queue-demo",
+      "boxes": [
+        {
+          "child_id": "370f5450-w1",
+          "display": "http",
+          "name": "q-one",
+          "position": 1,
+          "reason": "memory",
+          "state": "provisioning",
+          "worker": "agentbox-worker-1"
+        },
+        {
+          "child_id": "370f5450-w2",
+          "display": "http",
+          "name": "q-two",
+          "position": 2,
+          "reason": "memory",
+          "state": "provisioning",
+          "worker": "agentbox-worker-2"
+        },
+        {
+          "child_id": "370f5450-w3",
+          "display": "http",
+          "name": "q-three",
+          "position": 1,
+          "reason": "memory",
+          "state": "queued",
+          "worker": "agentbox-worker-3"
+        }
+      ],
+      "took_ms": 5
+    },
+    "reserve_call_ms": 22
+  },
+  "queue_status": {
+    "boxes": [
+      {
+        "batch": "queue-demo",
+        "child_id": "370f5450-w1",
+        "display": "http",
+        "lease": "agent",
+        "name": "q-one",
+        "proxy": "direct",
+        "runtime_s": 2,
+        "started_at": "2026-10-17T09:29:58Z",
+        "state": "ready",
+        "usage": {
+          "bytes": 0,
+          "renders": 0,
+          "requests": 0,
+          "tunnels": 0
+        },
+        "worker": "agentbox-worker-1"
+      },
+      {
+        "batch": "queue-demo",
+        "child_id": "370f5450-w2",
+        "display": "http",
+        "lease": "agent",
+        "name": "q-two",
+        "proxy": "direct",
+        "runtime_s": 2,
+        "started_at": "2026-10-17T09:29:58Z",
+        "state": "ready",
+        "usage": {
+          "bytes": 0,
+          "renders": 0,
+          "requests": 0,
+          "tunnels": 0
+        },
+        "worker": "agentbox-worker-2"
+      },
+      {
+        "batch": "queue-demo",
+        "child_id": "370f5450-w3",
+        "display": "http",
+        "lease": "agent",
+        "name": "q-three",
+        "owner": "370f5450-w3",
+        "position": 1,
+        "proxy": "direct",
+        "reason": "memory",
+        "state": "queued",
+        "usage": {
+          "bytes": 0,
+          "renders": 0,
+          "requests": 0,
+          "tunnels": 0
+        },
+        "worker": "agentbox-worker-3"
+      }
+    ],
+    "queue": {
+      "label": "Waiting for memory \u00b7 1 of 3 queued",
+      "length": 1
+    },
+    "took_ms": 6
+  },
+  "runtime": "desktop: Engine 29.6.2, MemTotal 8320954368 (7.75 GiB)",
+  "scripted_flow": {
+    "claim_state": "in_use",
+    "containers_removed": true,
+    "timeline_has_message": true,
+    "title": "Origin Page",
+    "tree_state_after": "released"
+  },
+  "vm": {
+    "max_headless_by_rule": 4,
+    "mem_gib": 7.75,
+    "vm_warning": "Docker VM has 8 GB. 15 headless and 2 desktop computers need about 26 GB."
+  }
+}

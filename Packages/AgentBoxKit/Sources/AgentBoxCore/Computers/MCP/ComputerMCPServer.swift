@@ -33,14 +33,17 @@ public struct ComputerMCPServer: Sendable {
         case "initialize":
             let requested = params?["protocolVersion"]?.string ?? ""
             let version = Self.supportedVersions.contains(requested) ? requested : Self.supportedVersions.last!
+            let isParent = await tools.hub.role(of: child) == .parent
             return Self.reply(id, result: [
                 "protocolVersion": .string(version), "capabilities": ["tools": ["listChanged": false]],
-                "serverInfo": ["name": "agentbox", "version": .string(Self.serverVersion)], "instructions": .string(ToolCatalog.serverInstructions),
+                "serverInfo": ["name": "agentbox", "version": .string(Self.serverVersion)],
+                "instructions": .string(isParent ? ToolCatalog.parentInstructions : ToolCatalog.serverInstructions),
             ])
         case "ping":
             return Self.reply(id, result: [:])
         case "tools/list":
-            return Self.reply(id, result: ["tools": .array(ToolCatalog.all.map(\.mcpJSON))])
+            let isParent = await tools.hub.role(of: child) == .parent
+            return Self.reply(id, result: ["tools": .array((isParent ? ToolCatalog.parentTools : ToolCatalog.all).map(\.mcpJSON))])
         case "tools/call":
             guard let name = params?["name"]?.string else { return Self.fail(id, code: -32602, "Invalid tool call: name is required") }
             let arguments = params?["arguments"] ?? [:]

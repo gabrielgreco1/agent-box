@@ -60,6 +60,16 @@ public actor ActivityService {
     private var touches = 0
     private static let cacheLimit = 64
 
+    /// T3-04: hooks de filhos nativos (`agent_id` + `mcp_server.name`, S-08) para a árvore da orquestração. Chamado depois de gravar.
+    public struct ChildHook: Sendable, Equatable {
+        public var parentRunID: UUID
+        public var event: String
+        public var agentID: String
+        public var mcpServer: String?
+    }
+    private var childObserver: (@Sendable (ChildHook) async -> Void)?
+    public func setChildObserver(_ observer: (@Sendable (ChildHook) async -> Void)?) { childObserver = observer }
+
     private var busy = false
     private var waiters: [CheckedContinuation<Void, Never>] = []
     private var watchTask: Task<Void, Never>?
@@ -161,6 +171,9 @@ public actor ActivityService {
             let projection = ActivityProjector.projection(runID: runID, terminalID: effectiveTerminal, provider: provider, state: state)
             try await store.saveActivity(projection)
             publish(runID: runID, terminalID: effectiveTerminal, state: state)
+            if inserted, let observer = childObserver, let agent = payload.agentID, !agent.isEmpty {
+                await observer(ChildHook(parentRunID: runID, event: name, agentID: agent, mcpServer: payload.mcpServer))
+            }
             return inserted ? .applied : .duplicate
         } catch {
             cache[runID] = nil  // o próximo evento refaz o estado a partir do banco
