@@ -6,11 +6,12 @@ public enum DSButtonVariant: Sendable, CaseIterable {
 }
 
 public enum DSButtonSize: Sendable, CaseIterable {
-    case xs, sm, regular, lg
+    case xs, compact, sm, regular, lg
 
     public var height: CGFloat {
         switch self {
         case .xs: 24
+        case .compact: 28
         case .sm: 32
         case .regular: 36
         case .lg: 40
@@ -20,6 +21,7 @@ public enum DSButtonSize: Sendable, CaseIterable {
     public var paddingH: CGFloat {
         switch self {
         case .xs: 8
+        case .compact: 12
         case .sm: 12
         case .regular: 16
         case .lg: 24
@@ -29,15 +31,16 @@ public enum DSButtonSize: Sendable, CaseIterable {
     public var paddingHWithIcon: CGFloat {
         switch self {
         case .xs: 6
+        case .compact: 10
         case .sm: 10
         case .regular: 12
         case .lg: 16
         }
     }
-    public var font: DSTextStyle { self == .xs ? DS.Font.label : DS.Font.control }
+    public var font: DSTextStyle { self == .xs || self == .compact ? DS.Font.label : DS.Font.control }
     public var icon: CGFloat {
         switch self {
-        case .xs: 12
+        case .xs, .compact: 12
         case .sm: 14
         case .regular, .lg: 16
         }

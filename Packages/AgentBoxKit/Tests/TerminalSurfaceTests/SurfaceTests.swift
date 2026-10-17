@@ -134,7 +134,11 @@ import Testing
         #expect(press(123, "\u{F702}", [.option, .numericPad, .function]))  // ⌥←
         #expect(press(124, "\u{F703}", [.option, .numericPad, .function]))  // ⌥→
         try await eventually("chord bytes") { out.bytes(origin: .key).count >= 1 + 1 + 1 + 7 + 2 + 2 }
-        #expect(out.bytes(origin: .key) == [0x01, 0x05, 0x15] + Array("\u{1b}[13;2u".utf8) + [0x1b, 0x62, 0x1b, 0x66])
+        let head: [UInt8] = [0x01, 0x05, 0x15]
+        let csiU: [UInt8] = Array("\u{1b}[13;2u".utf8)
+        let tail: [UInt8] = [0x1b, 0x62, 0x1b, 0x66]
+        let expected: [UInt8] = head + csiU + tail
+        #expect(out.bytes(origin: .key) == expected)
     }
 
     @Test func blockedInputDoesNotSendKeysAndRefusesFocus() async throws {

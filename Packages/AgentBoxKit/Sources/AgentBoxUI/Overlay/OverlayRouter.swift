@@ -73,6 +73,11 @@ public final class OverlayRouter {
 
     private var pendingRemovals: [UUID: Task<Void, Never>] = [:]
 
+    /// Popover ancorado aberto (menu ou combobox, M-105). Um por vez; Esc e clique fora fecham.
+    public private(set) var popover: PopoverEntry?
+    @ObservationIgnored public private(set) var popoverFrame: CGRect?
+    private var popoverRemoval: Task<Void, Never>?
+
     public init() {}
 
     /// Overlays visíveis e interativos (os que estão saindo não contam).
@@ -80,7 +85,10 @@ public final class OverlayRouter {
     public var top: OverlayEntry? { live.last }
     /// Enquanto há overlay vivo o terminal não aceita first responder nem teclas (02 §12.17).
     public var isPresenting: Bool { !live.isEmpty }
-    public var blocksTerminalInput: Bool { isPresenting }
+    public var blocksTerminalInput: Bool { isPresenting || popoverIsOpen }
+    public var popoverIsOpen: Bool { popover.map { !$0.isClosing } ?? false }
+    /// O host recebe cliques e teclas: overlay ou popover aberto.
+    public var capturesInput: Bool { isPresenting || popoverIsOpen }
 
     // MARK: Abrir
 
@@ -106,6 +114,7 @@ public final class OverlayRouter {
 
     /// Fecha o overlay do topo.
     public func dismiss(_ reason: OverlayDismissReason = .action) {
+        closePopover(restoreFocus: false, animated: false)
         guard let entry = top, let index = stack.firstIndex(where: { $0.id == entry.id }) else { return }
         stack[index].isClosing = true
         let last = live.isEmpty
@@ -121,11 +130,70 @@ public final class OverlayRouter {
 
     /// Fecha tudo (troca de janela, ⌘Q confirmado).
     public func dismissAll() {
+        closePopover(restoreFocus: false, animated: false)
         while isPresenting { dismiss(.action) }
     }
 
-    /// Esc: dispara o Cancel do overlay do topo (ou fecha direto se a ação não está disponível).
+    // MARK: Popover
+
+    /// Abre um popover ancorado. Já havendo um, ele troca na hora (sem animação de saída).
+    @discardableResult
+    public func presentPopover(_ spec: PopoverSpec) -> Bool {
+        closePopover(restoreFocus: false, animated: false)
+        popover = PopoverEntry(spec: spec)
+        if live.isEmpty { focus?.capture() } else { focus?.capturePopover() }
+        record("M-105 begin")
+        return true
+    }
+
+    /// Fecha o popover e devolve o foco a quem o tinha (o terminal, ou o campo do overlay).
+    public func dismissPopover() { closePopover(restoreFocus: true, animated: true) }
+
+    func setPopoverFrame(_ frame: CGRect) { popoverFrame = frame }
+
+    private func closePopover(restoreFocus: Bool, animated: Bool) {
+        popoverRemoval?.cancel()
+        popoverRemoval = nil
+        guard var entry = popover, !entry.isClosing else {
+            if popover != nil, !animated { popover = nil }
+            return
+        }
+        if restoreFocus {
+            if live.isEmpty { focus?.restore() } else { focus?.restorePopover() }
+        }
+        let wait = animated ? Self.popoverExitWait() : 0
+        if wait <= 0 {
+            popover = nil
+            popoverFrame = nil
+            record("M-105 end")
+            return
+        }
+        entry.isClosing = true
+        popover = entry
+        let id = entry.id
+        popoverRemoval = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(wait))
+            guard !Task.isCancelled, let self, self.popover?.id == id else { return }
+            self.popover = nil
+            self.popoverFrame = nil
+            self.record("M-105 end")
+        }
+    }
+
+    static func popoverExitWait() -> Double {
+        switch MotionPolicy.shared.resolution {
+        case .none: 0
+        case .crossfade(let d): d
+        case .normal(let scale): OverlayMotion.popoverExitDuration * scale
+        }
+    }
+
+    /// Esc: fecha primeiro o popover; depois dispara o Cancel do overlay do topo (ou fecha direto se a ação não está disponível).
     public func escapePressed() {
+        if popoverIsOpen {
+            dismissPopover()
+            return
+        }
         guard let entry = top else { return }
         if let cancel = entry.spec.cancelAction, performAction(cancel) { return }
         dismiss(.escape)
@@ -133,6 +201,10 @@ public final class OverlayRouter {
 
     /// Clique no scrim: só fecha overlays sem dados digitados (02 §12.17, regra 7).
     public func scrimClicked() {
+        if popoverIsOpen {
+            dismissPopover()
+            return
+        }
         guard let entry = top, entry.spec.dismissOnScrim() else { return }
         if let cancel = entry.spec.cancelAction, performAction(cancel) { return }
         dismiss(.scrim)
@@ -227,6 +299,20 @@ public final class OverlayFocusCoordinator {
     public func focusOverlay() {
         guard let window, let hostView else { return }
         window.makeFirstResponder(hostView)
+    }
+
+    private weak var popoverSaved: NSResponder?
+
+    /// Guarda o campo que tinha o foco antes de um popover abrir dentro de um overlay.
+    public func capturePopover() { popoverSaved = window?.firstResponder }
+
+    /// Devolve o foco ao campo guardado (ou ao host do overlay).
+    public func restorePopover() {
+        guard let window else { return }
+        let target = popoverSaved
+        popoverSaved = nil
+        if let target, window.makeFirstResponder(target) { return }
+        focusOverlay()
     }
 
     /// Devolve o first responder guardado (o terminal volta a receber teclas).

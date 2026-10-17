@@ -49,11 +49,13 @@ struct OverlayPanelHost: View {
                     OverlayEntryView(entry: entry, isBase: index == 0, isTop: entry.id == router.top?.id, container: proxy.size, router: router)
                 }
                 ToastStack(toasts: toasts)
+                PopoverLayer(router: router)
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
         }
         .environment(\.elementStore, elements)
         .environment(\.actionRegistry, registry)
+        .environment(\.overlayRouter, router)
         .environment(\.a11yParent, .windowMain)
         .ignoresSafeArea()
     }
@@ -177,7 +179,7 @@ final class OverlayHostingView: NSHostingView<AnyView> {
 
     @MainActor @preconcurrency required dynamic init?(coder: NSCoder) { fatalError("init(coder:) is not used") }  // required init?(coder:) não usado
 
-    override var acceptsFirstResponder: Bool { router.isPresenting }
+    override var acceptsFirstResponder: Bool { router.capturesInput }
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
@@ -190,13 +192,18 @@ final class OverlayHostingView: NSHostingView<AnyView> {
         guard let superview else { return nil }
         let local = convert(point, from: superview)
         guard bounds.contains(local) else { return nil }
-        if router.isPresenting { return super.hitTest(point) }
+        if router.capturesInput { return super.hitTest(point) }
         let p = swiftUIPoint(local)
         if toasts.cardFrames.values.contains(where: { $0.contains(p) }) { return super.hitTest(point) }
         return nil
     }
 
     override func mouseDown(with event: NSEvent) {
+        // Popover aberto: a camada SwiftUI decide (item do painel ou clique fora, que só fecha o popover).
+        if router.popoverIsOpen {
+            super.mouseDown(with: event)
+            return
+        }
         let p = swiftUIPoint(convert(event.locationInWindow, from: nil))
         let inside = router.top.flatMap { router.cardFrames[$0.id] }?.contains(p) ?? false
         if router.isPresenting, !inside, !toasts.cardFrames.values.contains(where: { $0.contains(p) }) {
@@ -209,7 +216,7 @@ final class OverlayHostingView: NSHostingView<AnyView> {
     static let escapeKeyCode: UInt16 = 53
 
     override func keyDown(with event: NSEvent) {
-        if router.isPresenting, event.keyCode == Self.escapeKeyCode {
+        if router.capturesInput, event.keyCode == Self.escapeKeyCode {
             router.escapePressed()
             return
         }
@@ -217,15 +224,15 @@ final class OverlayHostingView: NSHostingView<AnyView> {
     }
 
     override func cancelOperation(_ sender: Any?) {
-        if router.isPresenting { router.escapePressed() } else { super.cancelOperation(sender) }
+        if router.capturesInput { router.escapePressed() } else { super.cancelOperation(sender) }
     }
 
     /// Tab fica no overlay: o único key view candidato enquanto há overlay é este (os outros recusam first responder).
     override var nextKeyView: NSView? {
-        get { router.isPresenting ? self : super.nextKeyView }
+        get { router.capturesInput ? self : super.nextKeyView }
         set { super.nextKeyView = newValue }
     }
 
-    override var previousValidKeyView: NSView? { router.isPresenting ? self : super.previousValidKeyView }
-    override var nextValidKeyView: NSView? { router.isPresenting ? self : super.nextValidKeyView }
+    override var previousValidKeyView: NSView? { router.capturesInput ? self : super.previousValidKeyView }
+    override var nextValidKeyView: NSView? { router.capturesInput ? self : super.nextValidKeyView }
 }

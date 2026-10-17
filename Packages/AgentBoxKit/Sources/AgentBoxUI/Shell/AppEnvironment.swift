@@ -1,4 +1,5 @@
 import AgentBoxCore
+import AgentBoxDesignSystem
 import AgentBoxPlatform
 import AgentBoxProtocol
 import AgentBoxStore
@@ -121,6 +122,20 @@ public final class AppEnvironment {
         add(.paneClose) { _ in
             router.present(.confirmation(confirmation), from: nil) ? "opened" : "stack full"
         }
+        add(.composerSetProject) { arg in
+            if let value = arg.value { composer.project = value }
+            return composer.project
+        }
+        add(.composerSetAgent) { arg in
+            if let value = arg.value { composer.agent = value }
+            return composer.agent
+        }
+        add(.composerSetProfile) { arg in
+            if let value = arg.value { composer.profile = value }
+            return composer.profile
+        }
+        add(.composerManageAgents) { _ in nil }
+        add(.composerEditProfiles) { _ in nil }
         add(.composerSetWhere) { arg in
             composer.whereValue = arg.value ?? composer.whereValue
             return composer.whereValue
@@ -160,6 +175,7 @@ public final class AppEnvironment {
                         action: ToastAction(.appCheckProblems, title: String(localized: "Undo", bundle: .module)), undo: true)
             return nil
         }
+        if let script = scriptSteps { runDemoScript(script, composer: composer) }
     }
 
     /// Fixture `AGENTBOX_SCREEN=sidebar-demo`: controles cujo fluxo é de outra tarefa (composer, adicionar projeto, Settings,
@@ -191,6 +207,46 @@ public final class AppEnvironment {
             log.error("store failed to open: \(error)")
         }
     }
+
+    /// `AGENTBOX_DEMO_SCRIPT=composer;agent;...` (só no fixture, para evidência e testes): abre o composer e comboboxes/menus
+    /// em sequência, sem cliques. Passos: `composer`, `project`, `agent`, `profile`, `appmenu`.
+    var scriptSteps: [String]? {
+        guard let raw = ProcessInfo.processInfo.environment["AGENTBOX_DEMO_SCRIPT"], !raw.isEmpty else { return nil }
+        return raw.split(separator: ";").map { String($0).trimmingCharacters(in: .whitespaces) }
+    }
+
+    private func runDemoScript(_ steps: [String], composer: ComposerSampleModel) {
+        let router = overlays, registry = registry, elements = elements
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.2))
+            for step in steps {
+                switch step {
+                case "composer":
+                    _ = try? await registry.perform(.sessionNew, .press)
+                case "project", "agent", "profile":
+                    let (id, selection, entries, action, hint): (A11yID, String, [DSMenuEntry], ActionID, String) =
+                        switch step {
+                        case "project": (.overlayComposerProject, composer.project, ComposerSampleContent.projectEntries, .composerSetProject, "Search projects…")
+                        case "agent": (.overlayComposerAgent, composer.agent, ComposerSampleContent.agentEntries, .composerSetAgent, "Search agents…")
+                        default: (.overlayComposerProfile, composer.profile, ComposerSampleContent.profileEntries, .composerSetProfile, "Search profiles…")
+                        }
+                    if let anchor = elements.frame(of: id) {
+                        router.presentPopover(
+                            DSCombobox.popoverSpec(
+                                id: id, selection: selection, entries: entries, action: action, searchPlaceholder: hint, anchor: anchor,
+                                registry: registry))
+                    }
+                case "appmenu":
+                    if let anchor = elements.frame(of: .windowAppName) {
+                        DSMenuPanel.present(router: router, registry: registry, name: "appMenu", anchor: anchor, entries: AppMenuEntries.entries)
+                    }
+                default: break
+                }
+                try? await Task.sleep(for: .seconds(0.8))
+            }
+        }
+    }
+
 
     /// Sobe o servidor `ctl` se a automação estiver ligada. Chamado uma vez, no primeiro `.task` da janela.
     public func start() async {

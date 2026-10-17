@@ -70,43 +70,15 @@ public struct DSAgentIndicator: View {
     }
 }
 
-/// `AgentLogo` (02 §12.6). Os PDFs oficiais ainda não estão no repositório: símbolos do sistema no lugar.
-/// Claude mantém `#D97757`; os demais são template.
-public struct DSAgentLogo: View {
-    private let provider: TerminalProvider
-    private let size: CGFloat
-    private let dimmed: Bool
-
+extension DSAgentLogo {
+    /// Conveniência para o domínio (sidebar): mapeia `TerminalProvider` para `DSAgentKind`.
     public init(_ provider: TerminalProvider, size: CGFloat = 13, dimmed: Bool = false) {
-        self.provider = provider
-        self.size = size
-        self.dimmed = dimmed
-    }
-
-    private var symbol: String {
-        switch provider {
-        case .claude: "asterisk"
-        case .codex: "chevron.left.forwardslash.chevron.right"
-        case .opencode: "curlybraces"
-        case .shell: "terminal"
-        case .custom: "gearshape"
+        let kind: DSAgentKind = switch provider {
+        case .claude: .claude
+        case .codex: .codex
+        case .opencode: .opencode
+        case .shell, .custom: .shell
         }
-    }
-
-    private var tint: DSRGBA {
-        switch provider {
-        case .claude: DSRGBA(hex: 0xD97757)
-        case .shell, .custom: DS.ColorSpec.textSecondary
-        case .codex, .opencode: DS.ColorSpec.textPrimary
-        }
-    }
-
-    public var body: some View {
-        Image(systemName: symbol)
-            .font(.system(size: size - 1, weight: provider == .claude ? .bold : .regular))
-            .foregroundStyle(tint.color)
-            .opacity(dimmed ? 0.7 : 1)
-            .frame(width: size, height: size)
-            .accessibilityHidden(true)
+        self.init(kind, size: size, dimmed: dimmed)
     }
 }

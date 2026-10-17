@@ -49,6 +49,8 @@ public enum DSMetrics {
     public static let segmentPaddingH: CGFloat = 10
     public static let switchTrack = CGSize(width: 36, height: 20)
     public static let switchThumb: CGFloat = 14
+    public static let switchTrackCompact = CGSize(width: 24, height: 14)
+    public static let switchThumbCompact: CGFloat = 10
     public static let checkboxSize: CGFloat = 14
     public static let badgeHeight: CGFloat = 16
     public static let keycapHeight: CGFloat = 16
@@ -62,4 +64,26 @@ public enum DSMetrics {
     public static let emptyStateMaxWidth: CGFloat = 320
     public static let confirmationTile: CGFloat = 40
     public static let confirmationIcon: CGFloat = 20
+    /// Campo compacto do composer (protótipo M-101: 32 pt).
+    public static let fieldHeightComposer: CGFloat = 32
+    public static let segmentedHeightComposer: CGFloat = 32
+    public static let promptMaxHeight: CGFloat = 240
+    // Menu e combobox (02 §12.11, §12.15).
+    public static let menuPadding: CGFloat = 4
+    public static let menuItemHeight: CGFloat = 24
+    public static let menuItemPaddingH: CGFloat = 8
+    public static let menuItemIcon: CGFloat = 14
+    public static let menuSeparatorHeight: CGFloat = 7
+    public static let menuSearchHeight: CGFloat = 32
+    public static let menuMaxHeight: CGFloat = 320
+    public static let menuSearchThreshold = 7
+    public static let menuSubmenuGap: CGFloat = 2
+    public static let popoverGap: CGFloat = 4
+    public static let comboboxChevron: CGFloat = 11
+    // Tooltip (02 §12.14).
+    public static let tooltipArrow: CGFloat = 10
+    public static let tooltipGap: CGFloat = 6
+    public static let tooltipPaddingH: CGFloat = 12
+    public static let tooltipPaddingV: CGFloat = 6
+    public static let keyHintSize: CGFloat = 9
 }

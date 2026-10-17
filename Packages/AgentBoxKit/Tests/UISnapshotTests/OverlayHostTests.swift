@@ -58,7 +58,8 @@ import Testing
         r.env.overlays.dismiss(.action)
         #expect(r.env.overlays.stack.count == 1, "a saída ainda está animando")
         #expect(r.window.firstResponder === r.terminal, "04 princípio 8: foco devolvido no quadro 0 da saída")
-        try? await Task.sleep(for: .milliseconds(400))
+        // A remoção roda em Task: sob carga (suítes em paralelo) pode passar de 400 ms.
+        for _ in 0..<150 where !r.env.overlays.stack.isEmpty { try? await Task.sleep(for: .milliseconds(20)) }
         #expect(r.env.overlays.stack.isEmpty)
     }
 

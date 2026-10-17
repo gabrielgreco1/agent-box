@@ -15,7 +15,7 @@ import Testing
     /// Ambiente com as ações usadas pelos controles registradas (sem efeito), para o `ActionButton` renderizar habilitado.
     static func env() -> AppEnvironment {
         let env = AppEnvironment(environment: [:])
-        for id in [ActionID.composerSetWhere, .composerCreateMore, .composerCancel, .composerSubmit, .composerSetPrompt, .dialogCloseTerminalConfirm, .dialogCloseTerminalCancel, .dialogCloseTerminalDontAsk, .appCheckProblems, .sessionNew] {
+        for id in [ActionID.composerSetProject, .composerSetAgent, .composerSetProfile, .composerSetWhere, .composerCreateMore, .composerCancel, .composerSubmit, .composerSetPrompt, .dialogCloseTerminalConfirm, .dialogCloseTerminalCancel, .dialogCloseTerminalDontAsk, .appCheckProblems, .sessionNew] {
             try? env.registry.register(id) { _ in nil }
         }
         return env
