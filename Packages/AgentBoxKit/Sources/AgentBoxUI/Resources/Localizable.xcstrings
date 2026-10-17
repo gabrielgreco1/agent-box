@@ -12,6 +12,28 @@
         }
       }
     },
+    "About Agent Box": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About Agent Box"
+          }
+        }
+      }
+    },
+    "Add a New Project…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a New Project…"
+          }
+        }
+      }
+    },
     "Advanced": {
       "extractionState": "manual",
       "localizations": {
@@ -56,6 +78,17 @@
         }
       }
     },
+    "Blank Terminal": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blank Terminal"
+          }
+        }
+      }
+    },
     "Branch name, #123 or a PR / issue URL": {
       "extractionState": "manual",
       "localizations": {
@@ -74,6 +107,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cancel"
+          }
+        }
+      }
+    },
+    "Check for Problems": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check for Problems"
           }
         }
       }
@@ -177,6 +221,17 @@
         }
       }
     },
+    "Edit Profiles…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit Profiles…"
+          }
+        }
+      }
+    },
     "Existing Worktree": {
       "extractionState": "manual",
       "localizations": {
@@ -210,6 +265,17 @@
         }
       }
     },
+    "Manage Agents…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Manage Agents…"
+          }
+        }
+      }
+    },
     "New Session": {
       "extractionState": "manual",
       "localizations": {
@@ -228,6 +294,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "New Worktree"
+          }
+        }
+      }
+    },
+    "No Project (Clean Session)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Project (Clean Session)"
+          }
+        }
+      }
+    },
+    "Not available yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not available yet"
+          }
+        }
+      }
+    },
+    "Not installed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not installed"
           }
         }
       }
@@ -276,6 +375,39 @@
         }
       }
     },
+    "Search agents…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search agents…"
+          }
+        }
+      }
+    },
+    "Search profiles…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search profiles…"
+          }
+        }
+      }
+    },
+    "Search projects…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search projects…"
+          }
+        }
+      }
+    },
     "Session archived.": {
       "extractionState": "manual",
       "localizations": {
@@ -283,6 +415,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Session archived."
+          }
+        }
+      }
+    },
+    "Settings…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings…"
           }
         }
       }

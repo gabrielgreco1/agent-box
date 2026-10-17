@@ -1,3 +1,4 @@
+import AgentBoxDesignSystem
 import AgentBoxProtocol
 import SwiftUI
 
@@ -34,7 +35,9 @@ public struct ActionButton<Label: View>: View {
                 label
             }
             .disabled(!availability.isEnabled)
-            .help(Self.tooltip(availability, fallback: tooltip))
+            .dsTooltip(
+                Self.tooltip(availability, fallback: tooltip),
+                shortcut: availability.isEnabled && tooltip != nil ? action.spec.shortcut : nil)
             if let a11yID {
                 button.a11y(a11yID, kind: "button", label: action.spec.label, action: action)
             } else {

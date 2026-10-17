@@ -46,18 +46,22 @@ public extension View {
 /// Segmento do controle segmentado (02 §12.12): 12/500, raio 6, ativo `accent` + `textPrimary`, hover `fg/6`.
 public struct DSSegmentStyle: ButtonStyle {
     public let active: Bool
+    public let fillWidth: Bool
     @Environment(\.isEnabled) private var isEnabled
     @Environment(\.isFocused) private var isFocused
     @State private var hovering = false
 
-    public init(active: Bool) { self.active = active }
+    public init(active: Bool, fillWidth: Bool = false) {
+        self.active = active
+        self.fillWidth = fillWidth
+    }
 
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .dsFont(DS.Font.label)
             .foregroundStyle(active ? DS.Color.textPrimary : DS.Color.textSecondary)
             .padding(.horizontal, DSMetrics.segmentPaddingH)
-            .frame(maxHeight: .infinity)
+            .frame(maxWidth: fillWidth ? .infinity : nil, maxHeight: .infinity)
             .background(
                 RoundedRectangle(cornerRadius: DS.Radius.sm)
                     .fill(hovering && !active && isEnabled ? DS.Color.fg6 : Color.clear)
@@ -73,29 +77,34 @@ public struct DSSegmentStyle: ButtonStyle {
 public struct DSSwitchVisual: View {
     private let isOn: Bool
     private let forcedFocus: Bool?
+    private let compact: Bool
     @Environment(\.isFocused) private var isFocused
     @Environment(\.isEnabled) private var isEnabled
 
-    public init(isOn: Bool, focused: Bool? = nil) {
+    /// `compact`: trilho 24×14, botão 10 (02 §12.13), o do composer.
+    public init(isOn: Bool, focused: Bool? = nil, compact: Bool = false) {
         self.isOn = isOn
         self.forcedFocus = focused
+        self.compact = compact
     }
 
     private var focused: Bool { forcedFocus ?? (isFocused && isEnabled) }
 
-    private var travel: CGFloat { DSMetrics.switchTrack.width - DSMetrics.switchThumb - (DSMetrics.switchTrack.height - DSMetrics.switchThumb) }
+    private var track: CGSize { compact ? DSMetrics.switchTrackCompact : DSMetrics.switchTrack }
+    private var thumb: CGFloat { compact ? DSMetrics.switchThumbCompact : DSMetrics.switchThumb }
+    private var travel: CGFloat { track.width - thumb - (track.height - thumb) }
 
     public var body: some View {
-        let inset = (DSMetrics.switchTrack.height - DSMetrics.switchThumb) / 2
+        let inset = (track.height - thumb) / 2
         ZStack(alignment: .leading) {
-            Capsule().fill(isOn ? DS.Color.textPrimary : DS.ColorSpec.textSecondary.scaled(0.3).color)
+            Capsule().fill(isOn ? DS.Color.textPrimary : (compact ? DS.Color.accent : DS.ColorSpec.textSecondary.scaled(0.3).color))
             Circle()
-                .fill(DS.Color.canvas)
-                .frame(width: DSMetrics.switchThumb, height: DSMetrics.switchThumb)
+                .fill(compact && !isOn ? DS.Color.textSecondary : DS.Color.canvas)
+                .frame(width: thumb, height: thumb)
                 .shadow(color: .black.opacity(0.25), radius: DSMetrics.hairline, y: DSMetrics.hairline)
                 .offset(x: inset + (isOn ? travel : 0))
         }
-        .frame(width: DSMetrics.switchTrack.width, height: DSMetrics.switchTrack.height)
+        .frame(width: track.width, height: track.height)
         .dsFocusRing(focused, radius: DS.Radius.full)
         .animation(MotionPolicy.shared.animation(MotionTokens.Springs.snappy), value: isOn)
     }

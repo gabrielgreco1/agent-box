@@ -37,6 +37,8 @@ public final class WindowAutomation: AutomationSurface {
 
     public func screenshot(_ target: ScreenshotTarget) async throws -> ScreenshotResult {
         guard let window = store.window else { throw CtlError(code: "screenshot_failed", message: "the app has no window yet") }
+        // Janela aberta em segundo plano pode estar minimizada no Dock: traz de volta sem ativar o app.
+        if window.isMiniaturized { window.deminiaturize(nil) }
         if case .window(let size?) = target {
             window.setContentSize(NSSize(width: size.width, height: size.height))
             window.contentView?.layoutSubtreeIfNeeded()
