@@ -1,0 +1,196 @@
+{
+  "claude" : {
+    "daily_week_cost_usd" : [
+      521.19000000000005,
+      3.8999999999999999,
+      136.59,
+      114.48999999999999,
+      77.010000000000005,
+      437.87,
+      565.22000000000003
+    ],
+    "daily_week_fresh_tokens" : [
+      15671643,
+      232619,
+      6482458,
+      4205659,
+      4073354,
+      22351104,
+      27222968
+    ],
+    "five_hour" : {
+      "cost_usd" : 71.459999999999994,
+      "exceeds_peak" : false,
+      "fresh_tokens" : 3855829,
+      "has_reset" : true,
+      "messages" : 597,
+      "source" : "estimated",
+      "used_fraction" : 0.17899999999999999
+    },
+    "has_data" : true,
+    "hour_of_day_active_hours" : 24,
+    "hour_of_day_peak_hour" : 10,
+    "logged_in" : true,
+    "plan" : "team",
+    "seven_day" : {
+      "cost_usd" : 1969.6800000000001,
+      "exceeds_peak" : true,
+      "fresh_tokens" : 82834924,
+      "has_reset" : false,
+      "messages" : 13902,
+      "source" : "estimated",
+      "used_fraction" : 1
+    },
+    "today" : {
+      "cache_read" : 1274947697,
+      "cache_write" : 21355661,
+      "fresh" : 27222968,
+      "input" : 10080,
+      "output" : 5857227,
+      "total" : 1302170665
+    },
+    "today_cost_usd" : 565.22000000000003,
+    "top_models" : [
+      {
+        "cost_usd" : 1352.1199999999999,
+        "model" : "claude-opus-5-5",
+        "share" : 0.67000000000000004
+      },
+      {
+        "cost_usd" : 497.81999999999999,
+        "model" : "claude-sonnet-5-5",
+        "share" : 0.307
+      },
+      {
+        "cost_usd" : 5.9100000000000001,
+        "model" : "claude-haiku-5-5",
+        "share" : 0.021999999999999999
+      },
+      {
+        "cost_usd" : 0.41999999999999998,
+        "model" : "claude-opus-4-8",
+        "share" : 0
+      }
+    ],
+    "top_session_shares_of_week_cost" : [
+      0.45000000000000001,
+      0.41099999999999998,
+      0.067000000000000004,
+      0.019,
+      0.017000000000000001,
+      0.01
+    ],
+    "top_sessions_count" : 6,
+    "unpriced_models" : [
+      "claude-fable-5-1"
+    ],
+    "week" : {
+      "cache_read" : 2877633178,
+      "cache_write" : 67237485,
+      "fresh" : 80239805,
+      "input" : 26876,
+      "output" : 12975444,
+      "total" : 2957872983
+    },
+    "week_cost_usd" : 1856.27
+  },
+  "codex" : {
+    "daily_week_cost_usd" : [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "daily_week_fresh_tokens" : [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "five_hour" : {
+      "cost_usd" : 0,
+      "exceeds_peak" : false,
+      "fresh_tokens" : 0,
+      "has_reset" : false,
+      "messages" : 0,
+      "source" : "estimated",
+      "used_fraction" : 0
+    },
+    "has_data" : true,
+    "hour_of_day_active_hours" : 3,
+    "hour_of_day_peak_hour" : 12,
+    "logged_in" : false,
+    "plan" : "prolite",
+    "seven_day" : {
+      "cost_usd" : 0,
+      "exceeds_peak" : false,
+      "fresh_tokens" : 0,
+      "has_reset" : false,
+      "messages" : 0,
+      "source" : "estimated",
+      "used_fraction" : 0
+    },
+    "today" : {
+      "cache_read" : 0,
+      "cache_write" : 0,
+      "fresh" : 0,
+      "input" : 0,
+      "output" : 0,
+      "total" : 0
+    },
+    "today_cost_usd" : 0,
+    "top_models" : [
+
+    ],
+    "top_session_shares_of_week_cost" : [
+
+    ],
+    "top_sessions_count" : 0,
+    "unpriced_models" : [
+      "gpt-6-astra",
+      "gpt-6-sol",
+      "gpt-6.1-sol"
+    ],
+    "week" : {
+      "cache_read" : 0,
+      "cache_write" : 0,
+      "fresh" : 0,
+      "input" : 0,
+      "output" : 0,
+      "total" : 0
+    },
+    "week_cost_usd" : 0
+  },
+  "generated_by" : "InsightsRealAggregatesTests",
+  "ledger_file_bytes" : 1221317,
+  "machine" : {
+    "cores" : 14,
+    "cpu_total" : 0.80500000000000005,
+    "disk_used_fraction" : 0.94999999999999996,
+    "memory_pressure" : "normal",
+    "memory_total_gb" : 48,
+    "memory_used_fraction" : 0.71399999999999997,
+    "network_totals_gb" : [
+      2.4860508160000001,
+      2.1660129279999998
+    ],
+    "swap_used_mb" : 6077,
+    "thermal" : "fair",
+    "top_cpu_apps_count" : 6,
+    "top_memory_apps_count" : 6
+  },
+  "note" : "Somente agregados numéricos; sem prompts, transcripts, rótulos de sessão, e-mails ou caminhos.",
+  "scan" : {
+    "files_read" : 611,
+    "files_seen" : 1116,
+    "first_scan_seconds" : 6.0800000000000001,
+    "incremental_files_read" : 1,
+    "messages_counted" : 35198
+  }
+}
