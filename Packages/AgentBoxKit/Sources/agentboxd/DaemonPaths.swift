@@ -1,0 +1,36 @@
+import Foundation
+
+/// Caminhos do daemon (08 §0.1). `AGENTBOX_HOME` isola testes; sem ele, `~/Library/Application Support/AgentBox`.
+struct DaemonPaths: Sendable {
+    var home: URL
+    var socketPath: String
+    var sessionsDirectory: URL
+
+    init(home: URL, socketPath: String? = nil) {
+        self.home = home
+        self.socketPath = socketPath ?? home.appendingPathComponent("run/ptyd-v1.sock").path
+        sessionsDirectory = home.appendingPathComponent("sessions", isDirectory: true)
+    }
+
+    static func resolve(environment: [String: String], socketOverride: String?, homeOverride: String?) -> DaemonPaths {
+        let home: URL
+        if let homeOverride {
+            home = URL(fileURLWithPath: homeOverride, isDirectory: true)
+        } else if let value = environment["AGENTBOX_HOME"], !value.isEmpty {
+            home = URL(fileURLWithPath: value, isDirectory: true)
+        } else {
+            home = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/AgentBox", isDirectory: true)
+        }
+        return DaemonPaths(home: home, socketPath: socketOverride)
+    }
+
+    /// Cria `AB`, `AB/run` e `AB/sessions` com `0700`.
+    func prepare() throws {
+        let manager = FileManager.default
+        let socketDirectory = URL(fileURLWithPath: socketPath).deletingLastPathComponent()
+        for directory in [home, socketDirectory, sessionsDirectory] {
+            try manager.createDirectory(at: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+            try manager.setAttributes([.posixPermissions: 0o700], ofItemAtPath: directory.path)
+        }
+    }
+}

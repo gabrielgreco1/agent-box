@@ -1,0 +1,221 @@
+import AgentBoxCore
+import AgentBoxProtocol
+import Darwin
+import Foundation
+import SwiftTerm
+
+@testable import AgentBoxPlatform
+
+/// Localiza o `agentboxd` construído ao lado do bundle de testes.
+func agentboxdBinary() -> URL {
+    for bundle in Bundle.allBundles where bundle.bundleURL.pathExtension == "xctest" {
+        return bundle.bundleURL.deletingLastPathComponent().appendingPathComponent("agentboxd")
+    }
+    return URL(fileURLWithPath: ".build/debug/agentboxd")
+}
+
+/// `agentboxd` real como processo filho, com `AGENTBOX_HOME` isolado em `/tmp` (sun_path limita a 104 bytes).
+final class DaemonHarness: @unchecked Sendable {  // SAFETY: `process` só muda em start/stop, chamados em sequência pelo teste.
+    let home: URL
+    let socketPath: String
+    private var process: Process?
+
+    init() throws {
+        home = URL(fileURLWithPath: "/tmp/abd-\(UInt32.random(in: 0 ... 0xFFFFFF))", isDirectory: true)
+        try FileManager.default.createDirectory(at: home, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
+        socketPath = home.appendingPathComponent("run/ptyd-v1.sock").path
+    }
+
+    var sessionsDirectory: URL { home.appendingPathComponent("sessions") }
+
+    func start(idleExit: Int = 0) async throws {
+        let process = Process()
+        process.executableURL = agentboxdBinary()
+        process.arguments = ["--idle-exit", "\(idleExit)"]
+        var environment = ProcessInfo.processInfo.environment
+        environment["AGENTBOX_HOME"] = home.path
+        process.environment = environment
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        try process.run()
+        self.process = process
+        for _ in 0 ..< 100 {
+            if let connection = try? await UDSClient.connect(path: socketPath) {
+                connection.close()
+                return
+            }
+            try await Task.sleep(for: .milliseconds(50))
+        }
+        throw HarnessError.daemonDidNotStart
+    }
+
+    var pid: Int32? { process?.processIdentifier }
+
+    /// Mata o daemon (SIGKILL: simula crash) e espera o término.
+    func kill() async {
+        guard let process else { return }
+        Darwin.kill(process.processIdentifier, SIGKILL)
+        await waitForExit()
+        self.process = nil
+    }
+
+    func waitForExit(timeout: Duration = .seconds(5)) async {
+        guard let process else { return }
+        let deadline = ContinuousClock.now + timeout
+        while process.isRunning, ContinuousClock.now < deadline { try? await Task.sleep(for: .milliseconds(50)) }
+    }
+
+    var isRunning: Bool { process?.isRunning ?? false }
+
+    func stop() async {
+        if let process, process.isRunning { process.terminate() }
+        await waitForExit()
+        process = nil
+        try? FileManager.default.removeItem(at: home)
+    }
+
+    func makeClient(build: String = "test") -> PTYClient {
+        PTYClient(configuration: PTYClientConfiguration(socketPath: socketPath, build: build))
+    }
+}
+
+enum HarnessError: Error { case daemonDidNotStart, timeout(String) }
+
+func makeCreate(
+    _ argv: [String], cols: UInt16 = 100, rows: UInt16 = 30, ringBytes: Int = 4 << 20, coldLog: Bool = false,
+    env: [String: String] = [:], cwd: String = "/tmp"
+) -> CreateRequest {
+    var environment = ["PATH": "/usr/bin:/bin:/usr/sbin:/sbin", "LANG": "en_US.UTF-8", "HOME": NSHomeDirectory()]
+    environment.merge(env) { $1 }
+    return CreateRequest(
+        sessionID: SessionID(), argv: argv, cwd: cwd, env: environment, cols: cols, rows: rows, ringBytes: ringBytes, coldLog: coldLog,
+        owner: SessionOwner(terminalID: "term-1", runID: "run-1"))
+}
+
+/// Emulador do lado do cliente (o que a UI faria): aplica o `snapshot` (preâmbulo + replay) e o stream ao vivo.
+/// Não responde a consultas (quem responde é o daemon, AR-105).
+actor Replica {
+    private final class Delegate: TerminalDelegate {
+        func send(source: SwiftTerm.Terminal, data: ArraySlice<UInt8>) {}
+    }
+
+    private let delegate = Delegate()
+    private var terminal: SwiftTerm.Terminal
+    private let cols: Int
+    private let rows: Int
+    private var lastUpdate = ContinuousClock.now
+    private(set) var snapshots = 0
+    private(set) var events: [EventPayload] = []
+    private(set) var bytes = 0
+    private(set) var disconnects = 0
+    private(set) var resumedSnapshots = 0
+    private var task: Task<Void, Never>?
+    private(set) var replayScreen: String?
+    private(set) var replayDescription = ""
+    private var replayExpected: UInt64 = 0
+    private var replayReceived: UInt64 = 0
+
+    init(cols: Int, rows: Int) {
+        self.cols = cols
+        self.rows = rows
+        terminal = SwiftTerm.Terminal(delegate: delegate, options: TerminalOptions(cols: cols, rows: rows, scrollback: 5000))
+    }
+
+    func run(_ attachment: PTYAttachment) {
+        let stream = attachment.updates
+        task = Task { [weak self] in
+            for await update in stream { await self?.apply(update) }
+        }
+    }
+
+    func stop() { task?.cancel() }
+
+    private func apply(_ update: PTYUpdate) {
+        lastUpdate = .now
+        switch update {
+        case .snapshot(let snapshot):
+            snapshots += 1
+            if snapshot.resumed {
+                resumedSnapshots += 1
+            } else {
+                terminal = SwiftTerm.Terminal(delegate: delegate, options: TerminalOptions(cols: cols, rows: rows, scrollback: 5000))
+                terminal.feed(buffer: [UInt8](snapshot.modesPreamble)[...])
+            }
+            let preamble = [UInt8](snapshot.modesPreamble)
+            let kind = preamble == [0x1b, 0x63] ? "ring-start" : (preamble.starts(with: [0x1b, 0x63]) ? "checkpoint" : "cut")
+            replayDescription = "\(kind) \(snapshot.startSeq)..\(snapshot.endSeq)"
+            replayExpected = snapshot.endSeq - snapshot.startSeq
+            replayReceived = 0
+            replayScreen = nil
+            if replayExpected == 0 { replayScreen = screen() }
+        case .output(let frame):
+            bytes += frame.bytes.count
+            terminal.feed(buffer: [UInt8](frame.bytes)[...])
+            if replayScreen == nil {
+                replayReceived += UInt64(frame.bytes.count)
+                if replayReceived >= replayExpected { replayScreen = screen() }
+            }
+        case .event(let event):
+            events.append(event)
+        case .disconnected:
+            disconnects += 1
+        }
+    }
+
+    /// Espera `quiet` sem nenhuma atualização (o redraw e o replay assentaram).
+    func waitQuiet(_ quiet: Duration = .milliseconds(400), timeout: Duration = .seconds(15)) async {
+        let deadline = ContinuousClock.now + timeout
+        while ContinuousClock.now < deadline {
+            if ContinuousClock.now - lastUpdate >= quiet { return }
+            try? await Task.sleep(for: .milliseconds(50))
+        }
+    }
+
+    /// Tela visível (sem espaços à direita) mais os modos públicos, cursor e tamanho (formato do S-04).
+    func screen() -> String {
+        let dims = terminal.getDims()
+        var lines: [String] = []
+        for row in 0 ..< dims.rows { lines.append(terminal.getLine(row: row)?.translateToString(trimRight: true) ?? "") }
+        while let last = lines.last, last.isEmpty { lines.removeLast() }
+        let cursor = terminal.getCursorLocation()
+        return lines.joined(separator: "\n")
+            + "\n--modes alt=\(terminal.isCurrentBufferAlternate) bp=\(terminal.bracketedPasteMode) appCursor=\(terminal.applicationCursor) mouse=\(terminal.mouseMode) cursor=\(cursor.x),\(cursor.y) size=\(dims.cols)x\(dims.rows)"
+    }
+
+    /// Mesmo formato de `HeadlessEmulatorHost.textSnapshot` (scrollback + tela).
+    func bufferText(lines: Int) -> String {
+        var rows = String(decoding: terminal.getBufferAsData(kind: .active), as: UTF8.self).split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        while let last = rows.last, last.isEmpty { rows.removeLast() }
+        return rows.suffix(lines).joined(separator: "\n")
+    }
+}
+
+/// Espera uma condição assíncrona (poll curto, sem bloquear o pool).
+func eventually(_ what: String = "condition", timeout: Duration = .seconds(10), _ condition: () async -> Bool) async throws {
+    let deadline = ContinuousClock.now + timeout
+    while ContinuousClock.now < deadline {
+        if await condition() { return }
+        try await Task.sleep(for: .milliseconds(25))
+    }
+    throw HarnessError.timeout(what)
+}
+
+func data(_ text: String) -> Data { Data(text.utf8) }
+
+func processIsAlive(_ pid: Int32) -> Bool { Darwin.kill(pid, 0) == 0 }
+
+/// Coleta o texto que chega no stream de um pane (para procurar marcadores).
+actor Collector {
+    private(set) var text = ""
+    private var task: Task<Void, Never>?
+    func run(_ attachment: PTYAttachment) {
+        let stream = attachment.updates
+        task = Task { [weak self] in
+            for await update in stream {
+                if case .output(let frame) = update { await self?.append(frame.bytes) }
+            }
+        }
+    }
+    private func append(_ bytes: Data) { text += String(decoding: bytes, as: UTF8.self) }
+    func stop() { task?.cancel() }
+}

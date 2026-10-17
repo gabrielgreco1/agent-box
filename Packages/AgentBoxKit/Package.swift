@@ -73,9 +73,9 @@ let package = Package(
         tests("StoreTests", ["AgentBoxStore", "AgentBoxProtocol", "AgentBoxPlatform", grdb]),
         tests("CoreTests", ["AgentBoxCore", "AgentBoxPlatform", "AgentBoxProtocol"]),
         tests("DockerTests", ["AgentBoxDocker"]),
-        tests("TerminalCoreTests", ["AgentBoxTerminalCore"]),
+        tests("TerminalCoreTests", ["AgentBoxTerminalCore", swiftTerm]),
         tests("DesignSystemTests", ["AgentBoxDesignSystem"]),
-        tests("DaemonTests", ["AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxTerminalCore"]),
+        tests("DaemonTests", ["AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxTerminalCore", "AgentBoxCore", "agentboxd", swiftTerm]),
         .testTarget(
             name: "UISnapshotTests",
             dependencies: ["AgentBoxUI", "AgentBoxDesignSystem", snapshotTesting],
