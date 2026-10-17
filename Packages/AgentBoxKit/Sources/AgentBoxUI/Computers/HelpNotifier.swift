@@ -7,6 +7,12 @@ import UserNotifications
 @MainActor
 public protocol HelpNotifying: AnyObject {
     func notify(item: InboxItem, content: HelpNotificationContent)
+    /// Pedido de computador do modo Ask (F12): `<sessão> — Claude wants a computer` com Allow e Deny na notificação.
+    func notify(approval: ComputerApprovalRequest)
+}
+
+extension HelpNotifying {
+    public func notify(approval: ComputerApprovalRequest) {}
 }
 
 @MainActor
@@ -28,6 +34,11 @@ public final class RecordingHelpNotifier: HelpNotifying {
 public final class SystemHelpNotifier: NSObject, HelpNotifying, UNUserNotificationCenterDelegate {
     nonisolated public static let category = "agentbox.computer.help"
     nonisolated public static let takeOverAction = "agentbox.computer.takeOver"
+    nonisolated public static let approvalCategory = "agentbox.computer.approval"
+    nonisolated public static let allowAction = "agentbox.computer.allow"
+    nonisolated public static let denyAction = "agentbox.computer.deny"
+    /// Decisão tomada na própria notificação (Allow / Deny).
+    public var decide: @MainActor (String, ComputerApprovalDecision) -> Void = { _, _ in }
     private let open: @MainActor (String, Bool) -> Void
     private var authorized: Bool?
 
@@ -42,7 +53,14 @@ public final class SystemHelpNotifier: NSObject, HelpNotifying, UNUserNotificati
             UNNotificationCategory(
                 identifier: Self.category,
                 actions: [UNNotificationAction(identifier: Self.takeOverAction, title: "Take Over", options: [.foreground])],
-                intentIdentifiers: [])
+                intentIdentifiers: []),
+            UNNotificationCategory(
+                identifier: Self.approvalCategory,
+                actions: [
+                    UNNotificationAction(identifier: Self.allowAction, title: "Allow", options: []),
+                    UNNotificationAction(identifier: Self.denyAction, title: "Deny", options: [.destructive]),
+                ],
+                intentIdentifiers: []),
         ])
     }
 
@@ -63,10 +81,39 @@ public final class SystemHelpNotifier: NSObject, HelpNotifying, UNUserNotificati
         }
     }
 
+    public func notify(approval: ComputerApprovalRequest) {
+        let center = UNUserNotificationCenter.current()
+        let payload = UNMutableNotificationContent()
+        payload.title = "\(approval.sessionTitle) — \(approval.kind == .spawn ? "give this subagent a computer?" : "Claude wants a computer")"
+        payload.body = approval.kind == .spawn ? (approval.subject ?? "") : "\(approval.computerName) · \(approval.displayLabel) · \(approval.proxyLabel)"
+        payload.sound = .default
+        payload.threadIdentifier = approval.sessionTitle
+        payload.categoryIdentifier = Self.approvalCategory
+        payload.userInfo = ["approval": approval.id]
+        let request = UNNotificationRequest(identifier: "approval-\(approval.id)", content: payload, trigger: nil)
+        Task {
+            if self.authorized == nil { self.authorized = (try? await center.requestAuthorization(options: [.alert, .sound, .badge])) ?? false }
+            guard self.authorized == true else { return }
+            try? await center.add(request)
+        }
+    }
+
     public nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping @Sendable () -> Void
     ) {
         let info = response.notification.request.content.userInfo
+        if let approval = info["approval"] as? String {
+            let decision: ComputerApprovalDecision? = switch response.actionIdentifier {
+            case Self.allowAction: .allow
+            case Self.denyAction: .deny
+            default: nil
+            }
+            Task { @MainActor in
+                if let decision { self.decide(approval, decision) } else { NSApp.activate() }
+                completionHandler()
+            }
+            return
+        }
         let computer = info["computer"] as? String
         let takeOver = response.actionIdentifier == Self.takeOverAction
         Task { @MainActor in

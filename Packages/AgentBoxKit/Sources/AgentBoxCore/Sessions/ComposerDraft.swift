@@ -84,6 +84,8 @@ public struct ComposerDraft: Sendable, Equatable {
     /// Nome automático (`quiet-harbor`), fixo enquanto o composer está aberto.
     public var automaticName: String
     public var createMore = false
+    /// "Subagent computers" da sessão nova (F12): começa no padrão de Settings › Computers.
+    public var subagentComputers = SubagentComputersMode.off
 
     public init(projectID: UUID? = nil, whereChoice: ComposerWhere? = nil, automaticName: String = SessionNaming.automaticName()) {
         self.projectID = projectID
@@ -284,7 +286,8 @@ public struct ComposerDraft: Sendable, Equatable {
             target = .cleanFolder(path: folder, managed: false)
         }
         return SessionCreationRequest(
-            sessionID: ids.session, tabID: ids.tab, terminalID: ids.terminal, title: sessionTitle, target: target, spec: spec())
+            sessionID: ids.session, tabID: ids.tab, terminalID: ids.terminal, title: sessionTitle, target: target, spec: spec(),
+            subagentComputers: provider == .claude ? subagentComputers : .off)
     }
 
     /// `Reuse it` (03 §6.3): o branch digitado em Advanced passa a ser o de "Create from", reaproveitado.

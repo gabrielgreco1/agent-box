@@ -265,7 +265,11 @@ struct SessionCardView: View {
             } else if data.groupedTerminals > 0, !data.agentsCollapsed, data.agentRows.isEmpty {
                 groupedRow
             }
+            if !data.computers.isEmpty, !data.agentsCollapsed {
+                computerRows
+            }
         }
+        .animation(MotionPolicy.shared.animation(MotionTokens.Springs.snappy), value: data.computers.map(\.id))
         .padding(.vertical, verticalPadding)
         .padding(.horizontal, SidebarMetrics.cardPaddingH)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -346,11 +350,20 @@ struct SessionCardView: View {
                         DSBadge(badge.title, variant: badge.variant)
                     }
                     Spacer(minLength: DS.Space.s1)
+                    if data.offersSubagentToggle, !renaming, let registry, registry.isOffered(.sessionSetSubagentComputers) {
+                        SubagentToggleButton(
+                            sessionID: data.id, mode: data.subagent, id: .sidebarSessionComputers(sid), restartPending: data.restartToApply)
+                            .opacity(data.subagent.isOn || hovering || data.selected ? 1 : 0)
+                            .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: hovering)
+                    }
                     trailing
                 }
                 .frame(height: SidebarMetrics.line1Height)
                 line2
                     .frame(height: SidebarMetrics.line2Height)
+                if data.restartToApply, !renaming, let registry, registry.isOffered(.sessionRestartToApply) {
+                    RestartToApplyPill(sessionID: data.id, id: .sidebarSessionRestartToApply(sid))
+                }
             }
         }
     }
@@ -434,6 +447,23 @@ struct SessionCardView: View {
         .a11y(.sidebarSessionAgents(data.id.uuidString), kind: "container")
     }
 
+    /// Computadores que o Claude desta sessão reservou: uma linha filha cada, com estado, o que fazem e a miniatura no hover (F12).
+    private var computerRows: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(data.computers) { row in
+                ComputerChildRowView(sessionID: data.id, row: row)
+            }
+        }
+        .padding(.leading, agentIndent - SidebarMetrics.agentRowPaddingH)
+        .overlay(alignment: .leading) {
+            Rectangle()
+                .fill(DS.Color.border)
+                .frame(width: SubagentMetrics.connector)
+                .padding(.leading, SubagentMetrics.connectorInset)
+                .padding(.vertical, DS.Space.s1)
+        }
+    }
+
     private var groupedRow: some View {
         Text("+\(data.groupedTerminals) terminals", bundle: .module)
             .dsFont(DS.Font.small)
@@ -453,7 +483,7 @@ struct AgentRowView: View {
 
     var body: some View {
         let sid = row.sessionID.uuidString, tid = row.id.uuidString
-        let content = HStack(spacing: SidebarMetrics.agentRowGap) {
+        let line = HStack(spacing: SidebarMetrics.agentRowGap) {
             DSAgentIndicator(row.glyph, size: .sm)
                 .a11y(.sidebarSessionAgentStatus(sid, tid), kind: "image", label: row.stateLabel)
             DSAgentLogo(row.provider, size: SidebarMetrics.agentLogo)
@@ -467,22 +497,53 @@ struct AgentRowView: View {
             Spacer(minLength: DS.Space.s1)
             Text(verbatim: row.timeText).dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textTertiary.opacity(0.6)).fixedSize()
         }
-        .padding(.horizontal, SidebarMetrics.agentRowPaddingH)
+        .padding(.leading, SidebarMetrics.agentRowPaddingH)
+        .padding(.trailing, row.children.isEmpty ? SidebarMetrics.agentRowPaddingH : .zero)
         .frame(height: SidebarMetrics.agentRowHeight)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: SidebarMetrics.agentRowRadius).fill(hovering ? DS.Color.hoverAgentRow : Color.clear))
-        .overlay { focusRing(model.keyboardFocus == .agent(session: row.sessionID, terminal: row.id)) }
         .contentShape(Rectangle())
-        .onHover { hovering = $0 }
-        .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: hovering)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(Text(verbatim: "\(SidebarProjector.providerName(row.provider)), \(row.lead), \(row.stateLabel)"))
-        if let registry, registry.isOffered(.paneShow) {
-            ActionButton(.paneShow, id: .sidebarSessionAgent(sid, tid), argument: .select(tid)) { content }
-                .buttonStyle(.plain)
-        } else {
-            content.a11y(.sidebarSessionAgent(sid, tid), kind: "row", label: row.lead)
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 0) {
+                if let registry, registry.isOffered(.paneShow) {
+                    ActionButton(.paneShow, id: .sidebarSessionAgent(sid, tid), argument: .select(tid)) { line }
+                        .buttonStyle(.plain)
+                } else {
+                    line.a11y(.sidebarSessionAgent(sid, tid), kind: "row", label: row.lead)
+                }
+                if !row.children.isEmpty {
+                    ActionButton(
+                        .agentToggleChildren, id: .sidebarSessionAgentChildrenToggle(sid, tid), argument: .select(tid),
+                        tooltip: row.childrenCollapsed ? String(localized: "Show Subagents", bundle: .module) : String(localized: "Hide Subagents", bundle: .module)
+                    ) {
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: SidebarMetrics.chevron, weight: .medium))
+                            .foregroundStyle(DS.Color.textSecondary)
+                            .rotationEffect(.degrees(row.childrenCollapsed ? -90 : 0))
+                            .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.fast), value: row.childrenCollapsed)
+                            .frame(width: SubagentMetrics.toggleBox, height: SidebarMetrics.agentRowHeight)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityValue(Text(verbatim: row.childrenCollapsed ? "collapsed" : "expanded"))
+                }
+            }
+            .background(RoundedRectangle(cornerRadius: SidebarMetrics.agentRowRadius).fill(hovering ? DS.Color.hoverAgentRow : Color.clear))
+            .overlay { focusRing(model.keyboardFocus == .agent(session: row.sessionID, terminal: row.id)) }
+            .onHover { hovering = $0 }
+            .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: hovering)
+            if !row.children.isEmpty, !row.childrenCollapsed {
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(row.children) { child in
+                        SubagentRowView(sessionID: row.sessionID, terminalID: row.id, child: child)
+                    }
+                }
+                .padding(.leading, SidebarMetrics.statusColumn)
+                .transition(MotionPolicy.shared.reduceMotion ? .opacity : .opacity.combined(with: .offset(y: -DS.Space.s1)))
+            }
         }
+        .animation(MotionPolicy.shared.animation(MotionTokens.Springs.snappy), value: row.children.map(\.id))
+        .animation(MotionPolicy.shared.animation(MotionTokens.Springs.snappy), value: row.childrenCollapsed)
     }
 }
 

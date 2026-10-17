@@ -247,7 +247,7 @@ struct ComputersRow: View {
             cell(row.snapshot.proxy, ComputersMetrics.colProxy)
             cell(row.lastActivity.formatted(.relative(presentation: .numeric)), ComputersMetrics.colAge)
             if row.needsYou {
-                Text("Needs you", bundle: .module).dsFont(DS.Font.label).foregroundStyle(DS.Color.agentNeedsInputText)
+                Text("Needs You", bundle: .module).dsFont(DS.Font.label).foregroundStyle(DS.Color.agentNeedsInputText)
             }
             Spacer(minLength: 0)
         }

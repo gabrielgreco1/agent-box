@@ -50,6 +50,13 @@ public final class AppEnvironment {
     public let terminalRouter = TerminalActionRouter()
     /// Computadores (T3-05): viewer, página Computers, painel direito, pedido de ajuda e ações `computer.*`.
     public let computers = ComputersController()
+    /// "Subagent computers" por sessão (F12): ícone, menu, `Restart to apply`.
+    private(set) var subagentComputers: SubagentComputersController!
+    /// Hover card do computador de um subagente (pré-visualização ao vivo).
+    private(set) var subagentHoverCards: SubagentHoverCardController!
+    /// O orquestrador nasce depois do Store (as identidades e a árvore são persistidas); o lançamento o encontra por aqui.
+    let orchestratorHolder: OrchestratorHolder
+    var computerSweeper: Task<Void, Never>?
     /// ⌘Q com agentes vivos, modo accessory e barra de menus (T1-24).
     public private(set) var lifecycle: AppLifecycleCoordinator!
     public let automationEnabled: Bool
@@ -68,13 +75,15 @@ public final class AppEnvironment {
     private(set) var composer: ComposerController?
     /// "Open in…" e "Open in Editor" (T1-27).
     private(set) var openIn: OpenInController?
-    private let environmentVariables: [String: String]
+    let environmentVariables: [String: String]
     private let log = LogFacade(.app, category: "ui")
 
     /// `AGENTBOX_AUTOMATION=1` liga o canal `ctl` (o toggle em Settings > Advanced chega com T1-26).
     /// `AGENTBOX_SLICE=<n>` e `AGENTBOX_SCREEN=<tela>` valem só para dev e testes.
     public init(environment: [String: String] = ProcessInfo.processInfo.environment, dockBadge: (@MainActor (String?) -> Void)? = nil) {
         dockBadgeOverride = dockBadge
+        let holder = OrchestratorHolder()
+        orchestratorHolder = holder
         let flags = SliceFlags.fromEnvironment(environment)
         self.flags = flags
         self.automationEnabled = environment["AGENTBOX_AUTOMATION"] == "1"
@@ -122,9 +131,17 @@ public final class AppEnvironment {
                 appSocketPath: socketPath, build: build,
                 backgroundAgent: Self.makeBackgroundAgent(environment: environment, storeRoot: storeRoot),
                 loginEnvironment: { await loginProvider.environment().variables },
-                slice: slice2 ? .slice2 : .slice1, helperPath: slice2 ? Self.helperPath(environment) : nil),
+                slice: slice2 ? .slice2 : .slice1, helperPath: slice2 ? Self.helperPath(environment) : nil,
+                prepareOrchestration: { info in
+                    guard let orchestrator = holder.value else { return nil }
+                    return try? await orchestrator.prepareParent(info)
+                },
+                endOrchestration: { parent in await holder.value?.endParent(parent) }),
             registry: registry, elements: elements)
         workspace = WorkspaceModel(runtime: runtime)
+        subagentComputers = SubagentComputersController(sidebar: sidebar, workspace: workspace, overlays: overlays, elements: elements)
+        workspace.subagent = subagentComputers
+        sidebar.subagent = subagentComputers
         lifecycle = AppLifecycleCoordinator(registry: registry, overlays: overlays)
         registerShellActions()
         wireLifecycle()
@@ -143,17 +160,22 @@ public final class AppEnvironment {
     /// Liga o controlador de computadores: ações `computer.*`, ⌘W fecha a página do viewer e a notificação de pedido de ajuda.
     private func wireComputers() {
         do { try computers.register(in: registry) } catch { log.publicError("duplicate computer action registration") }
+        do { try subagentComputers.register(in: registry) } catch { log.publicError("duplicate subagent computers registration") }
+        subagentHoverCards = SubagentHoverCardController(computers: computers, registry: registry, elements: elements)
+        computers.model.sessionTitle = { [computers, sidebar] name in computers.model.sessionIDs[name].flatMap { sidebar.session($0)?.title } }
         workspace.pageCloser = { [computers] in
             guard computers.page != .workspace else { return false }
             computers.closePage()
             return true
         }
         if !automationEnabled {
-            computers.notifier = SystemHelpNotifier(open: { [computers, registry] name, takeOver in
+            let system = SystemHelpNotifier(open: { [computers, registry] name, takeOver in
                 NSApp.activate()
                 computers.openViewer(name)
                 if takeOver { Task { _ = try? await registry.perform(.computerTakeOver, .select(name)) } }
-            }) ?? NoopHelpNotifier()
+            })
+            system?.decide = { [computers] id, decision in computers.model.decide(id, decision) }
+            computers.notifier = system ?? NoopHelpNotifier()
         }
     }
 
@@ -459,6 +481,8 @@ public final class AppEnvironment {
         do {
             let opened = try await AgentBoxStore.open(paths: .default(environment: environmentVariables))
             store = opened
+            subagentComputers.attach(store: opened)
+            await startOrchestrator(store: opened)
             if fixture == Self.workspaceDemoFixture { try await seedWorkspaceDemo(into: opened) }
             if fixture == SidebarFixtures.screenID {
                 let cast = SidebarFixtures.full()
@@ -548,9 +572,10 @@ public final class AppEnvironment {
         // Fatia 2: `app.sock` é de um hub só (ctl + hook); os hooks chegam mesmo com a automação desligada.
         if let activity, hub == nil {
             let enabled = automationEnabled
-            let providers: [any AppSockServiceProvider] = [
+            var providers: [any AppSockServiceProvider] = [
                 CtlServiceProvider(dispatcher: registry, isEnabled: { enabled }), HookServiceProvider(activity: activity),
             ]
+            if let orchestrator = orchestratorHolder.value { providers.append(orchestrator.mcpProvider) }
             let server = AppSockHub(socketPath: socketPath, providers: providers)
             do {
                 try await server.start()
@@ -585,6 +610,7 @@ public final class AppEnvironment {
         projects.detach()
         computers.stopRefreshing()
         await computers.tearDownDemo()
+        computerSweeper?.cancel()
         await ctl?.stop()
         ctl = nil
         await hub?.stop()

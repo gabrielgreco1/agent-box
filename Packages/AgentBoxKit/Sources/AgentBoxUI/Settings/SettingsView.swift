@@ -41,6 +41,7 @@ struct SettingsView: View {
                 case "general": GeneralSettingsView(model: model)
                 case "terminal": TerminalSettingsView(model: model)
                 case "notifications": NotificationsSettingsView(model: model)
+                case "computers": ComputersSettingsView(model: model)
                 default: EmptyView()
                 }
             }

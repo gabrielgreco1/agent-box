@@ -72,13 +72,15 @@ public final class ActionRegistry: ActionDispatching {
 
     public func availability(of id: ActionID) -> ActionAvailability {
         let slice = id.spec.slice
+        // F13: sem restrição explícita de fatia, o que tem handler vale; o gating fica só para controles sem handler.
+        if !flags.restricted, let reg = registrations[id] { return reg.enablement() }
         guard flags.isEnabled(slice) else { return .unavailable(slice) }
         guard let reg = registrations[id] else { return .unregistered }
         return reg.enablement()
     }
 
     /// `true` se o controle da ação deve ser renderizado nesta fatia (feature flag por fatia).
-    public func isRendered(_ id: ActionID) -> Bool { flags.isEnabled(id.spec.slice) }
+    public func isRendered(_ id: ActionID) -> Bool { flags.restricted ? flags.isEnabled(id.spec.slice) : isRegistered(id) }
 
     // MARK: ActionDispatching
     // Os requisitos do protocolo (Core) são nonisolated e async; cada um salta para o MainActor.

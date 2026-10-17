@@ -19,6 +19,17 @@ extension AppEnvironment {
         let service = ActivityService(store: store, spoolDirectory: HookSpool.directory(forSocketPath: socketPath))
         do { try await service.start() } catch { LogFacade(.app, category: "attention").error("activity service failed to start: \(error)") }
         activity = service
+        // F12: os hooks dos filhos nativos ligam cada slot de worker ao `agent_run` dele (S-08).
+        if let orchestrator = orchestratorHolder.value {
+            let model = computers.model
+            await service.setChildObserver { hook in
+                await orchestrator.scheduler.handleChildHook(
+                    parentRunID: hook.parentRunID, event: hook.event, agentID: hook.agentID, mcpServer: hook.mcpServer)
+                if let name = await orchestrator.scheduler.computerName(forAgent: hook.agentID) {
+                    await MainActor.run { model.agentComputers[hook.agentID] = name }
+                }
+            }
+        }
         await attention.start(activity: service, store: store)
     }
 

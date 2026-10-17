@@ -19,6 +19,9 @@ public actor ComputerHub {
     private var parents: [String: String] = [:]  // filho -> pai que o criou (slot de worker, T3-04)
     private var childOrder: [String: [String]] = [:]  // pai -> filhos por ordem de slot
     private var lifecycle: (any ComputerLifecycle)?
+    /// A UI acompanha a chegada e a saída de computadores (linhas filhas da sidebar, viewer).
+    private var onRegister: (@Sendable (ManagedComputer) -> Void)?
+    private var onRemove: (@Sendable (String) -> Void)?
 
     public init(lifecycle: (any ComputerLifecycle)? = nil) { self.lifecycle = lifecycle }
 
@@ -68,10 +71,19 @@ public actor ComputerHub {
 
     // MARK: Computadores
 
-    public func register(_ computer: ManagedComputer) { computers[computer.name] = computer }
+    public func setObservers(onRegister: (@Sendable (ManagedComputer) -> Void)?, onRemove: (@Sendable (String) -> Void)?) {
+        self.onRegister = onRegister
+        self.onRemove = onRemove
+    }
+
+    public func register(_ computer: ManagedComputer) {
+        computers[computer.name] = computer
+        onRegister?(computer)
+    }
 
     public func remove(name: String) {
         computers[name] = nil
+        onRemove?(name)
         for (child, box) in claims where box == name { claims[child] = nil; released.insert(child) }  // o filho passa a receber `box_released`
     }
 

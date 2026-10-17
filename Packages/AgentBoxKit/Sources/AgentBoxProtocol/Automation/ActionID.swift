@@ -13,16 +13,22 @@ public enum ReleaseSlice: Int, Sendable, Codable, Comparable, CaseIterable {
 
 /// Fatias ligadas no build/ambiente atual.
 public struct SliceFlags: Sendable, Equatable {
-    /// Última fatia entregue (padrão: 1). `AGENTBOX_SLICE=<n>` (somente dev/testes) sobe o valor.
+    /// Última fatia entregue. O app liga por padrão tudo o que as Fatias 1 a 3 já implementam (F13); `AGENTBOX_SLICE=<n>`
+    /// (dev/testes) restringe o app a uma fatia menor.
     public let current: ReleaseSlice
+    /// `true`: a fatia foi escolhida (testes, `AGENTBOX_SLICE`) e o gating vale para todo controle. `false` (padrão do app):
+    /// só controles sem handler registrado ficam de fora (F13).
+    public let restricted: Bool
 
-    public init(current: ReleaseSlice = .slice1) { self.current = current }
+    public static let deliveredSlice = ReleaseSlice.slice3
+
+    public init(current: ReleaseSlice = .slice1, restricted: Bool = true) { self.current = current; self.restricted = restricted }
 
     public static func fromEnvironment(_ env: [String: String]) -> SliceFlags {
         if let raw = env["AGENTBOX_SLICE"], let n = Int(raw), let s = ReleaseSlice(rawValue: n), s <= .slice4 {
-            return SliceFlags(current: s)
+            return SliceFlags(current: s, restricted: true)
         }
-        return SliceFlags()
+        return SliceFlags(current: deliveredSlice, restricted: false)
     }
 
     public func isEnabled(_ slice: ReleaseSlice) -> Bool {

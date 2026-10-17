@@ -88,6 +88,8 @@ public actor ManagedComputer {
     public private(set) var display: ComputerDisplay
     public private(set) var state: BoxState
     public private(set) var queuePosition: Int?
+    /// Texto de progresso do estado atual (`"Building computer image… 3 of 14"`); some quando o estado muda para algo estável.
+    public private(set) var statusDetail: String?
     public private(set) var owner: String?
     public private(set) var lease: Lease = .agent
     public private(set) var controlPhase: ControlPhase = .agent
@@ -132,7 +134,10 @@ public actor ManagedComputer {
     public func setState(_ new: BoxState, position: Int? = nil) {
         state = (new == .ready && owner != nil) ? .inUse : new
         queuePosition = position
+        if new != .provisioning && new != .failed { statusDetail = nil }
     }
+    /// Progresso ou motivo mostrado na linha do computador (imagem sendo construída, Docker parado...).
+    public func setDetail(_ detail: String?) { statusDetail = detail }
     public func setDisplay(_ new: ComputerDisplay) { display = new }
     public func setProxy(_ name: String, country: String?) { proxy = name; self.country = country }
 
@@ -409,7 +414,7 @@ extension ManagedComputer: ViewerComputer {
 
     public func viewerSnapshot() async -> ViewerSnapshot {
         let summary = openHelp.flatMap { helpSummary($0) }
-        return ViewerSnapshot(name: name, state: state, display: display.rawValue, control: controlPhase, proxy: proxy, url: pageURL, lastDoing: lastDoing, help: summary)
+        return ViewerSnapshot(name: name, state: state, display: display.rawValue, control: controlPhase, proxy: proxy, url: pageURL, lastDoing: lastDoing, help: summary, detail: statusDetail, queuePosition: queuePosition)
     }
 
     /// Resumo de um pedido (banner, Inbox, notificação): sem conteúdo de página (CS-433). O host vem da URL do pedido ou da página.

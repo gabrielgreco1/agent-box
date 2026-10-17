@@ -1,4 +1,5 @@
 import AgentBoxDocker
+import AgentBoxProtocol
 import Foundation
 
 /// Resultado de uma ferramenta: JSON (sempre) e, no screenshot, a imagem PNG.
@@ -37,6 +38,8 @@ public actor ComputerToolService {
     public let hub: ComputerHub
     /// Ferramentas do pai (T3-04): reservar, consultar, liberar e mandar mensagem. `nil` = só ferramentas de worker.
     let orchestrator: (any ParentOrchestrating)?
+    /// Consentimento por sessão (F12): Full cria direto, Ask espera o card de aprovação. `nil` = sem porta (testes da T3).
+    let gate: (any ReserveGating)?
     var jobs: [String: JobMeta] = [:]
 
     struct JobMeta {
@@ -47,9 +50,15 @@ public actor ComputerToolService {
         var logged = false
     }
 
-    public init(hub: ComputerHub, orchestrator: (any ParentOrchestrating)? = nil) {
+    public init(hub: ComputerHub, orchestrator: (any ParentOrchestrating)? = nil, gate: (any ReserveGating)? = nil) {
         self.hub = hub
         self.orchestrator = orchestrator
+        self.gate = gate
+    }
+
+    /// Gatilho de spawn (F12): resposta ao hook `PreToolUse` do helper (`agentbox hook-guard`). Sem porta, deixa passar.
+    public func spawnGuard(parent: String, input: SubagentSpawnGuard.Input) async -> SpawnVerdict {
+        await gate?.spawnGuard(parent: parent, input) ?? .allow
     }
 
     /// Ferramentas que precisam do container vivo (as demais só tocam o host: diário, reqlog, ajuda, resultado).
@@ -218,13 +227,23 @@ public actor ComputerToolService {
             let request = ReserveRequest(
                 names: args.strings("names") ?? [], display: display, profile: args.string("profile"), proxy: args.string("proxy"),
                 proxiesAllowed: args.strings("proxies_allowed") ?? [], batch: args.string("batch"), keep24h: args.string("keep") == "24h",
-                allowHosts: args.strings("allow_hosts") ?? [])
+                allowHosts: (args.strings("allow_hosts") ?? []).compactMap(Self.normalizedHost))
+            if let gate, case .pending(let waiting) = try await gate.authorize(parent: parent, request) { return ToolResult(waiting) }
             return ToolResult(await orchestrator.reserve(parent: parent, request))
         case "boxes_status": return ToolResult(await orchestrator.status(parent: parent, names: args.strings("names"), batch: args.string("batch")))
         case "boxes_release": return ToolResult(await orchestrator.release(parent: parent, names: args.strings("names") ?? [], keep24h: args.string("keep") == "24h"))
         case "agent_message": return ToolResult(try await orchestrator.message(parent: parent, to: args.string("child_id") ?? "", text: args.string("text") ?? ""))
         default: throw ToolError(.notFound, "tool \(name) is not implemented")
         }
+    }
+
+    /// `https://origin:8080/x` ou `origin:8080` viram `origin`; `*.example.com` fica; vazio some (o egress compara só o hostname).
+    static func normalizedHost(_ raw: String) -> String? {
+        var text = raw.trimmingCharacters(in: .whitespaces)
+        if let range = text.range(of: "://") { text = String(text[range.upperBound...]) }
+        if let slash = text.firstIndex(where: { $0 == "/" || $0 == "?" || $0 == "#" }) { text = String(text[..<slash]) }
+        if let colon = text.lastIndex(of: ":"), text[text.index(after: colon)...].allSatisfy(\.isNumber) { text = String(text[..<colon]) }
+        return text.isEmpty ? nil : text.lowercased()
     }
 
     static let emptyUsage: JSON = ["requests": 0, "tunnels": 0, "bytes": 0, "renders": 0]

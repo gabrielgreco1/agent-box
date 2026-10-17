@@ -51,6 +51,8 @@ public struct ChildActivity: Sendable, Equatable {
     public var endedAtNs: Int64?
     public var lastMessage: String?
     public var subtitle: String?
+    /// Descrição do spawn (`Agent` com `description`), emparelhada com o início do subagente.
+    public var title: String?
 
     public var isLive: Bool { !implicit && phase != .done }
 }
@@ -64,6 +66,8 @@ public struct ActivityState: Sendable, Equatable {
     /// Pedidos de input abertos, por agente (`""` = agente principal, senão o `agent_id` do filho).
     public var pending: [String: PendingInput] = [:]
     public var children: [String: ChildActivity] = [:]
+    /// Descrições dos spawns (`PreToolUse` de `Agent`/`Task` do agente principal) ainda sem `SubagentStart`: o primeiro início leva a primeira.
+    public var pendingTitles: [String] = []
     public var subtitle: String?
     public var lastMessage: String?
     public var nativeSessionID: String?
@@ -79,6 +83,18 @@ public struct ActivityState: Sendable, Equatable {
     public init() {}
 
     public var liveChildCount: Int { children.values.filter(\.isLive).count }
+
+    /// Subagentes para a sidebar (os implícitos, vistos só por eventos de ferramenta, entram também), na ordem de início.
+    public var subagentInfos: [SubagentInfo] {
+        func date(_ ns: Int64) -> Date { Date(timeIntervalSince1970: Double(ns) / 1_000_000_000) }
+        return children.values.sorted { ($0.startedAtNs, $0.agentID) < ($1.startedAtNs, $1.agentID) }.map { c in
+            let phase: SubagentInfo.Phase
+            if c.phase == .done { phase = .done } else if pending[c.agentID] != nil { phase = .needsInput } else { phase = .running }
+            return SubagentInfo(
+                agentID: c.agentID, agentType: c.agentType, title: c.title, phase: phase, startedAt: date(c.startedAtNs),
+                endedAt: c.endedAtNs.map(date), subtitle: c.subtitle ?? c.lastMessage.map { String($0.prefix(120)) })
+        }
+    }
 
     /// Pedido pendente que define o `needsInput` visível: permissão antes de pergunta antes de outros.
     public var visiblePending: PendingInput? {
@@ -184,6 +200,10 @@ public enum ActivityReducer {
                 s.pending[""] = nil
                 if ![.waiting, .working].contains(s.base) { s.base = .working; s.reason = nil }
                 s.subtitle = toolSubtitle(p.toolName, p.toolTarget)
+                if let tool = p.toolName, tool == "Agent" || tool == "Task", let title = p.toolTarget, !title.isEmpty {
+                    s.pendingTitles.append(title)
+                    if s.pendingTitles.count > 16 { s.pendingTitles.removeFirst() }
+                }
                 if let tool = p.toolName, questionTools.contains(tool) {
                     s.pending[""] = PendingInput(kind: .question, summary: p.toolTarget)
                 }
@@ -233,6 +253,7 @@ public enum ActivityReducer {
             var c = s.children[child] ?? ChildActivity(
                 agentID: child, agentType: p.agentType, phase: .starting, implicit: false, startedAtNs: atNs, lastEventAtNs: atNs)
             c.implicit = false
+            if c.title == nil, !s.pendingTitles.isEmpty { c.title = s.pendingTitles.removeFirst() }
             if c.phase == .done && c.endedAtNs != nil && atNs > (c.endedAtNs ?? 0) { c.phase = .starting; c.endedAtNs = nil }
             c.agentType = p.agentType ?? c.agentType
             c.lastEventAtNs = max(c.lastEventAtNs, atNs)

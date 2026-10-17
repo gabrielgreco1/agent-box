@@ -124,6 +124,11 @@ extension SidebarModel {
             setSession(id, agentsCollapsed: !card.agentsCollapsed)
             return card.agentsCollapsed ? "expanded" : "collapsed"
         }
+        try registry.register(.agentToggleChildren) { [unowned self] arg in
+            let id = try uuid(arg, .agentToggleChildren)
+            toggleChildren(terminal: id)
+            return collapsedChildren.contains(id) ? "collapsed" : "expanded"
+        }
         try registry.register(.sessionRename) { [unowned self] arg in
             switch arg.kind {
             case .set:

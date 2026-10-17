@@ -448,7 +448,15 @@ enum StoreMigrations {
         """)
     }
 
-    static let all: [StoreMigration] = [v1Initial, v2Activity, v3Computers, v4VaultCatalog, v5ProxyExt, v6AgentTree]
+    /// `v7_subagent_computers` (F12): atributo por sessão "Subagent computers" (`off`/`ask`/`full`). Encadeada após `v6_agent_tree`;
+    /// só acrescenta uma coluna com padrão `off`, então sessões antigas seguem sem computadores.
+    static let v7SubagentComputers = StoreMigration(id: "v7_subagent_computers") { db in
+        try db.execute(sql: """
+        ALTER TABLE session ADD COLUMN subagent_computers TEXT NOT NULL DEFAULT 'off' CHECK (subagent_computers IN ('off','ask','full'));
+        """)
+    }
+
+    static let all: [StoreMigration] = [v1Initial, v2Activity, v3Computers, v4VaultCatalog, v5ProxyExt, v6AgentTree, v7SubagentComputers]
 
     static func migrator(_ migrations: [StoreMigration]) -> DatabaseMigrator {
         var m = DatabaseMigrator()

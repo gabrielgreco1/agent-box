@@ -106,10 +106,13 @@ import Testing
     }
 
     @Test func environmentOverride() {
-        #expect(SliceFlags.fromEnvironment([:]).current == .slice1)
+        // F13: sem `AGENTBOX_SLICE` o app liga o que as Fatias 1 a 3 já implementam; o valor explícito restringe.
+        #expect(SliceFlags.fromEnvironment([:]).current == .slice3)
+        #expect(!SliceFlags.fromEnvironment([:]).restricted)
         #expect(SliceFlags.fromEnvironment(["AGENTBOX_SLICE": "2"]).current == .slice2)
-        #expect(SliceFlags.fromEnvironment(["AGENTBOX_SLICE": "100"]).current == .slice1)
-        #expect(SliceFlags.fromEnvironment(["AGENTBOX_SLICE": "x"]).current == .slice1)
+        #expect(SliceFlags.fromEnvironment(["AGENTBOX_SLICE": "2"]).restricted)
+        #expect(SliceFlags.fromEnvironment(["AGENTBOX_SLICE": "100"]).current == .slice3)
+        #expect(SliceFlags.fromEnvironment(["AGENTBOX_SLICE": "x"]).current == .slice3)
     }
 }
 

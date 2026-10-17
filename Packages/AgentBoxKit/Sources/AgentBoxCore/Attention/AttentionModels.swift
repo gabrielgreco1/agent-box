@@ -64,6 +64,31 @@ public struct AttentionContext: Sendable, Equatable {
     }
 }
 
+/// Um subagente do agente (hooks `SubagentStart`/`SubagentStop`, com ou sem computador): a linha filha do card da sessão.
+public struct SubagentInfo: Sendable, Equatable, Identifiable {
+    public enum Phase: Sendable, Equatable { case running, needsInput, done, failed }
+
+    public var id: String { agentID }
+    public var agentID: String
+    public var agentType: String?
+    /// Título da tarefa (descrição do spawn); sem ele, o tipo do subagente.
+    public var title: String?
+    public var phase: Phase
+    public var startedAt: Date
+    public var endedAt: Date?
+    /// Última nota do diário ou ferramenta em uso.
+    public var subtitle: String?
+
+    public init(
+        agentID: String, agentType: String? = nil, title: String? = nil, phase: Phase, startedAt: Date, endedAt: Date? = nil, subtitle: String? = nil
+    ) {
+        self.agentID = agentID; self.agentType = agentType; self.title = title; self.phase = phase; self.startedAt = startedAt
+        self.endedAt = endedAt; self.subtitle = subtitle
+    }
+
+    public var displayTitle: String { title ?? agentType ?? "Subagent" }
+}
+
 /// Estado de atividade de um terminal de agente, como a UI o enxerga (derivado de `agent_run`).
 public struct TerminalActivity: Sendable, Equatable {
     public var terminalID: UUID
@@ -77,11 +102,14 @@ public struct TerminalActivity: Sendable, Equatable {
     public var estimated: Bool
     /// Quando `activity` mudou pela última vez (ordem de espera e tempo relativo).
     public var changedAt: Date
+    /// Todos os subagentes vistos nos hooks (em ordem de início).
+    public var children: [SubagentInfo] = []
 
     public init(
         terminalID: UUID, runID: UUID? = nil, activity: AgentActivity, lastMessage: String? = nil, reason: String? = nil,
-        subtitle: String? = nil, liveChildren: Int = 0, estimated: Bool = false, changedAt: Date = Date()
+        subtitle: String? = nil, liveChildren: Int = 0, estimated: Bool = false, changedAt: Date = Date(), children: [SubagentInfo] = []
     ) {
+        self.children = children
         self.terminalID = terminalID; self.runID = runID; self.activity = activity; self.lastMessage = lastMessage
         self.reason = reason; self.subtitle = subtitle; self.liveChildren = liveChildren; self.estimated = estimated
         self.changedAt = changedAt

@@ -37,7 +37,7 @@ import Testing
             guard let item = try Row.fetchOne(db, sql: "SELECT * FROM catalog_item WHERE id = 'c1'") else { Issue.record("catalog row lost"); return }
             #expect(item["scope"] as String == "user" && (item["frontmatter_json"] as String?) == nil && (item["shadowed_by"] as String?) == nil)
             let ids = try String.fetchAll(db, sql: "SELECT identifier FROM grdb_migrations")
-            #expect(ids == ["v1_initial", "v2_activity", "v3_computers", "v4_vault_catalog", "v5_proxy_ext", "v6_agent_tree"])
+            #expect(ids == ["v1_initial", "v2_activity", "v3_computers", "v4_vault_catalog", "v5_proxy_ext", "v6_agent_tree", "v7_subagent_computers"])
         }
     }
 

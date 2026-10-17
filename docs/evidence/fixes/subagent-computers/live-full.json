@@ -1,0 +1,61 @@
+{
+  "claude_run" : {
+    "agent_subagent_types" : [
+      "agentbox-worker-1"
+    ],
+    "agentbox_mcp_server_present" : true,
+    "app_skills_loaded" : [
+      "agentbox",
+      "agentbox-app:agentbox-boxes"
+    ],
+    "approval_cards_decided" : [
+
+    ],
+    "bash_commands" : [
+
+    ],
+    "cost_usd" : 0.014255539999999999,
+    "exit" : 0,
+    "final_text" : "O título da página é **\"Origin Page\"**.\n\n`http://origin:8080/` respondeu HTTP 200 sem redirecionamento, e o `document.title` no navegador bate com o `<title>`. A máquina foi liberada depois da leitura.",
+    "guard_blocked_a_plain_subagent" : false,
+    "image_setup_labels" : [
+      "Building computer image… 1 of 17",
+      "Building computer image… 2 of 17",
+      "Building computer image… 3 of 17",
+      "Building computer image… 4 of 17",
+      "Building computer image… 5 of 17",
+      "Building computer image… 6 of 17"
+    ],
+    "mode" : "full",
+    "other_mcp_servers_count" : 38,
+    "parent_tool_uses" : [
+      "ToolSearch",
+      "mcp__agentbox__boxes_reserve",
+      "Agent"
+    ],
+    "reqlog_requests_to_origin" : 3,
+    "skill_invocations" : [
+
+    ],
+    "skills_loaded_by_the_model" : [
+
+    ],
+    "tool_errors" : [
+
+    ],
+    "turns" : 1,
+    "worker_tool_uses" : [
+      "mcp__abx-5cf824d9-w1__box_claim",
+      "mcp__abx-5cf824d9-w1__journal",
+      "mcp__abx-5cf824d9-w1__browser_open",
+      "mcp__abx-5cf824d9-w1__browser_eval",
+      "mcp__abx-5cf824d9-w1__journal",
+      "mcp__abx-5cf824d9-w1__result_submit",
+      "mcp__abx-5cf824d9-w1__box_release"
+    ]
+  },
+  "cleanup" : {
+    "leftover_images" : 0,
+    "leftover_resources" : 0
+  }
+}

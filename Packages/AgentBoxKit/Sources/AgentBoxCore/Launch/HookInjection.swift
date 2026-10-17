@@ -32,6 +32,14 @@ public enum HookCommandLine {
     }
 }
 
+/// Identidade e modo do gatilho de spawn (F12): o hook `PreToolUse` em `Agent|Task` chama `agentbox hook-guard` com isto.
+public struct SpawnGuardConfig: Sendable, Equatable {
+    public var child: String
+    public var capability: String
+    public var mode: SubagentComputersMode
+    public init(child: String, capability: String, mode: SubagentComputersMode) { self.child = child; self.capability = capability; self.mode = mode }
+}
+
 /// Conteúdo das injeções por lançamento (Fatia 2+, 06 §2.8). Tudo é regenerado a cada start e a cada resume.
 public struct LaunchInjection: Sendable, Equatable {
     /// Caminho absoluto do helper `agentbox` que os hooks chamam.
@@ -51,11 +59,15 @@ public struct LaunchInjection: Sendable, Equatable {
     public var claudeEnvironment: [String: String]
     /// Claude: variáveis que NÃO podem chegar ao CLI mesmo vindas do shell de login (agent teams desligado, CS-310).
     public var claudeUnsetEnvironment: [String]
+    /// Claude: hook `PreToolUse` na ferramenta de spawn de subagentes (F12). `nil` = sem gatilho.
+    public var claudeSpawnGuard: SpawnGuardConfig?
 
     public init(
         helperPath: String, codexHookHashes: [HookEventName: String] = [:], claudeMCPConfig: Data? = nil, claudePluginFiles: [LaunchFile] = [],
-        claudeAgentsJSON: Data? = nil, claudeDenyRules: [String] = [], claudeEnvironment: [String: String] = [:], claudeUnsetEnvironment: [String] = []
+        claudeAgentsJSON: Data? = nil, claudeDenyRules: [String] = [], claudeEnvironment: [String: String] = [:], claudeUnsetEnvironment: [String] = [],
+        claudeSpawnGuard: SpawnGuardConfig? = nil
     ) {
+        self.claudeSpawnGuard = claudeSpawnGuard
         self.helperPath = helperPath; self.codexHookHashes = codexHookHashes
         self.claudeMCPConfig = claudeMCPConfig; self.claudePluginFiles = claudePluginFiles
         self.claudeAgentsJSON = claudeAgentsJSON; self.claudeDenyRules = claudeDenyRules
@@ -70,7 +82,7 @@ extension LaunchInjection {
     /// Claude: `--settings` sempre; `--mcp-config` e `--plugin-dir` só com conteúdo.
     func claudeInjection(launchDirectory: URL) throws -> (injected: [String], files: [LaunchFile]) {
         let dir = launchDirectory.standardizedFileURL.path
-        var files = [try ClaudeHookSettings.launchFile(helperPath: helperPath, denyRules: claudeDenyRules)]
+        var files = [try ClaudeHookSettings.launchFile(helperPath: helperPath, denyRules: claudeDenyRules, spawnGuard: claudeSpawnGuard)]
         var injected = ClaudeHookSettings.injectedArguments(settingsPath: "\(dir)/\(ClaudeHookSettings.fileName)")
         if let mcp = claudeMCPConfig, !mcp.isEmpty {
             files.append(LaunchFile(name: Self.mcpFileName, contents: mcp))
@@ -100,7 +112,7 @@ public enum ClaudeHookSettings {
 
     /// `{"hooks": {"<Evento>": [{"hooks": [{"type": "command", "command": "...", "timeout": 5}]}]}}` (06 §2.8).
     /// Saída determinística (chaves ordenadas). Hooks de `--settings` somam com os globais (S-05, V1 confirmado).
-    public static func settingsJSON(helperPath: String, denyRules: [String] = []) throws -> Data {
+    public static func settingsJSON(helperPath: String, denyRules: [String] = [], spawnGuard: SpawnGuardConfig? = nil) throws -> Data {
         var hooks: [String: Any] = [:]
         for event in HookEventName.claudeRegistered {
             hooks[event.rawValue] = [[
@@ -111,14 +123,24 @@ public enum ClaudeHookSettings {
                 ] as [String: Any]]
             ]]
         }
+        if let guardConfig = spawnGuard {
+            // F12: segundo grupo de PreToolUse só para a ferramenta de spawn; soma com o grupo de atividade (os dois rodam).
+            let command = "\(HookCommandLine.shellQuote(helperPath)) hook-guard --child \(guardConfig.child) --capability \(guardConfig.capability) --mode \(guardConfig.mode.rawValue)"
+            var groups = (hooks[HookEventName.preToolUse.rawValue] as? [[String: Any]]) ?? []
+            groups.append([
+                "matcher": SubagentSpawnGuard.matcher,
+                "hooks": [["type": "command", "command": command, "timeout": SubagentSpawnGuard.hookTimeoutSeconds] as [String: Any]],
+            ])
+            hooks[HookEventName.preToolUse.rawValue] = groups
+        }
         var root: [String: Any] = ["hooks": hooks]
         if !denyRules.isEmpty { root["permissions"] = ["deny": denyRules] }
         return try JSONSerialization.data(withJSONObject: root, options: [.sortedKeys, .prettyPrinted, .withoutEscapingSlashes])
     }
 
     /// Arquivo para `AB/run/launch/<runID>/settings.json` (`0600`).
-    public static func launchFile(helperPath: String, denyRules: [String] = []) throws -> LaunchFile {
-        LaunchFile(name: fileName, contents: try settingsJSON(helperPath: helperPath, denyRules: denyRules))
+    public static func launchFile(helperPath: String, denyRules: [String] = [], spawnGuard: SpawnGuardConfig? = nil) throws -> LaunchFile {
+        LaunchFile(name: fileName, contents: try settingsJSON(helperPath: helperPath, denyRules: denyRules, spawnGuard: spawnGuard))
     }
 
     /// Segmento `injected` do argv (T2-02 o usa; aqui só a forma).

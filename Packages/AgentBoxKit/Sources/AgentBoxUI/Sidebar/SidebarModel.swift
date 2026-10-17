@@ -34,6 +34,7 @@ final class SidebarModel {
     private(set) var hiddenProjects: Set<UUID> = []
     private(set) var collapsedSessions: Set<UUID> = []
     private(set) var expandedSummaries: Set<UUID> = []
+    private(set) var collapsedChildren: Set<UUID> = []
     private(set) var selectedSession: UUID? {
         didSet { if oldValue != selectedSession { onSelectionChange?(selectedSession) } }
     }
@@ -53,6 +54,8 @@ final class SidebarModel {
     private(set) var inboxOpen = false
     /// Diretório de computadores (T3-05): fonte dos pedidos de ajuda que o Inbox mostra ao lado da atenção dos agentes.
     @ObservationIgnored var helpInbox: ComputersModel?
+    /// "Subagent computers" (F12): ícone do card, `Restart to apply` e as linhas filhas dos computadores.
+    @ObservationIgnored var subagent: SubagentComputersController?
     var inboxFilter: InboxFilter = .all
     var inboxFilterMenuOpen = false
     /// Sessão em edição inline (03 §2.11): no máximo uma.
@@ -92,7 +95,30 @@ final class SidebarModel {
             snapshot: snapshot, query: query, sort: sort, filters: filters, collapsedProjects: collapsedProjects,
             showMoreOpen: showMoreOpen, hiddenProjects: hiddenProjects, collapsedSessions: collapsedSessions,
             expandedSummaries: expandedSummaries, selectedSession: selectedSession, pending: pending, now: clock(),
-            attention: attention?.center ?? AttentionCenter())
+            attention: attention?.center ?? AttentionCenter(), computers: computerRows, restartPending: restartPendingSessions,
+            offersSubagentToggle: toggleSessions, collapsedChildren: collapsedChildren, agentComputers: helpInbox?.agentComputers ?? [:])
+    }
+
+    /// Linhas filhas por sessão (nome, estado, miniatura) a partir do diretório de computadores.
+    private var computerRows: [UUID: [ComputerChildRow]] {
+        guard let helpInbox else { return [:] }
+        var out: [UUID: [ComputerChildRow]] = [:]
+        for row in helpInbox.rows {
+            guard let session = helpInbox.sessionIDs[row.id] else { continue }
+            out[session, default: []].append(ComputerChildRow(row))
+        }
+        for key in out.keys { out[key]?.sort { $0.id < $1.id } }
+        return out
+    }
+
+    private var restartPendingSessions: Set<UUID> {
+        guard let subagent else { return [] }
+        return Set(snapshot.sessions.filter { subagent.restartPending(session: $0.id) }.map(\.id))
+    }
+
+    private var toggleSessions: Set<UUID> {
+        guard let subagent else { return [] }
+        return Set(snapshot.sessions.filter { subagent.offersToggle(for: $0.id) }.map(\.id))
     }
 
     /// Quem é cada terminal de agente (sessão, projeto, agente) para títulos de notificação e linhas do Inbox.
@@ -110,6 +136,9 @@ final class SidebarModel {
         guard let helpInbox else { return [] }
         return helpInbox.inbox.filter { $0.phase == .needsYou && (inboxFilter != .unread || !$0.read) }
     }
+
+    /// Pedidos de computador esperando você no modo Ask (F12): primeiro em `Needs You`.
+    var approvalItems: [ComputerApprovalRequest] { helpInbox?.approvals ?? [] }
 
     var inboxFeed: InboxFeed {
         (attention?.center ?? AttentionCenter()).inbox(contexts: attentionContexts(), filter: inboxFilter, now: clock())
@@ -249,6 +278,11 @@ final class SidebarModel {
     func setSession(_ id: UUID, agentsCollapsed: Bool) {
         if agentsCollapsed { collapsedSessions.insert(id) } else { collapsedSessions.remove(id) }
         persist()
+    }
+
+    /// Chevron da linha do agente: recolhe ou expande os subagentes dele (só em memória).
+    func toggleChildren(terminal id: UUID) {
+        if collapsedChildren.contains(id) { collapsedChildren.remove(id) } else { collapsedChildren.insert(id) }
     }
 
     func toggleSummary(_ id: UUID) {

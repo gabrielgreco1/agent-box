@@ -274,9 +274,10 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
             log.error("computer \(name) failed to start: \(error)")
             guard var current = entries[name] else { return }
             current.phase = .failed
-            current.failure = "\(error)"
+            current.failure = Self.describe(error)
             entries[name] = current
             await current.computer.setState(.failed)
+            await current.computer.setDetail(String(Self.describe(error).prefix(240)))
             await persist(name)
             await drain()  // a vaga volta para a fila
         }
@@ -384,6 +385,18 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
     public var activeCount: Int { entries.values.filter { $0.phase == .creating || $0.phase == .active }.count }
     public func phase(of name: String) -> Phase? { entries[name]?.phase }
     public func childID(for name: String) -> String? { entries[name]?.childID }
+    /// O pai (identidade MCP do lançamento) dono do computador.
+    public func parent(of name: String) -> String? { entries[name]?.spec.parent }
+    /// Nomes dos computadores que o pai tem agora (qualquer fase menos `failed`).
+    public func computerNames(of parent: String) -> [String] { entries.values.filter { $0.spec.parent == parent }.map(\.spec.name).sorted() }
+    /// O computador do subagente nativo (`agent_id` dos hooks, ligado ao slot pelo `mcp_server.name`); `nil` se ele não tem computador.
+    public func computerName(forAgent agentID: String) -> String? {
+        guard let childID = agentToChild[agentID] else { return nil }
+        return entries.values.first { $0.childID == childID }?.spec.name
+    }
+
+    /// Falha de criação de um computador (motivo para a linha e o pai).
+    public func failureReason(of name: String) -> String? { entries[name]?.failure }
 
     /// `"Waiting for memory · 3 of 15 queued"` (CS-131), `nil` sem fila.
     public var queueLabel: String? {
@@ -420,6 +433,11 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
         case .active: out["state"] = .string(await computer.state.rawValue)
         }
         return .object(out)
+    }
+
+    /// Texto legível de uma falha de criação: o do próprio erro quando ele sabe se explicar (Docker parado), senão o genérico.
+    nonisolated static func describe(_ error: any Error) -> String {
+        (error as? LocalizedError)?.errorDescription ?? "\(error)"
     }
 
     /// `agentbox-worker-3` para o filho `<id>-w3` (a ordem do slot está no sufixo; ver `WorkerSlot`).

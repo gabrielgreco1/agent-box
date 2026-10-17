@@ -8,6 +8,6 @@ struct AgentBoxCLI: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "agentbox",
         abstract: "Agent Box helper (mcp, hook, ctl).",
-        subcommands: [CtlCommand.self, HookCommand.self, McpCommand.self]
+        subcommands: [CtlCommand.self, HookCommand.self, HookGuardCommand.self, McpCommand.self]
     )
 }

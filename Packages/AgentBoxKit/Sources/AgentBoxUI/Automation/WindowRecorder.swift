@@ -18,6 +18,9 @@ final class WindowRecorder {
         guard stream == nil else { throw CtlError(code: "recording_failed", message: "a recording is already running (\(path ?? ""))") }
         let url = URL(fileURLWithPath: outPath)
         unlink(outPath)
+        guard CGPreflightScreenCaptureAccess() else {
+            throw CtlError(code: "recording_failed", message: "Screen Recording isn't granted to Agent Box; not asking. Record from the host with screencapture -v -l <windowID>.")
+        }
         do {
             let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
             let wid = CGWindowID(window.windowNumber)

@@ -26,6 +26,9 @@ public final class SettingsModel {
     /// mostra "Background agents need approval".
     public var backgroundNeedsApproval = false
 
+    /// Estado do Docker e das imagens do computador (Settings › Computers).
+    var dockerStatus = DockerStatusInfo()
+
     public let flags: SliceFlags
     @ObservationIgnored let sections: [SettingsSectionSpec]
     @ObservationIgnored public var onPresentationChange: @MainActor (Bool) -> Void = { _ in }

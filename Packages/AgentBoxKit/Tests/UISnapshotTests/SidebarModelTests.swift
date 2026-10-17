@@ -183,7 +183,7 @@ import Testing
     }
 
     @Test func searchAndNavItemsDoNotRenderInSliceOneButDoFromSliceTwoOrFour() async throws {
-        let slice1 = AppEnvironment(environment: [:])
+        let slice1 = AppEnvironment(environment: ["AGENTBOX_SLICE": "1"])
         let host1 = await EmptyWindowTreeTests.host(slice1, size: NSSize(width: 1440, height: 900))
         defer { host1.window?.close() }
         let t1 = await slice1.registry.uiTree(root: nil)

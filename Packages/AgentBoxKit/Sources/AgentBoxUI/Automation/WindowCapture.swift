@@ -17,7 +17,15 @@ enum WindowCapture {
         var note: String?
     }
 
+    /// `true` só se o usuário já concedeu a Gravação de Tela a este app. Nunca pede (nem toca no ScreenCaptureKit) sem isso: o pedido
+    /// do sistema só aparece por ação explícita do usuário, nunca por um `ctl screenshot` de teste.
+    static var screenCaptureGranted: Bool { CGPreflightScreenCaptureAccess() }
+
     static func capture(_ window: NSWindow) async throws -> Capture {
+        guard screenCaptureGranted else {
+            guard let image = viaAppKit(window) else { throw CtlError(code: "screenshot_failed", message: "the AppKit render produced no image") }
+            return Capture(image: image, fidelity: "appkit", note: "Screen Recording isn't granted to Agent Box; AppKit render (no Metal layers). The host can capture with screencapture -l.")
+        }
         do {
             return Capture(image: try await viaScreenCaptureKit(window), fidelity: "screencapturekit", note: nil)
         } catch {

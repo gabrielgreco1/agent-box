@@ -108,10 +108,19 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
 
     @available(*, unavailable) required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
+    /// Testes: a janela nunca aparece para o usuário (transparente, sem mouse, atrás de tudo e fora da tela).
+    public static var invisibleForTests = false
+
     /// Abre sem ativar o app (o chamador decide se traz para frente).
     public func present(activate: Bool) {
         guard let window else { return }
-        if activate {
+        if Self.invisibleForTests {
+            window.alphaValue = 0
+            window.ignoresMouseEvents = true
+            window.animationBehavior = .none
+            window.setFrameOrigin(NSPoint(x: -20000, y: -20000))
+            window.orderBack(nil)
+        } else if activate {
             showWindow(nil)
             NSApp.activate()
         } else {

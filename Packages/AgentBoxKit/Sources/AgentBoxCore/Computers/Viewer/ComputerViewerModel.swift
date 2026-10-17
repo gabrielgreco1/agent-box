@@ -21,8 +21,12 @@ public struct ViewerSnapshot: Sendable, Equatable {
     public var url: String?
     public var lastDoing: String?
     public var help: HelpSummary?
+    /// Progresso (`Building computer image… 3 of 14`) ou motivo da falha; `nil` fora de provisioning/failed.
+    public var detail: String?
+    public var queuePosition: Int?
 
-    public init(name: String, state: BoxState, display: String, control: ControlPhase, proxy: String, url: String? = nil, lastDoing: String? = nil, help: HelpSummary? = nil) {
+    public init(name: String, state: BoxState, display: String, control: ControlPhase, proxy: String, url: String? = nil, lastDoing: String? = nil, help: HelpSummary? = nil, detail: String? = nil, queuePosition: Int? = nil) {
+        self.detail = detail; self.queuePosition = queuePosition
         self.name = name; self.state = state; self.display = display; self.control = control; self.proxy = proxy; self.url = url; self.lastDoing = lastDoing; self.help = help
     }
 }

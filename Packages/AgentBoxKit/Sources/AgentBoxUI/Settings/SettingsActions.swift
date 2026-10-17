@@ -261,6 +261,13 @@ extension SettingsModel {
         try notificationFlag(.settingsNotificationsTerminalBell, \.terminalBell, name: "Terminal bell")
         try notificationFlag(.settingsNotificationsSuppressWhenVisible, \.suppressWhenVisible, name: "Suppress when visible")
         try notificationFlag(.settingsNotificationsDockBadge, \.dockBadge, name: "Dock badge")
+        try registry.register(.settingsComputersDefaultSubagentMode) { [unowned self] arg in
+            guard let raw = arg.value, let mode = SubagentComputersMode(rawValue: raw) else {
+                throw ActionError.failed(.settingsComputersDefaultSubagentMode, message: "expected off, ask or full")
+            }
+            change("Subagent computers") { $0.computers.defaultSubagentMode = mode }
+            return mode.rawValue
+        }
         try registry.register(.settingsNotificationsSound) { [unowned self] arg in
             guard let raw = arg.value, let sound = AppSettings.NotificationSound(rawValue: raw) else {
                 throw ActionError.failed(.settingsNotificationsSound, message: "expected system or none")

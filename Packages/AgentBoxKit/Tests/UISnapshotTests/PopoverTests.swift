@@ -234,7 +234,7 @@ extension OverlayHostTests {
     }
 
     @Test func resolveDisablesUnregisteredActionsAndDropsFutureSlices() {
-        let env = AppEnvironment(environment: [:])
+        let env = AppEnvironment(environment: ["AGENTBOX_SLICE": "1"])
         try? env.registry.register(.appHideAppName) { _ in nil }
         let future = ActionID.catalog.first { $0.slice > .slice1 && $0.slice < .v11 }!.id
         let entries: [DSMenuEntry] = [

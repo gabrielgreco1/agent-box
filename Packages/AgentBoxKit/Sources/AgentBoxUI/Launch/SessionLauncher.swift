@@ -18,6 +18,8 @@ struct SessionLaunchRequest: Codable, Equatable {
     var argv: [String]?
     /// Origem do chip (centro do botão "Create Session"), em pontos da janela com y do topo. Padrão: base da janela.
     var origin: [Double]?
+    /// `off`, `ask` ou `full` (F12); sem o campo vale o padrão de Settings › Computers.
+    var subagentComputers: String?
 }
 
 /// Cria uma sessão limpa com o agente escolhido já rodando (P9, M-501): linha pendente na sidebar, chip voando até ela,
@@ -127,6 +129,10 @@ final class SessionLauncher {
         let spec = LaunchSpec(provider: provider, profileID: provider.isAgent ? settings?.defaultProfile(for: provider)?.id : nil, model: request.model, extraArgs: request.args ?? [], customArgv: request.argv, initialPrompt: prompt)
         var session = Session(id: sessionID, kind: .clean, folderPath: folder.path, title: title)
         session.managedFolder = managed
+        if provider == .claude {
+            session.subagentComputers = request.subagentComputers.flatMap(SubagentComputersMode.init(rawValue:))
+                ?? settings?.settings.computers.defaultSubagentMode ?? .off
+        }
         let terminal = Terminal(id: terminalID, tabID: tabID, provider: provider, title: title, cwd: folder.path, launchSpec: spec)
         let tab = Tab(id: tabID, sessionID: sessionID, title: title, layout: .leaf(Pane(content: .terminal(terminalID))), focusedTerminalID: terminalID)
         do {
