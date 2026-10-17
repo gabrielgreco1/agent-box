@@ -1,0 +1,27 @@
+{
+  "auth" : {
+    "scopes" : [
+      "gist",
+      "read:org",
+      "repo",
+      "workflow"
+    ],
+    "state" : "connected",
+    "tokenSource" : "keyring",
+    "user" : "gabrielgreco1"
+  },
+  "masterPR" : {
+    "checks" : "none",
+    "chip" : "open",
+    "number" : 11569,
+    "state" : "OPEN",
+    "totalChecks" : 0
+  },
+  "missingBranchHasPR" : false,
+  "rateLimit" : {
+    "cost" : 1,
+    "remaining" : 4995
+  },
+  "repo" : "octocat\/Hello-World",
+  "requests" : 1
+}
