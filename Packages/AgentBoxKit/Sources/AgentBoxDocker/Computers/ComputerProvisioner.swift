@@ -85,7 +85,9 @@ public struct ComputerProvisioner: Sendable {
                 _ = try await client.createVolume(name: volume, labels: volumeLabels)
                 runtimeID = try await startRuntime(request, secretsDirectory: secretsDirectory, volume: volume)
             }
-            let workID = try await startWork(request, work: work)
+            // Segredos de tarefa (§3.3): só arquivos 0400 numa pasta só leitura do `work`; o valor nunca vai por env nem argv.
+            let taskSecrets = try request.secrets.ensureRoleDirectory(computerID, role: .work)
+            let workID = try await startWork(request, work: work, taskSecrets: taskSecrets)
             if runtimeID != nil { try await waitRuntimeReady(admin) }
             return ProvisionedComputer(
                 labels: labels, display: request.display, egress: egress, runtimeContainerID: runtimeID, workContainerID: workID,
@@ -115,7 +117,7 @@ public struct ComputerProvisioner: Sendable {
         return id
     }
 
-    private func startWork(_ request: ComputerProvisionRequest, work: URL) async throws -> String {
+    private func startWork(_ request: ComputerProvisionRequest, work: URL, taskSecrets: URL) async throws -> String {
         let labels = request.labels
         var spec = ContainerSpec(name: labels.containerName(.work), image: request.boxImage)
         spec.labels = labels.labels(role: .work).merging(request.extraLabels) { $1 }
@@ -125,7 +127,7 @@ public struct ComputerProvisioner: Sendable {
         spec.environment = ["AGENTBOX_ROLE=work", "HOME=/tmp"] + EgressOrchestrator.workEnvironment(proxyPort: request.config.proxyPort)
         spec.resources = ContainerResources(memoryBytes: 1 << 30, cpus: 0.5, pidsLimit: 512)
         spec.tmpfs = ["/tmp": "rw,nosuid,size=1g,uid=10002"]
-        spec.binds = ["\(work.path):/work"]
+        spec.binds = ["\(work.path):/work", "\(taskSecrets.path):/run/agentbox/secrets:ro"]
         spec.network = ContainerNetworkAttachment(network: labels.networkName, aliases: ["work"])
         spec.stopTimeoutSeconds = 3
         let id = try await client.createContainer(spec)

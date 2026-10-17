@@ -42,6 +42,35 @@ import Testing
         #expect(austin.allSatisfy { $0["text"]?.string?.hasPrefix("b") == true })
     }
 
+    @Test func takeOverOnOneComputerDoesNotPauseTheOther() async throws {
+        // AC-411: Phoenix e Austin trabalhando; Take Over em Phoenix recusa as escritas dela com human_in_control e Austin segue
+        let temp = try TempRun()
+        defer { temp.remove() }
+        let hub = ComputerHub()
+        var computers: [String: ManagedComputer] = [:]
+        for name in ["phoenix", "austin"] {
+            let computer = try ManagedComputer(name: name, display: .headless, run: RunFolder(root: temp.root.appendingPathComponent(name)), backend: FakeBackend())
+            await hub.register(computer)
+            computers[name] = computer
+        }
+        for child in ["child-p", "child-a"] { await hub.registerChild(id: child, capability: "c") }
+        let service = ComputerToolService(hub: hub)
+        _ = await service.call("box_claim", arguments: ["name": "phoenix", "wait_s": 0], child: "child-p")
+        _ = await service.call("box_claim", arguments: ["name": "austin", "wait_s": 0], child: "child-a")
+        await computers["phoenix"]?.takeOver()
+        for _ in 0..<5 {
+            let p = await service.call("browser_click", arguments: ["selector": "#a"], child: "child-p")
+            let a = await service.call("browser_click", arguments: ["selector": "#a"], child: "child-a")
+            let pJSON = try JSON.parse(p.content[0]["text"]?.string ?? "")
+            #expect(p.isError)
+            #expect(pJSON["error"] == "human_in_control")
+            #expect(!a.isError)
+        }
+        // leituras e ferramentas que não tocam o computador seguem em Phoenix
+        #expect(!(await service.call("browser_read", arguments: ["what": "text"], child: "child-p")).isError)
+        #expect(!(await service.call("journal", arguments: ["kind": "NOTE", "text": "x"], child: "child-p")).isError)
+    }
+
     @Test func secondClaimGetsAlreadyClaimedWithTheOwner() async throws {
         let rig = try await Rig.make(children: ["child-1", "child-2"])
         defer { rig.cleanup() }

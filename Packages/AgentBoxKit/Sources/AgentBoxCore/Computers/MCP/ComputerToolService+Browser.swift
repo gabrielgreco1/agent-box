@@ -37,11 +37,10 @@ extension ComputerToolService {
         values["wait_s"] = .double(min(args.double("wait_s") ?? 4, max(0, 50 - timeout)))
         let before = await Self.lastRecordID(c)
         do {
-            var out = try await c.backend.runtime("open", .object(values), timeout: timeout + 20)
+            let out = try await c.backend.runtime("open", .object(values), timeout: timeout + 20)
             if out["status"]?.int == 403, let blocked = try await blockedRecord(c, after: before, url: args.string("url")) {
                 throw Self.blockedError(blocked)
             }
-            if case .object(var o) = out { o["wait_s_applied"] = nil; out = .object(o) }
             return ToolResult(out)
         } catch let error as ToolError where error.code == .proxyError || error.code == .timeout {
             // A navegação falhou: se o egress recusou o destino, o motivo está no reqlog (CS-143, CA-106).

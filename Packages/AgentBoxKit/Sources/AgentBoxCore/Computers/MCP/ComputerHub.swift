@@ -67,6 +67,7 @@ public actor ComputerHub {
         claims[child] = nil
         released.insert(child)
         await computer.release()
+        ComputerToolService.writeTimelineFile(computer)  // `logs/timeline.md` ao coletar (CS-261, CS-180)
         await computer.emit(.released(computer: computer.name))
         await lifecycle?.finish(computer, keep24h: keep24h)
     }

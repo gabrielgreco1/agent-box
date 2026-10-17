@@ -92,6 +92,16 @@ import Testing
         #expect(ToolCatalog.serverInstructions.contains("untrusted"))
     }
 
+    @Test func serverInstructionsCarryTheWorkerConductRules() {
+        // CS-331 / AC-428 (parte UNIT): as regras de conduta do worker (audit/01 R9) viajam no `instructions` do servidor MCP
+        let text = ToolCatalog.serverInstructions
+        for rule in ["prefer official APIs and open data", "never buy, pay, subscribe, donate or accept terms", "never create accounts, change account data or settings",
+                     "send messages, emails or contact forms", "search and filter forms are fine", "never bypass a login, paywall or captcha",
+                     "help_request(kind=login)", "help_request(kind=permission)", "journal BLOCKED", "cite a request id for every claim", "keep /work clean"] {
+            #expect(text.contains(rule), "instructions lack: \(rule)")
+        }
+    }
+
     @Test func inputSchemasAreWellFormedJSONSchemaObjects() throws {
         for tool in ToolCatalog.all {
             let schema = tool.inputSchema

@@ -39,6 +39,16 @@ public struct BoxSecretFiles: Sendable {
         try fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: url.path)
     }
 
+    /// Cria (0700) o diretório do papel sem gravar nada: o `work` monta `<papel>/` em `/run/agentbox/secrets` (CS-602, §3.3).
+    @discardableResult
+    public func ensureRoleDirectory(_ computerID: String, role: ComputerRole) throws -> URL {
+        try makeDirectory(boxesDirectory)
+        try makeDirectory(try computerDirectory(computerID))
+        let directory = try roleDirectory(computerID, role: role)
+        try makeDirectory(directory)
+        return directory
+    }
+
     /// Grava `name` (0400) no diretório do papel. Troca atômica: escreve num temporário 0600 e renomeia.
     @discardableResult
     public func write(_ data: Data, named name: String, computerID: String, role: ComputerRole) throws -> URL {

@@ -5,7 +5,7 @@
   "no_route_out_runtime" : "wget=1 | ",
   "no_route_out_work" : "wget=1 | ping=1 | 172.18.0.0\/16 dev eth0 scope link  src 172.18.0.4  | ",
   "not_tested" : "OrbStack e Colima: não instalados nesta máquina (07 CS-105: testados na verificação local quando instalados)",
-  "published_ports" : "runtime=0 work=0 egress=127.0.0.1:53629->8080",
+  "published_ports" : "runtime=0 work=0 egress=127.0.0.1:61277->8080",
   "result" : "PASS no desktop",
   "runtime" : "desktop: Docker Desktop, Engine 29.6.2, API 1.55, aarch64"
 }

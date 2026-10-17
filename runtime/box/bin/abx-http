@@ -43,10 +43,11 @@ def main() -> int:
     elif spec.get("body") is not None:
         kwargs["data"] = spec["body"].encode("utf-8")
     if spec.get("cookies"):
-        jar = {}
-        for c in spec["cookies"]:
-            jar[c["name"]] = c["value"]
-        kwargs["cookies"] = jar
+        # Cabeçalho explícito, não o cookie jar do curl: o jar do curl descarta cookies sem domínio "de verdade" (host `origin`).
+        headers = dict(kwargs["headers"] or {})
+        if not any(k.lower() == "cookie" for k in headers):
+            headers["Cookie"] = "; ".join(f"{c['name']}={c['value']}" for c in spec["cookies"])
+        kwargs["headers"] = headers
     started = time.monotonic()
     try:
         response = cr.request(**kwargs)

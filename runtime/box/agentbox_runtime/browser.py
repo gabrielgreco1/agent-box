@@ -54,6 +54,7 @@ class BrowserSession:
         self.ctx = None
         self.page = None
         self.write_lock = asyncio.Lock()
+        self.observers: set[asyncio.Task] = set()
         self.request_ids: dict[int, str] = {}
         self.started: dict[int, float] = {}
         self.last_main_request_id: str | None = None
@@ -77,8 +78,8 @@ class BrowserSession:
             options["proxy"] = {"server": self.proxy_server}
         self.ctx = await self.pw.chromium.launch_persistent_context(**options)
         self.ctx.on("request", self._on_request)
-        self.ctx.on("requestfinished", lambda r: asyncio.ensure_future(self._on_finished(r)))
-        self.ctx.on("requestfailed", lambda r: asyncio.ensure_future(self._on_failed(r)))
+        self.ctx.on("requestfinished", lambda r: self._spawn(self._on_finished(r)))
+        self.ctx.on("requestfailed", lambda r: self._spawn(self._on_failed(r)))
         self.ctx.on("page", self._on_page)
         for page in self.ctx.pages:
             self._on_page(page)
@@ -95,6 +96,18 @@ class BrowserSession:
                 await asyncio.wait_for(self.pw.stop(), 5)
         except Exception:
             pass
+
+    def _spawn(self, coroutine) -> None:
+        task = asyncio.ensure_future(coroutine)
+        self.observers.add(task)
+        task.add_done_callback(self.observers.discard)
+
+    async def settled(self, timeout: float = 3.0) -> None:
+        """Espera os observadores de rede em andamento e os envios ao egress: quando a ferramenta devolve, o que ela fez já
+        está no reqlog (o agente consulta `reqlog_query` logo em seguida)."""
+        if self.observers:
+            await asyncio.wait(set(self.observers), timeout=timeout)
+        await self.ingestor.flush(timeout)
 
     def _on_page(self, page) -> None:
         self.page = page
@@ -190,12 +203,12 @@ class BrowserSession:
             text = str(exc)
             if "Timeout" in type(exc).__name__ or "Timeout" in text.split("\n")[0]:
                 raise OpError("timeout", f"navigation did not finish in {timeout:g}s", 408)
-            await self.ingestor.flush(2)
+            await self.settled(2)
             raise OpError("navigation_failed", text.split("\n")[0][:400], 502, {"request_id": self.last_main_request_id})
         wait_s = float(a.get("wait_s", 4))
         if wait_s > 0:
             await page.wait_for_timeout(min(wait_s, 30) * 1000)
-        await self.ingestor.flush()
+        await self.settled()
         return {"url": page.url, "title": await self._title(), "status": response.status if response else None,
                 "request_id": self.last_main_request_id}
 
@@ -224,6 +237,7 @@ class BrowserSession:
             content = await (self._locator(selector) if selector else page.locator("body")).aria_snapshot()
         else:
             raise OpError("invalid_argument", "what must be text, html, links, forms or accessibility")
+        await self.settled()
         total = len(content)
         chunk = content[offset:offset + max_chars]
         truncated = offset + max_chars < total
@@ -247,6 +261,7 @@ class BrowserSession:
                 await page.wait_for_load_state("domcontentloaded", timeout=wait_s * 1000)
             except Exception:
                 pass
+        await self.settled()
         return {"url": page.url, "navigated": page.url != before}
 
     async def click(self, a: dict) -> dict:
@@ -328,6 +343,7 @@ class BrowserSession:
             if "Timeout" in type(exc).__name__:
                 return {"matched": False, "url": page.url}
             raise
+        await self.settled()
         return {"matched": True, "url": page.url}
 
     async def eval(self, a: dict) -> dict:
@@ -393,14 +409,17 @@ class BrowserSession:
 
     async def back(self, a: dict) -> dict:
         await self._page().go_back(wait_until="domcontentloaded", timeout=30000)
+        await self.settled()
         return {"url": self.page.url}
 
     async def forward(self, a: dict) -> dict:
         await self._page().go_forward(wait_until="domcontentloaded", timeout=30000)
+        await self.settled()
         return {"url": self.page.url}
 
     async def reload(self, a: dict) -> dict:
         response = await self._page().reload(wait_until="domcontentloaded", timeout=45000)
+        await self.settled()
         return {"url": self.page.url, "status": response.status if response else None}
 
     async def download(self, a: dict) -> dict:
