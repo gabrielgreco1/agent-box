@@ -108,7 +108,6 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `tabs.quickCommands`
 - `tabs.paneActions`
 - `tabs.rightPanelToggle`
-- `tabs.dropIndicator`
 
 ### Panes
 
@@ -149,15 +148,22 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `pane.<id>.rateLimit`
 - `pane.<id>.tooNarrow`
 - `pane.divider.<id>`
-- `pane.dropOverlay`
-- `pane.dropZone.<zone>`
-- `pane.dragGhost`
 - `pane.empty`
 - `pane.empty.newAgent`
 - `pane.empty.newTerminal`
 - `pane.empty.reopen`
 - `pane.empty.start`
 - `pane.empty.resume`
+
+### Tabs
+
+- `tabs.dropIndicator`
+
+### Panes
+
+- `pane.dropOverlay`
+- `pane.dropZone.<zone>`
+- `pane.dragGhost`
 
 ### Find
 

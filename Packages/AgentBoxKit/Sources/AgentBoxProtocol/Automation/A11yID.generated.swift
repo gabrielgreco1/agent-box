@@ -72,12 +72,6 @@ extension A11yID {
     public static let tabsPaneActions = A11yID(unchecked: "tabs.paneActions")
     /// `tabs.rightPanelToggle`
     public static let tabsRightPanelToggle = A11yID(unchecked: "tabs.rightPanelToggle")
-    /// `tabs.dropIndicator`
-    public static let tabsDropIndicator = A11yID(unchecked: "tabs.dropIndicator")
-    /// `pane.dropOverlay`
-    public static let paneDropOverlay = A11yID(unchecked: "pane.dropOverlay")
-    /// `pane.dragGhost`
-    public static let paneDragGhost = A11yID(unchecked: "pane.dragGhost")
     /// `pane.empty`
     public static let paneEmpty = A11yID(unchecked: "pane.empty")
     /// `pane.empty.newAgent`
@@ -90,6 +84,12 @@ extension A11yID {
     public static let paneEmptyStart = A11yID(unchecked: "pane.empty.start")
     /// `pane.empty.resume`
     public static let paneEmptyResume = A11yID(unchecked: "pane.empty.resume")
+    /// `tabs.dropIndicator`
+    public static let tabsDropIndicator = A11yID(unchecked: "tabs.dropIndicator")
+    /// `pane.dropOverlay`
+    public static let paneDropOverlay = A11yID(unchecked: "pane.dropOverlay")
+    /// `pane.dragGhost`
+    public static let paneDragGhost = A11yID(unchecked: "pane.dragGhost")
     /// `find.field`
     public static let findField = A11yID(unchecked: "find.field")
     /// `find.count`
@@ -1340,7 +1340,6 @@ extension A11yID {
         A11yIDSpec(pattern: "tabs.quickCommands", surface: "Tabs"),
         A11yIDSpec(pattern: "tabs.paneActions", surface: "Tabs"),
         A11yIDSpec(pattern: "tabs.rightPanelToggle", surface: "Tabs"),
-        A11yIDSpec(pattern: "tabs.dropIndicator", surface: "Tabs"),
         A11yIDSpec(pattern: "pane.<id>", surface: "Panes"),
         A11yIDSpec(pattern: "pane.<id>.terminal", surface: "Panes"),
         A11yIDSpec(pattern: "pane.<id>.header", surface: "Panes"),
@@ -1378,15 +1377,16 @@ extension A11yID {
         A11yIDSpec(pattern: "pane.<id>.rateLimit", surface: "Panes"),
         A11yIDSpec(pattern: "pane.<id>.tooNarrow", surface: "Panes"),
         A11yIDSpec(pattern: "pane.divider.<id>", surface: "Panes"),
-        A11yIDSpec(pattern: "pane.dropOverlay", surface: "Panes"),
-        A11yIDSpec(pattern: "pane.dropZone.<zone>", surface: "Panes"),
-        A11yIDSpec(pattern: "pane.dragGhost", surface: "Panes"),
         A11yIDSpec(pattern: "pane.empty", surface: "Panes"),
         A11yIDSpec(pattern: "pane.empty.newAgent", surface: "Panes"),
         A11yIDSpec(pattern: "pane.empty.newTerminal", surface: "Panes"),
         A11yIDSpec(pattern: "pane.empty.reopen", surface: "Panes"),
         A11yIDSpec(pattern: "pane.empty.start", surface: "Panes"),
         A11yIDSpec(pattern: "pane.empty.resume", surface: "Panes"),
+        A11yIDSpec(pattern: "tabs.dropIndicator", surface: "Tabs"),
+        A11yIDSpec(pattern: "pane.dropOverlay", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.dropZone.<zone>", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.dragGhost", surface: "Panes"),
         A11yIDSpec(pattern: "find.field", surface: "Find"),
         A11yIDSpec(pattern: "find.count", surface: "Find"),
         A11yIDSpec(pattern: "find.caseSensitive", surface: "Find"),
