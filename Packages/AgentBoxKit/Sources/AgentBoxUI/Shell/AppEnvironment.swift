@@ -162,6 +162,7 @@ public final class AppEnvironment {
         do { try computers.register(in: registry) } catch { log.publicError("duplicate computer action registration") }
         do { try subagentComputers.register(in: registry) } catch { log.publicError("duplicate subagent computers registration") }
         subagentHoverCards = SubagentHoverCardController(computers: computers, registry: registry, elements: elements)
+        computers.hoverCards = subagentHoverCards
         computers.model.sessionTitle = { [computers, sidebar] name in computers.model.sessionIDs[name].flatMap { sidebar.session($0)?.title } }
         workspace.pageCloser = { [computers] in
             guard computers.page != .workspace else { return false }

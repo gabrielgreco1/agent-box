@@ -171,6 +171,20 @@ final class SubagentHoverCardController {
         }
     }
 
+    /// `computer.showPreview` (automação e teclado): abre o card ao lado da linha do subagente que tem esse computador, sem ponteiro.
+    func present(computer: String, window: NSWindow?) -> Bool {
+        guard let sid = computers.model.sessionIDs[computer],
+              let child = computers.model.agentComputers.first(where: { $0.value == computer })?.key,
+              let frame = elements.frame(of: .sidebarSessionChild(sid.uuidString, child)), let window else { return false }
+        // `frame` vem do topo-esquerdo da janela; o painel usa coordenadas de tela (origem embaixo).
+        let content = window.contentView?.bounds.height ?? window.frame.height
+        let local = NSRect(x: frame.minX, y: content - frame.maxY, width: frame.width, height: frame.height)
+        let screen = window.convertToScreen(window.contentView?.convert(local, to: nil) ?? local)
+        hideTask?.cancel()
+        show(computer: computer, session: sid, child: child, anchor: screen, window: window)
+        return true
+    }
+
     func rowExited(computer: String?) {
         showTask?.cancel()
         scheduleHide()

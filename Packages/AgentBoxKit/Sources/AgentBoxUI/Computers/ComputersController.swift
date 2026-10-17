@@ -37,6 +37,8 @@ public final class ComputersController {
     @ObservationIgnored private var demoRig: DemoComputerRig?
     /// O hover card de um subagente está aberto: só então a miniatura corre (≤ 1 fps) fora do painel e da página Computers.
     @ObservationIgnored private var hoverPreviewOpen = false
+    /// O hover card dos subagentes (ligado pelo `AppEnvironment`).
+    @ObservationIgnored var hoverCards: SubagentHoverCardController?
 
     public func setHoverPreview(open: Bool) { hoverPreviewOpen = open }
 
@@ -277,6 +279,16 @@ public final class ComputersController {
         try decision(.computerAllowRequest, .allow)
         try decision(.computerAllowRequestSession, .allowForSession)
         try decision(.computerDenyRequest, .deny)
+        try registry.register(.computerShowPreview, enablement: hasComputer) { [unowned self] arg in
+            guard arg.kind == .select, let name = arg.value else {
+                hoverCards?.hide()
+                return "closed"
+            }
+            guard hoverCards?.present(computer: name, window: NSApp.windows.first { $0.canBecomeMain }) == true else {
+                throw ActionError.failed(.computerShowPreview, message: "No subagent row shows \(name)")
+            }
+            return name
+        }
         // "Open Docker": a linha do computador e o Settings oferecem quando o Docker está parado (07 CS-104).
         try registry.register(.dockerStart) { _ in
             DockerLauncher.open()

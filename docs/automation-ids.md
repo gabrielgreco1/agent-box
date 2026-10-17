@@ -660,6 +660,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `computer.paste` | Paste to Computer | — | slice3 |
 | `computer.copySelection` | Copy Selection from Computer | — | slice3 |
 | `computer.reconnect` | Reconnect | — | slice3 |
+| `computer.showPreview` | Show Preview (hover card do subagente) | — | slice3 |
 | `computer.allowRequest` | Allow | — | slice3 |
 | `computer.allowRequestSession` | Allow for this session | — | slice3 |
 | `computer.denyRequest` | Deny (pedido de computador) | — | slice3 |

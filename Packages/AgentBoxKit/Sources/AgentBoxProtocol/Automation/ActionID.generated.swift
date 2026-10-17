@@ -231,6 +231,7 @@ extension ActionID {
     public static let computerPaste = ActionID(unchecked: "computer.paste")
     public static let computerCopySelection = ActionID(unchecked: "computer.copySelection")
     public static let computerReconnect = ActionID(unchecked: "computer.reconnect")
+    public static let computerShowPreview = ActionID(unchecked: "computer.showPreview")
     public static let computerAllowRequest = ActionID(unchecked: "computer.allowRequest")
     public static let computerAllowRequestSession = ActionID(unchecked: "computer.allowRequestSession")
     public static let computerDenyRequest = ActionID(unchecked: "computer.denyRequest")
@@ -597,6 +598,7 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "computer.paste"), label: "Paste to Computer", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "computer.copySelection"), label: "Copy Selection from Computer", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "computer.reconnect"), label: "Reconnect", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "computer.showPreview"), label: "Show Preview (hover card do subagente)", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "computer.allowRequest"), label: "Allow", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "computer.allowRequestSession"), label: "Allow for this session", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "computer.denyRequest"), label: "Deny (pedido de computador)", shortcut: "", slice: .slice3),
