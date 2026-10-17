@@ -95,7 +95,7 @@ struct ViewerLeaseTests {
         #expect(model.help?.id == id)
     }
 
-    @Test func humanInControlErrorCarriesRetryAfterFromTheRuntime() {
+    @Test func humanInControlErrorKeepsRetryAfterFromTheRuntime() {
         let error = RuntimeErrorMapper.map(status: 409, body: ["error": "human_in_control", "message": "x", "details": ["retry_after_s": 5, "completed": true]])
         #expect(error.code == .humanInControl && error.retryAfterS == 5 && error.details?["completed"] == true)
     }

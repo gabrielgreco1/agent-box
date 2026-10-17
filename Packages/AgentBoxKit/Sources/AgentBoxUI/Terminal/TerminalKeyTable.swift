@@ -1,7 +1,7 @@
 import AppKit
 
 /// Tabela tecla → bytes das teclas reservadas ao terminal (03 §21, AC-T08). O app as intercepta antes do `TerminalView`
-/// porque o SwiftTerm não as traduz como o Orca: ⌘← ⌘→ ⌘⌫ viram ^A ^E ^U, ⇧↵ vira CSI-u e ⌥← ⌥→ saltam palavra.
+/// porque o SwiftTerm não as traduz como um terminal nativo: ⌘← ⌘→ ⌘⌫ viram ^A ^E ^U, ⇧↵ vira CSI-u e ⌥← ⌥→ saltam palavra.
 public enum TerminalKeyTable {
     public enum Key: Equatable {
         case leftArrow, rightArrow, delete, `return`

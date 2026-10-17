@@ -59,7 +59,12 @@ enum WindowCapture {
     private static func viaAppKit(_ window: NSWindow) -> CGImage? {
         guard let content = window.contentView else { return nil }
         let frameView = content.superview ?? content
-        guard let rep = frameView.bitmapImageRepForCachingDisplay(in: frameView.bounds) else { return nil }
+        let scale = window.backingScaleFactor
+        guard let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: Int(frameView.bounds.width * scale), pixelsHigh: Int(frameView.bounds.height * scale),
+            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
+            bytesPerRow: 0, bitsPerPixel: 0) else { return nil }
+        rep.size = frameView.bounds.size
         frameView.cacheDisplay(in: frameView.bounds, to: rep)
         return rep.cgImage
     }

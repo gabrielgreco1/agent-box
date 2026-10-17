@@ -80,7 +80,7 @@ extension OverlayHostTests {
     }
 
     /// Espera o `DSKeyCatcherView` do painel receber o foco (acontece um ciclo depois de montar).
-    func waitForCatcher(_ r: Rig) async -> DSKeyCatcherView? {
+    func awaitKeyCatcher(_ r: Rig) async -> DSKeyCatcherView? {
         for _ in 0..<80 {
             if let catcher = r.window.firstResponder as? DSKeyCatcherView { return catcher }
             try? await Task.sleep(for: .milliseconds(25))
@@ -97,7 +97,7 @@ extension OverlayHostTests {
         r.env.overlays.presentPopover(comboboxSpec(r))
         #expect(r.env.overlays.capturesInput && r.env.overlays.blocksTerminalInput)
         #expect(!r.env.overlays.isPresenting, "popover não é overlay")
-        let catcher = await waitForCatcher(r)
+        let catcher = await awaitKeyCatcher(r)
         #expect(catcher != nil, "o painel recebe o foco do teclado")
         r.env.overlays.dismissPopover()
         #expect(r.window.firstResponder === r.terminal, "o terminal volta a receber teclas")
@@ -110,7 +110,7 @@ extension OverlayHostTests {
         let spec = OverlaySpec(name: "composer", id: .overlayComposer, content: { AnyView(Color.clear.frame(width: 200, height: 100)) })
         r.env.overlays.present(spec)
         r.env.overlays.presentPopover(comboboxSpec(r))
-        _ = await waitForCatcher(r)
+        _ = await awaitKeyCatcher(r)
         // Esc de verdade pela janela: o `DSKeyCatcherView` o entende e fecha só o painel.
         r.window.sendEvent(key(53, "\u{1b}", window: r.window))
         #expect(r.env.overlays.popover == nil, "Esc fecha o painel")
@@ -157,7 +157,7 @@ extension OverlayHostTests {
         let r = await rig()
         defer { teardown(r) }
         r.env.overlays.presentPopover(comboboxSpec(r))
-        _ = await waitForCatcher(r)
+        _ = await awaitKeyCatcher(r)
         r.window.sendEvent(arrow(NSDownArrowFunctionKey, 125, window: r.window))
         r.window.sendEvent(key(36, "\r", window: r.window))
         try? await Task.sleep(for: .milliseconds(80))
@@ -170,7 +170,7 @@ extension OverlayHostTests {
         let r = await rig()
         defer { teardown(r) }
         r.env.overlays.presentPopover(comboboxSpec(r, selection: "codex"))
-        _ = await waitForCatcher(r)
+        _ = await awaitKeyCatcher(r)
         r.window.sendEvent(arrow(NSDownArrowFunctionKey, 125, window: r.window))  // pula OpenCode (desabilitado)
         r.window.sendEvent(key(36, "\r", window: r.window))
         try? await Task.sleep(for: .milliseconds(80))
@@ -181,7 +181,7 @@ extension OverlayHostTests {
         let r = await rig()
         defer { teardown(r) }
         r.env.overlays.presentPopover(comboboxSpec(r))
-        _ = await waitForCatcher(r)
+        _ = await awaitKeyCatcher(r)
         r.window.sendEvent(key(8, "c", window: r.window))
         r.window.sendEvent(key(31, "o", window: r.window))
         r.window.sendEvent(key(2, "d", window: r.window))
@@ -189,7 +189,7 @@ extension OverlayHostTests {
         try? await Task.sleep(for: .milliseconds(80))
         #expect(r.recorder.calls == ["setAgent:codex"], "digitar \"cod\" destaca Codex")
         r.env.overlays.presentPopover(comboboxSpec(r))
-        _ = await waitForCatcher(r)
+        _ = await awaitKeyCatcher(r)
         r.window.sendEvent(key(53, "\u{1b}", window: r.window))
         try? await Task.sleep(for: .milliseconds(80))
         #expect(r.recorder.calls.count == 1, "Esc não escolhe")
@@ -200,7 +200,7 @@ extension OverlayHostTests {
         let r = await rig()
         defer { teardown(r) }
         r.env.overlays.presentPopover(comboboxSpec(r))
-        let catcher = await waitForCatcher(r)
+        let catcher = await awaitKeyCatcher(r)
         #expect(catcher != nil)
         // ⌘ + tecla não é digitação: não altera o type-ahead do painel.
         catcher?.keyDown(with: key(8, "c", flags: .command, window: r.window))

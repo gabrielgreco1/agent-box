@@ -29,7 +29,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         public var confirmCloseTerminal = true
         public var confirmDeleteSession = true
         /// Padrão de transição (P15, R3.2).
-        public var worktreeFolder = "~/orca/workspaces"
+        public var worktreeFolder = "~/AgentBox/worktrees"
         public var cleanSessionFolder = "~/AgentBox/sessions"
         public var branchPrefix = BranchPrefixMode.gitUser
         public var branchPrefixCustom = ""
@@ -42,7 +42,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
             askBeforeQuit = try c.decodeIfPresent(Bool.self, forKey: .askBeforeQuit) ?? true
             confirmCloseTerminal = try c.decodeIfPresent(Bool.self, forKey: .confirmCloseTerminal) ?? true
             confirmDeleteSession = try c.decodeIfPresent(Bool.self, forKey: .confirmDeleteSession) ?? true
-            worktreeFolder = try c.decodeIfPresent(String.self, forKey: .worktreeFolder) ?? "~/orca/workspaces"
+            worktreeFolder = try c.decodeIfPresent(String.self, forKey: .worktreeFolder) ?? "~/AgentBox/worktrees"
             cleanSessionFolder = try c.decodeIfPresent(String.self, forKey: .cleanSessionFolder) ?? "~/AgentBox/sessions"
             branchPrefix = try c.decodeIfPresent(BranchPrefixMode.self, forKey: .branchPrefix) ?? .gitUser
             branchPrefixCustom = try c.decodeIfPresent(String.self, forKey: .branchPrefixCustom) ?? ""

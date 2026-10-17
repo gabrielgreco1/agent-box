@@ -53,7 +53,7 @@ enum Fixture {
     static func project(_ n: Int = 1) -> Project {
         Project(name: "repo\(n)", rootPath: "/Users/x/repo\(n)", gitRemoteURL: "git@example.com:x/repo\(n).git",
                 defaultBranch: "main", worktreeRoot: "/Users/x/wt", branchPrefix: "gabriel/", color: "blue",
-                source: .orcaImport, importSourceID: "orca-\(n)", sortIndex: n, createdAt: t0, archivedAt: nil)
+                importSourceID: "import-\(n)", sortIndex: n, createdAt: t0, archivedAt: nil)
     }
 
     static func worktree(_ p: Project) -> Worktree {
@@ -86,7 +86,7 @@ enum Fixture {
         LaunchProfile(name: "Claude · Skip permissions", provider: .claude, model: "opus", effort: "high",
                       permissionMode: "bypassPermissions", addDirs: ["/a"], extraArgs: ["--x"], env: ["K": "v"],
                       scope: project == nil ? .global : .project, projectID: project?.id, isDefault: true,
-                      source: .orcaImport, createdAt: t0, updatedAt: t0)
+                      createdAt: t0, updatedAt: t0)
     }
 
     /// Migração de teste que simula uma fatia futura.

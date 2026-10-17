@@ -123,17 +123,13 @@ Fatias (01 §4.1): na Fatia 1 só existem os itens de CLI (detectado, logado ou 
 > **AC-107** · v1 · `E2E` · audit/05 P0.8, T7
 > **Dado** a imagem ausente · **Quando** o usuário clica "Download" · **Então** a imagem é baixada por digest com progresso visível no item, o onboarding segue navegável, e se o registry falhar o item oferece "Build Locally" com progresso; ao fim, o item mostra "Ready" e o digest.
 
-> **AC-108** · v1 · `XCUI` + `E2E` · R1.3, P3, PP-7
-> **Dado** `F-ORCA` · **Quando** o usuário importa com os dois toggles ligados · **Então** aparecem 6 projetos e as worktrees ativas como sessões sob cada projeto (mostrando as 5 mais recentes e "Show N more"), nenhum arquivo é movido, e o hash de todos os arquivos sob o diretório de dados do Orca é igual antes e depois.
+> **AC-108** · removido por P21 (sem importação nem convivência com o Orca).
 
-> **AC-109** · v1 · `E2E` + `XCUI` · R1.3, PP-2, P15
-> **Dado** a importação concluída · **Quando** se lista os processos filhos do daemon · **Então** não há nenhum processo de agente; cada sessão importada aparece sem tabs, e selecioná-la mostra o estado vazio de 03 §4.7 (`pane.empty`) com "New Claude Code Tab" (⌥⌘T, agente padrão), que abre o agente só depois do clique.
+> **AC-109** · removido por P21 (sem importação nem convivência com o Orca).
 
-> **AC-110** · v1 · `UNIT` + `XCUI` · R1.3
-> **Dado** `agentDefaultArgs` com `--dangerously-skip-permissions` (Claude) e `--dangerously-bypass-approvals-and-sandbox` (Codex) · **Quando** a importação termina · **Então** existem os perfis "Claude · Skip permissions" e "Codex · Bypass approvals", marcados como padrão e com o indicador de permissões puladas.
+> **AC-110** · removido por P21 (sem importação nem convivência com o Orca).
 
-> **AC-111** · v1 · `UNIT` · R1.3
-> **Dado** uma importação já feita · **Quando** o usuário clica "Import Again…" em Settings › Import · **Então** nada é duplicado; worktrees novas no Orca entram, e as já importadas são reconhecidas pelo id de origem.
+> **AC-111** · removido por P21 (sem importação nem convivência com o Orca).
 
 > **AC-112** · v1 · `E2E` com `F-HOME` · R1.5, PP-6, T10
 > **Dado** os hashes de `~/.claude/settings.json`, do script de statusline, de `~/.claude/skills`, de `~/.codex/config.toml` e de `~/.codex/hooks.json` · **Quando** o onboarding termina e o usuário lança Claude e Codex com MCP e hooks do Agent Box · **Então** todos os hashes continuam iguais e o estado dos agentes funciona (AC-601). Se os hooks do Codex por `-c` exigirem trust gravado no `config.toml` (spike S-05 de R3), o Codex aparece com a marca `estimated` em vez de o app gravar o trust: o hash continua igual em qualquer caso.
@@ -826,11 +822,9 @@ Não pertencem a uma jornada só, mas toda jornada depende deles.
 > **AC-T09** · v1 · `XCUI` + `E2E` · audit/05 P0.7, audit/07 #33
 > **Dado** uma tab com processo rodando · **Quando** o usuário aperta ⌘W · **Então** a confirmação "Close this terminal?" diz o que vai parar; confirmado, o processo termina; ⇧⌘T reabre a tab relançando com `--resume` quando há ID nativo; arquivar e apagar sessão e worktree seguem o §6.1 do 01, com checagem de alterações não publicadas.
 
-> **AC-T10** · v1 · `E2E` · RT.1, PP-7
-> **Dado** uma worktree que o Orca também registra · **Quando** o usuário apaga a sessão · **Então** o diálogo de 03 §16.5 mostra "This worktree is also open in Orca." antes de confirmar, e "Keep the branch" funciona.
+> **AC-T10** · removido por P21 (sem importação nem convivência com o Orca).
 
-> **AC-T11** · v1 · `E2E` · RT.1
-> **Dado** o app aberto a partir de um terminal do Orca (env com `ORCA_AGENT_HOOK_PORT` e `ORCA_PANE_KEY`) · **Quando** o Agent Box lança um agente · **Então** o env do agente não tem nenhuma variável `ORCA_*`, e os hooks globais do Orca não disparam para ele.
+> **AC-T11** · removido por P21 (sem importação nem convivência com o Orca).
 
 > **AC-T12** · v1 · `XCUI` · RT.3, audit/07 #51
 > **Dado** qualquer ação longa (worktree, computador, imagem, retomada em lote) · **Quando** ela falha · **Então** o erro aparece no lugar onde a ação foi pedida, com uma ação ("Try Again", "Show Log"); erros não bloqueantes aparecem como toast por 60 s com "Copy Details"; não existe alerta genérico.
@@ -899,7 +893,7 @@ Versão: v1, v1.1, later (depois) ou out (fora). A coluna "Prio." é a prioridad
 |---|---|---|---|---|---|
 | R1.1 | P0 | Onboarding como checklist de diagnóstico não bloqueante | J1 | AC-101, 102, 103, 104 | v1 |
 | R1.2 | P0 | Contexto Docker ativo; capacidade em computadores | J1 | AC-105, 106 | v1 |
-| R1.3 | P0 | Importar do Orca (só leitura) | J1 | AC-108, 109, 110, 111 | v1 |
+| R1.3 | - | Importar do Orca (removido por P21) | J1 | - | removido |
 | R1.4 | P1 | Importar CLI antigo: credenciais do `.env` com preset de proxy (v1) e runs (v1.1) | J1 | AC-118 (v1), AC-119 (v1.1) | v1 / v1.1 |
 | R1.5 | P0 | Nunca sobrescrever config global dos CLIs | J1, J4, J10 | AC-112, 114, 401, 1001 | v1 |
 | R1.6 | P0 | Detectar a skill global `agentbox` e oferecer opções | J1, J4 | AC-113, 402 | v1 |
@@ -966,7 +960,7 @@ Versão: v1, v1.1, later (depois) ou out (fora). A coluna "Prio." é a prioridad
 | R10.3 | P1 | Orçamento de proxy (substituído por P13: proxy genérico configurável e uso quando disponível, sem teto) | J4, J10 | AC-417, 418, 1004 (proxy e uso, v1); teto: AC-1005 removido | v1 / out (teto) |
 | R10.4 | P1 | Recursos Docker ao vivo e limpeza | J10 | AC-1003 (v1), AC-1007 (v1.1) | v1 / v1.1 |
 | R10.5 | P2 | Histórico de gasto exportável | — | — | later |
-| RT.1 | P0 | Convivência com o Orca | J1, JT | AC-108, 112, T10, T11 | v1 |
+| RT.1 | - | Convivência com o Orca (removido por P21) | J1, JT | AC-112 | removido |
 | RT.2 | P0 | Aceite "um dia real" | §0.4 | §0.4, AC-T26 | v1 |
 | RT.3 | P1 | Ação longa com estado no lugar e fim com ação | J3, JT | AC-306, 311, T12 | v1 |
 
@@ -976,7 +970,7 @@ Versão: v1, v1.1, later (depois) ou out (fora). A coluna "Prio." é a prioridad
 |---|---|---|---|---|
 | audit/05 P0.1 | Projeto/Repo → Worktree → Terminal; sidebar em níveis | J3, J11 | AC-315, 1106 | v1 |
 | audit/05 P0.2 | Lançador de um passo, início imediato | J3, J11 | AC-307, 313, 1101 | v1 |
-| audit/05 P0.3 | Perfis com modelo, permissão e flags | J1, J3 | AC-110, 316 | v1 |
+| audit/05 P0.3 | Perfis com modelo, permissão e flags | J1, J3 | AC-316 | v1 |
 | audit/05 P0.4 | Ambiente herdado do shell de login | J3 | AC-312 | v1 |
 | audit/05 P0.5 | Daemon de PTY: sobreviver a quit e crash, reanexar | J8 | AC-801, 802, 803 | v1 |
 | audit/05 P0.6 | Estado semântico via hooks, notificação e ordenação | J2, J6 | AC-209, 601, 602, 603 | v1 |
@@ -1067,7 +1061,7 @@ Versão: v1, v1.1, later (depois) ou out (fora). A coluna "Prio." é a prioridad
 | Decisão | Jornada | ACs | Versão |
 |---|---|---|---|
 | P2 · UI em inglês | JT | AC-T04 | v1 |
-| P3 · Importação do Orca só leitura | J1 | AC-108 a 111 | v1 |
+| P3 · Importação do Orca só leitura (removida por P21) | J1 | - | removido |
 | P4 · Agentes continuam após ⌘Q; ícone na barra de menus | J8, J6 | AC-801 a 804, 606 | v1 |
 | P5/P6 · Modo leve v1, isolado v1.1 | J4, J4b | AC-401 a 425; AC-451 a 463 | v1 / v1.1 |
 | P7 · CLI logado no container | J4b | AC-453, 454, 463 | v1.1 |
@@ -1078,7 +1072,7 @@ Versão: v1, v1.1, later (depois) ou out (fora). A coluna "Prio." é a prioridad
 | P12 · Pai envia mensagem com Enter só a filhos que criou | J4b, J5 | AC-464, 505 | v1.1 |
 | P13 · Proxy genérico configurável, sem teto | J4, J10 | AC-417, 418, 1004, 118 | v1 |
 | P14 · Aprovação visual por tela | JT | AC-T26, T25 | v1 |
-| P15 · Padrões de 01 §8 adotados | J1, J8, J11 | AC-109, 304, 801, 804, 1101, 1103 | v1 |
+| P15 · Padrões de 01 §8 adotados | J1, J8, J11 | AC-304, 801, 804, 1101, 1103 | v1 |
 | T6 · Sem leitura de clipboard por OSC 52 | JT | AC-T05 | v1 |
 | T8 · Viewer noVNC | J4 | AC-408 | v1 |
 | T9 · Egress sidecar desde a v1 | J4 | AC-417, 418, 419, 424 | v1 |

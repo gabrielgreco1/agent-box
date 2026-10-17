@@ -3,12 +3,12 @@ import Foundation
 
 /// Perfis prontos (06 §2.3). IDs fixos para que golden files e snapshots de `LaunchSpec.profileID` sejam estáveis.
 ///
-/// Padrões herdados do Orca (`settings.agentDefaultArgs`): Claude `--dangerously-skip-permissions` e Codex
+/// Padrões: Claude `--dangerously-skip-permissions` e Codex
 /// `--dangerously-bypass-approvals-and-sandbox`. Por isso "Claude · Default" e "Codex · Default" PULAM permissões, e todo
 /// lançamento efetivo assim carrega o indicador `ShieldOff` (ver `LaunchPlan.skipsPermissions`). O onboarding mostra
 /// `BuiltinProfiles.skipPermissionsNotice` e pede escolha explícita; trocar de perfil remove o bypass.
 public enum BuiltinProfiles {
-    public static let skipPermissionsNotice = "Agents run without permission prompts (same as Orca). You can change this per profile."
+    public static let skipPermissionsNotice = "Agents run without permission prompts. You can change this per profile."
 
     private static let epoch = Date(timeIntervalSince1970: 0)
 
@@ -27,9 +27,9 @@ public enum BuiltinProfiles {
     public static let codexDefault = make("A0000000-0000-4000-8000-000000000003", "Codex · Default", .codex, permission: "bypass", isDefault: true)
     public static let openCodeDefault = make("A0000000-0000-4000-8000-000000000004", "OpenCode · Default", .opencode, isDefault: true)
     public static let shell = make("A0000000-0000-4000-8000-000000000005", "Shell", .shell, isDefault: true)
-    /// Perfis que a importação do Orca cria (06 §6.2): mesmos flags, com a origem registrada.
-    public static let claudeSkipPermissions = make("A0000000-0000-4000-8000-000000000006", "Claude · Skip permissions", .claude, permission: "bypassPermissions", source: .orcaImport)
-    public static let codexBypassApprovals = make("A0000000-0000-4000-8000-000000000007", "Codex · Bypass approvals", .codex, permission: "bypass", source: .orcaImport)
+    /// Variantes explícitas que pulam permissões (mesmos flags dos perfis padrão de Claude e Codex).
+    public static let claudeSkipPermissions = make("A0000000-0000-4000-8000-000000000006", "Claude · Skip permissions", .claude, permission: "bypassPermissions")
+    public static let codexBypassApprovals = make("A0000000-0000-4000-8000-000000000007", "Codex · Bypass approvals", .codex, permission: "bypass")
 
     public static let all: [LaunchProfile] = [
         claudeDefault, claudePlan, codexDefault, openCodeDefault, shell, claudeSkipPermissions, codexBypassApprovals,

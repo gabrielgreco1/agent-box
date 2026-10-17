@@ -54,7 +54,7 @@ private let syntheticShell = """
 export FOO=bar
 export MULTI=$'line1\\nline2\\n-----END CERT-----'
 export CRLF=$'a\\r\\nb'
-export ORCA_PANE_KEY=pane ORCA_AGENT_HOOK_PORT=1 CLAUDECODE=1 AGENTBOX_PANE_ID=x TERM_PROGRAM=iTerm.app VSCODE_PID=1
+export KITTY_PANE_KEY=pane KITTY_AGENT_HOOK_PORT=1 CLAUDECODE=1 AGENTBOX_PANE_ID=x TERM_PROGRAM=iTerm.app VSCODE_PID=1
 export MY_SECRET_TOKEN=value-that-must-not-leak
 if [ "$2" = "-i" ]; then export FROM_INTERACTIVE=1; fi
 eval "${@: -1}"
@@ -96,8 +96,8 @@ private func waitForFile(_ box: Sandbox, _ name: String, deadline: Duration = .s
         #expect(vars["SSH_AUTH_SOCK"] == "/tmp/fake-agent.sock")
         #expect(vars["HTTPS_PROXY"] == "http://proxy.invalid:8080")
         #expect(vars["PATH"]?.contains("/usr/bin") == true)
-        // denylist (AC-T11): nada de ORCA_*, AGENTBOX_*, CLAUDECODE, TERM_PROGRAM*, VSCODE_*, artefatos da captura
-        for name in ["ORCA_PANE_KEY", "ORCA_AGENT_HOOK_PORT", "CLAUDECODE", "AGENTBOX_PANE_ID", "TERM_PROGRAM", "VSCODE_PID", "AB_ENV_OUT", "TERM", "PWD", "SHLVL", "_"] {
+        // denylist (AC-T11): nada de KITTY_*, AGENTBOX_*, CLAUDECODE, TERM_PROGRAM*, VSCODE_*, artefatos da captura
+        for name in ["KITTY_PANE_KEY", "KITTY_AGENT_HOOK_PORT", "CLAUDECODE", "AGENTBOX_PANE_ID", "TERM_PROGRAM", "VSCODE_PID", "AB_ENV_OUT", "TERM", "PWD", "SHLVL", "_"] {
             #expect(vars[name] == nil, "\(name) deveria ter sido removida")
         }
         #expect(result.diagnostics.banner == nil)
@@ -186,7 +186,7 @@ private func waitForFile(_ box: Sandbox, _ name: String, deadline: Duration = .s
     @Test func bothModesHangingYieldsFailedWithLaunchdFallbackAndNoOrphans() async throws {
         let box = Sandbox()
         let shell = box.script("hang", "sleep 60 &\necho $! >> \(box.path("pids"))\nwait")
-        let config = box.config(shell: shell, extra: ["ORCA_PANE_KEY": "leak"], interactive: .seconds(1), nonInteractive: .seconds(1))
+        let config = box.config(shell: shell, extra: ["KITTY_PANE_KEY": "leak"], interactive: .seconds(1), nonInteractive: .seconds(1))
         let result = await LoginShellEnvProvider(config: config).environment()
         guard case .failed(let interactive, let nonInteractive, let fallback) = result else { Issue.record("esperado failed: \(result)"); return }
         #expect(interactive == .timedOut(milliseconds: 1000))
@@ -195,7 +195,7 @@ private func waitForFile(_ box: Sandbox, _ name: String, deadline: Duration = .s
         #expect(fallback.diagnostics.banner == "Using fallback environment")
         let path = try #require(fallback.variables["PATH"])
         #expect(path.contains("/opt/homebrew/bin") && path.contains("/usr/local/bin") && path.contains("/.local/bin"))
-        #expect(fallback.variables["ORCA_PANE_KEY"] == nil)
+        #expect(fallback.variables["KITTY_PANE_KEY"] == nil)
         #expect(fallback.variables["SSH_AUTH_SOCK"] == "/tmp/fake-agent.sock")
         let pids = try #require(box.read("pids")).split(separator: "\n").compactMap { pid_t($0) }
         #expect(pids.count == 2)
@@ -283,11 +283,11 @@ private func waitForFile(_ box: Sandbox, _ name: String, deadline: Duration = .s
 
     @Test func allowlistBeatsDenylistAndExtraRulesApply() async {
         let box = Sandbox()
-        let filter = EnvFilter.default.adding(denyNames: ["FOO"], allowNames: ["ORCA_KEEP_ME"])
-        let shell = box.script("s", "export ORCA_KEEP_ME=1 ORCA_DROP=1 FOO=bar BAR=baz\neval \"${@: -1}\"")
+        let filter = EnvFilter.default.adding(denyNames: ["FOO"], allowNames: ["KITTY_KEEP_ME"])
+        let shell = box.script("s", "export KITTY_KEEP_ME=1 KITTY_DROP=1 FOO=bar BAR=baz\neval \"${@: -1}\"")
         let vars = await LoginShellEnvProvider(config: box.config(shell: shell, filter: filter)).environment().variables
-        #expect(vars["ORCA_KEEP_ME"] == "1")
-        #expect(vars["ORCA_DROP"] == nil)
+        #expect(vars["KITTY_KEEP_ME"] == "1")
+        #expect(vars["KITTY_DROP"] == nil)
         #expect(vars["FOO"] == nil)
         #expect(vars["BAR"] == "baz")
     }
@@ -295,7 +295,7 @@ private func waitForFile(_ box: Sandbox, _ name: String, deadline: Duration = .s
     @Test func defaultFilterMatchesSpecDenylist() {
         let f = EnvFilter.default
         for name in ["PWD", "OLDPWD", "SHLVL", "_", "TERM_SESSION_ID", "TERM_PROGRAM", "TERM_PROGRAM_VERSION", "ITERM_PROFILE",
-                     "WEZTERM_PANE", "KITTY_WINDOW_ID", "GHOSTTY_RESOURCES_DIR", "VSCODE_INJECTION", "ORCA_PANE_KEY", "AGENTBOX_RUN_ID",
+                     "WEZTERM_PANE", "KITTY_WINDOW_ID", "GHOSTTY_RESOURCES_DIR", "VSCODE_INJECTION", "KITTY_PANE_KEY", "AGENTBOX_RUN_ID",
                      "CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT", "CLAUDE_CODE_SSE_PORT"] {
             #expect(!f.keeps(name), "\(name)")
         }
@@ -344,7 +344,7 @@ private func exists(_ tool: String, in dirs: [String]) -> Bool {
         let pathDirs = (result.variables["PATH"] ?? "").split(separator: ":").map(String.init)
         #expect(exists("claude", in: pathDirs), "claude deve resolver pelo PATH capturado")
         #expect(exists("gh", in: pathDirs), "gh deve resolver pelo PATH capturado")
-        #expect(result.variables.keys.allSatisfy { !$0.hasPrefix("ORCA_") })
+        #expect(result.variables.keys.allSatisfy { !$0.hasPrefix("KITTY_") })
         #expect(box.runDirIsClean())
     }
 }

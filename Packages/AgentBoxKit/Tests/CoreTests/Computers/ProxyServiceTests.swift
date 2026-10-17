@@ -166,7 +166,7 @@ struct ProxyServiceTests {
             let out = URL(fileURLWithPath: dir).appendingPathComponent("slice3/T3-02/zyte-import.json")
             try FileManager.default.createDirectory(at: out.deletingLastPathComponent(), withIntermediateDirectories: true)
             let summary: [String: Any] = [
-                "source": "~/orca/projects/agentbox/.env (somente leitura; arquivo não modificado)",
+                "source": "~/.agentbox/.env (somente leitura; arquivo não modificado)",
                 "proxy": ["name": result.proxy.name, "preset": result.proxy.preset.rawValue, "host": result.proxy.host, "port": result.proxy.port,
                           "scheme": result.proxy.scheme.rawValue, "price_per_request_micros": result.proxy.pricePerRequestMicros as Any,
                           "price_per_render_micros": result.proxy.pricePerRenderMicros as Any, "secret_storage": result.proxy.secretStorage.rawValue],

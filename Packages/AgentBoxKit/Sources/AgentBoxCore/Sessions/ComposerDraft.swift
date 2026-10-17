@@ -31,7 +31,7 @@ public struct ComposerContext: Sendable {
     public var defaultBranch: String?
     /// Prefixo normalizado (`gabrielgreco1`) ou `nil` (modo `none`).
     public var branchPrefix: String?
-    /// Raiz das worktrees já com `~` expandido (`/Users/x/orca/workspaces`).
+    /// Raiz das worktrees já com `~` expandido (`/Users/x/AgentBox/worktrees`).
     public var worktreeRoot: String
     /// Raiz das sessões limpas (`/Users/x/AgentBox/sessions`).
     public var cleanSessionRoot: String
@@ -225,7 +225,7 @@ public struct ComposerDraft: Sendable, Equatable {
 
     // MARK: Resumo e pedido
 
-    /// `claude --dangerously-skip-permissions "Fix the ArcGIS pagination…" in ~/orca/workspaces/rti-platform/fix-arcgis-pagination`.
+    /// `claude --dangerously-skip-permissions "Fix the ArcGIS pagination…" in ~/AgentBox/worktrees/rti-platform/fix-arcgis-pagination`.
     public func summary(_ context: ComposerContext) -> String {
         let command = LaunchPreview.command(spec: spec(), catalog: context.catalog, projectID: projectID)
         guard let path = targetPath(context) else { return command }

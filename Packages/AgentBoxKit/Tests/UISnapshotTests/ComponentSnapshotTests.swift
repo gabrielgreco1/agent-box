@@ -181,7 +181,7 @@ import Testing
 
     @Test func composerCard() {
         let env = Self.env()
-        let project = Project(name: "rti-platform", kind: .git, rootPath: "/Users/me/orca/workspaces/rti-platform", defaultBranch: "main")
+        let project = Project(name: "rti-platform", kind: .git, rootPath: "/Users/me/AgentBox/worktrees/rti-platform", defaultBranch: "main")
         env.sidebar.apply(StoreSnapshot(projects: [project]))
         let model = ComposerModel(sidebar: env.sidebar, settings: env.settings, initial: ComposerPersistedState(), preferredProject: project.id)
         model.draft.prompt = "Fix the ArcGIS pagination: the last page is dropped when resultOffset lands on a multiple of maxRecordCount."

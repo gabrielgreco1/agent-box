@@ -51,7 +51,7 @@ import Testing
         let picker = FakeFolderPicker()
         env.composer?.picker = picker
         let project = try await env.projects.addProject(folder: repo)
-        // Pastas e prefixo isolados no temp: nada em ~/orca nem em ~/AgentBox.
+        // Pastas e prefixo isolados no temp: nada fora do temp nem em ~/AgentBox.
         _ = try await env.registry.perform(.settingsGeneralWorktreeFolder, .set(root.appendingPathComponent("wt").path))
         _ = try await env.registry.perform(.settingsGeneralCleanSessionFolder, .set(root.appendingPathComponent("sessions").path))
         _ = try await env.registry.perform(.settingsGeneralBranchPrefix, .set("custom"))

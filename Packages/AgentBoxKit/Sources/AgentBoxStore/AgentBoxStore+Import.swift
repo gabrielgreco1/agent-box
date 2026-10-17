@@ -4,7 +4,7 @@ import GRDB
 
 /// Registro de uma execução de importador (08 AR-340, tabela `import_run`).
 public struct ImportRun: Sendable, Equatable, Identifiable {
-    public enum Source: String, Sendable, CaseIterable { case agentboxJSON = "agentbox_json", orca, agentboxCLI = "agentbox_cli" }
+    public enum Source: String, Sendable, CaseIterable { case agentboxJSON = "agentbox_json", agentboxCLI = "agentbox_cli" }
 
     public var id: UUID
     public var source: Source

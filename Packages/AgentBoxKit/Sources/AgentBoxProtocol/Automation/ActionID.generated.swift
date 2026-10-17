@@ -338,9 +338,6 @@ extension ActionID {
     public static let dialogMoveToProjectConfirm = ActionID(unchecked: "dialog.moveToProject.confirm")
     public static let dialogMoveToProjectSetProject = ActionID(unchecked: "dialog.moveToProject.setProject")
     public static let dialogMoveToProjectCancel = ActionID(unchecked: "dialog.moveToProject.cancel")
-    public static let dialogAddProjectChoose = ActionID(unchecked: "dialog.addProject.choose")
-    public static let dialogAddProjectImportOrca = ActionID(unchecked: "dialog.addProject.importOrca")
-    public static let dialogAddProjectClone = ActionID(unchecked: "dialog.addProject.clone")
     public static let dialogAddProjectAddFound = ActionID(unchecked: "dialog.addProject.addFound")
     public static let dialogAddProjectStopScan = ActionID(unchecked: "dialog.addProject.stopScan")
     public static let dialogQuitKeepRunning = ActionID(unchecked: "dialog.quit.keepRunning")
@@ -696,9 +693,6 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "dialog.moveToProject.confirm"), label: "Move / Convert (§16.8)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.moveToProject.setProject"), label: "Project (combobox, §16.8)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.moveToProject.cancel"), label: "Cancel (§16.8)", shortcut: "Esc", slice: .slice1),
-        ActionSpec(id: ActionID(unchecked: "dialog.addProject.choose"), label: "Choose a Folder…", shortcut: "", slice: .slice1),
-        ActionSpec(id: ActionID(unchecked: "dialog.addProject.importOrca"), label: "Import from Orca…", shortcut: "", slice: .slice1),
-        ActionSpec(id: ActionID(unchecked: "dialog.addProject.clone"), label: "Clone from URL (§16.9)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.addProject.addFound"), label: "Add <n> Projects", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.addProject.stopScan"), label: "Stop Scan (§16.9)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.quit.keepRunning"), label: "Keep Running (§16.10)", shortcut: "↵", slice: .slice1),

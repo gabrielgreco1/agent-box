@@ -213,7 +213,7 @@ public actor SecretVault {
             }
             let env = sel.envName ?? s.defaultEnvName ?? s.name
             guard Self.isValidEnvName(env) else { skipped.append(.init(envName: env, reason: .invalidName)); continue }
-            if env.hasPrefix("AGENTBOX_") || env.hasPrefix("ORCA_") { skipped.append(.init(envName: env, reason: .reserved)); continue }
+            if env.hasPrefix("AGENTBOX_") { skipped.append(.init(envName: env, reason: .reserved)); continue }
             guard s.delivery == SecretDelivery.profileEnv.rawValue else { skipped.append(.init(envName: env, reason: .notEnvDelivery)); continue }
             if let exp = s.expiresAt, exp <= clock() { skipped.append(.init(envName: env, reason: .expired)); continue }
             let data = try await keyring.open(.init(ciphertext: s.ciphertext, nonce: s.nonce), secretID: s.id.uuidString, version: s.keyVersion)
