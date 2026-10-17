@@ -32,10 +32,11 @@ final class PaneContainerView: NSView {
     let terminalID: UUID
     let entry: TerminalEntry
     let chrome = PaneChromeModel()
-    private let headerHost: NSHostingView<AnyView>
-    private let floatingHost: NSHostingView<AnyView>
-    private let bannerHost: NSHostingView<AnyView>
-    private let cardHost: NSHostingView<AnyView>
+    private enum Chrome: CaseIterable { case header, floating, banner, card }
+    /// Views SwiftUI do chrome: só existem enquanto aparecem (uma hosting view criada já registra seus controles).
+    private var hosts: [Chrome: NSHostingView<AnyView>] = [:]
+    private let registry: ActionRegistry?
+    private let elementStore: UIElementStore?
     private let dim = NSView()
     private var tracking: NSTrackingArea?
     private var registrations: [ElementRegistration] = []
@@ -48,17 +49,8 @@ final class PaneContainerView: NSView {
         terminalID = entry.terminalID
         self.entry = entry
         self.elements = elements
-        func host(_ view: some View) -> NSHostingView<AnyView> {
-            let h = NSHostingView(
-                rootView: AnyView(
-                    view.environment(\.actionRegistry, registry).environment(\.elementStore, elements).environment(\.a11yParent, nil)))
-            h.safeAreaRegions = []
-            return h
-        }
-        headerHost = host(PaneHeaderView(model: chrome))
-        floatingHost = host(PaneFloatingButtons(model: chrome))
-        bannerHost = host(PaneBannerView(model: chrome))
-        cardHost = host(PaneCardView(model: chrome))
+        self.registry = registry
+        elementStore = elements
         super.init(frame: .zero)
         chrome.terminalID = entry.terminalID
         wantsLayer = true
@@ -66,8 +58,6 @@ final class PaneContainerView: NSView {
         dim.wantsLayer = true
         dim.layer?.backgroundColor = NSColor.black.withAlphaComponent(MotionTokens.Opacity.exitedDim).cgColor
         addSubview(entry.host)
-        for v in [dim, headerHost, floatingHost, bannerHost, cardHost] { addSubview(v) }
-        for v in [dim, headerHost, floatingHost, bannerHost, cardHost] as [NSView] { v.isHidden = true }
         updateTracking()
     }
 
@@ -123,8 +113,8 @@ final class PaneContainerView: NSView {
         chrome.state = state
         if case .failed(let detail) = state { chrome.errorDetail = detail }
         showsHeader = multiPane
-        headerHost.isHidden = !multiPane
-        floatingHost.isHidden = multiPane
+        present(.header, multiPane)
+        present(.floating, !multiPane)
         let banner: Bool
         let card: Bool
         switch state {
@@ -133,13 +123,49 @@ final class PaneContainerView: NSView {
         case .failed: (banner, card) = (false, true)
         default: (banner, card) = (false, false)
         }
-        bannerHost.isHidden = !banner
-        cardHost.isHidden = !card
+        present(.banner, banner)
+        present(.card, card)
         var dimmed = false
         if card, case .exited = state { dimmed = true }
-        dim.isHidden = !dimmed
+        presentDim(dimmed)
         setHostAlpha(focused || multiPane == false ? 1 : MotionTokens.Opacity.inactivePane)
         needsLayout = true
+    }
+
+    private func makeHost(_ kind: Chrome) -> NSHostingView<AnyView> {
+        let content: AnyView
+        switch kind {
+        case .header: content = AnyView(PaneHeaderView(model: chrome))
+        case .floating: content = AnyView(PaneFloatingButtons(model: chrome))
+        case .banner: content = AnyView(PaneBannerView(model: chrome))
+        case .card: content = AnyView(PaneCardView(model: chrome))
+        }
+        let h = NSHostingView(
+            rootView: AnyView(content.environment(\.actionRegistry, registry).environment(\.elementStore, elementStore).environment(\.a11yParent, nil)))
+        h.safeAreaRegions = []
+        return h
+    }
+
+    /// Chrome SwiftUI que não aparece sai da hierarquia e é destruído: controles ocultos não ficam em `ctl ui tree`.
+    private func present(_ kind: Chrome, _ on: Bool) {
+        if on {
+            if hosts[kind] == nil {
+                let h = makeHost(kind)
+                hosts[kind] = h
+                addSubview(h)
+                needsLayout = true
+            }
+        } else if let h = hosts.removeValue(forKey: kind) {
+            h.removeFromSuperview()
+        }
+    }
+
+    private func presentDim(_ on: Bool) {
+        if on {
+            if dim.superview == nil { addSubview(dim, positioned: .above, relativeTo: entry.host) }
+        } else if dim.superview != nil {
+            dim.removeFromSuperview()
+        }
     }
 
     private func setHostAlpha(_ alpha: CGFloat) {
@@ -162,15 +188,19 @@ final class PaneContainerView: NSView {
         super.layout()
         entry.host.frame = bounds
         let w = bounds.width
-        headerHost.frame = NSRect(x: 0, y: 0, width: w, height: PaneMetrics.headerHeight)
-        let size = floatingHost.fittingSize
-        floatingHost.frame = NSRect(x: max(0, w - size.width - DS.Space.s1), y: DS.Space.s1, width: min(size.width, w), height: size.height)
+        hosts[.header]?.frame = NSRect(x: 0, y: 0, width: w, height: PaneMetrics.headerHeight)
+        if let floating = hosts[.floating] {
+            let size = floating.fittingSize
+            floating.frame = NSRect(x: max(0, w - size.width - DS.Space.s1), y: DS.Space.s1, width: min(size.width, w), height: size.height)
+        }
         let top = showsHeader ? PaneMetrics.headerHeight : 0
-        bannerHost.frame = NSRect(x: 0, y: top, width: w, height: PaneMetrics.banner)
+        hosts[.banner]?.frame = NSRect(x: 0, y: top, width: w, height: PaneMetrics.banner)
         dim.frame = bounds
-        let cardSize = cardHost.fittingSize
-        cardHost.frame = NSRect(
-            x: ((w - cardSize.width) / 2).rounded(), y: ((bounds.height - cardSize.height) / 2).rounded(), width: cardSize.width, height: cardSize.height)
+        if let card = hosts[.card] {
+            let cardSize = card.fittingSize
+            card.frame = NSRect(
+                x: ((w - cardSize.width) / 2).rounded(), y: ((bounds.height - cardSize.height) / 2).rounded(), width: cardSize.width, height: cardSize.height)
+        }
         if registrations.count == 2 {
             registrations[0].updateFrame(of: self)
             registrations[1].updateFrame(of: entry.host.surface)
@@ -279,7 +309,7 @@ final class PaneAreaView: NSView {
     private let router: TerminalActionRouter?
     private var containers: [UUID: PaneContainerView] = [:]
     private var dividers: [UUID: PaneDividerView] = [:]
-    private let emptyHost: NSHostingView<AnyView>
+    private var emptyHost: NSHostingView<AnyView>?
     private var readyNotified: Set<UUID> = []
     private weak var lastFocusedHost: TerminalHostView?
 
@@ -290,16 +320,9 @@ final class PaneAreaView: NSView {
         self.registry = registry
         self.elements = elements
         self.router = router
-        emptyHost = NSHostingView(
-            rootView: AnyView(
-                PaneEmptyView(model: model).environment(\.actionRegistry, registry).environment(\.elementStore, elements)
-                    .environment(\.a11yParent, nil)))
-        emptyHost.safeAreaRegions = []
         super.init(frame: .zero)
         wantsLayer = true
         layer?.backgroundColor = DS.ColorSpec.canvas.nsColor.cgColor
-        addSubview(emptyHost)
-        emptyHost.isHidden = true
         model.addListener { [weak self] in self?.modelChanged() }
     }
 
@@ -329,7 +352,7 @@ final class PaneAreaView: NSView {
     override func layout() {
         super.layout()
         model.contentSize = bounds.size
-        emptyHost.frame = bounds
+        emptyHost?.frame = bounds
         position()
     }
 
@@ -337,7 +360,19 @@ final class PaneAreaView: NSView {
         let sessionLoaded = model.isLoaded
         let tab = model.activeTab
         let noTabs = sessionLoaded && model.tabs.isEmpty
-        emptyHost.isHidden = !noTabs
+        if noTabs, emptyHost == nil {
+            let h = NSHostingView(
+                rootView: AnyView(
+                    PaneEmptyView(model: model).environment(\.actionRegistry, registry).environment(\.elementStore, elements)
+                        .environment(\.a11yParent, nil)))
+            h.safeAreaRegions = []
+            h.frame = bounds
+            addSubview(h)
+            emptyHost = h
+        } else if !noTabs, let h = emptyHost {
+            h.removeFromSuperview()
+            emptyHost = nil
+        }
         for c in containers.values {
             c.isHidden = true
             c.setTreeVisible(false)

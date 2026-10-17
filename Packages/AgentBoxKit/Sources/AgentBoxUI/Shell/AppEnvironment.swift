@@ -84,6 +84,25 @@ public final class AppEnvironment {
         do { try terminalRouter.register(in: registry) } catch { log.publicError("duplicate terminal action registration") }
     }
 
+    /// Fixture de dev e evidência (`AGENTBOX_SCREEN=workspace-demo`): uma sessão limpa com uma tab de shell, selecionada.
+    /// Os splits vêm de `ctl ui action pane.splitRight` etc.
+    static let workspaceDemoFixture = "workspace-demo"
+
+    private func seedWorkspaceDemo(into store: AgentBoxStore) async throws {
+        guard try await store.sessions().isEmpty else { return }
+        let folder = StorePaths.default(environment: environmentVariables).root.appendingPathComponent("demo-session", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        var session = Session(kind: .clean, folderPath: folder.path, title: "demo-session")
+        session.managedFolder = true
+        try await store.save(session)
+        let tabID = UUID.v7(), termID = UUID.v7()
+        let terminal = Terminal(id: termID, tabID: tabID, provider: .shell, title: "demo-session", cwd: folder.path, launchSpec: LaunchSpec(provider: .shell))
+        let tab = Tab(id: tabID, sessionID: session.id, title: "demo-session", layout: .leaf(Pane(content: .terminal(termID))), focusedTerminalID: termID)
+        try await store.save(tab)
+        try await store.save(terminal)
+        try await store.setUIState(SidebarModel.uiStateKey, SidebarPersistedState(selectedSession: session.id))
+    }
+
     /// Liga o workspace (tabs e panes) à sidebar, aos overlays e ao registro de ações (T1-14). No fixture do overlay
     /// (`overlay-demo`) as ações de fechar do demo continuam suas.
     private func wireWorkspace() {
@@ -226,6 +245,7 @@ public final class AppEnvironment {
         do {
             let opened = try await AgentBoxStore.open(paths: .default(environment: environmentVariables))
             store = opened
+            if fixture == Self.workspaceDemoFixture { try await seedWorkspaceDemo(into: opened) }
             if fixture == SidebarFixtures.screenID {
                 let cast = SidebarFixtures.full()
                 try await SidebarFixtures.seed(cast, into: opened)

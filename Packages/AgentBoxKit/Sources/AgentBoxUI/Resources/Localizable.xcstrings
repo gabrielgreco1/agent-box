@@ -1640,17 +1640,6 @@
         }
       }
     },
-    "Settings…": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Settings…"
-          }
-        }
-      }
-    },
     "Show": {
       "extractionState": "manual",
       "localizations": {

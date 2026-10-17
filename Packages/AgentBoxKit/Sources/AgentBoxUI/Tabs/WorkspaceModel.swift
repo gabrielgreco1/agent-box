@@ -255,7 +255,7 @@ final class WorkspaceModel {
         let previous = persistTail
         persistTail = Task { [log] in
             await previous?.value
-            do { try await work(store) } catch { log.error("workspace persist failed: \(error)") }
+            do { try await work(store) } catch { log.error("workspace persist failed: \(error)"); }
         }
     }
 
@@ -368,7 +368,9 @@ final class WorkspaceModel {
     private func makeTerminal(tabID: UUID, spec: LaunchSpec, cwd: String, folder: String) -> Terminal {
         let adapter = ProviderAdapters.adapter(for: spec.provider)
         let title = spec.provider.isAgent ? adapter.displayName : URL(fileURLWithPath: folder).lastPathComponent
-        return Terminal(tabID: tabID, provider: spec.provider, profileID: spec.profileID, title: title, cwd: cwd, launchSpec: spec)
+        // Perfis embutidos não estão na tabela `launch_profile` (FK): só o `launchSpec` guarda o ID deles.
+        let stored = spec.profileID.flatMap { id in snapshot.profiles.contains { $0.id == id } ? id : nil }
+        return Terminal(tabID: tabID, provider: spec.provider, profileID: stored, title: title, cwd: cwd, launchSpec: spec)
     }
 
     // MARK: Rename, reordenar

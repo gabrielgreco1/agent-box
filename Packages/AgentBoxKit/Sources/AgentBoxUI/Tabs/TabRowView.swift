@@ -124,6 +124,10 @@ struct TabRowView: View {
     @ViewBuilder
     private func overflowEdge(leading: Bool, proxy: ScrollViewProxy) -> some View {
         let visible = leading ? state.canScrollLeading : state.canScrollTrailing
+        if visible { overflowControl(leading: leading, proxy: proxy) }
+    }
+
+    private func overflowControl(leading: Bool, proxy: ScrollViewProxy) -> some View {
         ZStack(alignment: leading ? .leading : .trailing) {
             LinearGradient(
                 colors: [DS.Color.chrome, DS.Color.chrome.opacity(0)], startPoint: leading ? .leading : .trailing,
@@ -144,9 +148,7 @@ struct TabRowView: View {
             .a11y(leading ? .tabsOverflowLeading : .tabsOverflowTrailing, kind: "button", label: leading ? "Scroll tabs left" : "Scroll tabs right")
         }
         .frame(height: TabMetrics.rowHeight)
-        .opacity(visible ? 1 : 0)
-        .allowsHitTesting(visible)
-        .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.fast), value: visible)
+        .transition(.opacity)
     }
 
     private func scroll(leading: Bool, proxy: ScrollViewProxy) {

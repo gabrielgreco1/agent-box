@@ -18,7 +18,7 @@ import Testing
         var model: WorkspaceModel { env.workspace }
     }
 
-    func make(tabs: Int = 1) async throws -> Rig {
+    func make(tabs: Int = 1, profileID: UUID? = nil) async throws -> Rig {
         let root = URL(fileURLWithPath: "/tmp/abw-\(UInt32.random(in: 0 ... 0xFFFFFF))", isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         let env = AppEnvironment(environment: ["AGENTBOX_HOME": root.path])
@@ -29,7 +29,7 @@ import Testing
         try await store.save(session)
         for i in 0 ..< tabs {
             let tabID = UUID.v7(), termID = UUID.v7()
-            let terminal = Terminal(id: termID, tabID: tabID, provider: .shell, title: "zsh\(i)", cwd: root.path, launchSpec: LaunchSpec(provider: .shell))
+            let terminal = Terminal(id: termID, tabID: tabID, provider: .shell, title: "zsh\(i)", cwd: root.path, launchSpec: LaunchSpec(provider: .shell, profileID: profileID))
             let tab = Tab(id: tabID, sessionID: session.id, title: "zsh\(i)", sortIndex: i, layout: .leaf(Pane(content: .terminal(termID))), focusedTerminalID: termID)
             try await store.save(tab)
             try await store.save(terminal)
@@ -63,6 +63,18 @@ import Testing
         #expect(stored.layout.terminalIDs == [first, second])
         #expect(stored.focusedTerminalID == second)
         #expect(try await rig.store.terminal(id: second) != nil)
+    }
+
+    /// Regressão: o spec de um terminal lançado guarda o ID do perfil embutido (fora da tabela `launch_profile`); o split não pode violar a FK.
+    @Test func splitOfATerminalLaunchedWithABuiltinProfileIsPersisted() async throws {
+        let builtin = try #require(UUID(uuidString: "A0000000-0000-4000-8000-000000000005"))
+        let rig = try await make(profileID: builtin)
+        defer { Task { await cleanup(rig) } }
+        guard case .created(let second) = rig.model.split(.horizontal) else { Issue.record("split failed"); return }
+        await rig.model.settlePersistence()
+        let stored = try #require(try await rig.store.terminal(id: second))
+        #expect(stored.profileID == nil)
+        #expect(stored.launchSpec.profileID == builtin)
     }
 
     @Test func splitsAreUnlimitedAndRefusedOnlyBelowTheMinimumSize() async throws {
