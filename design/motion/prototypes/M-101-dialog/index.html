@@ -1,0 +1,82 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>M-101 + M-102 · Composer nascendo do "+"</title>
+<link rel="stylesheet" href="../../lib/ui-kit.css">
+<style>#composer{left:440px}</style>
+</head><body><div id="stage"></div>
+<script src="../../lib/tokens.js"></script>
+<script src="../../lib/motion.js"></script>
+<script src="../shared/shell.js"></script>
+<script src="../shared/composer.js"></script>
+<script>
+// M-101 abrir (Esc em ESC) + M-102 fechar. Variantes (?v=A|B|C) e Reduce Motion (?rm=1).
+//  A = 04 §7.1.1 ao pe da letra: ancora no ponto do botao projetado na borda, offset de 12 pt, stagger de 3 grupos.
+//  B = morph por recorte: o cartao cresce (recorte) a partir do ponto do botao com a spring `panel`.
+//  C = linha de base Orca (zoom-in-95): escala 0,95 -> 1 no centro, sem offset, sem stagger.
+const { RM, VAR, T, el, rectIn } = Shell, M = Motion, TK = MOTION;
+const S = Shell.build();
+const C = Composer.build(S.stage);
+const card = C.card; card.style.top = (450 - card.offsetHeight / 2) + 'px';
+const btn = document.getElementById('btn-plus'), term = S.termOld, ring = document.getElementById('focusring');
+const cursor = term.querySelector('.cursor');
+const br = rectIn(btn, S.stage), cr = rectIn(card, S.stage);
+// vetor v do centro do cartao ate o centro do botao; ancora = intersecao de v com a borda do cartao
+const vx = br.cx - cr.cx, vy = br.cy - cr.cy, vl = Math.hypot(vx, vy);
+const k = Math.min((cr.w / 2) / Math.abs(vx), (cr.h / 2) / Math.abs(vy));
+const anchor = { x: cr.w / 2 + vx * k, y: cr.h / 2 + vy * k };
+const dirx = vx / vl, diry = vy / vl, OFF = M.dist('medium');
+
+const T0 = 0.25, TE = T0 + 1.5, DUR = TE + 0.55;
+const MARK = { PRESS: T0, SETTLED: T0 + TK.duration.base, ESC: TE, CLOSED: TE + TK.duration.fast };
+
+function seek(t) {
+  const u = t - T0, v = t - TE, closing = v > 0;
+  const fade = (x) => M.curve('ease', TK.policy.reducedCrossfade, x);
+  let scrim, co, cs, cx = 0, cy = 0, ox = anchor.x, oy = anchor.y, clip = '';
+  const gOp = [1, 1, 1], gY = [0, 0, 0];
+  if (!closing) {
+    if (RM) { scrim = TK.opacity.scrim * fade(u); co = fade(u); cs = 1; }
+    else {
+      scrim = TK.opacity.scrim * M.curve('ease', 'fast', u);
+      if (VAR === 'A') {
+        const c = M.curve('standard', 'base', u);
+        co = c; cs = M.lerp(M.scale('dialogFrom'), 1, c); cx = dirx * OFF * (1 - c); cy = diry * OFF * (1 - c);
+        for (let i = 0; i < 3; i++) { const g = M.curve('standard', 'base', u, (i + 1) * TK.stagger.list); gOp[i] = g; gY[i] = (1 - g) * M.dist('micro'); }
+      } else if (VAR === 'B') {
+        const p = M.spring('panel', u);
+        co = M.curve('ease', 'hover', u); cs = 1;
+        const R = 14, x0 = Math.max(0, anchor.x - R), x1 = Math.min(cr.w, anchor.x + R), y0 = Math.max(0, anchor.y - R), y1 = Math.min(cr.h, anchor.y + R);
+        const ins = [y0 * (1 - p), (cr.w - x1) * (1 - p), (cr.h - y1) * (1 - p), x0 * (1 - p)].map((x) => Math.max(0, x));
+        clip = `inset(${ins[0]}px ${ins[1]}px ${ins[2]}px ${ins[3]}px round ${M.lerp(R, 14, p)}px)`;
+        for (let i = 0; i < 3; i++) { const g = M.curve('standard', 'base', u, TK.stagger.children + i * TK.stagger.list); gOp[i] = g; gY[i] = (1 - g) * M.dist('micro'); }
+      } else {                                           // C
+        const c = M.curve('standard', 'base', u);
+        co = c; cs = M.lerp(M.scale('dialogFrom'), 1, c); ox = cr.w / 2; oy = cr.h / 2;
+      }
+    }
+  } else {
+    if (RM) { scrim = TK.opacity.scrim * (1 - fade(v)); co = 1 - fade(v); cs = 1; }
+    else {
+      const e = M.curve('exit', 'fast', v);
+      scrim = TK.opacity.scrim * (1 - M.curve('ease', 'fast', v)); co = 1 - e; cs = M.lerp(1, M.scale('exitTo'), e);
+      if (VAR === 'C') { ox = cr.w / 2; oy = cr.h / 2; }
+    }
+  }
+  scrim = Math.max(0, scrim);
+  document.getElementById('scrim').style.opacity = u < 0 ? 0 : scrim;
+  T(card, { x: cx, y: cy, s: cs, o: u < 0 ? 0 : co, ox, oy });
+  card.style.clipPath = clip || 'none';
+  C.groups.forEach((g, i) => { g.style.opacity = gOp[i]; g.style.transform = `translateY(${gY[i]}px)`; });
+  document.getElementById('composer').querySelector('h2').style.opacity = 1;
+  // foco do anel do campo Prompt (0,12 s a partir de 0,2 s) e cursor do terminal
+  ring.style.opacity = closing ? 0 : M.curve('ease', 'hover', u, TK.duration.base);
+  cursor.className = 'cursor' + (u >= 0 && !closing ? ' hollow' : '');
+  // botao "+": press 0,97 (M-801), volta em snappy; fundo ativo enquanto o dialog existe
+  let bs = 1;
+  if (u >= 0 && u < TK.duration.press) bs = M.lerp(1, M.scale('press'), M.curve('ease', 'press', u));
+  else if (u >= TK.duration.press) bs = M.lerp(M.scale('press'), 1, M.spring('snappy', u - TK.duration.press));
+  let ba = u >= 0 ? 1 : 0;
+  if (closing) ba = 1 - M.curve('ease', 'hover', v, TK.duration.fast - TK.duration.hover);
+  btn.style.transform = `scale(${bs})`; btn.style.background = `rgba(250,250,250,${0.10 * ba})`;
+}
+Shell.setup({ dur: DUR, marks: MARK, seek });
+</script></body></html>

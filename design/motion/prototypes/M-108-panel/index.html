@@ -1,0 +1,46 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>M-108 · Painel direito (Computers)</title>
+<link rel="stylesheet" href="../../lib/ui-kit.css">
+<style>#panel-btn{position:absolute;right:12px;top:6px;width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text2)}</style>
+</head><body><div id="stage"></div>
+<script src="../../lib/tokens.js"></script>
+<script src="../../lib/motion.js"></script>
+<script src="../shared/shell.js"></script>
+<script>
+// M-108: painel direito abre em 0,30 expoOut (recorte, o conteúdo não desliza) e fecha em 0,20 exitClip.
+// Terminal: resize ÚNICO no quadro 0 da abertura e no ÚLTIMO quadro do fechamento (R2, 04 §7.1.2).
+// Variantes (?v=): A = recorte cresce a partir da borda que encosta no terminal (texto de 04 §6.3/§7.1.2)
+//                  B = recorte cresce a partir da borda da janela (leitura literal inset(0 0 0 100%) → inset(0))
+const { RM, VAR, T, el, rectIn, ic } = Shell, M = Motion, TK = MOTION;
+const S = Shell.build();
+const pb = el(S.tabbar, '', '', ic('panel', 16)); pb.id = 'panel-btn';
+const PW = 380, FULL = 1160;
+const panel = el(S.main, '', `left:${FULL - PW}px`, ''); panel.id = 'rpanel';
+const tabsEl = el(panel, 'act-tabs', '', `<div>Source Control</div><div>Checks</div><div class="on">Computers</div><div>Conversations</div><div>Context</div>`);
+const ind = el(tabsEl, 'act-ind', 'left:171px;width:84px');
+[['phoenix-az', 'Accela portal · agent clicking', '$0.12', '#00bb7f'], ['austin-tx', 'Idle · 2 min ago', '$0.04', '#737373'], ['denver-co', 'Starting browser…', '$0.00', '#a1a1a1']]
+  .forEach(([n, s, c, col]) => el(panel, 'crow', '', `<div class="t"><span class="dot" style="background:${col}"></span>${n}<span class="cost">${c}</span></div><div class="s">${s}</div>`));
+const hair = el(panel, 'hair');
+panel.style.top = '36px'; panel.style.height = '840px';
+const term = S.termOld;
+const T0 = 0.25, TC = T0 + 1.4, CLOSE = TK.duration.base, OPEN = TK.duration.panel, LASTF = CLOSE - 1 / 60;
+const DUR = TC + CLOSE + 0.45;
+const MARK = { PRESS: T0, PTY_RESIZE_OPEN: T0, PANEL_OPEN_END: T0 + OPEN, CLOSE: TC, PTY_RESIZE_CLOSE: TC + LASTF, END: TC + CLOSE };
+const fadeRM = (x) => M.curve('ease', TK.policy.reducedCrossfade, x);
+function seek(t) {
+  const u = t - T0, v = t - TC;
+  let p, o = 1;
+  if (v < 0) p = RM ? 1 : M.curve('expoOut', 'panel', u);
+  else p = RM ? 1 : 1 - M.curve('exitClip', 'base', v);
+  if (RM) o = v < 0 ? fadeRM(u) : 1 - fadeRM(v);
+  const open = (u >= 0 && v < 0) || (v >= 0 && v < LASTF);
+  term.style.width = (open ? FULL - PW : FULL) + 'px';          // um único resize em cada ponta
+  const rest = (1 - p) * 100;
+  panel.style.clipPath = RM ? 'none' : (VAR === 'A' ? `inset(0 ${rest}% 0 0)` : `inset(0 0 0 ${rest}%)`);
+  panel.style.opacity = u < 0 ? 0 : o; panel.style.visibility = (u < 0 || (v >= 0 && p <= 0.0005) || (RM && o <= 0.001)) ? 'hidden' : 'visible';
+  hair.style.opacity = v < 0 ? M.curve('ease', 'hover', u, OPEN) : 0;
+  pb.style.background = `rgba(250,250,250,${(u >= 0 && v < CLOSE ? 0.10 : 0)})`;
+  pb.style.color = u >= 0 && v < CLOSE ? 'var(--text)' : 'var(--text2)';
+}
+Shell.setup({ dur: DUR, marks: MARK, seek });
+</script></body></html>

@@ -1,0 +1,212 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>M-501 → M-503 → M-504 · Agente sendo lançado</title>
+<link rel="stylesheet" href="../../lib/ui-kit.css">
+<style>#composer{left:440px} #selbg{position:absolute;left:8px;width:264px;border-radius:8px;background:var(--sidebar-selected)}
+.ring-pulse{position:absolute;width:16px;height:16px;border-radius:50%;border:1.5px solid var(--primary);pointer-events:none}
+.sweep{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,rgba(250,250,250,0),rgba(250,250,250,.14));pointer-events:none}
+#chipname{display:inline-block;overflow:hidden;white-space:nowrap}</style>
+</head><body><div id="stage"></div>
+<script src="../../lib/tokens.js"></script>
+<script src="../../lib/motion.js"></script>
+<script src="../shared/shell.js"></script>
+<script src="../shared/composer.js"></script>
+<script>
+// M-501 chip voa até a sessão → M-503 ignição (checklist ligada a eventos reais) → M-504 primeiro byte.
+// Variantes (?v=): A = chip em arco (04 §7.2.1: x standard, y expoOut, arcLift, pouso lively + clickRing)
+//                  B = chip em linha reta com spring `panel` (sem overshoot) + varredura de brilho na linha
+//                  C = só o logo voa (o nome some no composer e é revelado por recorte na linha)
+// ?rm=1: sem chip, fades de 0,15, sem halo/loops, check sem desenho.
+const { RM, VAR, T, el, rectIn, ic, claudeLogo, ring, checkSvg } = Shell, M = Motion, TK = MOTION;
+const S = Shell.build();
+const C = Composer.build(S.stage);
+const card = C.card; card.style.top = (450 - card.offsetHeight / 2) + 'px';
+const NAME = 'fix-arcgis-pagination';
+
+// ---------- fixture: eventos REAIS do core (LaunchProgress), tempos relativos a ⌘↵ (u = 0). 04 §7.2.2 blocos A e B.
+const EV = [
+  { key: 'git.fetch',     label: 'Fetching origin…',      run: 0.05, done: 1.15 },
+  { key: 'git.worktree',  label: 'Creating worktree…',    run: 1.15, done: 1.95 },
+  { key: 'launch.config', label: 'Preparing launch',      run: 1.95, done: 2.20 },
+  { key: 'cli.exec',      label: 'Starting Claude Code…', run: 2.20, done: 3.10 },   // done = primeiro byte
+];
+const T_READY = 2.35, T_BYTE = 3.10;                 // pty.spawn confirmado / primeiro byte no PTY
+const FLIGHT = TK.duration.flight, LAND = FLIGHT;
+const IGN0 = 0.583;                                  // f35: pendente seleciona + ignição começa (04 §7.2.1)
+const MIN_STEP = TK.stagger.checklistMinStep;
+// fila visual: cada linha visível >= 0,12 s, sem atrasar o processo
+const vis = []; EV.forEach((e, i) => { vis[i] = Math.max(i === 0 ? IGN0 : vis[i - 1] + MIN_STEP, e.run, IGN0); });
+const dn = EV.map((e, i) => Math.max(e.done, vis[i] + MIN_STEP));
+const T0 = 0.25, DUR = T0 + T_BYTE + 0.17 + 0.7;
+const MARK = { PRESS: T0, COMPOSER_GONE: T0 + TK.duration.fast, CHIP_LAND: T0 + LAND, IGNITION_BEGIN: T0 + IGN0 };
+EV.forEach((e, i) => { MARK['STEP_' + e.key + '_DONE'] = T0 + dn[i]; });
+MARK.T_READY = T0 + T_READY; MARK.FIRST_BYTE = T0 + T_BYTE; MARK.END = T0 + T_BYTE + 0.167;
+
+// ---------- DOM: pending row na sidebar
+const slot = S.slot;
+const pend = el(slot, 'pending', '', `<div class="l1"><span class="stat"></span><span class="nm">${NAME}</span></div><div class="l2"></div>`);
+const stat = pend.querySelector('.stat'), nm = pend.querySelector('.nm'), l1 = pend.querySelector('.l1'), l2 = pend.querySelector('.l2');
+const spin = el(stat, '', '', ring('#a1a1a1'));
+const startDot = el(stat, '', 'display:flex;align-items:center;justify-content:center', '<span class="dot" style="background:#a1a1a1"></span>');
+const workRing = el(stat, '', '', ring('#edb200'));
+const phA = el(l2, '', '', '', 'span'), phB = el(l2, '', '', '', 'span');
+const swp = el(pend, 'sweep', 'opacity:0');
+const clickRing = el(S.stage, 'ring-pulse', 'opacity:0');
+const selbg = el(S.sidebar, '', 'height:62px;top:0', ''); selbg.id = 'selbg'; S.sidebar.insertBefore(selbg, S.pad);
+S.cardSel.classList.remove('sel');
+// medições com a vaga aberta (layout final)
+slot.style.height = '40px';
+const oldCard = rectIn(S.cardSel, S.sidebar), pendR = rectIn(pend, S.sidebar), statR = rectIn(stat, S.stage), nmR = rectIn(nm, S.stage);
+const slotRowH = 40;
+slot.style.height = '0px';
+const oldCardY0 = oldCard.y - slotRowH;              // posição do card antigo com a vaga fechada
+
+// ---------- chip
+const chip = el(S.stage, 'chip', '', `${claudeLogo(16)}<span id="chipname">${NAME}</span>`);
+const cn = chip.querySelector('#chipname'), clg = chip.querySelector('.lg');
+const chipW = chip.offsetWidth, chipH = 24;
+const bR = rectIn(document.getElementById('btn-create'), S.stage);
+const START = { x: bR.cx, y: bR.cy };
+const ES = 0.85;
+// chegada: logo do chip sobre o spinner da linha (variantes A/B: chip inteiro alinhado ao início da linha)
+const END = VAR === 'C' ? { x: statR.cx, y: statR.cy } : { x: statR.cx - 8 + chipW * ES / 2, y: statR.cy };
+
+// ---------- ignição no workspace novo
+const wsNew = el(S.work, 'ws', 'display:none');
+const termNew = el(wsNew, 'term', 'width:1160px', Shell.TERM_NEW + '\n  <span class="dim">Read(crawlers/arcgis.py)</span>');
+const cover = el(wsNew, 'cover');
+const ign = el(wsNew, 'ignition');
+const logoBox = el(ign, 'ign-logo', '', '');
+const haloEl = el(logoBox, 'halo'); const logoEl = el(logoBox, '', 'position:absolute;inset:0', claudeLogo(32));
+const phases = el(ign, 'phases', '', '');
+const rows = EV.map((e, i) => {
+  const r = el(phases, 'ph', `top:${i * 28}px`, `<span class="g"></span><span class="tx">${e.label}</span>`);
+  const g = r.querySelector('.g'), sp = el(g, '', '', ring('#edb200')), ck = el(g, '', '', checkSvg('#10b981'));
+  return { r, sp, ck, path: ck.querySelector('path'), tx: r.querySelector('.tx') };
+});
+el(ign, 'ign-cancel', '', 'Cancel');
+// ---------- tab nova
+S.tabOld.style.position = 'absolute'; S.tabOld.style.left = '0';
+const tabNew = el(S.tabs, 'tab active', 'width:0', `<span class="tabin" style="display:flex;align-items:center;gap:8px;transform-origin:0 50%">${claudeLogo(14)}Claude</span><span class="x">${ic('x', 12)}</span>`);
+const tabIn = tabNew.querySelector('.tabin');
+const fadeRM = (x) => M.curve('ease', TK.policy.reducedCrossfade, x);
+
+function seek(t) {
+  const u = t - T0;
+  // ---- composer (saída M-102 sem devolver foco); sem chip no Reduce Motion
+  let co, cs, scrim;
+  if (RM) { const f = fadeRM(u); co = 1 - f; cs = 1; scrim = TK.opacity.scrim * (1 - f); }
+  else { const e = M.curve('exit', 'fast', u); co = 1 - e; cs = M.lerp(1, M.scale('exitTo'), e); scrim = TK.opacity.scrim * (1 - M.curve('ease', 'fast', u)); }
+  document.getElementById('scrim').style.opacity = u < 0 ? TK.opacity.scrim : Math.max(0, scrim);
+  T(card, { s: u < 0 ? 1 : cs, o: u < 0 ? 1 : co });
+  document.getElementById('focusring').style.opacity = 1;
+
+  // ---- vaga da nova linha na sidebar (snappy) e linhas abaixo descem
+  let slotH = 0;
+  if (RM) slotH = u >= TK.duration.fast ? slotRowH : 0;
+  else slotH = slotRowH * Math.max(0, M.spring('snappy', u - 0.0));
+  const collapsed = M.curve('expoOut', 'disclosure', u, T_READY + 0.12);     // linha da fase colapsa (fade 0,12 → altura 0,18)
+  const rowH = M.lerp(slotRowH, 26, RM ? (u >= T_READY ? 1 : 0) : collapsed);
+  const slotFinal = RM ? slotH : slotH * (rowH / slotRowH);
+  slot.style.height = slotFinal + 'px';
+  pend.style.height = rowH + 'px';
+  const l2fade = RM ? (u >= T_READY ? 0 : 1) : 1 - M.curve('ease', 'hover', u, T_READY);
+  // ---- linha pendente nasce no pouso
+  const landed = RM ? fadeRM(u - TK.duration.fast) : 0;
+  let rowO = 0, rowY = 0, nameClip = 1;
+  if (RM) rowO = landed;
+  else if (VAR === 'C') { rowO = u >= LAND ? 1 : 0; nameClip = M.curve('standard', 'base', u, LAND); }
+  else { rowO = M.curve('ease', 'press', u, LAND - 0.02); rowY = M.dist('micro') * (1 - Math.min(1, M.spring('lively', u - LAND))); }
+  l1.style.opacity = rowO; l1.style.transform = `translateY(${rowY}px)`;
+  nm.style.clipPath = VAR === 'C' && !RM ? `inset(0 ${(1 - nameClip) * 100}% 0 0)` : 'none';
+  // spinner pendente: atraso spinnerShow e fade hover; troca por indicador em T_ready, por working em T_BYTE
+  const spShow = M.curve('ease', 'hover', u, IGN0);
+  const toDot = M.curve('ease', 'disclosure', u, T_READY), toWork = M.curve('ease', 'disclosure', u, T_BYTE);
+  const ang = RM ? 0 : M.spinnerAngle(t);
+  spin.style.opacity = spShow * (1 - toDot) * (u >= IGN0 ? 1 : 0); spin.style.transform = `rotate(${ang}deg)`;
+  startDot.style.opacity = toDot * (1 - toWork);
+  workRing.style.opacity = toWork; workRing.style.transform = `rotate(${ang}deg)`;
+  // fase na linha 2: push vertical (M-204)
+  const labelAt = (x) => { let k = -1; EV.forEach((e, i) => { if (x >= e.run) k = i; }); return k < 0 ? 'Preparing…' : EV[k].label; };
+  const cur = labelAt(u); let prev = 'Preparing…', tch = 0;
+  EV.forEach((e, i) => { if (u >= e.run) { prev = i === 0 ? 'Preparing…' : EV[i - 1].label; tch = e.run; } });
+  const ph = M.curve('standard', TK.duration.disclosure - 0.02, u, tch) ;        // 0,16 standard
+  const pp = RM ? 1 : ph, mic = M.dist('micro');
+  phA.textContent = prev; phB.textContent = cur;
+  phA.style.opacity = (1 - pp) * l2fade * rowO; phA.style.transform = `translateY(${-mic * pp}px)`;
+  phB.style.opacity = pp * l2fade * rowO; phB.style.transform = `translateY(${mic * (1 - pp)}px)`;
+  l2.style.opacity = 1;
+  // seleção: pisca no pouso (0 → 12% → 0 em 0,30), depois desliza para a linha nova (snappy)
+  const selMove = RM ? (u >= 0.15 ? 1 : 0) : M.spring('snappy', u, 0.5);
+  const oldY = oldCardY0 + slotFinal, newY = pendR.y;
+  const selY = M.lerp(oldY, newY, selMove), selH = M.lerp(oldCard.h, rowH, selMove);
+  selbg.style.top = selY + 'px'; selbg.style.height = selH + 'px';
+  let flash = 0;
+  if (!RM && VAR !== 'B' || false) { const f = M.clamp((u - LAND) / 0.30); flash = f <= 0 || f >= 1 ? 0 : (f < 0.4 ? f / 0.4 : (1 - f) / 0.6) * 0.12; }
+  pend.style.background = `rgba(250,250,250,${flash})`;
+  swp.style.opacity = 0;
+  if (VAR === 'B' && !RM) { const f = M.curve('standard', TK.duration.disclosure + 0.12, u, LAND); swp.style.opacity = f > 0 && f < 1 ? 1 : 0; swp.style.width = (f * 100) + '%'; swp.style.left = '0'; swp.style.opacity = f > 0 && f < 1 ? (1 - f) : 0; }
+  // clickRing (só A) a partir do logo
+  if (VAR === 'A' && !RM && u >= LAND) {
+    const q = u - LAND, rs = M.keyframes('clickRing', q, 'scale'), ro = q > TK.keyframes.clickRing.duration ? 0 : M.lerp(0.9, 0, M.bez('cssEaseOut')(q / TK.keyframes.clickRing.duration));
+    clickRing.style.left = (statR.cx - 8) + 'px'; clickRing.style.top = (statR.cy - 8) + 'px';
+    clickRing.style.transform = `scale(${rs})`; clickRing.style.opacity = ro;
+  } else clickRing.style.opacity = 0;
+
+  // ---- chip
+  if (RM || u < 0 || u >= LAND + 0.08) chip.style.visibility = 'hidden';
+  else {
+    chip.style.visibility = 'visible';
+    let px, py, s, lift = 0, o = 1;
+    if (VAR === 'B') { const p = M.spring('panel', u); px = py = p; s = M.lerp(1, ES, p); }
+    else { px = M.curve('standard', 'flight', u); py = M.curve('expoOut', 'flight', u); s = M.lerp(1, ES, px); lift = TK.distance.arcLift * Math.sin(Math.PI * M.clamp(u / FLIGHT)); }
+    const x = M.lerp(START.x, END.x, px), y = M.lerp(START.y, END.y, py) - (VAR === 'B' ? 0 : lift);
+    if (VAR === 'C') {                                // só o logo viaja; o nome some no composer
+      cn.style.opacity = 1 - M.curve('exit', 'fast', u); cn.style.maxWidth = (chipW * (1 - M.curve('exit', 'fast', u))) + 'px';
+      chip.style.background = `rgba(229,229,229,${1 - M.curve('exit', 'fast', u)})`;
+      chip.style.boxShadow = 'none';
+    }
+    if (u > LAND) o = 1 - M.curve('ease', 'press', u, LAND);          // matched geometry 0,08
+    const w = VAR === 'C' ? 16 + 12 : chipW;
+    chip.style.opacity = o;
+    chip.style.transform = `translate(${x - chip.offsetWidth * s / 2}px,${y - chipH * s / 2}px) scale(${s})`;
+    chip.style.transformOrigin = '0 0';
+  }
+
+  // ---- workspace antigo some em 0,08 (f30), novo (ignição) entra
+  const oldO = 1 - (RM ? fadeRM(u - 0.5) : M.curve('exit', 'press', u, 0.5));
+  S.wsOld.style.opacity = oldO; S.tabOld.style.opacity = oldO; S.tabOld.style.visibility = oldO <= 0.001 ? 'hidden' : 'visible';
+  wsNew.style.display = u >= IGN0 - 0.001 ? 'block' : 'none';
+  // logo + halo (breath) e linhas do checklist
+  const logoIn = RM ? fadeRM(u - IGN0) : M.curve('standard', 'base', u, IGN0);
+  const outP = RM ? fadeRM(u - T_BYTE) : M.curve('exit', 'hover', u, T_BYTE);
+  logoBox.style.opacity = logoIn * (1 - outP);
+  logoBox.style.transform = `translateY(${(RM ? 0 : (1 - logoIn) * mic) - (RM ? 0 : outP * mic)}px)`;
+  haloEl.style.opacity = RM ? 0.65 : M.lerp(TK.loop.halo.opacity[0], TK.loop.halo.opacity[1], M.halo(t));
+  haloEl.style.transform = RM ? 'none' : `scale(${M.lerp(TK.loop.halo.scale[0], TK.loop.halo.scale[1], M.halo(t))})`;
+  rows.forEach((r, i) => {
+    const a = RM ? fadeRM(u - vis[i]) : M.curve('standard', 'base', u, vis[i]);
+    r.r.style.opacity = a * (1 - outP); r.r.style.transform = `translateY(${RM ? -outP * mic * 0 : (1 - a) * mic - outP * mic}px)`;
+    const d = RM ? (u >= dn[i] ? 1 : 0) : M.curve('expoOut', 'medium', u, dn[i]);
+    r.path.style.strokeDashoffset = 1 - d;
+    const done = u >= dn[i];
+    r.sp.style.opacity = done ? 0 : 1; r.sp.style.transform = `rotate(${ang}deg)`;
+    r.ck.style.opacity = done ? 1 : 0;
+    r.tx.style.opacity = 1; r.r.style.color = done ? 'var(--text2)' : 'var(--text)';
+  });
+  // cobertura do terminal 1 → 0 (0,16 standard) no primeiro byte
+  cover.style.opacity = u >= T_BYTE ? 1 - (RM ? fadeRM(u - T_BYTE) : M.curve('standard', 0.16, u, T_BYTE)) : 1;
+  ign.style.background = 'transparent';
+  ign.style.visibility = (u >= T_BYTE + 0.13) ? 'hidden' : 'visible';
+
+  // ---- tab "Claude" (M-301) em T_ready
+  const tw = RM ? (u >= T_READY ? 180 : 0) : 180 * Math.max(0, M.spring('snappy', u, T_READY));
+  tabNew.style.width = tw + 'px';
+  const tc = RM ? fadeRM(u - T_READY) : M.curve('standard', 'base', u, T_READY);
+  tabIn.style.opacity = tc; tabIn.style.transform = RM ? 'none' : `translateY(${-TK.distance.hairline * (1 - tc)}px) scaleX(${M.lerp(M.scale('tabFromX'), 1, tc)})`;
+  tabNew.querySelector('.x').style.opacity = tc;
+  tabNew.style.visibility = tw < 1 ? 'hidden' : 'visible';
+  S.tplus.style.left = (Math.max(tw, 0) + 12) + 'px'; if (u < T_READY) S.tplus.style.left = '12px';
+  S.tplus.style.opacity = 1;
+}
+Shell.setup({ dur: DUR, marks: MARK, seek });
+</script></body></html>
