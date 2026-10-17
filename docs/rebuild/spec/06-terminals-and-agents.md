@@ -135,6 +135,8 @@ O input não é uma requisição JSON: vai em frames `0x03` (com `origin`), sem 
 
 **Capabilities iniciais (minor 0)**: `coldLog`, `osc133`, `textSnapshot`, `inputOrigin`, `drainWhenIdle`.
 
+**Precisões da implementação (T1-04, `AgentBoxProtocol`)**: (1) `len` conta os bytes de `kind` + payload (o prefixo de 4 bytes não entra); `len == 0` é `badRequest`; `len` > 1 MiB responde `frameTooLarge` assim que o prefixo chega, sem esperar o corpo. (2) `ok` leva o campo `result` (`created` com `session`+`spawned`, `list` com `sessions`, `pong`, `textSnapshot`); ausente = resposta vazia. (3) `attachSnapshot` também responde `attach` por `sinceSeq` atendido pelo ring, com `resumed:true` e `modesPreamble` vazio. (4) `error` sem `id` é erro de conexão. (5) Campos e capabilities desconhecidos são ignorados na leitura; `op`, evento, código de erro ou `client.kind` desconhecidos falham a decodificação (`badRequest`). (6) Negociação: versão = major do par e `min(minor)`; capabilities = interseção; N-1 só por cliente de compatibilidade que anuncia a major anterior no socket antigo. As fixtures normativas estão em `Tests/ProtocolTests/Fixtures/` (`v1/`, `n-1/`, `invalid/`, `frames/`).
+
 ### 1.4 Ciclo de vida da sessão
 
 ```

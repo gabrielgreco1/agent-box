@@ -20,8 +20,8 @@ let snapshotTesting: Target.Dependency = .product(name: "SnapshotTesting", packa
 func lib(_ name: String, _ deps: [Target.Dependency], ui: Bool = false, resources: [Resource] = []) -> Target {
     .target(name: name, dependencies: deps, resources: resources, swiftSettings: ui ? mainActorSettings : nonisolatedSettings)
 }
-func tests(_ name: String, _ deps: [Target.Dependency]) -> Target {
-    .testTarget(name: name, dependencies: deps, swiftSettings: nonisolatedSettings)
+func tests(_ name: String, _ deps: [Target.Dependency], resources: [Resource] = []) -> Target {
+    .testTarget(name: name, dependencies: deps, resources: resources, swiftSettings: nonisolatedSettings)
 }
 
 let package = Package(
@@ -64,8 +64,8 @@ let package = Package(
             dependencies: ["AgentBoxProtocol", "AgentBoxPlatform", argumentParser],
             swiftSettings: nonisolatedSettings
         ),
-        tests("ProtocolTests", ["AgentBoxProtocol"]),
-        tests("PlatformTests", ["AgentBoxPlatform"]),
+        tests("ProtocolTests", ["AgentBoxProtocol"], resources: [.copy("Fixtures")]),
+        tests("PlatformTests", ["AgentBoxPlatform", "AgentBoxProtocol"]),
         tests("StoreTests", ["AgentBoxStore", "AgentBoxProtocol", "AgentBoxPlatform", grdb]),
         tests("CoreTests", ["AgentBoxCore", "AgentBoxProtocol"]),
         tests("DockerTests", ["AgentBoxDocker"]),
