@@ -1,0 +1,5 @@
+No "base" settings found
+No "debug config" settings found
+No "release config" settings found
+No "macOS" settings found
+gen: AgentBox.xcodeproj gerado

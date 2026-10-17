@@ -1,0 +1,90 @@
+# XcodeGen 2.46.0 (instalado por scripts/bootstrap.sh em .tools/). O .xcodeproj gerado não é versionado (AR-120).
+# O app só contém @main, Info.plist e assets; todo o código vive em Packages/AgentBoxKit (AR-121).
+# agentboxd e agentbox (executáveis SPM) são compilados por scripts/build.sh e embutidos em Contents/MacOS.
+name: AgentBox
+options:
+  bundleIdPrefix: app.agentbox
+  deploymentTarget:
+    macOS: "15.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
+    GCC_TREAT_WARNINGS_AS_ERRORS: YES
+    MACOSX_DEPLOYMENT_TARGET: "15.0"
+    ENABLE_HARDENED_RUNTIME: YES
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+    SWIFT_UPCOMING_FEATURE_NONISOLATED_NONSENDING_BY_DEFAULT: YES
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    # Assinatura é feita por scripts/build.sh (de dentro para fora, AR-531).
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "-"
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    ALWAYS_SEARCH_USER_PATHS: NO
+packages:
+  AgentBoxKit:
+    path: Packages/AgentBoxKit
+targets:
+  AgentBox:
+    type: application
+    platform: macOS
+    sources:
+      - path: App
+    dependencies:
+      - package: AgentBoxKit
+        product: AgentBoxPlatform
+      # AgentBoxUI (-> SwiftTerm, shaders Metal) entra quando o Metal Toolchain estiver instalado
+      # (xcodebuild -downloadComponent MetalToolchain); ver evidência T1-01.
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleName: Agent Box
+        CFBundleDisplayName: Agent Box
+        CFBundleExecutable: Agent Box
+        CFBundlePackageType: APPL
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSMinimumSystemVersion: "15.0"
+        LSApplicationCategoryType: public.app-category.developer-tools
+        NSHighResolutionCapable: true
+        NSPrincipalClass: NSApplication
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.agentbox.mac
+        PRODUCT_NAME: Agent Box
+        # Executável 'Agent Box' (com espaço): 'AgentBox' colidiria com o helper Contents/MacOS/agentbox
+        # em volumes case-insensitive (APFS padrão).
+        EXECUTABLE_NAME: Agent Box
+        PRODUCT_MODULE_NAME: AgentBox
+        GENERATE_INFOPLIST_FILE: NO
+        ENABLE_APP_SANDBOX: NO
+        # Sem entitlements (AR-532).
+  AgentBoxUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - path: AppUITests
+    dependencies:
+      - target: AgentBox
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.agentbox.mac.uitests
+        TEST_TARGET_NAME: AgentBox
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  AgentBox:
+    build:
+      targets:
+        AgentBox: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - AgentBoxUITests
+    archive:
+      config: Release

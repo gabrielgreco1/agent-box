@@ -99,7 +99,7 @@ PY
     if [ -n "$got" ] && [ "$got" != "$want" ]; then
       fail "$f fixa $1 em $got; tool-versions.txt exige $want"
     fi
-  done < <(find "$ROOT" \( -path "$ROOT/legacy" -o -path '*/.build' -o -path "$ROOT/.tools" -o -path "$ROOT/.git" \) -prune -o -name Package.resolved -print)
+  done < <(find "$ROOT" \( -path "$ROOT/legacy" -o -path '*/.build' -o -path "$ROOT/.tools" -o -path "$ROOT/.git" -o -path "$ROOT/build" -o -path '*/DerivedData' -o -path '*/SourcePackages' \) -prune -o -name Package.resolved -print)
 }
 check_pin swiftterm SWIFTTERM_VERSION
 check_pin grdb.swift GRDB_VERSION

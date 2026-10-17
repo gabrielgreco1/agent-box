@@ -1,0 +1,37 @@
+== build/AgentBox/Agent Box.app
+--prepared:/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentboxd
+--validated:/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentboxd
+--prepared:/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentbox
+--validated:/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentbox
+build/AgentBox/Agent Box.app: valid on disk
+build/AgentBox/Agent Box.app: satisfies its Designated Requirement
+Executable=/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/Agent Box
+# designated => cdhash H"94841ac188604706d86d473bdb4499ed524a0d6c" or cdhash H"b529a9b1cdd9f1190d97f7d671269b99fe12fdcf"
+Identifier=app.agentbox.mac
+CodeDirectory v=20500 size=401 flags=0x10002(adhoc,runtime) hashes=6+3 location=embedded
+TeamIdentifier=not set
+== build/AgentBox/Agent Box.app/Contents/MacOS/agentbox
+build/AgentBox/Agent Box.app/Contents/MacOS/agentbox: valid on disk
+build/AgentBox/Agent Box.app/Contents/MacOS/agentbox: satisfies its Designated Requirement
+Executable=/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentbox
+# designated => cdhash H"28942c1c32281d8c7e4535632dc887fca955cb45"
+Identifier=app.agentbox.cli
+CodeDirectory v=20500 size=3377 flags=0x10002(adhoc,runtime) hashes=100+2 location=embedded
+TeamIdentifier=not set
+== build/AgentBox/Agent Box.app/Contents/MacOS/agentboxd
+build/AgentBox/Agent Box.app/Contents/MacOS/agentboxd: valid on disk
+build/AgentBox/Agent Box.app/Contents/MacOS/agentboxd: satisfies its Designated Requirement
+Executable=/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentboxd
+# designated => cdhash H"21400ccfc72d0afd5626ed694241504545217dda"
+Identifier=app.agentbox.ptyd
+CodeDirectory v=20500 size=5714 flags=0x10002(adhoc,runtime) hashes=173+2 location=embedded
+TeamIdentifier=not set
+
+total 9048
+-rwxr-xr-x@ 1 gabriel  staff   167792 Oct 17 00:36 Agent Box
+-rwxr-xr-x@ 1 gabriel  staff  1638160 Oct 17 00:36 agentbox
+-rwxr-xr-x@ 1 gabriel  staff  2823920 Oct 17 00:36 agentboxd
+  "CFBundleExecutable" => "Agent Box"
+  "CFBundleIdentifier" => "app.agentbox.mac"
+  "CFBundleName" => "Agent Box"
+  "LSMinimumSystemVersion" => "15.0"

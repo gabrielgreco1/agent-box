@@ -1,0 +1,54 @@
+[0/3] Write swift-version--58304C5D6DBC2206.txt
+[0/1] Planning build
+[1/1] Compiling plugin GenerateManual
+[2/2] Compiling plugin GenerateDoccReference
+[3/3] Compiling plugin SwiftTermBuildInfoPlugin
+Building for debugging...
+[3/9] Write swift-version--58304C5D6DBC2206.txt
+[4/8] Generate SwiftTerm build information
+Build complete! (5.27s)
+Test Suite 'All tests' started at 2026-10-17 00:35:56.273.
+Test Suite 'All tests' passed at 2026-10-17 00:35:56.274.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+◇ Test run started.
+↳ Testing Library Version: 1501
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite DaemonSmoke started.
+◇ Suite PlatformTestsSmoke started.
+◇ Suite TerminalCoreTestsSmoke started.
+◇ Suite LogFacadeTests started.
+◇ Suite DockerTestsSmoke started.
+◇ Test daemonDependenciesLink() started.
+◇ Suite ProtocolTestsSmoke started.
+◇ Suite UISnapshotSmoke started.
+◇ Test subsystemsMatchCanonicalIdentifiers() started.
+◇ Test moduleLinks() started.
+◇ Suite CoreTestsSmoke started.
+◇ Suite StoreTestsSmoke started.
+◇ Test moduleLinks() started.
+◇ Test facadeKeepsCategory() started.
+◇ Test moduleLinks() started.
+◇ Test uiModulesLink() started.
+◇ Test moduleLinks() started.
+◇ Test moduleLinks() started.
+✔ Test moduleLinks() passed after 0.001 seconds.
+✔ Test moduleLinks() passed after 0.001 seconds.
+✔ Test subsystemsMatchCanonicalIdentifiers() passed after 0.001 seconds.
+✔ Test moduleLinks() passed after 0.001 seconds.
+✔ Test daemonDependenciesLink() passed after 0.001 seconds.
+◇ Test moduleLinks() started.
+✔ Test moduleLinks() passed after 0.001 seconds.
+✔ Suite TerminalCoreTestsSmoke passed after 0.001 seconds.
+✔ Suite PlatformTestsSmoke passed after 0.001 seconds.
+✔ Suite DockerTestsSmoke passed after 0.001 seconds.
+✔ Test moduleLinks() passed after 0.001 seconds.
+✔ Test uiModulesLink() passed after 0.001 seconds.
+✔ Suite DaemonSmoke passed after 0.001 seconds.
+✔ Suite ProtocolTestsSmoke passed after 0.001 seconds.
+✔ Test moduleLinks() passed after 0.001 seconds.
+✔ Test facadeKeepsCategory() passed after 0.001 seconds.
+✔ Suite UISnapshotSmoke passed after 0.001 seconds.
+✔ Suite CoreTestsSmoke passed after 0.001 seconds.
+✔ Suite StoreTestsSmoke passed after 0.001 seconds.
+✔ Suite LogFacadeTests passed after 0.001 seconds.
+✔ Test run with 10 tests in 9 suites passed after 0.001 seconds.

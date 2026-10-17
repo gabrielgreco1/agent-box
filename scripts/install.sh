@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# install.sh - instala o app em /Applications com rollback (08 AR-902).
+#
+# Contrato
+#   Padrão   : roda build.sh; se o app estiver aberto, pede encerramento (osascript quit) e espera; NUNCA mata
+#              o daemon; guarda a versão instalada em ~/Library/Application Support/AgentBox/previous/;
+#              copia o novo bundle para um temporário em /Applications e troca por rename atômico; abre o app
+#              (a menos que --no-open).
+#   --rollback : restaura a versão guardada em previous/ (a atual vira previous/ para permitir desfazer).
+#   Env      : AGENTBOX_INSTALL_DIR (padrão /Applications), AGENTBOX_HOME (padrão ~/Library/Application Support/AgentBox),
+#              AGENTBOX_BUILD_DIR (saída do build.sh).
+# Uso: scripts/install.sh [--no-open] [--rollback] [--help]
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+usage() { sed -n '2,/^set -euo/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; }
+fail() { echo "ERRO: $*" >&2; exit 1; }
+
+INSTALL_DIR="${AGENTBOX_INSTALL_DIR:-/Applications}"
+AB="${AGENTBOX_HOME:-$HOME/Library/Application Support/AgentBox}"
+PREV_DIR="$AB/previous"
+BUILD_APP="${AGENTBOX_BUILD_DIR:-$ROOT/build/AgentBox}/Agent Box.app"
+TARGET="$INSTALL_DIR/Agent Box.app"
+BUNDLE_ID=app.agentbox.mac
+OPEN=1; ROLLBACK=0
+for a in "$@"; do
+  case "$a" in
+    -h|--help) usage; exit 0 ;;
+    --no-open) OPEN=0 ;;
+    --rollback) ROLLBACK=1 ;;
+    *) usage >&2; exit 2 ;;
+  esac
+done
+
+quit_app() {
+  if pgrep -f "$TARGET/Contents/MacOS/Agent Box" >/dev/null 2>&1; then
+    echo "install: encerrando o app (o daemon continua vivo)"
+    osascript -e "tell application id \"$BUNDLE_ID\" to quit" >/dev/null 2>&1 || true
+    for _ in $(seq 1 60); do
+      pgrep -f "$TARGET/Contents/MacOS/Agent Box" >/dev/null 2>&1 || return 0
+      sleep 0.5
+    done
+    fail "o app não encerrou em 30 s; feche-o e rode de novo (o daemon não é morto)"
+  fi
+}
+
+swap_in() { # source_bundle ; guarda a instalada em previous/ e troca por rename atômico
+  local src="$1" tmp="$INSTALL_DIR/.Agent Box.app.new.$$" keep="$PREV_DIR/Agent Box.app.keep.$$"
+  mkdir -p "$PREV_DIR"; chmod 700 "$AB" 2>/dev/null || true
+  rm -rf "$tmp"; ditto "$src" "$tmp"
+  codesign --verify --strict "$tmp" || { rm -rf "$tmp"; fail "bundle novo não passa em codesign --verify --strict"; }
+  if [ -d "$TARGET" ]; then
+    ditto "$TARGET" "$keep"
+    # rename atômico de diretórios: troca os dois de uma vez
+    if ! python3 -I - "$tmp" "$TARGET" <<'PY'
+import ctypes, sys, os
+libc = ctypes.CDLL(None, use_errno=True)
+RENAME_SWAP = 2
+r = libc.renamex_np(sys.argv[1].encode(), sys.argv[2].encode(), RENAME_SWAP)
+sys.exit(0 if r == 0 else 1)
+PY
+    then
+      rm -rf "$tmp" "$keep"; fail "troca atômica falhou; instalação anterior intacta"
+    fi
+    rm -rf "$tmp"
+    rm -rf "$PREV_DIR/Agent Box.app"; mv "$keep" "$PREV_DIR/Agent Box.app"
+  else
+    mv "$tmp" "$TARGET"
+  fi
+}
+
+if [ "$ROLLBACK" = 1 ]; then
+  [ -d "$PREV_DIR/Agent Box.app" ] || fail "nenhuma versão anterior em $PREV_DIR"
+  quit_app
+  ROLL_SRC="$PREV_DIR/Agent Box.app.rollback.$$"
+  mv "$PREV_DIR/Agent Box.app" "$ROLL_SRC"
+  swap_in "$ROLL_SRC"
+  rm -rf "$ROLL_SRC"
+  echo "install: rollback concluído -> $TARGET"
+else
+  "$ROOT/scripts/build.sh"
+  [ -d "$BUILD_APP" ] || fail "build não produziu $BUILD_APP"
+  quit_app
+  swap_in "$BUILD_APP"
+  echo "install: instalado -> $TARGET (anterior em $PREV_DIR)"
+fi
+codesign --verify --strict "$TARGET"
+[ "$OPEN" = 1 ] && open "$TARGET"
+exit 0

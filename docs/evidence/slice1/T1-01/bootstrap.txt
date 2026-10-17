@@ -1,0 +1,5 @@
+ok: Xcode 26.3
+ok: ripgrep 15.1.0
+ok: xcodegen 2.46.0 (.tools/bin/xcodegen)
+ok: pins de Package.resolved (nenhum divergente)
+bootstrap: OK
