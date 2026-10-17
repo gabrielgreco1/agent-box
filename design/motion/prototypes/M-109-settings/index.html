@@ -1,0 +1,46 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>M-109 · Settings</title>
+<link rel="stylesheet" href="../../lib/ui-kit.css">
+</head><body><div id="stage"></div>
+<script src="../../lib/tokens.js"></script>
+<script src="../../lib/motion.js"></script>
+<script src="../shared/shell.js"></script>
+<script>
+// M-109: página do centro. Conteúdo antigo 1 → 0 em 0,08 (exit); Settings entra a partir de f5 com
+// cssEaseOut 0,18 (y +8 → 0, fade). Sidebar e tab bar ficam paradas. Trocar de seção repete só a entrada
+// do Settings (sem fade de saída: a seção antiga é substituída no f0).
+const { RM, VAR, T, el, ic } = Shell, M = Motion, TK = MOTION;
+const S = Shell.build();
+const page = el(S.work, '', '', ''); page.id = 'settings';
+const nav = el(page, 'snav', '', ['General', 'Appearance', 'Agents', 'Git', 'Computers', 'Notifications'].map((x, i) => `<div class="${i === 0 ? 'on' : ''}">${x}</div>`).join(''));
+const sp = el(page, 'spage', '', '');
+const rowsHtml = (rows) => rows.map(([a, b, c]) => `<div class="srow"><div><div class="a">${a}</div><div class="b">${b}</div></div><div class="ctl">${c}<span class="r">${ic('chev', 14)}</span></div></div>`).join('');
+const secG = el(sp, 'sinner', '', `<h1>General</h1><p>Startup and window behaviour.</p>${rowsHtml([['Open at login', 'Keep agents running in the background', 'On'], ['Default project', 'Used by New Session', 'otter'], ['Confirm before quitting', 'Ask when agents are running', 'Keep Running']])}`);
+const secA = el(sp, 'sinner', '', `<h1>Agents</h1><p>Installed agents and launch profiles.</p>${rowsHtml([['Default agent', 'Used by New Session and ⌥⌘T', 'Claude Code'], ['Claude Code', 'Profile: Skip permissions', 'Installed'], ['Codex', 'Profile: Default', 'Not logged in']])}`);
+const gear = S.sidebar.querySelector('.sb-footer .ic');
+const T0 = 0.25, TS = T0 + 1.2, DUR = TS + 0.18 + 0.5;
+const MARK = { CLICK: T0, OLD_GONE: T0 + TK.duration.press, ENTER_BEGIN: T0 + 5 / 60, SETTINGS_END: T0 + 5 / 60 + 0.18, SECTION_SWITCH: TS, END: TS + 0.18 };
+const fadeRM = (x) => M.curve('ease', TK.policy.reducedCrossfade, x);
+function enter(e, x) {                                     // x = tempo desde o início da entrada
+  if (RM) { T(e, { o: fadeRM(x) }); return; }
+  const c = M.curve('cssEaseOut', 'disclosure', x);
+  T(e, { y: (1 - c) * M.dist('small'), o: c });
+}
+function seek(t) {
+  const u = t - T0;
+  const oldO = u < 0 ? 1 : 1 - (RM ? fadeRM(u) : M.curve('exit', 'press', u));
+  S.termOld.style.opacity = oldO;
+  const start = RM ? 0 : 5 / 60;                            // f5 (83 ms), 04 §7.1.3
+  page.style.visibility = u < start ? 'hidden' : 'visible';
+  enter(page, u - start);
+  if (RM) page.style.opacity = u < 0 ? 0 : fadeRM(u);
+  const second = t >= TS;
+  secG.style.display = second ? 'none' : 'block'; secA.style.display = second ? 'block' : 'none';
+  nav.children[0].className = second ? '' : 'on'; nav.children[2].className = second ? 'on' : '';
+  secG.style.opacity = 1; secG.style.transform = 'none';
+  if (second) { page.style.opacity = 1; page.style.transform = 'none'; enter(secA, t - TS); }
+  else T(secA, { o: 1 });
+  gear.parentNode.style.color = u >= 0 ? 'var(--text)' : 'var(--nav-icon)';
+}
+Shell.setup({ dur: DUR, marks: MARK, seek });
+</script></body></html>

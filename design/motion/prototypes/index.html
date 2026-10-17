@@ -1,0 +1,12 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Agent Box motion · protótipos</title>
+<style>body{background:#0a0a0a;color:#fafafa;font:13px -apple-system,sans-serif;margin:24px}h2{margin:32px 0 8px}p{color:#a1a1a1}
+.row{display:flex;gap:12px;flex-wrap:wrap}figure{margin:0;width:calc(50% - 6px);min-width:420px}video{width:100%;background:#000;border-radius:8px}figcaption{padding:4px 2px;color:#a1a1a1}button{padding:6px 12px}</style></head><body>
+<h1>Protótipos de motion · obrigatórios 1 (abrir telas) e 2 (agente sendo lançado)</h1>
+<p>60 fps, sem motion blur. Cada vídeo tem versão -slow4x.mp4 na mesma pasta de docs/evidence/motion. Vídeos renderizados por render_all.sh.</p>
+<button onclick="document.querySelectorAll('video').forEach(v=>{v.currentTime=0;v.play()})">Reproduzir todos</button>
+<script>
+const B = "../../../docs/evidence/motion/";
+const G=[["M-101-dialog","M-101 + M-102 · Composer nasce do +",["A","B","C","A-rm"]],["M-108-panel","M-108 · Painel direito",["A","B","A-rm"]],["M-109-settings","M-109 · Settings",["A","A-rm"]],["M-501-launch","M-501 → M-504 · Agente sendo lançado",["A","B","C","A-rm"]]];
+const L={A:"A (spec)",B:"B",C:"C","A-rm":"Reduce Motion"};
+for(const [d,t,vs] of G){document.write(`<h2>${t}</h2><div class="row">`+vs.map(v=>`<figure><video src="${B}${d}/${v}.mp4" controls loop muted playsinline></video><figcaption>${L[v]}${d=="M-108-panel"&&v=="B"?" (recorte a partir da borda da janela)":d=="M-108-panel"&&v=="A"?" (recorte a partir da borda do terminal)":""}</figcaption></figure>`).join("")+`</div>`)}
+</script></body></html>
