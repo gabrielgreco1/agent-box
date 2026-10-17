@@ -42,6 +42,7 @@ class AdminTests(unittest.TestCase):
                 write_cfg()
                 proxy = EgressProxy(load_config(secrets), logs)
                 admin = AdminServer(proxy, TOKEN, config_loader=lambda: load_config(secrets))
+                self.admin = admin
                 server = await asyncio.start_server(admin.handle, "127.0.0.1", 0)
                 try:
                     await fn(server.sockets[0].getsockname()[1], proxy, write_cfg, logs)
@@ -49,6 +50,41 @@ class AdminTests(unittest.TestCase):
                     server.close()
 
         asyncio.run(body())
+
+    def test_vnc_tunnel_forwards_the_upgrade_without_the_bearer_and_refuses_plain_requests(self):
+        async def fn(port, proxy, write_cfg, logs):
+            seen = {}
+
+            async def runtime(r, w):
+                head = await r.readuntil(b"\r\n\r\n")
+                seen["head"] = head.decode()
+                w.write(b"HTTP/1.1 101 Switching Protocols\r\n\r\n")
+                await w.drain()
+                data = await r.read(100)
+                w.write(b"echo:" + data)
+                await w.drain()
+                w.close()
+
+            rt = await asyncio.start_server(runtime, "127.0.0.1", 0)
+            proxy_admin = self.admin
+            proxy_admin.runtime_address = ("127.0.0.1", rt.sockets[0].getsockname()[1])
+            # sem Upgrade: recusado (400), nunca chega ao runtime
+            self.assertEqual((await http(port, "GET", "/vnc?ticket=x"))[0], 400)
+            self.assertNotIn("head", seen)
+            r, w = await asyncio.open_connection("127.0.0.1", port)
+            w.write(b"GET /vnc?ticket=abc HTTP/1.1\r\nHost: x\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n"
+                    b"Sec-WebSocket-Key: k\r\nSec-WebSocket-Version: 13\r\nAuthorization: Bearer nope\r\n\r\n")
+            await w.drain()
+            self.assertIn(b"101", await asyncio.wait_for(r.readuntil(b"\r\n\r\n"), 5))
+            w.write(b"ping")
+            await w.drain()
+            self.assertEqual(await asyncio.wait_for(r.read(100), 5), b"echo:ping")
+            w.close()
+            rt.close()
+            self.assertTrue(seen["head"].startswith("GET /v1/vnc?ticket=abc HTTP/1.1"))
+            self.assertNotIn("Authorization", seen["head"])  # o token do computador nunca vai no túnel
+
+        self.run_with_admin(fn)
 
     def test_auth_required_except_health(self):
         async def fn(port, proxy, write_cfg, logs):

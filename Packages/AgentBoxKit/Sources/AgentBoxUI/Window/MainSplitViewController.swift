@@ -34,6 +34,8 @@ final class MainSplitViewController: NSSplitViewController {
     private let env: AppEnvironment
     let sidebarItem: NSSplitViewItem
     let contentItem: NSSplitViewItem
+    /// Painel direito (03 §10): nasce recolhido; ⇧⌘C abre a aba Computers (T3-05).
+    let rightItem: NSSplitViewItem
     private var didSetInitialWidth = false
 
     init(env: AppEnvironment) {
@@ -51,8 +53,15 @@ final class MainSplitViewController: NSSplitViewController {
         } else {
             contentVC = WorkspaceViewController(env: env)
         }
+        let rightVC = NSViewController()
+        let rightView = ChromeHostingView(
+            content: ComputersPanelView(controller: env.computers).environment(\.elementStore, env.elements).environment(\.actionRegistry, env.registry)
+                .environment(\.a11yParent, .windowMain))
+        rightView.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
+        rightVC.view = rightView
         sidebarItem = NSSplitViewItem(viewController: sidebarVC)
         contentItem = NSSplitViewItem(viewController: contentVC)
+        rightItem = NSSplitViewItem(viewController: rightVC)
         super.init(nibName: nil, bundle: nil)
         let split = ChromeSplitView()
         split.isVertical = true
@@ -63,9 +72,16 @@ final class MainSplitViewController: NSSplitViewController {
         sidebarItem.canCollapse = true
         sidebarItem.holdingPriority = NSLayoutConstraint.Priority(rawValue: NSLayoutConstraint.Priority.defaultLow.rawValue + 1)
         contentItem.minimumThickness = DS.Layout.windowMinWidth - DS.Layout.sidebarMaxWidth
+        rightItem.minimumThickness = DS.Layout.rightPanelMinWidth
+        rightItem.maximumThickness = DS.Layout.rightPanelMaxWidth
+        rightItem.canCollapse = true
+        rightItem.isCollapsed = true
+        rightItem.holdingPriority = NSLayoutConstraint.Priority(rawValue: NSLayoutConstraint.Priority.defaultLow.rawValue + 1)
         addSplitViewItem(sidebarItem)
         addSplitViewItem(contentItem)
+        addSplitViewItem(rightItem)
         split.autosaveName = nil
+        env.computers.onPanelChange = { [weak self] open in self?.setRightPanelOpen(open) }
     }
 
     @available(*, unavailable) required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
@@ -77,6 +93,18 @@ final class MainSplitViewController: NSSplitViewController {
         if !didSetInitialWidth, splitView.bounds.width > 0 {
             didSetInitialWidth = true
             splitView.setPosition(DS.Layout.sidebarWidth, ofDividerAt: 0)
+        }
+    }
+
+    func setRightPanelOpen(_ open: Bool) {
+        guard rightItem.isCollapsed == open else { return }
+        if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
+            rightItem.isCollapsed = !open
+        } else {
+            rightItem.animator().isCollapsed = !open
+        }
+        if open {
+            splitView.setPosition(max(0, splitView.bounds.width - DS.Layout.rightPanelWidth), ofDividerAt: 1)
         }
     }
 

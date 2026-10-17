@@ -51,6 +51,8 @@ final class SidebarModel {
     @ObservationIgnored var attention: AttentionCoordinator?
     /// Inbox (⇧⌘I) no lugar do corpo da sidebar (03 §9.1). Só em memória: reabrir o app volta à lista de sessões.
     private(set) var inboxOpen = false
+    /// Diretório de computadores (T3-05): fonte dos pedidos de ajuda que o Inbox mostra ao lado da atenção dos agentes.
+    @ObservationIgnored var helpInbox: ComputersModel?
     var inboxFilter: InboxFilter = .all
     var inboxFilterMenuOpen = false
     /// Sessão em edição inline (03 §2.11): no máximo uma.
@@ -101,6 +103,12 @@ final class SidebarModel {
     func setInbox(open: Bool) {
         guard inboxOpen != open else { return }
         inboxOpen = open
+    }
+
+    /// Pedidos de ajuda de computador abertos (T3-05): entram em `Needs You` do mesmo Inbox, antes dos agentes (prioridade 1).
+    var helpItems: [InboxItem] {
+        guard let helpInbox else { return [] }
+        return helpInbox.inbox.filter { $0.phase == .needsYou && (inboxFilter != .unread || !$0.read) }
     }
 
     var inboxFeed: InboxFeed {

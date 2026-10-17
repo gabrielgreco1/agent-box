@@ -63,7 +63,7 @@ struct SidebarView: View {
             }
             NavItemRow(
                 action: .pageInbox, id: .sidebarNavInbox, title: String(localized: "Inbox", bundle: .module), symbol: "tray", hideKey: "inbox",
-                badge: model.attention?.center.badgeCount ?? 0, selected: model.inboxOpen)
+                badge: (model.attention?.center.badgeCount ?? 0) + (model.helpInbox?.attentionCount ?? 0), selected: model.inboxOpen)
             NavItemRow(action: .pageComputers, id: .sidebarNavComputers, title: String(localized: "Computers", bundle: .module), symbol: "display", hideKey: "computers")
             NavItemRow(action: .pageLibrary, id: .sidebarNavLibrary, title: String(localized: "Library", bundle: .module), symbol: "books.vertical", hideKey: "library")
         }

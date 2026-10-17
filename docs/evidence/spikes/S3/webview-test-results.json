@@ -1,0 +1,4 @@
+{"fps_average": 44.0, "fps_min": 38.5, "fps_samples": [41.0, 43.9, 48.0, 47.6, 45.0, 38.5],
+ "latency_p50_ms": 42.0, "latency_p95_ms": 67.0, "latency_samples": 40,
+ "ws_messages": 947, "ws_bytes": 402736, "page_hidden": true,
+ "window_visible": false, "app_active": false}

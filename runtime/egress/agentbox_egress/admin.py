@@ -7,7 +7,10 @@ Rotas autenticadas (T3-03 acrescenta as três últimas):
 - leitura: `/v1/usage`, `/v1/proxy`, `/v1/reqlog`, `/v1/reqlog/<id>/body`, `POST /v1/proxy/reload`;
 - `POST /v1/reqlog/ingest`: registro `observed` entregue pelo app (http_request, render) ou pelo runtime (browser);
 - `POST /v1/render`: render pelo modo API do proxy selecionado (`not_supported` se ele não tem);
-- `/runtime/v1/<op>`: reverse proxy para o servidor de controle do runtime (o app só fala com o egress).
+- `/runtime/v1/<op>`: reverse proxy para o servidor de controle do runtime (o app só fala com o egress);
+- `GET /vnc?ticket=...` (WebSocket): túnel para a ponte VNC do runtime (T3-05, CS-401). Sem `Authorization` (o WebView não
+  consegue mandar cabeçalho): o ticket de uso único, emitido por `/runtime/v1/vnc_ticket` com o token, vale 60 s e é conferido
+  pelo runtime. Qualquer outra coisa nesse caminho é recusada aqui.
 """
 from __future__ import annotations
 
@@ -53,6 +56,9 @@ class AdminServer:
             target = rest.rpartition(" ")[0]
             url = urlsplit(target)
             query = parse_qs(url.query)
+            if method == "GET" and url.path == "/vnc":
+                await self.tunnel_vnc(reader, writer, target, headers)
+                return
             request_body = b""
             bad_body = False
             try:
@@ -152,6 +158,46 @@ class AdminServer:
         except (IndexError, ValueError):
             return 502, "application/json", {"error": "box_restarted", "message": "bad answer from runtime"}
         return status, "application/json", payload
+
+    async def tunnel_vnc(self, reader, writer, target: str, headers) -> None:
+        """Repassa o upgrade WebSocket ao runtime (`/vnc` -> `/v1/vnc`) e vira um túnel de bytes. Não interpreta nada."""
+        if "websocket" not in (header_value(headers, "upgrade") or "").lower() or not header_value(headers, "sec-websocket-key"):
+            writer.write(b"HTTP/1.1 400 X\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
+            await writer.drain()
+            return
+        host, port = self.runtime_address
+        try:
+            ur, uw = await asyncio.wait_for(asyncio.open_connection(host, port), 5)
+        except (OSError, asyncio.TimeoutError):
+            writer.write(b"HTTP/1.1 503 X\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
+            await writer.drain()
+            return
+        forwarded = ["Host: runtime", "Upgrade: websocket", "Connection: Upgrade"]
+        for name in ("sec-websocket-key", "sec-websocket-version", "sec-websocket-protocol"):
+            value = header_value(headers, name)
+            if value:
+                forwarded.append(f"{name}: {value}")
+        uw.write((f"GET /v1/vnc{target[len('/vnc'):]} HTTP/1.1\r\n" + "\r\n".join(forwarded) + "\r\n\r\n").encode())
+        await uw.drain()
+
+        async def pump(src, dst) -> None:
+            try:
+                while True:
+                    data = await src.read(65536)
+                    if not data:
+                        break
+                    dst.write(data)
+                    await dst.drain()
+            except (ConnectionError, OSError):
+                pass
+
+        tasks = [asyncio.ensure_future(pump(reader, uw)), asyncio.ensure_future(pump(ur, writer))]
+        try:
+            await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+        finally:
+            for t in tasks:
+                t.cancel()
+            uw.close()
 
     # ----- render (CS-146) ----------------------------------------------------------------------------------------------------
     async def render(self, request_body: bytes):

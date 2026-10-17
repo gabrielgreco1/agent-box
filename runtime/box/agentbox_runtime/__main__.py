@@ -23,6 +23,7 @@ class Display:
     def __init__(self) -> None:
         self.xvfb: subprocess.Popen | None = None
         self.openbox: subprocess.Popen | None = None
+        self.vnc: subprocess.Popen | None = None
         self.mode = "headless"
 
     async def start_xvfb(self) -> None:
@@ -31,11 +32,21 @@ class Display:
         socket = Path(f"/tmp/.X11-unix/X{DISPLAY.lstrip(':')}")
         for _ in range(100):
             if socket.exists():
+                self.start_vnc()
                 return
             if self.xvfb.poll() is not None:
                 raise RuntimeError("Xvfb exited during startup")
             await asyncio.sleep(0.1)
         raise RuntimeError("Xvfb did not become ready")
+
+    def start_vnc(self) -> None:
+        """x11vnc só em 127.0.0.1 (ninguém fora deste container o alcança); a ponte do servidor de controle faz o upgrade
+        WebSocket com ticket e filtra input conforme o lease (T3-05, CS-401/402). Sem troca de seleção X: clipboard só por
+        ação explícita do humano (CS-422)."""
+        self.vnc = subprocess.Popen(
+            ["x11vnc", "-display", DISPLAY, "-localhost", "-rfbport", "5900", "-nopw", "-forever", "-shared", "-nosel", "-noipv6",
+             "-nobell", "-noxrecord", "-wait", "10", "-defer", "10", "-ncache", "0", "-quiet"],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     async def set_mode(self, display) -> dict:
         if display not in ("headless", "desktop"):
@@ -49,7 +60,7 @@ class Display:
         return {"display": display, "reloaded": False}
 
     def stop(self) -> None:
-        for proc in (self.openbox, self.xvfb):
+        for proc in (self.vnc, self.openbox, self.xvfb):
             if proc and proc.poll() is None:
                 proc.terminate()
 

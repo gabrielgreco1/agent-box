@@ -1,0 +1,160 @@
+import AgentBoxCore
+import AgentBoxDocker
+import AgentBoxProtocol
+import Foundation
+import Testing
+
+@testable import AgentBoxUI
+
+/// Backend mínimo (T3-05): lease por ACK programável, resto vazio.
+actor LeaseBackend: ComputerBackend {
+    var calls: [String] = []
+    var ack = true
+
+    func setAck(_ value: Bool) { ack = value }
+
+    func runtime(_ operation: String, _ args: JSON, timeout: TimeInterval) async throws -> JSON {
+        calls.append(operation + (args["action"]?.string.map { ":" + $0 } ?? ""))
+        if operation == "lease" { return ["lease": .string(ack ? "human" : "revoking"), "ack": .bool(ack)] }
+        if operation == "frame" { return ["jpeg_b64": .string(Data([0xFF, 0xD8, 9]).base64EncodedString()), "url": "http://aca.example.test/search"] }
+        return ["ok": true, "url": "http://aca.example.test/search", "title": "t", "cookies": [], "tabs": []]
+    }
+    func execRun(_ request: BackendExec, timeout: Duration) async throws -> BackendExecOutcome { BackendExecOutcome() }
+    func execStart(_ request: BackendExec) async throws -> String { "job" }
+    func execPoll(jobID: String, wait: Duration) async throws -> BackendExecOutcome { BackendExecOutcome() }
+    func execCancel(jobID: String) async throws -> BackendExecOutcome { BackendExecOutcome() }
+    func ingest(_ payload: JSON) async throws -> String { "id" }
+    func switchProxy(to proxy: String, country: String?) async throws -> Int { 0 }
+    func proxyInfo() async throws -> JSON { [:] }
+    func usage() async throws -> JSON { [:] }
+    func render(_ payload: JSON) async throws -> JSON { [:] }
+    func vncEndpoint() async throws -> URL { URL(string: "ws://127.0.0.1:1/vnc?ticket=t")! }
+}
+
+@MainActor
+@Suite("T3-05 - controlador de computadores e ações", .serialized)
+struct ComputersControllerTests {
+    struct Fixture {
+        let controller = ComputersController()
+        let registry: ActionRegistry
+        let backend: LeaseBackend
+        let notifier = RecordingHelpNotifier()
+        let computer: ManagedComputer
+        let folder: URL
+    }
+
+    func make() async throws -> Fixture {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("abx-ctl-\(UUID().uuidString.lowercased())", isDirectory: true)
+        let flags = SliceFlags(current: .slice3)
+        let registry = ActionRegistry(flags: flags, surface: FakeSurface())
+        let backend = LeaseBackend()
+        let computer = try ManagedComputer(name: "phoenix-az", display: .headless, run: RunFolder(root: folder), backend: backend)
+        let fixture = Fixture(registry: registry, backend: backend, computer: computer, folder: folder)
+        try fixture.controller.register(in: registry)
+        fixture.controller.notifier = fixture.notifier
+        return fixture
+    }
+
+    @Test func actionsAreDisabledWithAReasonUntilThereIsAComputer() async throws {
+        let f = try await make()
+        defer { try? FileManager.default.removeItem(at: f.folder) }
+        if case .disabled(let reason) = f.registry.availability(of: .computerTakeOver) { #expect(reason == "No computers yet.") } else { Issue.record("takeOver should be disabled") }
+        if case .disabled(let reason) = f.registry.availability(of: .computerHandBack) { #expect(reason == "Open a computer first.") } else { Issue.record("handBack should be disabled") }
+        if case .disabled(let reason) = f.registry.availability(of: .computerPaste) { #expect(reason == "Take over first.") } else { Issue.record("paste should be disabled") }
+        await f.controller.add(f.computer)
+        #expect(f.registry.availability(of: .computerTakeOver).isEnabled)
+        #expect(f.registry.availability(of: .computerOpenViewer).isEnabled)
+    }
+
+    @Test func openingTheViewerAndClosingItNeverTouchesLeaseOrComputer() async throws {
+        let f = try await make()
+        defer { try? FileManager.default.removeItem(at: f.folder) }
+        await f.controller.add(f.computer)
+        _ = try await f.registry.perform(.computerOpenViewer, .select("phoenix-az"))
+        #expect(f.controller.page == .viewer("phoenix-az") && f.controller.activeViewer?.name == "phoenix-az")
+        _ = try await f.registry.perform(.pageClose, nil)
+        #expect(f.controller.page == .workspace && f.controller.activeViewer == nil)
+        #expect(await f.computer.lease == .agent)  // CS-405
+        #expect(await f.computer.state == .ready)
+        let calls = await f.backend.calls
+        #expect(!calls.contains { $0.hasPrefix("lease") })
+    }
+
+    @Test func takeOverFromOutsideOpensTheViewerThenTakesControlAndHandBackReturnsIt() async throws {
+        let f = try await make()
+        defer { try? FileManager.default.removeItem(at: f.folder) }
+        await f.controller.add(f.computer)
+        let result = try await f.registry.perform(.computerTakeOver, .select("phoenix-az"))
+        #expect(result.message == "human")
+        #expect(f.controller.page == .viewer("phoenix-az"))
+        #expect(await f.computer.lease == .human)
+        // Hand Back abre o campo de nota; a confirmação devolve com a nota
+        _ = try await f.registry.perform(.computerHandBack, nil)
+        #expect(f.controller.activeViewer?.model.handBackNoteVisible == true)
+        f.controller.activeViewer?.model.handBackNote = "continue from page 3"
+        let back = try await f.registry.perform(.computerHandBack, .select("confirm"))
+        #expect(back.message == "agent")
+        #expect(await f.computer.lease == .agent)
+        let calls = await f.backend.calls
+        #expect(calls.filter { $0.hasPrefix("lease") } == ["lease:take", "lease:give"])
+    }
+
+    @Test func withoutAckTheForceActionTakesOver() async throws {
+        let f = try await make()
+        defer { try? FileManager.default.removeItem(at: f.folder) }
+        await f.backend.setAck(false)
+        await f.controller.add(f.computer)
+        let first = try await f.registry.perform(.computerTakeOver, .select("phoenix-az"))
+        #expect(first.message == "revoking" && f.controller.activeViewer?.model.forceAvailable == true)
+        await f.backend.setAck(true)
+        let forced = try await f.registry.perform(.computerForceTakeOver, nil)
+        #expect(forced.message == "human")
+        let calls = await f.backend.calls
+        #expect(calls.filter { $0.hasPrefix("lease") } == ["lease:take", "lease:force_take"])
+    }
+
+    @Test func helpRequestReachesInboxBadgeAndNotificationOnceAndOpeningMarksItRead() async throws {
+        let f = try await make()
+        defer { try? FileManager.default.removeItem(at: f.folder) }
+        await f.controller.add(f.computer)
+        await f.controller.hub.registerChild(id: "c1", capability: "cap")
+        let service = ComputerToolService(hub: f.controller.hub)
+        _ = await service.call("box_claim", arguments: ["name": "phoenix-az", "wait_s": 0], child: "c1")
+        func ask(_ reason: String) async -> String {
+            let out = await service.call("help_request", arguments: ["kind": "captcha", "reason": .string(reason), "url": "http://aca-prod.accela.com/search"], child: "c1")
+            return (try? JSON.parse(out.content.first?["text"]?.string ?? ""))?["request_id"]?.string ?? ""
+        }
+        let requestID = await ask("hCaptcha")
+        for _ in 0..<100 where f.controller.model.inbox.isEmpty { try await Task.sleep(for: .milliseconds(30)) }
+        #expect(f.controller.model.inbox.count == 1 && f.notifier.delivered.count == 1)
+        #expect(f.notifier.delivered[0].content.body == "CAPTCHA on aca-prod.accela.com")
+        #expect(await ask("again") == requestID)
+        try await Task.sleep(for: .milliseconds(150))
+        #expect(f.notifier.delivered.count == 1)
+        // clique na notificação: abre o viewer e marca lido; o Inbox lista o pedido
+        #expect(f.controller.model.unreadCount == 1)
+        f.controller.openViewer("phoenix-az")
+        #expect(f.controller.model.unreadCount == 0 && f.controller.page == .viewer("phoenix-az"))
+        await f.controller.activeViewer?.model.refresh()
+        #expect(f.controller.activeViewer?.model.help?.id == requestID)
+        // resolver: o help_wait do filho retorna
+        try await f.computer.resolveHelp(requestID, note: "done")
+        for _ in 0..<100 where f.controller.model.attentionCount != 0 { try await Task.sleep(for: .milliseconds(30)) }
+        #expect(f.controller.model.attentionCount == 0)
+        #expect(await f.computer.help(requestID)?.status == .resolved)
+    }
+
+    @Test func pagesTogglePanelOpensAndTheCloseHookWorks() async throws {
+        let f = try await make()
+        defer { try? FileManager.default.removeItem(at: f.folder) }
+        _ = try await f.registry.perform(.pageComputers, nil)
+        #expect(f.controller.page == .computers)
+        _ = try await f.registry.perform(.pageComputers, nil)
+        #expect(f.controller.page == .workspace)
+        var opened: [Bool] = []
+        f.controller.onPanelChange = { opened.append($0) }
+        _ = try await f.registry.perform(.panelComputers, nil)
+        _ = try await f.registry.perform(.panelComputers, nil)
+        #expect(opened == [true, false])
+    }
+}

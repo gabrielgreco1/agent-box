@@ -49,8 +49,19 @@ public struct HelpRequest: Sendable, Equatable {
     public var isOpen: Bool { status == .open || status == .takenOver }
 }
 
-/// Evento para a UI e para o app (Inbox, sidebar, notificação). A UI chega em T3-05.
+/// Fase do controle para a UI (CS-410): `revoking` = Take Over pedido, esperando a escrita em curso do agente terminar.
+public enum ControlPhase: String, Sendable, Equatable, Codable { case agent, revoking, human }
+
+/// O que o humano deixou ao devolver o controle (CS-413): a próxima chamada do filho recebe a nota e o estado reconciliado.
+public struct HandBack: Sendable, Equatable {
+    public var note: String?
+    public var at: Date
+    public var state: JSON?
+}
+
+/// Evento para a UI e para o app (Inbox, sidebar, notificação).
 public enum ComputerEvent: Sendable, Equatable {
+    case control(computer: String, phase: ControlPhase)
     case helpRequested(computer: String, requestID: String, kind: HelpKind)
     case helpResolved(computer: String, requestID: String, status: HelpStatus)
     case doing(computer: String, text: String)
@@ -79,6 +90,10 @@ public actor ManagedComputer {
     public private(set) var queuePosition: Int?
     public private(set) var owner: String?
     public private(set) var lease: Lease = .agent
+    public private(set) var controlPhase: ControlPhase = .agent
+    private var pendingHandBack: HandBack?
+    /// Estado do computador quando o humano assumiu (cookies e downloads), para reconciliar ao devolver.
+    private var takeOverBaseline: (cookies: String, downloads: Set<String>)?
     public private(set) var proxy: String
     public private(set) var country: String?
     public private(set) var lastDoing: String?
@@ -158,10 +173,92 @@ public actor ManagedComputer {
 
     func takePreviousRun() -> JSON? { defer { previousRun = nil }; return previousRun }
 
-    // MARK: Lease humano (T3-05 liga os botões; aqui só o estado e a regra)
+    // MARK: Lease humano (CS-410..415). O lease vive no runtime; aqui fica o espelho e a regra para o agente.
 
-    public func takeOver() { lease = .human; for id in helps.keys where helps[id]?.status == .open { helps[id]?.status = .takenOver } }
-    public func handBack() { lease = .agent }
+    /// Espelho local (também usado quando não há runtime, display `http`). Os botões usam `requestTakeOver` e `handBack(note:)`.
+    public func takeOver() {
+        lease = .human
+        controlPhase = .human
+        for id in helps.keys where helps[id]?.status == .open { helps[id]?.status = .takenOver }
+    }
+
+    public func handBack() { lease = .agent; controlPhase = .agent }
+
+    /// `"Take Over"`: pede ao runtime `revoke(agent)` e só devolve `true` com o ACK (a escrita em curso terminou). Sem ACK em
+    /// `wait` o computador fica em `revoking` e a UI oferece `"Force Take Over"` (`force: true` cancela a escrita em curso).
+    public func requestTakeOver(force: Bool = false, wait: TimeInterval = 10) async throws -> Bool {
+        if lease == .human { return true }
+        if takeOverBaseline == nil { takeOverBaseline = (await cookieFingerprint(), downloads()) }
+        controlPhase = .revoking
+        emit(.control(computer: name, phase: .revoking))
+        if display != .http {
+            do {
+                let out = try await backend.runtime("lease", ["action": .string(force ? "force_take" : "take"), "wait_s": .double(wait)], timeout: wait + 15)
+                if out["ack"]?.bool == false { return false }
+            } catch {
+                controlPhase = lease == .human ? .human : .agent
+                emit(.control(computer: name, phase: controlPhase))
+                throw error
+            }
+        }
+        takeOver()
+        await logEvent("lease", "human took over")
+        emit(.control(computer: name, phase: .human))
+        return true
+    }
+
+    /// `"Hand Back"` com nota opcional: o runtime solta o lease, reconcilia e o pedido de ajuda em andamento é resolvido com
+    /// a nota (o `help_wait` do filho retorna). Sem pedido, a nota e o estado seguem na próxima chamada do filho (CS-413, CS-414).
+    public func handBack(note: String?) async throws {
+        guard lease == .human || controlPhase == .revoking else { return }
+        let trimmed = (note?.trimmingCharacters(in: .whitespacesAndNewlines)).flatMap { $0.isEmpty ? nil : $0 }
+        if display != .http {
+            _ = try await backend.runtime("lease", ["action": "give", "note": trimmed.map { .string($0) } ?? .null], timeout: 15)
+        }
+        defer { takeOverBaseline = nil }
+        let taken = helps.values.filter { $0.status == .takenOver }.sorted { $0.createdAt < $1.createdAt }
+        lease = .agent
+        controlPhase = .agent
+        if taken.isEmpty {
+            let before = takeOverBaseline
+            let state = await reconcileState(cookiesBefore: before?.cookies, downloadsBefore: before?.downloads ?? downloads())
+            pendingHandBack = HandBack(note: trimmed, at: Date(), state: state)
+        } else {
+            for request in taken { try? await resolveHelp(request.id, note: trimmed) }
+        }
+        _ = try? await helpLog.append(["event": "handed_back", "note": trimmed.map { .string($0) } ?? .null])
+        await logEvent("lease", "human handed back")
+        emit(.control(computer: name, phase: .agent))
+    }
+
+    /// Reconcilia o espelho com o runtime (reabertura do app: CS-415, o lease `human` continua até o Hand Back).
+    public func syncLease() async {
+        guard display != .http, let out = try? await backend.runtime("lease", ["action": "status"], timeout: 10),
+              let value = out["lease"]?.string else { return }
+        switch value {
+        case "human": lease = .human; controlPhase = .human
+        case "revoking": controlPhase = .revoking
+        default: lease = .agent; controlPhase = .agent
+        }
+        emit(.control(computer: name, phase: controlPhase))
+    }
+
+    func takePendingHandBack() -> HandBack? { defer { pendingHandBack = nil }; return pendingHandBack }
+
+    /// Pedido de ajuda aberto (ou com o humano no controle), para banner, Inbox e miniatura.
+    public var openHelp: HelpRequest? { helps.values.filter(\.isOpen).sorted { $0.createdAt < $1.createdAt }.first }
+    public var allHelp: [HelpRequest] { helps.values.sorted { $0.createdAt < $1.createdAt } }
+
+    /// Miniatura (CS-403): JPEG da página via runtime. `nil` quando o computador não tem tela ou não responde.
+    public func thumbnail() async -> Data? {
+        guard display != .http, state == .ready || state == .inUse,
+              let out = try? await backend.runtime("frame", ["quality": 40], timeout: 6), let b64 = out["jpeg_b64"]?.string else { return nil }
+        pageURL = out["url"]?.string
+        return Data(base64Encoded: b64)
+    }
+
+    /// Última URL conhecida da página (vem da miniatura e do `box_status`); `nil` sem tela.
+    public private(set) var pageURL: String?
 
     /// Escritas do agente no computador ficam pausadas durante pedido de ajuda e controle humano (CS-272).
     func pauseReason() -> ToolError? {
@@ -233,6 +330,7 @@ public actor ManagedComputer {
         request.resolvedState = await reconcile(request)
         helps[id] = request
         lease = .agent
+        controlPhase = .agent
         _ = try? await helpLog.append(["id": .string(id), "event": "resolved", "note": note.map { .string($0) } ?? .null])
         emit(.helpResolved(computer: name, requestID: id, status: .resolved))
     }
@@ -279,6 +377,10 @@ public actor ManagedComputer {
     }
 
     private func reconcile(_ request: HelpRequest) async -> JSON {
+        await reconcileState(cookiesBefore: request.cookieFingerprint, downloadsBefore: request.downloadsAtRequest)
+    }
+
+    private func reconcileState(cookiesBefore: String?, downloadsBefore: Set<String>) async -> JSON {
         var state: [String: JSON] = [:]
         if display != .http {
             if let status = try? await backend.runtime("status", [:], timeout: 10) {
@@ -287,8 +389,8 @@ public actor ManagedComputer {
             }
             if let tabs = try? await backend.runtime("tabs", ["action": "list"], timeout: 10) { state["tabs"] = tabs["tabs"] ?? [] }
         }
-        state["cookies_changed"] = .bool(await cookieFingerprint() != request.cookieFingerprint)
-        state["new_downloads"] = .array(downloads().subtracting(request.downloadsAtRequest).sorted().map { .string("/work/downloads/" + $0) })
+        state["cookies_changed"] = .bool(await cookieFingerprint() != (cookiesBefore ?? ""))
+        state["new_downloads"] = .array(downloads().subtracting(downloadsBefore).sorted().map { .string("/work/downloads/" + $0) })
         return .object(state)
     }
 }
@@ -297,5 +399,25 @@ extension ChainedLog {
     /// Há alguma linha gravada? (leitura barata do tamanho do arquivo; usado só para o `previous_run`).
     nonisolated var fileHasContent: Bool {
         ((try? FileManager.default.attributesOfItem(atPath: file.path)[.size]) as? NSNumber)?.intValue ?? 0 > 0
+    }
+}
+
+extension ManagedComputer: ViewerComputer {
+    public nonisolated var computerName: String { name }
+
+    public func vncEndpoint() async throws -> URL { try await backend.vncEndpoint() }
+
+    public func viewerSnapshot() async -> ViewerSnapshot {
+        let summary = openHelp.flatMap { helpSummary($0) }
+        return ViewerSnapshot(name: name, state: state, display: display.rawValue, control: controlPhase, proxy: proxy, url: pageURL, lastDoing: lastDoing, help: summary)
+    }
+
+    /// Resumo de um pedido (banner, Inbox, notificação): sem conteúdo de página (CS-433). O host vem da URL do pedido ou da página.
+    public func helpSummary(_ id: String) -> HelpSummary? { help(id).flatMap { helpSummary($0) } }
+
+    private func helpSummary(_ help: HelpRequest) -> HelpSummary {
+        HelpSummary(
+            id: help.id, kind: help.kind, reason: help.reason, host: help.url.flatMap { URL(string: $0)?.host } ?? pageURL.flatMap { URL(string: $0)?.host },
+            question: help.question, options: help.options, takenOver: help.status == .takenOver)
     }
 }

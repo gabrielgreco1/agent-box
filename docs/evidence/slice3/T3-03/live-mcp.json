@@ -1,8 +1,13 @@
 {
+  "abnt2_diag" : "\"{\\\"keys\\\":[\\\"a\\\",\\\"\\\\u0000\\\",\\\"\\\\u0000\\\",\\\"o\\\",\\\" \\\",\\\"\\\\u0000\\\",\\\" \\\",\\\"\\\\u0000\\\",\\\" \\\",\\\"\\\\u0000\\\",\\\" \\\",\\\"\\\\u0000\\\"],\\\"ev\\\":[\\\"mousedown:t\\\",\\\"focus:t\\\",\\\"focusin:t\\\"],\\\"active\\\":\\\"t\\\",\\\"focus\\\":true,\\\"spot\\\":[10,10,1288,1280,931,800]}\"",
+  "abnt2_typing" : {
+    "page_value" : "\"ação ç ã é €\"",
+    "typed" : "ação ç ã é €"
+  },
   "browser_open" : {
     "record_source" : "browser",
     "record_trust" : "observed",
-    "request_id" : "01M54H669X27YGWFM3R02WNE7E",
+    "request_id" : "01M54NDE837V9EV1TRX2R6F81H",
     "status" : 200
   },
   "cleanup" : {
@@ -10,17 +15,17 @@
     "leftover_resources" : 0
   },
   "exec" : {
-    "cancel_seconds" : 0.1,
+    "cancel_seconds" : 0,
     "commands_logged" : 20,
     "stdin_roundtrip" : true,
     "uid" : 10002
   },
   "images" : {
-    "box" : "agentbox-box-test-e495e523:ctx-929cd1ba4b73",
-    "build_seconds" : 82,
-    "egress" : "agentbox-egress-test-e495e523:ctx-fe2d16edf2eb"
+    "box" : "agentbox-box-test-c7cd714f:ctx-9040ad6f569a",
+    "build_seconds" : 50,
+    "egress" : "agentbox-egress-test-c7cd714f:ctx-6f7c28c42706"
   },
-  "max_tool_call_seconds" : 15.1,
+  "max_tool_call_seconds" : 15,
   "mode_switch" : {
     "cookie_kept" : true,
     "new_requests" : 0,
@@ -32,7 +37,7 @@
     "symlink_dir" : "path_rejected",
     "symlink_file" : "path_rejected"
   },
-  "provision_seconds" : 3,
+  "provision_seconds" : 2,
   "proxy_render" : {
     "render_capture_in_reqlog" : true,
     "render_via" : "zyte-fake",
@@ -75,8 +80,20 @@
     "metadata_ip" : "blocked_by_policy(link-local)",
     "rfc1918" : "blocked_by_policy"
   },
+  "ticket" : {
+    "no_upgrade" : "400",
+    "server_init" : "1440x900",
+    "single_use" : true
+  },
+  "ws_fps_raw_640x400_animation" : {
+    "encoding" : "Raw (worst case for the bridge)",
+    "fps" : 37.5,
+    "frames" : 225,
+    "mb_per_s" : 4.1,
+    "seconds" : 6
+  },
   "xhr_in_reqlog" : {
-    "id" : "01M54H66PPM9CJQGHB1ETSY931",
+    "id" : "01M54NDEF73Q57W7JWMSZAFGK2",
     "source" : "browser",
     "trust" : "observed"
   }

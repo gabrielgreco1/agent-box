@@ -69,6 +69,8 @@ final class WorkspaceModel {
     @ObservationIgnored var defaultAgent: () -> TerminalProvider = { .claude }
     @ObservationIgnored var agentInstalled: (TerminalProvider) -> Bool? = { _ in nil }
     @ObservationIgnored let confirmationState = ConfirmationState()
+    /// ⌘W com uma página ou o viewer de computador no centro fecha a página (03 §11.6), não um terminal. Devolve `true` se tratou.
+    @ObservationIgnored var pageCloser: () -> Bool = { false }
 
     private(set) var currentSessionID: UUID?
     private(set) var states: [UUID: SessionState] = [:]

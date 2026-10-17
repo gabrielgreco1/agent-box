@@ -1,8 +1,8 @@
 {
   "build_tar_context_steps" : "7 of 7",
-  "ghcr_fallback" : "pull falhou, build local: agentbox-test-b316900b:ctx-50f668ed3ae1",
+  "ghcr_fallback" : "pull falhou, build local: agentbox-test-c253eb4f:ctx-9bcae5c584c2",
   "pull_by_digest" : "Status: Image is up to date for alpine@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc",
   "pull_by_digest_from_registry" : "alpine@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc: Status: Downloaded newer image for alpine@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc; camadas baixadas: 0",
   "real_runtime_box_build_via_engine_api" : "agentbox-box-test-2feecc3f:ctx-cc3afb33e867 em 60.644338583 seconds; passos 14 of 14; smoke: 10002 | aarch64 | 0.13.0 | \/usr\/bin\/Xvfb | \/usr\/bin\/x11vnc | \/usr\/bin\/websockify | \/usr\/bin\/xdotool | \/usr\/bin\/dtach | \/usr\/bin\/jq | ",
-  "tag_by_hash" : "agentbox-test-b316900b:ctx-da3a0925d909"
+  "tag_by_hash" : "agentbox-test-c253eb4f:ctx-7ef51107f663"
 }

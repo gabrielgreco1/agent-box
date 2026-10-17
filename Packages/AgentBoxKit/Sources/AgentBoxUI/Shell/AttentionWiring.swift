@@ -25,6 +25,10 @@ extension AppEnvironment {
     func wireAttention(environment: [String: String]) {
         guard let attention else { return }
         sidebar.attention = attention
+        // Pedidos de ajuda de computador (T3-05): mesma fila, mesmo Inbox, mesmo badge do Dock.
+        sidebar.helpInbox = computers.model
+        attention.extraBadgeCount = { [computers] in computers.model.attentionCount }
+        computers.model.onAttentionChange = { [attention] _ in attention.refreshDock() }
         workspace.attention = attention
         settings.attention = attention
         attention.contexts = { [sidebar] in sidebar.attentionContexts() }
@@ -89,15 +93,25 @@ extension AppEnvironment {
             sidebar.inboxFilterMenuOpen.toggle()
             return sidebar.inboxFilterMenuOpen ? "opened" : "closed"
         }
+        let computers = computers
         try registry.register(.inboxMarkRead) { arg in
+            // O ID de um pedido de ajuda é o `request_id` (não um UUID de terminal): vai para o diretório de computadores.
+            if arg.kind == .select, let raw = arg.value, computers.model.inbox.contains(where: { $0.id == raw }) {
+                computers.model.markRead(raw)
+                return nil
+            }
             attention.markRead(terminal: try terminalID(arg, .inboxMarkRead))
             return nil
         }
         try registry.register(
             .inboxMarkAllRead,
-            enablement: { attention.center.unread.isEmpty && attention.center.pending.isEmpty ? .disabled(reason: "Nothing unread") : .enabled }
+            enablement: {
+                attention.center.unread.isEmpty && attention.center.pending.isEmpty && computers.model.unreadCount == 0
+                    ? .disabled(reason: "Nothing unread") : .enabled
+            }
         ) { _ in
             attention.markAllRead()
+            computers.model.markAllRead()
             return nil
         }
         // Clique no item do Inbox (`select(<terminalId>)`) ou, com o sufixo `:notification`, o clique numa notificação do sistema.

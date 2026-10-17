@@ -40,6 +40,15 @@ public struct DockerComputerBackend: ComputerBackend {
         return json
     }
 
+    public func vncEndpoint() async throws -> URL {
+        guard computer.display != .http else { throw ToolError(.notSupported, "this computer is in HTTP mode and has no screen") }
+        let out = try await runtime("vnc_ticket", [:], timeout: 10)
+        guard let ticket = out["ticket"]?.string, let url = URL(string: "ws://127.0.0.1:\(computer.egress.adminPort)/vnc?ticket=\(ticket)") else {
+            throw ToolError(.boxRestarted, "the runtime did not issue a viewer ticket", retryAfterS: 5)
+        }
+        return url
+    }
+
     // MARK: Exec no `work`
 
     static func command(for request: BackendExec) -> [String] {

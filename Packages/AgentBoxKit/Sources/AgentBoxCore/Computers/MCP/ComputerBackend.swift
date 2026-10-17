@@ -48,6 +48,12 @@ public protocol ComputerBackend: Sendable {
     func usage() async throws -> JSON
     /// `POST /v1/render` no egress. Lança `not_supported` etc.
     func render(_ payload: JSON) async throws -> JSON
+    /// URL WebSocket do viewer (`ws://127.0.0.1:<porta do egress>/vnc?ticket=...`), com ticket de uso único válido por 60 s.
+    func vncEndpoint() async throws -> URL
+}
+
+extension ComputerBackend {
+    public func vncEndpoint() async throws -> URL { throw ToolError(.notSupported, "this computer has no screen") }
 }
 
 extension ComputerBackend {
@@ -68,7 +74,9 @@ public enum RuntimeErrorMapper {
         let code = body["error"]?.string ?? ""
         let message = body["message"]?.string ?? "runtime error (\(status))"
         let details = body["details"]
-        if let known = ToolErrorCode(rawValue: code) { return ToolError(known, message, details: details) }
+        if let known = ToolErrorCode(rawValue: code) {
+            return ToolError(known, message, retryAfterS: details?["retry_after_s"]?.int, details: details)
+        }
         switch code {
         case "navigation_failed": return ToolError(.proxyError, message, details: details)
         case "unauthorized": return ToolError(.appUnavailable, "the runtime rejected the app token", retryAfterS: 5)

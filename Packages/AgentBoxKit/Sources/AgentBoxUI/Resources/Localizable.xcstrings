@@ -782,6 +782,17 @@
         }
       }
     },
+    "Claude is using this computer. Take over to interact.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude is using this computer. Take over to interact."
+          }
+        }
+      }
+    },
     "Clean session folder": {
       "extractionState": "manual",
       "localizations": {
@@ -998,6 +1009,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Conflicts"
+          }
+        }
+      }
+    },
+    "Connecting…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connecting…"
           }
         }
       }
@@ -1284,6 +1306,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Custom prefix"
+          }
+        }
+      }
+    },
+    "Decline…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decline…"
           }
         }
       }
@@ -1695,6 +1728,17 @@
         }
       }
     },
+    "Force Take Over": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Force Take Over"
+          }
+        }
+      }
+    },
     "General": {
       "extractionState": "manual",
       "localizations": {
@@ -1746,6 +1790,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "GitHub"
+          }
+        }
+      }
+    },
+    "Hand Back": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hand Back"
           }
         }
       }
@@ -1937,6 +1992,17 @@
         }
       }
     },
+    "Keyboard captured · ⌃⌥ to release": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keyboard captured · ⌃⌥ to release"
+          }
+        }
+      }
+    },
     "Larger": {
       "extractionState": "manual",
       "localizations": {
@@ -1948,6 +2014,17 @@
         }
       }
     },
+    "Last Used": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last Used"
+          }
+        }
+      }
+    },
     "Launch profiles": {
       "extractionState": "manual",
       "localizations": {
@@ -1955,6 +2032,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Launch profiles"
+          }
+        }
+      }
+    },
+    "Lease": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lease"
           }
         }
       }
@@ -2054,6 +2142,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mark as Unread"
+          }
+        }
+      }
+    },
+    "Mode": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mode"
           }
         }
       }
@@ -2164,6 +2263,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Needs input"
+          }
+        }
+      }
+    },
+    "Needs you": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs you"
           }
         }
       }
@@ -2355,6 +2465,28 @@
         }
       }
     },
+    "No computers in this session. Agents create them when they need a browser.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No computers in this session. Agents create them when they need a browser."
+          }
+        }
+      }
+    },
+    "No computers yet. Agents create them when they need a browser.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No computers yet. Agents create them when they need a browser."
+          }
+        }
+      }
+    },
     "No folder chosen": {
       "extractionState": "manual",
       "localizations": {
@@ -2494,6 +2626,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Not started"
+          }
+        }
+      }
+    },
+    "Note for Claude Code (optional)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Note for Claude Code (optional)"
           }
         }
       }
@@ -2740,6 +2883,28 @@
         }
       }
     },
+    "Proxy": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proxy"
+          }
+        }
+      }
+    },
+    "Reason (optional)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reason (optional)"
+          }
+        }
+      }
+    },
     "Recent Activity": {
       "extractionState": "manual",
       "localizations": {
@@ -2747,6 +2912,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Recent Activity"
+          }
+        }
+      }
+    },
+    "Reconnect": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reconnect"
           }
         }
       }
@@ -2835,6 +3011,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reopen Closed Tab"
+          }
+        }
+      }
+    },
+    "Requesting control…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Requesting control…"
           }
         }
       }
@@ -3099,6 +3286,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Send Test Notification"
+          }
+        }
+      }
+    },
+    "Session": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Session"
           }
         }
       }
@@ -3444,6 +3642,17 @@
         }
       }
     },
+    "State": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "State"
+          }
+        }
+      }
+    },
     "Status unavailable": {
       "extractionState": "manual",
       "localizations": {
@@ -3521,6 +3730,17 @@
         }
       }
     },
+    "Take Over": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Take Over"
+          }
+        }
+      }
+    },
     "Terminal": {
       "extractionState": "manual",
       "localizations": {
@@ -3583,6 +3803,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "That isn't a folder."
+          }
+        }
+      }
+    },
+    "The agent will be told you declined.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The agent will be told you declined."
           }
         }
       }
@@ -3693,6 +3924,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Theme"
+          }
+        }
+      }
+    },
+    "This computer is stopped.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This computer is stopped."
           }
         }
       }
@@ -3968,6 +4210,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "branch %@"
+          }
+        }
+      }
+    },
+    "e.g. Logged in, continue from page 3": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "e.g. Logged in, continue from page 3"
           }
         }
       }

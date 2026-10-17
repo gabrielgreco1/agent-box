@@ -102,6 +102,13 @@ public actor ComputerToolService {
                 let ms = started.duration(to: .now).components
                 object["took_ms"] = .int(Int(ms.seconds * 1000 + ms.attoseconds / 1_000_000_000_000_000))
                 if let boxName, object["box"] == nil { object["box"] = .string(boxName) }
+                // CS-413/414: o humano devolveu o controle sem pedido de ajuda: a próxima chamada recebe a nota e o estado.
+                if let computer, let handBack = await computer.takePendingHandBack() {
+                    var entry: [String: JSON] = ["at": .string(ISO8601DateFormatter().string(from: handBack.at))]
+                    if let note = handBack.note { entry["note"] = .string(note) }
+                    if let state = handBack.state { entry["state"] = state }
+                    object["human_handback"] = .object(entry)
+                }
                 result.json = .object(object)
             }
             var content: [JSON] = [["type": "text", "text": .string(result.json.text)]]

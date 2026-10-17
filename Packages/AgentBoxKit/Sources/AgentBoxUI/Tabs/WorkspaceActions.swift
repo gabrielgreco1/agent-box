@@ -59,10 +59,12 @@ extension WorkspaceModel {
 
         // Fechar
         try reg(.paneClose, enablement: hasTab) { [unowned self] arg in
+            if arg.value == nil, pageCloser() { return nil }
             closePane(uuid(arg))
             return nil
         }
         try reg(.tabClose, enablement: hasTab) { [unowned self] arg in
+            if arg.value == nil, pageCloser() { return nil }
             closeTab(uuid(arg))
             return nil
         }

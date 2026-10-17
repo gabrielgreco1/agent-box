@@ -12,13 +12,19 @@ struct InboxView: View {
     var body: some View {
         let feed = model.inboxFeed
         Section {
-            if feed.isEmpty {
+            let help = model.helpItems
+            if feed.isEmpty, help.isEmpty {
                 DSEmptyState(String(localized: "Nothing needs you.", bundle: .module)) { EmptyView() }
                     .padding(.top, DS.Space.s6)
                     .a11y(.inboxEmpty, kind: "container", label: String(localized: "Nothing needs you.", bundle: .module))
             }
+            if !help.isEmpty, !feed.groups.contains(where: { $0.group == .needsYou }) {
+                groupHeader(.needsYou)
+                helpRows(help)
+            }
             ForEach(feed.groups, id: \.group) { entry in
                 groupHeader(entry.group)
+                if entry.group == .needsYou { helpRows(help) }
                 ForEach(entry.rows) { row in
                     InboxRowView(row: row, now: model.clock())
                         .transition(.opacity.combined(with: .offset(y: -DS.Space.s2)))
@@ -29,6 +35,12 @@ struct InboxView: View {
         }
         .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.base), value: feed.rows.map(\.id))
         .a11y(.inbox, kind: "container", label: String(localized: "Inbox", bundle: .module))
+    }
+
+    private func helpRows(_ items: [InboxItem]) -> some View {
+        ForEach(items) { item in
+            HelpRequestRowView(item: item).transition(.opacity.combined(with: .offset(y: -DS.Space.s2)))
+        }
     }
 
     private func header(unread: Int) -> some View {
@@ -55,6 +67,46 @@ struct InboxView: View {
             .padding(.horizontal, SidebarMetrics.sectionPaddingH)
             .frame(maxWidth: .infinity, minHeight: SidebarMetrics.sectionHeaderHeight - DS.Space.s2, alignment: .leading)
             .accessibilityAddTraits(.isHeader)
+    }
+}
+
+/// Pedido de ajuda de um computador (CAPTCHA, login): `<computer> needs you · <headline>` com `Take Over` (03 §9.1).
+struct HelpRequestRowView: View {
+    let item: InboxItem
+    @State private var hovering = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DS.Space.s0_5) {
+            HStack(spacing: DS.Space.s1_5) {
+                DSAgentIndicator(.needsInput, size: .sm)
+                Text(verbatim: item.computer)
+                    .dsFont(DS.Font.body)
+                    .fontWeight(item.read ? .regular : .semibold)
+                    .foregroundStyle(DS.Color.textPrimary)
+                    .lineLimit(1)
+                Spacer(minLength: DS.Space.s1)
+                if hovering, !item.read {
+                    ActionButton(.inboxMarkRead, id: .inboxItemMarkRead(item.id), argument: .select(item.id), tooltip: String(localized: "Mark as Read", bundle: .module)) {
+                        Image(systemName: "checkmark")
+                    }
+                    .buttonStyle(DSIconButtonStyle(.row))
+                }
+                DSButton(.computerTakeOver, id: .inboxItemTakeOver(item.id), "Take Over", variant: .outline, size: .xs, argument: .select(item.computer))
+            }
+            Text(verbatim: item.message)
+                .dsFont(DS.Font.small)
+                .foregroundStyle(DS.Color.textSecondary)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .padding(.leading, DSIndicatorSize.sm.box + DS.Space.s1_5)
+        }
+        .padding(.horizontal, DS.Space.s2_5)
+        .padding(.vertical, DS.Space.s2)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(minHeight: InboxMetrics.rowHeight)
+        .background(RoundedRectangle(cornerRadius: DS.Radius.card).fill(hovering ? DS.Color.fg8 : Color.clear))
+        .onHover { hovering = $0 }
+        .a11y(.inboxItem(item.id), kind: "row", label: item.message, value: "needs_you")
     }
 }
 

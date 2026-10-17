@@ -1,0 +1,115 @@
+{
+  "abnt2_diag" : "\"{\\\"keys\\\":[\\\"a\\\",\\\"\\\\u0000\\\",\\\"\\\\u0000\\\",\\\"o\\\",\\\" \\\",\\\"\\\\u0000\\\",\\\" \\\",\\\"\\\\u0000\\\",\\\" \\\",\\\"\\\\u0000\\\",\\\" \\\",\\\"\\\\u0000\\\"],\\\"ev\\\":[\\\"mousedown:t\\\",\\\"focus:t\\\",\\\"focusin:t\\\"],\\\"active\\\":\\\"t\\\",\\\"focus\\\":true,\\\"spot\\\":[10,10,1288,1280,931,800]}\"",
+  "abnt2_typing" : {
+    "page_value" : "\"ação ç ã é €\"",
+    "typed" : "ação ç ã é €"
+  },
+  "browser_open" : {
+    "record_source" : "browser",
+    "record_trust" : "observed",
+    "request_id" : "01M54NDE837V9EV1TRX2R6F81H",
+    "status" : 200
+  },
+  "cleanup" : {
+    "leftover_images" : 0,
+    "leftover_resources" : 0
+  },
+  "exec" : {
+    "cancel_seconds" : 0,
+    "commands_logged" : 20,
+    "stdin_roundtrip" : true,
+    "uid" : 10002
+  },
+  "images" : {
+    "box" : "agentbox-box-test-c7cd714f:ctx-9040ad6f569a",
+    "build_seconds" : 50,
+    "egress" : "agentbox-egress-test-c7cd714f:ctx-6f7c28c42706"
+  },
+  "max_tool_call_seconds" : 15,
+  "mode_switch" : {
+    "cookie_kept" : true,
+    "new_requests" : 0,
+    "page_marker_kept" : true,
+    "reloaded" : false
+  },
+  "path_rejected" : {
+    "dotdot" : "path_rejected",
+    "symlink_dir" : "path_rejected",
+    "symlink_file" : "path_rejected"
+  },
+  "provision_seconds" : 2,
+  "proxy_render" : {
+    "render_capture_in_reqlog" : true,
+    "render_via" : "zyte-fake",
+    "usage_renders" : 1
+  },
+  "release" : {
+    "resources_left" : 0,
+    "result_json_kept" : true,
+    "secrets_dir_removed" : true,
+    "timeline_md" : true
+  },
+  "reqlog_as_curl_replay" : {
+    "status" : "reproduced the browser XHR from the work container"
+  },
+  "result_submit" : {
+    "fields" : {
+      "/api" : "verified",
+      "/count" : "not_verified",
+      "/owner" : "cited_missing",
+      "/rows" : "verified"
+    },
+    "summary" : {
+      "cited_missing" : 1,
+      "not_verified" : 1,
+      "verified" : 2
+    }
+  },
+  "runtime" : "desktop: Engine 29.6.2, aarch64",
+  "screenshot" : {
+    "file" : "/work/shots/home.png",
+    "png_bytes" : 9616
+  },
+  "security" : {
+    "inspect_leaks" : 0,
+    "requests_chain" : "Log integrity: OK",
+    "work_networks" : "internal only"
+  },
+  "ssrf_blocked" : {
+    "host.docker.internal" : "blocked_by_policy",
+    "metadata_ip" : "blocked_by_policy(link-local)",
+    "rfc1918" : "blocked_by_policy"
+  },
+  "take_over_during_write" : {
+    "ack_after_seconds" : 4.8,
+    "agent_call_result" : "human_in_control",
+    "lease_after" : "human"
+  },
+  "thumbnail" : {
+    "jpeg_bytes" : 11812
+  },
+  "ticket" : {
+    "no_upgrade" : "400",
+    "server_init" : "1440x900",
+    "single_use" : true
+  },
+  "ws_fps_raw_640x400_animation" : {
+    "encoding" : "Raw (worst case for the bridge)",
+    "fps" : 37.5,
+    "frames" : 225,
+    "mb_per_s" : 4.1,
+    "seconds" : 6
+  },
+  "ws_input_latency_ms" : {
+    "max" : 173,
+    "p50" : 38,
+    "p95" : 47,
+    "samples" : 40
+  },
+  "x11vnc_from_work" : "not reachable (listens on the runtime loopback only)",
+  "xhr_in_reqlog" : {
+    "id" : "01M54NDEF73Q57W7JWMSZAFGK2",
+    "source" : "browser",
+    "trust" : "observed"
+  }
+}

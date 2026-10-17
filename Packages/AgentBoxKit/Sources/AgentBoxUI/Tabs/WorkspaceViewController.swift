@@ -11,6 +11,8 @@ final class WorkspaceRootView: NSView {
     let area: PaneAreaView
     /// Sessão em criação aberta pela linha pendente (03 §2.9): ocupa o centro inteiro, sem tab row.
     let pending: NSView
+    /// Página do centro (Computers, viewer): substitui landing, tab row e panes enquanto aberta (03 §12).
+    private(set) var page: NSView?
     private var workspaceVisible = false
     private var pendingVisible = false
 
@@ -39,6 +41,7 @@ final class WorkspaceRootView: NSView {
     }
 
     private func applyMode() {
+        guard page == nil else { return }
         if pendingVisible {
             landing.removeFromSuperview()
             area.removeFromSuperview()
@@ -58,8 +61,25 @@ final class WorkspaceRootView: NSView {
         needsLayout = true
     }
 
+    /// Troca a página do centro. `nil` volta ao landing ou ao workspace, conforme havia sessão.
+    func setPage(_ view: NSView?) {
+        page?.removeFromSuperview()
+        page = view
+        if let view {
+            landing.removeFromSuperview()
+            pending.removeFromSuperview()
+            area.removeFromSuperview()
+            tabRow.removeFromSuperview()
+            addSubview(view)
+        } else {
+            applyMode()
+        }
+        needsLayout = true
+    }
+
     override func layout() {
         super.layout()
+        page?.frame = bounds
         landing.frame = bounds
         pending.frame = bounds
         tabRow.frame = NSRect(x: 0, y: 0, width: bounds.width, height: TabMetrics.chromeHeight)
@@ -100,6 +120,28 @@ final class WorkspaceViewController: NSViewController {
             guard let root, let env else { return }
             root.setPendingVisible(env.sidebar.focusedPending != nil)
         }
+        env.computers.onPageChange = { [weak self, weak root, weak env] in
+            guard let self, let root, let env else { return }
+            root.setPage(self.pageView(for: env.computers.page, env: env))
+            if env.computers.page != .workspace { root.window?.makeFirstResponder(root.page) }
+        }
+    }
+
+    /// A view SwiftUI de uma página do centro (Computers) ou o viewer de um computador.
+    private func pageView(for page: CenterPage, env: AppEnvironment) -> NSView? {
+        let controller = env.computers
+        let content: AnyView
+        switch page {
+        case .workspace: return nil
+        case .computers: content = AnyView(ComputersPageView(controller: controller))
+        case .viewer(let name):
+            guard let viewer = controller.ensureViewer(name) else { return nil }
+            content = AnyView(ComputerViewerView(controller: viewer, computers: controller))
+        }
+        let host = ChromeHostingView(
+            content: content.environment(\.elementStore, env.elements).environment(\.actionRegistry, env.registry).environment(\.a11yParent, .windowMain))
+        host.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
+        return host
     }
 
     @available(*, unavailable) required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }  // required init?(coder:) não usado

@@ -25,6 +25,8 @@ public final class AttentionCoordinator {
     @ObservationIgnored public var navigate: (_ terminalID: UUID, _ sessionID: UUID, _ source: AttentionNavigation) -> Void = { _, _, _ in }
     /// `NSApp.dockTile.badgeLabel` (injetável: os testes gravam o texto).
     @ObservationIgnored public var setDockBadge: (String?) -> Void = { _ in }
+    /// Pedidos de ajuda de computador abertos (T3-05): entram na mesma contagem do badge do Dock.
+    @ObservationIgnored public var extraBadgeCount: () -> Int = { 0 }
     @ObservationIgnored public var clock: () -> Date = { Date() }
     /// Quanto o pane precisa ficar visível com a janela key para contar como visto (06 §3.6).
     @ObservationIgnored public var viewDwell: Duration = .seconds(1)
@@ -265,7 +267,7 @@ public final class AttentionCoordinator {
 
     /// Badge do Dock = itens de prioridade 1–2 abertos (06 §3.5), vazio quando 0 ou desligado nas preferências.
     public func refreshDock() {
-        let count = center.badgeCount
+        let count = center.badgeCount + extraBadgeCount()
         let label: String? = preferences().dockBadge && count > 0 ? String(count) : nil
         if let lastBadge, lastBadge == label { return }
         lastBadge = .some(label)

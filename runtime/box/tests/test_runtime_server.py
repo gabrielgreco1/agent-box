@@ -131,7 +131,7 @@ class ServerTests(unittest.TestCase):
             status, _, payload = await call(port, "POST", "/v1/open", raw=b"[1,2]")
             self.assertEqual((status, payload["error"]), (400, "invalid_argument"))
             self.assertEqual(set(OPS), {"open", "read", "screenshot", "click", "type", "press", "select", "scroll", "wait", "eval", "cookies", "tabs",
-                                        "back", "forward", "reload", "download", "upload", "status", "mode"})
+                                        "back", "forward", "reload", "download", "upload", "status", "mode", "lease", "vnc_ticket", "frame", "selection"})
 
         self.run_server(fn)
 

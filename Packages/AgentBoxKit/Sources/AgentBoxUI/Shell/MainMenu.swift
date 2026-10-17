@@ -71,8 +71,21 @@ enum MainMenu {
         main.addItem(
             submenu(title: "View") { m in
                 m.addItem(ActionMenuItem(.viewToggleSidebar, title: "Toggle Sidebar", key: "b", registry: registry))
+                m.addItem(ActionMenuItem(.panelComputers, title: "Computers Panel", key: "c", modifiers: [.shift, .command], registry: registry))
+                m.addItem(ActionMenuItem(.pageInbox, title: "Inbox", key: "i", modifiers: [.shift, .command], registry: registry))
                 m.addItem(ActionMenuItem(.navBack, title: "Back", key: left, modifiers: [.option, .command], registry: registry))
                 m.addItem(ActionMenuItem(.navForward, title: "Forward", key: right, modifiers: [.option, .command], registry: registry))
+            })
+        main.addItem(
+            submenu(title: "Computer") { m in
+                m.addItem(ActionMenuItem(.pageComputers, title: "Computers", key: "", registry: registry))
+                m.addItem(.separator())
+                m.addItem(ActionMenuItem(.computerTakeOver, title: "Take Over / Hand Back", key: "r", modifiers: [.shift, .command], registry: registry))
+                m.addItem(ActionMenuItem(.computerReleaseKeyboard, title: "Release Keyboard", key: "", registry: registry))
+                m.addItem(.separator())
+                m.addItem(ActionMenuItem(.computerPaste, title: "Paste to Computer", key: "", registry: registry))
+                m.addItem(ActionMenuItem(.computerCopySelection, title: "Copy Selection from Computer", key: "", registry: registry))
+                m.addItem(ActionMenuItem(.computerPopOut, title: "Open in New Window", key: "", registry: registry))
             })
         let up = String(UnicodeScalar(NSUpArrowFunctionKey)!)
         let down = String(UnicodeScalar(NSDownArrowFunctionKey)!)
