@@ -43,7 +43,7 @@ matches() {
   local dirs=()
   for d in $SCAN_EXPANDED; do dirs+=("$d"); done
   [ ${#dirs[@]} -gt 0 ] || return 0
-  (cd "$ROOT" && rg -nP --no-heading --glob '*.swift' ${globs[@]+"${globs[@]}"} -e "$re" "${dirs[@]}" 2>/dev/null || true) \
+  (cd "$ROOT" && rg -nP --no-heading -t swift ${globs[@]+"${globs[@]}"} -e "$re" "${dirs[@]}" 2>/dev/null || true) \
     | grep -vE '^[^:]+:[0-9]+:[[:space:]]*//' || true
 }
 

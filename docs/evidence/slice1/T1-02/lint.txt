@@ -1,0 +1,47 @@
+$ scripts/lint.sh --self-test | tail -1
+lint self-test: OK
+$ scripts/lint.sh
+lint: swift build (Swift 6 estrito, warnings como erro)
+lint: OK
+$ scripts/lint-ui.sh --self-test
+ok: sheet-bad (fail)
+ok: nsalert-bad (fail)
+ok: list-bad (fail)
+ok: list-call-bad (fail)
+ok: lazyvstack-ok (pass)
+ok: form-bad (fail)
+ok: color-hex-bad (fail)
+ok: color-hex-tokens-ok (pass)
+ok: padding-literal-bad (fail)
+ok: padding-edge-literal-bad (fail)
+ok: frame-literal-bad (fail)
+ok: padding-ds-ok (pass)
+ok: padding-default-ok (pass)
+ok: frame-infinity-ok (pass)
+ok: terminal-view-bad (fail)
+ok: emoji-bad (fail)
+ok: shortcut-glyph-ok (pass)
+ok: a11y-literal-bad (fail)
+ok: a11y-typed-ok (pass)
+ok: button-loose-bad (fail)
+ok: button-brace-bad (fail)
+ok: button-registry-ok (pass)
+ok: action-button-ok (pass)
+ok: button-allow-ok (pass)
+ok: tap-gesture-bad (fail)
+ok: nsbutton-bad (fail)
+ok: nsmenuitem-bad (fail)
+ok: string-missing-bad (fail)
+ok: string-in-catalog-ok (pass)
+ok: string-verbatim-ok (pass)
+ok: comment-ignored (pass)
+lint-ui self-test: OK
+$ scripts/lint-ui.sh
+lint-ui: OK
+$ scripts/gen-automation-ids.py --check
+gen-automation-ids: OK (327 A11yID, 296 ActionID)
+$ LINT_ROOT=<tmp com Button solto> scripts/lint-ui.sh
+lint-ui: [buttons] controle fora do ActionRegistry: o gatilho deve chamar registry.perform(.<id>) (use ActionButton)
+    Packages/AgentBoxKit/Sources/AgentBoxUI/Loose.swift:4:        Button("x") { doSomething() }
+lint-ui: FALHOU (1 violação(ões))
+rc=1
