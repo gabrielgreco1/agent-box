@@ -1,0 +1,201 @@
+[0/4] Write swift-version--58304C5D6DBC2206.txt
+[1/3] Linking SwiftTermBuildInfoGenerator-tool
+[2/3] Applying SwiftTermBuildInfoGenerator-tool
+[0/1] Planning build
+[1/1] Compiling plugin GenerateManual
+[2/2] Compiling plugin GenerateDoccReference
+[3/3] Compiling plugin SwiftTermBuildInfoPlugin
+Building for debugging...
+[3/15] Write swift-version--58304C5D6DBC2206.txt
+[5/16] Compiling AgentBoxProtocol Module.swift
+[6/16] Emitting module AgentBoxProtocol
+[6/16] Linking SwiftTermBuildInfoGenerator-tool
+[8/34] Compiling ProtocolTests SmokeTests.swift
+[9/34] Emitting module ProtocolTests
+[10/34] Compiling AgentBoxPlatform Module.swift
+[11/34] Emitting module AgentBoxPlatform
+[12/34] Compiling AgentBoxPlatform LogFacade.swift
+[12/43] Generate SwiftTerm build information
+[14/43] Compiling AgentBoxDesignSystem Space.generated.swift
+[15/43] Compiling AgentBoxStore Module.swift
+[16/43] Emitting module AgentBoxStore
+[17/43] Compiling AgentBoxDesignSystem Shadow.generated.swift
+[18/43] Compiling AgentBoxDocker Module.swift
+[19/43] Emitting module AgentBoxDocker
+[20/45] Compiling AgentBoxDesignSystem MotionTypes.swift
+[21/45] Emitting module agentbox
+[22/45] Compiling agentbox AgentBoxCLI.swift
+[23/44] Compiling PlatformTests SmokeTests.swift
+[24/46] Compiling AgentBoxTerminalCore Module.swift
+[25/46] Emitting module PlatformTests
+[26/46] Compiling PlatformTests LogFacadeTests.swift
+[27/50] Emitting module AgentBoxTerminalCore
+[28/50] Compiling AgentBoxDesignSystem resource_bundle_accessor.swift
+[29/50] Compiling AgentBoxDesignSystem MotionTokens.generated.swift
+[30/50] Compiling AgentBoxDesignSystem Typography.generated.swift
+[31/50] Compiling AgentBoxDesignSystem Radius.generated.swift
+[32/50] Compiling AgentBoxDesignSystem Colors.generated.swift
+[33/50] Compiling AgentBoxDesignSystem Module.swift
+[34/50] Compiling AgentBoxDesignSystem Fonts.swift
+[35/50] Compiling AgentBoxDesignSystem Motion.swift
+[36/50] Emitting module AgentBoxCore
+[37/50] Compiling AgentBoxCore Module.swift
+[38/56] Emitting module AgentBoxDesignSystem
+[39/56] Compiling AgentBoxDesignSystem DSTypes.swift
+[40/56] Compiling StoreTests SmokeTests.swift
+[41/56] Emitting module StoreTests
+[42/56] Emitting module DockerTests
+[43/56] Compiling DockerTests SmokeTests.swift
+[44/58] Emitting module agentboxd
+[45/58] Compiling agentboxd main.swift
+[46/65] Compiling TerminalCoreTests SmokeTests.swift
+[47/65] Emitting module TerminalCoreTests
+[48/65] Emitting module DaemonTests
+[49/65] Compiling DaemonTests SmokeTests.swift
+[49/65] Linking agentbox
+[51/65] Emitting module AgentBoxUI
+[52/65] Compiling AgentBoxUI Module.swift
+[52/65] Applying agentbox
+[54/65] Compiling CoreTests SmokeTests.swift
+[55/65] Emitting module CoreTests
+[56/67] Emitting module UISnapshotTests
+[57/67] Compiling UISnapshotTests SmokeTests.swift
+[57/67] Linking agentboxd
+[58/67] Applying agentboxd
+[60/67] Compiling DesignSystemTests FontTests.swift
+[61/67] Compiling DesignSystemTests MotionTests.swift
+[62/67] Compiling DesignSystemTests TestSupport.swift
+[63/67] Emitting module DesignSystemTests
+[64/67] Compiling DesignSystemTests TokensMatchJSONTests.swift
+[65/67] Compiling DesignSystemTests OrcaParityTests.swift
+[66/69] Emitting module AgentBoxKitPackageTests
+[67/69] Compiling AgentBoxKitPackageTests runner.swift
+[67/68] Linking AgentBoxKitPackageTests
+Build complete! (8.88s)
+Test Suite 'All tests' started at 2026-10-17 00:48:17.497.
+Test Suite 'All tests' passed at 2026-10-17 00:48:17.498.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+◇ Test run started.
+↳ Testing Library Version: 1501
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite DaemonSmoke started.
+◇ Suite UISnapshotSmoke started.
+◇ Suite CoreTestsSmoke started.
+◇ Suite PlatformTestsSmoke started.
+◇ Suite DockerTestsSmoke started.
+◇ Suite TerminalCoreTestsSmoke started.
+◇ Suite LogFacadeTests started.
+◇ Suite OrcaParityTests started.
+◇ Suite StoreTestsSmoke started.
+◇ Suite MotionTests started.
+◇ Suite FontTests started.
+◇ Suite TokensMatchJSONTests started.
+◇ Suite ProtocolTestsSmoke started.
+◇ Test daemonDependenciesLink() started.
+◇ Test facadeKeepsCategory() started.
+◇ Test subsystemsMatchCanonicalIdentifiers() started.
+◇ Test moduleLinks() started.
+◇ Test moduleLinks() started.
+◇ Test moduleLinks() started.
+◇ Test bezierProgressMatchesSpecTables() started.
+◇ Test uiModulesLink() started.
+◇ Test springsMatchSpecTables() started.
+◇ Test bezierBoundariesAndLinear() started.
+◇ Test everyTextStyleResolvesToTheRightFamily() started.
+◇ Test motionBuildersUseTokenValues() started.
+◇ Test reduceMotionIsOROfSystemAndPreference() started.
+◇ Test moduleLinks() started.
+◇ Test loopFpsIsCappedAndDropsInLowPower() started.
+◇ Test tabularDigitsKeepNumbersAligned() started.
+◇ Test weightMappingIsMonotonic() started.
+◇ Test uiFontUsesGeistAndTheWeightAxis() started.
+◇ Test terminalThemeMatchesJSON() started.
+◇ Test geistFileIsBundledWithLicense() started.
+◇ Test moduleLinks() started.
+◇ Test divergencesFromSpec02AreIntentional() started.
+◇ Test motionFlatLeavesMatchJSON() started.
+◇ Test geistRegistersAndResolvesByFamilyName() started.
+◇ Test policyAppliesPreferenceAndMode() started.
+◇ Test moduleLinks() started.
+◇ Test alphaColorsAreNeverPreMixed() started.
+◇ Test resolutionFollowsReduceMotionAndMode() started.
+◇ Test everyColorHasAnOrcaReferenceOrAJustification() started.
+◇ Test typographyMatchesJSON() started.
+◇ Test radiiUseOrcaValues() started.
+◇ Test lightColorsEqualOrcaExtractionWhereRegistered() started.
+◇ Test reducedCrossfadeTokensAreDefined() started.
+◇ Test spacingUsesOrcaScale() started.
+◇ Test radiiMatchJSON() started.
+◇ Test shadowsMatchJSON() started.
+◇ Test motionTypedTokensMatchJSON() started.
+◇ Test terminalUsesSFMono() started.
+◇ Test colorsMatchJSON() started.
+◇ Test typographyUsesOrcaSizesWeightsAndLineHeights() started.
+◇ Test generatedFilesAreUpToDate() started.
+◇ Test darkColorsEqualOrcaExtraction() started.
+◇ Test spaceAndLayoutMatchJSON() started.
+◇ Test tokensJSMatchesSwiftAndJSON() started.
+◇ Test motionOriginatedInOrcaMatchesExtraction() started.
+✔ Test daemonDependenciesLink() passed after 0.001 seconds.
+✔ Test moduleLinks() passed after 0.001 seconds.
+✔ Test facadeKeepsCategory() passed after 0.001 seconds.
+◇ Test appKitAndSwiftUIColorsFollowSpec() started.
+✔ Test moduleLinks() passed after 0.001 seconds.
+◇ Test fontFamiliesAreGeistAndSFMono() started.
+✔ Test moduleLinks() passed after 0.001 seconds.
+✔ Test subsystemsMatchCanonicalIdentifiers() passed after 0.001 seconds.
+✔ Test moduleLinks() passed after 0.001 seconds.
+✔ Test reduceMotionIsOROfSystemAndPreference() passed after 0.001 seconds.
+✔ Test springsMatchSpecTables() passed after 0.001 seconds.
+✔ Test bezierProgressMatchesSpecTables() passed after 0.001 seconds.
+✔ Test loopFpsIsCappedAndDropsInLowPower() passed after 0.001 seconds.
+✔ Test moduleLinks() passed after 0.001 seconds.
+✔ Test divergencesFromSpec02AreIntentional() passed after 0.001 seconds.
+✔ Test bezierBoundariesAndLinear() passed after 0.001 seconds.
+✔ Test resolutionFollowsReduceMotionAndMode() passed after 0.001 seconds.
+✔ Test reducedCrossfadeTokensAreDefined() passed after 0.001 seconds.
+✔ Test moduleLinks() passed after 0.001 seconds.
+✔ Test alphaColorsAreNeverPreMixed() passed after 0.001 seconds.
+✔ Test radiiMatchJSON() passed after 0.001 seconds.
+✔ Test typographyMatchesJSON() passed after 0.001 seconds.
+✔ Test radiiUseOrcaValues() passed after 0.001 seconds.
+✔ Test spacingUsesOrcaScale() passed after 0.001 seconds.
+✔ Test everyColorHasAnOrcaReferenceOrAJustification() passed after 0.001 seconds.
+✔ Suite LogFacadeTests passed after 0.001 seconds.
+✔ Suite PlatformTestsSmoke passed after 0.001 seconds.
+✔ Suite DaemonSmoke passed after 0.001 seconds.
+✔ Suite StoreTestsSmoke passed after 0.001 seconds.
+✔ Test shadowsMatchJSON() passed after 0.001 seconds.
+✔ Suite CoreTestsSmoke passed after 0.001 seconds.
+✔ Test motionBuildersUseTokenValues() passed after 0.001 seconds.
+✔ Test spaceAndLayoutMatchJSON() passed after 0.001 seconds.
+✔ Suite TerminalCoreTestsSmoke passed after 0.001 seconds.
+✔ Test terminalThemeMatchesJSON() passed after 0.001 seconds.
+✔ Suite ProtocolTestsSmoke passed after 0.001 seconds.
+✔ Suite DockerTestsSmoke passed after 0.001 seconds.
+✔ Test colorsMatchJSON() passed after 0.001 seconds.
+✔ Test motionTypedTokensMatchJSON() passed after 0.001 seconds.
+✔ Test fontFamiliesAreGeistAndSFMono() passed after 0.001 seconds.
+✔ Test motionFlatLeavesMatchJSON() passed after 0.001 seconds.
+✔ Test appKitAndSwiftUIColorsFollowSpec() passed after 0.001 seconds.
+✔ Test typographyUsesOrcaSizesWeightsAndLineHeights() passed after 0.001 seconds.
+✔ Test darkColorsEqualOrcaExtraction() passed after 0.001 seconds.
+✔ Test lightColorsEqualOrcaExtractionWhereRegistered() passed after 0.001 seconds.
+✔ Test motionOriginatedInOrcaMatchesExtraction() passed after 0.002 seconds.
+✔ Suite OrcaParityTests passed after 0.002 seconds.
+✔ Test tokensJSMatchesSwiftAndJSON() passed after 0.003 seconds.
+✔ Test policyAppliesPreferenceAndMode() passed after 0.005 seconds.
+✔ Suite MotionTests passed after 0.005 seconds.
+✔ Test weightMappingIsMonotonic() passed after 0.035 seconds.
+✔ Test everyTextStyleResolvesToTheRightFamily() passed after 0.035 seconds.
+✔ Test tabularDigitsKeepNumbersAligned() passed after 0.035 seconds.
+✔ Test geistFileIsBundledWithLicense() passed after 0.035 seconds.
+✔ Test uiModulesLink() passed after 0.035 seconds.
+✔ Test uiFontUsesGeistAndTheWeightAxis() passed after 0.035 seconds.
+✔ Test terminalUsesSFMono() passed after 0.035 seconds.
+✔ Test geistRegistersAndResolvesByFamilyName() passed after 0.035 seconds.
+✔ Suite UISnapshotSmoke passed after 0.035 seconds.
+✔ Suite FontTests passed after 0.035 seconds.
+✔ Test generatedFilesAreUpToDate() passed after 0.056 seconds.
+✔ Suite TokensMatchJSONTests passed after 0.057 seconds.
+✔ Test run with 47 tests in 13 suites passed after 0.057 seconds.

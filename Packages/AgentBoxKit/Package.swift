@@ -17,8 +17,8 @@ let grdb: Target.Dependency = .product(name: "GRDB", package: "GRDB.swift")
 let argumentParser: Target.Dependency = .product(name: "ArgumentParser", package: "swift-argument-parser")
 let snapshotTesting: Target.Dependency = .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
 
-func lib(_ name: String, _ deps: [Target.Dependency], ui: Bool = false) -> Target {
-    .target(name: name, dependencies: deps, swiftSettings: ui ? mainActorSettings : nonisolatedSettings)
+func lib(_ name: String, _ deps: [Target.Dependency], ui: Bool = false, resources: [Resource] = []) -> Target {
+    .target(name: name, dependencies: deps, resources: resources, swiftSettings: ui ? mainActorSettings : nonisolatedSettings)
 }
 func tests(_ name: String, _ deps: [Target.Dependency]) -> Target {
     .testTarget(name: name, dependencies: deps, swiftSettings: nonisolatedSettings)
@@ -52,7 +52,7 @@ let package = Package(
         lib("AgentBoxStore", ["AgentBoxPlatform", grdb]),
         lib("AgentBoxDocker", ["AgentBoxPlatform", "AgentBoxProtocol"]),
         lib("AgentBoxCore", ["AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxStore", "AgentBoxDocker"]),
-        lib("AgentBoxDesignSystem", ["AgentBoxProtocol"], ui: true),
+        lib("AgentBoxDesignSystem", ["AgentBoxProtocol"], ui: true, resources: [.copy("Resources/Fonts")]),
         lib("AgentBoxUI", ["AgentBoxCore", "AgentBoxDesignSystem", "AgentBoxTerminalCore", swiftTerm], ui: true),
         .executableTarget(
             name: "agentboxd",
@@ -70,6 +70,7 @@ let package = Package(
         tests("CoreTests", ["AgentBoxCore"]),
         tests("DockerTests", ["AgentBoxDocker"]),
         tests("TerminalCoreTests", ["AgentBoxTerminalCore"]),
+        tests("DesignSystemTests", ["AgentBoxDesignSystem"]),
         tests("DaemonTests", ["AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxTerminalCore"]),
         .testTarget(
             name: "UISnapshotTests",

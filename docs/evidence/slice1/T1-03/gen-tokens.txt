@@ -1,0 +1,2 @@
+gen-tokens: 7 arquivos (0 atualizados)
+gen-tokens: OK (7 arquivos em dia)
