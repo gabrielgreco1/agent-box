@@ -32,11 +32,15 @@ public struct AdapterContext: Sendable {
     /// Env capturado (para o shell resolver `$SHELL`).
     public var environment: [String: String]
     public var newUUID: @Sendable () -> UUID
+    /// Injeções por lançamento (Fatia 2+). `nil` na Fatia 1: o segmento `injected` fica vazio.
+    public var injection: LaunchInjection?
 
     public init(
         executablePath: String, cwd: String, runID: UUID, terminalID: UUID, launchDirectory: URL,
-        mode: LaunchMode = .automatic, environment: [String: String] = [:], newUUID: @escaping @Sendable () -> UUID = { UUID() }
+        mode: LaunchMode = .automatic, environment: [String: String] = [:], newUUID: @escaping @Sendable () -> UUID = { UUID() },
+        injection: LaunchInjection? = nil
     ) {
+        self.injection = injection
         self.executablePath = executablePath; self.cwd = cwd; self.runID = runID; self.terminalID = terminalID
         self.launchDirectory = launchDirectory; self.mode = mode; self.environment = environment; self.newUUID = newUUID
     }
