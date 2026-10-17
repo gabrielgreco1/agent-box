@@ -1,0 +1,5 @@
+lint: swift build (Swift 6 estrito, warnings como erro)
+lint: OK
+ok: comment-ignored (pass)
+lint self-test: OK
+lint-ui.sh: ainda nao implementado (T1-02); fora do escopo de T1-04
