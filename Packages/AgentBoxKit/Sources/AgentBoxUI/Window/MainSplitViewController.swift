@@ -220,6 +220,9 @@ struct LandingView: View {
                 if let registry, registry.isOffered(.projectAdd) {
                     DSButton(.projectAdd, id: .landingAddProject, "Add Project…", variant: .primary)
                 }
+                if let registry, registry.isOffered(.projectCloneFromGitHub) {
+                    DSButton(.projectCloneFromGitHub, id: .landingCloneProject, "Clone from GitHub…", variant: .secondary)
+                }
                 if let registry, registry.isOffered(.sessionNewClean) {
                     DSButton(.sessionNewClean, id: .landingNewCleanSession, "New Clean Session", variant: .secondary)
                 }

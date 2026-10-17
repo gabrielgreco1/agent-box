@@ -10,10 +10,13 @@ public struct ProcessRequest: Sendable {
     public var timeout: Duration
     /// Limite por stream (stdout e stderr); o excedente é descartado e `truncated` fica verdadeiro.
     public var maxOutputBytes: Int
+    /// Recebe cada pedaço de stderr assim que chega (progresso de `git clone --progress`); roda fora do lock, em fila do GCD.
+    public var onStderrChunk: (@Sendable (Data) -> Void)?
 
     public init(executable: URL, arguments: [String], environment: [String: String] = [:],
                 currentDirectory: URL? = nil, timeout: Duration = .seconds(30),
-                maxOutputBytes: Int = 4 * 1024 * 1024) {
+                maxOutputBytes: Int = 4 * 1024 * 1024, onStderrChunk: (@Sendable (Data) -> Void)? = nil) {
+        self.onStderrChunk = onStderrChunk
         self.executable = executable
         self.arguments = arguments
         self.environment = environment
@@ -177,6 +180,7 @@ private final class ProcessSession: @unchecked Sendable { // SAFETY: todo estado
             if isStdout { stdout.append(data.prefix(room)) } else { stderr.append(data.prefix(room)) }
         }
         lock.unlock()
+        if !isStdout { request.onStderrChunk?(data) }
     }
 
     private func finish(force: Bool) {

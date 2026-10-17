@@ -28,6 +28,8 @@ struct GeneralSettingsView: View {
             SettingsBlock(title: "Folders") {
                 folderRow("Worktree folder", help: "Where new worktrees are created.", key: "worktreeFolder",
                           action: .settingsGeneralWorktreeFolder, saved: general.worktreeFolder)
+                folderRow("Projects folder", help: "Where Clone from GitHub puts new projects.", key: "projectsFolder",
+                          action: .settingsGeneralProjectsFolder, saved: general.projectsFolder)
                 folderRow("Clean session folder", help: "Where sessions without a project live.", key: "cleanSessionFolder",
                           action: .settingsGeneralCleanSessionFolder, saved: general.cleanSessionFolder)
             }

@@ -33,6 +33,7 @@ extension ActionID {
     public static let sessionNewClean = ActionID(unchecked: "session.newClean")
     public static let sessionNewCleanInFolder = ActionID(unchecked: "session.newCleanInFolder")
     public static let projectAdd = ActionID(unchecked: "project.add")
+    public static let projectCloneFromGitHub = ActionID(unchecked: "project.cloneFromGitHub")
     public static let sidebarSortFilter = ActionID(unchecked: "sidebar.sortFilter")
     public static let sidebarResetFilters = ActionID(unchecked: "sidebar.resetFilters")
     public static let sidebarClearSearch = ActionID(unchecked: "sidebar.clearSearch")
@@ -258,6 +259,7 @@ extension ActionID {
     public static let settingsGeneralBranchPrefixCustom = ActionID(unchecked: "settings.general.branchPrefixCustom")
     public static let settingsGeneralWorktreeFolder = ActionID(unchecked: "settings.general.worktreeFolder")
     public static let settingsGeneralCleanSessionFolder = ActionID(unchecked: "settings.general.cleanSessionFolder")
+    public static let settingsGeneralProjectsFolder = ActionID(unchecked: "settings.general.projectsFolder")
     public static let settingsPickPath = ActionID(unchecked: "settings.pickPath")
     public static let settingsResetConfirmations = ActionID(unchecked: "settings.resetConfirmations")
     public static let settingsAgentsDefaultAgent = ActionID(unchecked: "settings.agents.defaultAgent")
@@ -340,6 +342,12 @@ extension ActionID {
     public static let dialogMoveToProjectCancel = ActionID(unchecked: "dialog.moveToProject.cancel")
     public static let dialogAddProjectAddFound = ActionID(unchecked: "dialog.addProject.addFound")
     public static let dialogAddProjectStopScan = ActionID(unchecked: "dialog.addProject.stopScan")
+    public static let dialogCloneRepoSetSource = ActionID(unchecked: "dialog.cloneRepo.setSource")
+    public static let dialogCloneRepoSelect = ActionID(unchecked: "dialog.cloneRepo.select")
+    public static let dialogCloneRepoSubmit = ActionID(unchecked: "dialog.cloneRepo.submit")
+    public static let dialogCloneRepoCancel = ActionID(unchecked: "dialog.cloneRepo.cancel")
+    public static let dialogCloneRepoLogIn = ActionID(unchecked: "dialog.cloneRepo.logIn")
+    public static let dialogCloneRepoRetry = ActionID(unchecked: "dialog.cloneRepo.retry")
     public static let dialogQuitKeepRunning = ActionID(unchecked: "dialog.quit.keepRunning")
     public static let dialogQuitStopAll = ActionID(unchecked: "dialog.quit.stopAll")
     public static let dialogQuitStopAllConfirm = ActionID(unchecked: "dialog.quit.stopAllConfirm")
@@ -410,6 +418,7 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "session.newClean"), label: "New Clean Session", shortcut: "⇧⌘N", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "session.newCleanInFolder"), label: "New Clean Session in Folder…", shortcut: "⌥⇧⌘N", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "project.add"), label: "Add Project…", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "project.cloneFromGitHub"), label: "Clone from GitHub…", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "sidebar.sortFilter"), label: "Sort and Filter", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "sidebar.resetFilters"), label: "Reset", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "sidebar.clearSearch"), label: "Clear Search", shortcut: "", slice: .slice2),
@@ -635,6 +644,7 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "settings.general.branchPrefixCustom"), label: "Branch prefix", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.general.worktreeFolder"), label: "Worktree folder", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.general.cleanSessionFolder"), label: "Clean session folder", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.general.projectsFolder"), label: "Projects folder", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.pickPath"), label: "Change…", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.resetConfirmations"), label: "Reset", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.agents.defaultAgent"), label: "Default agent", shortcut: "", slice: .slice1),
@@ -717,6 +727,12 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "dialog.moveToProject.cancel"), label: "Cancel (§16.8)", shortcut: "Esc", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.addProject.addFound"), label: "Add <n> Projects", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.addProject.stopScan"), label: "Stop Scan (§16.9)", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "dialog.cloneRepo.setSource"), label: "Campo `owner/repo` ou URL (§16.9b)", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "dialog.cloneRepo.select"), label: "Linha de repositório (§16.9b)", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "dialog.cloneRepo.submit"), label: "Clone (§16.9b)", shortcut: "↵", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "dialog.cloneRepo.cancel"), label: "Cancel (§16.9b)", shortcut: "Esc", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "dialog.cloneRepo.logIn"), label: "Log in to GitHub (§16.9b)", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "dialog.cloneRepo.retry"), label: "Try Again (§16.9b)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.quit.keepRunning"), label: "Keep Running (§16.10)", shortcut: "↵", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.quit.stopAll"), label: "Stop All and Quit… (§16.10)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.quit.stopAllConfirm"), label: "Stop All and Quit (segunda confirmação, §16.10)", shortcut: "", slice: .slice1),

@@ -123,6 +123,17 @@ final class ComposerController {
         Task { try? await store.scheduleUIState(ComposerModel.uiStateKey, state) }
     }
 
+    /// Um projeto acabou de ser clonado (`Clone from GitHub…` aberto pelo combobox Project): seleciona-o no composer, que
+    /// continua aberto com o que já foi digitado. Sem composer aberto não faz nada.
+    func projectCloned(_ project: Project) {
+        guard let model, isOpen else { return }
+        Task { @MainActor in
+            for _ in 0 ..< 100 where sidebar.project(project.id) == nil { try? await Task.sleep(for: .milliseconds(20)) }
+            guard self.model === model, isOpen else { return }
+            model.setProject(project.id)
+        }
+    }
+
     // MARK: Ações
 
     func register(in registry: ActionRegistry) throws {

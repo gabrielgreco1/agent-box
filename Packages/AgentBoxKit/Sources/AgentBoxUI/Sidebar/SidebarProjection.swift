@@ -35,6 +35,8 @@ struct PendingLaunch: Identifiable, Equatable {
     enum Phase: Equatable {
         case preparing, fetching, creatingWorktree
         case startingAgent(String)
+        /// `git clone` em andamento (F24); o texto já traz o percentual (`Cloning… 42%`).
+        case cloning(String)
     }
     var id: UUID
     var name: String
@@ -51,6 +53,8 @@ struct PendingLaunch: Identifiable, Equatable {
     var recoveries: [SessionRecovery] = []
     /// Fases já concluídas, na ordem (a PhaseList do centro mostra check nelas e spinner na atual).
     var history: [Phase] = []
+    /// Linha de `Clone from GitHub` (F24): não tem agente, worktree nem terminal; o centro mostra só o andamento.
+    var isClone = false
 
     init(
         id: UUID = .v7(), name: String, projectID: UUID?, phase: Phase = .preparing, failure: String? = nil, sessionID: UUID? = nil,
@@ -71,6 +75,7 @@ struct PendingLaunch: Identifiable, Equatable {
         case .fetching: String(localized: "Fetching origin…", bundle: .module)
         case .creatingWorktree: String(localized: "Creating worktree…", bundle: .module)
         case .startingAgent(let agent): "Starting \(agent)…"
+        case .cloning(let text): text
         }
     }
 }
