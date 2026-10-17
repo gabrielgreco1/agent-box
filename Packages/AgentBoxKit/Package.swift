@@ -38,6 +38,7 @@ let package = Package(
         .library(name: "AgentBoxDesignSystem", targets: ["AgentBoxDesignSystem"]),
         .library(name: "AgentBoxUI", targets: ["AgentBoxUI"]),
         .executable(name: "agentboxd", targets: ["agentboxd"]),
+        .executable(name: "agentboxd-launch", targets: ["agentboxd-launch"]),
         .executable(name: "agentbox", targets: ["agentbox"]),
         .executable(name: "agentbox-bench", targets: ["AgentBoxBench"]),
     ],
@@ -66,6 +67,8 @@ let package = Package(
             // apenas quando assina ad-hoc. O daemon ainda confere que ele próprio é ad-hoc antes de usar o modo.
             swiftSettings: nonisolatedSettings + [.define("AGENTBOX_ALLOW_ADHOC_PEERS", .when(configuration: .debug))]
         ),
+        // Launcher estável do LaunchAgent (T1-24, S-01): C puro, só faz `exec` do `agentboxd`; ver main.c.
+        .executableTarget(name: "agentboxd-launch"),
         .executableTarget(
             name: "agentbox",
             dependencies: ["AgentBoxProtocol", "AgentBoxPlatform", argumentParser],

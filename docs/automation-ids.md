@@ -364,6 +364,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `overlay.confirmQuit`
 - `overlay.confirmQuit.keepRunning`
 - `overlay.confirmQuit.stopAll`
+- `overlay.confirmQuit.stopAllConfirm`
 - `overlay.confirmQuit.cancel`
 - `overlay.confirmQuit.dontAsk`
 - `overlay.confirmSkipPermissions.confirm`
@@ -416,6 +417,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `app.hideAppName` | Hide App Name | — | slice1 |
 | `app.quit` | Quit Agent Box | ⌘Q | slice1 |
 | `app.quitCompletely` | Quit Agent Box Completely | — | slice1 |
+| `app.openMainWindow` | Open Agent Box (barra de menus) | — | slice1 |
+| `app.stopAllAgents` | Stop All Agents… (barra de menus) | — | slice1 |
 | `view.toggleSidebar` | Toggle Sidebar | ⌘B | slice1 |
 | `view.toggleRightPanel` | Right Panel | ⌘L (Fatia 2) | slice2 |
 | `view.toggleStatusBar` | Show Status Bar | — | slice1 |
@@ -647,6 +650,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `settings.openSection` | Seção do Settings (nav) | — | slice1 |
 | `settings.back` | Back to App | Esc | slice1 |
 | `settings.general.keepAgentsRunning` | Keep agents running when you quit | — | slice1 |
+| `settings.general.allowLoginItems` | Allow in Login Items | — | slice1 |
 | `settings.general.askBeforeQuit` | Ask before quitting with running agents | — | slice1 |
 | `settings.general.confirmCloseTerminal` | Confirm before closing a running terminal | — | slice1 |
 | `settings.general.confirmDeleteSession` | Confirm before deleting a session | — | slice1 |

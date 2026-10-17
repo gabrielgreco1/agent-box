@@ -14,6 +14,14 @@ struct GeneralSettingsView: View {
             SettingsBlock(title: "Background") {
                 switchRow("Keep agents running when you quit", help: "Terminals keep running and come back when you reopen Agent Box.",
                           key: "keepAgentsRunning", isOn: general.keepAgentsRunning, action: .settingsGeneralKeepAgentsRunning)
+                if model.backgroundNeedsApproval {
+                    SettingsRow(
+                        title: "Background agents need approval",
+                        help: "Allow Agent Box in Login Items so your agents keep running after you quit. Until then they keep running only while this Mac session lasts.") {
+                        DSButton(
+                            .settingsGeneralAllowLoginItems, id: .settings("general", "allowLoginItems"), "Allow in Login Items", variant: .outline)
+                    }
+                }
                 switchRow("Ask before quitting with running agents", help: nil,
                           key: "askBeforeQuit", isOn: general.askBeforeQuit, action: .settingsGeneralAskBeforeQuit)
             }

@@ -1,0 +1,59 @@
+keychain=/private/tmp/claude-501/-Users-gabriel-orca-workspaces-agent-box-otter/5dda428d-ecea-4852-b667-584fd17012cc/scratchpad/s01//agentbox-ci-11906.keychain-db sha=F1B87B048DA0BC4E9B9FD513AFF9F075151E401A
+before: notFound
+register: ok
+after: enabled
+	LWCR = {
+		"reqs" => {
+			"cdhash" => {
+				"$in" => [
+					0 = 				]
+			}
+		}
+		"vers" => 1
+		"comp" => 1
+		"ccat" => 0
+	}
+
+	domain = gui/501 [100016]
+--
+	properties = partial import | abandon process group | resolve program | has LWCR
+}
+	state = not running
+	jetsamproperties category = daemon
+	job state = uninitialized
+	properties = partial import | abandon process group | resolve program | has LWCR
+sock=/var/run/com.apple.launchd.SPOa772LDF/Listeners
+hello from daemon pid 12045
+--- apos rebuild (mesma identidade), daemon antigo ainda vivo:
+	state = running
+	runs = 1
+	jetsamproperties category = daemon
+	job state = running
+	properties = partial import | abandon process group | resolve program | has LWCR
+--- aguardando daemon sair por ociosidade
+	state = spawn scheduled
+	runs = 3
+	last exit code = 78: EX_CONFIG
+	jetsamproperties category = daemon
+	job state = spawn failed
+	properties = partial import | abandon process group | resolve program | needs LWCR update | has LWCR
+/private/tmp/claude-501/-Users-gabriel-orca-workspaces-agent-box-otter/5dda428d-ecea-4852-b667-584fd17012cc/scratchpad/s01/signed.sh: line 47: 12541 Done                    echo two
+     12543 Terminated: 15          | nc -U "$SOCK"
+2026-10-17 08:55:41 +0000 pid=12045 start v23134 argv=["Cont
+--- re-registro (unregister + register) com o binario novo
+Unable to block on application (GetProcessPID() returned 18446744073709551016)
+after: notRegistered
+before: notRegistered
+register: ok
+after: enabled
+sock=/var/run/com.apple.launchd.AOf5SijYH9/Listeners
+hello from daemon pid 12830
+	state = running
+	runs = 1
+	last exit code = (never exited)
+	jetsamproperties category = daemon
+	properties = partial import | abandon process group | resolve program | has LWCR
+2026-10-17 08:55:41 +0000 pid=12045 start v23134 argv=["Cont
+2026-10-17 08:56:13 +0000 pid=12830 start v29072 argv=["Cont
+cleanup done; keychains:
+    "/Users/gabriel/Library/Keychains/login.keychain-db"

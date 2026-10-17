@@ -25,6 +25,11 @@ public final class ChildDaemon: Sendable {
         executable?.resolvingSymlinksInPath().deletingLastPathComponent().appendingPathComponent("agentboxd")
     }
 
+    /// Launcher do LaunchAgent (`agentboxd-launch`, ver `Sources/agentboxd-launch/main.c`): é o binário a que o launchd prende o job.
+    public static func launcherExecutable(relativeTo executable: URL? = Bundle.main.executableURL) -> URL? {
+        executable?.resolvingSymlinksInPath().deletingLastPathComponent().appendingPathComponent("agentboxd-launch")
+    }
+
     public func start(executable: URL, idleExitSeconds: Int = 0) throws {
         try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         let child = Process()

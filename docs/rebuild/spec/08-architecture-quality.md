@@ -24,7 +24,7 @@ Tabela única para tudo que vira código, teste ou caminho em disco. Os outros c
 |---|---|---|
 | Bundle ID do app | `app.agentbox.mac` | R1 K-70 |
 | Identificadores de assinatura | app `app.agentbox.mac`, daemon `app.agentbox.ptyd`, helper `app.agentbox.cli`; mesma identidade local "Agent Box Local Signing" (AR-530) | — |
-| Daemon de PTY | executável `Contents/MacOS/agentboxd`; label launchd `app.agentbox.ptyd.v<major>` (v1: `app.agentbox.ptyd.v1`); plist `Contents/Library/LaunchAgents/app.agentbox.ptyd.v1.plist`; testes: `app.agentbox.ptyd.test-<n>` | R1 K-70 |
+| Daemon de PTY | executável `Contents/MacOS/agentboxd`; label launchd `app.agentbox.ptyd.v<major>` (v1: `app.agentbox.ptyd.v1`); plist `Contents/Library/LaunchAgents/app.agentbox.ptyd.v1.plist` (`BundleProgram` = `Contents/MacOS/agentboxd-launch`, launcher estável que faz `exec` do `agentboxd`; S-01/T1-24); testes: `app.agentbox.ptyd.test-<n>` | R1 K-70 |
 | Socket do daemon (LaunchAgent) | `Sockets` com `SecureSocketWithKey = AGENTBOX_PTYD_SOCK_V1`; caminho escolhido pelo launchd; o app lê com `launchctl getenv AGENTBOX_PTYD_SOCK_V1`. **Nunca** `SockPathName` com caminho no home (plist estático não expande `~`) | R3 §1, S-01 |
 | Socket do daemon (degradado, testes, plano B do S-01) | `AB/run/ptyd-v1.sock` (`$AGENTBOX_HOME/run/ptyd-v1.sock` nos testes), `bind` feito pelo próprio daemon | 06 §1.2 |
 | Socket do app | `AB/run/app.sock` (`0600`), serviços `mcp`, `hook`, `ctl` | AR-106 |

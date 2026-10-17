@@ -1,0 +1,117 @@
+gui/501/app.agentbox.ptyd.test-e51bf = {
+	active count = 1
+	path = (submitted by smd.525)
+	type = Submitted
+	managed_by = com.apple.xpc.ServiceManagement
+	state = running
+
+	program identifier = Contents/MacOS/agentboxd-launch (mode: 2)
+	parent bundle identifier = app.agentbox.mac.teste51bf
+	parent bundle version = 92
+	BTM uuid = 1FE84931-4FBD-41DB-8698-751FBFAC37CE
+	arguments = {
+		Contents/MacOS/agentboxd-launch
+		--launchd
+		Listeners
+		--build
+		1
+		--idle-exit
+		8
+	}
+
+	inherited environment = {
+		AGENTBOX_PTYD_SOCK_TEST_E51BF => /var/run/com.apple.launchd.YyrnPogOcc/Listeners
+		SSH_AUTH_SOCK => /var/run/com.apple.launchd.dhA99DJdfi/Listeners
+	}
+
+	default environment = {
+		PATH => /usr/bin:/bin:/usr/sbin:/sbin
+	}
+
+	environment = {
+		OSLogRateLimit => 64
+		AGENTBOX_HOME => /tmp/abe-e51bf/h
+		XPC_SERVICE_NAME => app.agentbox.ptyd.test-e51bf
+	}
+
+	LWCR = {
+		"reqs" => {
+			"cdhash" => {
+				"$in" => [
+					0 = 				]
+			}
+		}
+		"vers" => 1
+		"comp" => 1
+		"ccat" => 0
+	}
+
+	domain = gui/501 [100016]
+	asid = 100016
+	minimum runtime = 10
+	exit timeout = 5
+	runs = 2
+	pid = 56000
+	immediate reason = ipc (socket)
+	forks = 1
+	execs = 2
+	initialized = 1
+	trampolined = 1
+	started suspended = 0
+	proxy started suspended = 0
+	checked allocations = 0 (queried = 1)
+	checked allocations reason = no host
+	checked allocations flags = 0x0
+	last exit code = 0
+
+	sockets = {
+		"Listeners" = {
+			type = stream
+			path = /var/run/com.apple.launchd.YyrnPogOcc/Listeners
+			mode = 600
+			secure key = AGENTBOX_PTYD_SOCK_TEST_E51BF
+			owner uid = 501
+			group id = 0
+
+			sockets = {
+				41 (bytes to read)
+			}
+
+			active = 1
+			passive = 1
+			bonjour = 0
+			ipv4v6 = 0
+			receive_packet_info = 0
+			needs_rename = 0
+		}
+	}
+
+	resource coalition = {
+		ID = 55954
+		type = resource
+		state = active
+		active count = 1
+		name = app.agentbox.ptyd.test-e51bf
+	}
+
+	jetsam coalition = {
+		ID = 55955
+		type = jetsam
+		state = active
+		active count = 1
+		name = app.agentbox.ptyd.test-e51bf
+	}
+
+	spawn type = interactive (4)
+	jetsam priority = 40
+	jetsam memory limit (active) = (unlimited)
+	jetsam memory limit (inactive) = (unlimited)
+	jetsamproperties category = daemon
+	submitted job. ignore execute allowed
+	jetsam thread limit = 32
+	cpumon = default
+	job state = running
+	sanitizer flags = 0x0
+
+	properties = partial import | abandon process group | resolve program | has LWCR
+}

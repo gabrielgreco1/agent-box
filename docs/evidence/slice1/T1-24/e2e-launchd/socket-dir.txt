@@ -1,0 +1,4 @@
+total 0
+drwx------    3 gabriel  wheel     96 Oct 17 07:33 .
+drwxrwxr-x  101 root     daemon  3232 Oct 17 07:33 ..
+srw-------    1 gabriel  wheel      0 Oct 17 07:33 Listeners

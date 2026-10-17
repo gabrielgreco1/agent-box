@@ -1,0 +1,3 @@
+before: enabled
+unregister: ok
+after: notRegistered

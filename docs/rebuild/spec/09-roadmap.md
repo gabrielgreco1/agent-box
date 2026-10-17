@@ -493,7 +493,7 @@ Consolidadas de `review/E-*.md`, 07 §9, 08 §11 e R3 §12. Nenhuma bloqueia a F
 | # | Decisão | Origem | Recomendação registrada | Bloqueia |
 |---|---|---|---|---|
 | 1 | **D-Codex-1**: aceitar o trust de hooks do Codex gravado pelo próprio Codex após clique do usuário (zona cinzenta de T10) | 06 §3.3.1, 08 S-05 | **Decidida em P18 (opção B):** trust inline por `-c 'hooks.state={…}'`, sem escrever em `~/.codex`; fallback rollout `estimated` | T2-03 |
-| 2 | **Plano B do socket do daemon**: se o launchd não aceitar o caminho no home (S-01), usar `RunAtLoad=false` + `launchctl kickstart` e `bind` próprio em `AB/run/ptyd-v1.sock`, exceção a T1 que precisa ir ao 00 | 08 S-01 | A Fatia 1 roda no modo degradado até lá | T1-24 |
+| 2 | **Plano B do socket do daemon**: se o launchd não aceitar o caminho no home (S-01), usar `RunAtLoad=false` + `launchctl kickstart` e `bind` próprio em `AB/run/ptyd-v1.sock`, exceção a T1 que precisa ir ao 00 | 08 S-01 | **Não necessário (S-01 aprovou o plano canônico, 2026-10-17, `docs/evidence/spikes/S-01/`).** O modo "daemon filho" ficou como fallback quando o item de login exige aprovação | T1-24 |
 | 3 | **Plano B do peer auth** se o S-03 reprovar: `getpeereid` + Team ID ad-hoc só em `DEBUG` por flag de compilação | 08 S-03 | Só aprovar se o S-03 falhar | T1-07 |
 | 4 | **Versão do SwiftTerm**: 1.20.0 fixo ou 1.99.0 conforme S-02 | R3 §12 item 6 | 1.20.0 agora | T1-09 |
 | 5 | Permissões da máquina de QA: Gravação de Tela, Acessibilidade, login item | 08 AR-825, S-01, S-07 | Dono concede uma vez | T1-02, T1-24 |

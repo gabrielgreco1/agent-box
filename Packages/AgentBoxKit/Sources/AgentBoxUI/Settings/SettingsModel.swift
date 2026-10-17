@@ -20,11 +20,16 @@ public final class SettingsModel {
     public private(set) var editingProfileID: UUID?
     /// Mensagem de validação por campo (`general.worktreeFolder`, `agents.profileArgs`...): o valor salvo continua valendo.
     public private(set) var fieldErrors: [String: String] = [:]
+    /// O LaunchAgent do daemon espera aprovação em Itens de Início: o app roda no modo de fallback (06 §1.2) e Settings › General
+    /// mostra "Background agents need approval".
+    public var backgroundNeedsApproval = false
 
     public let flags: SliceFlags
     @ObservationIgnored let sections: [SettingsSectionSpec]
     @ObservationIgnored public var onPresentationChange: @MainActor (Bool) -> Void = { _ in }
     @ObservationIgnored public weak var toasts: ToastCenter?
+    /// Botão "Allow in Login Items": abre Ajustes do Sistema › Itens de Início. Só por clique.
+    @ObservationIgnored public var openLoginItems: @MainActor () -> Void = {}
     @ObservationIgnored var probe: AgentProbe
     @ObservationIgnored var system: SettingsSystemActions
     @ObservationIgnored var clock: () -> Date = { Date() }
@@ -123,6 +128,11 @@ public final class SettingsModel {
     }
 
     /// Aplica a mudança na hora (o controle reflete o novo valor) e grava com debounce; se a gravação falha, volta ao salvo.
+    /// "Don't ask again" do overlay de quit (03 §16.10): desliga `Ask before quitting with running agents`.
+    func disableAskBeforeQuit() {
+        change("Ask before quitting") { $0.general.askBeforeQuit = false }
+    }
+
     func change(_ name: String, _ mutate: (inout AppSettings) -> Void) {
         mutate(&settings)
         guard settings != persisted else { return }

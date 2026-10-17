@@ -123,6 +123,11 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
         updateMainFrame()
     }
 
+    /// Keep Running: esconde a janela sem destruir as views de terminal (reabrir volta já anexada).
+    public func hide() {
+        window?.orderOut(nil)
+    }
+
     /// Settings abre por cima da sidebar e do centro (03 §14): o split some enquanto a página está aberta e o foco vai para ela.
     private func observeSettings() {
         let previous = env.settings.onPresentationChange

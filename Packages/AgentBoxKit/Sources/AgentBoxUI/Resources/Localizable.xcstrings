@@ -3058,6 +3058,259 @@
           }
         }
       }
+    },
+    "Quit Agent Box?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quit Agent Box?"
+          }
+        }
+      }
+    },
+    "%@ Everything keeps running in the background and comes back when you reopen Agent Box.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ Everything keeps running in the background and comes back when you reopen Agent Box."
+          }
+        }
+      }
+    },
+    "%@ Quitting stops them.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ Quitting stops them."
+          }
+        }
+      }
+    },
+    "Stop %@?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop %@?"
+          }
+        }
+      }
+    },
+    "Unsaved work in those terminals is lost.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unsaved work in those terminals is lost."
+          }
+        }
+      }
+    },
+    "Keep Running": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep Running"
+          }
+        }
+      }
+    },
+    "Stop All and Quit…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop All and Quit…"
+          }
+        }
+      }
+    },
+    "1 agent": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 agent"
+          }
+        }
+      }
+    },
+    "%lld agents": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld agents"
+          }
+        }
+      }
+    },
+    "1 shell": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 shell"
+          }
+        }
+      }
+    },
+    "%lld shells": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld shells"
+          }
+        }
+      }
+    },
+    "1 agent is still running.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 agent is still running."
+          }
+        }
+      }
+    },
+    "%lld agents are still running.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld agents are still running."
+          }
+        }
+      }
+    },
+    "1 shell is still running.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 shell is still running."
+          }
+        }
+      }
+    },
+    "%lld shells are still running.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld shells are still running."
+          }
+        }
+      }
+    },
+    "%@ and %@ are still running.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ and %@ are still running."
+          }
+        }
+      }
+    },
+    "Open Agent Box": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Agent Box"
+          }
+        }
+      }
+    },
+    "Stop All Agents…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop All Agents…"
+          }
+        }
+      }
+    },
+    "Quit Agent Box Completely": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quit Agent Box Completely"
+          }
+        }
+      }
+    },
+    "Background agents need approval": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Background agents need approval"
+          }
+        }
+      }
+    },
+    "Allow Agent Box in Login Items so your agents keep running after you quit. Until then they keep running only while this Mac session lasts.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow Agent Box in Login Items so your agents keep running after you quit. Until then they keep running only while this Mac session lasts."
+          }
+        }
+      }
+    },
+    "Allow in Login Items": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow in Login Items"
+          }
+        }
+      }
+    },
+    "Stop and Quit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop and Quit"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

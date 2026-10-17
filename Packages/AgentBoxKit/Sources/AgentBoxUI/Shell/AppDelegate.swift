@@ -16,17 +16,18 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         // Telas de fixture (dev e evidência) não leem nem gravam o frame salvo do usuário.
         let controller = MainWindowController(env: env, autosaveName: env.fixture == nil ? "workspace" : nil)
         windowController = controller
+        env.lifecycle.dependencies.showWindow = { [weak controller] in controller?.present(activate: true) }
+        env.lifecycle.dependencies.hideWindow = { [weak controller] in controller?.hide() }
         NSApp.mainMenu = MainMenu.build(registry: env.registry)
         // Com a automação ligada o app abre sem tirar o foco de quem o lançou (`open -g`).
         controller.present(activate: !env.automationEnabled)
         Task { await env.start() }
     }
 
+    /// ⌘Q (T1-24): a política decide entre sair, manter os agentes em segundo plano ou perguntar no overlay da janela.
     public func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        let env = env
-        Task { @MainActor in
-            await env.markCleanExit()
-            NSApp.reply(toApplicationShouldTerminate: true)
+        env.lifecycle.shouldTerminate { shouldQuit in
+            NSApp.reply(toApplicationShouldTerminate: shouldQuit)
         }
         return .terminateLater
     }
@@ -35,10 +36,17 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         env.shutdownSync()
     }
 
-    public func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
+    /// Fechar a janela com agente vivo não encerra o app: ele passa a accessory e o ícone da barra de menus fica (06 §1.6).
+    public func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        if env.lifecycle.shouldStayAfterLastWindowClosed {
+            env.lifecycle.enterBackground()
+            return false
+        }
+        return true
+    }
 
     public func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        if !flag { windowController?.present(activate: true) }
+        if !flag { env.lifecycle.leaveBackground() }
         return true
     }
 }
