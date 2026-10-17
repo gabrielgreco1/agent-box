@@ -33,6 +33,8 @@ public final class AppEnvironment {
     public let overlays = OverlayRouter()
     public let toasts = ToastCenter()
     let sidebar = SidebarModel()
+    /// Tab row e árvore de panes da sessão selecionada (T1-14).
+    let workspace: WorkspaceModel
     public let keyBindings: KeyBindingRegistry
     /// Pane de terminal focado: destino das ações de zoom, busca, copiar/colar e limpar (T1-09).
     public let terminalRouter = TerminalActionRouter()
@@ -60,12 +62,41 @@ public final class AppEnvironment {
         if !bindings.conflicts().isEmpty { log.publicError("key binding conflicts detected") }
         self.keyBindings = bindings
         elements.enablement = { [registry] id in registry.availability(of: id) }
+        let storeRoot = StorePaths.default(environment: environment).root
+        let loginProvider = LoginShellEnvProvider(
+            config: LoginShellEnvConfig(runDirectory: storeRoot.appendingPathComponent("run", isDirectory: true)))
+        let runtime = TerminalRuntime(
+            configuration: TerminalRuntime.Configuration(
+                daemonHome: storeRoot, daemonExecutable: environment["AGENTBOX_DAEMON"].map { URL(fileURLWithPath: $0) },
+                stopDaemonOnQuit: automationEnabled || environment["AGENTBOX_STOP_DAEMON_ON_QUIT"] == "1",
+                appSocketPath: socketPath, loginEnvironment: { await loginProvider.environment().variables }),
+            registry: registry, elements: elements)
+        workspace = WorkspaceModel(runtime: runtime)
         registerShellActions()
         do { try sidebar.registerActions(in: registry) } catch { log.publicError("duplicate sidebar action registration") }
         wireOverlays()
+        wireWorkspace()
         if fixture == Self.overlayDemoFixture || fixture == SidebarFixtures.screenID { registerOverlayDemo() }
         if fixture == SidebarFixtures.screenID { registerSidebarDemo() }
         do { try terminalRouter.register(in: registry) } catch { log.publicError("duplicate terminal action registration") }
+    }
+
+    /// Liga o workspace (tabs e panes) à sidebar, aos overlays e ao registro de ações (T1-14). No fixture do overlay
+    /// (`overlay-demo`) as ações de fechar do demo continuam suas.
+    private func wireWorkspace() {
+        workspace.overlays = overlays
+        workspace.toasts = toasts
+        workspace.sessionLookup = { [sidebar] id in sidebar.session(id) }
+        sidebar.onSelectionChange = { [workspace] id in workspace.setSession(id) }
+        sidebar.onSnapshot = { [workspace] snapshot in workspace.ingest(snapshot) }
+        workspace.runtime.contextMenu = { [workspace, registry] id in workspace.paneContextMenu(registry: registry, terminalID: id) }
+        let demo = fixture == Self.overlayDemoFixture
+        do {
+            try workspace.registerActions(
+                in: registry, elements: elements, includeCloseDialog: !demo, excluding: demo ? [.paneClose] : [])
+        } catch {
+            log.publicError("duplicate workspace action registration")
+        }
     }
 
     /// Ações reais da casca vazia; as demais entram com a tela que as possui.
@@ -202,6 +233,7 @@ public final class AppEnvironment {
                     sidebar.beginPending(PendingLaunch(name: String(localized: "Add retry logic", bundle: .module), projectID: pid, phase: .fetching))
                 }
             }
+            await workspace.attach(store: opened)
             await sidebar.attach(store: opened)
         } catch {
             log.error("store failed to open: \(error)")
@@ -259,6 +291,11 @@ public final class AppEnvironment {
         } catch {
             log.error("ctl failed to start: \(error)")
         }
+    }
+
+    /// Encerra o daemon filho se esta execução o possui (automação, testes, `AGENTBOX_STOP_DAEMON_ON_QUIT=1`).
+    public func shutdownSync() {
+        workspace.runtime.shutdown()
     }
 
     public func stop() async {

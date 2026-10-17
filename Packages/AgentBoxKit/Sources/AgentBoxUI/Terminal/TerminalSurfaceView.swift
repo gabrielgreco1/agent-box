@@ -50,6 +50,13 @@ public final class TerminalSurfaceView: TerminalView {
 
     @available(*, unavailable) required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }  // required init?(coder:) não usado
 
+    /// Menu de contexto do terminal (03 §4.5): construído por quem hospeda o pane (o menu depende do estado do pane).
+    public var contextMenuProvider: (() -> NSMenu?)?
+
+    public override func menu(for event: NSEvent) -> NSMenu? {
+        contextMenuProvider?() ?? super.menu(for: event)
+    }
+
     // MARK: Saída para o PTY
 
     /// Quem recebe o que a view quer escrever no PTY. Pode ser chamado de qualquer thread; ordem preservada pelo sink.

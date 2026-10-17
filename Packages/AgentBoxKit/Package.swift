@@ -93,7 +93,7 @@ let package = Package(
         tests("DaemonTests", ["AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxTerminalCore", "AgentBoxCore", "agentboxd", "peerprobe", swiftTerm]),
         .testTarget(
             name: "TerminalSurfaceTests",
-            dependencies: ["AgentBoxUI", "AgentBoxCore", "AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxTerminalCore", "AgentBoxDesignSystem", "agentboxd", swiftTerm],
+            dependencies: ["AgentBoxUI", "AgentBoxCore", "AgentBoxStore", "AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxTerminalCore", "AgentBoxDesignSystem", "agentboxd", swiftTerm],
             swiftSettings: mainActorSettings
         ),
         .testTarget(
