@@ -43,8 +43,8 @@ matches() {
   local dirs=()
   for d in $SCAN_EXPANDED; do dirs+=("$d"); done
   [ ${#dirs[@]} -gt 0 ] || return 0
-  (cd "$ROOT" && rg -nP --no-heading --glob '*.swift' ${globs[@]+"${globs[@]}"} -e "$re" "${dirs[@]}" 2>/dev/null || true) \
-    | grep -vE '^[^:]+:[0-9]+:[[:space:]]*//' || true
+  (cd "$ROOT" && rg -nP --no-heading ${globs[@]+"${globs[@]}"} -e "$re" "${dirs[@]}" 2>/dev/null || true) \
+    | grep -E '^[^:]+\.swift:[0-9]+:' | grep -vE '^[^:]+:[0-9]+:[[:space:]]*//' || true
 }
 
 report() { # regra mensagem linhas
@@ -134,6 +134,7 @@ if [ "$SELF_TEST" = 1 ]; then
   expect grdb-bad $C 'import GRDB' fail
   expect grdb-store-ok Packages/AgentBoxKit/Sources/AgentBoxStore/X.swift 'import GRDB' pass
   expect ui-filemanager-bad $U 'let f = FileManager.default' fail
+  expect ui-filemanager-core-ok $C 'let f = FileManager.default' pass
   expect sheet-bad $U 'Text("x").sheet(isPresented: b) {}' fail
   expect print-bad $C 'print("x")' fail
   expect fingerprint-ok $C 'let x = fingerprint(a)' pass
