@@ -581,7 +581,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `git.createPR` | Create Pull Request… | — | slice2 |
 | `git.openPR` | Open on GitHub | — | slice2 |
 | `git.copyPRURL` | Copy URL (PR) | — | slice2 |
-| `account.logIn` | Log In (gh, Claude, Codex) | — | slice2 |
+| `account.logIn` | Log In (gh, Claude, Codex) | — | slice1 |
 | `checks.sendFailures` | Send Failures to Claude Code | — | v11 |
 | `conversation.resume` | Resume in New Tab / in Split, Show Transcript | — | slice2 |
 | `conversation.resumeSplit` | Resume in New Tab / in Split, Show Transcript | — | slice2 |
@@ -643,6 +643,39 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `proxy.add` | Add Proxy | — | slice3 |
 | `proxy.test` | Test Proxy | — | slice3 |
 | `proxy.delete` | Delete… | — | slice3 |
+| `settings.openSection` | Seção do Settings (nav) | — | slice1 |
+| `settings.back` | Back to App | Esc | slice1 |
+| `settings.general.keepAgentsRunning` | Keep agents running when you quit | — | slice1 |
+| `settings.general.askBeforeQuit` | Ask before quitting with running agents | — | slice1 |
+| `settings.general.confirmCloseTerminal` | Confirm before closing a running terminal | — | slice1 |
+| `settings.general.confirmDeleteSession` | Confirm before deleting a session | — | slice1 |
+| `settings.general.branchPrefix` | Branch prefix | — | slice1 |
+| `settings.general.branchPrefixCustom` | Branch prefix | — | slice1 |
+| `settings.general.worktreeFolder` | Worktree folder | — | slice1 |
+| `settings.general.cleanSessionFolder` | Clean session folder | — | slice1 |
+| `settings.pickPath` | Change… | — | slice1 |
+| `settings.resetConfirmations` | Reset | — | slice1 |
+| `settings.agents.defaultAgent` | Default agent | — | slice1 |
+| `settings.agents.defaultProfile` | Default profile | — | slice1 |
+| `settings.agents.profileNew` | New Profile | — | slice1 |
+| `settings.agents.profileDuplicate` | Duplicate | — | slice1 |
+| `settings.agents.profileEdit` | Edit | — | slice1 |
+| `settings.agents.profileDelete` | Delete | — | slice1 |
+| `settings.agents.profileName` | Profile name | — | slice1 |
+| `settings.agents.profilePermission` | Permissions | — | slice1 |
+| `settings.agents.profileModel` | Model | — | slice1 |
+| `settings.agents.profileArgs` | Extra flags | — | slice1 |
+| `settings.terminal.font` | Font | — | slice1 |
+| `settings.terminal.size` | Size | — | slice1 |
+| `settings.terminal.theme` | Theme | — | slice1 |
+| `settings.terminal.cursor` | Cursor | — | slice1 |
+| `settings.terminal.cursorBlink` | Cursor | — | slice1 |
+| `agent.detect` | Detect Again / Check Again | — | slice1 |
+| `agent.installHelp` | Install… | — | slice1 |
+| `onboarding.keepSettingUp` | Keep Setting Up | — | slice1 |
+| `onboarding.confirmSkip` | Skip (confirmação do onboarding) | — | slice1 |
+| `onboarding.skip` | Skip for Now | — | slice1 |
+| `onboarding.done` | Done | — | slice1 |
 | `palette.open` | Jump To… (abrir a palette) | ⌘J | slice1 |
 | `palette.openRow` | Open Row | ↵ | slice1 |
 | `palette.openInSplit` | Open in Split | ⇧↵ | slice1 |

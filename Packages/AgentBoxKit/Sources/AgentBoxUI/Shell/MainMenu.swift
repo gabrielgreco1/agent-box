@@ -38,6 +38,9 @@ enum MainMenu {
         let main = NSMenu()
         main.addItem(
             submenu(title: "Agent Box") { m in
+                m.addItem(ActionMenuItem(.appSetup, title: "Set Up Agent Box…", key: "", registry: registry))
+                m.addItem(ActionMenuItem(.appSettings, title: "Settings…", key: ",", registry: registry))
+                m.addItem(.separator())
                 m.addItem(ActionMenuItem(.appHideAppName, title: "Hide App Name", key: "", registry: registry))
                 m.addItem(.separator())
                 m.addItem(ActionMenuItem(.appQuit, title: "Quit Agent Box", key: "q", registry: registry))

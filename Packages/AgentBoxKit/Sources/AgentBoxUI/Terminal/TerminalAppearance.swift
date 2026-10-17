@@ -1,3 +1,4 @@
+import AgentBoxCore
 import AgentBoxDesignSystem
 import AppKit
 import Carbon.HIToolbox
@@ -10,15 +11,28 @@ public struct TerminalAppearance: Equatable {
     public var scrollback: Int
     /// `Option as Meta` (02 §3). `auto` decide pelo layout de teclado.
     public var optionAsMeta: OptionAsMeta
+    /// Família escolhida em Settings › Terminal; `SF Mono` = fonte do sistema (padrão).
+    public var fontFamily: String
+    public var cursor: AppSettings.CursorStyle
+    public var cursorBlink: Bool
 
     public init(
         fontSize: CGFloat = DS.TerminalFont.defaultSize, padding: CGFloat = DS.TerminalFont.padding, scrollback: Int = 5000,
-        optionAsMeta: OptionAsMeta = .auto
+        optionAsMeta: OptionAsMeta = .auto, fontFamily: String = AppSettings.Terminal.defaultFont,
+        cursor: AppSettings.CursorStyle = .block, cursorBlink: Bool = true
     ) {
+        self.fontFamily = fontFamily
+        self.cursor = cursor
+        self.cursorBlink = cursorBlink
         self.fontSize = Self.clamp(fontSize)
         self.padding = padding
         self.scrollback = scrollback
         self.optionAsMeta = optionAsMeta
+    }
+
+    /// Aparência a partir de Settings › Terminal: o que o usuário mudou vale para o terminal que abrir (e os abertos, ao reaplicar).
+    public init(settings: AppSettings.Terminal) {
+        self.init(fontSize: CGFloat(settings.fontSize), fontFamily: settings.fontFamily, cursor: settings.cursor, cursorBlink: settings.cursorBlink)
     }
 
     public static func clamp(_ size: CGFloat) -> CGFloat {
@@ -27,7 +41,18 @@ public struct TerminalAppearance: Equatable {
 
     /// SF Mono Medium (500); o negrito (700) é derivado pela view. Line height 1.0 = altura natural da célula.
     public var font: NSFont {
-        NSFont.monospacedSystemFont(ofSize: fontSize, weight: .medium)
+        if fontFamily != AppSettings.Terminal.defaultFont, let custom = NSFont(name: fontFamily, size: fontSize) { return custom }
+        return NSFont.monospacedSystemFont(ofSize: fontSize, weight: .medium)
+    }
+
+    /// Parâmetro de DECSCUSR (`CSI n SP q`): 1 bloco piscando (padrão), 2 bloco fixo, 3/4 sublinhado, 5/6 barra.
+    var decscusr: Int {
+        let base = switch cursor {
+        case .block: 1
+        case .underline: 3
+        case .bar: 5
+        }
+        return cursorBlink ? base : base + 1
     }
 }
 
@@ -68,6 +93,8 @@ public enum TerminalTheme {
         view.caretTextColor = DS.Terminal.cursorText.nsColor
         view.selectedTextBackgroundColor = DS.Terminal.selectionBackground.nsColor
         view.font = appearance.font
+        // Cursor inicial: o emulador do SwiftTerm só o expõe por DECSCUSR. É estado de exibição; nada vai ao PTY.
+        if appearance.decscusr != 1 { view.feed(byteArray: ArraySlice(Array("\u{1b}[\(appearance.decscusr) q".utf8))) }
         view.optionAsMetaKey = appearance.optionAsMeta.resolves(layoutID: TerminalKeyboardLayout.currentID())
     }
 }
