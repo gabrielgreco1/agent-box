@@ -1,4 +1,5 @@
 import AgentBoxCore
+import AgentBoxProtocol
 import Foundation
 import Observation
 
@@ -91,6 +92,21 @@ public final class InsightsModel {
         if let machine = next.machine, machine.at != snapshot.machine?.at { history.append(machine) }
         snapshot = next
         now = clock()
+    }
+
+    /// Clique explícito em "Show exact limits" (P23): só então o serviço lê o login do Claude Code no Keychain.
+    public func enableExactLimits() async { await service?.enableExactLimits() }
+
+    func register(in registry: ActionRegistry) throws {
+        try registry.register(
+            .insightsShowExactLimits,
+            enablement: { [unowned self] in
+                snapshot.claudeLimits == .notEnabled ? .enabled : .disabled(reason: String(localized: "Exact limits are on.", bundle: .module))
+            }
+        ) { [unowned self] _ in
+            await enableExactLimits()
+            return "enabled"
+        }
     }
 
     public func summary(for provider: InsightsProvider) -> ProviderSummary {

@@ -383,6 +383,7 @@ extension ActionID {
     public static let filesCopyPath = ActionID(unchecked: "files.copyPath")
     public static let filesOpenIn = ActionID(unchecked: "files.openIn")
     public static let filesOpenInTarget = ActionID(unchecked: "files.openInTarget")
+    public static let insightsShowExactLimits = ActionID(unchecked: "insights.showExactLimits")
 }
 
 extension ActionID {
@@ -769,5 +770,6 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "files.copyPath"), label: "Copy Path", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "files.openIn"), label: "Open in…", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "files.openInTarget"), label: "Open in Target", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "insights.showExactLimits"), label: "Show Exact Limits", shortcut: "", slice: .slice1),
     ]
 }

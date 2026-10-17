@@ -35,7 +35,7 @@ import Testing
             func window(_ w: LimitWindow?) -> Any {
                 guard let w else { return NSNull() }
                 return ["source": w.source.rawValue, "used_fraction": nn(w.usedFraction.map { ($0 * 1000).rounded() / 1000 }),
-                        "has_reset": w.resetsAt != nil, "exceeds_peak": w.exceedsPeak, "messages": w.messages,
+                        "has_reset": w.resetsAt != nil, "messages": w.messages,
                         "cost_usd": (w.costUSD * 100).rounded() / 100, "fresh_tokens": w.counts.fresh] as [String: Any]
             }
             let peakHour = s.hourOfDay.enumerated().max { $0.element < $1.element }?.offset

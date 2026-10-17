@@ -1,32 +1,42 @@
 import AgentBoxDesignSystem
 import SwiftUI
 
-/// Medidores do módulo Insights. Linguagem visual única: marcas radiais/verticais ("tick marks") acesas até o valor,
-/// como um instrumento. Cor só diz estado (02 §1.5): neutro até 75%, `warning` até 90%, `destructive` acima.
-/// Animações são one-shots com tokens de 04 (`twEaseOut`, contadores e barras); nenhum loop infinito (04 R5).
+/// Componentes do módulo Insights. Linguagem contida (estilo Orca e a tela `/usage` do Claude): barras finas com rótulo e
+/// percentual à direita, números secundários pequenos, cor de estado só acima de 80% (aviso) e 95% (crítico). Nenhum loop
+/// infinito (04 R5); as animações são one-shots com tokens de 04.
 
 nonisolated enum InsightsMetrics {
-    static let ringSize: CGFloat = 112
-    static let ringSizeCompact: CGFloat = 64
-    static let ringTicks = 54
-    static let ringSweep: Double = 270
-    static let ringTickLength: CGFloat = 7
-    static let ringTickWidth: CGFloat = 2
-    static let barTicks = 56
-    static let barHeight: CGFloat = 14
-    static let heatCell: CGFloat = 10
-    static let sparkHeight: CGFloat = 40
-    static let coreBarHeight: CGFloat = 26
-    static let compactWidth: CGFloat = 250
+    /// Espessura da barra de limite (token de espaçamento s1 = 4).
+    static let barHeight: CGFloat = 4
+    static let heatCell: CGFloat = 8
+    static let heatMaxCell: CGFloat = 14
+    static let sparkHeight: CGFloat = 24
+    static let coreBarHeight: CGFloat = 16
     static let rowBarHeight: CGFloat = 2
+    /// Breakpoints de largura do módulo: ≥ `wideMinWidth` duas colunas; ≥ `mediumMinWidth` uma coluna; abaixo, compacto.
+    static let wideMinWidth: CGFloat = 520
+    static let mediumMinWidth: CGFloat = 300
+    /// Abaixo disso as abas viram só ícone.
+    static let iconTabsBelowWidth: CGFloat = 300
+    static let gridLabelWidth: CGFloat = 40
 }
 
 enum InsightsTone {
-    /// Cor da parte acesa do medidor para uma fração de uso.
+    /// Estado de uma fração de uso: neutro até 80%, aviso a partir de 80%, crítico a partir de 95%.
+    static let warnAt = 0.8
+    static let criticalAt = 0.95
+
     static func color(for fraction: Double) -> Color {
-        if fraction >= 0.9 { return DS.Color.destructive }
-        if fraction >= 0.75 { return DS.Color.warning }
+        if fraction >= criticalAt { return DS.Color.destructive }
+        if fraction >= warnAt { return DS.Color.warning }
         return DS.Color.textPrimary
+    }
+
+    /// Cor do preenchimento da barra: neutro discreto até 80%.
+    static func fill(for fraction: Double) -> Color {
+        if fraction >= criticalAt { return DS.Color.destructive }
+        if fraction >= warnAt { return DS.Color.warning }
+        return DS.Color.textPrimary.opacity(0.7)
     }
 }
 
@@ -75,154 +85,112 @@ struct AnimatedNumber: View {
     }
 }
 
-// MARK: - Anel de marcas
+// MARK: - Barra fina
 
-/// Marcas radiais ao longo de 270° (do canto inferior esquerdo ao inferior direito). `lit` acende as primeiras marcas.
-struct RingTicks: Shape {
-    var count: Int = InsightsMetrics.ringTicks
-    var lit: Double = 1  // 0…1; animável
-    var tickLength: CGFloat = InsightsMetrics.ringTickLength
-
-    var animatableData: Double {
-        get { lit }
-        set { lit = newValue }
-    }
-
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        let radius = min(rect.width, rect.height) / 2
-        let center = CGPoint(x: rect.midX, y: rect.midY)
-        let litCount = lit >= 1 ? count : (lit <= 0 ? 0 : Int((lit * Double(count)).rounded(.up)))
-        for i in 0..<litCount {
-            let t = count > 1 ? Double(i) / Double(count - 1) : 0
-            let theta = (135 + t * InsightsMetrics.ringSweep) * .pi / 180
-            let c = CGFloat(cos(theta)), s = CGFloat(sin(theta))
-            path.move(to: CGPoint(x: center.x + c * (radius - tickLength), y: center.y + s * (radius - tickLength)))
-            path.addLine(to: CGPoint(x: center.x + c * radius, y: center.y + s * radius))
-        }
-        return path
-    }
-}
-
-/// Medidor circular de uma janela de limite. Real = marcas sólidas; estimado = marcas a 55% e selo `est.`.
-struct RingMeter: View {
+/// Barra fina de uma fração (limites, disco). Neutra até 80%; `toned: false` mantém sempre neutra.
+struct ThinBar: View {
     let fraction: Double?
-    /// Fração do tempo da janela já decorrida: marcador de ritmo (cursor externo). `nil` = sem marcador.
-    var elapsed: Double?
-    var estimated: Bool = false
-    var caption: String
-    var compact: Bool = false
+    var toned = true
 
     var body: some View {
-        let size = compact ? InsightsMetrics.ringSizeCompact : InsightsMetrics.ringSize
-        let tick = compact ? InsightsMetrics.ringTickLength * 0.7 : InsightsMetrics.ringTickLength
-        ZStack {
-            RingTicks(lit: 1, tickLength: tick)
-                .stroke(DS.Color.fg10, style: StrokeStyle(lineWidth: InsightsMetrics.ringTickWidth, lineCap: .butt))
-            if let fraction {
-                AnimatedValue(value: min(1, max(0, fraction))) { shown in
-                    RingTicks(lit: shown, tickLength: tick)
-                        .stroke(InsightsTone.color(for: fraction).opacity(estimated ? 0.55 : 1),
-                                style: StrokeStyle(lineWidth: InsightsMetrics.ringTickWidth, lineCap: .butt))
-                }
-            }
-            if let elapsed { PaceCaret(position: elapsed, size: size) }
-            VStack(spacing: DS.Space.s0_5) {
+        GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                Capsule().fill(DS.Color.fg8)
                 if let fraction {
-                    AnimatedNumber(value: fraction * 100) { "\(Int($0.rounded()))%" }
-                        .dsFont(compact ? DS.Font.control : DS.Font.display)
-                        .foregroundStyle(DS.Color.textPrimary)
-                } else {
-                    Text(verbatim: "–")
-                        .dsFont(compact ? DS.Font.control : DS.Font.display)
-                        .foregroundStyle(DS.Color.textTertiary)
-                }
-                HStack(spacing: DS.Space.s1) {
-                    Text(verbatim: caption).dsFont(DS.Font.micro).foregroundStyle(DS.Color.textSecondary)
-                    if estimated && !compact { Text("est.").dsFont(DS.Font.micro).foregroundStyle(DS.Color.textTertiary) }
-                }
-            }
-        }
-        .frame(width: size, height: size)
-    }
-}
-
-/// Cursor de ritmo: marca fina fora do anel na posição do tempo decorrido.
-struct PaceCaret: View {
-    let position: Double
-    let size: CGFloat
-
-    var body: some View {
-        Canvas { context, canvas in
-            let radius = min(canvas.width, canvas.height) / 2
-            let center = CGPoint(x: canvas.width / 2, y: canvas.height / 2)
-            let theta = (135 + min(1, max(0, position)) * InsightsMetrics.ringSweep) * .pi / 180
-            let c = CGFloat(cos(theta)), s = CGFloat(sin(theta))
-            var p = Path()
-            p.move(to: CGPoint(x: center.x + c * (radius - InsightsMetrics.ringTickLength - DS.Space.s1), y: center.y + s * (radius - InsightsMetrics.ringTickLength - DS.Space.s1)))
-            p.addLine(to: CGPoint(x: center.x + c * (radius + DS.Space.s0_5), y: center.y + s * (radius + DS.Space.s0_5)))
-            context.stroke(p, with: .color(DS.Color.textSecondary), style: StrokeStyle(lineWidth: MotionTokens.Stroke.liveBorder, lineCap: .round))
-        }
-        .frame(width: size, height: size)
-        .allowsHitTesting(false)
-    }
-}
-
-// MARK: - Barra de marcas
-
-/// Marcas verticais acesas até o valor; marcas mais altas a cada `majorEvery`. Usada na janela de 7 dias (um dia = 8 marcas).
-struct BarTicks: Shape {
-    var count: Int = InsightsMetrics.barTicks
-    var lit: Double = 1
-    var majorEvery: Int = 8
-    var onlyLit = true
-
-    var animatableData: Double {
-        get { lit }
-        set { lit = newValue }
-    }
-
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        let step = rect.width / CGFloat(count)
-        let litCount = lit >= 1 ? count : (lit <= 0 ? 0 : Int((lit * Double(count)).rounded(.up)))
-        let end = onlyLit ? litCount : count
-        for i in 0..<end {
-            let x = rect.minX + step * (CGFloat(i) + 0.5)
-            let major = i % majorEvery == 0
-            let h = major ? rect.height : rect.height * 0.7
-            path.move(to: CGPoint(x: x, y: rect.maxY))
-            path.addLine(to: CGPoint(x: x, y: rect.maxY - h))
-        }
-        return path
-    }
-}
-
-struct TickBar: View {
-    let fraction: Double?
-    var elapsed: Double?
-    var estimated = false
-
-    var body: some View {
-        ZStack(alignment: .topLeading) {
-            BarTicks(lit: 1, onlyLit: false)
-                .stroke(DS.Color.fg10, style: StrokeStyle(lineWidth: InsightsMetrics.ringTickWidth, lineCap: .butt))
-            if let fraction {
-                AnimatedValue(value: min(1, max(0, fraction))) { shown in
-                    BarTicks(lit: shown)
-                        .stroke(InsightsTone.color(for: fraction).opacity(estimated ? 0.55 : 1),
-                                style: StrokeStyle(lineWidth: InsightsMetrics.ringTickWidth, lineCap: .butt))
-                }
-            }
-            if let elapsed {
-                GeometryReader { proxy in
-                    Rectangle()
-                        .fill(DS.Color.textSecondary)
-                        .frame(width: MotionTokens.Stroke.liveBorder, height: InsightsMetrics.barHeight + DS.Space.s1)
-                        .offset(x: proxy.size.width * min(1, max(0, elapsed)) - MotionTokens.Stroke.liveBorder / 2, y: -DS.Space.s0_5)
+                    let clamped = min(1, max(0, fraction))
+                    AnimatedValue(value: clamped) { shown in
+                        Capsule()
+                            .fill(toned ? InsightsTone.fill(for: fraction) : DS.Color.textPrimary.opacity(0.7))
+                            .frame(width: proxy.size.width * CGFloat(shown))
+                    }
                 }
             }
         }
         .frame(height: InsightsMetrics.barHeight)
+        .accessibilityHidden(true)
+    }
+}
+
+/// Uma janela de limite: rótulo à esquerda, percentual à direita, barra fina e "Resets in …". `compact` junta o reset ao rótulo.
+struct LimitRow: View {
+    let label: LocalizedStringKey
+    let fraction: Double?
+    let resetsAt: Date?
+    let now: Date
+    var compact = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DS.Space.s1) {
+            HStack(alignment: .firstTextBaseline, spacing: DS.Space.s1_5) {
+                Text(label, bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary).lineLimit(1)
+                if compact, let text = resetText {
+                    Text(verbatim: text).dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textTertiary).lineLimit(1)
+                }
+                Spacer(minLength: DS.Space.s1)
+                percent
+            }
+            ThinBar(fraction: fraction)
+            if !compact {
+                // Reserva a linha mesmo sem horário de reset: a altura do bloco não pula quando o dado exato chega.
+                Text(verbatim: resetText ?? " ").dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textTertiary).lineLimit(1)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder private var percent: some View {
+        if let fraction {
+            AnimatedNumber(value: fraction * 100) { "\(Int($0.rounded()))%" }
+                .dsFont(DS.Font.label).foregroundStyle(InsightsTone.color(for: fraction))
+        } else {
+            Text(verbatim: "—").dsFont(DS.Font.label).foregroundStyle(DS.Color.textTertiary)
+        }
+    }
+
+    private var resetText: String? {
+        guard let resetsAt, resetsAt > now else { return nil }
+        return compactReset(resetsAt)
+    }
+
+    private func compactReset(_ date: Date) -> String {
+        let text = InsightsFormat.duration(date.timeIntervalSince(now))
+        return compact ? text : String(localized: "Resets in \(text)", bundle: .module)
+    }
+}
+
+// MARK: - Grade de números secundários
+
+/// Linha da grade: rótulo curto e até três valores (custo, tokens, mensagens), em fonte pequena e dígitos tabulares.
+struct InsightsStatRow: Identifiable {
+    let id: String
+    let label: LocalizedStringKey
+    let values: [String]
+}
+
+struct InsightsStatGrid: View {
+    let headers: [LocalizedStringKey]
+    let rows: [InsightsStatRow]
+
+    var body: some View {
+        Grid(alignment: .trailing, horizontalSpacing: DS.Space.s2, verticalSpacing: DS.Space.s1) {
+            GridRow {
+                Color.clear.frame(width: InsightsMetrics.gridLabelWidth, height: DSMetrics.hairline).gridColumnAlignment(.leading)
+                ForEach(Array(headers.enumerated()), id: \.offset) { _, h in
+                    Text(h, bundle: .module).dsFont(DS.Font.micro).foregroundStyle(DS.Color.textTertiary).lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                }
+            }
+            ForEach(rows) { row in
+                GridRow {
+                    Text(row.label, bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary).lineLimit(1)
+                        .frame(width: InsightsMetrics.gridLabelWidth, alignment: .leading)
+                    ForEach(Array(row.values.enumerated()), id: \.offset) { _, v in
+                        Text(verbatim: v).dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                    }
+                }
+            }
+        }
     }
 }

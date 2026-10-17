@@ -216,6 +216,8 @@ extension A11yID {
     public static let rightPanelDivider = A11yID(unchecked: "rightPanel.divider")
     /// `rightPanel.insights.empty`
     public static let rightPanelInsightsEmpty = A11yID(unchecked: "rightPanel.insights.empty")
+    /// `rightPanel.insights.showExactLimits`
+    public static let rightPanelInsightsShowExactLimits = A11yID(unchecked: "rightPanel.insights.showExactLimits")
     /// `tabs.filesToggle`
     public static let tabsFilesToggle = A11yID(unchecked: "tabs.filesToggle")
     /// `tabs.insightsToggle`
@@ -1464,6 +1466,7 @@ extension A11yID {
         A11yIDSpec(pattern: "rightPanel.module.<id>.minimize", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
         A11yIDSpec(pattern: "rightPanel.divider", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
         A11yIDSpec(pattern: "rightPanel.insights.empty", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
+        A11yIDSpec(pattern: "rightPanel.insights.showExactLimits", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
         A11yIDSpec(pattern: "tabs.filesToggle", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
         A11yIDSpec(pattern: "tabs.insightsToggle", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
         A11yIDSpec(pattern: "rightPanel.files", surface: "Painel direito (Files, 10-right-panel §2)"),

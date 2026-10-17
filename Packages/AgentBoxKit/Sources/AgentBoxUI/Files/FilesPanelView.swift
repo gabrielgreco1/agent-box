@@ -16,51 +16,104 @@ enum FilesMetrics {
     static let pathHeight = DS.Space.s4 + DS.Space.s1
     static let dot: CGFloat = 6
     static let hairline: CGFloat = 1
+    /// Breakpoints do módulo: ≥ `wideMinWidth` árvore e visualizador lado a lado; ≥ `mediumMinWidth` uma coluna; abaixo, compacto.
+    static let wideMinWidth: CGFloat = 560
+    static let mediumMinWidth: CGFloat = 300
+    /// Altura mínima para o cabeçalho de duas linhas (nome + caminho) e para o modo largo.
+    static let tallMinHeight: CGFloat = 160
+    static let treeColumnWidth: CGFloat = 248
 }
 
-/// Corpo do módulo: a árvore (com a barra de raiz) ou, com um arquivo aberto, o visualizador no lugar dela.
+/// Layout do módulo Files para o espaço disponível (contínuo: recalculado a cada tamanho).
+enum FilesLayout: Equatable {
+    case wide, medium, compact
+
+    init(width: CGFloat, height: CGFloat) {
+        if width >= FilesMetrics.wideMinWidth, height >= FilesMetrics.tallMinHeight { self = .wide }
+        else if width >= FilesMetrics.mediumMinWidth, height >= FilesMetrics.tallMinHeight { self = .medium }
+        else { self = .compact }
+    }
+
+    var isCompact: Bool { self == .compact }
+}
+
+/// Corpo do módulo: a árvore (com a barra de raiz) ou, com um arquivo aberto, o visualizador no lugar dela. Em largura de
+/// duas colunas a árvore fica à esquerda e o visualizador à direita. `compact` (contexto do painel) é só uma dica: o layout vem
+/// do tamanho real, então o módulo se adapta a qualquer largura e altura.
 struct FilesPanelView: View {
     let controller: FilesController
     let compact: Bool
 
     var body: some View {
-        ZStack {
-            if let viewer = controller.viewer {
-                FileViewerView(controller: controller, viewer: viewer, compact: compact)
-                    .transition(.opacity)
-            } else {
-                FilesTreeScreen(controller: controller, compact: compact)
-                    .transition(.opacity)
-            }
+        GeometryReader { proxy in
+            let layout = FilesLayout(width: proxy.size.width, height: proxy.size.height)
+            content(layout)
+                .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
+                .layoutProbeRoot()
         }
-        .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.base), value: controller.viewer?.path)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(DS.Color.panel)
         .a11y(.rightPanelFiles, kind: "container")
+    }
+
+    @ViewBuilder private func content(_ layout: FilesLayout) -> some View {
+        if layout == .wide {
+            HStack(spacing: 0) {
+                FilesTreeScreen(controller: controller, layout: layout)
+                    .frame(width: FilesMetrics.treeColumnWidth)
+                DS.Color.border.frame(width: FilesMetrics.hairline)
+                ZStack {
+                    if let viewer = controller.viewer {
+                        FileViewerView(controller: controller, viewer: viewer, compact: false)
+                            .transition(.opacity)
+                    } else {
+                        DSEmptyState(String(localized: "Select a file to read it here.", bundle: .module)) { EmptyView() }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                }
+                .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.base), value: controller.viewer?.path)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            }
+        } else {
+            ZStack(alignment: .top) {
+                if let viewer = controller.viewer {
+                    FileViewerView(controller: controller, viewer: viewer, compact: layout.isCompact)
+                        .transition(.opacity)
+                } else {
+                    FilesTreeScreen(controller: controller, layout: layout)
+                        .transition(.opacity)
+                }
+            }
+            .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.base), value: controller.viewer?.path)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        }
     }
 }
 
 /// Barra da raiz (nome, branch, ações) e a lista de arquivos.
 struct FilesTreeScreen: View {
     let controller: FilesController
-    let compact: Bool
+    let layout: FilesLayout
+    private var compact: Bool { layout.isCompact }
 
     var body: some View {
         VStack(spacing: 0) {
             if let root = controller.resolution.root {
                 rootBar(root)
-                ZStack {
+                ZStack(alignment: .top) {
                     treeBody(root)
                         .id(controller.rootEpoch)
                         .transition(.opacity.combined(with: .offset(y: MotionTokens.Distance.small)))
                 }
                 .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.base), value: controller.rootEpoch)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 .clipped()
             } else {
                 DSEmptyState(String(localized: "Select a session to browse its files.", bundle: .module)) { EmptyView() }
                     .a11y(.rightPanelFilesEmpty, kind: "text")
             }
         }
+        // Sem isto o conteúdo curto (pasta com poucos arquivos) ficava centralizado e deixava um vazio acima do cabeçalho.
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     // MARK: Barra da raiz
@@ -123,6 +176,7 @@ struct FilesTreeScreen: View {
         }
         .padding(.bottom, DS.Space.s1)
         .overlay(alignment: .bottom) { DS.Color.border.frame(height: FilesMetrics.hairline) }
+        .layoutProbe("rootBar")
         .a11y(.rightPanelFilesRoot, kind: "text", label: displayName(root), value: root)
     }
 
@@ -157,6 +211,7 @@ struct FilesTreeScreen: View {
                 }
                 .padding(.vertical, DS.Space.s1)
             }
+            .layoutProbe("tree")
             .a11y(.rightPanelFilesTree, kind: "container", value: "\(rows.count)")
         }
     }

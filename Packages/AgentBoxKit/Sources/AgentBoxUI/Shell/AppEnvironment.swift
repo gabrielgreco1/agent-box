@@ -202,6 +202,7 @@ public final class AppEnvironment {
         files.revealInFinder = { [openIn] url in openIn?.system.reveal(url) }
         RightPanelModules.registerAll(into: rightPanel, env: self)
         do { try rightPanel.register(in: registry) } catch { log.publicError("duplicate right panel registration") }
+        do { try insights.register(in: registry) } catch { log.publicError("duplicate insights registration") }
         do { try files.register(in: registry, openIn: openIn, overlays: overlays, elements: elements) } catch {
             log.publicError("duplicate files registration")
         }
