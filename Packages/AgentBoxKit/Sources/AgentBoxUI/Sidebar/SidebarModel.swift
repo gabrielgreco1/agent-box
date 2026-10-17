@@ -42,6 +42,11 @@ final class SidebarModel {
     /// Avisa a cada snapshot novo do Store (o workspace carrega a sessão selecionada quando ela chega).
     @ObservationIgnored var onSnapshot: ((StoreSnapshot) -> Void)?
     private(set) var pending: [PendingLaunch] = []
+    /// Linha pendente aberta no centro (PhaseList ou erro com ações, 03 §2.9). Some quando a sessão fica pronta ou é descartada.
+    private(set) var focusedPending: UUID? {
+        didSet { if oldValue != focusedPending { onPendingFocusChange?() } }
+    }
+    @ObservationIgnored var onPendingFocusChange: (() -> Void)?
     /// Sessão em edição inline (03 §2.11): no máximo uma.
     private(set) var renamingSession: UUID?
     /// Projeto em edição inline (T1-19): no máximo um, e nunca junto com uma sessão em edição.
@@ -67,6 +72,8 @@ final class SidebarModel {
     var onCancelPending: (UUID) -> Void = { _ in }
     /// `session.cancelLaunch` com o ID de um terminal em ignição (Cancel do pane): `true` se alguém cuidou.
     @ObservationIgnored var cancelLaunchFallback: (UUID) -> Bool = { _ in false }
+    /// `Discard` de uma linha pendente com erro: o orquestrador solta o pedido guardado.
+    @ObservationIgnored var onDiscardPending: (UUID) -> Void = { _ in }
 
     init() {}
 
@@ -141,6 +148,7 @@ final class SidebarModel {
     @discardableResult
     func select(_ id: UUID) -> Bool {
         guard let session = session(id) else { return false }
+        focusedPending = nil
         selectedSession = id
         keyboardFocus = nil
         focusListRequest += 1
@@ -314,22 +322,58 @@ final class SidebarModel {
 
     func advance(pending id: UUID, to phase: PendingLaunch.Phase) {
         guard let i = pending.firstIndex(where: { $0.id == id }) else { return }
+        if pending[i].phase != phase, pending[i].failure == nil, !pending[i].history.contains(pending[i].phase) {
+            pending[i].history.append(pending[i].phase)
+        }
         pending[i].phase = phase
         pending[i].failure = nil
+        pending[i].detail = nil
+        pending[i].recoveries = []
     }
 
-    func fail(pending id: UUID, message: String) {
+    /// Volta a linha ao começo para uma nova tentativa (Try Again): sem histórico nem erro.
+    func restart(pending id: UUID) {
+        guard let i = pending.firstIndex(where: { $0.id == id }) else { return }
+        pending[i].phase = .preparing
+        pending[i].history = []
+        pending[i].failure = nil
+        pending[i].detail = nil
+        pending[i].recoveries = []
+    }
+
+    func fail(pending id: UUID, message: String, detail: String? = nil, recoveries: [SessionRecovery] = []) {
         guard let i = pending.firstIndex(where: { $0.id == id }) else { return }
         pending[i].failure = message
+        pending[i].detail = detail
+        pending[i].recoveries = recoveries
     }
 
-    func finish(pending id: UUID) { pending.removeAll { $0.id == id } }
+    func pending(_ id: UUID) -> PendingLaunch? { pending.first { $0.id == id } }
+
+    /// Informa a sessão que a linha esconde (o ID final só existe depois de reaproveitar uma sessão "não iniciada").
+    func hide(session sessionID: UUID, behind pendingID: UUID) {
+        guard let i = pending.firstIndex(where: { $0.id == pendingID }) else { return }
+        pending[i].sessionID = sessionID
+    }
+
+    /// Abre a linha pendente no centro (clique na linha, ou criação pelo composer).
+    func focus(pending id: UUID) {
+        guard pending.contains(where: { $0.id == id }) else { return }
+        focusedPending = id
+        keyboardFocus = nil
+    }
+
+    func finish(pending id: UUID) {
+        pending.removeAll { $0.id == id }
+        if focusedPending == id { focusedPending = nil }
+    }
 
     /// `Cancel` da linha pendente: remove e avisa o orquestrador para abortar. `false` se já terminou.
     @discardableResult
     func cancel(pending id: UUID) -> Bool {
         guard pending.contains(where: { $0.id == id }) else { return false }
         pending.removeAll { $0.id == id }
+        if focusedPending == id { focusedPending = nil }
         onCancelPending(id)
         return true
     }

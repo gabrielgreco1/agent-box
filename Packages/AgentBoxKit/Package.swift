@@ -90,7 +90,7 @@ let package = Package(
         tests("DockerTests", ["AgentBoxDocker", "AgentBoxPlatform"], resources: [.copy("Fixtures")]),
         tests("TerminalCoreTests", ["AgentBoxTerminalCore", swiftTerm]),
         tests("DesignSystemTests", ["AgentBoxDesignSystem"]),
-        tests("DaemonTests", ["AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxTerminalCore", "AgentBoxCore", "agentboxd", "peerprobe", swiftTerm]),
+        tests("DaemonTests", ["AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxTerminalCore", "AgentBoxCore", "AgentBoxStore", "agentboxd", "peerprobe", swiftTerm]),
         .testTarget(
             name: "TerminalSurfaceTests",
             dependencies: ["AgentBoxUI", "AgentBoxCore", "AgentBoxStore", "AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxTerminalCore", "AgentBoxDesignSystem", "agentboxd", swiftTerm],

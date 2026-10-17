@@ -101,6 +101,31 @@ public struct GitService: Sendable {
         return name.isEmpty ? .none : .gitUsername(name)
     }
 
+    // MARK: - Branches
+
+    /// Onde um branch existe: local (`refs/heads`), só no `origin` ou em lugar nenhum.
+    public func lookupBranch(_ name: String, in repositoryURL: URL) async throws -> GitBranchLookup {
+        guard !name.isEmpty, !name.hasPrefix("-") else { return .none }
+        if try await refExists("refs/heads/\(name)", in: repositoryURL) { return .local }
+        if try await refExists("refs/remotes/origin/\(name)", in: repositoryURL) { return .remote }
+        return .none
+    }
+
+    /// Nomes curtos dos branches locais e `origin/*` (sem `origin/HEAD`), locais primeiro, no máximo `limit`.
+    public func branches(in repositoryURL: URL, limit: Int = 60) async throws -> [String] {
+        let out = try await checked(["for-each-ref", "--format=%(refname)", "refs/heads", "refs/remotes/origin"],
+                                    in: repositoryURL, kind: .read, timeout: timeouts.read, notRepository: true)
+        var locals: [String] = [], remotes: [String] = []
+        for line in out.split(whereSeparator: \.isNewline).map(String.init) {
+            if line.hasPrefix("refs/heads/") { locals.append(String(line.dropFirst("refs/heads/".count))) }
+            else if line.hasPrefix("refs/remotes/") {
+                let short = String(line.dropFirst("refs/remotes/".count))
+                if short != "origin/HEAD" { remotes.append(short) }
+            }
+        }
+        return Array((locals.sorted() + remotes.sorted()).prefix(limit))
+    }
+
     // MARK: - Worktrees
 
     /// Lista worktrees (o primeiro é o checkout principal).
@@ -112,7 +137,7 @@ public struct GitService: Sendable {
 
     /// Cria um worktree (branch existente, ou nova a partir de `origin/<default>`), com nomes de pasta e branch
     /// únicos (`-2`, `-3`…). Em falha desfaz só o que esta chamada criou.
-    public func createWorktree(_ request: GitWorktreeRequest) async throws -> GitWorktreeCreation {
+    public func createWorktree(_ request: GitWorktreeRequest, progress: (@Sendable (GitWorktreePhase) -> Void)? = nil) async throws -> GitWorktreeCreation {
         guard let info = try await detectRepository(at: request.repositoryURL) else {
             throw GitError.notARepository(request.repositoryURL.path)
         }
@@ -141,16 +166,17 @@ public struct GitService: Sendable {
             let normalized = GitNaming.slug(from: slug)
             let branchBase = prefix.value.map { "\($0)/\(normalized)" } ?? normalized
             try await validateBranchName(branchBase, in: repo)
-            let base = try await resolveBase(baseRef, in: repo, policy: request.fetch, fetched: &fetched)
+            let base = try await resolveBase(baseRef, in: repo, policy: request.fetch, fetched: &fetched, progress: progress)
             plan = CreationPlan(branch: branchBase, baseRef: base, kind: .newBranch, slug: normalized)
             plan.autoSuffix = true
         case .newBranchExact(let name, let baseRef):
             try await validateBranchName(name, in: repo)
             if try await branchTaken(name, in: repo) { throw GitError.branchAlreadyExists(name) }
-            let base = try await resolveBase(baseRef, in: repo, policy: request.fetch, fetched: &fetched)
+            let base = try await resolveBase(baseRef, in: repo, policy: request.fetch, fetched: &fetched, progress: progress)
             plan = CreationPlan(branch: name, baseRef: base, kind: .newBranch, slug: GitNaming.slug(from: name))
         }
 
+        progress?(.creating)
         try FileManager.default.createDirectory(at: parent, withIntermediateDirectories: true)
         let (destination, branch) = try await pickNames(plan, parent: parent, in: repo)
         let baseCommit: String? = if let base = plan.baseRef { try await resolvedCommit(base, in: repo) } else { nil }
@@ -281,7 +307,7 @@ public struct GitService: Sendable {
 
     /// Base `origin/<default>` com fetch opcional; sem `origin`, usa o branch padrão local.
     private func resolveBase(_ explicit: String?, in repo: URL, policy: GitFetchPolicy,
-                             fetched: inout Bool) async throws -> String {
+                             fetched: inout Bool, progress: (@Sendable (GitWorktreePhase) -> Void)? = nil) async throws -> String {
         if let explicit {
             guard !explicit.hasPrefix("-") else { throw GitError.baseRefMissing(explicit) }
             _ = try await resolvedCommit(explicit, in: repo)
@@ -295,6 +321,7 @@ public struct GitService: Sendable {
             return name
         }
         if policy == .fetchFirst {
+            progress?(.fetching)
             let result: GitCommandResult
             do {
                 result = try await runner.run(["fetch", "origin", name], in: repo, kind: .write, timeout: timeouts.fetch)

@@ -52,6 +52,8 @@ public final class AppEnvironment {
     /// Sessões limpas (⇧⌘N, ⌥⇧⌘N, arquivar, apagar, mover) e Quick Launch (⌥⌘N, "+" da tab row) — T1-17 e T1-21.
     private(set) var cleanSessions: CleanSessionController?
     private var quickLaunch: QuickLaunchController?
+    /// Composer ⌘N (T1-20): overlay, ações `composer.*` e `session.new*`.
+    private(set) var composer: ComposerController?
     private let environmentVariables: [String: String]
     private let log = LogFacade(.app, category: "ui")
 
@@ -187,6 +189,7 @@ public final class AppEnvironment {
         }
         let sessionLauncher = SessionLauncher(sidebar: sidebar, workspace: workspace, elements: elements, sessionsRoot: sessionsRoot)
         launcher = sessionLauncher
+        sessionLauncher.settings = settings
         do { try sessionLauncher.register(in: registry) } catch { log.publicError("duplicate session.launch registration") }
         let clean = CleanSessionController(
             launcher: sessionLauncher, sidebar: sidebar, workspace: workspace, overlays: overlays, toasts: toasts, elements: elements,
@@ -197,6 +200,11 @@ public final class AppEnvironment {
         let quick = QuickLaunchController(workspace: workspace, overlays: overlays, elements: elements, settings: settings)
         quickLaunch = quick
         do { try quick.register(in: registry) } catch { log.publicError("duplicate quick launch registration") }
+        let composerController = ComposerController(
+            sidebar: sidebar, settings: settings, overlays: overlays, toasts: toasts, elements: elements, launcher: sessionLauncher,
+            automationEnabled: automationEnabled)
+        composer = composerController
+        do { try composerController.register(in: registry) } catch { log.publicError("duplicate composer registration") }
     }
 
     /// Ações reais da casca vazia; as demais entram com a tela que as possui.
@@ -223,7 +231,7 @@ public final class AppEnvironment {
         }
     }
 
-    /// Fixture de desenvolvimento (`AGENTBOX_SCREEN=overlay-demo`): liga ações que abrem overlays e toasts de exemplo.
+    /// Fixture de desenvolvimento (`AGENTBOX_SCREEN=overlay-demo`): liga ações que abrem overlays e toasts de exemplo (o composer é o real).
     public static let overlayDemoFixture = "overlay-demo"
 
     /// Liga o roteador de overlays ao registro (Esc dispara o Cancel) e à árvore de UI (origem da animação).
@@ -240,52 +248,14 @@ public final class AppEnvironment {
     /// `pane.close` abre "Close this terminal?" e `app.checkProblems` mostra toasts. Os handlers de `composer.*`
     /// e `dialog.closeTerminal.*` gravam nos modelos da amostra.
     private func registerOverlayDemo() {
-        let composer = ComposerSampleModel()
         let confirmation = ConfirmationModel.closeTerminal(
             message: String(localized: "Claude Code is still working. Closing ends the process; you can resume the conversation later.", bundle: .module))
         let router = overlays, toasts = toasts
         func add(_ id: ActionID, _ handler: @escaping @MainActor (ActionArgument) async throws -> String?) {
             try? registry.register(id, handler: handler)
         }
-        add(.sessionNew) { _ in
-            router.present(.composerSample(composer), from: .windowSidebarToggle) ? "opened" : "stack full"
-        }
         add(.paneClose) { _ in
             router.present(.confirmation(confirmation), from: nil) ? "opened" : "stack full"
-        }
-        add(.composerSetProject) { arg in
-            if let value = arg.value { composer.project = value }
-            return composer.project
-        }
-        add(.composerSetAgent) { arg in
-            if let value = arg.value { composer.agent = value }
-            return composer.agent
-        }
-        add(.composerSetProfile) { arg in
-            if let value = arg.value { composer.profile = value }
-            return composer.profile
-        }
-        add(.composerManageAgents) { _ in nil }
-        add(.composerEditProfiles) { _ in nil }
-        add(.composerSetWhere) { arg in
-            composer.whereValue = arg.value ?? composer.whereValue
-            return composer.whereValue
-        }
-        add(.composerSetPrompt) { arg in
-            composer.prompt = arg.value ?? ""
-            return nil
-        }
-        add(.composerCreateMore) { arg in
-            composer.createMore = arg.value == "on"
-            return composer.createMore ? "on" : "off"
-        }
-        add(.composerCancel) { _ in
-            router.dismiss(.action)
-            return nil
-        }
-        add(.composerSubmit) { _ in
-            router.dismiss(.action)
-            return nil
         }
         add(.dialogCloseTerminalCancel) { _ in
             router.dismiss(.action)
@@ -306,7 +276,7 @@ public final class AppEnvironment {
                         action: ToastAction(.appCheckProblems, title: String(localized: "Undo", bundle: .module)), undo: true)
             return nil
         }
-        if let script = scriptSteps { runDemoScript(script, composer: composer) }
+        if let script = scriptSteps { runDemoScript(script) }
     }
 
     /// Fixture `AGENTBOX_SCREEN=sidebar-demo`: controles cujo fluxo é de outra tarefa (composer, adicionar projeto, Settings,
@@ -337,6 +307,7 @@ public final class AppEnvironment {
             launcher?.attach(store: opened)
             cleanSessions?.attach(store: opened)
             await restoreSessions(store: opened)
+            await composer?.attach(store: opened)
             await workspace.attach(store: opened)
             await sidebar.attach(store: opened)
             await settings.attach(store: opened)
@@ -363,20 +334,21 @@ public final class AppEnvironment {
         return raw.split(separator: ";").map { String($0).trimmingCharacters(in: .whitespaces) }
     }
 
-    private func runDemoScript(_ steps: [String], composer: ComposerSampleModel) {
+    private func runDemoScript(_ steps: [String]) {
         let router = overlays, registry = registry, elements = elements
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
             try? await Task.sleep(for: .seconds(1.2))
             for step in steps {
                 switch step {
                 case "composer":
                     _ = try? await registry.perform(.sessionNew, .press)
                 case "project", "agent", "profile":
+                    guard let model = self?.composer?.model else { break }
                     let (id, selection, entries, action, hint): (A11yID, String, [DSMenuEntry], ActionID, String) =
                         switch step {
-                        case "project": (.overlayComposerProject, composer.project, ComposerSampleContent.projectEntries, .composerSetProject, "Search projects…")
-                        case "agent": (.overlayComposerAgent, composer.agent, ComposerSampleContent.agentEntries, .composerSetAgent, "Search agents…")
-                        default: (.overlayComposerProfile, composer.profile, ComposerSampleContent.profileEntries, .composerSetProfile, "Search profiles…")
+                        case "project": (.overlayComposerProject, model.draft.projectID?.uuidString ?? "none", model.projectEntries, .composerSetProject, "Search projects…")
+                        case "agent": (.overlayComposerAgent, model.draft.provider.rawValue, model.agentEntries, .composerSetAgent, "Search agents…")
+                        default: (.overlayComposerProfile, model.draft.profileID?.uuidString ?? "", model.profileEntries, .composerSetProfile, "Search profiles…")
                         }
                     if let anchor = elements.frame(of: id) {
                         router.presentPopover(

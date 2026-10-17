@@ -1,3 +1,4 @@
+import AgentBoxCore
 import AgentBoxDesignSystem
 import AgentBoxProtocol
 import AgentBoxStore
@@ -43,18 +44,33 @@ struct PendingLaunch: Identifiable, Equatable {
     var failure: String?
     /// Sessão já gravada no Store que esta linha esconde até ficar pronta (a linha vira o card, M-501).
     var sessionID: UUID?
+    /// Agente da sessão em criação (logo e texto do centro).
+    var provider: TerminalProvider = .claude
+    /// Detalhe da falha para o centro (03 §6.4) e as saídas que a linha oferece além de `Discard`.
+    var detail: String?
+    var recoveries: [SessionRecovery] = []
+    /// Fases já concluídas, na ordem (a PhaseList do centro mostra check nelas e spinner na atual).
+    var history: [Phase] = []
 
-    init(id: UUID = .v7(), name: String, projectID: UUID?, phase: Phase = .preparing, failure: String? = nil, sessionID: UUID? = nil) {
+    init(
+        id: UUID = .v7(), name: String, projectID: UUID?, phase: Phase = .preparing, failure: String? = nil, sessionID: UUID? = nil,
+        provider: TerminalProvider = .claude
+    ) {
         self.id = id; self.name = name; self.projectID = projectID; self.phase = phase; self.failure = failure; self.sessionID = sessionID
+        self.provider = provider
     }
 
     var phaseText: String {
         if let failure { return failure }
+        return Self.text(of: phase)
+    }
+
+    static func text(of phase: Phase) -> String {
         switch phase {
-        case .preparing: return String(localized: "Preparing…", bundle: .module)
-        case .fetching: return String(localized: "Fetching origin…", bundle: .module)
-        case .creatingWorktree: return String(localized: "Creating worktree…", bundle: .module)
-        case .startingAgent(let agent): return "Starting \(agent)…"
+        case .preparing: String(localized: "Preparing…", bundle: .module)
+        case .fetching: String(localized: "Fetching origin…", bundle: .module)
+        case .creatingWorktree: String(localized: "Creating worktree…", bundle: .module)
+        case .startingAgent(let agent): "Starting \(agent)…"
         }
     }
 }

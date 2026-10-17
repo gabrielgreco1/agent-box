@@ -32,6 +32,10 @@ extension SidebarModel {
 
         try registry.register(.sessionSelect) { [unowned self] arg in
             let id = try uuid(arg, .sessionSelect)
+            if pending(id) != nil, session(id) == nil {
+                focus(pending: id)
+                return "pending"
+            }
             guard select(id) else { throw ActionError.failed(.sessionSelect, message: "Session not found") }
             return "selected"
         }
@@ -168,7 +172,9 @@ extension SidebarModel {
             return nil
         }
         try registry.register(.sessionDiscardPending) { [unowned self] arg in
-            finish(pending: try uuid(arg, .sessionDiscardPending))
+            let id = try uuid(arg, .sessionDiscardPending)
+            onDiscardPending(id)
+            finish(pending: id)
             return nil
         }
     }

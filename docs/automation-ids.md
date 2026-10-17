@@ -193,6 +193,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `overlay.composer.computers`
 - `overlay.composer.proxy`
 - `overlay.composer.watchSubagents`
+- `overlay.composer.summary`
 - `overlay.composer.createMore`
 - `overlay.composer.cancel`
 - `overlay.composer.submit`

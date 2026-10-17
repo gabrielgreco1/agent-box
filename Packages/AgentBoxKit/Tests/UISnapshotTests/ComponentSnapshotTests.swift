@@ -1,5 +1,6 @@
 import AgentBoxDesignSystem
 import AgentBoxProtocol
+import AgentBoxStore
 import AppKit
 import SnapshotTesting
 import SwiftUI
@@ -178,13 +179,17 @@ import Testing
             size: CGSize(width: 490, height: 220), name: "confirmationOverlayCard")
     }
 
-    @Test func composerSampleCard() {
-        let model = ComposerSampleModel()
+    @Test func composerCard() {
+        let env = Self.env()
+        let project = Project(name: "rti-platform", kind: .git, rootPath: "/Users/me/orca/workspaces/rti-platform", defaultBranch: "main")
+        env.sidebar.apply(StoreSnapshot(projects: [project]))
+        let model = ComposerModel(sidebar: env.sidebar, settings: env.settings, initial: ComposerPersistedState(), preferredProject: project.id)
+        model.draft.prompt = "Fix the ArcGIS pagination: the last page is dropped when resultOffset lands on a multiple of maxRecordCount."
         snap(
-            ComposerSampleContent(model: model)
+            ComposerView(model: model)
                 .frame(width: DS.Layout.composerWidth)
                 .background(RoundedRectangle(cornerRadius: DS.Radius.card).fill(DS.Color.overlayCard))
                 .overlay(RoundedRectangle(cornerRadius: DS.Radius.card).strokeBorder(DS.Color.borderStrong)),
-            size: CGSize(width: 600, height: 560), name: "composerSampleCard")
+            size: CGSize(width: 600, height: 620), name: "composerCard")
     }
 }

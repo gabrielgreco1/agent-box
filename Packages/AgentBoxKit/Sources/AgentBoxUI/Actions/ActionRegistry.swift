@@ -54,6 +54,11 @@ public final class ActionRegistry: ActionDispatching {
         registrations[id] = Registration(enablement: enablement, handler: handler)
     }
 
+    /// Troca o handler de uma ação já registrada (testes que observam o que um controle dispara).
+    func replace(_ id: ActionID, handler: @escaping Handler) {
+        registrations[id] = Registration(enablement: { .enabled }, handler: handler)
+    }
+
     public var registeredIDs: [ActionID] { registrations.keys.sorted() }
 
     public func isRegistered(_ id: ActionID) -> Bool { registrations[id] != nil }

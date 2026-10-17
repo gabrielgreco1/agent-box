@@ -38,7 +38,7 @@ struct PaneIgnitionView: View {
 }
 
 /// Logo de 32 com halo em loop (escala 1 ↔ 1,04, opacidade 0,5 ↔ 0,8; `MotionTokens.Loop.halo`). Estático em Reduce Motion.
-private struct IgnitionLogo: View {
+struct IgnitionLogo: View {
     let provider: TerminalProvider
 
     var body: some View {
@@ -90,7 +90,7 @@ private struct PhaseRowView: View {
 }
 
 /// Check ou X desenhado com `trim` (0,24 `expoOut`; X: 0,18). Reduce Motion: aparece pronto.
-private struct DrawnGlyph: View {
+struct DrawnGlyph: View {
     enum Kind { case check, cross }
     let kind: Kind
     let color: Color

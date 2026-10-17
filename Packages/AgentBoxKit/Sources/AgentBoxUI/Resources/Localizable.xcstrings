@@ -408,6 +408,17 @@
         }
       }
     },
+    "Base branch": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Base branch"
+          }
+        }
+      }
+    },
     "Blank Terminal": {
       "extractionState": "manual",
       "localizations": {
@@ -437,6 +448,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Block"
+          }
+        }
+      }
+    },
+    "Branch exists": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Branch exists"
+          }
+        }
+      }
+    },
+    "Branch name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Branch name"
           }
         }
       }
@@ -540,6 +573,28 @@
         }
       }
     },
+    "Choose Folder…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose Folder…"
+          }
+        }
+      }
+    },
+    "Choose a Folder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a Folder"
+          }
+        }
+      }
+    },
     "Choose a project.": {
       "extractionState": "manual",
       "localizations": {
@@ -547,6 +602,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choose a project."
+          }
+        }
+      }
+    },
+    "Choose a worktree": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a worktree"
+          }
+        }
+      }
+    },
+    "Choose…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose…"
           }
         }
       }
@@ -991,6 +1068,17 @@
         }
       }
     },
+    "Create Without Fetching": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create Without Fetching"
+          }
+        }
+      }
+    },
     "Create from": {
       "extractionState": "manual",
       "localizations": {
@@ -1178,6 +1266,17 @@
         }
       }
     },
+    "Discard this session?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discard this session?"
+          }
+        }
+      }
+    },
     "Docker": {
       "extractionState": "manual",
       "localizations": {
@@ -1350,6 +1449,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Find in terminal…"
+          }
+        }
+      }
+    },
+    "Folder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Folder"
           }
         }
       }
@@ -1603,6 +1713,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Its %lld sessions are archived. No files, worktrees or branches are deleted."
+          }
+        }
+      }
+    },
+    "Keep Editing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep Editing"
           }
         }
       }
@@ -1882,6 +2003,17 @@
         }
       }
     },
+    "New Folder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Folder"
+          }
+        }
+      }
+    },
     "New OpenCode Tab": {
       "extractionState": "manual",
       "localizations": {
@@ -1970,6 +2102,17 @@
         }
       }
     },
+    "New worktrees go in a folder named after the project inside this one.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New worktrees go in a folder named after the project inside this one."
+          }
+        }
+      }
+    },
     "No Project (Clean Session)": {
       "extractionState": "manual",
       "localizations": {
@@ -1977,6 +2120,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "No Project (Clean Session)"
+          }
+        }
+      }
+    },
+    "No folder chosen": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No folder chosen"
           }
         }
       }
@@ -2091,6 +2245,17 @@
         }
       }
     },
+    "Not logged in": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not logged in"
+          }
+        }
+      }
+    },
     "Not started": {
       "extractionState": "manual",
       "localizations": {
@@ -2109,6 +2274,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Notifications"
+          }
+        }
+      }
+    },
+    "Open": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open"
           }
         }
       }
@@ -2241,6 +2417,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Project"
+          }
+        }
+      }
+    },
+    "Project Folder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Project Folder"
           }
         }
       }
@@ -2443,6 +2630,28 @@
         }
       }
     },
+    "Reuse existing branch": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reuse existing branch"
+          }
+        }
+      }
+    },
+    "Reuse it": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reuse it"
+          }
+        }
+      }
+    },
     "Reveal Current Session": {
       "extractionState": "manual",
       "localizations": {
@@ -2564,6 +2773,28 @@
         }
       }
     },
+    "Search worktrees…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search worktrees…"
+          }
+        }
+      }
+    },
+    "Select": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select"
+          }
+        }
+      }
+    },
     "Select a project": {
       "extractionState": "manual",
       "localizations": {
@@ -2604,6 +2835,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Session deleted."
+          }
+        }
+      }
+    },
+    "Session name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Session name"
           }
         }
       }
@@ -3103,6 +3345,17 @@
         }
       }
     },
+    "The session runs in this folder. Agent Box doesn't create or delete anything in it.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The session runs in this folder. Agent Box doesn't create or delete anything in it."
+          }
+        }
+      }
+    },
     "Theme": {
       "extractionState": "manual",
       "localizations": {
@@ -3202,6 +3455,28 @@
         }
       }
     },
+    "Use Existing Branch": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use Existing Branch"
+          }
+        }
+      }
+    },
+    "Used by %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Used by %@"
+          }
+        }
+      }
+    },
     "Used by the + button and clean sessions.": {
       "extractionState": "manual",
       "localizations": {
@@ -3220,6 +3495,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Used when you don't pick one."
+          }
+        }
+      }
+    },
+    "What should the agent do? (optional)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What should the agent do? (optional)"
           }
         }
       }
@@ -3257,6 +3543,17 @@
         }
       }
     },
+    "Where to Create Worktrees": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Where to Create Worktrees"
+          }
+        }
+      }
+    },
     "Workspace": {
       "extractionState": "manual",
       "localizations": {
@@ -3268,6 +3565,17 @@
         }
       }
     },
+    "Worktree": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Worktree"
+          }
+        }
+      }
+    },
     "Worktree folder": {
       "extractionState": "manual",
       "localizations": {
@@ -3275,6 +3583,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Worktree folder"
+          }
+        }
+      }
+    },
+    "Worktree location": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Worktree location"
           }
         }
       }

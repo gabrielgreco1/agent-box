@@ -68,6 +68,12 @@ public enum GitWorktreeSource: Sendable, Equatable {
     case newBranchExact(name: String, baseRef: String?)
 }
 
+/// Onde um branch existe (`GitService.lookupBranch`).
+public enum GitBranchLookup: Sendable, Equatable { case none, local, remote }
+
+/// Fase da criação de worktree, para a linha pendente da sidebar (03 §2.9).
+public enum GitWorktreePhase: Sendable, Equatable { case fetching, creating }
+
 public enum GitFetchPolicy: Sendable, Equatable {
     /// `git fetch origin <default>` (timeout 30 s); falha vira `GitError.fetchFailed`.
     case fetchFirst

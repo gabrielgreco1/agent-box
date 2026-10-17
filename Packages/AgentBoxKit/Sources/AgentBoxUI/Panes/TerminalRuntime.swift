@@ -245,12 +245,12 @@ final class TerminalRuntime {
 
     /// Lança o terminal pelo `LaunchCoordinator`: resolve o CLI, gera o plano, cria a sessão no daemon e anexa a view.
     /// `onEvent` recebe o progresso real (qualquer thread).
-    func launch(_ terminal: Terminal, mode: LaunchMode = .automatic, onEvent: @escaping @Sendable (LaunchEvent) -> Void) async throws -> LaunchResult {
+    func launch(_ terminal: Terminal, mode: LaunchMode = .automatic, catalog: ProfileCatalog = ProfileCatalog(), onEvent: @escaping @Sendable (LaunchEvent) -> Void) async throws -> LaunchResult {
         let entry = entry(for: terminal.id)
         let dims = entry.host.surface.terminalDimensions
         let job = LaunchJob(
             terminalID: terminal.id, spec: terminal.launchSpec, cwd: terminal.cwd, addDirs: terminal.addDirs, coldLog: terminal.coldLog,
-            cols: UInt16(clamping: dims.cols), rows: UInt16(clamping: dims.rows), mode: mode)
+            cols: UInt16(clamping: dims.cols), rows: UInt16(clamping: dims.rows), catalog: catalog, mode: mode)
         return try await coordinator.launch(
             job, onEvent: onEvent,
             attach: { [weak self] summary, runID in try await self?.attach(entry, session: summary.sessionID, mode: .snapshot, runID: runID) })

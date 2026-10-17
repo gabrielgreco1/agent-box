@@ -324,7 +324,7 @@ struct SidebarView: View {
         case .session(let id): Task { _ = try? await registry.perform(.sessionSelect, .select(id.uuidString)) }
         case .agent(_, let terminal): Task { _ = try? await registry.perform(.paneShow, .select(terminal.uuidString)) }
         case .showMore(let id): Task { _ = try? await registry.perform(.projectShowMore, .select(id.uuidString)) }
-        case .pending: break
+        case .pending(let id): Task { _ = try? await registry.perform(.sessionSelect, .select(id.uuidString)) }
         }
     }
 }
