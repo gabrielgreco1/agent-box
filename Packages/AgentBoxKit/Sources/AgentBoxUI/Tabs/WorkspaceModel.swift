@@ -73,6 +73,9 @@ final class WorkspaceModel {
     /// Pane expandido por tab (⇧⌘↵); só em memória.
     private(set) var expandedPanes: [UUID: UUID] = [:]
     private(set) var runStates: [UUID: PaneRunState] = [:]
+    /// Por que cada terminal ficou `interrupted` (frase do banner, T1-23).
+    private(set) var interruptionReasons: [UUID: InterruptionReason] = [:]
+    @ObservationIgnored private var coldLogShown: Set<UUID> = []
     /// Checklist da ignição por terminal (T1-16): alimentada só por eventos reais do `LaunchCoordinator`.
     private(set) var launchTimelines: [UUID: LaunchTimeline] = [:]
     /// Terminais cuja ignição já passou de `ignitionSkip` (0,3 s) sem primeiro byte: só então o placeholder aparece (M-506).
@@ -93,6 +96,7 @@ final class WorkspaceModel {
         self.runtime = runtime
         runtime.onEvent = { [weak self] id, event in self?.handle(event, terminalID: id) }
         runtime.onFocusRequested = { [weak self] id in self?.focus(terminalID: id) }
+        runtime.onDaemonRecovered = { [weak self] in self?.verifyAfterDaemonLoss() }
     }
 
     // MARK: Observadores (partes AppKit)
@@ -111,8 +115,23 @@ final class WorkspaceModel {
                 if let sid = UUID(uuidString: s), let tid = UUID(uuidString: t) { activeTabIDs[sid] = tid }
             }
         }
+        interruptionReasons = await SessionReconciler.interruptions(store: store)
         ensureLoaded()
         notify()
+    }
+
+    /// Reabertura (06 §1.4): cruza os terminais `running` do banco com o que o daemon mantém vivo. Vivo reanexa (a view pede o
+    /// snapshot ao aparecer); morto vira `interrupted` com o motivo. Sem daemon, não sobe um só para descobrir isso. Nada é
+    /// relançado: quem decide é o usuário (Resume, Start Fresh, Close). Chamar antes de `attach(store:)`.
+    func restoreSessions(store: AgentBoxStore) async -> ReconcileReport? {
+        let running = ((try? await store.terminals(in: .running)) ?? []) + ((try? await store.terminals(in: .launching)) ?? [])
+        let daemonSessions = running.isEmpty ? nil : await runtime.probeDaemon()
+        do {
+            return try await SessionReconciler.reconcile(store: store, daemonSessions: daemonSessions)
+        } catch {
+            log.error("restore failed: \(error)")
+            return nil
+        }
     }
 
     /// Chamado a cada snapshot do Store: carrega a sessão selecionada quando ela chega e esquece as que sumiram.
@@ -773,15 +792,23 @@ final class WorkspaceModel {
             launch(t)
         case .launching, .running:
             reattach(t)
+        case .interrupted, .exited, .killed:
+            showColdLog(of: t)
         default:
             break
         }
     }
 
+    /// Último scrollback do cold log num pane sem processo (Interrupted ou encerrado), uma vez por view.
+    private func showColdLog(of terminal: Terminal) {
+        guard coldLogShown.insert(terminal.id).inserted else { return }
+        runtime.showColdLog(of: terminal)
+    }
+
     /// Duração máxima sem primeiro byte antes de mostrar o terminal mesmo assim (comando silencioso).
     static let silentLaunchFallback: Duration = .seconds(10)
 
-    private func launch(_ terminal: Terminal) {
+    private func launch(_ terminal: Terminal, mode: LaunchMode = .automatic) {
         let id = terminal.id
         launching.insert(id)
         runStates[id] = .starting
@@ -806,7 +833,7 @@ final class WorkspaceModel {
             defer { launching.remove(id) }
             guard let current = self.terminal(id) else { return }
             do {
-                let result = try await runtime.launch(current) { [weak self] event in
+                let result = try await runtime.launch(current, mode: mode) { [weak self] event in
                     Task { @MainActor in self?.apply(launchEvent: event, terminalID: id) }
                 }
                 guard self.terminal(id) != nil else { return }
@@ -894,12 +921,76 @@ final class WorkspaceModel {
             case .exited(let summary):
                 markExited(id, info: summary.exit)
             case .gone:
-                update(terminal: id) { $0.state = .interrupted; $0.endedAt = Date() }
-                runStates[id] = .interrupted
-                save(terminal: id)
+                markInterrupted(id)
             }
             notify()
         }
+    }
+
+    /// O processo sumiu sem `exit` (daemon morto, reboot): `interrupted`, com o motivo guardado e o scrollback do cold log.
+    private func markInterrupted(_ id: UUID, reason: InterruptionReason? = nil) {
+        guard let t = terminal(id) else { return }
+        let why = reason ?? InterruptionClassifier.reason(
+            startedAt: t.startedAt, bootTime: InterruptionClassifier.bootTime(), previousRunWasClean: nil)
+        interruptionReasons[id] = why
+        update(terminal: id) { $0.state = .interrupted; $0.endedAt = $0.endedAt ?? Date() }
+        runStates[id] = .interrupted
+        save(terminal: id)
+        if let store { Task { await SessionReconciler.recordInterruption(store: store, terminalID: id, reason: why) } }
+        runtime.existingEntry(for: id)?.unbind()
+        if let fresh = terminal(id) { showColdLog(of: fresh) }
+        notify()
+    }
+
+    /// A conexão com o daemon voltou depois de cair: o que estava `running` e o daemon não conhece mais está `interrupted`.
+    func verifyAfterDaemonLoss() {
+        Task { @MainActor in
+            let sessions = (try? await runtime.client.list()) ?? []
+            let known = Dictionary(sessions.map { ($0.sessionID.description, $0) }, uniquingKeysWith: { a, _ in a })
+            for t in states.values.flatMap({ $0.terminals.values }) where t.state == .running {
+                switch paneState(t.id) {
+                case .interrupted, .exited, .failed: continue
+                default: break
+                }
+                if let raw = t.ptySessionID, let summary = known[raw] {
+                    if summary.state != .running { markExited(t.id, info: summary.exit) }
+                } else {
+                    markInterrupted(t.id, reason: .unexpected)
+                }
+            }
+        }
+    }
+
+    /// Resume (06 §2.6): relança com o ID nativo e flags regeneradas, sem o prompt inicial. Sem ID: "Continue Last".
+    func resume(_ terminalID: UUID) {
+        guard let t = terminal(terminalID), t.provider.isAgent, !launching.contains(terminalID) else { return }
+        let plan = RestorePlanner.resume(t)
+        relaunch(terminalID, spec: plan.spec, mode: plan.mode, freshConversation: false)
+    }
+
+    /// Start Fresh: mesma configuração, conversa nova.
+    func startFresh(_ terminalID: UUID) {
+        guard let t = terminal(terminalID), !launching.contains(terminalID) else { return }
+        relaunch(terminalID, spec: RestorePlanner.startFresh(t), mode: .automatic, freshConversation: true)
+    }
+
+    private func relaunch(_ id: UUID, spec: LaunchSpec, mode: LaunchMode, freshConversation: Bool) {
+        guard let old = terminal(id) else { return }
+        let oldSession = old.ptySessionID.flatMap { SessionID(string: $0) }
+        runtime.existingEntry(for: id)?.unbind()
+        retire(run: id)
+        interruptionReasons[id] = nil
+        coldLogShown.remove(id)
+        update(terminal: id) { t in
+            t.state = .notStarted
+            t.ptySessionID = nil
+            t.exitCode = nil; t.exitSignal = nil; t.endedAt = nil
+            t.launchSpec = spec
+            if freshConversation { t.nativeConversationID = nil }
+        }
+        runStates[id] = .starting
+        if let oldSession { Task { try? await runtime.client.forget(sessionID: oldSession) } }
+        if let fresh = terminal(id) { launch(fresh, mode: mode) }
     }
 
     /// Reinicia o terminal no mesmo cwd e no mesmo pane (sem resume).

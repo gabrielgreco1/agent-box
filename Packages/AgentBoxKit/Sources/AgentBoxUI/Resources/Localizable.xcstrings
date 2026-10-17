@@ -2817,17 +2817,6 @@
         }
       }
     },
-    "Terminal": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Terminal"
-          }
-        }
-      }
-    },
     "Terminals keep running and come back when you reopen Agent Box.": {
       "extractionState": "manual",
       "localizations": {
@@ -3000,6 +2989,72 @@
           "stringUnit": {
             "state": "translated",
             "value": "System"
+          }
+        }
+      }
+    },
+    "This terminal stopped when your Mac restarted.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This terminal stopped when your Mac restarted."
+          }
+        }
+      }
+    },
+    "This terminal stopped while Agent Box was closed.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This terminal stopped while Agent Box was closed."
+          }
+        }
+      }
+    },
+    "Resume": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resume"
+          }
+        }
+      }
+    },
+    "Continue Last": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue Last"
+          }
+        }
+      }
+    },
+    "Start Fresh": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start Fresh"
+          }
+        }
+      }
+    },
+    "Reconnected to %lld running terminals.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reconnected to %lld running terminals."
           }
         }
       }

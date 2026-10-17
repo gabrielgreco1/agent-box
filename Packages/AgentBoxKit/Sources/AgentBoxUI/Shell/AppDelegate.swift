@@ -22,6 +22,15 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         Task { await env.start() }
     }
 
+    public func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        let env = env
+        Task { @MainActor in
+            await env.markCleanExit()
+            NSApp.reply(toApplicationShouldTerminate: true)
+        }
+        return .terminateLater
+    }
+
     public func applicationWillTerminate(_ notification: Notification) {
         env.shutdownSync()
     }

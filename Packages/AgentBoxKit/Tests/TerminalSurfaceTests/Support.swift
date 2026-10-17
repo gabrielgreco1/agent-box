@@ -61,6 +61,15 @@ final class DaemonHarness: @unchecked Sendable {  // SAFETY: `process` só muda 
         try? FileManager.default.removeItem(at: home)
     }
 
+    /// `kill -9` no daemon sem apagar o home (o cold log e o banco ficam, como depois de um crash ou reboot).
+    func killDaemon() async {
+        guard let process, process.isRunning else { return }
+        Darwin.kill(process.processIdentifier, SIGKILL)
+        let deadline = ContinuousClock.now + .seconds(5)
+        while process.isRunning, ContinuousClock.now < deadline { try? await Task.sleep(for: .milliseconds(25)) }
+        self.process = nil
+    }
+
     func makeClient(maxBacklogBytes: Int = 4 << 20) -> PTYClient {
         PTYClient(configuration: PTYClientConfiguration(socketPath: socketPath, build: "test", maxBacklogBytes: maxBacklogBytes))
     }

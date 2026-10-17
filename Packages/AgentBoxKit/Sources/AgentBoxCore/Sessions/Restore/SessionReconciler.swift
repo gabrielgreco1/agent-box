@@ -1,0 +1,72 @@
+import AgentBoxProtocol
+import AgentBoxStore
+import Foundation
+
+/// Resultado da reconciliação do banco com o que o daemon ainda tem (06 §1.4).
+public struct ReconcileReport: Sendable, Equatable {
+    /// Terminais cujo processo continua vivo no daemon (a UI os religa com snapshot).
+    public var alive: [UUID] = []
+    public var exited: [UUID] = []
+    public var interrupted: [UUID: InterruptionReason] = [:]
+    public init() {}
+}
+
+/// Ao abrir o app: terminais que o banco diz estarem `running`/`launching` são cruzados com o `list` do daemon.
+/// Vivo = fica como está; encerrado = grava a saída; ausente = `interrupted` com o motivo. **Nada é relançado**
+/// (06 §1.6): quem decide é o usuário, com Resume, Start Fresh ou Close.
+public enum SessionReconciler {
+    /// - Parameter daemonSessions: `nil` = daemon inalcançável (todas as sessões estão perdidas).
+    public static func reconcile(
+        store: AgentBoxStore, daemonSessions: [SessionSummary]?, now: Date = Date(), bootTime: Date = InterruptionClassifier.bootTime()
+    ) async throws -> ReconcileReport {
+        var report = ReconcileReport()
+        var state = (try await store.uiState(RestoreUIState.key, as: RestoreUIState.self)) ?? RestoreUIState()
+        let previousClean = !state.appRunning
+        var candidates = try await store.terminals(in: .running)
+        candidates += try await store.terminals(in: .launching)
+        let byID = Dictionary((daemonSessions ?? []).map { ($0.sessionID.description, $0) }, uniquingKeysWith: { first, _ in first })
+        for var terminal in candidates {
+            let summary = terminal.ptySessionID.flatMap { byID[$0] }
+            if let summary, summary.state == .running {
+                report.alive.append(terminal.id)
+            } else if let summary {
+                terminal.state = summary.exit?.signal != nil ? .killed : .exited
+                terminal.exitCode = summary.exit?.code.map(Int.init)
+                terminal.exitSignal = summary.exit?.signal.map(Int.init)
+                terminal.endedAt = summary.exit?.at ?? now
+                try await store.save(terminal)
+                report.exited.append(terminal.id)
+            } else {
+                let reason = InterruptionClassifier.reason(
+                    startedAt: terminal.startedAt, bootTime: bootTime, previousRunWasClean: previousClean)
+                terminal.state = .interrupted
+                terminal.endedAt = terminal.endedAt ?? now
+                try await store.save(terminal)
+                report.interrupted[terminal.id] = reason
+                state.interruptions[terminal.id.uuidString] = reason
+            }
+        }
+        state.appRunning = true
+        try await store.setUIState(RestoreUIState.key, state)
+        return report
+    }
+
+    /// Saída limpa do app (⌘Q, fechar a janela): a próxima abertura sabe que o que morreu depois morreu "com o app fechado".
+    public static func markCleanExit(store: AgentBoxStore) async {
+        var state = (try? await store.uiState(RestoreUIState.key, as: RestoreUIState.self)) ?? RestoreUIState()
+        state.appRunning = false
+        try? await store.setUIState(RestoreUIState.key, state)
+    }
+
+    /// Um terminal passou a `interrupted` com o app aberto (daemon morreu): guarda o motivo para o banner.
+    public static func recordInterruption(store: AgentBoxStore, terminalID: UUID, reason: InterruptionReason) async {
+        var state = (try? await store.uiState(RestoreUIState.key, as: RestoreUIState.self)) ?? RestoreUIState()
+        state.interruptions[terminalID.uuidString] = reason
+        try? await store.setUIState(RestoreUIState.key, state)
+    }
+
+    public static func interruptions(store: AgentBoxStore) async -> [UUID: InterruptionReason] {
+        let state = (try? await store.uiState(RestoreUIState.key, as: RestoreUIState.self)) ?? RestoreUIState()
+        return Dictionary(uniqueKeysWithValues: state.interruptions.compactMap { key, value in UUID(uuidString: key).map { ($0, value) } })
+    }
+}

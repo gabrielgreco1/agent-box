@@ -83,6 +83,9 @@ final class TerminalRuntime {
     /// Menu de contexto de um pane (03 §4.5), montado por quem conhece as ações.
     var contextMenu: ((UUID) -> NSMenu?)?
     var onConnectionChange: ((Connection) -> Void)?
+    /// A conexão com o daemon voltou depois de uma queda (o daemon pode ser outro: sessões podem ter sumido, T1-23).
+    var onDaemonRecovered: (() -> Void)?
+    private var monitor: Task<Void, Never>?
 
     init(configuration: Configuration, registry: ActionRegistry?, elements: UIElementStore?) {
         self.configuration = configuration
@@ -113,6 +116,60 @@ final class TerminalRuntime {
         return ok
     }
 
+    /// Diretório do cold log (`<home>/sessions/<ptySessionID>/`, 06 §1.5).
+    var coldLogReader: ColdLogReader {
+        ColdLogReader(sessionsDirectory: configuration.daemonHome.appendingPathComponent("sessions", isDirectory: true))
+    }
+
+    /// Pergunta ao daemon o que ele mantém vivo **sem** subir um novo (reabertura do app): `nil` = não há daemon.
+    func probeDaemon() async -> [SessionSummary]? {
+        guard connection != .connected else { return try? await client.list() }
+        guard (try? await client.start()) != nil else { return nil }
+        setConnection(.connected)
+        startMonitor()
+        return try? await client.list()
+    }
+
+    /// Acompanha a conexão: depois de uma queda espera 2 s pela reconexão automática e, se o daemon não voltou, sobe outro
+    /// como filho (as sessões do antigo estão perdidas; a UI as marca `interrupted` em `onDaemonRecovered`).
+    private func startMonitor() {
+        guard monitor == nil else { return }
+        monitor = Task { [weak self] in
+            guard let client = self?.client else { return }
+            var wasConnected = false
+            var lost = false
+            var respawn: Task<Void, Never>?
+            for await state in await client.connectionStates() {
+                switch state {
+                case .connected:
+                    respawn?.cancel()
+                    if lost {
+                        lost = false
+                        self?.setConnection(.connected)
+                        self?.onDaemonRecovered?()
+                    }
+                    wasConnected = true
+                case .disconnected:
+                    guard wasConnected, !lost else { continue }
+                    lost = true
+                    self?.setConnection(.connecting)
+                    respawn = Task { [weak self] in
+                        try? await Task.sleep(for: .seconds(2))
+                        guard !Task.isCancelled else { return }
+                        self?.respawnDaemon()
+                    }
+                case .connecting:
+                    break
+                }
+            }
+        }
+    }
+
+    private func respawnDaemon() {
+        guard let exe = configuration.daemonExecutable ?? ChildDaemon.defaultExecutable() else { return }
+        do { try daemon.start(executable: exe, idleExitSeconds: 60) } catch { log.error("daemon respawn failed: \(error)") }
+    }
+
     private func setConnection(_ value: Connection) {
         guard connection != value else { return }
         connection = value
@@ -123,6 +180,7 @@ final class TerminalRuntime {
         setConnection(.connecting)
         if (try? await client.start()) != nil {
             setConnection(.connected)
+            startMonitor()
             return true
         }
         if let exe = configuration.daemonExecutable ?? ChildDaemon.defaultExecutable() {
@@ -131,6 +189,7 @@ final class TerminalRuntime {
         for _ in 0 ..< 100 {
             if (try? await client.start()) != nil {
                 setConnection(.connected)
+                startMonitor()
                 return true
             }
             try? await Task.sleep(for: .milliseconds(50))
@@ -186,12 +245,12 @@ final class TerminalRuntime {
 
     /// Lança o terminal pelo `LaunchCoordinator`: resolve o CLI, gera o plano, cria a sessão no daemon e anexa a view.
     /// `onEvent` recebe o progresso real (qualquer thread).
-    func launch(_ terminal: Terminal, onEvent: @escaping @Sendable (LaunchEvent) -> Void) async throws -> LaunchResult {
+    func launch(_ terminal: Terminal, mode: LaunchMode = .automatic, onEvent: @escaping @Sendable (LaunchEvent) -> Void) async throws -> LaunchResult {
         let entry = entry(for: terminal.id)
         let dims = entry.host.surface.terminalDimensions
         let job = LaunchJob(
             terminalID: terminal.id, spec: terminal.launchSpec, cwd: terminal.cwd, addDirs: terminal.addDirs, coldLog: terminal.coldLog,
-            cols: UInt16(clamping: dims.cols), rows: UInt16(clamping: dims.rows))
+            cols: UInt16(clamping: dims.cols), rows: UInt16(clamping: dims.rows), mode: mode)
         return try await coordinator.launch(
             job, onEvent: onEvent,
             attach: { [weak self] summary, runID in try await self?.attach(entry, session: summary.sessionID, mode: .snapshot, runID: runID) })
@@ -210,6 +269,23 @@ final class TerminalRuntime {
             log.error("reattach failed: \(error)")
             return .gone
         }
+    }
+
+    /// Mostra o último scrollback do cold log no pane de um terminal sem processo (Interrupted, Exited depois de reabrir).
+    /// Nunca escreve no PTY: só alimenta o emulador local. Devolve `false` se não há log.
+    @discardableResult
+    func showColdLog(of terminal: Terminal) -> Bool {
+        guard let session = terminal.ptySessionID, let tail = coldLogReader.tail(sessionID: session) else { return false }
+        let entry = entry(for: terminal.id)
+        guard !entry.isAttached else { return false }
+        let surface = entry.host.surface
+        let feeder = surface.feedSender
+        surface.setReplaying(true)
+        feeder.feed(byteArray: [0x1b, 0x63][...])
+        feeder.feed(byteArray: tail.bytes[...])
+        feeder.feed(byteArray: Array("\r\n".utf8)[...])
+        surface.setReplaying(false)
+        return true
     }
 
     private func attach(_ entry: TerminalEntry, session: SessionID, mode: AttachMode, runID: UUID? = nil) async throws {
