@@ -95,9 +95,11 @@ final class MainSplitViewController: NSSplitViewController {
     }
 }
 
-/// Centro vazio: landing mínima (03 §19), sem botões enquanto as ações de projeto/sessão não existem.
+/// Centro vazio: landing mínima (03 §19). Só `Add Project…` por enquanto (T1-19); os demais botões entram com as
+/// tarefas dos fluxos que eles abrem (`isOffered`: sem handler registrado, o botão não aparece).
 struct LandingView: View {
     let automationOn: Bool
+    @Environment(\.actionRegistry) private var registry
 
     var body: some View {
         VStack(spacing: DS.Space.s2) {
@@ -108,6 +110,10 @@ struct LandingView: View {
                 .font(DS.Font.dialogBody.font)
                 .foregroundStyle(DS.Color.textSecondary)
                 .multilineTextAlignment(.center)
+            if let registry, registry.isOffered(.projectAdd) {
+                DSButton(.projectAdd, id: .landingAddProject, "Add Project…", variant: .primary)
+                    .padding(.top, DS.Space.s4)
+            }
         }
         .padding(.horizontal, DS.Space.s4)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
