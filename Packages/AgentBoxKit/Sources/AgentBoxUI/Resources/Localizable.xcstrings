@@ -1,6 +1,28 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "\"%@\" is still running. Closing ends it.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"%@\" is still running. Closing ends it."
+          }
+        }
+      }
+    },
+    "%@ exited.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ exited."
+          }
+        }
+      }
+    },
     "%@ is already in your projects.": {
       "extractionState": "manual",
       "localizations": {
@@ -12,6 +34,17 @@
         }
       }
     },
+    "%@ isn't installed or isn't on your PATH.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ isn't installed or isn't on your PATH."
+          }
+        }
+      }
+    },
     "%@, %lld sessions": {
       "extractionState": "manual",
       "localizations": {
@@ -19,6 +52,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@, %lld sessions"
+          }
+        }
+      }
+    },
+    "%lld terminals are still running. Closing ends their processes.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld terminals are still running. Closing ends their processes."
           }
         }
       }
@@ -276,6 +320,83 @@
         }
       }
     },
+    "Close": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        }
+      }
+    },
+    "Close %lld terminals?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close %lld terminals?"
+          }
+        }
+      }
+    },
+    "Close Other Panes": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close Other Panes"
+          }
+        }
+      }
+    },
+    "Close Other Tabs": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close Other Tabs"
+          }
+        }
+      }
+    },
+    "Close Pane": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close Pane"
+          }
+        }
+      }
+    },
+    "Close Tab": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close Tab"
+          }
+        }
+      }
+    },
+    "Close Tabs to the Right": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close Tabs to the Right"
+          }
+        }
+      }
+    },
     "Close Terminal": {
       "extractionState": "manual",
       "localizations": {
@@ -305,6 +426,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Collapse All Sessions"
+          }
+        }
+      }
+    },
+    "Collapse Pane": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Collapse Pane"
           }
         }
       }
@@ -364,6 +496,17 @@
         }
       }
     },
+    "Copy Details": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy Details"
+          }
+        }
+      }
+    },
     "Copy Path": {
       "extractionState": "manual",
       "localizations": {
@@ -393,6 +536,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Copy Session ID"
+          }
+        }
+      }
+    },
+    "Copy Terminal ID": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy Terminal ID"
           }
         }
       }
@@ -437,6 +591,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Couldn't start"
+          }
+        }
+      }
+    },
+    "Couldn't start %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't start %@"
           }
         }
       }
@@ -562,6 +727,17 @@
         }
       }
     },
+    "Equalize Pane Sizes": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Equalize Pane Sizes"
+          }
+        }
+      }
+    },
     "Existing Worktree": {
       "extractionState": "manual",
       "localizations": {
@@ -595,6 +771,17 @@
         }
       }
     },
+    "Expand Pane": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expand Pane"
+          }
+        }
+      }
+    },
     "Fetching origin…": {
       "extractionState": "manual",
       "localizations": {
@@ -624,6 +811,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Folder not found"
+          }
+        }
+      }
+    },
+    "Force Quit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Force Quit"
           }
         }
       }
@@ -837,6 +1035,17 @@
         }
       }
     },
+    "New Claude Code Tab": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Claude Code Tab"
+          }
+        }
+      }
+    },
     "New Clean Session": {
       "extractionState": "manual",
       "localizations": {
@@ -844,6 +1053,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "New Clean Session"
+          }
+        }
+      }
+    },
+    "New Codex Tab": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Codex Tab"
+          }
+        }
+      }
+    },
+    "New OpenCode Tab": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New OpenCode Tab"
           }
         }
       }
@@ -877,6 +1108,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "New Session in %@…"
+          }
+        }
+      }
+    },
+    "New Tab": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Tab"
+          }
+        }
+      }
+    },
+    "New Terminal": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Terminal"
           }
         }
       }
@@ -958,6 +1211,17 @@
         }
       }
     },
+    "No terminals open in %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No terminals open in %@"
+          }
+        }
+      }
+    },
     "Not available yet": {
       "extractionState": "manual",
       "localizations": {
@@ -965,6 +1229,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Not available yet"
+          }
+        }
+      }
+    },
+    "Not enough room to split. Close a pane or widen the window.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not enough room to split. Close a pane or widen the window."
           }
         }
       }
@@ -1009,6 +1284,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Open on GitHub"
+          }
+        }
+      }
+    },
+    "Pane Actions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pane Actions"
           }
         }
       }
@@ -1156,6 +1442,17 @@
         }
       }
     },
+    "Reopen Closed Tab": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reopen Closed Tab"
+          }
+        }
+      }
+    },
     "Reset": {
       "extractionState": "manual",
       "localizations": {
@@ -1163,6 +1460,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reset"
+          }
+        }
+      }
+    },
+    "Reset Title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset Title"
+          }
+        }
+      }
+    },
+    "Restart": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restart"
           }
         }
       }
@@ -1321,17 +1640,6 @@
         }
       }
     },
-    "settings.menu": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Settings…"
-          }
-        }
-      }
-    },
     "Show": {
       "extractionState": "manual",
       "localizations": {
@@ -1398,6 +1706,28 @@
         }
       }
     },
+    "Split Down": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Split Down"
+          }
+        }
+      }
+    },
+    "Split Right": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Split Right"
+          }
+        }
+      }
+    },
     "Starting…": {
       "extractionState": "manual",
       "localizations": {
@@ -1431,6 +1761,28 @@
         }
       }
     },
+    "Terminal": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminal"
+          }
+        }
+      }
+    },
+    "Terminal exited": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminal exited"
+          }
+        }
+      }
+    },
     "That isn't a folder.": {
       "extractionState": "manual",
       "localizations": {
@@ -1442,6 +1794,17 @@
         }
       }
     },
+    "The background service isn't running.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The background service isn't running."
+          }
+        }
+      }
+    },
     "The file is read-only.": {
       "extractionState": "manual",
       "localizations": {
@@ -1449,6 +1812,72 @@
           "stringUnit": {
             "state": "translated",
             "value": "The file is read-only."
+          }
+        }
+      }
+    },
+    "The process couldn't be started.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The process couldn't be started."
+          }
+        }
+      }
+    },
+    "The process didn't exit.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The process didn't exit."
+          }
+        }
+      }
+    },
+    "The process ended with exit code %lld. Its output is preserved.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The process ended with exit code %lld. Its output is preserved."
+          }
+        }
+      }
+    },
+    "The process was killed (signal %lld). Its output is preserved.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The process was killed (signal %lld). Its output is preserved."
+          }
+        }
+      }
+    },
+    "This terminal stopped unexpectedly.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This terminal stopped unexpectedly."
+          }
+        }
+      }
+    },
+    "Try Again": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try Again"
           }
         }
       }
@@ -1515,6 +1944,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "now"
+          }
+        }
+      }
+    },
+    "pane.exited.shell": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Process exited."
+          }
+        }
+      }
+    },
+    "pane.menu.forceQuit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Force Quit Process…"
+          }
+        }
+      }
+    },
+    "settings.menu": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings…"
           }
         }
       }

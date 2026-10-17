@@ -1,0 +1,903 @@
+import AgentBoxCore
+import AgentBoxDesignSystem
+import AgentBoxPlatform
+import AgentBoxProtocol
+import AgentBoxStore
+import AppKit
+import Foundation
+import Observation
+
+/// Parte do workspace que sobrevive ao reinício (`ui_state`): a tab ativa de cada sessão (06 §1.8).
+nonisolated struct WorkspaceUIState: Codable, Equatable, Sendable {
+    var activeTabs: [String: String] = [:]
+}
+
+/// Estado de execução de um pane na UI (03 §4.6). O estado persistido do processo é `Terminal.state`; este acrescenta
+/// o que só existe enquanto o app roda (fechando, erro de lançamento).
+enum PaneRunState: Equatable {
+    /// Ainda sem sessão no daemon (a view é criada antes do lançamento).
+    case starting
+    case running
+    case exited(code: Int?, signal: Int?)
+    case interrupted
+    case failed(String)
+    /// Fechando: `kill graceful` enviado; `stuck` depois de 5 s sem sair (banner "The process didn't exit.").
+    case closing(stuck: Bool)
+}
+
+/// Pedido de confirmação de fechamento em andamento (03 §16.1).
+struct PendingClose {
+    var terminalIDs: [UUID]
+    var perform: @MainActor () -> Void
+}
+
+/// Modelo da tab row e da árvore de panes da sessão selecionada (T1-14). Mantém o conjunto de trabalho em memória
+/// (tabs, terminais, tab ativa, expansão) e grava no Store: estrutura na hora, proporções com debounce de 300 ms
+/// (`scheduleLayout`) e no fim do gesto (`setLayout`). A UI só chama métodos daqui, via `ActionRegistry`.
+@MainActor
+@Observable
+final class WorkspaceModel {
+    struct SessionState {
+        var tabs: [Tab]
+        var terminals: [UUID: Terminal]
+        /// Tabs da mais recente para a mais antiga (⌃⇥).
+        var recent: [UUID]
+    }
+
+    static let uiStateKey = "workspace"
+    static let confirmCloseSettingKey = "terminal.confirmClose"
+    /// Tabs reabertas por ⇧⌘T: até 10 por sessão (03 §3.4).
+    static let reopenLimit = 10
+
+    @ObservationIgnored let runtime: TerminalRuntime
+    @ObservationIgnored private(set) var store: AgentBoxStore?
+    @ObservationIgnored var sessionLookup: (UUID) -> Session? = { _ in nil }
+    @ObservationIgnored private var snapshot = StoreSnapshot()
+    @ObservationIgnored private var listeners: [() -> Void] = []
+    @ObservationIgnored private var persistTail: Task<Void, Never>?
+    @ObservationIgnored private var launching: Set<UUID> = []
+    /// Fechados aqui: o snapshot do Store pode ainda mostrá-los por um instante e não deve ressuscitá-los.
+    @ObservationIgnored private var closedTabIDs: Set<UUID> = []
+    @ObservationIgnored private var removedTerminalIDs: Set<UUID> = []
+    @ObservationIgnored private var titleTasks: [UUID: Task<Void, Never>] = [:]
+    @ObservationIgnored private let log = LogFacade(.app, category: "workspace")
+    /// Tamanho da área de panes (medido pela view); decide o limite de 240 × 120 dos splits.
+    @ObservationIgnored var contentSize: CGSize = .zero
+    @ObservationIgnored var overlays: OverlayRouter?
+    @ObservationIgnored var toasts: ToastCenter?
+    @ObservationIgnored let confirmationState = ConfirmationState()
+
+    private(set) var currentSessionID: UUID?
+    private(set) var states: [UUID: SessionState] = [:]
+    private(set) var activeTabIDs: [UUID: UUID] = [:]
+    /// Pane expandido por tab (⇧⌘↵); só em memória.
+    private(set) var expandedPanes: [UUID: UUID] = [:]
+    private(set) var runStates: [UUID: PaneRunState] = [:]
+    var renamingTab: UUID?
+    private(set) var pendingClose: PendingClose?
+    /// Pane que acabou de receber foco por atalho ou ação (anel de 120 ms, M-309).
+    private(set) var focusPulse: (terminalID: UUID, nonce: Int)?
+    /// Tab que acabou de ser aberta (largura 0 → cheia, M-301).
+    private(set) var recentlyOpenedTab: UUID?
+
+    init(runtime: TerminalRuntime) {
+        self.runtime = runtime
+        runtime.onEvent = { [weak self] id, event in self?.handle(event, terminalID: id) }
+        runtime.onFocusRequested = { [weak self] id in self?.focus(terminalID: id) }
+    }
+
+    // MARK: Observadores (partes AppKit)
+
+    /// A parte AppKit (árvore de panes) é redesenhada a cada mudança; a SwiftUI observa as propriedades.
+    func addListener(_ listener: @escaping () -> Void) { listeners.append(listener) }
+
+    private func notify() { for l in listeners { l() } }
+
+    // MARK: Store
+
+    func attach(store: AgentBoxStore) async {
+        self.store = store
+        if let saved = try? await store.uiState(Self.uiStateKey, as: WorkspaceUIState.self) {
+            for (s, t) in saved.activeTabs {
+                if let sid = UUID(uuidString: s), let tid = UUID(uuidString: t) { activeTabIDs[sid] = tid }
+            }
+        }
+        ensureLoaded()
+        notify()
+    }
+
+    /// Chamado a cada snapshot do Store: carrega a sessão selecionada quando ela chega e esquece as que sumiram.
+    func ingest(_ snap: StoreSnapshot) {
+        snapshot = snap
+        let alive = Set(snap.sessions.map(\.id))
+        for id in states.keys where !alive.contains(id) { dropSession(id) }
+        mergeNewRecords(from: snap)
+        ensureLoaded()
+    }
+
+    /// Sessão já carregada: acrescenta tabs e terminais que outro escritor gravou depois (o Store grava a tab antes do terminal).
+    private func mergeNewRecords(from snap: StoreSnapshot) {
+        var changed = false
+        for (sid, var state) in states {
+            let known = Set(state.tabs.map(\.id))
+            let newTabs = snap.tabs.filter { $0.sessionID == sid && $0.closedAt == nil && !known.contains($0.id) && !closedTabIDs.contains($0.id) }
+            if !newTabs.isEmpty {
+                state.tabs = (state.tabs + newTabs).sorted { ($0.sortIndex, $0.createdAt) < ($1.sortIndex, $1.createdAt) }
+                if activeTabIDs[sid] == nil { activeTabIDs[sid] = state.tabs.first?.id }
+                changed = true
+            }
+            let tabIDs = Set(state.tabs.map(\.id))
+            for t in snap.terminals where tabIDs.contains(t.tabID) && state.terminals[t.id] == nil && !removedTerminalIDs.contains(t.id) {
+                state.terminals[t.id] = t
+                runStates[t.id] = .starting
+                changed = true
+            }
+            states[sid] = state
+        }
+        if changed { notify() }
+    }
+
+    func setSession(_ id: UUID?) {
+        guard currentSessionID != id else { return }
+        currentSessionID = id
+        ensureLoaded()
+        notify()
+    }
+
+    private func dropSession(_ id: UUID) {
+        guard let state = states.removeValue(forKey: id) else { return }
+        for terminal in state.terminals.keys { runtime.dispose(terminal) }
+        activeTabIDs[id] = nil
+        notify()
+    }
+
+    private func ensureLoaded() {
+        guard let sid = currentSessionID, states[sid] == nil, snapshot.sessions.contains(where: { $0.id == sid }) else { return }
+        let tabs = snapshot.tabs.filter { $0.sessionID == sid && $0.closedAt == nil }
+            .sorted { ($0.sortIndex, $0.createdAt) < ($1.sortIndex, $1.createdAt) }
+        let tabIDs = Set(tabs.map(\.id))
+        var terminals: [UUID: Terminal] = [:]
+        for t in snapshot.terminals where tabIDs.contains(t.tabID) { terminals[t.id] = t }
+        var state = SessionState(tabs: tabs, terminals: terminals, recent: [])
+        let preferred = activeTabIDs[sid].flatMap { id in tabs.contains { $0.id == id } ? id : nil }
+        let active = preferred ?? tabs.first?.id
+        activeTabIDs[sid] = active
+        if let active { state.recent = [active] }
+        states[sid] = state
+        for t in terminals.values {
+            switch t.state {
+            case .exited, .killed: runStates[t.id] = .exited(code: t.exitCode, signal: t.exitSignal)
+            case .interrupted: runStates[t.id] = .interrupted
+            case .failedToStart: runStates[t.id] = .failed(String(localized: "The process couldn't be started.", bundle: .module))
+            default: runStates[t.id] = .starting
+            }
+        }
+        notify()
+    }
+
+    // MARK: Consultas
+
+    var session: Session? { currentSessionID.flatMap(sessionLookup) }
+    var isLoaded: Bool { currentSessionID.flatMap { states[$0] } != nil }
+    var tabs: [Tab] { currentSessionID.flatMap { states[$0]?.tabs } ?? [] }
+
+    var activeTabID: UUID? { currentSessionID.flatMap { activeTabIDs[$0] } }
+    var activeTab: Tab? { activeTabID.flatMap { id in tabs.first { $0.id == id } } }
+
+    func terminal(_ id: UUID) -> Terminal? {
+        for state in states.values { if let t = state.terminals[id] { return t } }
+        return nil
+    }
+
+    func tab(_ id: UUID) -> Tab? { tabs.first { $0.id == id } }
+
+    /// A tab (de qualquer sessão carregada) que contém o terminal.
+    func tabContaining(terminalID: UUID) -> Tab? { locate(terminal: terminalID)?.tab }
+
+    private func locate(terminal id: UUID) -> (sid: UUID, tab: Tab)? {
+        for (sid, state) in states {
+            if let tab = state.tabs.first(where: { $0.layout.pane(forTerminal: id) != nil }) { return (sid, tab) }
+        }
+        return nil
+    }
+
+    private func locate(tab id: UUID) -> (sid: UUID, tab: Tab)? {
+        for (sid, state) in states { if let tab = state.tabs.first(where: { $0.id == id }) { return (sid, tab) } }
+        return nil
+    }
+
+    /// Terminal focado da tab ativa (o que as ações de teclado alvejam).
+    var focusedTerminalID: UUID? {
+        guard let tab = activeTab else { return nil }
+        if let f = tab.focusedTerminalID, tab.layout.pane(forTerminal: f) != nil { return f }
+        return tab.layout.terminalIDs.first
+    }
+
+    /// Todo terminal de sessão carregada que ainda está em algum layout (a área de panes tem uma view por um deles).
+    var loadedTerminalIDs: Set<UUID> {
+        Set(states.values.flatMap { $0.tabs.flatMap { $0.layout.terminalIDs } })
+    }
+
+    /// Título do cabeçalho do pane: o dinâmico do terminal (OSC 0/2) ou o nome do agente.
+    func displayTitleOfPane(_ terminalID: UUID) -> String { terminal(terminalID)?.title ?? "" }
+
+    func paneState(_ terminalID: UUID) -> PaneRunState { runStates[terminalID] ?? .starting }
+
+    /// Todos os terminais das tabs da sessão atual (as views existem para todos, só as da tab ativa aparecem).
+    var terminalsInCurrentSession: [Terminal] {
+        guard let sid = currentSessionID, let state = states[sid] else { return [] }
+        return state.tabs.flatMap { $0.layout.terminalIDs }.compactMap { state.terminals[$0] }
+    }
+
+    func expandedPane(in tab: Tab) -> UUID? {
+        guard let p = expandedPanes[tab.id], tab.layout.contains(paneID: p) else { return nil }
+        return p
+    }
+
+    /// Título mostrado: o fixado pelo usuário, senão o dinâmico do terminal focado (OSC 0/2), senão o da tab (03 §3.2).
+    func displayTitle(of tab: Tab) -> String {
+        if tab.titleLocked { return tab.title }
+        if let id = tab.focusedTerminalID ?? tab.layout.terminalIDs.first, let t = terminal(id), !t.title.isEmpty { return t.title }
+        return tab.title
+    }
+
+    /// Terminal que representa a tab (foco, senão o primeiro): fornece logo e estado do início da tab.
+    func primaryTerminal(of tab: Tab) -> Terminal? {
+        let id = tab.focusedTerminalID.flatMap { tab.layout.pane(forTerminal: $0) != nil ? $0 : nil } ?? tab.layout.terminalIDs.first
+        return id.flatMap(terminal)
+    }
+
+    // MARK: Mutação com persistência ordenada
+
+    /// Grava na ordem em que foi pedido (uma cadeia de tarefas): layout, tabs e terminais não se ultrapassam.
+    private func persist(_ work: @escaping @Sendable (AgentBoxStore) async throws -> Void) {
+        guard let store else { return }
+        let previous = persistTail
+        persistTail = Task { [log] in
+            await previous?.value
+            do { try await work(store) } catch { log.error("workspace persist failed: \(error)"); }
+        }
+    }
+
+    /// Espera as gravações pendentes (testes e ⇧⌘T, que lê o Store).
+    func settlePersistence() async { await persistTail?.value }
+
+    private func update(tab id: UUID, _ body: (inout Tab) -> Void) {
+        guard let (sid, _) = locate(tab: id), var state = states[sid], let i = state.tabs.firstIndex(where: { $0.id == id }) else { return }
+        body(&state.tabs[i])
+        states[sid] = state
+    }
+
+    private func update(terminal id: UUID, _ body: (inout Terminal) -> Void) {
+        for (sid, var state) in states where state.terminals[id] != nil {
+            body(&state.terminals[id]!)
+            states[sid] = state
+            return
+        }
+    }
+
+    private func save(terminal id: UUID) {
+        guard let t = terminal(id) else { return }
+        persist { try await $0.save(t) }
+    }
+
+    private func save(tab id: UUID) {
+        guard let t = locate(tab: id)?.tab else { return }
+        persist { try await $0.save(t) }
+    }
+
+    private func saveLayout(of tabID: UUID, final: Bool) {
+        guard let tab = locate(tab: tabID)?.tab else { return }
+        let layout = tab.layout, focus = tab.focusedTerminalID
+        if final {
+            persist { try await $0.setLayout(tabID: tabID, layout: layout, focusedTerminalID: focus) }
+        } else {
+            persist { try await $0.scheduleLayout(tabID: tabID, layout: layout, focusedTerminalID: focus) }
+        }
+    }
+
+    private func saveUIState() {
+        let state = WorkspaceUIState(activeTabs: Dictionary(uniqueKeysWithValues: activeTabIDs.map { ($0.key.uuidString, $0.value.uuidString) }))
+        persist { try await $0.setUIState(Self.uiStateKey, state) }
+    }
+
+    // MARK: Tabs
+
+    func selectTab(_ id: UUID) {
+        guard let sid = currentSessionID, tabs.contains(where: { $0.id == id }) else { return }
+        if activeTabIDs[sid] != id {
+            activeTabIDs[sid] = id
+            states[sid]?.recent.removeAll { $0 == id }
+            states[sid]?.recent.insert(id, at: 0)
+            saveUIState()
+        }
+        notify()
+        focusTerminalOfActiveTab()
+    }
+
+    func selectTab(at index: Int) {
+        guard tabs.indices.contains(index) else { return }
+        selectTab(tabs[index].id)
+    }
+
+    func selectTab(delta: Int) {
+        guard let active = activeTabID, let i = tabs.firstIndex(where: { $0.id == active }), tabs.count > 1 else { return }
+        let n = tabs.count
+        selectTab(at: ((i + delta) % n + n) % n)
+    }
+
+    /// ⌃⇥: a tab usada antes desta; repete para voltar (alterna entre as duas últimas).
+    func selectRecentTab(reverse: Bool = false) {
+        guard let sid = currentSessionID, let recent = states[sid]?.recent.filter({ id in tabs.contains { $0.id == id } }), recent.count > 1 else { return }
+        selectTab(reverse ? recent[recent.count - 1] : recent[1])
+    }
+
+    private func nextSortIndex(after tabID: UUID?) -> Int {
+        guard let tabID, let i = tabs.firstIndex(where: { $0.id == tabID }) else { return (tabs.map(\.sortIndex).max() ?? -1) + 1 }
+        return i + 1
+    }
+
+    /// Nova tab com um terminal (⌘T shell, ⌥⌘T agente, Quick Launch). Entra à direita da ativa (M-301).
+    @discardableResult
+    func newTab(provider: TerminalProvider, profileID: UUID? = nil, prompt: String? = nil) -> UUID? {
+        guard let session, let sid = currentSessionID, states[sid] != nil else { return nil }
+        let tabID = UUID.v7()
+        var spec = LaunchSpec(provider: provider, profileID: profileID)
+        spec.initialPrompt = prompt
+        let terminal = makeTerminal(tabID: tabID, spec: spec, cwd: session.folderPath, folder: session.folderPath)
+        let pane = Pane(content: .terminal(terminal.id))
+        let position = nextSortIndex(after: activeTabID)
+        let tab = Tab(
+            id: tabID, sessionID: sid, title: terminal.title, sortIndex: position, layout: .leaf(pane), focusedTerminalID: terminal.id)
+        var list = states[sid]!.tabs
+        list.insert(tab, at: min(position, list.count))
+        for i in list.indices { list[i].sortIndex = i }
+        states[sid]!.tabs = list
+        states[sid]!.terminals[terminal.id] = terminal
+        runStates[terminal.id] = .starting
+        recentlyOpenedTab = tabID
+        selectTab(tabID)
+        let saved = list, newTerminal = terminal
+        persist { store in
+            for t in saved { try await store.save(t) }
+            try await store.save(newTerminal)
+        }
+        return tabID
+    }
+
+    private func makeTerminal(tabID: UUID, spec: LaunchSpec, cwd: String, folder: String) -> Terminal {
+        let adapter = ProviderAdapters.adapter(for: spec.provider)
+        let title = spec.provider.isAgent ? adapter.displayName : URL(fileURLWithPath: folder).lastPathComponent
+        // Perfis embutidos não estão na tabela `launch_profile` (FK): só o `launchSpec` guarda o ID deles.
+        let stored = spec.profileID.flatMap { id in snapshot.profiles.contains { $0.id == id } ? id : nil }
+        return Terminal(tabID: tabID, provider: spec.provider, profileID: stored, title: title, cwd: cwd, launchSpec: spec)
+    }
+
+    // MARK: Rename, reordenar
+
+    func beginRename(_ tabID: UUID) -> Bool {
+        guard tab(tabID) != nil else { return false }
+        renamingTab = tabID
+        return true
+    }
+
+    func cancelRename() { renamingTab = nil }
+
+    /// Vazio volta ao título dinâmico; texto fixa o título (03 §2.11).
+    func commitRename(_ text: String, tabID: UUID? = nil) {
+        guard let id = tabID ?? renamingTab, tab(id) != nil else { return }
+        renamingTab = nil
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { resetTitle(id) } else {
+            update(tab: id) { $0.title = trimmed; $0.titleLocked = true }
+            save(tab: id)
+        }
+        notify()
+    }
+
+    func resetTitle(_ tabID: UUID) {
+        guard let t = tab(tabID), t.titleLocked else { return }
+        let fallback = primaryTerminal(of: t)?.title ?? t.title
+        update(tab: tabID) { $0.title = fallback; $0.titleLocked = false }
+        save(tab: tabID)
+        notify()
+    }
+
+    func moveTab(_ tabID: UUID, to index: Int) {
+        guard let sid = currentSessionID, var list = states[sid]?.tabs, let from = list.firstIndex(where: { $0.id == tabID }) else { return }
+        let target = min(max(index, 0), list.count - 1)
+        guard target != from else { return }
+        let moved = list.remove(at: from)
+        list.insert(moved, at: target)
+        for i in list.indices { list[i].sortIndex = i }
+        states[sid]!.tabs = list
+        let saved = list
+        persist { store in for t in saved { try await store.save(t) } }
+        notify()
+    }
+
+    // MARK: Foco e panes
+
+    func focus(terminalID: UUID) {
+        guard let tab = tabContaining(terminalID: terminalID) else { return }
+        if tab.focusedTerminalID != terminalID {
+            update(tab: tab.id) { $0.focusedTerminalID = terminalID }
+            saveLayout(of: tab.id, final: false)
+        }
+        notify()
+    }
+
+    /// Foco por atalho ou ação: seleciona a tab, foca o pane e o terminal da AppKit (rim flash, M-309).
+    func show(terminalID: UUID) {
+        guard let tab = tabContaining(terminalID: terminalID) else { return }
+        if activeTabID != tab.id { selectTab(tab.id) }
+        focus(terminalID: terminalID)
+        pulse(terminalID)
+        runtime.existingEntry(for: terminalID)?.host.focusTerminal()
+    }
+
+    private func pulse(_ terminalID: UUID) {
+        focusPulse = (terminalID, (focusPulse?.nonce ?? 0) + 1)
+    }
+
+    func focusTerminalOfActiveTab() {
+        guard let id = focusedTerminalID else { return }
+        runtime.existingEntry(for: id)?.host.focusTerminal()
+    }
+
+    func focusNextPane(delta: Int) -> Bool {
+        guard let tab = activeTab, let current = focusedTerminalID, let pane = tab.layout.pane(forTerminal: current),
+              let next = tab.layout.pane(from: pane.id, delta: delta), case .terminal(let id) = next.content
+        else { return false }
+        if expandedPanes[tab.id] != nil { expandedPanes[tab.id] = nil }
+        show(terminalID: id)
+        return true
+    }
+
+    // MARK: Split
+
+    enum SplitResult: Equatable { case created(UUID), noRoom, unavailable }
+
+    @discardableResult
+    func split(_ axis: SplitAxis, source: UUID? = nil, shell: Bool = false) -> SplitResult {
+        guard let tab = activeTab, let sourceID = source ?? focusedTerminalID, let sourcePane = tab.layout.pane(forTerminal: sourceID),
+              let origin = terminal(sourceID), let sid = currentSessionID
+        else { return .unavailable }
+        if expandedPanes[tab.id] != nil { expandedPanes[tab.id] = nil }
+        let area = CGRect(origin: .zero, size: contentSize)
+        if contentSize != .zero, !tab.layout.canSplit(paneID: sourcePane.id, axis: axis, in: area) {
+            toasts?.show(
+                kind: .info, title: String(localized: "Not enough room to split. Close a pane or widen the window.", bundle: .module))
+            return .noRoom
+        }
+        // Mesmo agente e perfil (⌥: shell). Sem prompt e sem ID nativo: o pane novo começa uma conversa nova.
+        var spec = origin.launchSpec
+        if shell { spec = LaunchSpec(provider: .shell) }
+        spec.initialPrompt = nil; spec.initialPromptFile = nil; spec.nativeSessionID = nil; spec.resumeOf = nil
+        var terminal = makeTerminal(tabID: tab.id, spec: spec, cwd: origin.cwd, folder: origin.cwd)
+        terminal.title = spec.provider.isAgent ? ProviderAdapters.adapter(for: spec.provider).displayName : URL(fileURLWithPath: origin.cwd).lastPathComponent
+        let pane = Pane(content: .terminal(terminal.id))
+        guard let layout = tab.layout.splitting(paneID: sourcePane.id, axis: axis, inserting: pane) else { return .unavailable }
+        update(tab: tab.id) { $0.layout = layout; $0.focusedTerminalID = terminal.id }
+        states[sid]?.terminals[terminal.id] = terminal
+        runStates[terminal.id] = .starting
+        let newTerminal = terminal, tabID = tab.id
+        persist { try await $0.save(newTerminal) }
+        saveLayout(of: tabID, final: true)
+        pulse(terminal.id)
+        notify()
+        return .created(terminal.id)
+    }
+
+    func toggleExpand(_ terminalID: UUID? = nil) {
+        guard let tab = activeTab, tab.layout.leafCount > 1 || expandedPanes[tab.id] != nil,
+              let id = terminalID ?? focusedTerminalID, let pane = tab.layout.pane(forTerminal: id)
+        else { return }
+        expandedPanes[tab.id] = expandedPanes[tab.id] == pane.id ? nil : pane.id
+        focus(terminalID: id)
+        notify()
+    }
+
+    func equalize() {
+        guard let tab = activeTab, tab.layout.leafCount > 1 else { return }
+        update(tab: tab.id) { $0.layout = $0.layout.equalized() }
+        saveLayout(of: tab.id, final: true)
+        notify()
+    }
+
+    func equalizeDivider(at path: SplitPath) {
+        guard let tab = activeTab else { return }
+        update(tab: tab.id) { $0.layout = $0.layout.equalizing(at: path) }
+        saveLayout(of: tab.id, final: true)
+        notify()
+    }
+
+    /// Arrasto do divisor: atualiza a proporção na hora; grava com debounce, e no fim do gesto (`final`) sem espera.
+    func setRatio(at path: SplitPath, ratio: Double, final: Bool) {
+        guard let tab = activeTab else { return }
+        let area = CGRect(origin: .zero, size: contentSize)
+        let clamped = contentSize == .zero ? ratio : tab.layout.clampedRatio(ratio, at: path, in: area)
+        update(tab: tab.id) { $0.layout = $0.layout.settingRatio(at: path, ratio: clamped) }
+        saveLayout(of: tab.id, final: final)
+        notify()
+    }
+
+    // MARK: Fechar
+
+    private var confirmClose: Bool {
+        get async { (try? await store?.setting(Self.confirmCloseSettingKey, as: Bool.self)) ?? true }
+    }
+
+    /// Fecha um pane (⌘W). O último pane fecha a tab; a última tab deixa a sessão sem tabs (nunca fecha a janela).
+    func closePane(_ terminalID: UUID? = nil) {
+        guard let id = terminalID ?? focusedTerminalID, terminal(id) != nil else { return }
+        request(close: [id])
+    }
+
+    func closeTab(_ tabID: UUID? = nil) {
+        guard let id = tabID ?? activeTabID, let t = tab(id) else { return }
+        request(close: t.layout.terminalIDs)
+    }
+
+    func closeOtherTabs(except tabID: UUID? = nil) {
+        guard let keep = tabID ?? activeTabID else { return }
+        request(close: tabs.filter { $0.id != keep }.flatMap { $0.layout.terminalIDs })
+    }
+
+    func closeTabs(toTheRightOf tabID: UUID? = nil) {
+        guard let from = tabID ?? activeTabID, let i = tabs.firstIndex(where: { $0.id == from }) else { return }
+        request(close: tabs[(i + 1)...].flatMap { $0.layout.terminalIDs })
+    }
+
+    func closeOtherPanes(keeping terminalID: UUID? = nil) {
+        guard let tab = activeTab, let keep = terminalID ?? focusedTerminalID else { return }
+        request(close: tab.layout.terminalIDs.filter { $0 != keep })
+    }
+
+    /// Fechar um conjunto de terminais: confirma só se algum tem processo vivo e não é shell ocioso (03 §16.1).
+    private func request(close ids: [UUID]) {
+        guard !ids.isEmpty else { return }
+        Task { @MainActor in
+            var busy: [Terminal] = []
+            var commands: [UUID: String] = [:]
+            for id in ids {
+                guard let t = terminal(id), await runtime.isBusy(t) else { continue }
+                busy.append(t)
+                if !t.provider.isAgent, let pid = await runtime.summary(of: t)?.pid, let name = ProcessTree.firstChildName(of: pid) { commands[id] = name }
+            }
+            let ask = await confirmClose
+            if busy.isEmpty || !ask || overlays == nil {
+                perform(close: ids)
+                return
+            }
+            presentConfirmation(for: busy, all: ids, commands: commands)
+        }
+    }
+
+    private func presentConfirmation(for busy: [Terminal], all ids: [UUID], commands: [UUID: String]) {
+        guard let overlays else { return perform(close: ids) }
+        let message: String
+        let title: String
+        if busy.count == 1, let t = busy.first {
+            title = String(localized: "Close this terminal?", bundle: .module)
+            if t.provider.isAgent {
+                message = String(
+                    localized: "\(ProviderAdapters.adapter(for: t.provider).displayName) is still working. Closing ends the process; you can resume the conversation later.",
+                    bundle: .module)
+            } else {
+                let command = commands[t.id] ?? t.title
+                message = String(localized: "\"\(command)\" is still running. Closing ends it.", bundle: .module)
+            }
+        } else {
+            title = String(localized: "Close \(busy.count) terminals?", bundle: .module)
+            message = String(localized: "\(busy.count) terminals are still running. Closing ends their processes.", bundle: .module)
+        }
+        confirmationState.dontAsk = false
+        var model = ConfirmationModel.closeTerminal(message: message)
+        model.title = title
+        model.state = confirmationState
+        pendingClose = PendingClose(terminalIDs: ids) { [weak self] in self?.perform(close: ids) }
+        if !overlays.present(.confirmation(model), from: nil) {
+            pendingClose = nil
+            perform(close: ids)
+        }
+    }
+
+    func confirmPendingClose() {
+        overlays?.dismiss(.action)
+        let pending = pendingClose
+        pendingClose = nil
+        if confirmationState.dontAsk { persist { try await $0.setSetting(Self.confirmCloseSettingKey, false) } }
+        pending?.perform()
+    }
+
+    func cancelPendingClose() {
+        overlays?.dismiss(.action)
+        pendingClose = nil
+    }
+
+    /// Fecha os terminais: sem processo vivo, sai na hora; com processo, `kill graceful` e o pane fica "fechando"
+    /// até a saída (banner `The process didn't exit.` com Force Quit depois de 5 s, 03 §4.6).
+    func perform(close ids: [UUID]) {
+        for id in ids {
+            guard let t = terminal(id) else { continue }
+            let attached = runtime.existingEntry(for: id)?.isAttached == true
+            var alive = t.state == .running && t.ptySessionID != nil
+            switch paneState(id) {
+            case .exited, .interrupted, .failed: alive = false
+            default: break
+            }
+            if alive {
+                Task { await runtime.kill(t, mode: .graceful) }
+                if attached {
+                    runStates[id] = .closing(stuck: false)
+                    Task { @MainActor [weak self] in
+                        try? await Task.sleep(for: .seconds(5))
+                        guard let self, case .closing(false) = self.runStates[id] else { return }
+                        self.runStates[id] = .closing(stuck: true)
+                        self.notify()
+                    }
+                    continue
+                }
+            }
+            finalizeRemoval(of: id)
+        }
+        notify()
+    }
+
+    func forceQuit(_ terminalID: UUID) {
+        guard let t = terminal(terminalID) else { return }
+        Task { await runtime.kill(t, mode: .force) }
+    }
+
+    func cancelClose(_ terminalID: UUID) {
+        guard case .closing = paneState(terminalID) else { return }
+        runStates[terminalID] = .running
+        notify()
+    }
+
+    /// Remove o pane do layout (o irmão ocupa o espaço, M-307), apaga o terminal (soft delete) e solta a view.
+    private func finalizeRemoval(of terminalID: UUID) {
+        guard let t = terminal(terminalID), let (sid, tab) = locate(terminal: terminalID), let pane = tab.layout.pane(forTerminal: terminalID)
+        else { return }
+        var removed = t
+        removed.deletedAt = Date()
+        let gone = removed
+        persist { try await $0.save(gone) }
+        states[sid]?.terminals[terminalID] = nil
+        removedTerminalIDs.insert(terminalID)
+        runStates[terminalID] = nil
+        runtime.dispose(terminalID)
+        if let layout = tab.layout.removing(paneID: pane.id) {
+            let successor = tab.layout.focusSuccessor(afterRemoving: pane.id)
+            update(tab: tab.id) { tab in
+                tab.layout = layout
+                if tab.focusedTerminalID == terminalID {
+                    if let s = successor, case .terminal(let id) = s.content { tab.focusedTerminalID = id } else { tab.focusedTerminalID = layout.terminalIDs.first }
+                }
+            }
+            if expandedPanes[tab.id] == pane.id { expandedPanes[tab.id] = nil }
+            saveLayout(of: tab.id, final: true)
+            if tab.id == activeTabID { focusTerminalOfActiveTab() }
+        } else {
+            removeTab(tab.id, in: sid)
+        }
+        notify()
+    }
+
+    /// Fecha a tab (closedAt): some da tab row e fica disponível para ⇧⌘T.
+    private func removeTab(_ tabID: UUID, in sid: UUID) {
+        guard var state = states[sid], let i = state.tabs.firstIndex(where: { $0.id == tabID }) else { return }
+        var tab = state.tabs.remove(at: i)
+        closedTabIDs.insert(tabID)
+        tab.closedAt = Date()
+        state.recent.removeAll { $0 == tabID }
+        states[sid] = state
+        expandedPanes[tabID] = nil
+        if activeTabIDs[sid] == tabID {
+            let next = state.recent.first ?? (state.tabs.indices.contains(i) ? state.tabs[i].id : state.tabs.last?.id)
+            activeTabIDs[sid] = next
+            saveUIState()
+        }
+        let closed = tab
+        persist { try await $0.save(closed) }
+        if sid == currentSessionID { focusTerminalOfActiveTab() }
+    }
+
+    // MARK: Reabrir
+
+    /// ⇧⌘T: a tab fechada mais recente da sessão (até 10). Os terminais voltam como novos (com `--resume` se havia ID).
+    func reopenClosedTab() {
+        guard let sid = currentSessionID, let store else { return }
+        Task { @MainActor in
+            await settlePersistence()
+            guard let closed = try? await store.tabs(sessionID: sid, includeClosed: true).filter({ $0.closedAt != nil })
+                .sorted(by: { ($0.closedAt ?? .distantPast) > ($1.closedAt ?? .distantPast) }).prefix(Self.reopenLimit).first
+            else { return }
+            let stored = (try? await store.terminals(tabID: closed.id, includeDeleted: true)) ?? []
+            closedTabIDs.remove(closed.id)
+            var tab = closed
+            tab.closedAt = nil
+            tab.sortIndex = tabs.count
+            var terminals: [Terminal] = []
+            for var t in stored where tab.layout.pane(forTerminal: t.id) != nil {
+                removedTerminalIDs.remove(t.id)
+                t.deletedAt = nil
+                t.state = .notStarted
+                t.ptySessionID = nil
+                t.exitCode = nil; t.exitSignal = nil; t.endedAt = nil; t.startedAt = nil
+                if t.provider.isAgent, let native = t.nativeConversationID { t.launchSpec.resumeOf = native }
+                terminals.append(t)
+            }
+            guard !terminals.isEmpty, states[sid] != nil else { return }
+            states[sid]!.tabs.append(tab)
+            for t in terminals {
+                states[sid]!.terminals[t.id] = t
+                runStates[t.id] = .starting
+            }
+            let saved = tab, savedTerminals = terminals
+            persist { store in
+                try await store.save(saved)
+                for t in savedTerminals { try await store.save(t) }
+            }
+            recentlyOpenedTab = tab.id
+            selectTab(tab.id)
+        }
+    }
+
+    var hasClosedTabs: Bool {
+        guard let sid = currentSessionID else { return false }
+        return snapshot.tabs.contains { $0.sessionID == sid && $0.closedAt != nil }
+    }
+
+    // MARK: Lançar e religar
+
+    /// A view do pane já tem tamanho (primeiro layout): lança o terminal novo ou religa o que o daemon manteve vivo.
+    func paneReady(_ terminalID: UUID) {
+        guard let t = terminal(terminalID), !launching.contains(terminalID) else { return }
+        if let entry = runtime.existingEntry(for: terminalID), entry.isAttached { return }
+        switch t.state {
+        case .notStarted:
+            launch(t)
+        case .launching, .running:
+            reattach(t)
+        default:
+            break
+        }
+    }
+
+    private func launch(_ terminal: Terminal) {
+        let id = terminal.id
+        launching.insert(id)
+        runStates[id] = .starting
+        update(terminal: id) { $0.state = .launching }
+        save(terminal: id)
+        Task { @MainActor in
+            defer { launching.remove(id) }
+            guard let current = self.terminal(id) else { return }
+            do {
+                let outcome = try await runtime.launch(current)
+                guard self.terminal(id) != nil else { return }
+                update(terminal: id) { t in
+                    t.state = .running
+                    t.ptySessionID = outcome.summary.sessionID.description
+                    t.resolvedArgv = outcome.plan.argv
+                    t.envKeys = outcome.plan.envKeys
+                    t.launchSpec = outcome.plan.spec
+                    t.nativeConversationID = outcome.plan.nativeConversationID ?? t.nativeConversationID
+                    t.startedAt = Date()
+                    t.endedAt = nil
+                    t.exitCode = nil
+                    t.exitSignal = nil
+                }
+                runStates[id] = .running
+                save(terminal: id)
+                if id == focusedTerminalID { runtime.existingEntry(for: id)?.host.focusTerminal() }
+            } catch {
+                update(terminal: id) { $0.state = .failedToStart }
+                runStates[id] = .failed((error as? LocalizedError)?.errorDescription ?? "\(error)")
+                save(terminal: id)
+            }
+            notify()
+        }
+    }
+
+    private func reattach(_ terminal: Terminal) {
+        let id = terminal.id
+        launching.insert(id)
+        Task { @MainActor in
+            defer { launching.remove(id) }
+            switch await runtime.reattach(terminal) {
+            case .attached:
+                update(terminal: id) { $0.state = .running }
+                runStates[id] = .running
+                if id == focusedTerminalID { runtime.existingEntry(for: id)?.host.focusTerminal() }
+            case .exited(let summary):
+                markExited(id, info: summary.exit)
+            case .gone:
+                update(terminal: id) { $0.state = .interrupted; $0.endedAt = Date() }
+                runStates[id] = .interrupted
+                save(terminal: id)
+            }
+            notify()
+        }
+    }
+
+    /// Reinicia o terminal no mesmo cwd e no mesmo pane (sem resume).
+    func restart(_ terminalID: UUID) {
+        guard let t = terminal(terminalID) else { return }
+        runtime.existingEntry(for: terminalID)?.unbind()
+        update(terminal: terminalID) { t in
+            t.state = .notStarted
+            t.ptySessionID = nil
+            t.exitCode = nil; t.exitSignal = nil; t.endedAt = nil
+        }
+        runStates[terminalID] = .starting
+        if let fresh = terminal(terminalID) { launch(fresh) } else { launch(t) }
+    }
+
+    // MARK: Eventos do daemon
+
+    private func handle(_ event: EventPayload, terminalID: UUID) {
+        guard terminal(terminalID) != nil else { return }
+        switch event {
+        case .exit(let info):
+            markExited(terminalID, info: info)
+        case .title(let e):
+            guard let t = terminal(terminalID), t.titleSource != .user, !e.text.isEmpty else { return }
+            update(terminal: terminalID) { $0.title = e.text; $0.titleSource = .osc }
+            debouncedSave(terminalID)
+            notify()
+        case .cwd(let e):
+            update(terminal: terminalID) { $0.cwd = e.path }
+            debouncedSave(terminalID)
+        case .stillAlive:
+            if case .closing = paneState(terminalID) { runStates[terminalID] = .closing(stuck: true); notify() }
+        case .sessionGone:
+            if case .closing = paneState(terminalID) { finalizeRemoval(of: terminalID) }
+        default:
+            break
+        }
+    }
+
+    private func markExited(_ id: UUID, info: ExitInfo?) {
+        let closing: Bool
+        if case .closing = paneState(id) { closing = true } else { closing = false }
+        if closing {
+            finalizeRemoval(of: id)
+            return
+        }
+        update(terminal: id) { t in
+            t.state = info?.signal != nil ? .killed : .exited
+            t.exitCode = info?.code.map(Int.init)
+            t.exitSignal = info?.signal.map(Int.init)
+            t.endedAt = info?.at ?? Date()
+        }
+        runStates[id] = .exited(code: info?.code.map(Int.init), signal: info?.signal.map(Int.init))
+        save(terminal: id)
+        notify()
+    }
+
+    private func debouncedSave(_ id: UUID) {
+        titleTasks[id]?.cancel()
+        titleTasks[id] = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(500))
+            guard !Task.isCancelled, let self else { return }
+            self.save(terminal: id)
+            self.titleTasks[id] = nil
+        }
+    }
+}
+
+extension ProcessTree {
+    /// Nome do primeiro processo filho de `pid` (para "`pnpm test` is still running").
+    static func firstChildName(of pid: Int32) -> String? {
+        guard pid > 0 else { return nil }
+        var buffer = [Int32](repeating: 0, count: 16)
+        let bytes = proc_listchildpids(pid, &buffer, Int32(buffer.count * MemoryLayout<Int32>.size))
+        guard bytes > 0 else { return nil }
+        var name = [CChar](repeating: 0, count: 256)
+        guard proc_name(buffer[0], &name, UInt32(name.count)) > 0 else { return nil }
+        return String(decoding: name.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }, as: UTF8.self)
+    }
+}

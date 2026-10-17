@@ -4,10 +4,15 @@ import AppKit
 /// Item de menu que dispara uma ação do registro (08 AR-805): estado e motivo vêm de `availability`.
 nonisolated final class ActionMenuItem: NSMenuItem {
     let actionID: ActionID
+    let argument: ActionArgument
     private weak var registry: ActionRegistry?
 
-    nonisolated init(_ id: ActionID, title: String, key: String, modifiers: NSEvent.ModifierFlags = [.command], registry: ActionRegistry) {
+    nonisolated init(
+        _ id: ActionID, title: String, key: String, modifiers: NSEvent.ModifierFlags = [.command], argument: ActionArgument = .press,
+        registry: ActionRegistry
+    ) {
         actionID = id
+        self.argument = argument
         self.registry = registry
         super.init(title: title, action: #selector(fire(_:)), keyEquivalent: key)
         keyEquivalentModifierMask = modifiers
@@ -18,8 +23,8 @@ nonisolated final class ActionMenuItem: NSMenuItem {
 
     @objc nonisolated private func fire(_ sender: Any?) {
         guard let registry else { return }
-        let id = actionID
-        Task { @MainActor in _ = try? await registry.perform(id, .press) }
+        let id = actionID, argument = argument
+        Task { @MainActor in _ = try? await registry.perform(id, argument) }
     }
 
     nonisolated override var isEnabled: Bool {
@@ -44,6 +49,16 @@ enum MainMenu {
                 m.addItem(ActionMenuItem(.appHideAppName, title: "Hide App Name", key: "", registry: registry))
                 m.addItem(.separator())
                 m.addItem(ActionMenuItem(.appQuit, title: "Quit Agent Box", key: "q", registry: registry))
+            })
+        main.addItem(
+            submenu(title: "File") { m in
+                m.addItem(ActionMenuItem(.tabQuickLaunch, title: "New Tab…", key: "n", modifiers: [.option, .command], registry: registry))
+                m.addItem(ActionMenuItem(.tabNewAgent, title: "New Agent Tab", key: "t", modifiers: [.option, .command], registry: registry))
+                m.addItem(ActionMenuItem(.tabNewTerminal, title: "New Terminal", key: "t", registry: registry))
+                m.addItem(.separator())
+                m.addItem(ActionMenuItem(.paneClose, title: "Close Pane", key: "w", registry: registry))
+                m.addItem(ActionMenuItem(.tabClose, title: "Close Tab", key: "", registry: registry))
+                m.addItem(ActionMenuItem(.tabReopen, title: "Reopen Closed Tab", key: "t", modifiers: [.shift, .command], registry: registry))
             })
         let left = String(UnicodeScalar(NSLeftArrowFunctionKey)!)
         let right = String(UnicodeScalar(NSRightArrowFunctionKey)!)
@@ -70,6 +85,29 @@ enum MainMenu {
                 }
                 m.addItem(.separator())
                 m.addItem(ActionMenuItem(.sidebarFocus, title: "Focus Session List", key: "0", modifiers: [.shift, .command], registry: registry))
+            })
+        let selectTabs: [ActionID] = [
+            .tabSelect1, .tabSelect2, .tabSelect3, .tabSelect4, .tabSelect5, .tabSelect6, .tabSelect7, .tabSelect8, .tabSelect9,
+        ]
+        main.addItem(
+            submenu(title: "Terminal") { m in
+                m.addItem(ActionMenuItem(.paneSplitRight, title: "Split Right", key: "d", registry: registry))
+                m.addItem(ActionMenuItem(.paneSplitDown, title: "Split Down", key: "d", modifiers: [.shift, .command], registry: registry))
+                m.addItem(.separator())
+                m.addItem(ActionMenuItem(.paneNext, title: "Next Pane", key: "]", registry: registry))
+                m.addItem(ActionMenuItem(.panePrevious, title: "Previous Pane", key: "[", registry: registry))
+                m.addItem(ActionMenuItem(.paneToggleExpand, title: "Expand Pane", key: "\r", modifiers: [.shift, .command], registry: registry))
+                m.addItem(ActionMenuItem(.paneEqualize, title: "Equalize Pane Sizes", key: "", registry: registry))
+                m.addItem(.separator())
+                m.addItem(ActionMenuItem(.tabNext, title: "Next Tab", key: "}", modifiers: [.shift, .command], registry: registry))
+                m.addItem(ActionMenuItem(.tabPrevious, title: "Previous Tab", key: "{", modifiers: [.shift, .command], registry: registry))
+                m.addItem(ActionMenuItem(.tabRecent, title: "Recent Tab", key: "\t", modifiers: [.control], registry: registry))
+                m.addItem(
+                    ActionMenuItem(.tabRecent, title: "Recent Tab (Reverse)", key: "\t", modifiers: [.control, .shift], argument: .select("reverse"), registry: registry))
+                for (i, action) in selectTabs.enumerated() {
+                    m.addItem(ActionMenuItem(action, title: "Select Tab \(i + 1)", key: "\(i + 1)", modifiers: [.control], registry: registry))
+                }
+                m.addItem(ActionMenuItem(.tabRename, title: "Rename Tab…", key: "r", registry: registry))
             })
         let window = submenu(title: "Window") { m in
             // lint-ui: allow buttons seletor padrão do sistema (sem ação de produto)

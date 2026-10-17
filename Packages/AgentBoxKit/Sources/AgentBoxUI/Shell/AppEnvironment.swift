@@ -33,6 +33,8 @@ public final class AppEnvironment {
     public let overlays = OverlayRouter()
     public let toasts = ToastCenter()
     let sidebar = SidebarModel()
+    /// Tab row e árvore de panes da sessão selecionada (T1-14).
+    let workspace: WorkspaceModel
     /// Settings em página inteira e onboarding mínimo (T1-26): detecção de CLIs, perfis de lançamento e configuração.
     public let settings: SettingsModel
     public let onboarding: OnboardingModel
@@ -70,10 +72,21 @@ public final class AppEnvironment {
         autoOnboarding = environment["AGENTBOX_SKIP_ONBOARDING"] != "1" && (screen == nil || screen == Self.setupDemoFixture)
         self.projects = ProjectsController(sidebar: sidebar, overlays: overlays, toasts: toasts, automationEnabled: automationEnabled)
         elements.enablement = { [registry] id in registry.availability(of: id) }
+        let storeRoot = StorePaths.default(environment: environment).root
+        let loginProvider = LoginShellEnvProvider(
+            config: LoginShellEnvConfig(runDirectory: storeRoot.appendingPathComponent("run", isDirectory: true)))
+        let runtime = TerminalRuntime(
+            configuration: TerminalRuntime.Configuration(
+                daemonHome: storeRoot, daemonExecutable: environment["AGENTBOX_DAEMON"].map { URL(fileURLWithPath: $0) },
+                stopDaemonOnQuit: automationEnabled || environment["AGENTBOX_STOP_DAEMON_ON_QUIT"] == "1",
+                appSocketPath: socketPath, loginEnvironment: { await loginProvider.environment().variables }),
+            registry: registry, elements: elements)
+        workspace = WorkspaceModel(runtime: runtime)
         registerShellActions()
         do { try sidebar.registerActions(in: registry) } catch { log.publicError("duplicate sidebar action registration") }
         do { try projects.registerActions(in: registry) } catch { log.publicError("duplicate project action registration") }
         wireOverlays()
+        wireWorkspace()
         if fixture == Self.overlayDemoFixture || fixture == SidebarFixtures.screenID { registerOverlayDemo() }
         if fixture == SidebarFixtures.screenID { registerSidebarDemo() }
         do { try terminalRouter.register(in: registry) } catch { log.publicError("duplicate terminal action registration") }
@@ -118,6 +131,42 @@ public final class AppEnvironment {
             previous(open)
             // Abrir o Settings (Review Profiles, ⌘,) tira o onboarding da frente sem registrá-lo como concluído.
             if open { onboarding.hide() }
+        }
+    }
+
+    /// Fixture de dev e evidência (`AGENTBOX_SCREEN=workspace-demo`): uma sessão limpa com uma tab de shell, selecionada.
+    /// Os splits vêm de `ctl ui action pane.splitRight` etc.
+    static let workspaceDemoFixture = "workspace-demo"
+
+    private func seedWorkspaceDemo(into store: AgentBoxStore) async throws {
+        guard try await store.sessions().isEmpty else { return }
+        let folder = StorePaths.default(environment: environmentVariables).root
+        var session = Session(kind: .clean, folderPath: folder.path, title: "demo-session")
+        session.managedFolder = true
+        try await store.save(session)
+        let tabID = UUID.v7(), termID = UUID.v7()
+        let terminal = Terminal(id: termID, tabID: tabID, provider: .shell, title: "demo-session", cwd: folder.path, launchSpec: LaunchSpec(provider: .shell))
+        let tab = Tab(id: tabID, sessionID: session.id, title: "demo-session", layout: .leaf(Pane(content: .terminal(termID))), focusedTerminalID: termID)
+        try await store.save(tab)
+        try await store.save(terminal)
+        try await store.setUIState(SidebarModel.uiStateKey, SidebarPersistedState(selectedSession: session.id))
+    }
+
+    /// Liga o workspace (tabs e panes) à sidebar, aos overlays e ao registro de ações (T1-14). No fixture do overlay
+    /// (`overlay-demo`) as ações de fechar do demo continuam suas.
+    private func wireWorkspace() {
+        workspace.overlays = overlays
+        workspace.toasts = toasts
+        workspace.sessionLookup = { [sidebar] id in sidebar.session(id) }
+        sidebar.onSelectionChange = { [workspace] id in workspace.setSession(id) }
+        sidebar.onSnapshot = { [workspace] snapshot in workspace.ingest(snapshot) }
+        workspace.runtime.contextMenu = { [workspace, registry] id in workspace.paneContextMenu(registry: registry, terminalID: id) }
+        let demo = fixture == Self.overlayDemoFixture
+        do {
+            try workspace.registerActions(
+                in: registry, elements: elements, includeCloseDialog: !demo, excluding: demo ? [.paneClose] : [])
+        } catch {
+            log.publicError("duplicate workspace action registration")
         }
     }
 
@@ -245,6 +294,7 @@ public final class AppEnvironment {
         do {
             let opened = try await AgentBoxStore.open(paths: .default(environment: environmentVariables))
             store = opened
+            if fixture == Self.workspaceDemoFixture { try await seedWorkspaceDemo(into: opened) }
             if fixture == SidebarFixtures.screenID {
                 let cast = SidebarFixtures.full()
                 try await SidebarFixtures.seed(cast, into: opened)
@@ -255,6 +305,7 @@ public final class AppEnvironment {
                     sidebar.beginPending(PendingLaunch(name: String(localized: "Add retry logic", bundle: .module), projectID: pid, phase: .fetching))
                 }
             }
+            await workspace.attach(store: opened)
             await sidebar.attach(store: opened)
             await settings.attach(store: opened)
             if autoOnboarding { await onboarding.attach(store: opened, forceVisible: fixture == Self.setupDemoFixture) }
@@ -315,6 +366,11 @@ public final class AppEnvironment {
         } catch {
             log.error("ctl failed to start: \(error)")
         }
+    }
+
+    /// Encerra o daemon filho se esta execução o possui (automação, testes, `AGENTBOX_STOP_DAEMON_ON_QUIT=1`).
+    public func shutdownSync() {
+        workspace.runtime.shutdown()
     }
 
     public func stop() async {
