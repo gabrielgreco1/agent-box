@@ -419,11 +419,12 @@ final class WorkspaceModel {
 
     /// Nova tab com um terminal (⌘T shell, ⌥⌘T agente, Quick Launch). Entra à direita da ativa (M-301).
     @discardableResult
-    func newTab(provider: TerminalProvider, profileID: UUID? = nil, prompt: String? = nil) -> UUID? {
+    func newTab(provider: TerminalProvider, profileID: UUID? = nil, prompt: String? = nil, customArgv: [String]? = nil) -> UUID? {
         guard let session, let sid = currentSessionID, states[sid] != nil else { return nil }
         let tabID = UUID.v7()
         var spec = LaunchSpec(provider: provider, profileID: profileID)
         spec.initialPrompt = prompt
+        spec.customArgv = customArgv
         let terminal = makeTerminal(tabID: tabID, spec: spec, cwd: session.folderPath, folder: session.folderPath)
         let pane = Pane(content: .terminal(terminal.id))
         let position = nextSortIndex(after: activeTabID)

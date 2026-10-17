@@ -190,6 +190,11 @@ struct SidebarView: View {
             if let registry, registry.isOffered(.projectAdd) {
                 DSIconButton(.projectAdd, id: .sidebarProjectsAdd, symbol: "folder.badge.plus", name: String(localized: "Add Project…", bundle: .module), variant: .header)
             }
+            if let registry, registry.isOffered(.projectCloneFromGitHub) {
+                DSIconButton(
+                    .projectCloneFromGitHub, id: .sidebarProjectsClone, symbol: "arrow.down.to.line",
+                    name: String(localized: "Clone from GitHub…", bundle: .module), variant: .header)
+            }
             if let registry, registry.isOffered(.sessionNew) {
                 DSIconButton(.sessionNew, id: .sidebarProjectsNewSession, symbol: "plus", name: String(localized: "New Session", bundle: .module), variant: .header)
             }
@@ -214,6 +219,9 @@ struct SidebarView: View {
             VStack(spacing: DS.Space.s2) {
                 if let registry, registry.isOffered(.projectAdd) {
                     DSButton(.projectAdd, id: nil, "Add Project…", variant: .outline, size: .sm)
+                }
+                if let registry, registry.isOffered(.projectCloneFromGitHub) {
+                    DSButton(.projectCloneFromGitHub, id: nil, "Clone from GitHub…", variant: .ghost, size: .sm)
                 }
                 if let registry, registry.isOffered(.sessionNewClean) {
                     DSButton(.sessionNewClean, id: nil, "New Clean Session", variant: .ghost, size: .sm)

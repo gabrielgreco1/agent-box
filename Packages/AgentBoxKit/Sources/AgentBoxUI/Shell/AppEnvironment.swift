@@ -81,6 +81,8 @@ public final class AppEnvironment {
     private var quickLaunch: QuickLaunchController?
     /// Composer ⌘N (T1-20): overlay, ações `composer.*` e `session.new*`.
     private(set) var composer: ComposerController?
+    /// Clone from GitHub… (F24): overlay, ações `project.cloneFromGitHub` e `dialog.cloneRepo.*`.
+    private(set) var cloneRepo: CloneRepoController?
     /// "Open in…" e "Open in Editor" (T1-27).
     private(set) var openIn: OpenInController?
     let environmentVariables: [String: String]
@@ -347,6 +349,16 @@ public final class AppEnvironment {
         // Um só seletor de pasta: o do composer (fake nos testes) também atende "New Clean Session in Folder…".
         clean.picker = CleanFolderPicker(base: { [weak composerController] in composerController?.picker ?? OpenPanelSessionFolderPicker() })
         do { try composerController.register(in: registry) } catch { log.publicError("duplicate composer registration") }
+        let cloneController = CloneRepoController(
+            sidebar: sidebar, overlays: overlays, toasts: toasts, projects: projects,
+            projectsRoot: { [settings] in
+                CleanSessionPaths.projectsRoot(configured: settings.settings.general.projectsFolder, isolatedHome: isolatedHome)
+            })
+        cloneController.onCloned = { [weak composerController] project in composerController?.projectCloned(project) }
+        cloneController.canOpenLoginTerminal = { [workspace] in workspace.isLoaded }
+        cloneController.openLoginTerminal = { [workspace] argv in workspace.newTab(provider: .custom, customArgv: argv) != nil }
+        cloneRepo = cloneController
+        do { try cloneController.register(in: registry) } catch { log.publicError("duplicate clone registration") }
     }
 
     /// Ações reais da casca vazia; as demais entram com a tela que as possui.

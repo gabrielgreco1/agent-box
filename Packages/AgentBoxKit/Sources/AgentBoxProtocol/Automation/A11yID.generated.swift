@@ -58,6 +58,8 @@ extension A11yID {
     public static let sidebarFooterSettings = A11yID(unchecked: "sidebar.footer.settings")
     /// `sidebar.footer.reveal`
     public static let sidebarFooterReveal = A11yID(unchecked: "sidebar.footer.reveal")
+    /// `sidebar.projects.clone`
+    public static let sidebarProjectsClone = A11yID(unchecked: "sidebar.projects.clone")
     /// `tabs.activeIndicator`
     public static let tabsActiveIndicator = A11yID(unchecked: "tabs.activeIndicator")
     /// `tabs.overflow.leading`
@@ -390,6 +392,24 @@ extension A11yID {
     public static let overlayAddProjectCloneUrl = A11yID(unchecked: "overlay.addProject.clone.url")
     /// `overlay.addProject.clone.submit`
     public static let overlayAddProjectCloneSubmit = A11yID(unchecked: "overlay.addProject.clone.submit")
+    /// `overlay.cloneRepo`
+    public static let overlayCloneRepo = A11yID(unchecked: "overlay.cloneRepo")
+    /// `overlay.cloneRepo.input`
+    public static let overlayCloneRepoInput = A11yID(unchecked: "overlay.cloneRepo.input")
+    /// `overlay.cloneRepo.list`
+    public static let overlayCloneRepoList = A11yID(unchecked: "overlay.cloneRepo.list")
+    /// `overlay.cloneRepo.progress`
+    public static let overlayCloneRepoProgress = A11yID(unchecked: "overlay.cloneRepo.progress")
+    /// `overlay.cloneRepo.logIn`
+    public static let overlayCloneRepoLogIn = A11yID(unchecked: "overlay.cloneRepo.logIn")
+    /// `overlay.cloneRepo.error`
+    public static let overlayCloneRepoError = A11yID(unchecked: "overlay.cloneRepo.error")
+    /// `overlay.cloneRepo.retry`
+    public static let overlayCloneRepoRetry = A11yID(unchecked: "overlay.cloneRepo.retry")
+    /// `overlay.cloneRepo.cancel`
+    public static let overlayCloneRepoCancel = A11yID(unchecked: "overlay.cloneRepo.cancel")
+    /// `overlay.cloneRepo.submit`
+    public static let overlayCloneRepoSubmit = A11yID(unchecked: "overlay.cloneRepo.submit")
     /// `overlay.confirmQuit`
     public static let overlayConfirmQuit = A11yID(unchecked: "overlay.confirmQuit")
     /// `overlay.confirmQuit.keepRunning`
@@ -426,6 +446,8 @@ extension A11yID {
     public static let landing = A11yID(unchecked: "landing")
     /// `landing.addProject`
     public static let landingAddProject = A11yID(unchecked: "landing.addProject")
+    /// `landing.cloneProject`
+    public static let landingCloneProject = A11yID(unchecked: "landing.cloneProject")
     /// `landing.newCleanSession`
     public static let landingNewCleanSession = A11yID(unchecked: "landing.newCleanSession")
     /// `landing.newSession`
@@ -1223,6 +1245,11 @@ extension A11yID {
         A11yID(unchecked: "overlay.resume.row.\(A11yID.segment(id))")
     }
 
+    /// `overlay.cloneRepo.row.<id>`
+    public static func overlayCloneRepoRow(_ id: String) -> A11yID {
+        A11yID(unchecked: "overlay.cloneRepo.row.\(A11yID.segment(id))")
+    }
+
     /// `overlay.newBatch.*`
     public static func overlayNewBatch(_ rest: String) -> A11yID {
         A11yID(unchecked: "overlay.newBatch.\(A11yID.rawSegment(rest, loose: true))")
@@ -1328,6 +1355,7 @@ extension A11yID {
         A11yIDSpec(pattern: "sidebar.cleanSessions.new", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.footer.settings", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.footer.reveal", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.projects.clone", surface: "Sidebar"),
         A11yIDSpec(pattern: "tabs.tab.<terminalId>", surface: "Tabs"),
         A11yIDSpec(pattern: "tabs.tab.<terminalId>.close", surface: "Tabs"),
         A11yIDSpec(pattern: "tabs.tab.<terminalId>.title", surface: "Tabs"),
@@ -1602,6 +1630,16 @@ extension A11yID {
         A11yIDSpec(pattern: "overlay.addProject.clone", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.addProject.clone.url", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.addProject.clone.submit", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.cloneRepo", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.cloneRepo.input", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.cloneRepo.list", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.cloneRepo.row.<id>", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.cloneRepo.progress", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.cloneRepo.logIn", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.cloneRepo.error", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.cloneRepo.retry", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.cloneRepo.cancel", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.cloneRepo.submit", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmQuit", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmQuit.keepRunning", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmQuit.stopAll", surface: "Dialogs"),
@@ -1621,6 +1659,7 @@ extension A11yID {
         A11yIDSpec(pattern: "popover.paste.confirm", surface: "Dialogs"),
         A11yIDSpec(pattern: "landing", surface: "Landing"),
         A11yIDSpec(pattern: "landing.addProject", surface: "Landing"),
+        A11yIDSpec(pattern: "landing.cloneProject", surface: "Landing"),
         A11yIDSpec(pattern: "landing.newCleanSession", surface: "Landing"),
         A11yIDSpec(pattern: "landing.newSession", surface: "Landing"),
         A11yIDSpec(pattern: "menuBar.icon", surface: "Menu bar"),

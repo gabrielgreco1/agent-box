@@ -89,6 +89,17 @@
         }
       }
     },
+    "%@ was already cloned. Opened it as a project.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ was already cloned. Opened it as a project."
+          }
+        }
+      }
+    },
     "%@, %@ sessions": {
       "extractionState": "manual",
       "localizations": {
@@ -1277,6 +1288,83 @@
         }
       }
     },
+    "Clone": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clone"
+          }
+        }
+      }
+    },
+    "Clone %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clone %@"
+          }
+        }
+      }
+    },
+    "Clone from GitHub…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clone from GitHub…"
+          }
+        }
+      }
+    },
+    "Cloned %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cloned %@."
+          }
+        }
+      }
+    },
+    "Cloning %@…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cloning %@…"
+          }
+        }
+      }
+    },
+    "Cloning…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cloning…"
+          }
+        }
+      }
+    },
+    "Cloning… %lld%%": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cloning… %lld%%"
+          }
+        }
+      }
+    },
     "Close": {
       "extractionState": "manual",
       "localizations": {
@@ -1647,6 +1735,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Couldn't add the project."
+          }
+        }
+      }
+    },
+    "Couldn't clone the repository.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't clone the repository."
+          }
+        }
+      }
+    },
+    "Couldn't load your repositories.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't load your repositories."
           }
         }
       }
@@ -2190,6 +2300,17 @@
         }
       }
     },
+    "Esc Cancel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esc Cancel"
+          }
+        }
+      }
+    },
     "Estimated against your busiest earlier window. Connect the status line for exact limits.": {
       "extractionState": "manual",
       "localizations": {
@@ -2388,6 +2509,17 @@
         }
       }
     },
+    "Finish logging in to GitHub in the new tab, then try again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finish logging in to GitHub in the new tab, then try again."
+          }
+        }
+      }
+    },
     "Folder": {
       "extractionState": "manual",
       "localizations": {
@@ -2560,6 +2692,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "GitHub"
+          }
+        }
+      }
+    },
+    "GitHub is limiting requests. Try again in a minute.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub is limiting requests. Try again in a minute."
+          }
+        }
+      }
+    },
+    "GitHub took too long to answer.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub took too long to answer."
           }
         }
       }
@@ -2751,6 +2905,17 @@
         }
       }
     },
+    "Install the GitHub CLI to see your repositories.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install the GitHub CLI to see your repositories."
+          }
+        }
+      }
+    },
     "Install…": {
       "extractionState": "manual",
       "localizations": {
@@ -2927,6 +3092,17 @@
         }
       }
     },
+    "Loading your repositories…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading your repositories…"
+          }
+        }
+      }
+    },
     "Log In": {
       "extractionState": "manual",
       "localizations": {
@@ -2934,6 +3110,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Log In"
+          }
+        }
+      }
+    },
+    "Log in to GitHub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Log in to GitHub"
+          }
+        }
+      }
+    },
+    "Log in to GitHub to see your repositories.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Log in to GitHub to see your repositories."
           }
         }
       }
@@ -3554,6 +3752,28 @@
         }
       }
     },
+    "No repositories match.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No repositories match."
+          }
+        }
+      }
+    },
+    "No repositories yet.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No repositories yet."
+          }
+        }
+      }
+    },
     "No results": {
       "extractionState": "manual",
       "localizations": {
@@ -4071,6 +4291,17 @@
         }
       }
     },
+    "Private": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private"
+          }
+        }
+      }
+    },
     "Profile": {
       "extractionState": "manual",
       "localizations": {
@@ -4126,6 +4357,17 @@
         }
       }
     },
+    "Projects folder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Projects folder"
+          }
+        }
+      }
+    },
     "Prompt": {
       "extractionState": "manual",
       "localizations": {
@@ -4144,6 +4386,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Proxy"
+          }
+        }
+      }
+    },
+    "Public": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Public"
           }
         }
       }
@@ -4254,6 +4507,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Recent Activity"
+          }
+        }
+      }
+    },
+    "Recent repositories": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recent repositories"
           }
         }
       }
@@ -4463,6 +4727,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Restart to apply"
+          }
+        }
+      }
+    },
+    "Results": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Results"
           }
         }
       }
@@ -5809,6 +6084,17 @@
         }
       }
     },
+    "Updated %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Updated %@"
+          }
+        }
+      }
+    },
     "Usage and machine insights will appear here.": {
       "extractionState": "manual",
       "localizations": {
@@ -5963,6 +6249,17 @@
         }
       }
     },
+    "Where Clone from GitHub puts new projects.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Where Clone from GitHub puts new projects."
+          }
+        }
+      }
+    },
     "Where new worktrees are created.": {
       "extractionState": "manual",
       "localizations": {
@@ -6073,6 +6370,17 @@
         }
       }
     },
+    "You can still paste a public repository URL.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can still paste a public repository URL."
+          }
+        }
+      }
+    },
     "You're in control": {
       "extractionState": "manual",
       "localizations": {
@@ -6091,6 +6399,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "branch %@"
+          }
+        }
+      }
+    },
+    "brew install gh · or paste a public repository URL.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "brew install gh · or paste a public repository URL."
           }
         }
       }
@@ -6190,6 +6509,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "with %lld terminals"
+          }
+        }
+      }
+    },
+    "↑↓ Choose · ↵ Clone · Esc Cancel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "↑↓ Choose · ↵ Clone · Esc Cancel"
           }
         }
       }

@@ -180,6 +180,7 @@ Clique direito em um item: `Hide from Sidebar` (esconde só aquele item de nav; 
 |---|---|---|---|---|
 | Filter & sort | `SlidersHorizontal` | Abre `DSMenuPanel` (abaixo) | `Sort and Filter` | `sidebar.projects.filter` |
 | Add project | `FolderPlus` | Overlay **Add a Project** (§16.9) | `Add Project…` | `sidebar.projects.add` |
+| Clone from GitHub | `Download` | Overlay **Clone from GitHub** (§16.9b) | `Clone from GitHub…` | `sidebar.projects.clone` |
 | New session | `Plus` | Composer (§6) com o projeto da sessão atual | `New Session ⌘N` | `sidebar.projects.newSession` |
 
 Menu **Sort and Filter** (popover 240):
@@ -1019,6 +1020,7 @@ Página da janela inteira (sidebar, centro e painel dão lugar ao Settings; a fa
 - `Ask before quitting with running agents` — switch, on (é o "Don't ask again" do §16.10).
 - `Worktree folder` — caminho + `[Change…]`; padrão `~/AgentBox/worktrees` (P21).
 - `Clean session folder` — caminho + `[Change…]`; padrão `~/AgentBox/sessions`.
+- `Projects folder` — caminho + `[Change…]`; padrão `~/AgentBox/projects`. Onde `Clone from GitHub…` cria `<pasta>/<repo>` (F24).
 - `Branch prefix` — `Git user name` (padrão) · `Custom` (input) · `None`.
 - `Open in editor` — combobox com os editores detectados em `/Applications` e no PATH (Cursor, VS Code, Zed, Xcode, Sublime Text) + `Other…` (`NSOpenPanel` de app); é o destino de `Open in Editor` (⇧⌘O) em todo o app.
 - `Open in terminal` — combobox (`Terminal`, `iTerm`, `Ghostty`, `Warp`, detectados) para "Open in another terminal".
@@ -1211,6 +1213,18 @@ Overlay 512 (`audit/04 §5.1`). Título `Add a Project`.
 - Pasta com vários repos: `Found 4 repositories in this folder.` + checkboxes + `[Add 4 Projects]` (`[Stop Scan]` durante o scan).
 - Depois de adicionar: detecta a base (`origin/main`) e volta ao chamador (composer ou sidebar).
 - IDs: `overlay.addProject.choose`, `.clone`, `.clone.url`, `.clone.submit`.
+- F24: o fluxo Add Project e o combobox Project do composer têm o item `Clone from GitHub…` (ação `project.cloneFromGitHub`), que abre o overlay §16.9b. A sidebar (ícone `Download` do header, estado vazio) e a landing (`Clone from GitHub…`) abrem o mesmo overlay.
+
+### 16.9b Clone from GitHub (F24)
+
+Overlay 512 (sub-overlay quando aberto pelo composer; o composer mantém o que foi digitado). Título `Clone from GitHub`.
+- Campo (28, foco ao abrir): placeholder `Paste a repository URL or owner/repo`. Aceita URL https, SSH (`git@github.com:owner/repo.git`, `ssh://`) e `owner/repo`. Digitar também filtra a lista (nome, dono, linguagem, descrição). Quando o texto é uma referência válida, a primeira linha vira `Clone <owner/repo>` e fica selecionada.
+- Lista `RECENT REPOSITORIES` (label 11/500; vira `RESULTS` com busca): repositórios da conta e das organizações via `gh repo list`, ordenados por `pushedAt`/`updatedAt` (mais recente primeiro), com cache de 5 min. Linha 44: nome 13/500 + `owner` em `textTertiary`, badge `Private`/`Public`, linguagem e `Updated 3 days ago` em `small`. ↑↓ navegam, ↵ clona o selecionado, Esc cancela.
+- Sem `gh` logado (ou sem `gh`): faixa `Log in to GitHub to see your repositories.` com `[Log in to GitHub]` (abre uma tab com `gh auth login`); o campo continua aceitando URL pública.
+- Clonar (↵ ou `[Clone]`): a lista dá lugar ao progresso no próprio painel (`Cloning octocat/Hello-World…`, barra determinada, fase `Receiving objects 42%`, `[Cancel]`) e a sidebar mostra a linha pendente `Cloning… 42%` com `Cancel`. Destino: `<Projects folder>/<repo>` (Settings › General › Folders › `Projects folder`, padrão `~/AgentBox/projects`). Pasta já existente com o mesmo remote vira o projeto sem clonar; pasta com outro conteúdo usa `<repo>-<owner>` ou falha com mensagem clara.
+- Erro: mensagem de uma linha (`Repository not found. If it is private, log in to GitHub.`, `Couldn't reach GitHub.`, `A folder named x already exists and isn't this repository.`) com `[Try Again]`; nada fica pela metade (a pasta parcial é removida).
+- Ao concluir: o painel fecha, o projeto é registrado e fica selecionado no composer (quando aberto por ele) ou aparece expandido na sidebar. Toast `Cloned <repo>.`
+- IDs: `overlay.cloneRepo`, `.input`, `.list`, `.row.<id>`, `.progress`, `.logIn`, `.error`, `.retry`, `.cancel`, `.submit`.
 
 ### 16.10 Quit with running agents (⌘Q)
 
@@ -1373,7 +1387,7 @@ Quando não há projetos nem sessões (primeiro uso, depois do onboarding pulado
 
 Sem ilustração, sem texto de boas-vindas (DS §15). Com projetos mas nenhuma sessão selecionada (raro): o mesmo layout sem o item 3 e com `[New Session…]` primário.
 
-IDs: `landing`, `landing.addProject`, `landing.newCleanSession`, `landing.newSession`.
+IDs: `landing`, `landing.addProject`, `landing.cloneProject`, `landing.newCleanSession`, `landing.newSession`.
 
 ---
 
@@ -1487,6 +1501,7 @@ Atalhos reservados para o terminal (nunca capturados pelo app): ⌃ + letra, ⌥
 | Erros | `<region>.errorBoundary`, `<region>.errorBoundary.retry`, `<region>.errorBoundary.copy` |
 | Genéricos | `<host>.status`, `<host>.hoverCard`, `<panel>.empty`, `tooltip`, `menuPanel.<name>`, `popover.<name>[.<field>/.confirm]` |
 | Sidebar | `sidebar`, `sidebar.selection`, `sidebar.search`, `sidebar.search.clear`, `sidebar.search.empty`, `sidebar.search.empty.clear`, `sidebar.nav.inbox`, `sidebar.nav.inbox.badge`, `sidebar.nav.computers`, `sidebar.nav.library`, `sidebar.projects.filter`, `sidebar.projects.filterMenu`, `sidebar.projects.add`, `sidebar.projects.newSession`, `sidebar.project.<id>[.toggle/.menu/.newSession/.showMore/.rename]`, `sidebar.session.<id>[.name/.status/.archive/.prChip/.note/.summaryPill/.hoverCard/.phase/.error/.agents/.rename/.revealGlow/.showMore/.computers/.restartToApply]`, `sidebar.session.<id>.pin` (v1.1), `sidebar.session.<id>.agent.<terminalId>[.status/.lastMessage/.children.toggle]`, `sidebar.session.<id>.child.<childId>[.status/.glyph/.connector/.title/.elapsed/.hoverCard/.preview/.openViewer]`, `sidebar.pending.<id>[.cancel]`, `sidebar.cleanSessions`, `sidebar.cleanSessions.new`, `sidebar.footer.settings`, `sidebar.footer.reveal` |
+| Sidebar | `sidebar`, `sidebar.selection`, `sidebar.search`, `sidebar.search.clear`, `sidebar.search.empty`, `sidebar.search.empty.clear`, `sidebar.nav.inbox`, `sidebar.nav.inbox.badge`, `sidebar.nav.computers`, `sidebar.nav.library`, `sidebar.projects.filter`, `sidebar.projects.filterMenu`, `sidebar.projects.add`, `sidebar.projects.clone`, `sidebar.projects.newSession`, `sidebar.project.<id>[.toggle/.menu/.newSession/.showMore/.rename]`, `sidebar.session.<id>[.name/.status/.archive/.prChip/.note/.summaryPill/.hoverCard/.phase/.error/.agents/.rename/.revealGlow/.showMore]`, `sidebar.session.<id>.pin` (v1.1), `sidebar.session.<id>.agent.<terminalId>[.status/.lastMessage/.children.toggle]`, `sidebar.session.<id>.child.<childId>[.status/.glyph/.connector]`, `sidebar.pending.<id>[.cancel]`, `sidebar.cleanSessions`, `sidebar.cleanSessions.new`, `sidebar.footer.settings`, `sidebar.footer.reveal` |
 | Tabs | `tabs.tab.<terminalId>[.close/.title/.restart/.status]`, `tabs.activeIndicator`, `tabs.overflow.leading`, `tabs.overflow.trailing`, `tabs.new`, `tabs.quickCommands` (v1.1), `tabs.paneActions`, `tabs.rightPanelToggle` |
 | Panes | `pane.<id>`, `pane.<id>.terminal`, `pane.<id>.header`, `pane.<id>.status`, `.splitRight`, `.splitDown`, `.expand`, `.close`, `.cover`, `.rimFlash`, `.attention`, `.zoomPill`, `.feedbackPill`, `.computers`, `.approval[.allow/.allowSession/.deny]`, `.ignition[.cancel]`, `.ignition.step.<stepKey>`, `.exitBanner`, `.exitOverlay[.restart/.close/.resume]`, `.startError`, `.interrupted[.resume]`, `.daemonBanner`, `.closing.forceQuit`, `.containerPopover` (v1.1), `.containerPhases` (v1.1), `.containerStopped` (v1.1), `.rateLimit` (v1.1), `.tooNarrow`; `pane.divider.<id>`; `pane.empty[.newAgent/.newTerminal/.reopen/.start/.resume]` |
 | Sidebar | `sidebar`, `sidebar.selection`, `sidebar.search`, `sidebar.search.clear`, `sidebar.search.empty`, `sidebar.search.empty.clear`, `sidebar.nav.inbox`, `sidebar.nav.inbox.badge`, `sidebar.nav.computers`, `sidebar.nav.library`, `sidebar.projects.filter`, `sidebar.projects.filterMenu`, `sidebar.projects.add`, `sidebar.projects.newSession`, `sidebar.project.<id>[.toggle/.menu/.newSession/.showMore/.rename]`, `sidebar.session.<id>[.name/.status/.archive/.prChip/.note/.summaryPill/.hoverCard/.phase/.error/.agents/.rename/.revealGlow/.showMore]`, `sidebar.session.<id>.pin` (v1.1), `sidebar.session.<id>.agent.<terminalId>[.status/.lastMessage/.children.toggle]`, `sidebar.session.<id>.child.<childId>[.status/.glyph/.connector]`, `sidebar.pending.<id>[.cancel]`, `sidebar.cleanSessions`, `sidebar.cleanSessions.new`, `sidebar.footer.settings`, `sidebar.footer.reveal` |
@@ -1506,8 +1521,8 @@ Atalhos reservados para o terminal (nunca capturados pelo app): ⌃ + letra, ⌥
 | Páginas | `computers.page`, `computers.cleanUp` (v1.1), `computers.dockerBanner`, `computers.empty`, `computers.row.<id>`, `computers.queue.row.<id>.cancel`; `batch.<batchId>.page`, `batch.<batchId>.row.<childId>`, `batch.<batchId>.collectAll`, `batch.<batchId>.archive`; `library.page`, `library.section`, `library.search`, `library.source`, `library.new`, `library.empty`, `library.row.<kind>.<id>`, `library.detail.{newSession,enable,insert,openInEditor,reveal}`, `library.profile.{name,agent,model,permissions,args,env,default}` |
 | Settings | `settings.page`, `settings.back`, `settings.search`, `settings.nav.<section>`, `settings.<section>.<key>`, `settings.computers.proxies.row.<proxyId>`, `settings.computers.proxies.add`, `settings.computers.proxies.test` |
 | Onboarding | `onboarding`, `onboarding.step.<name>`, `onboarding.item.<key>`, `onboarding.done`, `onboarding.skip` |
-| Dialogs | `overlay.confirmClose[.dontAsk/.cancel/.confirm]`, `overlay.confirmArchive[.cancel/.confirm]`, `overlay.confirmStopComputer.confirm`, `overlay.confirmDeleteComputer.confirm`, `overlay.confirmDelete[.keepBranch/.trashFolder/.deleteRuns/.dontAsk/.changes/.cancel/.confirm]`, `overlay.confirmRemoveProject[.cancel/.confirm]`, `overlay.resume[.row.<id>/.confirm]`, `overlay.moveToProject[.project/.cancel/.confirm]`, `overlay.addProject.{choose,clone,clone.url,clone.submit}`, `overlay.confirmQuit[.keepRunning/.stopAll/.stopAllConfirm/.cancel/.dontAsk]`, `overlay.confirmSkipPermissions.confirm`, `overlay.renameBranch[.name/.submit]`, `overlay.about[.licenses/.copy]`, `overlay.newBatch.*`, `popover.paste[.text/.confirm]` |
-| Landing | `landing`, `landing.addProject`, `landing.newCleanSession`, `landing.newSession` |
+| Dialogs | `overlay.confirmClose[.dontAsk/.cancel/.confirm]`, `overlay.confirmArchive[.cancel/.confirm]`, `overlay.confirmStopComputer.confirm`, `overlay.confirmDeleteComputer.confirm`, `overlay.confirmDelete[.keepBranch/.trashFolder/.deleteRuns/.dontAsk/.changes/.cancel/.confirm]`, `overlay.confirmRemoveProject[.cancel/.confirm]`, `overlay.resume[.row.<id>/.confirm]`, `overlay.moveToProject[.project/.cancel/.confirm]`, `overlay.addProject.{choose,clone,clone.url,clone.submit}`, `overlay.cloneRepo[.input/.list/.row.<id>/.progress/.logIn/.error/.retry/.cancel/.submit]`, `overlay.confirmQuit[.keepRunning/.stopAll/.stopAllConfirm/.cancel/.dontAsk]`, `overlay.confirmSkipPermissions.confirm`, `overlay.renameBranch[.name/.submit]`, `overlay.about[.licenses/.copy]`, `overlay.newBatch.*`, `popover.paste[.text/.confirm]` |
+| Landing | `landing`, `landing.addProject`, `landing.cloneProject`, `landing.newCleanSession`, `landing.newSession` |
 | Menu bar | `menuBar.icon`, `menuBar.item.<sessionId>`, `menuBar.open`, `menuBar.newSession`, `menuBar.newCleanSession`, `menuBar.stopAll`, `menuBar.quitCompletely` |
 | Menus do app | `menu.<group>.<actionId>` (actionId de §24) |
 | Toasts | `toast.<kind>`, `toast.<kind>.action` |
@@ -1604,6 +1619,7 @@ Toda interação da UI é uma ação do registro (`ActionRegistry`: `ActionID` �
 | Subagent computers (card, header do pane) | `session.setSubagentComputers` | — | `select(off/ask/full)` na sessão selecionada, ou `select(<sessionId>:<modo>)`: liga ou desliga os computadores dos subagentes (F12). Sessão rodando: aparece `Restart to apply` | Só Claude Code: `Subagent computers works with Claude Code.` | v1 (Fatia 3) | `testAction_session_setSubagentComputers` |
 | Collapse / Expand Subagents (chevron da linha do agente) | `agent.toggleChildren` | — | `select(<terminalId>)`: recolhe ou expande as linhas dos subagentes do agente (em memória) | — | v1 (Fatia 3) | `testAction_agent_toggleChildren` |
 | Restart to apply | `session.restartToApply` | — | Relança o Claude da sessão com Resume e o novo modo de "Subagent computers" | Nada a aplicar: `Already applied.` | v1 (Fatia 3) | `testAction_session_restartToApply` |
+| Clone from GitHub… | `project.cloneFromGitHub` | — | Overlay §16.9b; item do combobox Project do composer e do Add Project; ao concluir seleciona o projeto clonado | — | v1 | `testAction_project_cloneFromGitHub` |
 | Sort and Filter / Reset | `sidebar.sortFilter` / `sidebar.resetFilters` | — | Popover §2.4 / volta ao padrão | — | v1 | `testAction_sidebar_sortFilter` · `testAction_sidebar_resetFilters` |
 | Clear Search / Clear Filters | `sidebar.clearSearch` / `sidebar.clearFilters` | — | Limpa a busca / `Show` | — | v1 (a busca é da Fatia 2; `Show` na Fatia 1) | `testAction_sidebar_clearSearch` · `testAction_sidebar_clearFilters` |
 | Show <n> more | `project.showMore` | — | Mostra todas as sessões do projeto | — | v1 | `testAction_project_showMore` |
@@ -1781,8 +1797,8 @@ Chaves da Fatia 1 (T1-26). Todas gravam pela regra de §14.1 (switch, segmented,
 | Confirm before closing a running terminal | `settings.general.confirmCloseTerminal` | — | `set(on/off)` | — | v1 | `testAction_settings_general_confirmCloseTerminal` |
 | Confirm before deleting a session | `settings.general.confirmDeleteSession` | — | `set(on/off)` | — | v1 | `testAction_settings_general_confirmDeleteSession` |
 | Branch prefix | `settings.general.branchPrefix` / `settings.general.branchPrefixCustom` | — | `select(gitUser/custom/none)` / `set(<texto>)` | Custom: só com `Custom` escolhido | v1 | `testAction_settings_general_branchPrefix` · `testAction_settings_general_branchPrefixCustom` |
-| Worktree folder / Clean session folder | `settings.general.worktreeFolder` / `settings.general.cleanSessionFolder` | — | `set(<caminho>)`; caminho relativo ou vazio é inválido e não grava | — | v1 | `testAction_settings_general_worktreeFolder` · `testAction_settings_general_cleanSessionFolder` |
-| Change… | `settings.pickPath` | — | `select(worktreeFolder/cleanSessionFolder)`: `NSOpenPanel` de pasta | — | v1 | `testAction_settings_pickPath` |
+| Worktree folder / Clean session folder / Projects folder | `settings.general.worktreeFolder` / `settings.general.cleanSessionFolder` / `settings.general.projectsFolder` | — | `set(<caminho>)`; caminho relativo ou vazio é inválido e não grava | — | v1 | `testAction_settings_general_worktreeFolder` · `testAction_settings_general_cleanSessionFolder` · `testAction_settings_general_projectsFolder` |
+| Change… | `settings.pickPath` | — | `select(worktreeFolder/cleanSessionFolder/projectsFolder)`: `NSOpenPanel` de pasta | — | v1 | `testAction_settings_pickPath` |
 | Reset | `settings.resetConfirmations` | — | Religa as três confirmações; toast `Confirmations restored.` | — | v1 | `testAction_settings_resetConfirmations` |
 | Subagent computers (padrão das novas sessões) | `settings.computers.defaultSubagentMode` | — | `select(off/ask/full)`: padrão de "Subagent computers" das sessões novas; as existentes não mudam | — | v1 (Fatia 3) | `testAction_settings_computers_defaultSubagentMode` |
 | Default agent | `settings.agents.defaultAgent` | — | `select(claude/codex/opencode/shell)` | — | v1 | `testAction_settings_agents_defaultAgent` |
@@ -1872,6 +1888,12 @@ Cada botão e checkbox dos diálogos de §16 é uma ação. `Cancel` (Esc) exist
 | Project (combobox, §16.8) | `dialog.moveToProject.setProject` | — | Escolhe o projeto ou `Convert to Project` | — | v1 | `testAction_dialog_moveToProject_setProject` |
 | Cancel (§16.8) | `dialog.moveToProject.cancel` | Esc | Fecha o overlay sem mover | — | v1 | `testAction_dialog_moveToProject_cancel` |
 | Add <n> Projects / Stop Scan (§16.9) | `dialog.addProject.addFound` / `dialog.addProject.stopScan` | — | Adiciona os repositórios marcados / interrompe o scan da pasta | — | v1 | `testAction_dialog_addProject_addFound` · `testAction_dialog_addProject_stopScan` |
+| Campo `owner/repo` ou URL (§16.9b) | `dialog.cloneRepo.setSource` | — | `set(<texto>)`: filtra a lista e, se for referência válida, vira a primeira linha | — | v1 | `testAction_dialog_cloneRepo_setSource` |
+| Linha de repositório (§16.9b) | `dialog.cloneRepo.select` | — | `select(<owner/repo>)`: marca a linha (↑↓) | — | v1 | `testAction_dialog_cloneRepo_select` |
+| Clone (§16.9b) | `dialog.cloneRepo.submit` | ↵ | Clona a linha selecionada ou a referência digitada; mostra o progresso no painel e na sidebar | Sem referência válida: `Choose a repository or paste a URL.` | v1 | `testAction_dialog_cloneRepo_submit` |
+| Cancel (§16.9b) | `dialog.cloneRepo.cancel` | Esc | Cancela o clone em andamento (remove a pasta parcial) e fecha o overlay | — | v1 | `testAction_dialog_cloneRepo_cancel` |
+| Log in to GitHub (§16.9b) | `dialog.cloneRepo.logIn` | — | Abre uma tab com `gh auth login` | `Select a session first.` | v1 | `testAction_dialog_cloneRepo_logIn` |
+| Try Again (§16.9b) | `dialog.cloneRepo.retry` | — | Repete o clone que falhou | — | v1 | `testAction_dialog_cloneRepo_retry` |
 | Keep Running (§16.10) | `dialog.quit.keepRunning` | ↵ | Fecha a janela e deixa o app em modo accessory; agentes seguem vivos | — | v1 | `testAction_dialog_quit_keepRunning` |
 | Stop All and Quit… (§16.10) | `dialog.quit.stopAll` | — | Abre a segunda confirmação `Stop <n> agents and <m> computers?` | — | v1 | `testAction_dialog_quit_stopAll` |
 | Stop All and Quit (segunda confirmação, §16.10) | `dialog.quit.stopAllConfirm` | — | Encerra os agentes e computadores e o app | — | v1 | `testAction_dialog_quit_stopAllConfirm` |

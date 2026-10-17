@@ -93,6 +93,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `sidebar.cleanSessions.new`
 - `sidebar.footer.settings`
 - `sidebar.footer.reveal`
+- `sidebar.projects.clone`
 
 ### Tabs
 
@@ -424,6 +425,16 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `overlay.addProject.clone`
 - `overlay.addProject.clone.url`
 - `overlay.addProject.clone.submit`
+- `overlay.cloneRepo`
+- `overlay.cloneRepo.input`
+- `overlay.cloneRepo.list`
+- `overlay.cloneRepo.row.<id>`
+- `overlay.cloneRepo.progress`
+- `overlay.cloneRepo.logIn`
+- `overlay.cloneRepo.error`
+- `overlay.cloneRepo.retry`
+- `overlay.cloneRepo.cancel`
+- `overlay.cloneRepo.submit`
 - `overlay.confirmQuit`
 - `overlay.confirmQuit.keepRunning`
 - `overlay.confirmQuit.stopAll`
@@ -446,6 +457,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 
 - `landing`
 - `landing.addProject`
+- `landing.cloneProject`
 - `landing.newCleanSession`
 - `landing.newSession`
 
@@ -506,6 +518,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `session.setSubagentComputers` | Subagent computers (card, header do pane) | — | slice3 |
 | `agent.toggleChildren` | Collapse / Expand Subagents (chevron da linha do agente) | — | slice3 |
 | `session.restartToApply` | Restart to apply | — | slice3 |
+| `project.cloneFromGitHub` | Clone from GitHub… | — | slice1 |
 | `sidebar.sortFilter` | Sort and Filter | — | slice1 |
 | `sidebar.resetFilters` | Reset | — | slice1 |
 | `sidebar.clearSearch` | Clear Search | — | slice2 |
@@ -738,6 +751,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `settings.general.branchPrefixCustom` | Branch prefix | — | slice1 |
 | `settings.general.worktreeFolder` | Worktree folder | — | slice1 |
 | `settings.general.cleanSessionFolder` | Clean session folder | — | slice1 |
+| `settings.general.projectsFolder` | Projects folder | — | slice1 |
 | `settings.pickPath` | Change… | — | slice1 |
 | `settings.resetConfirmations` | Reset | — | slice1 |
 | `settings.computers.defaultSubagentMode` | Subagent computers (padrão das novas sessões) | — | slice3 |
@@ -822,6 +836,12 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `dialog.moveToProject.cancel` | Cancel (§16.8) | Esc | slice1 |
 | `dialog.addProject.addFound` | Add <n> Projects | — | slice1 |
 | `dialog.addProject.stopScan` | Stop Scan (§16.9) | — | slice1 |
+| `dialog.cloneRepo.setSource` | Campo `owner/repo` ou URL (§16.9b) | — | slice1 |
+| `dialog.cloneRepo.select` | Linha de repositório (§16.9b) | — | slice1 |
+| `dialog.cloneRepo.submit` | Clone (§16.9b) | ↵ | slice1 |
+| `dialog.cloneRepo.cancel` | Cancel (§16.9b) | Esc | slice1 |
+| `dialog.cloneRepo.logIn` | Log in to GitHub (§16.9b) | — | slice1 |
+| `dialog.cloneRepo.retry` | Try Again (§16.9b) | — | slice1 |
 | `dialog.quit.keepRunning` | Keep Running (§16.10) | ↵ | slice1 |
 | `dialog.quit.stopAll` | Stop All and Quit… (§16.10) | — | slice1 |
 | `dialog.quit.stopAllConfirm` | Stop All and Quit (segunda confirmação, §16.10) | — | slice1 |

@@ -132,6 +132,16 @@ public enum CleanSessionPaths {
         return CleanSessionFolders.expand(configured.isEmpty ? defaultSessionsSetting : configured)
     }
 
+    public static let defaultProjectsSetting = "~/AgentBox/projects"
+
+    /// Pasta de `Clone from GitHub…` (F24). Mesmo isolamento de `AGENTBOX_HOME` das sessões limpas.
+    public static func projectsRoot(configured: String, isolatedHome: URL?) -> URL {
+        if configured == defaultProjectsSetting || configured.isEmpty, let isolatedHome {
+            return isolatedHome.appendingPathComponent("AgentBox/projects", isDirectory: true)
+        }
+        return CleanSessionFolders.expand(configured.isEmpty ? defaultProjectsSetting : configured)
+    }
+
     /// `~/AgentBox/runs` (ou `<AGENTBOX_HOME>/runs` isolado).
     public static func runsRoot(isolatedHome: URL?) -> URL {
         (isolatedHome.map { $0.appendingPathComponent("AgentBox", isDirectory: true) } ?? CleanSessionFolders.expand("~/AgentBox")).appendingPathComponent("runs", isDirectory: true)

@@ -111,12 +111,14 @@ extension SettingsModel {
         }
         try folder(.settingsGeneralWorktreeFolder, \.worktreeFolder, key: "worktreeFolder", name: "Worktree folder")
         try folder(.settingsGeneralCleanSessionFolder, \.cleanSessionFolder, key: "cleanSessionFolder", name: "Clean session folder")
+        try folder(.settingsGeneralProjectsFolder, \.projectsFolder, key: "projectsFolder", name: "Projects folder")
         try registry.register(.settingsPickPath) { [unowned self] arg in
             let which = try value(arg, .settingsPickPath)
             let (keyPath, key, name): (WritableKeyPath<AppSettings.General, String>, String, String) =
                 switch which {
                 case "worktreeFolder": (\.worktreeFolder, "worktreeFolder", "Worktree folder")
                 case "cleanSessionFolder": (\.cleanSessionFolder, "cleanSessionFolder", "Clean session folder")
+                case "projectsFolder": (\.projectsFolder, "projectsFolder", "Projects folder")
                 default: throw ActionError.failed(.settingsPickPath, message: "unknown folder setting")
                 }
             guard let path = await system.pickFolder(settings.general[keyPath: keyPath]) else { return "cancelled" }
