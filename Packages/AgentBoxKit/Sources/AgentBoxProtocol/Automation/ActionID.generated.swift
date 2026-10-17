@@ -45,6 +45,7 @@ extension ActionID {
     public static let sessionCopyBranch = ActionID(unchecked: "session.copyBranch")
     public static let projectCollapseAll = ActionID(unchecked: "project.collapseAll")
     public static let projectHide = ActionID(unchecked: "project.hide")
+    public static let projectRename = ActionID(unchecked: "project.rename")
     public static let projectRemove = ActionID(unchecked: "project.remove")
     public static let itemRefreshGit = ActionID(unchecked: "item.refreshGit")
     public static let itemCopyId = ActionID(unchecked: "item.copyId")
@@ -309,6 +310,7 @@ extension ActionID {
     public static let dialogDeleteSessionDeleteRuns = ActionID(unchecked: "dialog.deleteSession.deleteRuns")
     public static let dialogDeleteSessionDontAsk = ActionID(unchecked: "dialog.deleteSession.dontAsk")
     public static let dialogRemoveProjectConfirm = ActionID(unchecked: "dialog.removeProject.confirm")
+    public static let dialogRemoveProjectCancel = ActionID(unchecked: "dialog.removeProject.cancel")
     public static let dialogResumeAgentsConfirm = ActionID(unchecked: "dialog.resumeAgents.confirm")
     public static let dialogResumeAgentsCancel = ActionID(unchecked: "dialog.resumeAgents.cancel")
     public static let dialogResumeAgentsSelectAll = ActionID(unchecked: "dialog.resumeAgents.selectAll")
@@ -381,6 +383,7 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "session.copyBranch"), label: "Copy Branch Name", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "project.collapseAll"), label: "Collapse All Sessions", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "project.hide"), label: "Hide Project", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "project.rename"), label: "Rename Project…", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "project.remove"), label: "Remove Project…", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "item.refreshGit"), label: "Refresh Git (⌥)", shortcut: "⌥", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "item.copyId"), label: "Copy Project/Session ID (⌥)", shortcut: "⌥", slice: .slice1),
@@ -645,6 +648,7 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "dialog.deleteSession.deleteRuns"), label: "Also delete run folders (§16.5)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.deleteSession.dontAsk"), label: "Don't ask again (§16.5)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.removeProject.confirm"), label: "Remove Project (§16.6)", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "dialog.removeProject.cancel"), label: "Cancel (§16.6)", shortcut: "Esc", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.resumeAgents.confirm"), label: "Resume <n>", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.resumeAgents.cancel"), label: "Not Now (§16.7)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.resumeAgents.selectAll"), label: "Select All", shortcut: "", slice: .slice1),

@@ -49,42 +49,21 @@ struct ProjectRowView: View {
 
     var body: some View {
         let pid = data.id.uuidString
+        let renaming = model.renamingProject == data.id
         ZStack(alignment: .trailing) {
-            ActionButton(.sidebarProjectToggle, id: .sidebarProject(pid), argument: .select(pid)) {
-                HStack(spacing: SidebarMetrics.projectGap) {
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: SidebarMetrics.chevron, weight: .medium))
-                        .foregroundStyle(DS.Color.textSecondary)
-                        .rotationEffect(.degrees(data.collapsed ? -90 : 0))
-                        .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.fast), value: data.collapsed)
-                        .frame(width: SidebarMetrics.chevron, height: SidebarMetrics.chevron)
-                        .a11y(.sidebarProjectToggle(pid), kind: "image")
-                    repoIcon
-                    Text(verbatim: data.name)
-                        .dsFont(DS.Font.bodyStrong)
-                        .foregroundStyle(DS.Color.textPrimary)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                    Spacer(minLength: DS.Space.s1)
-                    if data.collapsed, !hovering {
-                        Text(verbatim: "\(data.sessionCount)")
-                            .dsFont(DS.Font.microNumeric)
-                            .foregroundStyle(DS.Color.textTertiary)
-                    }
+            if renaming {
+                projectLine(renaming: true, pid: pid)
+            } else {
+                ActionButton(.sidebarProjectToggle, id: .sidebarProject(pid), argument: .select(pid)) {
+                    projectLine(renaming: false, pid: pid)
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel(Text(verbatim: projectLabel))
+                        .accessibilityValue(Text(verbatim: data.collapsed ? "collapsed" : "expanded"))
                 }
-                .padding(.leading, SidebarMetrics.projectPaddingLeading)
-                .padding(.trailing, SidebarMetrics.sectionPaddingH)
-                .frame(height: SidebarMetrics.projectRowHeight)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(hovering ? DS.Color.fg5 : Color.clear)
-                .contentShape(Rectangle())
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel(Text(verbatim: projectLabel))
-                .accessibilityValue(Text(verbatim: data.collapsed ? "collapsed" : "expanded"))
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(.isHeader)
             }
-            .buttonStyle(.plain)
-            .accessibilityAddTraits(.isHeader)
-            if hovering {
+            if hovering, !renaming {
                 HStack(spacing: DS.Space.s0_5) {
                     ProjectMenuButton(model: model, project: data.id)
                     if let registry, registry.isOffered(.projectNewSession) {
@@ -101,6 +80,53 @@ struct ProjectRowView: View {
         .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: hovering)
         .contextMenu { ProjectMenuItems(model: model, project: data.id) }
         .overlay { focusRing(model.keyboardFocus == .project(data.id)) }
+    }
+
+    /// Conteúdo da linha; no modo renomear, o nome vira o campo inline (03 §2.11) e a linha deixa de ser um botão.
+    private func projectLine(renaming: Bool, pid: String) -> some View {
+        HStack(spacing: SidebarMetrics.projectGap) {
+            Image(systemName: "chevron.down")
+                .font(.system(size: SidebarMetrics.chevron, weight: .medium))
+                .foregroundStyle(DS.Color.textSecondary)
+                .rotationEffect(.degrees(data.collapsed ? -90 : 0))
+                .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.fast), value: data.collapsed)
+                .frame(width: SidebarMetrics.chevron, height: SidebarMetrics.chevron)
+                .a11y(.sidebarProjectToggle(pid), kind: "image")
+            repoIcon
+            if renaming {
+                InlineRenameField(
+                    initialText: data.name, font: DS.Font.bodyStrong.nsFont,
+                    onCommit: { text in
+                        guard let registry else { return }
+                        Task { _ = try? await registry.perform(.projectRename, .set(text)) }
+                    },
+                    onCancel: { model.cancelRenameProject() }
+                )
+                .padding(.horizontal, DS.Space.s1)
+                .frame(height: SidebarMetrics.line1Height)
+                .background(RoundedRectangle(cornerRadius: DS.Radius.xs * 2).fill(DS.ColorSpec.paneTitleInputBackground.color))
+                .overlay(RoundedRectangle(cornerRadius: DS.Radius.xs * 2).strokeBorder(DS.ColorSpec.ring.scaled(0.5).color, lineWidth: DSMetrics.hairline))
+                .a11y(.sidebarProjectRename(pid), kind: "textfield", value: data.name)
+            } else {
+                Text(verbatim: data.name)
+                    .dsFont(DS.Font.bodyStrong)
+                    .foregroundStyle(DS.Color.textPrimary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
+            Spacer(minLength: DS.Space.s1)
+            if data.collapsed, !hovering, !renaming {
+                Text(verbatim: "\(data.sessionCount)")
+                    .dsFont(DS.Font.microNumeric)
+                    .foregroundStyle(DS.Color.textTertiary)
+            }
+        }
+        .padding(.leading, SidebarMetrics.projectPaddingLeading)
+        .padding(.trailing, SidebarMetrics.sectionPaddingH)
+        .frame(height: SidebarMetrics.projectRowHeight)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(hovering && !renaming ? DS.Color.fg5 : Color.clear)
+        .contentShape(Rectangle())
     }
 
     private var projectLabel: String {

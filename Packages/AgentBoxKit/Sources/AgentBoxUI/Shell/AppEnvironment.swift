@@ -36,6 +36,7 @@ public final class AppEnvironment {
     /// Settings em página inteira e onboarding mínimo (T1-26): detecção de CLIs, perfis de lançamento e configuração.
     public let settings: SettingsModel
     public let onboarding: OnboardingModel
+    let projects: ProjectsController
     public let keyBindings: KeyBindingRegistry
     /// Pane de terminal focado: destino das ações de zoom, busca, copiar/colar e limpar (T1-09).
     public let terminalRouter = TerminalActionRouter()
@@ -67,9 +68,11 @@ public final class AppEnvironment {
         self.onboarding = OnboardingModel(settings: settings)
         let screen = environment["AGENTBOX_SCREEN"]
         autoOnboarding = environment["AGENTBOX_SKIP_ONBOARDING"] != "1" && (screen == nil || screen == Self.setupDemoFixture)
+        self.projects = ProjectsController(sidebar: sidebar, overlays: overlays, toasts: toasts, automationEnabled: automationEnabled)
         elements.enablement = { [registry] id in registry.availability(of: id) }
         registerShellActions()
         do { try sidebar.registerActions(in: registry) } catch { log.publicError("duplicate sidebar action registration") }
+        do { try projects.registerActions(in: registry) } catch { log.publicError("duplicate project action registration") }
         wireOverlays()
         if fixture == Self.overlayDemoFixture || fixture == SidebarFixtures.screenID { registerOverlayDemo() }
         if fixture == SidebarFixtures.screenID { registerSidebarDemo() }
@@ -231,7 +234,7 @@ public final class AppEnvironment {
     /// Fixture `AGENTBOX_SCREEN=sidebar-demo`: controles cujo fluxo é de outra tarefa (composer, adicionar projeto, Settings,
     /// páginas) ganham handlers de exemplo para a evidência visual mostrar a sidebar completa. Nada disso roda em uso normal.
     private func registerSidebarDemo() {
-        for id in [ActionID.projectAdd, .sessionNewClean, .appSettings, .projectNewSession, .pageInbox, .pageComputers, .pageLibrary] {
+        for id in [ActionID.sessionNewClean, .appSettings, .projectNewSession, .pageInbox, .pageComputers, .pageLibrary] {
             try? registry.register(id) { _ in "demo" }
         }
     }
@@ -255,6 +258,7 @@ public final class AppEnvironment {
             await sidebar.attach(store: opened)
             await settings.attach(store: opened)
             if autoOnboarding { await onboarding.attach(store: opened, forceVisible: fixture == Self.setupDemoFixture) }
+            projects.attach(store: opened)
         } catch {
             log.error("store failed to open: \(error)")
         }
@@ -315,6 +319,7 @@ public final class AppEnvironment {
 
     public func stop() async {
         sidebar.detach()
+        projects.detach()
         await ctl?.stop()
         ctl = nil
     }

@@ -56,6 +56,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `sidebar.project.<id>.menu`
 - `sidebar.project.<id>.newSession`
 - `sidebar.project.<id>.showMore`
+- `sidebar.project.<id>.rename`
 - `sidebar.session.<id>`
 - `sidebar.session.<id>.name`
 - `sidebar.session.<id>.status`
@@ -346,6 +347,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `overlay.confirmDelete.trashFolder`
 - `overlay.confirmDelete.deleteRuns`
 - `overlay.confirmDelete.confirm`
+- `overlay.confirmRemoveProject`
+- `overlay.confirmRemoveProject.cancel`
 - `overlay.confirmRemoveProject.confirm`
 - `overlay.resume`
 - `overlay.resume.row.<id>`
@@ -449,6 +452,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `session.copyBranch` | Copy Branch Name | — | slice1 |
 | `project.collapseAll` | Collapse All Sessions | — | slice1 |
 | `project.hide` | Hide Project | — | slice1 |
+| `project.rename` | Rename Project… | — | slice1 |
 | `project.remove` | Remove Project… | — | slice1 |
 | `item.refreshGit` | Refresh Git (⌥) | ⌥ | slice1 |
 | `item.copyId` | Copy Project/Session ID (⌥) | ⌥ | slice1 |
@@ -713,6 +717,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `dialog.deleteSession.deleteRuns` | Also delete run folders (§16.5) | — | slice1 |
 | `dialog.deleteSession.dontAsk` | Don't ask again (§16.5) | — | slice1 |
 | `dialog.removeProject.confirm` | Remove Project (§16.6) | — | slice1 |
+| `dialog.removeProject.cancel` | Cancel (§16.6) | Esc | slice1 |
 | `dialog.resumeAgents.confirm` | Resume <n> | — | slice1 |
 | `dialog.resumeAgents.cancel` | Not Now (§16.7) | — | slice1 |
 | `dialog.resumeAgents.selectAll` | Select All | — | slice1 |
