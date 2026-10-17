@@ -37,8 +37,9 @@ targets:
     dependencies:
       - package: AgentBoxKit
         product: AgentBoxPlatform
-      # AgentBoxUI (-> SwiftTerm, shaders Metal) entra quando o Metal Toolchain estiver instalado
-      # (xcodebuild -downloadComponent MetalToolchain); ver evidência T1-01.
+      # AgentBoxUI (T1-02): registro de ações, A11yID, janela e canal ctl. Puxa SwiftTerm (shaders Metal).
+      - package: AgentBoxKit
+        product: AgentBoxUI
     info:
       path: App/Info.plist
       properties:

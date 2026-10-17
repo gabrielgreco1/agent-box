@@ -1,0 +1,21 @@
+◇ Test run started.
+✔ Suite CoreTestsSmoke passed after 0.004 seconds.
+✔ Suite TerminalCoreTestsSmoke passed after 0.004 seconds.
+✔ Suite PlatformTestsSmoke passed after 0.004 seconds.
+✔ Suite DaemonSmoke passed after 0.004 seconds.
+✔ Suite LogFacadeTests passed after 0.004 seconds.
+✔ Suite ProtocolTestsSmoke passed after 0.004 seconds.
+✔ Suite ActionIDTests passed after 0.004 seconds.
+✔ Suite SliceFlagsTests passed after 0.004 seconds.
+✔ Suite StoreTestsSmoke passed after 0.004 seconds.
+✔ Suite AppSockFrameTests passed after 0.004 seconds.
+✔ Suite DockerTestsSmoke passed after 0.005 seconds.
+✔ Suite CtlWireTests passed after 0.005 seconds.
+✔ Suite A11yIDTests passed after 0.007 seconds.
+✔ Suite UISnapshotSmoke passed after 0.118 seconds.
+✔ Suite KeyBindingRegistryTests passed after 0.121 seconds.
+✔ Suite UIElementStoreTests passed after 0.120 seconds.
+✔ Suite ActionRegistryTests passed after 0.121 seconds.
+✔ Suite EmptyWindowTreeTests passed after 0.151 seconds.
+✔ Suite CtlServerTests passed after 0.231 seconds.
+✔ Test run with 75 tests in 19 suites passed after 0.231 seconds.

@@ -1,0 +1,1421 @@
+// GERADO por scripts/gen-automation-ids.py a partir de docs/rebuild/spec/03-screens.md §22. NÃO EDITAR.
+// Cada identificador (ou padrão com <placeholder>) da lista canônica vira uma constante ou função.
+
+extension A11yID {
+    /// `window.main`
+    public static let windowMain = A11yID(unchecked: "window.main")
+    /// `window.titlebar`
+    public static let windowTitlebar = A11yID(unchecked: "window.titlebar")
+    /// `window.appName`
+    public static let windowAppName = A11yID(unchecked: "window.appName")
+    /// `window.sidebarToggle`
+    public static let windowSidebarToggle = A11yID(unchecked: "window.sidebarToggle")
+    /// `window.historyBack`
+    public static let windowHistoryBack = A11yID(unchecked: "window.historyBack")
+    /// `window.historyForward`
+    public static let windowHistoryForward = A11yID(unchecked: "window.historyForward")
+    /// `window.automationBadge`
+    public static let windowAutomationBadge = A11yID(unchecked: "window.automationBadge")
+    /// `window.daemonBanner`
+    public static let windowDaemonBanner = A11yID(unchecked: "window.daemonBanner")
+    /// `window.databaseBanner`
+    public static let windowDatabaseBanner = A11yID(unchecked: "window.databaseBanner")
+    /// `tooltip`
+    public static let tooltip = A11yID(unchecked: "tooltip")
+    /// `sidebar`
+    public static let sidebar = A11yID(unchecked: "sidebar")
+    /// `sidebar.selection`
+    public static let sidebarSelection = A11yID(unchecked: "sidebar.selection")
+    /// `sidebar.search`
+    public static let sidebarSearch = A11yID(unchecked: "sidebar.search")
+    /// `sidebar.search.clear`
+    public static let sidebarSearchClear = A11yID(unchecked: "sidebar.search.clear")
+    /// `sidebar.search.empty`
+    public static let sidebarSearchEmpty = A11yID(unchecked: "sidebar.search.empty")
+    /// `sidebar.search.empty.clear`
+    public static let sidebarSearchEmptyClear = A11yID(unchecked: "sidebar.search.empty.clear")
+    /// `sidebar.nav.inbox`
+    public static let sidebarNavInbox = A11yID(unchecked: "sidebar.nav.inbox")
+    /// `sidebar.nav.inbox.badge`
+    public static let sidebarNavInboxBadge = A11yID(unchecked: "sidebar.nav.inbox.badge")
+    /// `sidebar.nav.computers`
+    public static let sidebarNavComputers = A11yID(unchecked: "sidebar.nav.computers")
+    /// `sidebar.nav.library`
+    public static let sidebarNavLibrary = A11yID(unchecked: "sidebar.nav.library")
+    /// `sidebar.projects.filter`
+    public static let sidebarProjectsFilter = A11yID(unchecked: "sidebar.projects.filter")
+    /// `sidebar.projects.filterMenu`
+    public static let sidebarProjectsFilterMenu = A11yID(unchecked: "sidebar.projects.filterMenu")
+    /// `sidebar.projects.add`
+    public static let sidebarProjectsAdd = A11yID(unchecked: "sidebar.projects.add")
+    /// `sidebar.projects.newSession`
+    public static let sidebarProjectsNewSession = A11yID(unchecked: "sidebar.projects.newSession")
+    /// `sidebar.cleanSessions`
+    public static let sidebarCleanSessions = A11yID(unchecked: "sidebar.cleanSessions")
+    /// `sidebar.cleanSessions.new`
+    public static let sidebarCleanSessionsNew = A11yID(unchecked: "sidebar.cleanSessions.new")
+    /// `sidebar.footer.settings`
+    public static let sidebarFooterSettings = A11yID(unchecked: "sidebar.footer.settings")
+    /// `sidebar.footer.reveal`
+    public static let sidebarFooterReveal = A11yID(unchecked: "sidebar.footer.reveal")
+    /// `tabs.activeIndicator`
+    public static let tabsActiveIndicator = A11yID(unchecked: "tabs.activeIndicator")
+    /// `tabs.overflow.leading`
+    public static let tabsOverflowLeading = A11yID(unchecked: "tabs.overflow.leading")
+    /// `tabs.overflow.trailing`
+    public static let tabsOverflowTrailing = A11yID(unchecked: "tabs.overflow.trailing")
+    /// `tabs.new`
+    public static let tabsNew = A11yID(unchecked: "tabs.new")
+    /// `tabs.quickCommands`
+    public static let tabsQuickCommands = A11yID(unchecked: "tabs.quickCommands")
+    /// `tabs.paneActions`
+    public static let tabsPaneActions = A11yID(unchecked: "tabs.paneActions")
+    /// `tabs.rightPanelToggle`
+    public static let tabsRightPanelToggle = A11yID(unchecked: "tabs.rightPanelToggle")
+    /// `pane.empty`
+    public static let paneEmpty = A11yID(unchecked: "pane.empty")
+    /// `pane.empty.newAgent`
+    public static let paneEmptyNewAgent = A11yID(unchecked: "pane.empty.newAgent")
+    /// `pane.empty.newTerminal`
+    public static let paneEmptyNewTerminal = A11yID(unchecked: "pane.empty.newTerminal")
+    /// `pane.empty.reopen`
+    public static let paneEmptyReopen = A11yID(unchecked: "pane.empty.reopen")
+    /// `pane.empty.start`
+    public static let paneEmptyStart = A11yID(unchecked: "pane.empty.start")
+    /// `pane.empty.resume`
+    public static let paneEmptyResume = A11yID(unchecked: "pane.empty.resume")
+    /// `find.field`
+    public static let findField = A11yID(unchecked: "find.field")
+    /// `find.count`
+    public static let findCount = A11yID(unchecked: "find.count")
+    /// `find.caseSensitive`
+    public static let findCaseSensitive = A11yID(unchecked: "find.caseSensitive")
+    /// `find.regex`
+    public static let findRegex = A11yID(unchecked: "find.regex")
+    /// `find.previous`
+    public static let findPrevious = A11yID(unchecked: "find.previous")
+    /// `find.next`
+    public static let findNext = A11yID(unchecked: "find.next")
+    /// `find.close`
+    public static let findClose = A11yID(unchecked: "find.close")
+    /// `statusBar`
+    public static let statusBar = A11yID(unchecked: "statusBar")
+    /// `statusBar.usage.claude`
+    public static let statusBarUsageClaude = A11yID(unchecked: "statusBar.usage.claude")
+    /// `statusBar.usage.codex`
+    public static let statusBarUsageCodex = A11yID(unchecked: "statusBar.usage.codex")
+    /// `statusBar.agents`
+    public static let statusBarAgents = A11yID(unchecked: "statusBar.agents")
+    /// `statusBar.computers`
+    public static let statusBarComputers = A11yID(unchecked: "statusBar.computers")
+    /// `statusBar.proxyUsage`
+    public static let statusBarProxyUsage = A11yID(unchecked: "statusBar.proxyUsage")
+    /// `statusBar.docker`
+    public static let statusBarDocker = A11yID(unchecked: "statusBar.docker")
+    /// `statusBar.background`
+    public static let statusBarBackground = A11yID(unchecked: "statusBar.background")
+    /// `overlay.scrim`
+    public static let overlayScrim = A11yID(unchecked: "overlay.scrim")
+    /// `overlay.composer`
+    public static let overlayComposer = A11yID(unchecked: "overlay.composer")
+    /// `overlay.composer.project`
+    public static let overlayComposerProject = A11yID(unchecked: "overlay.composer.project")
+    /// `overlay.composer.where`
+    public static let overlayComposerWhere = A11yID(unchecked: "overlay.composer.where")
+    /// `overlay.composer.createFrom`
+    public static let overlayComposerCreateFrom = A11yID(unchecked: "overlay.composer.createFrom")
+    /// `overlay.composer.baseRef`
+    public static let overlayComposerBaseRef = A11yID(unchecked: "overlay.composer.baseRef")
+    /// `overlay.composer.reuseBranch`
+    public static let overlayComposerReuseBranch = A11yID(unchecked: "overlay.composer.reuseBranch")
+    /// `overlay.composer.worktree`
+    public static let overlayComposerWorktree = A11yID(unchecked: "overlay.composer.worktree")
+    /// `overlay.composer.folder`
+    public static let overlayComposerFolder = A11yID(unchecked: "overlay.composer.folder")
+    /// `overlay.composer.agent`
+    public static let overlayComposerAgent = A11yID(unchecked: "overlay.composer.agent")
+    /// `overlay.composer.profile`
+    public static let overlayComposerProfile = A11yID(unchecked: "overlay.composer.profile")
+    /// `overlay.composer.prompt`
+    public static let overlayComposerPrompt = A11yID(unchecked: "overlay.composer.prompt")
+    /// `overlay.composer.advanced`
+    public static let overlayComposerAdvanced = A11yID(unchecked: "overlay.composer.advanced")
+    /// `overlay.composer.name`
+    public static let overlayComposerName = A11yID(unchecked: "overlay.composer.name")
+    /// `overlay.composer.branch`
+    public static let overlayComposerBranch = A11yID(unchecked: "overlay.composer.branch")
+    /// `overlay.composer.location`
+    public static let overlayComposerLocation = A11yID(unchecked: "overlay.composer.location")
+    /// `overlay.composer.computers`
+    public static let overlayComposerComputers = A11yID(unchecked: "overlay.composer.computers")
+    /// `overlay.composer.proxy`
+    public static let overlayComposerProxy = A11yID(unchecked: "overlay.composer.proxy")
+    /// `overlay.composer.watchSubagents`
+    public static let overlayComposerWatchSubagents = A11yID(unchecked: "overlay.composer.watchSubagents")
+    /// `overlay.composer.createMore`
+    public static let overlayComposerCreateMore = A11yID(unchecked: "overlay.composer.createMore")
+    /// `overlay.composer.cancel`
+    public static let overlayComposerCancel = A11yID(unchecked: "overlay.composer.cancel")
+    /// `overlay.composer.submit`
+    public static let overlayComposerSubmit = A11yID(unchecked: "overlay.composer.submit")
+    /// `overlay.composer.launchChip`
+    public static let overlayComposerLaunchChip = A11yID(unchecked: "overlay.composer.launchChip")
+    /// `overlay.quickLaunch`
+    public static let overlayQuickLaunch = A11yID(unchecked: "overlay.quickLaunch")
+    /// `overlay.quickLaunch.input`
+    public static let overlayQuickLaunchInput = A11yID(unchecked: "overlay.quickLaunch.input")
+    /// `overlay.quickLaunch.resume`
+    public static let overlayQuickLaunchResume = A11yID(unchecked: "overlay.quickLaunch.resume")
+    /// `overlay.quickLaunch.openComputer`
+    public static let overlayQuickLaunchOpenComputer = A11yID(unchecked: "overlay.quickLaunch.openComputer")
+    /// `overlay.quickLaunch.agentSettings`
+    public static let overlayQuickLaunchAgentSettings = A11yID(unchecked: "overlay.quickLaunch.agentSettings")
+    /// `overlay.palette`
+    public static let overlayPalette = A11yID(unchecked: "overlay.palette")
+    /// `overlay.palette.input`
+    public static let overlayPaletteInput = A11yID(unchecked: "overlay.palette.input")
+    /// `overlay.palette.filter`
+    public static let overlayPaletteFilter = A11yID(unchecked: "overlay.palette.filter")
+    /// `overlay.palette.insertMode`
+    public static let overlayPaletteInsertMode = A11yID(unchecked: "overlay.palette.insertMode")
+    /// `inbox`
+    public static let inbox = A11yID(unchecked: "inbox")
+    /// `inbox.filter`
+    public static let inboxFilter = A11yID(unchecked: "inbox.filter")
+    /// `inbox.markAllRead`
+    public static let inboxMarkAllRead = A11yID(unchecked: "inbox.markAllRead")
+    /// `inbox.empty`
+    public static let inboxEmpty = A11yID(unchecked: "inbox.empty")
+    /// `rightPanel`
+    public static let rightPanel = A11yID(unchecked: "rightPanel")
+    /// `rightPanel.tabs.indicator`
+    public static let rightPanelTabsIndicator = A11yID(unchecked: "rightPanel.tabs.indicator")
+    /// `rightPanel.sourceControl.branch`
+    public static let rightPanelSourceControlBranch = A11yID(unchecked: "rightPanel.sourceControl.branch")
+    /// `rightPanel.sourceControl.refresh`
+    public static let rightPanelSourceControlRefresh = A11yID(unchecked: "rightPanel.sourceControl.refresh")
+    /// `rightPanel.sourceControl.pr`
+    public static let rightPanelSourceControlPr = A11yID(unchecked: "rightPanel.sourceControl.pr")
+    /// `rightPanel.sourceControl.createPR`
+    public static let rightPanelSourceControlCreatePR = A11yID(unchecked: "rightPanel.sourceControl.createPR")
+    /// `rightPanel.checks.refresh`
+    public static let rightPanelChecksRefresh = A11yID(unchecked: "rightPanel.checks.refresh")
+    /// `rightPanel.checks.sendFailures`
+    public static let rightPanelChecksSendFailures = A11yID(unchecked: "rightPanel.checks.sendFailures")
+    /// `rightPanel.computers.new`
+    public static let rightPanelComputersNew = A11yID(unchecked: "rightPanel.computers.new")
+    /// `rightPanel.computers.empty`
+    public static let rightPanelComputersEmpty = A11yID(unchecked: "rightPanel.computers.empty")
+    /// `rightPanel.conversations.search`
+    public static let rightPanelConversationsSearch = A11yID(unchecked: "rightPanel.conversations.search")
+    /// `rightPanel.conversations.scope`
+    public static let rightPanelConversationsScope = A11yID(unchecked: "rightPanel.conversations.scope")
+    /// `computers.page`
+    public static let computersPage = A11yID(unchecked: "computers.page")
+    /// `computers.cleanUp`
+    public static let computersCleanUp = A11yID(unchecked: "computers.cleanUp")
+    /// `computers.dockerBanner`
+    public static let computersDockerBanner = A11yID(unchecked: "computers.dockerBanner")
+    /// `computers.empty`
+    public static let computersEmpty = A11yID(unchecked: "computers.empty")
+    /// `library.page`
+    public static let libraryPage = A11yID(unchecked: "library.page")
+    /// `library.section`
+    public static let librarySection = A11yID(unchecked: "library.section")
+    /// `library.search`
+    public static let librarySearch = A11yID(unchecked: "library.search")
+    /// `library.source`
+    public static let librarySource = A11yID(unchecked: "library.source")
+    /// `library.new`
+    public static let libraryNew = A11yID(unchecked: "library.new")
+    /// `library.empty`
+    public static let libraryEmpty = A11yID(unchecked: "library.empty")
+    /// `library.detail.newSession`
+    public static let libraryDetailNewSession = A11yID(unchecked: "library.detail.newSession")
+    /// `library.detail.enable`
+    public static let libraryDetailEnable = A11yID(unchecked: "library.detail.enable")
+    /// `library.detail.insert`
+    public static let libraryDetailInsert = A11yID(unchecked: "library.detail.insert")
+    /// `library.detail.openInEditor`
+    public static let libraryDetailOpenInEditor = A11yID(unchecked: "library.detail.openInEditor")
+    /// `library.detail.reveal`
+    public static let libraryDetailReveal = A11yID(unchecked: "library.detail.reveal")
+    /// `library.profile.name`
+    public static let libraryProfileName = A11yID(unchecked: "library.profile.name")
+    /// `library.profile.agent`
+    public static let libraryProfileAgent = A11yID(unchecked: "library.profile.agent")
+    /// `library.profile.model`
+    public static let libraryProfileModel = A11yID(unchecked: "library.profile.model")
+    /// `library.profile.permissions`
+    public static let libraryProfilePermissions = A11yID(unchecked: "library.profile.permissions")
+    /// `library.profile.args`
+    public static let libraryProfileArgs = A11yID(unchecked: "library.profile.args")
+    /// `library.profile.env`
+    public static let libraryProfileEnv = A11yID(unchecked: "library.profile.env")
+    /// `library.profile.default`
+    public static let libraryProfileDefault = A11yID(unchecked: "library.profile.default")
+    /// `settings.page`
+    public static let settingsPage = A11yID(unchecked: "settings.page")
+    /// `settings.back`
+    public static let settingsBack = A11yID(unchecked: "settings.back")
+    /// `settings.search`
+    public static let settingsSearch = A11yID(unchecked: "settings.search")
+    /// `settings.computers.proxies.add`
+    public static let settingsComputersProxiesAdd = A11yID(unchecked: "settings.computers.proxies.add")
+    /// `settings.computers.proxies.test`
+    public static let settingsComputersProxiesTest = A11yID(unchecked: "settings.computers.proxies.test")
+    /// `onboarding`
+    public static let onboarding = A11yID(unchecked: "onboarding")
+    /// `onboarding.import.confirm`
+    public static let onboardingImportConfirm = A11yID(unchecked: "onboarding.import.confirm")
+    /// `onboarding.done`
+    public static let onboardingDone = A11yID(unchecked: "onboarding.done")
+    /// `onboarding.skip`
+    public static let onboardingSkip = A11yID(unchecked: "onboarding.skip")
+    /// `overlay.confirmClose`
+    public static let overlayConfirmClose = A11yID(unchecked: "overlay.confirmClose")
+    /// `overlay.confirmClose.dontAsk`
+    public static let overlayConfirmCloseDontAsk = A11yID(unchecked: "overlay.confirmClose.dontAsk")
+    /// `overlay.confirmClose.cancel`
+    public static let overlayConfirmCloseCancel = A11yID(unchecked: "overlay.confirmClose.cancel")
+    /// `overlay.confirmClose.confirm`
+    public static let overlayConfirmCloseConfirm = A11yID(unchecked: "overlay.confirmClose.confirm")
+    /// `overlay.confirmArchive.confirm`
+    public static let overlayConfirmArchiveConfirm = A11yID(unchecked: "overlay.confirmArchive.confirm")
+    /// `overlay.confirmStopComputer.confirm`
+    public static let overlayConfirmStopComputerConfirm = A11yID(unchecked: "overlay.confirmStopComputer.confirm")
+    /// `overlay.confirmDeleteComputer.confirm`
+    public static let overlayConfirmDeleteComputerConfirm = A11yID(unchecked: "overlay.confirmDeleteComputer.confirm")
+    /// `overlay.confirmDelete`
+    public static let overlayConfirmDelete = A11yID(unchecked: "overlay.confirmDelete")
+    /// `overlay.confirmDelete.keepBranch`
+    public static let overlayConfirmDeleteKeepBranch = A11yID(unchecked: "overlay.confirmDelete.keepBranch")
+    /// `overlay.confirmDelete.trashFolder`
+    public static let overlayConfirmDeleteTrashFolder = A11yID(unchecked: "overlay.confirmDelete.trashFolder")
+    /// `overlay.confirmDelete.deleteRuns`
+    public static let overlayConfirmDeleteDeleteRuns = A11yID(unchecked: "overlay.confirmDelete.deleteRuns")
+    /// `overlay.confirmDelete.confirm`
+    public static let overlayConfirmDeleteConfirm = A11yID(unchecked: "overlay.confirmDelete.confirm")
+    /// `overlay.confirmRemoveProject.confirm`
+    public static let overlayConfirmRemoveProjectConfirm = A11yID(unchecked: "overlay.confirmRemoveProject.confirm")
+    /// `overlay.resume`
+    public static let overlayResume = A11yID(unchecked: "overlay.resume")
+    /// `overlay.resume.confirm`
+    public static let overlayResumeConfirm = A11yID(unchecked: "overlay.resume.confirm")
+    /// `overlay.moveToProject`
+    public static let overlayMoveToProject = A11yID(unchecked: "overlay.moveToProject")
+    /// `overlay.moveToProject.project`
+    public static let overlayMoveToProjectProject = A11yID(unchecked: "overlay.moveToProject.project")
+    /// `overlay.moveToProject.confirm`
+    public static let overlayMoveToProjectConfirm = A11yID(unchecked: "overlay.moveToProject.confirm")
+    /// `overlay.addProject.choose`
+    public static let overlayAddProjectChoose = A11yID(unchecked: "overlay.addProject.choose")
+    /// `overlay.addProject.clone`
+    public static let overlayAddProjectClone = A11yID(unchecked: "overlay.addProject.clone")
+    /// `overlay.addProject.clone.url`
+    public static let overlayAddProjectCloneUrl = A11yID(unchecked: "overlay.addProject.clone.url")
+    /// `overlay.addProject.clone.submit`
+    public static let overlayAddProjectCloneSubmit = A11yID(unchecked: "overlay.addProject.clone.submit")
+    /// `overlay.addProject.importOrca`
+    public static let overlayAddProjectImportOrca = A11yID(unchecked: "overlay.addProject.importOrca")
+    /// `overlay.confirmQuit`
+    public static let overlayConfirmQuit = A11yID(unchecked: "overlay.confirmQuit")
+    /// `overlay.confirmQuit.keepRunning`
+    public static let overlayConfirmQuitKeepRunning = A11yID(unchecked: "overlay.confirmQuit.keepRunning")
+    /// `overlay.confirmQuit.stopAll`
+    public static let overlayConfirmQuitStopAll = A11yID(unchecked: "overlay.confirmQuit.stopAll")
+    /// `overlay.confirmQuit.cancel`
+    public static let overlayConfirmQuitCancel = A11yID(unchecked: "overlay.confirmQuit.cancel")
+    /// `overlay.confirmQuit.dontAsk`
+    public static let overlayConfirmQuitDontAsk = A11yID(unchecked: "overlay.confirmQuit.dontAsk")
+    /// `overlay.confirmSkipPermissions.confirm`
+    public static let overlayConfirmSkipPermissionsConfirm = A11yID(unchecked: "overlay.confirmSkipPermissions.confirm")
+    /// `overlay.renameBranch`
+    public static let overlayRenameBranch = A11yID(unchecked: "overlay.renameBranch")
+    /// `overlay.renameBranch.name`
+    public static let overlayRenameBranchName = A11yID(unchecked: "overlay.renameBranch.name")
+    /// `overlay.renameBranch.submit`
+    public static let overlayRenameBranchSubmit = A11yID(unchecked: "overlay.renameBranch.submit")
+    /// `overlay.about`
+    public static let overlayAbout = A11yID(unchecked: "overlay.about")
+    /// `overlay.about.licenses`
+    public static let overlayAboutLicenses = A11yID(unchecked: "overlay.about.licenses")
+    /// `overlay.about.copy`
+    public static let overlayAboutCopy = A11yID(unchecked: "overlay.about.copy")
+    /// `popover.paste`
+    public static let popoverPaste = A11yID(unchecked: "popover.paste")
+    /// `popover.paste.text`
+    public static let popoverPasteText = A11yID(unchecked: "popover.paste.text")
+    /// `popover.paste.confirm`
+    public static let popoverPasteConfirm = A11yID(unchecked: "popover.paste.confirm")
+    /// `landing`
+    public static let landing = A11yID(unchecked: "landing")
+    /// `landing.addProject`
+    public static let landingAddProject = A11yID(unchecked: "landing.addProject")
+    /// `landing.newCleanSession`
+    public static let landingNewCleanSession = A11yID(unchecked: "landing.newCleanSession")
+    /// `landing.importOrca`
+    public static let landingImportOrca = A11yID(unchecked: "landing.importOrca")
+    /// `landing.newSession`
+    public static let landingNewSession = A11yID(unchecked: "landing.newSession")
+    /// `menuBar.icon`
+    public static let menuBarIcon = A11yID(unchecked: "menuBar.icon")
+    /// `menuBar.open`
+    public static let menuBarOpen = A11yID(unchecked: "menuBar.open")
+    /// `menuBar.newSession`
+    public static let menuBarNewSession = A11yID(unchecked: "menuBar.newSession")
+    /// `menuBar.newCleanSession`
+    public static let menuBarNewCleanSession = A11yID(unchecked: "menuBar.newCleanSession")
+    /// `menuBar.stopAll`
+    public static let menuBarStopAll = A11yID(unchecked: "menuBar.stopAll")
+    /// `menuBar.quitCompletely`
+    public static let menuBarQuitCompletely = A11yID(unchecked: "menuBar.quitCompletely")
+
+    /// `<region>.errorBoundary`
+    public static func errorBoundary(_ region: String) -> A11yID {
+        A11yID(unchecked: "\(A11yID.rawSegment(region, loose: true)).errorBoundary")
+    }
+
+    /// `<region>.errorBoundary.retry`
+    public static func errorBoundaryRetry(_ region: String) -> A11yID {
+        A11yID(unchecked: "\(A11yID.rawSegment(region, loose: true)).errorBoundary.retry")
+    }
+
+    /// `<region>.errorBoundary.copy`
+    public static func errorBoundaryCopy(_ region: String) -> A11yID {
+        A11yID(unchecked: "\(A11yID.rawSegment(region, loose: true)).errorBoundary.copy")
+    }
+
+    /// `<host>.status`
+    public static func status(_ host: String) -> A11yID {
+        A11yID(unchecked: "\(A11yID.rawSegment(host, loose: true)).status")
+    }
+
+    /// `<host>.hoverCard`
+    public static func hoverCard(_ host: String) -> A11yID {
+        A11yID(unchecked: "\(A11yID.rawSegment(host, loose: true)).hoverCard")
+    }
+
+    /// `<panel>.empty`
+    public static func empty(_ panel: String) -> A11yID {
+        A11yID(unchecked: "\(A11yID.rawSegment(panel, loose: true)).empty")
+    }
+
+    /// `menuPanel.<name>`
+    public static func menuPanel(_ name: String) -> A11yID {
+        A11yID(unchecked: "menuPanel.\(A11yID.segment(name))")
+    }
+
+    /// `popover.<name>`
+    public static func popover(_ name: String) -> A11yID {
+        A11yID(unchecked: "popover.\(A11yID.segment(name))")
+    }
+
+    /// `popover.<name>.<field>`
+    public static func popoverWithNameField(_ name: String, _ field: String) -> A11yID {
+        A11yID(unchecked: "popover.\(A11yID.segment(name)).\(A11yID.segment(field))")
+    }
+
+    /// `popover.<name>.confirm`
+    public static func popoverConfirm(_ name: String) -> A11yID {
+        A11yID(unchecked: "popover.\(A11yID.segment(name)).confirm")
+    }
+
+    /// `sidebar.project.<id>`
+    public static func sidebarProject(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.project.\(A11yID.segment(id))")
+    }
+
+    /// `sidebar.project.<id>.toggle`
+    public static func sidebarProjectToggle(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.project.\(A11yID.segment(id)).toggle")
+    }
+
+    /// `sidebar.project.<id>.menu`
+    public static func sidebarProjectMenu(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.project.\(A11yID.segment(id)).menu")
+    }
+
+    /// `sidebar.project.<id>.newSession`
+    public static func sidebarProjectNewSession(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.project.\(A11yID.segment(id)).newSession")
+    }
+
+    /// `sidebar.project.<id>.showMore`
+    public static func sidebarProjectShowMore(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.project.\(A11yID.segment(id)).showMore")
+    }
+
+    /// `sidebar.session.<id>`
+    public static func sidebarSession(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id))")
+    }
+
+    /// `sidebar.session.<id>.name`
+    public static func sidebarSessionName(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).name")
+    }
+
+    /// `sidebar.session.<id>.status`
+    public static func sidebarSessionStatus(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).status")
+    }
+
+    /// `sidebar.session.<id>.archive`
+    public static func sidebarSessionArchive(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).archive")
+    }
+
+    /// `sidebar.session.<id>.prChip`
+    public static func sidebarSessionPrChip(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).prChip")
+    }
+
+    /// `sidebar.session.<id>.note`
+    public static func sidebarSessionNote(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).note")
+    }
+
+    /// `sidebar.session.<id>.summaryPill`
+    public static func sidebarSessionSummaryPill(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).summaryPill")
+    }
+
+    /// `sidebar.session.<id>.hoverCard`
+    public static func sidebarSessionHoverCard(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).hoverCard")
+    }
+
+    /// `sidebar.session.<id>.phase`
+    public static func sidebarSessionPhase(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).phase")
+    }
+
+    /// `sidebar.session.<id>.error`
+    public static func sidebarSessionError(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).error")
+    }
+
+    /// `sidebar.session.<id>.agents`
+    public static func sidebarSessionAgents(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).agents")
+    }
+
+    /// `sidebar.session.<id>.rename`
+    public static func sidebarSessionRename(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).rename")
+    }
+
+    /// `sidebar.session.<id>.revealGlow`
+    public static func sidebarSessionRevealGlow(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).revealGlow")
+    }
+
+    /// `sidebar.session.<id>.showMore`
+    public static func sidebarSessionShowMore(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).showMore")
+    }
+
+    /// `sidebar.session.<id>.pin`
+    public static func sidebarSessionPin(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).pin")
+    }
+
+    /// `sidebar.session.<id>.agent.<terminalId>`
+    public static func sidebarSessionAgent(_ id: String, _ terminalId: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).agent.\(A11yID.segment(terminalId))")
+    }
+
+    /// `sidebar.session.<id>.agent.<terminalId>.status`
+    public static func sidebarSessionAgentStatus(_ id: String, _ terminalId: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).agent.\(A11yID.segment(terminalId)).status")
+    }
+
+    /// `sidebar.session.<id>.agent.<terminalId>.lastMessage`
+    public static func sidebarSessionAgentLastMessage(_ id: String, _ terminalId: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).agent.\(A11yID.segment(terminalId)).lastMessage")
+    }
+
+    /// `sidebar.session.<id>.agent.<terminalId>.children.toggle`
+    public static func sidebarSessionAgentChildrenToggle(_ id: String, _ terminalId: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).agent.\(A11yID.segment(terminalId)).children.toggle")
+    }
+
+    /// `sidebar.session.<id>.child.<childId>`
+    public static func sidebarSessionChild(_ id: String, _ childId: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).child.\(A11yID.segment(childId))")
+    }
+
+    /// `sidebar.session.<id>.child.<childId>.status`
+    public static func sidebarSessionChildStatus(_ id: String, _ childId: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).child.\(A11yID.segment(childId)).status")
+    }
+
+    /// `sidebar.session.<id>.child.<childId>.glyph`
+    public static func sidebarSessionChildGlyph(_ id: String, _ childId: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).child.\(A11yID.segment(childId)).glyph")
+    }
+
+    /// `sidebar.session.<id>.child.<childId>.connector`
+    public static func sidebarSessionChildConnector(_ id: String, _ childId: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).child.\(A11yID.segment(childId)).connector")
+    }
+
+    /// `sidebar.pending.<id>`
+    public static func sidebarPending(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.pending.\(A11yID.segment(id))")
+    }
+
+    /// `sidebar.pending.<id>.cancel`
+    public static func sidebarPendingCancel(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.pending.\(A11yID.segment(id)).cancel")
+    }
+
+    /// `tabs.tab.<terminalId>`
+    public static func tabsTab(_ terminalId: String) -> A11yID {
+        A11yID(unchecked: "tabs.tab.\(A11yID.segment(terminalId))")
+    }
+
+    /// `tabs.tab.<terminalId>.close`
+    public static func tabsTabClose(_ terminalId: String) -> A11yID {
+        A11yID(unchecked: "tabs.tab.\(A11yID.segment(terminalId)).close")
+    }
+
+    /// `tabs.tab.<terminalId>.title`
+    public static func tabsTabTitle(_ terminalId: String) -> A11yID {
+        A11yID(unchecked: "tabs.tab.\(A11yID.segment(terminalId)).title")
+    }
+
+    /// `tabs.tab.<terminalId>.restart`
+    public static func tabsTabRestart(_ terminalId: String) -> A11yID {
+        A11yID(unchecked: "tabs.tab.\(A11yID.segment(terminalId)).restart")
+    }
+
+    /// `tabs.tab.<terminalId>.status`
+    public static func tabsTabStatus(_ terminalId: String) -> A11yID {
+        A11yID(unchecked: "tabs.tab.\(A11yID.segment(terminalId)).status")
+    }
+
+    /// `pane.<id>`
+    public static func pane(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id))")
+    }
+
+    /// `pane.<id>.terminal`
+    public static func paneTerminal(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).terminal")
+    }
+
+    /// `pane.<id>.header`
+    public static func paneHeader(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).header")
+    }
+
+    /// `pane.<id>.status`
+    public static func paneStatus(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).status")
+    }
+
+    /// `pane.<id>.splitRight`
+    public static func paneSplitRight(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).splitRight")
+    }
+
+    /// `pane.<id>.splitDown`
+    public static func paneSplitDown(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).splitDown")
+    }
+
+    /// `pane.<id>.expand`
+    public static func paneExpand(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).expand")
+    }
+
+    /// `pane.<id>.close`
+    public static func paneClose(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).close")
+    }
+
+    /// `pane.<id>.cover`
+    public static func paneCover(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).cover")
+    }
+
+    /// `pane.<id>.rimFlash`
+    public static func paneRimFlash(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).rimFlash")
+    }
+
+    /// `pane.<id>.attention`
+    public static func paneAttention(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).attention")
+    }
+
+    /// `pane.<id>.zoomPill`
+    public static func paneZoomPill(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).zoomPill")
+    }
+
+    /// `pane.<id>.feedbackPill`
+    public static func paneFeedbackPill(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).feedbackPill")
+    }
+
+    /// `pane.<id>.ignition`
+    public static func paneIgnition(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).ignition")
+    }
+
+    /// `pane.<id>.ignition.cancel`
+    public static func paneIgnitionCancel(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).ignition.cancel")
+    }
+
+    /// `pane.<id>.ignition.step.<stepKey>`
+    public static func paneIgnitionStep(_ id: String, _ stepKey: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).ignition.step.\(A11yID.segment(stepKey))")
+    }
+
+    /// `pane.<id>.exitBanner`
+    public static func paneExitBanner(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).exitBanner")
+    }
+
+    /// `pane.<id>.exitOverlay`
+    public static func paneExitOverlay(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).exitOverlay")
+    }
+
+    /// `pane.<id>.exitOverlay.restart`
+    public static func paneExitOverlayRestart(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).exitOverlay.restart")
+    }
+
+    /// `pane.<id>.exitOverlay.close`
+    public static func paneExitOverlayClose(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).exitOverlay.close")
+    }
+
+    /// `pane.<id>.exitOverlay.resume`
+    public static func paneExitOverlayResume(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).exitOverlay.resume")
+    }
+
+    /// `pane.<id>.startError`
+    public static func paneStartError(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).startError")
+    }
+
+    /// `pane.<id>.interrupted`
+    public static func paneInterrupted(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).interrupted")
+    }
+
+    /// `pane.<id>.interrupted.resume`
+    public static func paneInterruptedResume(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).interrupted.resume")
+    }
+
+    /// `pane.<id>.daemonBanner`
+    public static func paneDaemonBanner(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).daemonBanner")
+    }
+
+    /// `pane.<id>.closing.forceQuit`
+    public static func paneClosingForceQuit(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).closing.forceQuit")
+    }
+
+    /// `pane.<id>.containerPopover`
+    public static func paneContainerPopover(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).containerPopover")
+    }
+
+    /// `pane.<id>.containerPhases`
+    public static func paneContainerPhases(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).containerPhases")
+    }
+
+    /// `pane.<id>.containerStopped`
+    public static func paneContainerStopped(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).containerStopped")
+    }
+
+    /// `pane.<id>.rateLimit`
+    public static func paneRateLimit(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).rateLimit")
+    }
+
+    /// `pane.<id>.tooNarrow`
+    public static func paneTooNarrow(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).tooNarrow")
+    }
+
+    /// `pane.divider.<id>`
+    public static func paneDivider(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.divider.\(A11yID.segment(id))")
+    }
+
+    /// `overlay.<name>`
+    public static func overlay(_ name: String) -> A11yID {
+        A11yID(unchecked: "overlay.\(A11yID.segment(name))")
+    }
+
+    /// `overlay.<name>.advanced`
+    public static func overlayAdvanced(_ name: String) -> A11yID {
+        A11yID(unchecked: "overlay.\(A11yID.segment(name)).advanced")
+    }
+
+    /// `overlay.<name>.<field>.error`
+    public static func overlayError(_ name: String, _ field: String) -> A11yID {
+        A11yID(unchecked: "overlay.\(A11yID.segment(name)).\(A11yID.segment(field)).error")
+    }
+
+    /// `overlay.<name>.submit`
+    public static func overlaySubmit(_ name: String) -> A11yID {
+        A11yID(unchecked: "overlay.\(A11yID.segment(name)).submit")
+    }
+
+    /// `overlay.<name>.cancel`
+    public static func overlayCancel(_ name: String) -> A11yID {
+        A11yID(unchecked: "overlay.\(A11yID.segment(name)).cancel")
+    }
+
+    /// `overlay.composer.<field>.error`
+    public static func overlayComposerError(_ field: String) -> A11yID {
+        A11yID(unchecked: "overlay.composer.\(A11yID.segment(field)).error")
+    }
+
+    /// `overlay.quickLaunch.item.<agent>`
+    public static func overlayQuickLaunchItem(_ agent: String) -> A11yID {
+        A11yID(unchecked: "overlay.quickLaunch.item.\(A11yID.segment(agent))")
+    }
+
+    /// `overlay.quickLaunch.profile.<id>`
+    public static func overlayQuickLaunchProfile(_ id: String) -> A11yID {
+        A11yID(unchecked: "overlay.quickLaunch.profile.\(A11yID.segment(id))")
+    }
+
+    /// `overlay.palette.row.<kind>.<id>`
+    public static func overlayPaletteRow(_ kind: String, _ id: String) -> A11yID {
+        A11yID(unchecked: "overlay.palette.row.\(A11yID.segment(kind)).\(A11yID.segment(id))")
+    }
+
+    /// `inbox.item.<eventId>`
+    public static func inboxItem(_ eventId: String) -> A11yID {
+        A11yID(unchecked: "inbox.item.\(A11yID.segment(eventId))")
+    }
+
+    /// `inbox.item.<eventId>.markRead`
+    public static func inboxItemMarkRead(_ eventId: String) -> A11yID {
+        A11yID(unchecked: "inbox.item.\(A11yID.segment(eventId)).markRead")
+    }
+
+    /// `inbox.item.<eventId>.takeOver`
+    public static func inboxItemTakeOver(_ eventId: String) -> A11yID {
+        A11yID(unchecked: "inbox.item.\(A11yID.segment(eventId)).takeOver")
+    }
+
+    /// `rightPanel.tab.<name>`
+    public static func rightPanelTab(_ name: String) -> A11yID {
+        A11yID(unchecked: "rightPanel.tab.\(A11yID.segment(name))")
+    }
+
+    /// `rightPanel.sourceControl.change.<path>`
+    public static func rightPanelSourceControlChange(_ path: String) -> A11yID {
+        A11yID(unchecked: "rightPanel.sourceControl.change.\(A11yID.rawSegment(path, loose: true))")
+    }
+
+    /// `rightPanel.checks.row.<name>`
+    public static func rightPanelChecksRow(_ name: String) -> A11yID {
+        A11yID(unchecked: "rightPanel.checks.row.\(A11yID.segment(name))")
+    }
+
+    /// `rightPanel.computers.thumb.<computerId>`
+    public static func rightPanelComputersThumb(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "rightPanel.computers.thumb.\(A11yID.segment(computerId))")
+    }
+
+    /// `rightPanel.computers.thumb.<computerId>.takeOver`
+    public static func rightPanelComputersThumbTakeOver(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "rightPanel.computers.thumb.\(A11yID.segment(computerId)).takeOver")
+    }
+
+    /// `rightPanel.conversations.row.<id>`
+    public static func rightPanelConversationsRow(_ id: String) -> A11yID {
+        A11yID(unchecked: "rightPanel.conversations.row.\(A11yID.segment(id))")
+    }
+
+    /// `rightPanel.conversations.row.<id>.resume`
+    public static func rightPanelConversationsRowResume(_ id: String) -> A11yID {
+        A11yID(unchecked: "rightPanel.conversations.row.\(A11yID.segment(id)).resume")
+    }
+
+    /// `rightPanel.context.item.<kind>.<id>`
+    public static func rightPanelContextItem(_ kind: String, _ id: String) -> A11yID {
+        A11yID(unchecked: "rightPanel.context.item.\(A11yID.segment(kind)).\(A11yID.segment(id))")
+    }
+
+    /// `rightPanel.context.item.<kind>.<id>.toggle`
+    public static func rightPanelContextItemToggle(_ kind: String, _ id: String) -> A11yID {
+        A11yID(unchecked: "rightPanel.context.item.\(A11yID.segment(kind)).\(A11yID.segment(id)).toggle")
+    }
+
+    /// `rightPanel.context.item.<kind>.<id>.insert`
+    public static func rightPanelContextItemInsert(_ kind: String, _ id: String) -> A11yID {
+        A11yID(unchecked: "rightPanel.context.item.\(A11yID.segment(kind)).\(A11yID.segment(id)).insert")
+    }
+
+    /// `rightPanel.computer.<id>.tab.<name>`
+    public static func rightPanelComputerTab(_ id: String, _ name: String) -> A11yID {
+        A11yID(unchecked: "rightPanel.computer.\(A11yID.segment(id)).tab.\(A11yID.segment(name))")
+    }
+
+    /// `viewer.<computerId>`
+    public static func viewer(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId))")
+    }
+
+    /// `viewer.<computerId>.name`
+    public static func viewerName(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).name")
+    }
+
+    /// `viewer.<computerId>.mode`
+    public static func viewerMode(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).mode")
+    }
+
+    /// `viewer.<computerId>.url`
+    public static func viewerUrl(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).url")
+    }
+
+    /// `viewer.<computerId>.controlPill`
+    public static func viewerControlPill(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).controlPill")
+    }
+
+    /// `viewer.<computerId>.controlFrame`
+    public static func viewerControlFrame(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).controlFrame")
+    }
+
+    /// `viewer.<computerId>.ghostCursor`
+    public static func viewerGhostCursor(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).ghostCursor")
+    }
+
+    /// `viewer.<computerId>.clickRipple`
+    public static func viewerClickRipple(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).clickRipple")
+    }
+
+    /// `viewer.<computerId>.takeOver`
+    public static func viewerTakeOver(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).takeOver")
+    }
+
+    /// `viewer.<computerId>.handBack`
+    public static func viewerHandBack(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).handBack")
+    }
+
+    /// `viewer.<computerId>.handBack.note`
+    public static func viewerHandBackNote(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).handBack.note")
+    }
+
+    /// `viewer.<computerId>.handBack.confirm`
+    public static func viewerHandBackConfirm(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).handBack.confirm")
+    }
+
+    /// `viewer.<computerId>.forceTakeOver`
+    public static func viewerForceTakeOver(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).forceTakeOver")
+    }
+
+    /// `viewer.<computerId>.helpBanner`
+    public static func viewerHelpBanner(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).helpBanner")
+    }
+
+    /// `viewer.<computerId>.helpBanner.decline`
+    public static func viewerHelpBannerDecline(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).helpBanner.decline")
+    }
+
+    /// `viewer.<computerId>.connecting`
+    public static func viewerConnecting(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).connecting")
+    }
+
+    /// `viewer.<computerId>.status`
+    public static func viewerStatus(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).status")
+    }
+
+    /// `viewer.<computerId>.disconnected`
+    public static func viewerDisconnected(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).disconnected")
+    }
+
+    /// `viewer.<computerId>.popOut`
+    public static func viewerPopOut(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).popOut")
+    }
+
+    /// `viewer.<computerId>.more`
+    public static func viewerMore(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).more")
+    }
+
+    /// `viewer.<computerId>.strip`
+    public static func viewerStrip(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).strip")
+    }
+
+    /// `viewer.<computerId>.strip.thumb.<otherId>`
+    public static func viewerStripThumb(_ computerId: String, _ otherId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).strip.thumb.\(A11yID.segment(otherId))")
+    }
+
+    /// `viewer.<computerId>.keyboardBadge`
+    public static func viewerKeyboardBadge(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).keyboardBadge")
+    }
+
+    /// `computers.row.<id>`
+    public static func computersRow(_ id: String) -> A11yID {
+        A11yID(unchecked: "computers.row.\(A11yID.segment(id))")
+    }
+
+    /// `computers.queue.row.<id>.cancel`
+    public static func computersQueueRowCancel(_ id: String) -> A11yID {
+        A11yID(unchecked: "computers.queue.row.\(A11yID.segment(id)).cancel")
+    }
+
+    /// `batch.<batchId>.page`
+    public static func batchPage(_ batchId: String) -> A11yID {
+        A11yID(unchecked: "batch.\(A11yID.segment(batchId)).page")
+    }
+
+    /// `batch.<batchId>.row.<childId>`
+    public static func batchRow(_ batchId: String, _ childId: String) -> A11yID {
+        A11yID(unchecked: "batch.\(A11yID.segment(batchId)).row.\(A11yID.segment(childId))")
+    }
+
+    /// `batch.<batchId>.collectAll`
+    public static func batchCollectAll(_ batchId: String) -> A11yID {
+        A11yID(unchecked: "batch.\(A11yID.segment(batchId)).collectAll")
+    }
+
+    /// `batch.<batchId>.archive`
+    public static func batchArchive(_ batchId: String) -> A11yID {
+        A11yID(unchecked: "batch.\(A11yID.segment(batchId)).archive")
+    }
+
+    /// `library.row.<kind>.<id>`
+    public static func libraryRow(_ kind: String, _ id: String) -> A11yID {
+        A11yID(unchecked: "library.row.\(A11yID.segment(kind)).\(A11yID.segment(id))")
+    }
+
+    /// `settings.nav.<section>`
+    public static func settingsNav(_ section: String) -> A11yID {
+        A11yID(unchecked: "settings.nav.\(A11yID.segment(section))")
+    }
+
+    /// `settings.<section>.<key>`
+    public static func settings(_ section: String, _ key: String) -> A11yID {
+        A11yID(unchecked: "settings.\(A11yID.segment(section)).\(A11yID.segment(key))")
+    }
+
+    /// `settings.computers.proxies.row.<proxyId>`
+    public static func settingsComputersProxiesRow(_ proxyId: String) -> A11yID {
+        A11yID(unchecked: "settings.computers.proxies.row.\(A11yID.segment(proxyId))")
+    }
+
+    /// `onboarding.step.<name>`
+    public static func onboardingStep(_ name: String) -> A11yID {
+        A11yID(unchecked: "onboarding.step.\(A11yID.segment(name))")
+    }
+
+    /// `onboarding.item.<key>`
+    public static func onboardingItem(_ key: String) -> A11yID {
+        A11yID(unchecked: "onboarding.item.\(A11yID.segment(key))")
+    }
+
+    /// `onboarding.import.<group>`
+    public static func onboardingImport(_ group: String) -> A11yID {
+        A11yID(unchecked: "onboarding.import.\(A11yID.segment(group))")
+    }
+
+    /// `onboarding.import.item.<n>`
+    public static func onboardingImportItem(_ n: String) -> A11yID {
+        A11yID(unchecked: "onboarding.import.item.\(A11yID.segment(n))")
+    }
+
+    /// `overlay.resume.row.<id>`
+    public static func overlayResumeRow(_ id: String) -> A11yID {
+        A11yID(unchecked: "overlay.resume.row.\(A11yID.segment(id))")
+    }
+
+    /// `overlay.newBatch.*`
+    public static func overlayNewBatch(_ rest: String) -> A11yID {
+        A11yID(unchecked: "overlay.newBatch.\(A11yID.rawSegment(rest, loose: true))")
+    }
+
+    /// `menuBar.item.<sessionId>`
+    public static func menuBarItem(_ sessionId: String) -> A11yID {
+        A11yID(unchecked: "menuBar.item.\(A11yID.segment(sessionId))")
+    }
+
+    /// `menu.<group>.<actionId>`
+    public static func menu(_ group: String, _ actionId: String) -> A11yID {
+        A11yID(unchecked: "menu.\(A11yID.segment(group)).\(A11yID.segment(actionId))")
+    }
+
+    /// `toast.<kind>`
+    public static func toast(_ kind: String) -> A11yID {
+        A11yID(unchecked: "toast.\(A11yID.segment(kind))")
+    }
+
+    /// `toast.<kind>.action`
+    public static func toastAction(_ kind: String) -> A11yID {
+        A11yID(unchecked: "toast.\(A11yID.segment(kind)).action")
+    }
+}
+
+extension A11yID {
+    /// Lista canônica completa (03 §22), na ordem da spec.
+    public static let catalog: [A11yIDSpec] = [
+        A11yIDSpec(pattern: "window.main", surface: "Janela"),
+        A11yIDSpec(pattern: "window.titlebar", surface: "Janela"),
+        A11yIDSpec(pattern: "window.appName", surface: "Janela"),
+        A11yIDSpec(pattern: "window.sidebarToggle", surface: "Janela"),
+        A11yIDSpec(pattern: "window.historyBack", surface: "Janela"),
+        A11yIDSpec(pattern: "window.historyForward", surface: "Janela"),
+        A11yIDSpec(pattern: "window.automationBadge", surface: "Janela"),
+        A11yIDSpec(pattern: "window.daemonBanner", surface: "Janela"),
+        A11yIDSpec(pattern: "window.databaseBanner", surface: "Janela"),
+        A11yIDSpec(pattern: "<region>.errorBoundary", surface: "Erros"),
+        A11yIDSpec(pattern: "<region>.errorBoundary.retry", surface: "Erros"),
+        A11yIDSpec(pattern: "<region>.errorBoundary.copy", surface: "Erros"),
+        A11yIDSpec(pattern: "<host>.status", surface: "Genéricos"),
+        A11yIDSpec(pattern: "<host>.hoverCard", surface: "Genéricos"),
+        A11yIDSpec(pattern: "<panel>.empty", surface: "Genéricos"),
+        A11yIDSpec(pattern: "tooltip", surface: "Genéricos"),
+        A11yIDSpec(pattern: "menuPanel.<name>", surface: "Genéricos"),
+        A11yIDSpec(pattern: "popover.<name>", surface: "Genéricos"),
+        A11yIDSpec(pattern: "popover.<name>.<field>", surface: "Genéricos"),
+        A11yIDSpec(pattern: "popover.<name>.confirm", surface: "Genéricos"),
+        A11yIDSpec(pattern: "sidebar", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.selection", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.search", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.search.clear", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.search.empty", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.search.empty.clear", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.nav.inbox", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.nav.inbox.badge", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.nav.computers", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.nav.library", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.projects.filter", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.projects.filterMenu", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.projects.add", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.projects.newSession", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.project.<id>", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.project.<id>.toggle", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.project.<id>.menu", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.project.<id>.newSession", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.project.<id>.showMore", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.name", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.status", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.archive", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.prChip", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.note", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.summaryPill", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.hoverCard", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.phase", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.error", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.agents", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.rename", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.revealGlow", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.showMore", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.pin", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.agent.<terminalId>", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.agent.<terminalId>.status", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.agent.<terminalId>.lastMessage", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.agent.<terminalId>.children.toggle", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.child.<childId>", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.child.<childId>.status", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.child.<childId>.glyph", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.child.<childId>.connector", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.pending.<id>", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.pending.<id>.cancel", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.cleanSessions", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.cleanSessions.new", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.footer.settings", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.footer.reveal", surface: "Sidebar"),
+        A11yIDSpec(pattern: "tabs.tab.<terminalId>", surface: "Tabs"),
+        A11yIDSpec(pattern: "tabs.tab.<terminalId>.close", surface: "Tabs"),
+        A11yIDSpec(pattern: "tabs.tab.<terminalId>.title", surface: "Tabs"),
+        A11yIDSpec(pattern: "tabs.tab.<terminalId>.restart", surface: "Tabs"),
+        A11yIDSpec(pattern: "tabs.tab.<terminalId>.status", surface: "Tabs"),
+        A11yIDSpec(pattern: "tabs.activeIndicator", surface: "Tabs"),
+        A11yIDSpec(pattern: "tabs.overflow.leading", surface: "Tabs"),
+        A11yIDSpec(pattern: "tabs.overflow.trailing", surface: "Tabs"),
+        A11yIDSpec(pattern: "tabs.new", surface: "Tabs"),
+        A11yIDSpec(pattern: "tabs.quickCommands", surface: "Tabs"),
+        A11yIDSpec(pattern: "tabs.paneActions", surface: "Tabs"),
+        A11yIDSpec(pattern: "tabs.rightPanelToggle", surface: "Tabs"),
+        A11yIDSpec(pattern: "pane.<id>", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.terminal", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.header", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.status", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.splitRight", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.splitDown", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.expand", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.close", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.cover", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.rimFlash", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.attention", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.zoomPill", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.feedbackPill", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.ignition", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.ignition.cancel", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.ignition.step.<stepKey>", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.exitBanner", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.exitOverlay", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.exitOverlay.restart", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.exitOverlay.close", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.exitOverlay.resume", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.startError", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.interrupted", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.interrupted.resume", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.daemonBanner", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.closing.forceQuit", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.containerPopover", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.containerPhases", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.containerStopped", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.rateLimit", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.tooNarrow", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.divider.<id>", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.empty", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.empty.newAgent", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.empty.newTerminal", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.empty.reopen", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.empty.start", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.empty.resume", surface: "Panes"),
+        A11yIDSpec(pattern: "find.field", surface: "Find"),
+        A11yIDSpec(pattern: "find.count", surface: "Find"),
+        A11yIDSpec(pattern: "find.caseSensitive", surface: "Find"),
+        A11yIDSpec(pattern: "find.regex", surface: "Find"),
+        A11yIDSpec(pattern: "find.previous", surface: "Find"),
+        A11yIDSpec(pattern: "find.next", surface: "Find"),
+        A11yIDSpec(pattern: "find.close", surface: "Find"),
+        A11yIDSpec(pattern: "statusBar", surface: "Status bar"),
+        A11yIDSpec(pattern: "statusBar.usage.claude", surface: "Status bar"),
+        A11yIDSpec(pattern: "statusBar.usage.codex", surface: "Status bar"),
+        A11yIDSpec(pattern: "statusBar.agents", surface: "Status bar"),
+        A11yIDSpec(pattern: "statusBar.computers", surface: "Status bar"),
+        A11yIDSpec(pattern: "statusBar.proxyUsage", surface: "Status bar"),
+        A11yIDSpec(pattern: "statusBar.docker", surface: "Status bar"),
+        A11yIDSpec(pattern: "statusBar.background", surface: "Status bar"),
+        A11yIDSpec(pattern: "overlay.scrim", surface: "Overlays (geral)"),
+        A11yIDSpec(pattern: "overlay.<name>", surface: "Overlays (geral)"),
+        A11yIDSpec(pattern: "overlay.<name>.advanced", surface: "Overlays (geral)"),
+        A11yIDSpec(pattern: "overlay.<name>.<field>.error", surface: "Overlays (geral)"),
+        A11yIDSpec(pattern: "overlay.<name>.submit", surface: "Overlays (geral)"),
+        A11yIDSpec(pattern: "overlay.<name>.cancel", surface: "Overlays (geral)"),
+        A11yIDSpec(pattern: "overlay.composer", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.project", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.where", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.createFrom", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.baseRef", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.reuseBranch", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.worktree", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.folder", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.agent", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.profile", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.prompt", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.advanced", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.name", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.branch", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.location", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.computers", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.proxy", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.watchSubagents", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.createMore", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.cancel", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.submit", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.launchChip", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.<field>.error", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.quickLaunch", surface: "Quick launch"),
+        A11yIDSpec(pattern: "overlay.quickLaunch.input", surface: "Quick launch"),
+        A11yIDSpec(pattern: "overlay.quickLaunch.item.<agent>", surface: "Quick launch"),
+        A11yIDSpec(pattern: "overlay.quickLaunch.profile.<id>", surface: "Quick launch"),
+        A11yIDSpec(pattern: "overlay.quickLaunch.resume", surface: "Quick launch"),
+        A11yIDSpec(pattern: "overlay.quickLaunch.openComputer", surface: "Quick launch"),
+        A11yIDSpec(pattern: "overlay.quickLaunch.agentSettings", surface: "Quick launch"),
+        A11yIDSpec(pattern: "overlay.palette", surface: "Palette"),
+        A11yIDSpec(pattern: "overlay.palette.input", surface: "Palette"),
+        A11yIDSpec(pattern: "overlay.palette.row.<kind>.<id>", surface: "Palette"),
+        A11yIDSpec(pattern: "overlay.palette.filter", surface: "Palette"),
+        A11yIDSpec(pattern: "overlay.palette.insertMode", surface: "Palette"),
+        A11yIDSpec(pattern: "inbox", surface: "Inbox"),
+        A11yIDSpec(pattern: "inbox.filter", surface: "Inbox"),
+        A11yIDSpec(pattern: "inbox.markAllRead", surface: "Inbox"),
+        A11yIDSpec(pattern: "inbox.empty", surface: "Inbox"),
+        A11yIDSpec(pattern: "inbox.item.<eventId>", surface: "Inbox"),
+        A11yIDSpec(pattern: "inbox.item.<eventId>.markRead", surface: "Inbox"),
+        A11yIDSpec(pattern: "inbox.item.<eventId>.takeOver", surface: "Inbox"),
+        A11yIDSpec(pattern: "rightPanel", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.tab.<name>", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.tabs.indicator", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.sourceControl.branch", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.sourceControl.refresh", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.sourceControl.pr", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.sourceControl.createPR", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.sourceControl.change.<path>", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.checks.row.<name>", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.checks.refresh", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.checks.sendFailures", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.computers.new", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.computers.empty", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.computers.thumb.<computerId>", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.computers.thumb.<computerId>.takeOver", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.conversations.search", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.conversations.scope", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.conversations.row.<id>", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.conversations.row.<id>.resume", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.context.item.<kind>.<id>", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.context.item.<kind>.<id>.toggle", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.context.item.<kind>.<id>.insert", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.computer.<id>.tab.<name>", surface: "Painel direito"),
+        A11yIDSpec(pattern: "viewer.<computerId>", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.name", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.mode", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.url", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.controlPill", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.controlFrame", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.ghostCursor", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.clickRipple", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.takeOver", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.handBack", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.handBack.note", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.handBack.confirm", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.forceTakeOver", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.helpBanner", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.helpBanner.decline", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.connecting", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.status", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.disconnected", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.popOut", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.more", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.strip", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.strip.thumb.<otherId>", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.keyboardBadge", surface: "Viewer"),
+        A11yIDSpec(pattern: "computers.page", surface: "Páginas"),
+        A11yIDSpec(pattern: "computers.cleanUp", surface: "Páginas"),
+        A11yIDSpec(pattern: "computers.dockerBanner", surface: "Páginas"),
+        A11yIDSpec(pattern: "computers.empty", surface: "Páginas"),
+        A11yIDSpec(pattern: "computers.row.<id>", surface: "Páginas"),
+        A11yIDSpec(pattern: "computers.queue.row.<id>.cancel", surface: "Páginas"),
+        A11yIDSpec(pattern: "batch.<batchId>.page", surface: "Páginas"),
+        A11yIDSpec(pattern: "batch.<batchId>.row.<childId>", surface: "Páginas"),
+        A11yIDSpec(pattern: "batch.<batchId>.collectAll", surface: "Páginas"),
+        A11yIDSpec(pattern: "batch.<batchId>.archive", surface: "Páginas"),
+        A11yIDSpec(pattern: "library.page", surface: "Páginas"),
+        A11yIDSpec(pattern: "library.section", surface: "Páginas"),
+        A11yIDSpec(pattern: "library.search", surface: "Páginas"),
+        A11yIDSpec(pattern: "library.source", surface: "Páginas"),
+        A11yIDSpec(pattern: "library.new", surface: "Páginas"),
+        A11yIDSpec(pattern: "library.empty", surface: "Páginas"),
+        A11yIDSpec(pattern: "library.row.<kind>.<id>", surface: "Páginas"),
+        A11yIDSpec(pattern: "library.detail.newSession", surface: "Páginas"),
+        A11yIDSpec(pattern: "library.detail.enable", surface: "Páginas"),
+        A11yIDSpec(pattern: "library.detail.insert", surface: "Páginas"),
+        A11yIDSpec(pattern: "library.detail.openInEditor", surface: "Páginas"),
+        A11yIDSpec(pattern: "library.detail.reveal", surface: "Páginas"),
+        A11yIDSpec(pattern: "library.profile.name", surface: "Páginas"),
+        A11yIDSpec(pattern: "library.profile.agent", surface: "Páginas"),
+        A11yIDSpec(pattern: "library.profile.model", surface: "Páginas"),
+        A11yIDSpec(pattern: "library.profile.permissions", surface: "Páginas"),
+        A11yIDSpec(pattern: "library.profile.args", surface: "Páginas"),
+        A11yIDSpec(pattern: "library.profile.env", surface: "Páginas"),
+        A11yIDSpec(pattern: "library.profile.default", surface: "Páginas"),
+        A11yIDSpec(pattern: "settings.page", surface: "Settings"),
+        A11yIDSpec(pattern: "settings.back", surface: "Settings"),
+        A11yIDSpec(pattern: "settings.search", surface: "Settings"),
+        A11yIDSpec(pattern: "settings.nav.<section>", surface: "Settings"),
+        A11yIDSpec(pattern: "settings.<section>.<key>", surface: "Settings"),
+        A11yIDSpec(pattern: "settings.computers.proxies.row.<proxyId>", surface: "Settings"),
+        A11yIDSpec(pattern: "settings.computers.proxies.add", surface: "Settings"),
+        A11yIDSpec(pattern: "settings.computers.proxies.test", surface: "Settings"),
+        A11yIDSpec(pattern: "onboarding", surface: "Onboarding"),
+        A11yIDSpec(pattern: "onboarding.step.<name>", surface: "Onboarding"),
+        A11yIDSpec(pattern: "onboarding.item.<key>", surface: "Onboarding"),
+        A11yIDSpec(pattern: "onboarding.import.<group>", surface: "Onboarding"),
+        A11yIDSpec(pattern: "onboarding.import.item.<n>", surface: "Onboarding"),
+        A11yIDSpec(pattern: "onboarding.import.confirm", surface: "Onboarding"),
+        A11yIDSpec(pattern: "onboarding.done", surface: "Onboarding"),
+        A11yIDSpec(pattern: "onboarding.skip", surface: "Onboarding"),
+        A11yIDSpec(pattern: "overlay.confirmClose", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmClose.dontAsk", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmClose.cancel", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmClose.confirm", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmArchive.confirm", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmStopComputer.confirm", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmDeleteComputer.confirm", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmDelete", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmDelete.keepBranch", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmDelete.trashFolder", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmDelete.deleteRuns", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmDelete.confirm", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmRemoveProject.confirm", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.resume", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.resume.row.<id>", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.resume.confirm", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.moveToProject", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.moveToProject.project", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.moveToProject.confirm", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.addProject.choose", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.addProject.clone", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.addProject.clone.url", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.addProject.clone.submit", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.addProject.importOrca", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmQuit", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmQuit.keepRunning", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmQuit.stopAll", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmQuit.cancel", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmQuit.dontAsk", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmSkipPermissions.confirm", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.renameBranch", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.renameBranch.name", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.renameBranch.submit", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.about", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.about.licenses", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.about.copy", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.newBatch.*", surface: "Dialogs"),
+        A11yIDSpec(pattern: "popover.paste", surface: "Dialogs"),
+        A11yIDSpec(pattern: "popover.paste.text", surface: "Dialogs"),
+        A11yIDSpec(pattern: "popover.paste.confirm", surface: "Dialogs"),
+        A11yIDSpec(pattern: "landing", surface: "Landing"),
+        A11yIDSpec(pattern: "landing.addProject", surface: "Landing"),
+        A11yIDSpec(pattern: "landing.newCleanSession", surface: "Landing"),
+        A11yIDSpec(pattern: "landing.importOrca", surface: "Landing"),
+        A11yIDSpec(pattern: "landing.newSession", surface: "Landing"),
+        A11yIDSpec(pattern: "menuBar.icon", surface: "Menu bar"),
+        A11yIDSpec(pattern: "menuBar.item.<sessionId>", surface: "Menu bar"),
+        A11yIDSpec(pattern: "menuBar.open", surface: "Menu bar"),
+        A11yIDSpec(pattern: "menuBar.newSession", surface: "Menu bar"),
+        A11yIDSpec(pattern: "menuBar.newCleanSession", surface: "Menu bar"),
+        A11yIDSpec(pattern: "menuBar.stopAll", surface: "Menu bar"),
+        A11yIDSpec(pattern: "menuBar.quitCompletely", surface: "Menu bar"),
+        A11yIDSpec(pattern: "menu.<group>.<actionId>", surface: "Menus do app"),
+        A11yIDSpec(pattern: "toast.<kind>", surface: "Toasts"),
+        A11yIDSpec(pattern: "toast.<kind>.action", surface: "Toasts"),
+    ]
+}

@@ -1,10 +1,12 @@
 import AgentBoxPlatform
+import AgentBoxUI
 import SwiftUI
 
-/// Casca vazia (T1-01): abre uma janela sem UI de produto.
+/// Casca (T1-01/T1-02): um `@main` que monta o `AppEnvironment` e a janela principal. Sem lógica de produto.
 @main
 struct AgentBoxApp: App {
     private let log = LogFacade(.app, category: "lifecycle")
+    private let env = AppEnvironment()
 
     init() {
         log.publicInfo("launch")
@@ -12,8 +14,8 @@ struct AgentBoxApp: App {
 
     var body: some Scene {
         WindowGroup {
-            Color.clear
-                .frame(minWidth: 640, minHeight: 400)
+            MainWindowView(env: env)
         }
+        .defaultSize(width: 1440, height: 900)
     }
 }
