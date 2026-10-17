@@ -36,7 +36,7 @@ public enum SidebarFixtures {
 
         func project(_ name: String, kind: ProjectKind = .git, remote: String? = "git@github.com:labrynth/x.git", index: Int) -> Project {
             let p = Project(
-                name: name, kind: kind, rootPath: "\(home)/orca/workspaces/\(name)", gitRemoteURL: kind == .git ? remote : nil,
+                name: name, kind: kind, rootPath: "\(home)/AgentBox/worktrees/\(name)", gitRemoteURL: kind == .git ? remote : nil,
                 defaultBranch: kind == .git ? "main" : nil, sortIndex: index, createdAt: ago(now, days: 30))
             c.projects.append(p)
             return p
@@ -85,7 +85,7 @@ public enum SidebarFixtures {
         _ = session(
             motion, title: "sandperch", branch: "sandperch", active: ago(now, hours: 3),
             terminals: [
-                (.claude, .running, "Review motion tokens", nil), (.codex, .running, "Port Orca shadows", nil),
+                (.claude, .running, "Review motion tokens", nil), (.codex, .running, "Port motion shadows", nil),
                 (.claude, .launching, "Write snapshot tests", nil), (.opencode, .interrupted, "Check A11y IDs", nil),
                 (.claude, .exited, "Lint pass", 0),
             ])

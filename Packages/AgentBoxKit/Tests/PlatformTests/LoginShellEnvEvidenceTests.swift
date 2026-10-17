@@ -11,7 +11,7 @@ import Testing
         let base = [
             "HOME": home, "USER": NSUserName(), "LOGNAME": NSUserName(),
             "PATH": "/usr/bin:/bin:/usr/sbin:/sbin", "TMPDIR": NSTemporaryDirectory(), "LANG": "en_US.UTF-8",
-            "ORCA_PANE_KEY": "synthetic-orca-pane", "ORCA_AGENT_HOOK_PORT": "0", "CLAUDECODE": "1",
+            "KITTY_PANE_KEY": "synthetic-pane", "KITTY_AGENT_HOOK_PORT": "0", "CLAUDECODE": "1",
         ]
         let runDir = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("abenv-evidence-\(UUID().uuidString)")
         let provider = LoginShellEnvProvider(config: LoginShellEnvConfig(baseEnvironment: base, runDirectory: runDir))
@@ -42,9 +42,9 @@ import Testing
             "secret_like_key_names_only": result.diagnostics.secretLikeKeys,
             "ssh_auth_sock_present": result.variables["SSH_AUTH_SOCK"] != nil,
             "proxy_keys_present": keys.filter { $0.lowercased().hasSuffix("_proxy") },
-            "orca_keys_in_result": keys.filter { $0.hasPrefix("ORCA_") },
+            "foreign_keys_in_result": keys.filter { $0.hasPrefix("KITTY_") },
             "claudecode_in_result": result.variables["CLAUDECODE"] != nil,
-            "input_env_had_orca_and_claudecode": true,
+            "input_env_had_foreign_and_claudecode": true,
             "which_in_captured_path": which,
             "path_entry_count": path.count,
         ]

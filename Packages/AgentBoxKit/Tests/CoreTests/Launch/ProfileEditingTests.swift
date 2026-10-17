@@ -96,7 +96,7 @@ import Testing
         #expect(partial.terminal.fontSize == 32, "size is clamped on load")
         #expect(partial.general.askBeforeQuit == false)
         #expect(partial.general.keepAgentsRunning == true)
-        #expect(AppSettings().general.worktreeFolder == "~/orca/workspaces")
+        #expect(AppSettings().general.worktreeFolder == "~/AgentBox/worktrees")
         #expect(AppSettings().general.cleanSessionFolder == "~/AgentBox/sessions")
     }
 
@@ -110,7 +110,7 @@ import Testing
     }
 
     @Test func validation() {
-        #expect(SettingsValidation.folder("~/orca/workspaces/") == .success("~/orca/workspaces"))
+        #expect(SettingsValidation.folder("~/AgentBox/worktrees/") == .success("~/AgentBox/worktrees"))
         #expect(SettingsValidation.folder("/tmp/x") == .success("/tmp/x"))
         #expect(SettingsValidation.folder("relative/path") == .failure(.init("Use an absolute path, starting with / or ~.")))
         #expect(SettingsValidation.folder("  ") == .failure(.init("Enter a folder path.")))

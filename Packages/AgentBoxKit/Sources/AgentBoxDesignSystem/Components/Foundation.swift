@@ -14,7 +14,7 @@ public enum DSInteractionState: Sendable, Equatable {
 }
 
 public extension DSRGBA {
-    /// Mesma cor com o alfa multiplicado (`input/30`, `primary/90` do Orca). Nunca pré-mistura com a superfície (02 §2).
+    /// Mesma cor com o alfa multiplicado (`input/30`, `primary/90` de referência). Nunca pré-mistura com a superfície (02 §2).
     func scaled(_ factor: Double) -> DSRGBA { DSRGBA(hex: hex, opacity: alpha * factor) }
 }
 

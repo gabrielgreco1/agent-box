@@ -291,7 +291,7 @@ import Testing
         defer { Task { await cleanup(cancel) } }
         let result = try await cancel.registry.perform(.settingsPickPath, .select("worktreeFolder"))
         #expect(result.message == "cancelled")
-        #expect(cancel.model.settings.general.worktreeFolder == "~/orca/workspaces")
+        #expect(cancel.model.settings.general.worktreeFolder == "~/AgentBox/worktrees")
     }
 
     // MARK: Perfis

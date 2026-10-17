@@ -7,14 +7,14 @@ import Testing
 @Suite struct ComposerDraftTests {
     static let project = Project(name: "rti-platform", kind: .git, rootPath: "/Users/me/code/rti-platform", defaultBranch: "main")
     static let main = Worktree(projectID: project.id, path: "/Users/me/code/rti-platform", branch: "main", isMain: true)
-    static let feature = Worktree(projectID: project.id, path: "/Users/me/orca/workspaces/rti-platform/feat", branch: "me/feat")
+    static let feature = Worktree(projectID: project.id, path: "/Users/me/AgentBox/worktrees/rti-platform/feat", branch: "me/feat")
 
     func context(
         project: Project? = ComposerDraftTests.project, prefix: String? = "gabrielgreco1", lookup: GitBranchLookup? = nil,
         users: [UUID: String] = [:]
     ) -> ComposerContext {
         ComposerContext(
-            project: project, defaultBranch: "main", branchPrefix: prefix, worktreeRoot: "/Users/me/orca/workspaces",
+            project: project, defaultBranch: "main", branchPrefix: prefix, worktreeRoot: "/Users/me/AgentBox/worktrees",
             cleanSessionRoot: "/Users/me/AgentBox/sessions", createFromLookup: lookup, worktrees: [Self.main, Self.feature],
             worktreeUsers: users, home: "/Users/me")
     }
@@ -78,7 +78,7 @@ import Testing
     @Test func locationAndPathFollowTheWhereChoice() {
         let ctx = context()
         var d = draft("fix arcgis pagination")
-        #expect(d.worktreeLocation(ctx) == "/Users/me/orca/workspaces/rti-platform/fix-arcgis-pagination")
+        #expect(d.worktreeLocation(ctx) == "/Users/me/AgentBox/worktrees/rti-platform/fix-arcgis-pagination")
         d.locationRoot = "/tmp/wt"
         #expect(d.worktreeLocation(ctx) == "/tmp/wt/rti-platform/fix-arcgis-pagination")
         d.whereChoice = .mainCheckout
@@ -148,7 +148,7 @@ import Testing
         let text = d.summary(context())
         #expect(text.hasPrefix("claude --dangerously-skip-permissions \"Fix the ArcGIS pagination: the last"))
         #expect(text.contains("…\""))
-        #expect(text.hasSuffix(" in ~/orca/workspaces/rti-platform/fix-the-arcgis-pagination-the"))
+        #expect(text.hasSuffix(" in ~/AgentBox/worktrees/rti-platform/fix-the-arcgis-pagination-the"))
         d.profileID = BuiltinProfiles.claudePlan.id
         #expect(d.summary(context()).hasPrefix("claude --permission-mode plan "))
         d.provider = .shell

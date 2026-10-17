@@ -182,8 +182,8 @@ public struct LaunchEnvironmentComposer: Sendable {
         var warnings: [LaunchWarning] = []
         for layer in [profileEnv, overrides] {
             for (name, value) in layer.sorted(by: { $0.key < $1.key }) {
-                // Só o app define AGENTBOX_*; ORCA_* ativaria os hooks globais do Orca dentro do Agent Box.
-                if name.hasPrefix("AGENTBOX_") || name.hasPrefix("ORCA_") {
+                // Só o app define AGENTBOX_*.
+                if name.hasPrefix("AGENTBOX_") {
                     warnings.append(LaunchWarning(.reservedEnvDropped, "\(name) is reserved and was not passed to the terminal"))
                     continue
                 }

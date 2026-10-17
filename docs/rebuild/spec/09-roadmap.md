@@ -16,7 +16,7 @@ Cada fatia de produto termina com **um dia de uso real** do dono e só fecha com
 |---|---|---|---|---|
 | **0 · Fechamento** | Nada de código de produto antes de: errata aplicada, referência do Orca versionada, spikes S-01…S-08 respondidos, scripts de gate e versões fixadas | Abrir o repositório e ver que toda tarefa da Fatia 1 tem referência, dono, critério e script para ser provada | Não há dia de uso. Saída: checklist da §2.6 inteiro verde, aprovado pelo dono | Nenhum AC de produto. Gate: `bootstrap.sh` falha com versão errada; relatórios dos spikes em `docs/evidence/spikes/` |
 | **1 · Casca, terminais e sessões limpas** | Substituir o Orca em trabalho **sem** computadores: janela, sidebar, tabs, splits, composer, Quick Launch, sessões limpas, daemon que sobrevive ao ⌘Q | Criar sessão com agente já rodando, abrir sessão limpa em um clique, dividir e fechar panes, fechar o app e reabrir com os agentes vivos | J3 (sem PR e sem hooks), J11, J8 passos de ⌘Q e relançamento, com gravação | AC-000, AC-101 (só CLI detectado e logado), AC-120 (landing), AC-301…316, AC-801…805 e 811, AC-1101…1106 e 1108, AC-T01…T09, T12, T14, T16, T25 (momentos 1 e 2), T26, T27, T28 |
-| **2 · Atenção, GitHub e convivência com o Orca** | Saber quem precisa de mim sem olhar cada terminal; PR e checks; importar o Orca | Ver estado real dos agentes (hooks), receber notificação e ir ao agente certo, abrir PR, importar projetos do Orca e usar os dois apps | J1, J2, J5 e J6 completos, com gravação | AC-101…120 (exceto AC-119), AC-201…209, AC-501…506, AC-601…612, AC-806…810, AC-T10, T11, T13, T15, T17, T18, T24 |
+| **2 · Atenção, GitHub** | Saber quem precisa de mim sem olhar cada terminal; PR e checks; importar o Orca | Ver estado real dos agentes (hooks), receber notificação e ir ao agente certo, abrir PR, importar projetos do Orca e usar os dois apps | J1, J2, J5 e J6 completos, com gravação | AC-101…120 (exceto AC-119), AC-201…209, AC-501…506, AC-601…612, AC-806…810, AC-T10, T11, T13, T15, T17, T18, T24 |
 | **3 · Computadores, modo leve** | Superar o CLI antigo: o pai pede computador, o filho nativo usa, o dono acompanha e assume | Rodar "spawn 2 subagents" e um lote real de 10+ filhos com computador, ver o viewer, assumir e devolver, coletar resultado com evidência no host | J4 com lote real de pelo menos 10 subagentes (RT.2 item 3) | AC-401…425, AC-428, AC-429, AC-105…107, AC-T19…T23, AC-418, AC-117, AC-118 |
 | **4 · Uso, biblioteca mínima e endurecimento** | Fechar a v1: status bar de uso, Library só leitura com ativação por sessão, "Insert Skill or Agent…", observabilidade, benchmarks | Ver uso dos limites do Claude e do Codex, computadores e proxy na status bar; ativar skill numa sessão; inserir skill ou agente no prompt pela palette | RT.2: J2, J3, J4, J6, J8 e J11 num dia real com assinatura estável, usando o Agent Box no lugar do Orca | AC-901…905, AC-1001…1004, AC-T26 de todas as telas, todos os ACs v1 de 05 verdes, release `1.0.0` |
 | **v1.1** | Modo isolado e o que 01 §4.2 adia | Rodar CLIs dentro de containers como tabs, handoff, diff, limpeza etc. | Definido na abertura da v1.1 | AC-4xx do modo isolado (AC-451…464) e demais ACs v1.1 de 05 |
@@ -183,7 +183,7 @@ Reconciliação com R3 §10: as 25 tarefas de R3 (T-01…T-25) viram **T1-01…T
 - Escopo: captura com marcador, fallback `-l -c` com timeout, denylist (inclui `ORCA_*`), cache e invalidação.
 - Arquivos: `AgentBoxPlatform/LoginShellEnv/`.
 - Depende de: T1-01, S-06.
-- Cobre: TA-110, AC-312, AC-T11.
+- Cobre: TA-110, AC-312.
 - Pronto quando: unidade + AC-312 no shell do dono; env do agente sem `ORCA_*`.
 - Evidência: [T]; [L] `which claude codex gh` dentro de um pane.
 
@@ -362,7 +362,7 @@ Pré-requisitos de verificação: S-05 (concluído) e V1…V13 (08 §11.2); D-Co
 | T2-05 GitHub | `gh`: chip de PR, checks, "Create PR", nota de status da sessão; painel direito (activity bar, Source Control só lista, Checks) | T2-01, Fatia 1 | AC-501, 503, 504, 208 |
 | T2-06 Colar no prompt por clique | "Paste into <Agent>" com bracketed paste sem Enter, origem `0x02` (T11) | T2-04 | AC-505, 506 |
 | T2-07 Retomada e Conversations | "Resume Agents…" em lote com custo à vista, aba Conversations (⇧⌘H) | T2-01 | AC-203, 205, 206, 207, 806…810 |
-| T2-08 Importação do Orca e convivência | Importar projetos, worktrees e args padrão (P3), só leitura; sessões importadas "Not started" (P15); aviso de worktree também aberta no Orca | Fatia 1 | AC-108…111, AC-T10, AC-T11 |
+| T2-08 Importação do Orca e convivência | Removida por P21 (nenhuma dependência do Orca no produto) | - | - |
 | T2-09 Onboarding completo | Checklist de diagnóstico: CLIs, `gh`, Docker, conflitos de config global (R1.1, R1.5…R1.8) | T2-08 | AC-101…104, 112…117 |
 | T2-10 Vault, catálogo e importador do JSON atual | Segredos no Keychain/Vault, catálogo de agentes, importador dos JSONs antigos com dry-run | Fatia 1 | AC-118 (parte), AC-T15 |
 | T2-11 Desempenho e fechamento | 10 sessões em paralelo medidas (AR-702/703), relatório da fatia | todas | AC-608, 609 |

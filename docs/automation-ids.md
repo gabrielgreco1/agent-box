@@ -328,9 +328,6 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `onboarding`
 - `onboarding.step.<name>`
 - `onboarding.item.<key>`
-- `onboarding.import.<group>`
-- `onboarding.import.item.<n>`
-- `onboarding.import.confirm`
 - `onboarding.done`
 - `onboarding.skip`
 
@@ -367,7 +364,6 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `overlay.addProject.clone`
 - `overlay.addProject.clone.url`
 - `overlay.addProject.clone.submit`
-- `overlay.addProject.importOrca`
 - `overlay.confirmQuit`
 - `overlay.confirmQuit.keepRunning`
 - `overlay.confirmQuit.stopAll`
@@ -391,7 +387,6 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `landing`
 - `landing.addProject`
 - `landing.newCleanSession`
-- `landing.importOrca`
 - `landing.newSession`
 
 ### Menu bar
@@ -753,9 +748,6 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `dialog.moveToProject.confirm` | Move / Convert (§16.8) | — | slice1 |
 | `dialog.moveToProject.setProject` | Project (combobox, §16.8) | — | slice1 |
 | `dialog.moveToProject.cancel` | Cancel (§16.8) | Esc | slice1 |
-| `dialog.addProject.choose` | Choose a Folder… | — | slice1 |
-| `dialog.addProject.importOrca` | Import from Orca… | — | slice1 |
-| `dialog.addProject.clone` | Clone from URL (§16.9) | — | slice1 |
 | `dialog.addProject.addFound` | Add <n> Projects | — | slice1 |
 | `dialog.addProject.stopScan` | Stop Scan (§16.9) | — | slice1 |
 | `dialog.quit.keepRunning` | Keep Running (§16.10) | ↵ | slice1 |

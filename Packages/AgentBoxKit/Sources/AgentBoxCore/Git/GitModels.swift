@@ -84,7 +84,7 @@ public enum GitFetchPolicy: Sendable, Equatable {
 public struct GitWorktreeRequest: Sendable, Equatable {
     public var repositoryURL: URL
     public var source: GitWorktreeSource
-    /// Raiz das worktrees (P15: `~/orca/workspaces`); a pasta final é `<raiz>/<repo>/<slug>`.
+    /// Raiz das worktrees (P21: `~/AgentBox/worktrees`); a pasta final é `<raiz>/<repo>/<slug>`.
     public var worktreeRoot: URL
     public var fetch: GitFetchPolicy
 
@@ -119,9 +119,9 @@ public struct GitWorktreeRemovalOptions: Sendable, Equatable {
 
 /// Convenções de caminho e nome (P15, 06 §5.2).
 public enum GitNaming {
-    /// `~/orca/workspaces` (padrão de transição, P15).
+    /// `~/AgentBox/worktrees` (P21).
     public static func defaultWorktreeRoot(home: URL = FileManager.default.homeDirectoryForCurrentUser) -> URL {
-        home.appendingPathComponent("orca", isDirectory: true).appendingPathComponent("workspaces", isDirectory: true)
+        home.appendingPathComponent("AgentBox", isDirectory: true).appendingPathComponent("worktrees", isDirectory: true)
     }
 
     /// Minúsculas ASCII, hífens, até 40 caracteres; vazio vira "worktree".

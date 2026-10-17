@@ -40,7 +40,7 @@ public enum AttentionFixtures {
         var projects: [String: Project] = [:]
         for (index, name) in ["labrynth-motiondesign", "otter"].enumerated() {
             let p = Project(
-                name: name, rootPath: "\(home)/orca/workspaces/\(name)", gitRemoteURL: "git@github.com:labrynth/x.git", defaultBranch: "main",
+                name: name, rootPath: "\(home)/AgentBox/worktrees/\(name)", gitRemoteURL: "git@github.com:labrynth/x.git", defaultBranch: "main",
                 sortIndex: index, createdAt: now.addingTimeInterval(-30 * 86400))
             projects[name] = p
             cast.projects.append(p)

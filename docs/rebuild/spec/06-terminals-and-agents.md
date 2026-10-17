@@ -814,66 +814,9 @@ Alternativa sempre disponível: "Open Compare on GitHub" (`gh pr create --web`).
 
 ---
 
-## 6. Importação do Orca (P3)
+## 6. Importação do Orca (removida por P21)
 
-### 6.1 Fontes
-
-| Fonte | Caminho | Como ler |
-|---|---|---|
-| Estado atual do Orca | `~/Library/Application Support/orca/profiles/<perfil>/profile-state.db` (SQLite, WAL), tabela `profile_state_documents(domain, payload JSON, domain_version, revision, updated_at)` | Copiar `profile-state.db`, `-wal` e `-shm` para um diretório temporário do app e abrir a **cópia** com `mode=ro`. Nunca abrir o original (mesmo read-only, um banco em WAL pode precisar escrever o `-shm`). Apagar a cópia ao terminar |
-| Legado | `…/<perfil>/orca-data.json` | Só se o SQLite não existir ou falhar; marcado "may be outdated" (na máquina, o JSON parou em 12/10 e o SQLite foi atualizado hoje) |
-| Verdade dos worktrees | `git worktree list --porcelain` em cada repo importado | O app não confia na lista do Orca para existência |
-| Pasta de worktrees | `settings.workspaceDir` (`~/orca/workspaces`) | Worktrees em disco que nenhum repo lista viram "Found on disk" (opcionais) |
-
-- Perfis: lista `profiles/`; um só (`local-default`) importa direto; vários, o usuário escolhe.
-- `domain_version` desconhecido: o domínio é pulado com nota no relatório.
-- Conferido hoje: 7 repos (`rti-platform`, `rti-content-platform`, `rti-global`, `labrynth-motiondesign`, `arizona-data-request`, `crawlers`, `agent-box`), 111 entradas em `worktreeMeta`, 0 `folderWorkspaces`.
-
-### 6.2 Mapeamento
-
-| Orca (domínio → campo) | Agent Box | Observação |
-|---|---|---|
-| `repos[]` → `path`, `displayName`, `kind`, `badgeColor`, `id` | `project(root_path, name, kind, color, import_source{orca_repo_id})` | Chave de deduplicação: caminho real |
-| `projects[]` (agrupamento com `sourceRepoIds`) | Ignorado na v1 (1 repo por projeto em todos) | Grupos de projetos: later |
-| `folderWorkspaces` | Projeto do tipo pasta | Vazio hoje |
-| `git worktree list` × `worktreeMeta["<repoId>::<path>"]` → `displayName`, `comment`, `lastActivityAt`, `sortOrder` | `worktree` + sessão: nome = `displayName` (ou nome da pasta), nota de status = `comment`, ordem = `sortOrder`, "last active" = `lastActivityAt` | O checkout principal vira sessão "main" só se o Orca tiver meta para ele |
-| `settings.agentDefaultArgs.claude` | Perfil "Claude · Skip permissions" (padrão; detalhe "Imported from Orca") com os args tokenizados | Hoje `--dangerously-skip-permissions` |
-| `settings.agentDefaultArgs.codex` | Perfil "Codex · Bypass approvals" (detalhe "Imported from Orca") | Hoje `--dangerously-bypass-approvals-and-sandbox` |
-| `settings.agentDefaultArgs.opencode` (se houver) | Perfil OpenCode | Outros agentes (gemini, amp…) ignorados |
-| `settings.agentDefaultEnv[provider]` | `env{}` do perfil importado | Mostra as **chaves**; valores só com confirmação (podem ser segredos) |
-| `settings.agentCmdOverrides[provider]` | Override de executável | Vazio hoje |
-| `settings.defaultTuiAgent` | Provider padrão do lançador | `claude` |
-| `settings.workspaceDir` | `worktreeRoot` | `~/orca/workspaces` |
-| `settings.branchPrefix`, `branchPrefixCustom` | Prefixo de branch | `git-username` |
-| `settings.setupScriptLaunchMode` | Política de setup (v1.1) | `new-tab` |
-| `settings.terminalDefaultShell` | Shell padrão, se não vazio | Vazio hoje |
-| `claudeLivePtySessionIds` | Later: oferecer "Resume Claude conversations open in Orca" | Exige não sequestrar conversa ativa no Orca |
-| `workspaceSession`, `tabGroups`, scrollback, browser, automações, SSH, contas, mobile, telemetria, onboarding, hooks | **Não importados** | Fora do escopo (T14) ou específicos do Orca |
-
-### 6.3 Fluxo
-
-1. Onboarding detecta o Orca e mostra: "Found Orca: 7 repositories, N worktrees on disk, default args for Claude and Codex." Toggles: Projects & worktrees · Agent defaults · Worktree settings.
-2. [Import] roda em segundo plano (≤ 5 s para este volume) e termina com um relatório: importados, pulados (worktree inexistente, domínio desconhecido), conflitos.
-3. Idempotente: "Import Again…" em Settings › Import (03 §14.2) atualiza por caminho real, adiciona novos e **não** sobrescreve o que foi editado no Agent Box (nome, nota, perfil), a menos que o usuário marque "Overwrite my changes".
-4. Nada é movido, renomeado ou gravado no Orca.
-
-### 6.4 Coexistência depois da importação
-
-- Os dois apps podem abrir o mesmo worktree. Antes de remover um worktree que o estado do Orca ainda lista (`worktreeMeta` com o caminho), o diálogo da §5.2 avisa "This worktree is also open in Orca." (texto de 03 §16.5).
-- Se o Orca estiver rodando (`pgrep -x Orca` ou bundle ID), o aviso ganha a variante "Orca is open.".
-- Remover worktree pelo Agent Box não toca o estado do Orca; o Orca descobre a remoção pelo próprio `git worktree list`.
-
-### 6.5 Requisitos — importação
-
-| ID | P | Versão | Requisito | Aceite |
-|---|---|---|---|---|
-| TA-601 | P0 | v1 | Ler o SQLite do Orca por cópia read-only, com fallback para o JSON legado | Checksums dos arquivos do Orca iguais antes e depois; com o Orca aberto, a importação funciona |
-| TA-602 | P0 | v1 | Importar repos como projetos e worktrees existentes em disco como sessões, com nome, nota e ordem | Os 7 repos aparecem; cada worktree listado pelo git com meta no Orca vira sessão com o `displayName` |
-| TA-603 | P0 | v1 | Importar args padrão de Claude e Codex como perfis padrão | Novo Claude após importar tem `--dangerously-skip-permissions`; novo Codex tem `--dangerously-bypass-approvals-and-sandbox` |
-| TA-604 | P1 | v1 | Importar raiz de worktrees, prefixo de branch, agente padrão, shell e env (com confirmação para valores) | Worktree novo vai para `~/orca/workspaces/<repo>/` com prefixo `gabrielgreco1/` |
-| TA-605 | P1 | v1 | Relatório de importação e reimportação idempotente que preserva edições locais | Importar duas vezes não duplica nada; renomear uma sessão e reimportar mantém o nome novo |
-| TA-606 | P1 | v1 | Aviso de worktree compartilhado com o Orca ao remover | Remover um worktree presente no `worktreeMeta` mostra o aviso |
-| TA-607 | P2 | later | Oferecer retomada de conversas Claude abertas no Orca e grupos de projetos | — |
+O Agent Box não importa nem lê dados do Orca (P21). Fica só o importador dos JSONs antigos do próprio Agent Box (T2-10). Requisitos TA-601…TA-607 removidos. A pasta padrão de worktrees é `~/AgentBox/worktrees/<repo>/<nome>`.
 
 ---
 

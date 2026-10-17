@@ -180,7 +180,7 @@ private struct ProfileRow: View {
                 .a11y(id("Skips"), kind: "indicator", label: skip.tooltip)
             }
             if profile.isBuiltin {
-                DSBadge(profile.source == .orcaImport ? String(localized: "Imported from Orca", bundle: .module) : String(localized: "Built-in", bundle: .module))
+                DSBadge(String(localized: "Built-in", bundle: .module))
             }
             if isDefault { DSBadge(String(localized: "Default", bundle: .module), variant: .mono) }
             Spacer(minLength: DS.Space.s2)

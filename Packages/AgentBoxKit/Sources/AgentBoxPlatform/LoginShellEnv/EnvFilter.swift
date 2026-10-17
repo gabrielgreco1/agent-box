@@ -30,7 +30,7 @@ public struct EnvFilter: Sendable, Equatable {
             "AB_ENV_OUT", "TERM", "COLORTERM",
         ],
         denyPrefixes: [
-            "TERM_PROGRAM", "ITERM_", "WEZTERM_", "KITTY_", "GHOSTTY_", "VSCODE_", "ORCA_", "AGENTBOX_",
+            "TERM_PROGRAM", "ITERM_", "WEZTERM_", "KITTY_", "GHOSTTY_", "VSCODE_", "AGENTBOX_",
         ],
         allowNames: [
             "SSH_AUTH_SOCK", "PATH",

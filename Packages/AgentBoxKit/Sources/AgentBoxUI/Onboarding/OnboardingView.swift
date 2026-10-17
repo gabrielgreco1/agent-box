@@ -67,7 +67,7 @@ struct OnboardingView: View {
         return items
     }
 
-    /// Os perfis padrão pulam permissões como no Orca (06 §2.3): o aviso é explícito e leva à tela onde se troca.
+    /// Os perfis padrão pulam permissões (06 §2.3): o aviso é explícito e leva à tela onde se troca.
     private var permissionsNotice: some View {
         HStack(alignment: .top, spacing: DS.Space.s2) {
             Image(systemName: "shield.slash").font(.system(size: SettingsMetrics.rowIcon)).foregroundStyle(DS.Color.warning)

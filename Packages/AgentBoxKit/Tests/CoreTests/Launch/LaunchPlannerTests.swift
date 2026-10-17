@@ -155,12 +155,12 @@ import Testing
         // Perfis sem bypass não mostram o indicador.
         let planMode = try LaunchSamples.plan(LaunchSpec(provider: .claude, profileID: BuiltinProfiles.claudePlan.id))
         #expect(planMode.skipsPermissions == nil)
-        #expect(BuiltinProfiles.skipPermissionsNotice == "Agents run without permission prompts (same as Orca). You can change this per profile.")
+        #expect(BuiltinProfiles.skipPermissionsNotice == "Agents run without permission prompts. You can change this per profile.")
     }
 
-    @Test func orcaImportProfilesAreMarked() {
-        #expect(BuiltinProfiles.claudeSkipPermissions.source == .orcaImport)
-        #expect(BuiltinProfiles.codexBypassApprovals.source == .orcaImport)
+    @Test func skipPermissionProfilesAreBuiltin() {
+        #expect(BuiltinProfiles.claudeSkipPermissions.source == .manual)
+        #expect(BuiltinProfiles.codexBypassApprovals.source == .manual)
         #expect(BuiltinProfiles.all.map(\.name).contains("Claude · Plan"))
     }
 
@@ -189,11 +189,11 @@ import Testing
     }
 
     @Test func environmentCompositionFollowsSpec() throws {
-        let profile = LaunchProfile(name: "env", provider: .shell, env: ["MY_FLAG": "1", "ORCA_PANE_KEY": "evil", "AGENTBOX_PANE_ID": "spoof"], isDefault: true)
+        let profile = LaunchProfile(name: "env", provider: .shell, env: ["MY_FLAG": "1", "AGENTBOX_RUN_ID": "spoof2", "AGENTBOX_PANE_ID": "spoof"], isDefault: true)
         let plan = try LaunchSamples.plan(LaunchSpec(provider: .shell), catalog: ProfileCatalog(userProfiles: [profile]))
         let env = plan.environment
         // 2. denylist
-        for gone in ["ORCA_PANE_KEY", "CLAUDECODE", "PWD"] { #expect(env[gone] == nil, "\(gone) must not reach the terminal") }
+        for gone in ["KITTY_PANE_KEY", "CLAUDECODE", "PWD"] { #expect(env[gone] == nil, "\(gone) must not reach the terminal") }
         // allowlist e o resto do shell de login passam
         #expect(env["SSH_AUTH_SOCK"] == "/private/tmp/agent.sock")
         #expect(env["HTTPS_PROXY"] == "http://proxy:3128")
@@ -208,7 +208,7 @@ import Testing
         #expect(env["AGENTBOX_RUN_ID"] == LaunchSamples.runID.uuidString.lowercased())
         #expect(env["AGENTBOX_APP_SOCK"] == "/tmp/ab/run/app.sock")
         #expect(Set(env.keys.filter { $0.hasPrefix("AGENTBOX_") }) == ["AGENTBOX_PANE_ID", "AGENTBOX_RUN_ID", "AGENTBOX_APP_SOCK"])
-        // 4. perfil, sem ORCA_*/AGENTBOX_* (reservados)
+        // 4. perfil, sem AGENTBOX_* (reservado)
         #expect(env["MY_FLAG"] == "1")
         #expect(plan.warnings.filter { $0.code == .reservedEnvDropped }.count == 2)
         #expect(plan.envKeys == env.keys.sorted())

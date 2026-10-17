@@ -73,7 +73,7 @@ struct TerminalPreview: View {
     var body: some View {
         VStack(alignment: .leading, spacing: .zero) {
             line {
-                Text(verbatim: "~/orca/workspaces/otter").foregroundColor(ansi(4))
+                Text(verbatim: "~/AgentBox/worktrees/otter").foregroundColor(ansi(4))
                 Text(verbatim: " $ ").foregroundColor(DS.Terminal.foreground.color)
                 Text(verbatim: "git status").foregroundColor(DS.Terminal.foreground.color)
             }

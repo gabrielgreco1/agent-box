@@ -27,7 +27,6 @@ enum Repo {
         return s
     }
 
-    static let orcaTokens = "docs/rebuild/reference/orca-1.4.219/tokens"
 }
 
 /// Cor lida de um JSON: `#rrggbb` ou `#rrggbbaa`.
@@ -78,7 +77,7 @@ struct ColorSource {
         var name: String
         var dark: String
         var opacity: Double?
-        var orca: String?
+        var reference: String?
         var light: String?
         var note: String?
     }
@@ -93,43 +92,10 @@ struct ColorSource {
                 tokens.append(Token(
                     name: name, dark: d["dark"] as? String ?? "",
                     opacity: (d["opacity"] as? NSNumber)?.doubleValue,
-                    orca: d["orca"] as? String, light: d["light"] as? String, note: d["note"] as? String))
+                    reference: d["reference"] as? String, light: d["light"] as? String, note: d["note"] as? String))
             }
         }
         return (tokens, doc["terminal"] as? [String: Any] ?? [:])
     }
 }
 
-/// CSS extraído do Orca (docs/rebuild/reference/orca-1.4.219/tokens/colors.json).
-struct OrcaColors {
-    let dark: [String: String]
-    let light: [String: String]
-    let palette: [String: String]
-
-    init() {
-        let doc = Repo.json("\(Repo.orcaTokens)/colors.json")
-        dark = doc["dark"] as? [String: String] ?? [:]
-        light = doc["light"] as? [String: String] ?? [:]
-        palette = doc["palette_tailwind"] as? [String: String] ?? [:]
-    }
-
-    /// Resolve `var(--x)` recursivamente; `palette:--color-x` lê a paleta Tailwind.
-    func resolve(_ ref: String, light useLight: Bool = false) -> HexColor? {
-        let table = useLight ? light : dark
-        var value: String
-        if ref.hasPrefix("palette:") {
-            guard let v = palette[String(ref.dropFirst("palette:".count))] else { return nil }
-            value = v
-        } else {
-            guard let v = table[ref] else { return nil }
-            value = v
-        }
-        for _ in 0..<8 {
-            guard value.hasPrefix("var(") else { return HexColor(value) }
-            let name = String(value.dropFirst(4).dropLast())
-            guard let next = table[name] ?? palette[name] else { return nil }
-            value = next
-        }
-        return nil
-    }
-}

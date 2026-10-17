@@ -1,7 +1,7 @@
 import Foundation
 
 public enum ProjectKind: String, Codable, Sendable, CaseIterable { case git, folder }
-public enum RecordSource: String, Codable, Sendable, CaseIterable { case manual, orcaImport = "orca_import" }
+public enum RecordSource: String, Codable, Sendable, CaseIterable { case manual }
 
 /// Repositório Git ou pasta raiz que agrupa sessões (01 §5.2). Remover nunca apaga arquivos.
 public struct Project: Codable, Hashable, Sendable, Identifiable {

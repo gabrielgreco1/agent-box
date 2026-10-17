@@ -78,7 +78,7 @@ public final class OnboardingModel {
 
     // MARK: Itens da checklist
 
-    /// Só o que a Fatia 1 mostra: Claude Code, Codex e OpenCode (opcional). gh, Docker, imagem, notificações e Orca vêm depois.
+    /// Só o que a Fatia 1 mostra: Claude Code, Codex e OpenCode (opcional). gh, Docker, imagem e notificações vêm depois.
     public var items: [AgentInfo] { settings.agents }
 
     public func isOptional(_ provider: TerminalProvider) -> Bool { provider == .opencode }

@@ -68,9 +68,9 @@ import Testing
         #expect(GitNaming.candidate("a", attempt: 2) == "a-2")
     }
 
-    @Test func defaultRootIsOrcaWorkspaces() {
+    @Test func defaultRootIsAgentBoxWorktrees() {
         let root = GitNaming.defaultWorktreeRoot(home: URL(fileURLWithPath: "/Users/x"))
-        #expect(root.path == "/Users/x/orca/workspaces")
+        #expect(root.path == "/Users/x/AgentBox/worktrees")
     }
 }
 

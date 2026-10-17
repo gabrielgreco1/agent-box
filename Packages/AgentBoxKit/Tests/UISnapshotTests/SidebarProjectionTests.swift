@@ -169,11 +169,11 @@ import Testing
     }
 
     @Test func searchMatchesTerminalsAndShowsOnlyThemInTheCard() {
-        let p = SidebarProjector.build(input(full()) { $0.query = "port orca shadows" })
+        let p = SidebarProjector.build(input(full()) { $0.query = "port motion shadows" })
         let card = p.projects.flatMap(\.sessions).first { $0.title == "sandperch" }
         #expect(card != nil)
         #expect(card?.agentRows.count == 1, "só o terminal que casou")
-        #expect(card?.agentRows.first?.lead == "Port Orca shadows")
+        #expect(card?.agentRows.first?.lead == "Port motion shadows")
     }
 
     @Test func searchDropsProjectsAndSectionsWithoutResultsAndReportsEmpty() {

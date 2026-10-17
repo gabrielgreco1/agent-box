@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# compare-ui.sh - comparação visual mecânica com o Orca (08 AR-808, P14). Implementado em T1-02.
+# compare-ui.sh - comparação visual mecânica com a referência (08 AR-808, P14). Implementado em T1-02.
 #
 # Contrato
 #   Entrada : <tela> (screenId de 03 §0, também passado ao app como AGENTBOX_SCREEN = fixture da tela).
-#             Referência: --reference <png> ou docs/rebuild/reference/orca-1.4.219/screens/<tela>-<W>x<H>.png (depois <tela>.png).
+#             Referência: --reference <png> ou docs/rebuild/reference/<pacote>/screens/<tela>-<W>x<H>.png (depois <tela>.png).
 #   Efeitos : usa 'agentbox ctl screenshot --size' (ScreenCaptureKit da própria janela) em cada tamanho e grava em
 #             docs/evidence/ui/<tarefa>/ (ou --out): <tela>-<WxH>-app.png, -side-by-side.png (referência | Agent Box),
 #             -overlay50.png (sobreposição 50%), -diff.png (diferença absoluta) e -metrics.json. Tamanhos padrão:
@@ -72,9 +72,10 @@ fi
 "$BIN" ctl ui wait window.main --timeout 15 >/dev/null || fail "window.main não apareceu"
 
 find_ref() { # W H
-  local d="$ROOT/docs/rebuild/reference/orca-1.4.219/screens"
   if [ -n "$REF" ]; then echo "$REF"; return; fi
-  for c in "$d/$SCREEN-$1x$2.png" "$d/$SCREEN.png"; do [ -f "$c" ] && { echo "$c"; return; }; done
+  for d in "$ROOT"/docs/rebuild/reference/*/screens; do
+    for c in "$d/$SCREEN-$1x$2.png" "$d/$SCREEN.png"; do [ -f "$c" ] && { echo "$c"; return; }; done
+  done
   return 1
 }
 
@@ -87,7 +88,7 @@ for size in "${SZ[@]}"; do
   APP_PNG="$OUT/$SCREEN-$size-app.png"
   "$BIN" ctl screenshot --window --size "$size" --out "$APP_PNG" > "$OUT/$SCREEN-$size-screenshot.json" \
     || fail "ctl screenshot falhou em $size (veja $OUT/$SCREEN-$size-screenshot.json; Gravação de Tela concedida?)"
-  REF_PNG="$(find_ref "$W" "$H")" || fail "referência ausente para '$SCREEN' em $size em docs/rebuild/reference/orca-1.4.219/screens/ (use --reference)"
+  REF_PNG="$(find_ref "$W" "$H")" || fail "referência ausente para '$SCREEN' em $size em docs/rebuild/reference/*/screens/ (use --reference)"
   "$BIN" ctl compare "$APP_PNG" "$REF_PNG" --out-dir "$OUT" --name "$SCREEN-$size" > "$OUT/$SCREEN-$size-metrics.json" \
     || fail "comparação falhou em $size"
   python3 - "$OUT/$SCREEN-$size-metrics.json" "$SCREEN" "$size" "$REF_PNG" <<'PY'

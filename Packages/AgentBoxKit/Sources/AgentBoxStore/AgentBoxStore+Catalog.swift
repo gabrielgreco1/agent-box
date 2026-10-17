@@ -52,7 +52,7 @@ public struct CatalogDiff: Sendable, Equatable {
 
 public struct ImportRunRow: Sendable, Equatable {
     public var id: UUID
-    public var source: String       // agentbox_json | orca | agentbox_cli
+    public var source: String       // agentbox_json | agentbox_cli
     public var sourcePath: String
     public var fingerprint: String?
     public var dryRun: Bool

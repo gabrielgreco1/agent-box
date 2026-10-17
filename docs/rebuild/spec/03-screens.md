@@ -195,7 +195,7 @@ Menu **Sort and Filter** (popover 240):
 - Chevron `ChevronDown` 12 (gira −90° recolhido, 150 ms) · ícone do repo 16 (caixa r4 `secondary`, glifo `GitBranch` 12; pasta comum: `FolderOpen`) · nome `bodyStrong` 13/600 truncado · contador `textTertiary` `micro` com nº de sessões quando recolhido.
 - Hover: fundo `fg5`; à direita aparecem botões `row` 20: `Ellipsis` (menu do projeto) e `Plus` (`New Session in <project> ⌘N`).
 - Clique na linha recolhe/expande (estado persistido, `audit/07 #29`; M-806).
-- Com mais de 5 sessões (ex.: importadas do Orca), mostra as 5 mais recentes e a linha `Show <n> more` (24, `textTertiary`); clique expande e o estado persiste (P15).
+- Com mais de 5 sessões (ex.: sessões antigas), mostra as 5 mais recentes e a linha `Show <n> more` (24, `textTertiary`); clique expande e o estado persiste (P15).
 - Arrastar uma sessão limpa e soltar na linha de projeto = **Move to Project…** com aquele projeto pré-escolhido (overlay §16.8, M-212).
 - ID: `sidebar.project.<projectId>`, `.toggle`, `.menu`, `.newSession`.
 
@@ -239,7 +239,7 @@ Superfície DS §12.9. Uma sessão = um card. O card **é o item selecionável**
 **Hover card** (250 ms, DS §12.16), 300 de largura:
 ```
 stacktax-pr-bronze                         (bodyStrong)
-rti-platform · ~/orca/workspaces/rti-platform/stacktax   (small, path middle-truncated)
+rti-platform · ~/AgentBox/worktrees/rti-platform/stacktax   (small, path middle-truncated)
 State      Claude Code needs input · 4m
 Branch     gabrielgreco1/stacktax  ↑2  ● 3 files changed
 PR         #412 Open · Checks 2 failing, 9 passing
@@ -259,7 +259,6 @@ Linhas ausentes não aparecem. ID: `sidebar.session.<id>.hoverCard`.
 | arquivando | 50% + grayscale + pílula `Archiving…` com spinner (M-209) |
 | excluindo | 50% + grayscale + pílula `Deleting…` |
 | erro de diretório (pasta sumiu) | linha 2 vira `AlertCircle` 10 `destructive` + `Folder not found`; ação `Locate Folder…` no hover (§24) |
-| worktree também aberto no Orca (RT.1) | ícone `Info` 10 após o nome; tooltip `Also open in Orca` |
 
 **Clique:** seleciona a sessão; ⌘-clique: multi-seleção (para arquivar/excluir em lote); clique na linha de agente foca aquele pane (troca de tab se preciso, com rim flash M-309 só se veio de teclado).
 
@@ -524,13 +523,13 @@ Com link sob o cursor, no topo: `Open Link` · `Copy Link`; com caminho de arqui
 | **Rate limit** (v1.1, R7.2) | Banner `warning`: `Claude hit its 5-hour limit. Resets at 2:20 PM.` | `[Continue in Codex]` · ✕ | `pane.<id>.rateLimit` |
 | **Pane estreito** | < 240 de largura: título centralizado + `[Expand]` | — | `pane.<id>.tooNarrow` |
 
-Nenhum estado usa "Ready to start" nem exige um ▶ para o processo começar (P9). A exceção é a sessão importada do Orca, que nunca rodou (§4.7).
+Nenhum estado usa "Ready to start" nem exige um ▶ para o processo começar (P9). A exceção é a sessão restaurada que nunca rodou (§4.7).
 
 ### 4.7 Sessão sem tabs
 
-Acontece quando o usuário fecha a última tab, ou quando a sessão foi importada do Orca e nunca rodou (P15). Centro (fundo `canvas`), coluna 320 centralizada:
+Acontece quando o usuário fecha a última tab, ou quando a sessão foi restaurada e nunca rodou (P15). Centro (fundo `canvas`), coluna 320 centralizada:
 - Fechou tudo: `No terminals open in <session>.` (`body` `textSecondary`) · `[New Claude Code Tab ⌥⌘T]` (`secondary sm`, agente padrão) · `[New Terminal ⌘T]` (`ghost sm`) · `[Reopen Closed Tab ⇧⌘T]` (`ghost sm`, se houver).
-- Importada (`Not started`, AC-109): `Imported from Orca. Nothing is running yet.` · `[Start Claude Code]` (`primary sm`, agente padrão; o rótulo segue o agente) · `[Resume Conversation]` (`ghost sm`, só se o Orca registrou um ID de conversa) · `[New Terminal ⌘T]`.
+- Restaurada (`Not started`): `Nothing is running yet.` · `[Start Claude Code]` (`primary sm`, agente padrão; o rótulo segue o agente) · `[Resume Conversation]` (`ghost sm`, só se há um ID de conversa registrado) · `[New Terminal ⌘T]`.
 - ID: `pane.empty`, `.newAgent`, `.newTerminal`, `.reopen`, `.start`, `.resume`.
 
 ---
@@ -564,10 +563,10 @@ Overlay DS §12.17, **560** de largura (máx. janela − 32). Abre por ⌘N, `+`
 | 1 | **Project** | `DSCombobox` com busca; itens: projetos (ícone + nome + caminho `textTertiary`), separador, `No Project (Clean Session)`, separador fixo `Add a New Project…` | Projeto da sessão atual; senão o último usado | `Add a New Project…` abre sub-overlay §16.9 preservando o que foi digitado | `overlay.composer.project` |
 | 2 | **Where** | `DSSegmented` | Projeto: `New Worktree`; sem projeto: `New Folder` | Projeto: `New Worktree` · `Existing Worktree` · `Main Checkout`. Sem projeto: `New Folder` · `Choose Folder…` | `overlay.composer.where` |
 | 3a | **Create from** (só New Worktree) | Input inteligente + seletor de base à direita do label (`origin/main ⌄`) | vazio = base | Aceita nome de branch, `#123` (issue/PR), URL de PR/issue do GitHub. Reconhecido: chip abaixo (`PR #412 · Fix ArcGIS pagination` / `Branch exists`). Branch existente: checkbox `Reuse existing branch` (M-111). ↵ leva o foco para Agent | `overlay.composer.createFrom`, `.baseRef`, `.reuseBranch` |
-| 3b | **Worktree** (Existing Worktree) | Combobox com worktrees do projeto (incl. importadas do Orca), cada uma com branch e `Used by <session>` se já tiver sessão | — | Escolher uma em uso mostra aviso `warning` de uma linha: `Another session already uses this worktree.` | `overlay.composer.worktree` |
+| 3b | **Worktree** (Existing Worktree) | Combobox com worktrees do projeto, cada uma com branch e `Used by <session>` se já tiver sessão | — | Escolher uma em uso mostra aviso `warning` de uma linha: `Another session already uses this worktree.` | `overlay.composer.worktree` |
 | 3c | **Folder** (Choose Folder…) | Campo de caminho read-only + `[Choose…]` (`NSOpenPanel` escuro) | — | Guarda o caminho; o app não usa security-scoped bookmarks (AR-533) | `overlay.composer.folder` |
 | 4 | **Agent** | `DSCombobox`: `Claude Code` (padrão), `Codex`, `OpenCode`, separador, `Blank Terminal`; rodapé `Manage Agents…` | Agente padrão (Settings › Agents) | Rodapé `Manage Agents…` abre Settings › Agents. Clique direito num item: `Set as Default`. Agente não instalado: item desabilitado com `Not installed`; não logado: item com `TriangleAlert` e detalhe `Not logged in` (escolher mostra aviso com `[Log In]` que abre tab com o comando de login) | `overlay.composer.agent` |
-| 5 | **Profile** | `DSCombobox` filtrado pelo agente; cada perfil mostra flags em `mono` | Perfil padrão do agente (ex.: `Claude · Skip permissions`, importado do Orca) | Rodapé `Edit Profiles…` (Library › Profiles) | `overlay.composer.profile` |
+| 5 | **Profile** | `DSCombobox` filtrado pelo agente; cada perfil mostra flags em `mono` | Perfil padrão do agente (ex.: `Claude · Skip permissions`) | Rodapé `Edit Profiles…` (Library › Profiles) | `overlay.composer.profile` |
 | 6 | **Prompt** | `PromptEditor` (88–240), placeholder `What should the agent do? (optional)` | vazio | Vai como **argumento do CLI** (T11, R3.1); acima de 16 KiB vira arquivo referenciado (01, 06). Anexos por arrastar: later (R3.6). Com `Blank Terminal`, o campo some | `overlay.composer.prompt` |
 | 7 | **Advanced** ⌄ | Disclosure (fechado; estado lembrado) | — | Ver §6.2 | `overlay.composer.advanced` |
 
@@ -577,14 +576,14 @@ Overlay DS §12.17, **560** de largura (máx. janela − 32). Abre por ⌘N, `+`
 |---|---|---|---|
 | Session name | input, placeholder com o nome automático | Derivado do prompt (3–5 primeiras palavras, como digitadas; pasta e branch usam o slug kebab-case, 06 §5.2); sem prompt, adjetivo + substantivo (`quiet-harbor`, P15) | `overlay.composer.name` |
 | Branch name (New Worktree) | input mono | `<git user>/<session name>` (prefixo de Settings › Git) | `overlay.composer.branch` |
-| Worktree location (New Worktree) | texto read-only mono `textSecondary` + `[Change…]` | `<worktree root>/<repo>/<session name>` (padrão compatível com `~/orca/workspaces`, R3.2) | `overlay.composer.location` |
+| Worktree location (New Worktree) | texto read-only mono `textSecondary` + `[Change…]` | `<worktree root>/<repo>/<session name>` (padrão `~/AgentBox/worktrees`, P21) | `overlay.composer.location` |
 | Subagent computers (Fatia 3) | `DSSegmented`: `Off` · `On This Mac` · `In Container` (v1.1; na v1 o segmento não existe) | `On This Mac` | `overlay.composer.computers` |
 | Computer proxy (Fatia 3, P13) | `DSCombobox`: `Default (<nome>)` · `None` · proxies de Settings › Computers › Proxies | o padrão de Settings | `overlay.composer.proxy` |
 | Watch Claude subagents (Fatia 2) | switch | On (Claude) | `overlay.composer.watchSubagents` |
 
 ### 6.3 Footer e resumo
 
-- Linha de resumo acima do footer, `small` mono `textSecondary`, uma linha truncada no meio, com tooltip completo: `claude --dangerously-skip-permissions "<prompt…>" in ~/orca/workspaces/rti-platform/fix-arcgis-pagination`. É a confirmação do que vai rodar (P9, `audit/07 #42`).
+- Linha de resumo acima do footer, `small` mono `textSecondary`, uma linha truncada no meio, com tooltip completo: `claude --dangerously-skip-permissions "<prompt…>" in ~/AgentBox/worktrees/rti-platform/fix-arcgis-pagination`. É a confirmação do que vai rodar (P9, `audit/07 #42`).
 - Footer esquerdo: switch compacto `Create More` (mantém o overlay aberto e limpa o prompt).
 - Footer direito: `[Cancel]` (outline sm, Esc) · `[Create Session]` (primary sm, keycaps `⌘↵`). Desabilitado só se faltar projeto ou pasta.
 - Erro de validação (M-808): caixa `destructive/10` com borda `/40` acima do footer, ícone + uma linha (`Branch "x" already exists.` com link `Reuse it`). Erro por campo: `overlay.composer.<field>.error`.
@@ -705,7 +704,6 @@ DS §12.19. Usos fixos (texto exato):
 - `Not enough room to split. Close a pane or widen the window.`
 - `Sort changed to <x>.` · `Undo`.
 - `You can change this in Settings › <section>.` · `Open Settings` (após "Don't ask again").
-- `Imported <n> projects and <m> worktrees from Orca.`
 
 ---
 
@@ -930,7 +928,7 @@ Conflito detectado (R1.6): a skill global `agentbox` aparece com badge `warning`
 ### 13.4 Profiles
 
 Perfis de lançamento (`LaunchProfile`): agente + modelo + modo de permissão + args + env.
-- Lista: perfil padrão por agente (o importado do Orca se chama `Claude · Skip permissions` / `Codex · Bypass approvals` e leva `Imported from Orca` em `small`), perfis do usuário.
+- Lista: perfil padrão por agente (inclui `Claude · Skip permissions` / `Codex · Bypass approvals`, com o selo `Built-in` em `small`), perfis do usuário.
 - Detalhe = **formulário editável** com a mesma regra de salvamento do Settings (§14.1):
 
 | Campo | Controle | ID |
@@ -1006,7 +1004,7 @@ Página da janela inteira (sidebar, centro e painel dão lugar ao Settings; a fa
 - `Keep agents running when you quit` — switch, on (P4). Ajuda: `Terminals keep running in the background and reappear when you reopen Agent Box.` Se o item de login não foi aprovado: `warning` + `[Allow in Login Items]`.
 - `Show menu bar icon` — `Always` · `When agents are running` (padrão). Não existe `Never` (P4: com o app em modo accessory, o ícone é a única porta de volta).
 - `Ask before quitting with running agents` — switch, on (é o "Don't ask again" do §16.10).
-- `Worktree folder` — caminho + `[Change…]`; padrão `~/orca/workspaces` (transição, R3.2, P15).
+- `Worktree folder` — caminho + `[Change…]`; padrão `~/AgentBox/worktrees` (P21).
 - `Clean session folder` — caminho + `[Change…]`; padrão `~/AgentBox/sessions`.
 - `Branch prefix` — `Git user name` (padrão) · `Custom` (input) · `None`.
 - `Open in editor` — combobox com os editores detectados em `/Applications` e no PATH (Cursor, VS Code, Zed, Xcode, Sublime Text) + `Other…` (`NSOpenPanel` de app); é o destino de `Open in Editor` (⇧⌘O) em todo o app.
@@ -1021,7 +1019,6 @@ Página da janela inteira (sidebar, centro e painel dão lugar ao Settings; a fa
 - `Show pull request on session cards` — switch, on.
 
 `Import` (`settings.nav.import`)
-- `Orca` — `Last imported Oct 16 · 6 projects, 103 worktrees` + `[Import Again…]` (abre o passo de importação do onboarding).
 - `agentbox CLI runs` (v1.1) — `[Import Runs…]`.
 
 **COMPUTERS**
@@ -1109,16 +1106,14 @@ Título `"Set Up Agent Box"` (18/600). Descrição: `Agent Box checks what's on 
 | 6 | `Computer image` | `Not downloaded · 1.2 GB` / barra com bytes / `Ready` | `[Download]` (continua em segundo plano) | `onboarding.item.image` |
 | 7 | `Notifications` | `So you know when an agent needs you.` | `[Allow]` | `onboarding.item.notifications` |
 | 8 | `Keep agents running` | `Terminals survive quitting Agent Box.` | `[Allow in Login Items]` | `onboarding.item.background` |
-| 9 | `Import from Orca` | `Found 6 projects, 103 worktrees and default agent arguments.` | `[Review…]` → passo 2 | `onboarding.item.orca` |
-| 10 | `Conflicts` (só se houver) | `A global "agentbox" skill may compete with Agent Box.` · `Orca hooks found (harmless).` · `Codex notify is used by another app (left untouched).` | `[Block in Agent Box]` · `[Disable Globally…]` · `[Keep]` | `onboarding.item.conflicts` |
+| 9 | `Conflicts` (só se houver) | `A global "agentbox" skill may compete with Agent Box.` · `Codex notify is used by another app (left untouched).` | `[Block in Agent Box]` · `[Disable Globally…]` · `[Keep]` | `onboarding.item.conflicts` |
 
 Itens 5 e 6 são da Fatia 3: antes dela, não renderizam.
 
-**Passo 2 · Import from Orca** (mesmo overlay, troca de conteúdo com M-004; `onboarding.step.import`): título `Import from Orca`; texto `Nothing is moved or written to Orca.` (P3); grupos com checkbox e contagem: `Projects (6)` (expansível com lista e caminho), `Worktrees (103)` (`Active only` · `All`), `Default agent arguments` (mostra `claude --dangerously-skip-permissions`, `codex --dangerously-bypass-approvals-and-sandbox` com aviso `warning` de uma linha), `Sidebar width and terminal settings`. Footer: `[Back]` · `[Import]` (primary). Sessões importadas entram sem processo (`Not started`, P15). Concluído: volta à checklist com `Imported 6 projects and 41 sessions.` no item.
 
-**Footer da checklist:** esquerda `[Skip for Now]` (`ghost`; confirma inline: `Skip setup? You can finish it in Settings › Diagnostics.` `[Keep Setting Up]` `[Skip]`); direita `[Done]` (primary). `Done` fecha e abre o composer com o último projeto do Orca pré-selecionado (`audit/10 J1.5`); sem projetos, mostra a landing (§19).
+**Footer da checklist:** esquerda `[Skip for Now]` (`ghost`; confirma inline: `Skip setup? You can finish it in Settings › Diagnostics.` `[Keep Setting Up]` `[Skip]`); direita `[Done]` (primary). `Done` fecha e abre o composer com o último projeto usado pré-selecionado (`audit/10 J1.5`); sem projetos, mostra a landing (§19).
 
-IDs: `onboarding`, `onboarding.step.<name>`, `onboarding.item.<key>`, `onboarding.import.<group>`, `onboarding.import.item.<n>`, `onboarding.import.confirm`, `onboarding.done`, `onboarding.skip`.
+IDs: `onboarding`, `onboarding.step.<name>`, `onboarding.item.<key>`, `onboarding.done`, `onboarding.skip`.
 
 ---
 
@@ -1164,7 +1159,6 @@ Fechar vários (Close Other Tabs, fechar sessão com 3 rodando): `Close 3 termin
 - Texto (worktree nova): `Stops its terminals and computers, removes the worktree folder and deletes the local branch "<branch>".`; aviso adicional `destructive` quando há alterações não commitadas ou commits não enviados: `3 uncommitted files and 2 unpushed commits will be lost.`; checkbox `Keep the branch`. Main checkout / pasta existente / sessão limpa com pasta escolhida: `Stops its terminals and computers. The folder stays on disk.` (sem checkbox de Lixo, AC-1105).
 - Sessão limpa com pasta criada pelo app: texto `Stops its terminals and computers.` + checkbox `Move folder to Trash` (marcada; move `~/AgentBox/sessions/<name>` para o Lixo do macOS) + checkbox `Also delete run folders` (desmarcada; AC-1108).
 - Sessão de worktree: antes de abrir o overlay o app lê o worktree (`GitService.inspectRemoval`, 06 §5.2); a leitura termina antes de o overlay abrir. Com perda (`.changes`, `destructive`): a lista dos primeiros arquivos alterados ou não rastreados e as contagens; sem `Don't ask again` e o overlay aparece mesmo com a confirmação desligada em Settings. Confirmar é a confirmação explícita do `--force`. `Keep the branch` desmarcada = `git branch -d` (nunca `-D`; se a branch não está mesclada ela fica e o toast avisa). Se surgir trabalho novo entre a abertura do overlay e o clique (mais arquivos ou commits que os listados), nada é apagado e o toast `The worktree changed.` pede para revisar. Falha ao ler: `Couldn't check the worktree.`; falha ao remover: `Couldn't delete the worktree.` com o erro e a sessão continua na sidebar. Sem Undo (a pasta saiu do disco).
-- Worktree também aberto no Orca: linha `warning` `This worktree is also open in Orca.` (variante: `Orca is open.`).
 - Checkbox: `Don't ask again` (só quando não há perda de dados).
 - Botões: `[Cancel]` · `[Delete Session]` (destructive). Depois: toast `Session deleted.` `Undo` (8 s, restaura só o registro).
 - IDs: `overlay.confirmDelete`, `.keepBranch`, `.trashFolder`, `.deleteRuns`, `.dontAsk`, `.cancel`, `.confirm`.
@@ -1200,10 +1194,10 @@ Gatilhos: `Move to Project…`, `Convert to Project…`, arrastar o card até um
 
 Overlay 512 (`audit/04 §5.1`). Título `Add a Project`.
 - Ação principal grande (`secondary`, 56 de altura, ícone `FolderOpen` 20): `Choose a Folder…` / `A Git repository or any folder on this Mac.`
-- `OTHER WAYS` (label 11/500): linhas navegáveis por ↑↓ com chip `↵` na selecionada: `Clone from URL` (v1.1; abre campos `Git URL` + `Parent folder` + `[Clone]` com `Cloning…`), `Import from Orca…` (abre o passo 2 do onboarding).
+- `OTHER WAYS` (label 11/500): linhas navegáveis por ↑↓ com chip `↵` na selecionada: `Clone from URL` (v1.1; abre campos `Git URL` + `Parent folder` + `[Clone]` com `Cloning…`).
 - Pasta com vários repos: `Found 4 repositories in this folder.` + checkboxes + `[Add 4 Projects]` (`[Stop Scan]` durante o scan).
 - Depois de adicionar: detecta a base (`origin/main`) e volta ao chamador (composer ou sidebar).
-- IDs: `overlay.addProject.choose`, `.clone`, `.clone.url`, `.clone.submit`, `.importOrca`.
+- IDs: `overlay.addProject.choose`, `.clone`, `.clone.url`, `.clone.submit`.
 
 ### 16.10 Quit with running agents (⌘Q)
 
@@ -1220,7 +1214,7 @@ Overlay de confirmação na janela (T5, P15, K-90). **Nunca `NSAlert`.** Se nenh
 
 - Título: `Run Claude Code without permission prompts?`
 - Texto: `The agent can run any command and edit any file in this session without asking.`
-- Botões: `[Cancel]` · `[Use Skip Permissions]`. Perfis importados do Orca não pedem (o dono já usa).
+- Botões: `[Cancel]` · `[Use Skip Permissions]`.
 - IDs: `overlay.confirmSkipPermissions`, `.confirm`.
 
 ### 16.12 Paste to agent (ação explícita, R5.1)
@@ -1361,12 +1355,12 @@ Quando não há projetos nem sessões (primeiro uso, depois do onboarding pulado
 1. Tile do logo 64×64, raio 18, fundo `secondary`, glifo da marca 32 `textPrimary`.
 2. `"Agent Box"` (`display` 28/600), margem superior 16.
 3. `Run Claude Code, Codex and OpenCode side by side, each in its own folder.` (`dialogBody` 14 `textSecondary`), margem 8.
-4. Botões (margem 24, gap 8): `[Add Project…]` (primary default) · `[New Clean Session]` (secondary default) · `[Import from Orca…]` (ghost, só se Orca detectado e não importado).
+4. Botões (margem 24, gap 8): `[Add Project…]` (primary default) · `[New Clean Session]` (secondary default).
 5. Lista de atalhos (320, margem 32), linhas 24 com label `small` à esquerda e keycaps à direita: `New session` ⌘N · `New clean session` ⇧⌘N · `Jump to…` ⌘J · `Settings` ⌘,.
 
 Sem ilustração, sem texto de boas-vindas (DS §15). Com projetos mas nenhuma sessão selecionada (raro): o mesmo layout sem o item 3 e com `[New Session…]` primário.
 
-IDs: `landing`, `landing.addProject`, `landing.newCleanSession`, `landing.importOrca`, `landing.newSession`.
+IDs: `landing`, `landing.addProject`, `landing.newCleanSession`, `landing.newSession`.
 
 ---
 
@@ -1492,9 +1486,9 @@ Atalhos reservados para o terminal (nunca capturados pelo app): ⌃ + letra, ⌥
 | Viewer | `viewer.<computerId>`, `.name`, `.mode`, `.url`, `.controlPill`, `.controlFrame`, `.ghostCursor`, `.clickRipple`, `.takeOver`, `.handBack[.note/.confirm]`, `.forceTakeOver`, `.helpBanner[.decline]`, `.connecting`, `.status`, `.disconnected`, `.popOut`, `.more`, `.strip[.thumb.<otherId>]`, `.keyboardBadge` |
 | Páginas | `computers.page`, `computers.cleanUp` (v1.1), `computers.dockerBanner`, `computers.empty`, `computers.row.<id>`, `computers.queue.row.<id>.cancel`; `batch.<batchId>.page`, `batch.<batchId>.row.<childId>`, `batch.<batchId>.collectAll`, `batch.<batchId>.archive`; `library.page`, `library.section`, `library.search`, `library.source`, `library.new`, `library.empty`, `library.row.<kind>.<id>`, `library.detail.{newSession,enable,insert,openInEditor,reveal}`, `library.profile.{name,agent,model,permissions,args,env,default}` |
 | Settings | `settings.page`, `settings.back`, `settings.search`, `settings.nav.<section>`, `settings.<section>.<key>`, `settings.computers.proxies.row.<proxyId>`, `settings.computers.proxies.add`, `settings.computers.proxies.test` |
-| Onboarding | `onboarding`, `onboarding.step.<name>`, `onboarding.item.<key>`, `onboarding.import.<group>`, `onboarding.import.item.<n>`, `onboarding.import.confirm`, `onboarding.done`, `onboarding.skip` |
-| Dialogs | `overlay.confirmClose[.dontAsk/.cancel/.confirm]`, `overlay.confirmArchive[.cancel/.confirm]`, `overlay.confirmStopComputer.confirm`, `overlay.confirmDeleteComputer.confirm`, `overlay.confirmDelete[.keepBranch/.trashFolder/.deleteRuns/.dontAsk/.changes/.cancel/.confirm]`, `overlay.confirmRemoveProject[.cancel/.confirm]`, `overlay.resume[.row.<id>/.confirm]`, `overlay.moveToProject[.project/.cancel/.confirm]`, `overlay.addProject.{choose,clone,clone.url,clone.submit,importOrca}`, `overlay.confirmQuit[.keepRunning/.stopAll/.stopAllConfirm/.cancel/.dontAsk]`, `overlay.confirmSkipPermissions.confirm`, `overlay.renameBranch[.name/.submit]`, `overlay.about[.licenses/.copy]`, `overlay.newBatch.*`, `popover.paste[.text/.confirm]` |
-| Landing | `landing`, `landing.addProject`, `landing.newCleanSession`, `landing.importOrca`, `landing.newSession` |
+| Onboarding | `onboarding`, `onboarding.step.<name>`, `onboarding.item.<key>`, `onboarding.done`, `onboarding.skip` |
+| Dialogs | `overlay.confirmClose[.dontAsk/.cancel/.confirm]`, `overlay.confirmArchive[.cancel/.confirm]`, `overlay.confirmStopComputer.confirm`, `overlay.confirmDeleteComputer.confirm`, `overlay.confirmDelete[.keepBranch/.trashFolder/.deleteRuns/.dontAsk/.changes/.cancel/.confirm]`, `overlay.confirmRemoveProject[.cancel/.confirm]`, `overlay.resume[.row.<id>/.confirm]`, `overlay.moveToProject[.project/.cancel/.confirm]`, `overlay.addProject.{choose,clone,clone.url,clone.submit}`, `overlay.confirmQuit[.keepRunning/.stopAll/.stopAllConfirm/.cancel/.dontAsk]`, `overlay.confirmSkipPermissions.confirm`, `overlay.renameBranch[.name/.submit]`, `overlay.about[.licenses/.copy]`, `overlay.newBatch.*`, `popover.paste[.text/.confirm]` |
+| Landing | `landing`, `landing.addProject`, `landing.newCleanSession`, `landing.newSession` |
 | Menu bar | `menuBar.icon`, `menuBar.item.<sessionId>`, `menuBar.open`, `menuBar.newSession`, `menuBar.newCleanSession`, `menuBar.stopAll`, `menuBar.quitCompletely` |
 | Menus do app | `menu.<group>.<actionId>` (actionId de §24) |
 | Toasts | `toast.<kind>`, `toast.<kind>.action` |
@@ -1746,7 +1740,7 @@ Toda interação da UI é uma ação do registro (`ActionRegistry`: `ActionID` �
 
 ### 24.6 Settings e onboarding
 
-Cada controle de §14 é uma ação `settings.<section>.<key>` que grava o valor (regra de §14.1). Botões próprios: `Change…` (`settings.pickPath`), `Detect Again` / `Check Again` (`agent.detect`), `Edit Profiles…` (`library.profiles`), `Show Details` (`agent.hookDetails`), `Allow in Login Items` (`app.allowLoginItem`, abre System Settings › Login Items), `Open System Settings` (`app.openSystemSettings`), `Reset` "Don't ask again" (`settings.resetConfirmations`), `Import Again…` (`import.orca`), `Reveal Keybindings File` (`settings.revealKeybindings`), `Back Up Now` (`db.backup`), `Export Database…` (`db.export`), `Restore from Backup…` (`db.restore`), `Reload Shell Environment` (`terminal.reloadEnv`), `Read` security model (`help.securityModel`), `Reset Agent Box…` (`app.reset`, confirmação digitando `reset`), `Add Credential` / `Import .env File…` / `Reveal` / `Edit` / `Delete…` (`credential.*`, Reveal pede Touch ID). Onboarding: `Log In` (`account.logIn`), `Install…` (`agent.installHelp`), `Start Docker`, `Download`, `Allow` (`notifications.request`), `Review…` / `Import` / `Back` (`import.orca*`), `Skip for Now` / `Done` (`onboarding.skip` / `onboarding.done`). Nenhum desses fica sem efeito: quando a pré-condição falta, o botão fica desabilitado com o motivo em uma linha.
+Cada controle de §14 é uma ação `settings.<section>.<key>` que grava o valor (regra de §14.1). Botões próprios: `Change…` (`settings.pickPath`), `Detect Again` / `Check Again` (`agent.detect`), `Edit Profiles…` (`library.profiles`), `Show Details` (`agent.hookDetails`), `Allow in Login Items` (`app.allowLoginItem`, abre System Settings › Login Items), `Open System Settings` (`app.openSystemSettings`), `Reset` "Don't ask again" (`settings.resetConfirmations`), `Reveal Keybindings File` (`settings.revealKeybindings`), `Back Up Now` (`db.backup`), `Export Database…` (`db.export`), `Restore from Backup…` (`db.restore`), `Reload Shell Environment` (`terminal.reloadEnv`), `Read` security model (`help.securityModel`), `Reset Agent Box…` (`app.reset`, confirmação digitando `reset`), `Add Credential` / `Import .env File…` / `Reveal` / `Edit` / `Delete…` (`credential.*`, Reveal pede Touch ID). Onboarding: `Log In` (`account.logIn`), `Install…` (`agent.installHelp`), `Start Docker`, `Download`, `Allow` (`notifications.request`), `Skip for Now` / `Done` (`onboarding.skip` / `onboarding.done`). Nenhum desses fica sem efeito: quando a pré-condição falta, o botão fica desabilitado com o motivo em uma linha.
 
 Chaves da Fatia 1 (T1-26). Todas gravam pela regra de §14.1 (switch, segmented, combobox e stepper na hora; texto no ↵ ou blur; debounce de 300 ms no Store). `set(on/off)` liga e desliga; `select(<valor>)` escolhe; `set(<texto>)` grava texto. Controles de seções de fatias futuras não existem na UI da Fatia 1 (AC-T28).
 
@@ -1848,7 +1842,6 @@ Cada botão e checkbox dos diálogos de §16 é uma ação. `Cancel` (Esc) exist
 | Move / Convert (§16.8) | `dialog.moveToProject.confirm` | — | Move a sessão limpa para o projeto escolhido ou a converte em projeto; agentes seguem rodando (mesmo PID) | Sem projeto escolhido: `Choose a project.` | v1 | `testAction_dialog_moveToProject_confirm` |
 | Project (combobox, §16.8) | `dialog.moveToProject.setProject` | — | Escolhe o projeto ou `Convert to Project` | — | v1 | `testAction_dialog_moveToProject_setProject` |
 | Cancel (§16.8) | `dialog.moveToProject.cancel` | Esc | Fecha o overlay sem mover | — | v1 | `testAction_dialog_moveToProject_cancel` |
-| Choose a Folder… / Import from Orca… / Clone from URL (§16.9) | `dialog.addProject.choose` / `dialog.addProject.importOrca` / `dialog.addProject.clone` | — | Escolhe a pasta / abre o passo 2 do onboarding / clona por URL (clone: v1.1) | — | v1 | `testAction_dialog_addProject_choose` · `testAction_dialog_addProject_importOrca` · `testAction_dialog_addProject_clone` |
 | Add <n> Projects / Stop Scan (§16.9) | `dialog.addProject.addFound` / `dialog.addProject.stopScan` | — | Adiciona os repositórios marcados / interrompe o scan da pasta | — | v1 | `testAction_dialog_addProject_addFound` · `testAction_dialog_addProject_stopScan` |
 | Keep Running (§16.10) | `dialog.quit.keepRunning` | ↵ | Fecha a janela e deixa o app em modo accessory; agentes seguem vivos | — | v1 | `testAction_dialog_quit_keepRunning` |
 | Stop All and Quit… (§16.10) | `dialog.quit.stopAll` | — | Abre a segunda confirmação `Stop <n> agents and <m> computers?` | — | v1 | `testAction_dialog_quit_stopAll` |

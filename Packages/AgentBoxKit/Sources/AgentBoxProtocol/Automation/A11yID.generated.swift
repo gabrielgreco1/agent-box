@@ -268,8 +268,6 @@ extension A11yID {
     public static let settingsComputersProxiesTest = A11yID(unchecked: "settings.computers.proxies.test")
     /// `onboarding`
     public static let onboarding = A11yID(unchecked: "onboarding")
-    /// `onboarding.import.confirm`
-    public static let onboardingImportConfirm = A11yID(unchecked: "onboarding.import.confirm")
     /// `onboarding.done`
     public static let onboardingDone = A11yID(unchecked: "onboarding.done")
     /// `onboarding.skip`
@@ -334,8 +332,6 @@ extension A11yID {
     public static let overlayAddProjectCloneUrl = A11yID(unchecked: "overlay.addProject.clone.url")
     /// `overlay.addProject.clone.submit`
     public static let overlayAddProjectCloneSubmit = A11yID(unchecked: "overlay.addProject.clone.submit")
-    /// `overlay.addProject.importOrca`
-    public static let overlayAddProjectImportOrca = A11yID(unchecked: "overlay.addProject.importOrca")
     /// `overlay.confirmQuit`
     public static let overlayConfirmQuit = A11yID(unchecked: "overlay.confirmQuit")
     /// `overlay.confirmQuit.keepRunning`
@@ -374,8 +370,6 @@ extension A11yID {
     public static let landingAddProject = A11yID(unchecked: "landing.addProject")
     /// `landing.newCleanSession`
     public static let landingNewCleanSession = A11yID(unchecked: "landing.newCleanSession")
-    /// `landing.importOrca`
-    public static let landingImportOrca = A11yID(unchecked: "landing.importOrca")
     /// `landing.newSession`
     public static let landingNewSession = A11yID(unchecked: "landing.newSession")
     /// `menuBar.icon`
@@ -1071,16 +1065,6 @@ extension A11yID {
         A11yID(unchecked: "onboarding.item.\(A11yID.segment(key))")
     }
 
-    /// `onboarding.import.<group>`
-    public static func onboardingImport(_ group: String) -> A11yID {
-        A11yID(unchecked: "onboarding.import.\(A11yID.segment(group))")
-    }
-
-    /// `onboarding.import.item.<n>`
-    public static func onboardingImportItem(_ n: String) -> A11yID {
-        A11yID(unchecked: "onboarding.import.item.\(A11yID.segment(n))")
-    }
-
     /// `overlay.resume.row.<id>`
     public static func overlayResumeRow(_ id: String) -> A11yID {
         A11yID(unchecked: "overlay.resume.row.\(A11yID.segment(id))")
@@ -1384,9 +1368,6 @@ extension A11yID {
         A11yIDSpec(pattern: "onboarding", surface: "Onboarding"),
         A11yIDSpec(pattern: "onboarding.step.<name>", surface: "Onboarding"),
         A11yIDSpec(pattern: "onboarding.item.<key>", surface: "Onboarding"),
-        A11yIDSpec(pattern: "onboarding.import.<group>", surface: "Onboarding"),
-        A11yIDSpec(pattern: "onboarding.import.item.<n>", surface: "Onboarding"),
-        A11yIDSpec(pattern: "onboarding.import.confirm", surface: "Onboarding"),
         A11yIDSpec(pattern: "onboarding.done", surface: "Onboarding"),
         A11yIDSpec(pattern: "onboarding.skip", surface: "Onboarding"),
         A11yIDSpec(pattern: "overlay.confirmClose", surface: "Dialogs"),
@@ -1420,7 +1401,6 @@ extension A11yID {
         A11yIDSpec(pattern: "overlay.addProject.clone", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.addProject.clone.url", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.addProject.clone.submit", surface: "Dialogs"),
-        A11yIDSpec(pattern: "overlay.addProject.importOrca", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmQuit", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmQuit.keepRunning", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmQuit.stopAll", surface: "Dialogs"),
@@ -1441,7 +1421,6 @@ extension A11yID {
         A11yIDSpec(pattern: "landing", surface: "Landing"),
         A11yIDSpec(pattern: "landing.addProject", surface: "Landing"),
         A11yIDSpec(pattern: "landing.newCleanSession", surface: "Landing"),
-        A11yIDSpec(pattern: "landing.importOrca", surface: "Landing"),
         A11yIDSpec(pattern: "landing.newSession", surface: "Landing"),
         A11yIDSpec(pattern: "menuBar.icon", surface: "Menu bar"),
         A11yIDSpec(pattern: "menuBar.item.<sessionId>", surface: "Menu bar"),

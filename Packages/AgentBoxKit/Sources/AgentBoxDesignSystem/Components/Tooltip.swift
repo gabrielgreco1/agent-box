@@ -2,7 +2,7 @@ import AppKit
 import Observation
 import SwiftUI
 
-// Tooltip invertido do Orca (02 §12.14, M-106). `.help()` fica só nos controles de formulário do Settings.
+// Tooltip invertido (02 §12.14, M-106). `.help()` fica só nos controles de formulário do Settings.
 
 /// Atrasos de abertura (02 §12.14, DS1; tokens `delay.tooltip*`).
 public enum TooltipDelay: Sendable {

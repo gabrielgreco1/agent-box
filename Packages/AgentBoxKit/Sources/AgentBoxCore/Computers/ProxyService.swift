@@ -78,7 +78,7 @@ public struct ProxyService: Sendable {
 
     /// Caminho padrão do `.env` do CLI antigo.
     public static func defaultCLIEnvFile() -> URL {
-        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("orca/projects/agentbox/.env")
+        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".agentbox/.env")
     }
 
     /// `Import from agentbox CLI…` (08 AR-343, 07 CS-160): lê SÓ `ZYTE_API_KEY` (e os preços informativos) do `.env` do CLI antigo,

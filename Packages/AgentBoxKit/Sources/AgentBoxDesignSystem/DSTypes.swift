@@ -18,7 +18,7 @@ nonisolated public struct DSRGBA: Sendable, Equatable {
         self.alpha = opacity
     }
 
-    /// Para valores `#rrggbbaa` do Orca: o alfa é o byte / 255.
+    /// Para valores `#rrggbbaa` de referência: o alfa é o byte / 255.
     public init(hex: UInt32, alphaByte: UInt8) {
         self.hex = hex
         self.alpha = Double(alphaByte) / 255

@@ -36,7 +36,7 @@ import Testing
     @Test func comboboxStates() {
         snap(
             VStack(alignment: .leading, spacing: DS.Space.s3) {
-                DSComboboxField(icon: .symbol("folder"), title: "otter", detail: "~/orca/workspaces/otter")
+                DSComboboxField(icon: .symbol("folder"), title: "otter", detail: "~/AgentBox/worktrees/otter")
                 DSComboboxField(icon: .agent(.claude), title: "Claude Code", open: true)
                 DSComboboxField(title: "Claude · Skip permissions", focused: true)
                 DSComboboxField(icon: .agent(.codex), title: "Codex").disabled(true)

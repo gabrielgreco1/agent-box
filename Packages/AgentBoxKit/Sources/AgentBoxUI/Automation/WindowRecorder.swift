@@ -5,7 +5,7 @@ import ScreenCaptureKit
 import Synchronization
 
 /// Gravação da própria janela em `.mov` (`ctl record start|stop`, 08 AR-806) via `SCRecordingOutput` (macOS 15).
-/// Serve para a comparação de motion com o Orca (P1/P14). Exige Gravação de Tela.
+/// Serve para a comparação de motion com a referência (P1/P14). Exige Gravação de Tela.
 @MainActor
 final class WindowRecorder {
     private var stream: SCStream?

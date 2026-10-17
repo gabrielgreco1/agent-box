@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Variantes de botão (02 §12.1, Orca `button.tsx`).
+/// Variantes de botão (02 §12.1).
 public enum DSButtonVariant: Sendable, CaseIterable {
     case primary, secondary, outline, ghost, destructive, link
 }

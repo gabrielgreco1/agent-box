@@ -134,10 +134,10 @@ def collect_colors(doc):
             if name in seen:
                 fail("%s: nome duplicado" % where)
             seen.add(name)
-            if "orca" not in spec:
-                fail("%s: falta a chave 'orca' (variável do Orca, 'palette:--color-*' ou null com 'note')" % where)
-            if spec["orca"] is None and not spec.get("note"):
-                fail("%s: orca=null exige 'note' justificando" % where)
+            if "reference" not in spec:
+                fail("%s: falta a chave 'reference' (variável de referência, 'palette:--color-*' ou null com 'note')" % where)
+            if spec["reference"] is None and not spec.get("note"):
+                fail("%s: reference=null exige 'note' justificando" % where)
             rgb, byte, op = parse_color(spec, where)
             if "light" in spec:
                 parse_color(spec["light"], where + ".light")
