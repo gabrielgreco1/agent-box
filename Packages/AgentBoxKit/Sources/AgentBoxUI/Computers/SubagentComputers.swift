@@ -334,7 +334,7 @@ struct ComputerChildRowView: View {
                         .id(row.detail ?? row.stateLabel)
                         .transition(.opacity)
                     Spacer(minLength: DS.Space.s1)
-                    if !row.needsDocker {
+                    if !row.needsDocker, row.detail != nil {
                         Text(verbatim: row.stateLabel)
                             .dsFont(DS.Font.microNumeric)
                             .foregroundStyle(DS.Color.textTertiary.opacity(0.8))

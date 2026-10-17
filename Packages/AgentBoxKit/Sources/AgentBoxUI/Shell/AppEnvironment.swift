@@ -60,6 +60,8 @@ public final class AppEnvironment {
     /// ⌘Q com agentes vivos, modo accessory e barra de menus (T1-24).
     public private(set) var lifecycle: AppLifecycleCoordinator!
     public let automationEnabled: Bool
+    /// `AGENTBOX_TEST_HEADLESS=1`: instância de teste/evidência que nunca aparece (sem Dock, janela, menu, status item nem notificações).
+    public let headless: Bool
     public let fixture: String?
     public let socketPath: String
     private var ctl: CtlServer?
@@ -87,6 +89,7 @@ public final class AppEnvironment {
         let flags = SliceFlags.fromEnvironment(environment)
         self.flags = flags
         self.automationEnabled = environment["AGENTBOX_AUTOMATION"] == "1"
+        self.headless = environment["AGENTBOX_TEST_HEADLESS"] == "1"
         self.fixture = environment["AGENTBOX_SCREEN"]
         self.socketPath = AppSockPath.resolve(environment: environment)
         self.environmentVariables = environment
@@ -107,7 +110,7 @@ public final class AppEnvironment {
         let slice2 = flags.isEnabled(.slice2)
         if slice2 {
             let center: any NotificationCentering
-            if environment["AGENTBOX_NOTIFICATIONS"] == "fake" {
+            if environment["AGENTBOX_NOTIFICATIONS"] == "fake" || environment["AGENTBOX_TEST_HEADLESS"] == "1" {
                 let recorder = RecordingNotificationCenter(
                     authorization: .notDetermined, logURL: storeRoot.appendingPathComponent("run/fake-notifications.jsonl"))
                 fakeNotifier = recorder
@@ -169,7 +172,7 @@ public final class AppEnvironment {
             computers.closePage()
             return true
         }
-        if !automationEnabled {
+        if !automationEnabled && !headless {
             let system = SystemHelpNotifier(open: { [computers, registry] name, takeOver in
                 NSApp.activate()
                 computers.openViewer(name)
