@@ -235,6 +235,39 @@ extension ActionID {
     public static let proxyAdd = ActionID(unchecked: "proxy.add")
     public static let proxyTest = ActionID(unchecked: "proxy.test")
     public static let proxyDelete = ActionID(unchecked: "proxy.delete")
+    public static let settingsOpenSection = ActionID(unchecked: "settings.openSection")
+    public static let settingsBack = ActionID(unchecked: "settings.back")
+    public static let settingsGeneralKeepAgentsRunning = ActionID(unchecked: "settings.general.keepAgentsRunning")
+    public static let settingsGeneralAskBeforeQuit = ActionID(unchecked: "settings.general.askBeforeQuit")
+    public static let settingsGeneralConfirmCloseTerminal = ActionID(unchecked: "settings.general.confirmCloseTerminal")
+    public static let settingsGeneralConfirmDeleteSession = ActionID(unchecked: "settings.general.confirmDeleteSession")
+    public static let settingsGeneralBranchPrefix = ActionID(unchecked: "settings.general.branchPrefix")
+    public static let settingsGeneralBranchPrefixCustom = ActionID(unchecked: "settings.general.branchPrefixCustom")
+    public static let settingsGeneralWorktreeFolder = ActionID(unchecked: "settings.general.worktreeFolder")
+    public static let settingsGeneralCleanSessionFolder = ActionID(unchecked: "settings.general.cleanSessionFolder")
+    public static let settingsPickPath = ActionID(unchecked: "settings.pickPath")
+    public static let settingsResetConfirmations = ActionID(unchecked: "settings.resetConfirmations")
+    public static let settingsAgentsDefaultAgent = ActionID(unchecked: "settings.agents.defaultAgent")
+    public static let settingsAgentsDefaultProfile = ActionID(unchecked: "settings.agents.defaultProfile")
+    public static let settingsAgentsProfileNew = ActionID(unchecked: "settings.agents.profileNew")
+    public static let settingsAgentsProfileDuplicate = ActionID(unchecked: "settings.agents.profileDuplicate")
+    public static let settingsAgentsProfileEdit = ActionID(unchecked: "settings.agents.profileEdit")
+    public static let settingsAgentsProfileDelete = ActionID(unchecked: "settings.agents.profileDelete")
+    public static let settingsAgentsProfileName = ActionID(unchecked: "settings.agents.profileName")
+    public static let settingsAgentsProfilePermission = ActionID(unchecked: "settings.agents.profilePermission")
+    public static let settingsAgentsProfileModel = ActionID(unchecked: "settings.agents.profileModel")
+    public static let settingsAgentsProfileArgs = ActionID(unchecked: "settings.agents.profileArgs")
+    public static let settingsTerminalFont = ActionID(unchecked: "settings.terminal.font")
+    public static let settingsTerminalSize = ActionID(unchecked: "settings.terminal.size")
+    public static let settingsTerminalTheme = ActionID(unchecked: "settings.terminal.theme")
+    public static let settingsTerminalCursor = ActionID(unchecked: "settings.terminal.cursor")
+    public static let settingsTerminalCursorBlink = ActionID(unchecked: "settings.terminal.cursorBlink")
+    public static let agentDetect = ActionID(unchecked: "agent.detect")
+    public static let agentInstallHelp = ActionID(unchecked: "agent.installHelp")
+    public static let onboardingKeepSettingUp = ActionID(unchecked: "onboarding.keepSettingUp")
+    public static let onboardingConfirmSkip = ActionID(unchecked: "onboarding.confirmSkip")
+    public static let onboardingSkip = ActionID(unchecked: "onboarding.skip")
+    public static let onboardingDone = ActionID(unchecked: "onboarding.done")
     public static let paletteOpen = ActionID(unchecked: "palette.open")
     public static let paletteOpenRow = ActionID(unchecked: "palette.openRow")
     public static let paletteOpenInSplit = ActionID(unchecked: "palette.openInSplit")
@@ -476,7 +509,7 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "git.createPR"), label: "Create Pull Request…", shortcut: "", slice: .slice2),
         ActionSpec(id: ActionID(unchecked: "git.openPR"), label: "Open on GitHub", shortcut: "", slice: .slice2),
         ActionSpec(id: ActionID(unchecked: "git.copyPRURL"), label: "Copy URL (PR)", shortcut: "", slice: .slice2),
-        ActionSpec(id: ActionID(unchecked: "account.logIn"), label: "Log In (gh, Claude, Codex)", shortcut: "", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "account.logIn"), label: "Log In (gh, Claude, Codex)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "checks.sendFailures"), label: "Send Failures to Claude Code", shortcut: "", slice: .v11),
         ActionSpec(id: ActionID(unchecked: "conversation.resume"), label: "Resume in New Tab / in Split, Show Transcript", shortcut: "", slice: .slice2),
         ActionSpec(id: ActionID(unchecked: "conversation.resumeSplit"), label: "Resume in New Tab / in Split, Show Transcript", shortcut: "", slice: .slice2),
@@ -538,6 +571,39 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "proxy.add"), label: "Add Proxy", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "proxy.test"), label: "Test Proxy", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "proxy.delete"), label: "Delete…", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "settings.openSection"), label: "Seção do Settings (nav)", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.back"), label: "Back to App", shortcut: "Esc", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.general.keepAgentsRunning"), label: "Keep agents running when you quit", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.general.askBeforeQuit"), label: "Ask before quitting with running agents", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.general.confirmCloseTerminal"), label: "Confirm before closing a running terminal", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.general.confirmDeleteSession"), label: "Confirm before deleting a session", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.general.branchPrefix"), label: "Branch prefix", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.general.branchPrefixCustom"), label: "Branch prefix", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.general.worktreeFolder"), label: "Worktree folder", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.general.cleanSessionFolder"), label: "Clean session folder", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.pickPath"), label: "Change…", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.resetConfirmations"), label: "Reset", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.agents.defaultAgent"), label: "Default agent", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.agents.defaultProfile"), label: "Default profile", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.agents.profileNew"), label: "New Profile", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.agents.profileDuplicate"), label: "Duplicate", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.agents.profileEdit"), label: "Edit", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.agents.profileDelete"), label: "Delete", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.agents.profileName"), label: "Profile name", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.agents.profilePermission"), label: "Permissions", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.agents.profileModel"), label: "Model", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.agents.profileArgs"), label: "Extra flags", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.terminal.font"), label: "Font", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.terminal.size"), label: "Size", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.terminal.theme"), label: "Theme", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.terminal.cursor"), label: "Cursor", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.terminal.cursorBlink"), label: "Cursor", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "agent.detect"), label: "Detect Again / Check Again", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "agent.installHelp"), label: "Install…", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "onboarding.keepSettingUp"), label: "Keep Setting Up", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "onboarding.confirmSkip"), label: "Skip (confirmação do onboarding)", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "onboarding.skip"), label: "Skip for Now", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "onboarding.done"), label: "Done", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "palette.open"), label: "Jump To… (abrir a palette)", shortcut: "⌘J", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "palette.openRow"), label: "Open Row", shortcut: "↵", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "palette.openInSplit"), label: "Open in Split", shortcut: "⇧↵", slice: .slice1),

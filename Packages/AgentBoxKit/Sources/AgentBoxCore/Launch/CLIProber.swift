@@ -47,6 +47,14 @@ public struct CLIProbeResult: Sendable, Equatable {
     public var issues: [String]
 
     public var isInstalled: Bool { executable != nil }
+
+    public init(
+        provider: TerminalProvider, executable: String?, version: CLIVersion? = nil, versionText: String? = nil,
+        capabilities: CLICapabilities? = nil, login: CLILoginState, issues: [String] = []
+    ) {
+        self.provider = provider; self.executable = executable; self.version = version; self.versionText = versionText
+        self.capabilities = capabilities; self.login = login; self.issues = issues
+    }
 }
 
 /// Detecta CLI instalado, versão, flags (`--help`) e login (comando de status, somente leitura). NUNCA roda `login`.

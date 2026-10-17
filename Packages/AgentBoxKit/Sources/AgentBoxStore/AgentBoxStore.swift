@@ -414,6 +414,13 @@ public actor AgentBoxStore {
         schedule(key: "ui-state:\(key)") { try Self.upsertKeyValue($0, table: "ui_state", key: key, json: json, ms: ms) }
     }
 
+    /// Configuração do usuário com debounce de 300 ms (03 §14.1 regra 6): vários toques seguidos num stepper viram uma escrita.
+    public func scheduleSetting<T: Encodable & Sendable>(_ key: String, _ value: T) throws {
+        guard mode == .readWrite else { throw StoreError.readOnly }
+        let json = try RowCodec.json(value), ms = RowCodec.ms(clock())
+        schedule(key: "setting:\(key)") { try Self.upsertKeyValue($0, table: "setting", key: key, json: json, ms: ms) }
+    }
+
     /// Grava o layout agora (fim do gesto), cancelando qualquer escrita pendente do mesmo tab.
     public func setLayout(tabID: UUID, layout: PaneLayout, focusedTerminalID: UUID?) async throws {
         guard layout.isValid else { throw StoreError.invalidModel("invalid pane layout") }

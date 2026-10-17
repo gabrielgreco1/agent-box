@@ -11,14 +11,19 @@ final class ChromeContainerView: NSView {
     let split: NSView
     /// Overlays e toasts: acima de tudo, cobrindo a janela inteira (02 §12.17).
     let overlay: NSView
+    /// Settings em página inteira (03 §14): cobre sidebar, centro e painel; a faixa da titlebar fica por cima.
+    let settings: NSView
     var stripWidth: () -> CGFloat = { 0 }
 
-    init(split: NSView, strip: NSView, overlay: NSView) {
+    init(split: NSView, strip: NSView, overlay: NSView, settings: NSView) {
         self.split = split
         self.strip = strip
         self.overlay = overlay
+        self.settings = settings
         super.init(frame: .zero)
+        settings.isHidden = true
         addSubview(split)
+        addSubview(settings)
         addSubview(strip)
         addSubview(overlay)
     }
@@ -28,6 +33,7 @@ final class ChromeContainerView: NSView {
     override func layout() {
         super.layout()
         split.frame = bounds
+        settings.frame = bounds
         overlay.frame = bounds
         let h = DS.Layout.titlebarHeight
         strip.frame = NSRect(x: 0, y: bounds.height - h, width: min(stripWidth(), bounds.width), height: h)
@@ -43,6 +49,7 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
     private let container: ChromeContainerView
     private let strip: ChromeHostingView
     private let overlayHost: OverlayHostingView
+    private let settingsHost: ChromeHostingView
     private let overlayFocus = OverlayFocusCoordinator()
     private var positioner: TrafficLightPositioner?
     private var observers: [any NSObjectProtocol] = []
@@ -58,7 +65,12 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
         self.strip = strip
         let overlayHost = OverlayHostingView(router: env.overlays, toasts: env.toasts, registry: env.registry, elements: env.elements)
         self.overlayHost = overlayHost
-        container = ChromeContainerView(split: split.view, strip: strip, overlay: overlayHost)
+        let settingsHost = ChromeHostingView(
+            content: SettingsView(model: env.settings).environment(\.elementStore, env.elements).environment(\.actionRegistry, env.registry)
+                .environment(\.overlayRouter, env.overlays).environment(\.a11yParent, .windowMain))
+        settingsHost.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
+        self.settingsHost = settingsHost
+        container = ChromeContainerView(split: split.view, strip: strip, overlay: overlayHost, settings: settingsHost)
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: DS.Layout.windowDefaultWidth, height: DS.Layout.windowDefaultHeight),
@@ -88,6 +100,7 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
         env.overlays.focus = overlayFocus
         env.elements.register(mainToken, id: .windowMain, kind: "window", label: "Agent Box", value: nil, action: nil, parent: nil)
         registerActions()
+        observeSettings()
         observeLayout()
         window.layoutIfNeeded()
         container.needsLayout = true
@@ -108,6 +121,19 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
         }
         positioner?.apply()
         updateMainFrame()
+    }
+
+    /// Settings abre por cima da sidebar e do centro (03 §14): o split some enquanto a página está aberta e o foco vai para ela.
+    private func observeSettings() {
+        let previous = env.settings.onPresentationChange
+        env.settings.onPresentationChange = { [weak self] open in
+            previous(open)
+            guard let self else { return }
+            self.split.view.isHidden = open
+            self.settingsHost.isHidden = !open
+            self.container.needsLayout = true
+            if open { self.window?.makeFirstResponder(self.settingsHost) }
+        }
     }
 
     private func currentStripWidth() -> CGFloat {

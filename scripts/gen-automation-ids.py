@@ -214,7 +214,7 @@ def gen_a11y(entries):
 SLICE_BY_PREFIX = [
     ("computer.", 3), ("docker.", 3), ("image.", 3), ("batch.", 3), ("proxy.", 3), ("child.", 3),
     ("git.", 2), ("conversation.", 2), ("context.", 4), ("inbox.", 2), ("notification.", 2),
-    ("account.", 2), ("checks.", 2), ("conflict.", 2), ("library.", 4), ("profile.", 4),
+    ("account.logIn", 1), ("account.", 2), ("checks.", 2), ("conflict.", 2), ("library.", 4), ("profile.", 4),
     ("settings.testNotification", 2), ("session.markRead", 2), ("session.markUnread", 2),
     ("panel.refresh", 2), ("panel.conversations", 2), ("panel.context", 4),
     ("view.toggleRightPanel", 2), ("sidebar.clearSearch", 2), ("sidebar.search", 2),

@@ -33,6 +33,9 @@ public final class AppEnvironment {
     public let overlays = OverlayRouter()
     public let toasts = ToastCenter()
     let sidebar = SidebarModel()
+    /// Settings em página inteira e onboarding mínimo (T1-26): detecção de CLIs, perfis de lançamento e configuração.
+    public let settings: SettingsModel
+    public let onboarding: OnboardingModel
     public let keyBindings: KeyBindingRegistry
     /// Pane de terminal focado: destino das ações de zoom, busca, copiar/colar e limpar (T1-09).
     public let terminalRouter = TerminalActionRouter()
@@ -59,6 +62,11 @@ public final class AppEnvironment {
         do { bindings = try KeyBindingRegistry.canonical() } catch { log.publicError("canonical key bindings invalid") }
         if !bindings.conflicts().isEmpty { log.publicError("key binding conflicts detected") }
         self.keyBindings = bindings
+        let settings = SettingsModel(flags: flags, probe: Self.makeProbe(fixture: environment["AGENTBOX_SCREEN"]))
+        self.settings = settings
+        self.onboarding = OnboardingModel(settings: settings)
+        let screen = environment["AGENTBOX_SCREEN"]
+        autoOnboarding = environment["AGENTBOX_SKIP_ONBOARDING"] != "1" && (screen == nil || screen == Self.setupDemoFixture)
         elements.enablement = { [registry] id in registry.availability(of: id) }
         registerShellActions()
         do { try sidebar.registerActions(in: registry) } catch { log.publicError("duplicate sidebar action registration") }
@@ -66,6 +74,48 @@ public final class AppEnvironment {
         if fixture == Self.overlayDemoFixture || fixture == SidebarFixtures.screenID { registerOverlayDemo() }
         if fixture == SidebarFixtures.screenID { registerSidebarDemo() }
         do { try terminalRouter.register(in: registry) } catch { log.publicError("duplicate terminal action registration") }
+        wireSettings()
+    }
+
+    /// `AGENTBOX_SCREEN=setup-demo`: onboarding e Settings com CLIs de mentira (Claude logado, Codex deslogado, OpenCode ausente),
+    /// para a evidência visual não depender do que está instalado no Mac.
+    public static let setupDemoFixture = "setup-demo"
+    private let autoOnboarding: Bool
+
+    private static func makeProbe(fixture: String?) -> AgentProbe {
+        if fixture == setupDemoFixture {
+            return { provider, _ in
+                switch provider {
+                case .claude: CLIProbeResult(provider: .claude, executable: "/Users/demo/.local/bin/claude", version: CLIVersion(2, 1, 302), login: .loggedIn)
+                case .codex: CLIProbeResult(provider: .codex, executable: "/opt/homebrew/bin/codex", version: CLIVersion(0, 160, 0), login: .loggedOut)
+                default: CLIProbeResult(provider: provider, executable: nil, login: .unknown("not installed"))
+                }
+            }
+        }
+        let loginEnv = LoginShellEnvProvider()
+        let prober = CLIProber(environment: { await loginEnv.environment().captured.variables })
+        return { provider, force in await prober.probe(ProviderAdapters.adapter(for: provider), checkLogin: true, force: force) }
+    }
+
+    /// Liga Settings e onboarding ao registro de ações, aos overlays e aos toasts.
+    private func wireSettings() {
+        settings.toasts = toasts
+        do {
+            try settings.registerActions(in: registry)
+            try onboarding.registerActions(in: registry)
+        } catch {
+            log.publicError("duplicate settings action registration")
+        }
+        onboarding.present = { [overlays, onboarding] in overlays.present(onboarding.overlaySpec(), from: nil) }
+        onboarding.dismiss = { [overlays] in
+            if overlays.top?.spec.name == "onboarding" { overlays.dismiss(.action) }
+        }
+        let previous = settings.onPresentationChange
+        settings.onPresentationChange = { [onboarding] open in
+            previous(open)
+            // Abrir o Settings (Review Profiles, ⌘,) tira o onboarding da frente sem registrá-lo como concluído.
+            if open { onboarding.hide() }
+        }
     }
 
     /// Ações reais da casca vazia; as demais entram com a tela que as possui.
@@ -203,6 +253,8 @@ public final class AppEnvironment {
                 }
             }
             await sidebar.attach(store: opened)
+            await settings.attach(store: opened)
+            if autoOnboarding { await onboarding.attach(store: opened, forceVisible: fixture == Self.setupDemoFixture) }
         } catch {
             log.error("store failed to open: \(error)")
         }
