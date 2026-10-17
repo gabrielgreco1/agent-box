@@ -1,0 +1,155 @@
+[
+  {
+    "argvSample" : [
+      "claude",
+      "--session-id",
+      "11111111-2222-4333-8444-555555555555",
+      "--dangerously-skip-permissions",
+      "hello"
+    ],
+    "argvSampleWarnings" : [
+
+    ],
+    "capabilitySource" : "help",
+    "executable" : "/Users/gabriel/.local/bin/claude",
+    "flagCount" : 77,
+    "flagsMissingFromFixture" : [
+
+    ],
+    "flagsMissingFromInstalled" : [
+
+    ],
+    "helpMatchesFixture" : true,
+    "issues" : [
+
+    ],
+    "login" : "loggedIn",
+    "provider" : "claude",
+    "subcommands" : [
+      "agents",
+      "attach",
+      "auth",
+      "auto-mode",
+      "doctor",
+      "gateway",
+      "import",
+      "install",
+      "logs",
+      "mcp",
+      "purge",
+      "respawn",
+      "rm",
+      "setup-token",
+      "ultrareview"
+    ],
+    "version" : "2.1.302",
+    "versionText" : "2.1.302 (Claude Code)"
+  },
+  {
+    "argvSample" : [
+      "codex",
+      "--no-daemon",
+      "--dangerously-bypass-approvals-and-sandbox",
+      "hello"
+    ],
+    "argvSampleWarnings" : [
+
+    ],
+    "capabilitySource" : "help",
+    "executable" : "/Users/gabriel/.local/bin/codex",
+    "flagCount" : 33,
+    "flagsMissingFromFixture" : [
+
+    ],
+    "flagsMissingFromInstalled" : [
+
+    ],
+    "helpMatchesFixture" : true,
+    "issues" : [
+
+    ],
+    "login" : "loggedIn",
+    "provider" : "codex",
+    "subcommands" : [
+      "agents",
+      "app",
+      "app-server",
+      "apply",
+      "archive",
+      "cloud",
+      "completion",
+      "debug",
+      "delete",
+      "doctor",
+      "exec",
+      "exec-server",
+      "features",
+      "fork",
+      "help",
+      "login",
+      "logout",
+      "mcp",
+      "migrate-rollouts",
+      "plugin",
+      "queue",
+      "remote-control",
+      "resume",
+      "review",
+      "sandbox",
+      "unarchive",
+      "update"
+    ],
+    "version" : "0.163.0",
+    "versionText" : "codex-cli 0.163.0"
+  },
+  {
+    "argvSample" : [
+      "opencode",
+      "--prompt",
+      "hello"
+    ],
+    "argvSampleWarnings" : [
+
+    ],
+    "capabilitySource" : "help",
+    "executable" : "/Users/gabriel/.local/bin/opencode",
+    "flagCount" : 25,
+    "flagsMissingFromFixture" : [
+
+    ],
+    "flagsMissingFromInstalled" : [
+
+    ],
+    "helpMatchesFixture" : true,
+    "issues" : [
+
+    ],
+    "login" : "loggedIn",
+    "provider" : "opencode",
+    "subcommands" : [
+      "acp",
+      "agent",
+      "attach",
+      "completion",
+      "db",
+      "debug",
+      "export",
+      "github",
+      "import",
+      "mcp",
+      "models",
+      "plugin",
+      "pr",
+      "providers",
+      "run",
+      "serve",
+      "session",
+      "stats",
+      "uninstall",
+      "upgrade",
+      "web"
+    ],
+    "version" : "1.18.34",
+    "versionText" : "1.18.34"
+  }
+]
