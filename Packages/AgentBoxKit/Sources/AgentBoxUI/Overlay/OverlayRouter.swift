@@ -332,7 +332,13 @@ public final class OverlayFocusCoordinator {
         let target = saved
         saved = nil
         // Guardado era a janela/a contentView/algo fora da árvore: não é destino de digitação, o terminal é.
-        if let target, target !== window, target !== window.contentView, !(target is ChromeHostingView), window.makeFirstResponder(target) { return }
+        // O terminal guardado pode ter saído de cena (tab trocada pela ação do menu): vale o terminal focado de agora.
+        let staleTerminal = target is TerminalSurfaceView
+        if let target, !staleTerminal, target !== window, target !== window.contentView, !(target is ChromeHostingView),
+            window.makeFirstResponder(target)
+        {
+            return
+        }
         window.makeFirstResponder(window.contentView)
         fallbackFocus?()
     }

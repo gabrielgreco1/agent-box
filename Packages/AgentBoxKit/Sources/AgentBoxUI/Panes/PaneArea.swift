@@ -671,7 +671,7 @@ final class PaneAreaView: NSView {
             if lastFocusedHost !== host {
                 lastFocusedHost = host
                 let editing = window?.firstResponder is NSText
-                if !editing { DispatchQueue.main.async { host.focusTerminal() } }
+                if !editing { DispatchQueue.main.async { [weak model] in model?.autoFocus(host) } }
             }
         }
         // Primeiro layout com tamanho: lança o terminal novo ou religa o que o daemon manteve vivo.

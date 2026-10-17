@@ -178,7 +178,13 @@ final class WorkspaceViewController: NSViewController {
         env.computers.onPageChange = { [weak self, weak root, weak env] in
             guard let self, let root, let env else { return }
             root.setPage(self.pageView(for: env.computers.page, env: env))
-            if env.computers.page != .workspace { root.window?.makeFirstResponder(root.page) }
+            if env.computers.page != .workspace {
+                root.window?.makeFirstResponder(root.page)
+            } else {
+                // Voltou ao workspace: o terminal da tab ativa recupera o teclado (a página que tinha o foco saiu da janela).
+                env.workspace.focusTerminalOfActiveTab()
+                DispatchQueue.main.async { [weak env] in env?.workspace.focusTerminalOfActiveTab() }
+            }
         }
     }
 

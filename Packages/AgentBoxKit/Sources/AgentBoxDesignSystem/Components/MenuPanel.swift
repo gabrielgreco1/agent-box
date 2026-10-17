@@ -154,7 +154,7 @@ public struct DSMenuPanelView: View {
         .frame(width: width)
         .dsMenuSurface(solid: solidSurface)
         .overlay(alignment: .topLeading) { submenuView }
-        .background(DSKeyCatcher(navigator: navigator, onOutcome: onOutcome))
+        .background(DSKeyCatcher(navigator: navigator, active: keysActive, onOutcome: onOutcome))
         .environment(\.colorScheme, .dark)
     }
 
@@ -293,6 +293,8 @@ public struct DSMenuPanelView: View {
         .accessibilityValue(Text(verbatim: navigator.query))
     }
 
+    @Environment(\.dsMenuKeysActive) private var keysActive
+
     @ViewBuilder private var submenuView: some View {
         if let sub = navigator.submenu, let id = navigator.openSubmenuID {
             DSMenuPanelView(navigator: sub, width: width, solidSurface: solidSurface, decorateRow: decorateRow, onOutcome: onOutcome)
@@ -306,18 +308,21 @@ public struct DSMenuPanelView: View {
 /// View invisível que recebe o foco do teclado enquanto o painel está aberto. Digita (com IME), navega e fecha.
 struct DSKeyCatcher: NSViewRepresentable {
     let navigator: DSMenuNavigator
+    let active: Bool
     let onOutcome: (DSMenuOutcome) -> Void
 
     func makeNSView(context: Context) -> DSKeyCatcherView {
         let view = DSKeyCatcherView()
         view.navigator = navigator
         view.onOutcome = onOutcome
+        view.isActive = active
         return view
     }
 
     func updateNSView(_ view: DSKeyCatcherView, context: Context) {
         view.navigator = navigator
         view.onOutcome = onOutcome
+        view.isActive = active
     }
 }
 
@@ -327,14 +332,29 @@ public final class DSKeyCatcherView: NSView, NSTextInputClient {
     public var onOutcome: (DSMenuOutcome) -> Void = { _ in }
     private var markedString = ""
 
-    public override var acceptsFirstResponder: Bool { true }
+    /// Só é first responder enquanto o menu está aberto (não em saída animada, não depois de fechado): um captador de
+    /// teclas parado como first responder engole a digitação do terminal (F27).
+    public var isActive = true {
+        didSet {
+            guard !isActive, oldValue else { return }
+            markedString = ""
+            if let window, window.firstResponder === self { window.makeFirstResponder(nil) }
+        }
+    }
+
+    public override var acceptsFirstResponder: Bool { isActive }
+
+    public override func viewWillMove(toWindow newWindow: NSWindow?) {
+        if newWindow == nil, let window, window.firstResponder === self { window.makeFirstResponder(nil) }
+        super.viewWillMove(toWindow: newWindow)
+    }
 
     public override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         guard window != nil else { return }
         // O foco entra depois do primeiro layout (o painel nasce no mesmo ciclo em que o host muda de estado).
         DispatchQueue.main.async { [weak self] in
-            guard let self, let window = self.window else { return }
+            guard let self, self.isActive, let window = self.window else { return }
             window.makeFirstResponder(self)
         }
     }
@@ -411,4 +431,9 @@ public final class DSKeyCatcherView: NSView, NSTextInputClient {
         guard let window else { return .zero }
         return window.convertToScreen(convert(bounds, to: nil))
     }
+}
+
+public extension EnvironmentValues {
+    /// `false` quando o painel está fechando (saída animada): o captador de teclas larga o first responder.
+    @Entry var dsMenuKeysActive: Bool = true
 }

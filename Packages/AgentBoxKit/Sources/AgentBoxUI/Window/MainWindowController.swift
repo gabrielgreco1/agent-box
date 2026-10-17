@@ -3,6 +3,7 @@ import AgentBoxPlatform
 import AgentBoxProtocol
 import AppKit
 import SwiftUI
+import WebKit
 
 /// Contêiner do conteúdo: o split ocupa a janela inteira e a faixa de 36 pt flutua por cima
 /// (largura da sidebar quando aberta; largura do próprio conteúdo quando recolhida, 03 §1.3).
@@ -51,6 +52,14 @@ final class ChromeContainerView: NSView {
 /// `onUnhandledKey`, que devolve o foco ao terminal e reenvia (watchdog de digitação).
 final class AgentBoxWindow: NSWindow {
     var onUnhandledKey: ((NSEvent) -> Bool)?
+    /// Antes de entregar `keyDown` ao first responder: `true` se a tecla foi redirecionada (responder que não é terminal
+    /// nem campo de texto, como um captador de teclas de menu esquecido, engole a digitação sem passar pelo watchdog).
+    var routeStrayKey: ((NSEvent) -> Bool)?
+
+    override func sendEvent(_ event: NSEvent) {
+        if event.type == .keyDown, let routeStrayKey, routeStrayKey(event) { return }
+        super.sendEvent(event)
+    }
 
     override func keyDown(with event: NSEvent) {
         if let onUnhandledKey, onUnhandledKey(event) { return }
@@ -114,6 +123,7 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
         super.init(window: window)
         window.delegate = self
         window.onUnhandledKey = { [weak self] event in self?.recoverTypingFocus(for: event) ?? false }
+        window.routeStrayKey = { [weak self] event in self?.redirectStrayKey(event) ?? false }
 
         container.stripWidth = { [weak self] in self?.currentStripWidth() ?? 0 }
         window.center()
@@ -138,6 +148,37 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
 
     /// Watchdog: `keyDown` chegou à janela sem que nenhum responder o tratasse. Sem overlay e sem Settings, o terminal do
     /// pane focado recebe o foco e a tecla. Devolve `true` se a tecla foi reenviada.
+    /// Quem pode ficar com as teclas: o terminal, qualquer campo de texto (field editor, `NSTextView`), o viewer (WebView) e as
+    /// hosting views do SwiftUI (atalhos de lista, Esc). Qualquer outro responder (captador de menu fechado, janela, content
+    /// view) é um responder invisível: a tecla vai para o terminal focado.
+    static func acceptsTyping(_ responder: NSResponder?) -> Bool {
+        guard let responder else { return false }
+        if responder is TerminalSurfaceView || responder is NSText || responder is NSTextView { return true }
+        if responder is NSHostingView<AnyView> || responder is OverlayHostingView { return true }
+        if let view = responder as? NSView {
+            var node: NSView? = view
+            while let current = node {
+                if current is WKWebView || current is NSTextField { return true }
+                node = current.superview
+            }
+        }
+        return false
+    }
+
+    func redirectStrayKey(_ event: NSEvent) -> Bool {
+        guard let window, !event.modifierFlags.contains(.command), !event.modifierFlags.contains(.control) else { return false }
+        guard !env.overlays.blocksTerminalInput, settingsHost.isHidden, env.computers.page == .workspace else { return false }
+        let responder = window.firstResponder
+        guard !Self.acceptsTyping(responder), let host = env.workspace.focusedHost() else { return false }
+        let name = responder.map { String(describing: type(of: $0)) } ?? "nil"
+        focusLog.publicError("keyDown went to a responder that is not a terminal or text field; redirected to the terminal")
+        focusLog.error("responder=\(name)")
+        host.focusTerminal()
+        guard window.firstResponder === host.surface else { return false }
+        host.surface.keyDown(with: event)
+        return true
+    }
+
     func recoverTypingFocus(for event: NSEvent) -> Bool {
         let responder = window?.firstResponder.map { String(describing: type(of: $0)) } ?? "nil"
         let blocked = env.overlays.blocksTerminalInput

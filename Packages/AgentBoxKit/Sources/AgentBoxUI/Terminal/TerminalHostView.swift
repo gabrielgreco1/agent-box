@@ -101,7 +101,7 @@ public final class TerminalHostView: NSView {
 
     public func focusTerminal() {
         guard !inputBlocked else { return }
-        window?.makeFirstResponder(surface)
+        surface.takeFocus()
     }
 
     private var surfaceHasFocus: Bool { window?.firstResponder === surface }

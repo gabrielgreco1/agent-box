@@ -297,6 +297,9 @@ public final class AppEnvironment {
     /// (`overlay-demo`) as ações de fechar do demo continuam suas.
     private func wireWorkspace() {
         workspace.overlays = overlays
+        workspace.autoFocusAllowed = { [overlays, settings, computers] in
+            !overlays.blocksTerminalInput && !settings.isOpen && computers.page == .workspace
+        }
         workspace.toasts = toasts
         workspace.sessionLookup = { [sidebar] id in sidebar.session(id) }
         sidebar.onSelectionChange = { [workspace] id in workspace.setSession(id) }

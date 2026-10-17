@@ -52,8 +52,24 @@ public final class TerminalSurfaceView: TerminalView {
 
     /// Clique no terminal sempre devolve o foco à superfície (um overlay aberto engole o clique antes, no hit test).
     public override func mouseDown(with event: NSEvent) {
-        if let window, window.firstResponder !== self { window.makeFirstResponder(self) }
+        takeFocus()
         super.mouseDown(with: event)
+    }
+
+    /// Torna a surface first responder de qualquer jeito: descarta texto marcado preso (tecla morta do ABNT2) e, se o
+    /// responder atual recusar largar o foco, força a janela a ficar sem responder e então entrega à surface.
+    @discardableResult
+    public func takeFocus() -> Bool {
+        guard let window else { return false }
+        if hasMarkedText() {
+            inputContext?.discardMarkedText()
+            unmarkText()
+        }
+        if window.firstResponder === self { return true }
+        if window.makeFirstResponder(self) { return true }
+        log.publicError("terminal focus refused by the current responder; forcing")
+        _ = window.makeFirstResponder(nil)
+        return window.makeFirstResponder(self)
     }
 
     /// Menu de contexto do terminal (03 §4.5): construído por quem hospeda o pane (o menu depende do estado do pane).

@@ -552,6 +552,15 @@ final class WorkspaceModel {
         return runtime.existingEntry(for: id)?.host
     }
 
+    /// Quem pode receber foco automático (evento de lançamento, troca de tab): sem overlay, popover, Settings, página do centro
+    /// nem campo de texto com o teclado. Ligado pelo `AppEnvironment`. Foco pedido pelo usuário (clique, fechar overlay) não passa por aqui.
+    var autoFocusAllowed: () -> Bool = { true }
+
+    func autoFocus(_ host: TerminalHostView?) {
+        guard let host, autoFocusAllowed(), !(host.window?.firstResponder is NSText) else { return }
+        host.focusTerminal()
+    }
+
     func focusTerminalOfActiveTab() {
         guard let id = focusedTerminalID else { return }
         runtime.existingEntry(for: id)?.host.focusTerminal()
@@ -987,7 +996,7 @@ final class WorkspaceModel {
         case .firstOutput:
             ignitionTimers[id]?.cancel()
             if case .starting = paneState(id) { runStates[id] = .running }
-            if id == focusedTerminalID { runtime.existingEntry(for: id)?.host.focusTerminal() }
+            if id == focusedTerminalID { autoFocus(runtime.existingEntry(for: id)?.host) }
         case .nativeID(_, let nativeID):
             update(terminal: id) { $0.nativeConversationID = nativeID }
             save(terminal: id)
@@ -1023,7 +1032,7 @@ final class WorkspaceModel {
             case .attached:
                 update(terminal: id) { $0.state = .running }
                 runStates[id] = .running
-                if id == focusedTerminalID { runtime.existingEntry(for: id)?.host.focusTerminal() }
+                if id == focusedTerminalID { autoFocus(runtime.existingEntry(for: id)?.host) }
             case .exited(let summary):
                 markExited(id, info: summary.exit)
             case .gone:
