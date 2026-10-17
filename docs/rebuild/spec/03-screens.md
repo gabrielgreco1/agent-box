@@ -1166,7 +1166,7 @@ Fechar vários (Close Other Tabs, fechar sessão com 3 rodando): `Close 3 termin
 - Worktree também aberto no Orca: linha `warning` `This worktree is also open in Orca.` (variante: `Orca is open.`).
 - Checkbox: `Don't ask again` (só quando não há perda de dados).
 - Botões: `[Cancel]` · `[Delete Session]` (destructive). Depois: toast `Session deleted.` `Undo` (8 s, restaura só o registro).
-- IDs: `overlay.confirmDelete`, `.keepBranch`, `.trashFolder`, `.deleteRuns`, `.confirm`.
+- IDs: `overlay.confirmDelete`, `.keepBranch`, `.trashFolder`, `.deleteRuns`, `.dontAsk`, `.cancel`, `.confirm`.
 
 ### 16.6 Remove project
 
@@ -1193,7 +1193,7 @@ Gatilhos: `Move to Project…`, `Convert to Project…`, arrastar o card até um
 - Texto: `The folder stays where it is. Agents keep running.` (mesmo PID, AC-1106). Convert cria projeto do tipo `git` se a pasta já é repositório, senão `folder`; o app não roda `git init` (v1.1).
 - Botões: `[Cancel]` · `[Move]` (primary; vira `[Convert]` com a primeira opção).
 - `Move Folder into Project…` (v1.1) é outra ação: só habilita com todos os terminais parados (tooltip `Stop all terminals in this session first`), move a pasta para dentro do projeto e atualiza caminhos.
-- IDs: `overlay.moveToProject`, `.project`, `.confirm`.
+- IDs: `overlay.moveToProject`, `.project`, `.cancel`, `.confirm`.
 
 ### 16.9 Add a Project
 
@@ -1492,7 +1492,7 @@ Atalhos reservados para o terminal (nunca capturados pelo app): ⌃ + letra, ⌥
 | Páginas | `computers.page`, `computers.cleanUp` (v1.1), `computers.dockerBanner`, `computers.empty`, `computers.row.<id>`, `computers.queue.row.<id>.cancel`; `batch.<batchId>.page`, `batch.<batchId>.row.<childId>`, `batch.<batchId>.collectAll`, `batch.<batchId>.archive`; `library.page`, `library.section`, `library.search`, `library.source`, `library.new`, `library.empty`, `library.row.<kind>.<id>`, `library.detail.{newSession,enable,insert,openInEditor,reveal}`, `library.profile.{name,agent,model,permissions,args,env,default}` |
 | Settings | `settings.page`, `settings.back`, `settings.search`, `settings.nav.<section>`, `settings.<section>.<key>`, `settings.computers.proxies.row.<proxyId>`, `settings.computers.proxies.add`, `settings.computers.proxies.test` |
 | Onboarding | `onboarding`, `onboarding.step.<name>`, `onboarding.item.<key>`, `onboarding.import.<group>`, `onboarding.import.item.<n>`, `onboarding.import.confirm`, `onboarding.done`, `onboarding.skip` |
-| Dialogs | `overlay.confirmClose[.dontAsk/.cancel/.confirm]`, `overlay.confirmArchive.confirm`, `overlay.confirmStopComputer.confirm`, `overlay.confirmDeleteComputer.confirm`, `overlay.confirmDelete[.keepBranch/.trashFolder/.deleteRuns/.confirm]`, `overlay.confirmRemoveProject[.cancel/.confirm]`, `overlay.resume[.row.<id>/.confirm]`, `overlay.moveToProject[.project/.confirm]`, `overlay.addProject.{choose,clone,clone.url,clone.submit,importOrca}`, `overlay.confirmQuit[.keepRunning/.stopAll/.cancel/.dontAsk]`, `overlay.confirmSkipPermissions.confirm`, `overlay.renameBranch[.name/.submit]`, `overlay.about[.licenses/.copy]`, `overlay.newBatch.*`, `popover.paste[.text/.confirm]` |
+| Dialogs | `overlay.confirmClose[.dontAsk/.cancel/.confirm]`, `overlay.confirmArchive[.cancel/.confirm]`, `overlay.confirmStopComputer.confirm`, `overlay.confirmDeleteComputer.confirm`, `overlay.confirmDelete[.keepBranch/.trashFolder/.deleteRuns/.dontAsk/.cancel/.confirm]`, `overlay.confirmRemoveProject[.cancel/.confirm]`, `overlay.resume[.row.<id>/.confirm]`, `overlay.moveToProject[.project/.cancel/.confirm]`, `overlay.addProject.{choose,clone,clone.url,clone.submit,importOrca}`, `overlay.confirmQuit[.keepRunning/.stopAll/.cancel/.dontAsk]`, `overlay.confirmSkipPermissions.confirm`, `overlay.renameBranch[.name/.submit]`, `overlay.about[.licenses/.copy]`, `overlay.newBatch.*`, `popover.paste[.text/.confirm]` |
 | Landing | `landing`, `landing.addProject`, `landing.newCleanSession`, `landing.importOrca`, `landing.newSession` |
 | Menu bar | `menuBar.icon`, `menuBar.item.<sessionId>`, `menuBar.open`, `menuBar.newSession`, `menuBar.newCleanSession`, `menuBar.stopAll`, `menuBar.quitCompletely` |
 | Menus do app | `menu.<group>.<actionId>` (actionId de §24) |
@@ -1828,6 +1828,7 @@ Cada botão e checkbox dos diálogos de §16 é uma ação. `Cancel` (Esc) exist
 | Select All / Select None / linha com checkbox (§16.7) | `dialog.resumeAgents.selectAll` / `dialog.resumeAgents.selectNone` / `dialog.resumeAgents.toggleRow` | — | Marca ou desmarca os agentes da lista | — | v1 | `testAction_dialog_resumeAgents_selectAll` · `testAction_dialog_resumeAgents_selectNone` · `testAction_dialog_resumeAgents_toggleRow` |
 | Move / Convert (§16.8) | `dialog.moveToProject.confirm` | — | Move a sessão limpa para o projeto escolhido ou a converte em projeto; agentes seguem rodando (mesmo PID) | Sem projeto escolhido: `Choose a project.` | v1 | `testAction_dialog_moveToProject_confirm` |
 | Project (combobox, §16.8) | `dialog.moveToProject.setProject` | — | Escolhe o projeto ou `Convert to Project` | — | v1 | `testAction_dialog_moveToProject_setProject` |
+| Cancel (§16.8) | `dialog.moveToProject.cancel` | Esc | Fecha o overlay sem mover | — | v1 | `testAction_dialog_moveToProject_cancel` |
 | Choose a Folder… / Import from Orca… / Clone from URL (§16.9) | `dialog.addProject.choose` / `dialog.addProject.importOrca` / `dialog.addProject.clone` | — | Escolhe a pasta / abre o passo 2 do onboarding / clona por URL (clone: v1.1) | — | v1 | `testAction_dialog_addProject_choose` · `testAction_dialog_addProject_importOrca` · `testAction_dialog_addProject_clone` |
 | Add <n> Projects / Stop Scan (§16.9) | `dialog.addProject.addFound` / `dialog.addProject.stopScan` | — | Adiciona os repositórios marcados / interrompe o scan da pasta | — | v1 | `testAction_dialog_addProject_addFound` · `testAction_dialog_addProject_stopScan` |
 | Keep Running (§16.10) | `dialog.quit.keepRunning` | ↵ | Fecha a janela e deixa o app em modo accessory; agentes seguem vivos | — | v1 | `testAction_dialog_quit_keepRunning` |

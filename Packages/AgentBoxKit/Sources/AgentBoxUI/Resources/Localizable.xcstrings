@@ -111,6 +111,17 @@
         }
       }
     },
+    "Accounts": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accounts"
+          }
+        }
+      }
+    },
     "Add": {
       "extractionState": "manual",
       "localizations": {
@@ -177,6 +188,17 @@
         }
       }
     },
+    "Added to the name of new branches.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added to the name of new branches."
+          }
+        }
+      }
+    },
     "Advanced": {
       "extractionState": "manual",
       "localizations": {
@@ -210,6 +232,94 @@
         }
       }
     },
+    "Agent Box checks what's on this Mac. Fix what you need now; the rest can wait.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agent Box checks what's on this Mac. Fix what you need now; the rest can wait."
+          }
+        }
+      }
+    },
+    "Agent Settings…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agent Settings…"
+          }
+        }
+      }
+    },
+    "Agents": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agents"
+          }
+        }
+      }
+    },
+    "Also delete run folders": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Also delete run folders"
+          }
+        }
+      }
+    },
+    "Appearance": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appearance"
+          }
+        }
+      }
+    },
+    "Applies to new terminals.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Applies to new terminals."
+          }
+        }
+      }
+    },
+    "Archive": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Archive"
+          }
+        }
+      }
+    },
+    "Archive \"%@\"?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Archive \"%@\"?"
+          }
+        }
+      }
+    },
     "Archive Session…": {
       "extractionState": "manual",
       "localizations": {
@@ -217,6 +327,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Archive Session…"
+          }
+        }
+      }
+    },
+    "Archive it instead.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Archive it instead."
           }
         }
       }
@@ -232,6 +353,17 @@
         }
       }
     },
+    "Ask before quitting with running agents": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask before quitting with running agents"
+          }
+        }
+      }
+    },
     "Automation on": {
       "extractionState": "manual",
       "localizations": {
@@ -239,6 +371,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Automation on"
+          }
+        }
+      }
+    },
+    "Back to App": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back to App"
+          }
+        }
+      }
+    },
+    "Background": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Background"
+          }
+        }
+      }
+    },
+    "Bar": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bar"
           }
         }
       }
@@ -254,6 +419,28 @@
         }
       }
     },
+    "Blink": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blink"
+          }
+        }
+      }
+    },
+    "Block": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Block"
+          }
+        }
+      }
+    },
     "Branch name, #123 or a PR / issue URL": {
       "extractionState": "manual",
       "localizations": {
@@ -261,6 +448,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Branch name, #123 or a PR / issue URL"
+          }
+        }
+      }
+    },
+    "Branch prefix": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Branch prefix"
+          }
+        }
+      }
+    },
+    "Branches": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Branches"
+          }
+        }
+      }
+    },
+    "Built-in": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Built-in"
           }
         }
       }
@@ -276,6 +496,28 @@
         }
       }
     },
+    "Change…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change…"
+          }
+        }
+      }
+    },
+    "Check Again": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check Again"
+          }
+        }
+      }
+    },
     "Check for Problems": {
       "extractionState": "manual",
       "localizations": {
@@ -287,6 +529,28 @@
         }
       }
     },
+    "Checklist": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checklist"
+          }
+        }
+      }
+    },
+    "Choose a project.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a project."
+          }
+        }
+      }
+    },
     "Claude Code is still working. Closing ends the process; you can resume the conversation later.": {
       "extractionState": "manual",
       "localizations": {
@@ -294,6 +558,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Claude Code is still working. Closing ends the process; you can resume the conversation later."
+          }
+        }
+      }
+    },
+    "Clean session folder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clean session folder"
           }
         }
       }
@@ -452,6 +727,50 @@
         }
       }
     },
+    "Confirm before closing a running terminal": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirm before closing a running terminal"
+          }
+        }
+      }
+    },
+    "Confirm before deleting a session": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirm before deleting a session"
+          }
+        }
+      }
+    },
+    "Confirmations": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirmations"
+          }
+        }
+      }
+    },
+    "Confirmations restored.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirmations restored."
+          }
+        }
+      }
+    },
     "Conflicts": {
       "extractionState": "manual",
       "localizations": {
@@ -470,6 +789,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Container stopped"
+          }
+        }
+      }
+    },
+    "Continue Last": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue Last"
+          }
+        }
+      }
+    },
+    "Convert to Project (use this folder as the project root)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Convert to Project (use this folder as the project root)"
           }
         }
       }
@@ -562,6 +903,17 @@
         }
       }
     },
+    "Couldn't move the folder to the Trash.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't move the folder to the Trash."
+          }
+        }
+      }
+    },
     "Couldn't remove the project.": {
       "extractionState": "manual",
       "localizations": {
@@ -569,6 +921,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Couldn't remove the project."
+          }
+        }
+      }
+    },
+    "Couldn't save %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't save %@."
           }
         }
       }
@@ -650,6 +1013,105 @@
         }
       }
     },
+    "Credentials": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Credentials"
+          }
+        }
+      }
+    },
+    "Cursor": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cursor"
+          }
+        }
+      }
+    },
+    "Custom": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Custom"
+          }
+        }
+      }
+    },
+    "Custom prefix": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Custom prefix"
+          }
+        }
+      }
+    },
+    "Default": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default"
+          }
+        }
+      }
+    },
+    "Default agent": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default agent"
+          }
+        }
+      }
+    },
+    "Default profile": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default profile"
+          }
+        }
+      }
+    },
+    "Delete": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        }
+      }
+    },
+    "Delete \"%@\"?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete \"%@\"?"
+          }
+        }
+      }
+    },
     "Delete Session…": {
       "extractionState": "manual",
       "localizations": {
@@ -657,6 +1119,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Delete Session…"
+          }
+        }
+      }
+    },
+    "Deleting worktree and project sessions isn't available yet.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deleting worktree and project sessions isn't available yet."
           }
         }
       }
@@ -683,6 +1156,17 @@
         }
       }
     },
+    "Diagnostics": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diagnostics"
+          }
+        }
+      }
+    },
     "Discard": {
       "extractionState": "manual",
       "localizations": {
@@ -694,6 +1178,17 @@
         }
       }
     },
+    "Docker": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Docker"
+          }
+        }
+      }
+    },
     "Don't ask again": {
       "extractionState": "manual",
       "localizations": {
@@ -701,6 +1196,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Don't ask again"
+          }
+        }
+      }
+    },
+    "Done": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        }
+      }
+    },
+    "Duplicate": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duplicate"
+          }
+        }
+      }
+    },
+    "Edit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit"
           }
         }
       }
@@ -734,6 +1262,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Equalize Pane Sizes"
+          }
+        }
+      }
+    },
+    "Executable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Executable"
           }
         }
       }
@@ -782,6 +1321,17 @@
         }
       }
     },
+    "Extra flags": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Extra flags"
+          }
+        }
+      }
+    },
     "Fetching origin…": {
       "extractionState": "manual",
       "localizations": {
@@ -815,6 +1365,39 @@
         }
       }
     },
+    "Folders": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Folders"
+          }
+        }
+      }
+    },
+    "Font": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Font"
+          }
+        }
+      }
+    },
+    "For example name/": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For example name/"
+          }
+        }
+      }
+    },
     "Force Quit": {
       "extractionState": "manual",
       "localizations": {
@@ -822,6 +1405,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Force Quit"
+          }
+        }
+      }
+    },
+    "General": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "General"
           }
         }
       }
@@ -844,6 +1438,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Git took too long to answer."
+          }
+        }
+      }
+    },
+    "Git user": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Git user"
+          }
+        }
+      }
+    },
+    "GitHub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub"
           }
         }
       }
@@ -892,6 +1508,39 @@
         }
       }
     },
+    "How much the agent can do without asking.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How much the agent can do without asking."
+          }
+        }
+      }
+    },
+    "Import": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import"
+          }
+        }
+      }
+    },
+    "Imported from Orca": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Imported from Orca"
+          }
+        }
+      }
+    },
     "Inbox": {
       "extractionState": "manual",
       "localizations": {
@@ -899,6 +1548,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Inbox"
+          }
+        }
+      }
+    },
+    "Install %@ or choose another default agent.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install %@ or choose another default agent."
+          }
+        }
+      }
+    },
+    "Install…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install…"
+          }
+        }
+      }
+    },
+    "Interface": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Interface"
           }
         }
       }
@@ -925,6 +1607,50 @@
         }
       }
     },
+    "Keep Setting Up": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep Setting Up"
+          }
+        }
+      }
+    },
+    "Keep agents running when you quit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep agents running when you quit"
+          }
+        }
+      }
+    },
+    "Larger": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Larger"
+          }
+        }
+      }
+    },
+    "Launch profiles": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Launch profiles"
+          }
+        }
+      }
+    },
     "Library": {
       "extractionState": "manual",
       "localizations": {
@@ -932,6 +1658,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Library"
+          }
+        }
+      }
+    },
+    "Log In": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Log In"
           }
         }
       }
@@ -1002,6 +1739,28 @@
         }
       }
     },
+    "Model": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model"
+          }
+        }
+      }
+    },
+    "Monospaced fonts installed on this Mac.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Monospaced fonts installed on this Mac."
+          }
+        }
+      }
+    },
     "More": {
       "extractionState": "manual",
       "localizations": {
@@ -1009,6 +1768,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "More"
+          }
+        }
+      }
+    },
+    "Move \"%@\" to a project?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move \"%@\" to a project?"
+          }
+        }
+      }
+    },
+    "Move folder to Trash": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move folder to Trash"
           }
         }
       }
@@ -1024,6 +1805,17 @@
         }
       }
     },
+    "Moved to %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moved to %@."
+          }
+        }
+      }
+    },
     "Name": {
       "extractionState": "manual",
       "localizations": {
@@ -1031,6 +1823,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Name"
+          }
+        }
+      }
+    },
+    "New %@ Tab": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New %@ Tab"
           }
         }
       }
@@ -1057,6 +1860,17 @@
         }
       }
     },
+    "New Clean Session in Folder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Clean Session in Folder"
+          }
+        }
+      }
+    },
     "New Codex Tab": {
       "extractionState": "manual",
       "localizations": {
@@ -1075,6 +1889,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "New OpenCode Tab"
+          }
+        }
+      }
+    },
+    "New Profile": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Profile"
           }
         }
       }
@@ -1222,6 +2047,17 @@
         }
       }
     },
+    "None": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None"
+          }
+        }
+      }
+    },
     "Not available yet": {
       "extractionState": "manual",
       "localizations": {
@@ -1266,6 +2102,17 @@
         }
       }
     },
+    "Notifications": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications"
+          }
+        }
+      }
+    },
     "Open in Editor": {
       "extractionState": "manual",
       "localizations": {
@@ -1288,6 +2135,28 @@
         }
       }
     },
+    "Optional": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optional"
+          }
+        }
+      }
+    },
+    "Optional. Leave empty for the agent's default.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optional. Leave empty for the agent's default."
+          }
+        }
+      }
+    },
     "Pane Actions": {
       "extractionState": "manual",
       "localizations": {
@@ -1299,6 +2168,39 @@
         }
       }
     },
+    "Permissions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permissions"
+          }
+        }
+      }
+    },
+    "Pick the folder the session works in. Agent Box won't create or delete anything in it.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick the folder the session works in. Agent Box won't create or delete anything in it."
+          }
+        }
+      }
+    },
+    "Points, from 8 to 32.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Points, from 8 to 32."
+          }
+        }
+      }
+    },
     "Preparing…": {
       "extractionState": "manual",
       "localizations": {
@@ -1306,6 +2208,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Preparing…"
+          }
+        }
+      }
+    },
+    "Preview": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preview"
           }
         }
       }
@@ -1372,6 +2285,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Recent Activity"
+          }
+        }
+      }
+    },
+    "Reconnected to %lld running terminals.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reconnected to %lld running terminals."
           }
         }
       }
@@ -1464,6 +2388,17 @@
         }
       }
     },
+    "Reset \"Don't ask again\" choices": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset \"Don't ask again\" choices"
+          }
+        }
+      }
+    },
     "Reset Title": {
       "extractionState": "manual",
       "localizations": {
@@ -1482,6 +2417,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Restart"
+          }
+        }
+      }
+    },
+    "Resume": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resume"
           }
         }
       }
@@ -1515,6 +2461,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reveal in Finder"
+          }
+        }
+      }
+    },
+    "Review Profiles": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Review Profiles"
           }
         }
       }
@@ -1563,6 +2520,17 @@
         }
       }
     },
+    "Search fonts…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search fonts…"
+          }
+        }
+      }
+    },
     "Search profiles…": {
       "extractionState": "manual",
       "localizations": {
@@ -1585,6 +2553,39 @@
         }
       }
     },
+    "Search themes…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search themes…"
+          }
+        }
+      }
+    },
+    "Select a project": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select a project"
+          }
+        }
+      }
+    },
+    "Select a session first.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select a session first."
+          }
+        }
+      }
+    },
     "Session archived.": {
       "extractionState": "manual",
       "localizations": {
@@ -1592,6 +2593,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Session archived."
+          }
+        }
+      }
+    },
+    "Session deleted.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Session deleted."
           }
         }
       }
@@ -1629,6 +2641,17 @@
         }
       }
     },
+    "Set Up Agent Box": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set Up Agent Box"
+          }
+        }
+      }
+    },
     "Settings": {
       "extractionState": "manual",
       "localizations": {
@@ -1636,6 +2659,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Settings"
+          }
+        }
+      }
+    },
+    "Shape of the cursor.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shape of the cursor."
+          }
+        }
+      }
+    },
+    "Shortcuts": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shortcuts"
           }
         }
       }
@@ -1669,6 +2714,72 @@
           "stringUnit": {
             "state": "translated",
             "value": "Show less"
+          }
+        }
+      }
+    },
+    "Size": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Size"
+          }
+        }
+      }
+    },
+    "Skip": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip"
+          }
+        }
+      }
+    },
+    "Skip for Now": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip for Now"
+          }
+        }
+      }
+    },
+    "Skip setup? You can finish it from Agent Box › Set Up Agent Box…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip setup? You can finish it from Agent Box › Set Up Agent Box…"
+          }
+        }
+      }
+    },
+    "Skips permissions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skips permissions"
+          }
+        }
+      }
+    },
+    "Smaller": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Smaller"
           }
         }
       }
@@ -1728,6 +2839,50 @@
         }
       }
     },
+    "Start %@ with \"%@\"": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start %@ with \"%@\""
+          }
+        }
+      }
+    },
+    "Start Fresh": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start Fresh"
+          }
+        }
+      }
+    },
+    "Start Session": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start Session"
+          }
+        }
+      }
+    },
+    "Start an agent or type a prompt…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start an agent or type a prompt…"
+          }
+        }
+      }
+    },
     "Starting…": {
       "extractionState": "manual",
       "localizations": {
@@ -1761,6 +2916,50 @@
         }
       }
     },
+    "Stops its terminals and computers.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stops its terminals and computers."
+          }
+        }
+      }
+    },
+    "Stops its terminals and computers. The folder stays on disk.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stops its terminals and computers. The folder stays on disk."
+          }
+        }
+      }
+    },
+    "Stops its terminals and computers. The folder, worktree and branch stay; you can restore it from Archived Sessions.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stops its terminals and computers. The folder, worktree and branch stay; you can restore it from Archived Sessions."
+          }
+        }
+      }
+    },
+    "System": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System"
+          }
+        }
+      }
+    },
     "Terminal": {
       "extractionState": "manual",
       "localizations": {
@@ -1779,6 +2978,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Terminal exited"
+          }
+        }
+      }
+    },
+    "Terminals keep running and come back when you reopen Agent Box.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminals keep running and come back when you reopen Agent Box."
+          }
+        }
+      }
+    },
+    "Text": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Text"
           }
         }
       }
@@ -1805,6 +3026,17 @@
         }
       }
     },
+    "The color palette of the terminal.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The color palette of the terminal."
+          }
+        }
+      }
+    },
     "The file is read-only.": {
       "extractionState": "manual",
       "localizations": {
@@ -1812,6 +3044,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "The file is read-only."
+          }
+        }
+      }
+    },
+    "The folder stays where it is. Agents keep running.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The folder stays where it is. Agents keep running."
           }
         }
       }
@@ -1860,6 +3103,17 @@
         }
       }
     },
+    "Theme": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Theme"
+          }
+        }
+      }
+    },
     "This terminal stopped unexpectedly.": {
       "extractionState": "manual",
       "localizations": {
@@ -1871,6 +3125,28 @@
         }
       }
     },
+    "This terminal stopped when your Mac restarted.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This terminal stopped when your Mac restarted."
+          }
+        }
+      }
+    },
+    "This terminal stopped while Agent Box was closed.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This terminal stopped while Agent Box was closed."
+          }
+        }
+      }
+    },
     "Try Again": {
       "extractionState": "manual",
       "localizations": {
@@ -1878,6 +3154,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Try Again"
+          }
+        }
+      }
+    },
+    "Turns every confirmation back on.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turns every confirmation back on."
+          }
+        }
+      }
+    },
+    "Underline": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Underline"
           }
         }
       }
@@ -1904,6 +3202,28 @@
         }
       }
     },
+    "Used by the + button and clean sessions.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Used by the + button and clean sessions."
+          }
+        }
+      }
+    },
+    "Used when you don't pick one.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Used when you don't pick one."
+          }
+        }
+      }
+    },
     "Where": {
       "extractionState": "manual",
       "localizations": {
@@ -1911,6 +3231,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "Where"
+          }
+        }
+      }
+    },
+    "Where new worktrees are created.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Where new worktrees are created."
+          }
+        }
+      }
+    },
+    "Where sessions without a project live.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Where sessions without a project live."
+          }
+        }
+      }
+    },
+    "Workspace": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workspace"
+          }
+        }
+      }
+    },
+    "Worktree folder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Worktree folder"
           }
         }
       }
@@ -1992,1069 +3356,13 @@
         }
       }
     },
-    "Accounts": {
+    "↵ Open · ⌘↵ Start with prompt · ⇧↵ Split · Esc Close": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Accounts"
-          }
-        }
-      }
-    },
-    "Added to the name of new branches.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Added to the name of new branches."
-          }
-        }
-      }
-    },
-    "Agent Box checks what's on this Mac. Fix what you need now; the rest can wait.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Agent Box checks what's on this Mac. Fix what you need now; the rest can wait."
-          }
-        }
-      }
-    },
-    "Agents": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Agents"
-          }
-        }
-      }
-    },
-    "Appearance": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Appearance"
-          }
-        }
-      }
-    },
-    "Applies to new terminals.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Applies to new terminals."
-          }
-        }
-      }
-    },
-    "Ask before quitting with running agents": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ask before quitting with running agents"
-          }
-        }
-      }
-    },
-    "Back to App": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Back to App"
-          }
-        }
-      }
-    },
-    "Background": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Background"
-          }
-        }
-      }
-    },
-    "Bar": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bar"
-          }
-        }
-      }
-    },
-    "Blink": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Blink"
-          }
-        }
-      }
-    },
-    "Block": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Block"
-          }
-        }
-      }
-    },
-    "Branch prefix": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Branch prefix"
-          }
-        }
-      }
-    },
-    "Branches": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Branches"
-          }
-        }
-      }
-    },
-    "Built-in": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Built-in"
-          }
-        }
-      }
-    },
-    "Change…": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Change…"
-          }
-        }
-      }
-    },
-    "Check Again": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Check Again"
-          }
-        }
-      }
-    },
-    "Clean session folder": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Clean session folder"
-          }
-        }
-      }
-    },
-    "Confirm before closing a running terminal": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Confirm before closing a running terminal"
-          }
-        }
-      }
-    },
-    "Confirm before deleting a session": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Confirm before deleting a session"
-          }
-        }
-      }
-    },
-    "Confirmations restored.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Confirmations restored."
-          }
-        }
-      }
-    },
-    "Confirmations": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Confirmations"
-          }
-        }
-      }
-    },
-    "Credentials": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Credentials"
-          }
-        }
-      }
-    },
-    "Cursor": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cursor"
-          }
-        }
-      }
-    },
-    "Custom prefix": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Custom prefix"
-          }
-        }
-      }
-    },
-    "Custom": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Custom"
-          }
-        }
-      }
-    },
-    "Default agent": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Default agent"
-          }
-        }
-      }
-    },
-    "Default profile": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Default profile"
-          }
-        }
-      }
-    },
-    "Default": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Default"
-          }
-        }
-      }
-    },
-    "Delete": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Delete"
-          }
-        }
-      }
-    },
-    "Diagnostics": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Diagnostics"
-          }
-        }
-      }
-    },
-    "Docker": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Docker"
-          }
-        }
-      }
-    },
-    "Done": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Done"
-          }
-        }
-      }
-    },
-    "Duplicate": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Duplicate"
-          }
-        }
-      }
-    },
-    "Edit": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Edit"
-          }
-        }
-      }
-    },
-    "Executable": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Executable"
-          }
-        }
-      }
-    },
-    "Extra flags": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Extra flags"
-          }
-        }
-      }
-    },
-    "Folders": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Folders"
-          }
-        }
-      }
-    },
-    "Font": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Font"
-          }
-        }
-      }
-    },
-    "For example name/": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "For example name/"
-          }
-        }
-      }
-    },
-    "General": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "General"
-          }
-        }
-      }
-    },
-    "Git user": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Git user"
-          }
-        }
-      }
-    },
-    "GitHub": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "GitHub"
-          }
-        }
-      }
-    },
-    "How much the agent can do without asking.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "How much the agent can do without asking."
-          }
-        }
-      }
-    },
-    "Import": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Import"
-          }
-        }
-      }
-    },
-    "Imported from Orca": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Imported from Orca"
-          }
-        }
-      }
-    },
-    "Install…": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Install…"
-          }
-        }
-      }
-    },
-    "Keep agents running when you quit": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Keep agents running when you quit"
-          }
-        }
-      }
-    },
-    "Keep Setting Up": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Keep Setting Up"
-          }
-        }
-      }
-    },
-    "Larger": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Larger"
-          }
-        }
-      }
-    },
-    "Launch profiles": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Launch profiles"
-          }
-        }
-      }
-    },
-    "Log In": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Log In"
-          }
-        }
-      }
-    },
-    "Model": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Model"
-          }
-        }
-      }
-    },
-    "Monospaced fonts installed on this Mac.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Monospaced fonts installed on this Mac."
-          }
-        }
-      }
-    },
-    "New Profile": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "New Profile"
-          }
-        }
-      }
-    },
-    "None": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "None"
-          }
-        }
-      }
-    },
-    "Notifications": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Notifications"
-          }
-        }
-      }
-    },
-    "Optional. Leave empty for the agent's default.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Optional. Leave empty for the agent's default."
-          }
-        }
-      }
-    },
-    "Optional": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Optional"
-          }
-        }
-      }
-    },
-    "Permissions": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Permissions"
-          }
-        }
-      }
-    },
-    "Points, from 8 to 32.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Points, from 8 to 32."
-          }
-        }
-      }
-    },
-    "Preview": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Preview"
-          }
-        }
-      }
-    },
-    "Reset \"Don't ask again\" choices": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reset \"Don't ask again\" choices"
-          }
-        }
-      }
-    },
-    "Review Profiles": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Review Profiles"
-          }
-        }
-      }
-    },
-    "Search fonts…": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Search fonts…"
-          }
-        }
-      }
-    },
-    "Search themes…": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Search themes…"
-          }
-        }
-      }
-    },
-    "Set Up Agent Box": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Set Up Agent Box"
-          }
-        }
-      }
-    },
-    "Shape of the cursor.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Shape of the cursor."
-          }
-        }
-      }
-    },
-    "Shortcuts": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Shortcuts"
-          }
-        }
-      }
-    },
-    "Size": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Size"
-          }
-        }
-      }
-    },
-    "Skip for Now": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Skip for Now"
-          }
-        }
-      }
-    },
-    "Skip setup? You can finish it from Agent Box › Set Up Agent Box…": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Skip setup? You can finish it from Agent Box › Set Up Agent Box…"
-          }
-        }
-      }
-    },
-    "Skip": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Skip"
-          }
-        }
-      }
-    },
-    "Skips permissions": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Skips permissions"
-          }
-        }
-      }
-    },
-    "Smaller": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Smaller"
-          }
-        }
-      }
-    },
-    "Terminals keep running and come back when you reopen Agent Box.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Terminals keep running and come back when you reopen Agent Box."
-          }
-        }
-      }
-    },
-    "Text": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Text"
-          }
-        }
-      }
-    },
-    "The color palette of the terminal.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The color palette of the terminal."
-          }
-        }
-      }
-    },
-    "Theme": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Theme"
-          }
-        }
-      }
-    },
-    "Turns every confirmation back on.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Turns every confirmation back on."
-          }
-        }
-      }
-    },
-    "Underline": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Underline"
-          }
-        }
-      }
-    },
-    "Used by the + button and clean sessions.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Used by the + button and clean sessions."
-          }
-        }
-      }
-    },
-    "Used when you don't pick one.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Used when you don't pick one."
-          }
-        }
-      }
-    },
-    "Where new worktrees are created.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Where new worktrees are created."
-          }
-        }
-      }
-    },
-    "Where sessions without a project live.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Where sessions without a project live."
-          }
-        }
-      }
-    },
-    "Worktree folder": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Worktree folder"
-          }
-        }
-      }
-    },
-    "Couldn't save %@.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couldn't save %@."
-          }
-        }
-      }
-    },
-    "Checklist": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Checklist"
-          }
-        }
-      }
-    },
-    "Workspace": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Workspace"
-          }
-        }
-      }
-    },
-    "Interface": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Interface"
-          }
-        }
-      }
-    },
-    "System": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "System"
-          }
-        }
-      }
-    },
-    "This terminal stopped when your Mac restarted.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This terminal stopped when your Mac restarted."
-          }
-        }
-      }
-    },
-    "This terminal stopped while Agent Box was closed.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This terminal stopped while Agent Box was closed."
-          }
-        }
-      }
-    },
-    "Resume": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Resume"
-          }
-        }
-      }
-    },
-    "Continue Last": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Continue Last"
-          }
-        }
-      }
-    },
-    "Start Fresh": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start Fresh"
-          }
-        }
-      }
-    },
-    "Reconnected to %lld running terminals.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reconnected to %lld running terminals."
+            "value": "↵ Open · ⌘↵ Start with prompt · ⇧↵ Split · Esc Close"
           }
         }
       }

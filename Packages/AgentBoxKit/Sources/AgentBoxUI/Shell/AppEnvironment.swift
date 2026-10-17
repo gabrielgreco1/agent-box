@@ -49,6 +49,9 @@ public final class AppEnvironment {
     private var store: AgentBoxStore?
     /// `session.launch`: sessão com o agente já rodando (P9, M-501).
     private var launcher: SessionLauncher?
+    /// Sessões limpas (⇧⌘N, ⌥⇧⌘N, arquivar, apagar, mover) e Quick Launch (⌥⌘N, "+" da tab row) — T1-17 e T1-21.
+    private(set) var cleanSessions: CleanSessionController?
+    private var quickLaunch: QuickLaunchController?
     private let environmentVariables: [String: String]
     private let log = LogFacade(.app, category: "ui")
 
@@ -175,11 +178,25 @@ public final class AppEnvironment {
             workspace.cancelLaunch(id)
             return true
         }
-        let sessionLauncher = SessionLauncher(
-            sidebar: sidebar, workspace: workspace, elements: elements,
-            sessionsRoot: StorePaths.default(environment: environmentVariables).root.appendingPathComponent("sessions", isDirectory: true))
+        // Agente padrão e instalação detectada vêm do Settings; ⌥⌘T e o Quick Launch usam os mesmos.
+        workspace.defaultAgent = { [settings] in settings.settings.agents.defaultAgent }
+        workspace.agentInstalled = { [settings] in settings.agent($0)?.installedState }
+        let isolatedHome = environmentVariables["AGENTBOX_HOME"].flatMap { $0.isEmpty ? nil : URL(fileURLWithPath: $0, isDirectory: true) }
+        let sessionsRoot: () -> URL = { [settings] in
+            CleanSessionPaths.sessionsRoot(configured: settings.settings.general.cleanSessionFolder, isolatedHome: isolatedHome)
+        }
+        let sessionLauncher = SessionLauncher(sidebar: sidebar, workspace: workspace, elements: elements, sessionsRoot: sessionsRoot)
         launcher = sessionLauncher
         do { try sessionLauncher.register(in: registry) } catch { log.publicError("duplicate session.launch registration") }
+        let clean = CleanSessionController(
+            launcher: sessionLauncher, sidebar: sidebar, workspace: workspace, overlays: overlays, toasts: toasts, elements: elements,
+            settings: settings, projects: projects, sessionsRoot: sessionsRoot,
+            runsRoot: { CleanSessionPaths.runsRoot(isolatedHome: isolatedHome) }, automationEnabled: automationEnabled)
+        cleanSessions = clean
+        do { try clean.register(in: registry) } catch { log.publicError("duplicate clean session registration") }
+        let quick = QuickLaunchController(workspace: workspace, overlays: overlays, elements: elements, settings: settings)
+        quickLaunch = quick
+        do { try quick.register(in: registry) } catch { log.publicError("duplicate quick launch registration") }
     }
 
     /// Ações reais da casca vazia; as demais entram com a tela que as possui.
@@ -295,7 +312,7 @@ public final class AppEnvironment {
     /// Fixture `AGENTBOX_SCREEN=sidebar-demo`: controles cujo fluxo é de outra tarefa (composer, adicionar projeto, Settings,
     /// páginas) ganham handlers de exemplo para a evidência visual mostrar a sidebar completa. Nada disso roda em uso normal.
     private func registerSidebarDemo() {
-        for id in [ActionID.sessionNewClean, .appSettings, .projectNewSession, .pageInbox, .pageComputers, .pageLibrary] {
+        for id in [ActionID.appSettings, .projectNewSession, .pageInbox, .pageComputers, .pageLibrary] {
             try? registry.register(id) { _ in "demo" }
         }
     }
@@ -318,6 +335,7 @@ public final class AppEnvironment {
                 }
             }
             launcher?.attach(store: opened)
+            cleanSessions?.attach(store: opened)
             await restoreSessions(store: opened)
             await workspace.attach(store: opened)
             await sidebar.attach(store: opened)

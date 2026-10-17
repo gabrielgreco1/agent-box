@@ -52,6 +52,12 @@ enum MainMenu {
             })
         main.addItem(
             submenu(title: "File") { m in
+                m.addItem(ActionMenuItem(.sessionNewClean, title: "New Clean Session", key: "n", modifiers: [.shift, .command], registry: registry))
+                m.addItem(
+                    ActionMenuItem(
+                        .sessionNewCleanInFolder, title: "New Clean Session in Folder…", key: "n", modifiers: [.option, .shift, .command],
+                        registry: registry))
+                m.addItem(.separator())
                 m.addItem(ActionMenuItem(.tabQuickLaunch, title: "New Tab…", key: "n", modifiers: [.option, .command], registry: registry))
                 m.addItem(ActionMenuItem(.tabNewAgent, title: "New Agent Tab", key: "t", modifiers: [.option, .command], registry: registry))
                 m.addItem(ActionMenuItem(.tabNewTerminal, title: "New Terminal", key: "t", registry: registry))

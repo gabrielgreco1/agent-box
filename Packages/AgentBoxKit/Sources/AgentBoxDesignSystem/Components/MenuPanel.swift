@@ -107,13 +107,21 @@ public struct DSMenuPanelView: View {
     private let width: CGFloat
     private let searchPlaceholder: String
     private let solidSurface: Bool
+    private let footer: String?
+    private let decorateRow: (DSMenuItem, AnyView) -> AnyView
+    private let decorateSearch: (AnyView) -> AnyView
     private let onOutcome: (DSMenuOutcome) -> Void
 
-    /// `solidSurface`: fundo sólido em vez de blur (snapshots determinísticos).
+    /// `solidSurface`: fundo sólido em vez de blur (snapshots determinísticos). `footer`: linha de dicas de teclado abaixo da
+    /// lista (Quick Launch). `decorateRow` e `decorateSearch` deixam quem usa o painel ligar identificadores de automação.
     public init(
         navigator: DSMenuNavigator, width: CGFloat = DS.Layout.menuMinWidth, searchPlaceholder: String = "", solidSurface: Bool = false,
-        onOutcome: @escaping (DSMenuOutcome) -> Void
+        footer: String? = nil, decorateRow: @escaping (DSMenuItem, AnyView) -> AnyView = { _, view in view },
+        decorateSearch: @escaping (AnyView) -> AnyView = { $0 }, onOutcome: @escaping (DSMenuOutcome) -> Void
     ) {
+        self.footer = footer
+        self.decorateRow = decorateRow
+        self.decorateSearch = decorateSearch
         self.solidSurface = solidSurface
         self.navigator = navigator
         self.width = width
@@ -129,10 +137,19 @@ public struct DSMenuPanelView: View {
     public var body: some View {
         VStack(spacing: .zero) {
             if navigator.searchable {
-                searchRow
+                decorateSearch(AnyView(searchRow))
                 DS.Color.border.frame(height: DSMetrics.hairline)
             }
             list
+            if let footer {
+                DS.Color.border.frame(height: DSMetrics.hairline)
+                Text(verbatim: footer)
+                    .dsFont(DS.Font.small)
+                    .foregroundStyle(DS.Color.textTertiary)
+                    .lineLimit(1)
+                    .padding(.horizontal, DSMetrics.menuItemPaddingH + DSMetrics.menuPadding)
+                    .frame(maxWidth: .infinity, minHeight: DSMetrics.menuItemHeight, alignment: .leading)
+            }
         }
         .frame(width: width)
         .dsMenuSurface(solid: solidSurface)
@@ -147,7 +164,7 @@ public struct DSMenuPanelView: View {
                 VStack(spacing: .zero) {
                     ForEach(navigator.visibleEntries) { entry in
                         switch entry {
-                        case .item(let item): row(item).id(item.id)
+                        case .item(let item): decorateRow(item, AnyView(row(item))).id(item.id)
                         case .separator: separator
                         case .header(let title): header(title)
                         }
@@ -278,7 +295,7 @@ public struct DSMenuPanelView: View {
 
     @ViewBuilder private var submenuView: some View {
         if let sub = navigator.submenu, let id = navigator.openSubmenuID {
-            DSMenuPanelView(navigator: sub, width: width, solidSurface: solidSurface, onOutcome: onOutcome)
+            DSMenuPanelView(navigator: sub, width: width, solidSurface: solidSurface, decorateRow: decorateRow, onOutcome: onOutcome)
                 .offset(x: width + DSMetrics.menuSubmenuGap, y: navigator.rowOffset(of: id) + DSMetrics.menuPadding + (navigator.searchable ? DSMetrics.menuSearchHeight + DSMetrics.hairline : 0))
         }
     }
@@ -323,6 +340,11 @@ public final class DSKeyCatcherView: NSView, NSTextInputClient {
     }
 
     public override func keyDown(with event: NSEvent) {
+        // ⌘↵ e ⇧↵ ativam o item destacado com o modificador (Quick Launch: com prompt, em split).
+        if event.keyCode == 36 || event.keyCode == 76 {
+            if event.modifierFlags.contains(.command) { deliver(.enter, activation: .command); return }
+            if event.modifierFlags.contains(.shift) { deliver(.enter, activation: .shift); return }
+        }
         if event.modifierFlags.contains(.command) {
             if event.charactersIgnoringModifiers == "v", navigator?.searchable == true,
                 let text = NSPasteboard.general.string(forType: .string)
@@ -336,8 +358,8 @@ public final class DSKeyCatcherView: NSView, NSTextInputClient {
         interpretKeyEvents([event])
     }
 
-    private func deliver(_ key: DSMenuKey) {
-        guard let outcome = navigator?.handle(key), outcome != .none else { return }
+    private func deliver(_ key: DSMenuKey, activation: DSMenuActivation = .plain) {
+        guard let outcome = navigator?.handle(key, activation: activation), outcome != .none else { return }
         onOutcome(outcome)
     }
 

@@ -151,6 +151,19 @@ final class SidebarModel {
         return true
     }
 
+    /// Sai da sessão que acabou de ser arquivada ou apagada: vai para a vizinha visível (a seguinte, senão a anterior) ou, sem
+    /// nenhuma, deixa a seleção vazia (a landing volta).
+    func leave(session id: UUID) {
+        guard selectedSession == id else { return }
+        let order = projection.sessionOrder
+        if let i = order.firstIndex(of: id), let next = order.indices.contains(i + 1) ? order[i + 1] : (i > 0 ? order[i - 1] : nil) {
+            select(next)
+        } else {
+            selectedSession = nil
+            persist()
+        }
+    }
+
     /// Sessão vizinha na ordem visível (⇧⌘↑/↓); sem seleção, o primeiro/último.
     @discardableResult
     func selectNeighbor(_ delta: Int) -> UUID? {

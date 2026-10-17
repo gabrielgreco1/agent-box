@@ -201,7 +201,7 @@ struct SidebarView: View {
 
     private var emptyWorkspace: some View {
         DSEmptyState(String(localized: "No projects yet.", bundle: .module)) {
-            HStack(spacing: DS.Space.s2) {
+            VStack(spacing: DS.Space.s2) {
                 if let registry, registry.isOffered(.projectAdd) {
                     DSButton(.projectAdd, id: nil, "Add Project…", variant: .outline, size: .sm)
                 }
