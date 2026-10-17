@@ -6,6 +6,14 @@ import Foundation
 /// (`AB/run/ptyd-v1.sock`; `$AGENTBOX_HOME/run/ptyd-v1.sock` nos testes). Ativação por launchd é a T1-24.
 ///
 /// Opções: `--socket <caminho>`, `--home <diretório>`, `--idle-exit <segundos>` (0 desliga; padrão 60), `--build <texto>`.
+/// Configuração explícita de build do modo ad-hoc de desenvolvimento (S-03): `-Xswiftc -DAGENTBOX_ALLOW_ADHOC_PEERS`.
+/// Nunca por variável de ambiente nem argumento. Só tem efeito se o próprio daemon estiver assinado ad-hoc.
+#if AGENTBOX_ALLOW_ADHOC_PEERS
+    private let allowAdhocPeersBuild = true
+#else
+    private let allowAdhocPeersBuild = false
+#endif
+
 @main
 struct AgentBoxD {
     static func main() async {
@@ -27,7 +35,10 @@ struct AgentBoxD {
             }
         }
         let paths = DaemonPaths.resolve(environment: ProcessInfo.processInfo.environment, socketOverride: socket, homeOverride: home)
-        let configuration = DaemonConfiguration(paths: paths, build: build, idleExit: idleExit > 0 ? .seconds(idleExit) : nil)
+        let policy = PeerAuthPolicy.resolve(daemon: CodeIdentity.ofCurrentProcess(), allowAdhocDevelopment: allowAdhocPeersBuild)
+        let configuration = DaemonConfiguration(
+            paths: paths, build: build, idleExit: idleExit > 0 ? .seconds(idleExit) : nil,
+            peerAuthenticator: PeerAuthenticator(policy: policy))
         do {
             try await DaemonServer(configuration: configuration).run()
         } catch {

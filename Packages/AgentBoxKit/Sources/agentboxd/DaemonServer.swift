@@ -8,6 +8,8 @@ struct DaemonConfiguration: Sendable {
     var build: String
     /// Sai depois de tanto tempo sem sessões vivas e sem clientes (06 §1.2). `nil` desliga.
     var idleExit: Duration?
+    /// Autenticação do peer na aceitação da conexão (06 §1.4, T1-07).
+    var peerAuthenticator: PeerAuthenticator
 }
 
 /// Servidor do daemon: registro de sessões, atendimento das operações de 06 §1.3 e ciclo de vida.
@@ -15,6 +17,7 @@ actor DaemonServer {
     private let configuration: DaemonConfiguration
     private let hub = EventHub()
     private let log = LogFacade(.ptyd, category: "server")
+    private let authLog = LogFacade(.ptyd, category: "auth")
     private let startedAt = Date()
     private let startedInstant = ContinuousClock.now
     private var sessions: [SessionID: PTYSession] = [:]
@@ -38,6 +41,13 @@ actor DaemonServer {
         _ = await BlockingIOBridge.run { ColdLog.sweep(sessionsDirectory: sessionsDirectory, keeping: []) }
         let listener = try await UDSListener.listen(path: configuration.paths.socketPath)
         log.publicInfo("agentboxd listening")
+        switch configuration.peerAuthenticator.policy {
+        case .signed: authLog.publicInfo("peer auth: signed (uid + code requirement)")
+        case .adhocDevelopment: authLog.publicInfo("peer auth: ad-hoc development mode (uid only)")
+        case .denyAll(let reason):
+            authLog.publicError("peer auth: DENY ALL, every connection will be refused")
+            authLog.error(reason)
+        }
         await withTaskGroup(of: Void.self) { group in
             group.addTask { await self.idleMonitor(listener: listener) }
             for await connection in listener.connections {
@@ -73,6 +83,7 @@ actor DaemonServer {
 
     private func serve(_ connection: UDSConnection) async {
         let framed = FramedConnection(connection)
+        guard await authorize(connection, framed) else { return }
         let handshake = ServerHandshake(daemon: daemonInfo)
         let negotiated: NegotiatedSession
         do {
@@ -114,6 +125,25 @@ actor DaemonServer {
             case .output:
                 outbox.enqueueControl(.reply(.error(id: nil, DaemonError(.badRequest, "output frames are daemon-to-client only"))))
             }
+        }
+    }
+
+    /// Autentica o peer antes de ler o `hello`. Recusa: `error{peerRejected}` tipado, log em `auth` e fecha.
+    private func authorize(_ connection: UDSConnection, _ framed: FramedConnection) async -> Bool {
+        let authenticator = configuration.peerAuthenticator
+        let credentials = connection.peer
+        let decision = await BlockingIOBridge.run { authenticator.authenticate(credentials) }
+        switch decision {
+        case .accepted:
+            return true
+        case .rejected(let rejection):
+            authLog.publicError("peer rejected")
+            authLog.error("\(rejection.kind.rawValue): \(rejection.detail) (pid \(credentials?.pid ?? -1))")
+            let error = DaemonError(.peerRejected, "peer not authorized: \(rejection.kind.rawValue)")
+            try? await framed.send(.control(.reply(.error(id: nil, error))))
+            try? await Task.sleep(for: .milliseconds(50))
+            await framed.close()
+            return false
         }
     }
 

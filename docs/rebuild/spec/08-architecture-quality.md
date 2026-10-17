@@ -64,7 +64,7 @@ Tabela única para tudo que vira código, teste ou caminho em disco. Os outros c
 | `origin` do input | `0x00` tecla · `0x01` colagem do usuário · `0x02` colagem do app por clique (T11) · `0x03` `ctl` · `0x04` pai → filho (P12) · `0x05` resposta a consulta do terminal |
 | Ops | `hello`/`helloAck`, `create`, `list`, `attach{mode: snapshot\|sinceSeq}`, `detach`, `resize`, `signal`, `kill`, `subscribe`, `textSnapshot`, `forget`, `drainWhenIdle`, `ping` (input por frame `0x03`) |
 | Eventos | `exit`, `title`, `cwd`, `bell`, `prompt`, `altScreen`, `modes`, `idle`, `stillAlive`, `resyncRequired`, `sessionGone` |
-| Erros | `protocolMajorMismatch`, `badRequest`, `unknownSession`, `sessionExited`, `spawnFailed`, `frameTooLarge`, `notCapable`, `internal` |
+| Erros | `protocolMajorMismatch`, `badRequest`, `unknownSession`, `sessionExited`, `spawnFailed`, `frameTooLarge`, `notCapable`, `peerRejected`, `internal` |
 | Capabilities iniciais | `coldLog`, `osc133`, `textSnapshot`, `inputOrigin`, `drainWhenIdle` |
 | Backpressure | **2 MiB** por cliente no daemon → `resyncRequired`. Do lado do app: backlog de 4 MiB por pane (AR-406) |
 | Coalescência | 16 ms ou 64 KiB por frame |

@@ -102,9 +102,9 @@ Esta seção e `08 AR-102` descrevem o **mesmo** protocolo, com os mesmos nomes.
 
 1. `getpeereid`: uid do peer igual ao do daemon.
 2. `getsockopt(LOCAL_PEERTOKEN)` → audit token → `SecCodeCopyGuestWithAttributes` → `SecCodeCheckValidity` contra um requisito compilado no daemon: mesma folha de certificado da identidade de assinatura (T4) **e** identificador `app.agentbox.mac` (só o app; `08 AR-503`).
-3. Falhou: fecha a conexão sem resposta e registra (`Logger`, subsystem `app.agentbox.ptyd`, categoria `auth`).
+3. Falhou: responde `error{code:"peerRejected"}` (sem `id`), fecha e registra (`Logger`, subsystem `app.agentbox.ptyd`, categoria `auth`). O erro vem antes de qualquer `hello` e não revela o motivo além da categoria.
 
-Motivo: o socket permite digitar em qualquer terminal, inclusive num Claude com `--dangerously-skip-permissions`. Um processo do mesmo usuário (um agente com Bash) não pode usar o daemon. Builds de desenvolvimento usam a mesma identidade local (T4); não existe bypass por variável de ambiente. Como isso funciona com XCUITest, `ctl` e o runner de CI é o spike S-03 (`08 §11`).
+Motivo: o socket permite digitar em qualquer terminal, inclusive num Claude com `--dangerously-skip-permissions`. Um processo do mesmo usuário (um agente com Bash) não pode usar o daemon. Builds de desenvolvimento usam a mesma identidade local (T4); não existe bypass por variável de ambiente. Única exceção (T1-07, S-03): enquanto o daemon estiver assinado **ad-hoc** (dono ainda sem `make-dev-cert.sh`) e o build tiver a flag de compilação `AGENTBOX_ALLOW_ADHOC_PEERS`, vale só o uid (modo `adhoc-development`, registrado no log). `scripts/build.sh` passa a flag só quando assina ad-hoc; daemon assinado com certificado ignora a flag; daemon ad-hoc sem a flag recusa todos. Como isso funciona com XCUITest, `ctl` e o runner de CI é o spike S-03 (`08 §11`).
 
 **Requisições** (todas com `id`; resposta `{"op":"ok","id":…, …}` ou `{"op":"error","id":…,"code":…,"message":…}`):
 
@@ -127,7 +127,7 @@ O input não é uma requisição JSON: vai em frames `0x03` (com `origin`), sem 
 
 **Eventos** (`op:"event"`, com `sessionID`): `exit{code, signal, at}`, `title{text}` (OSC 0/2), `cwd{path}` (OSC 7), `bell`, `prompt{phase: A|B|C|D, exitStatus?}` (OSC 133), `altScreen{on}`, `modes{bracketedPaste, appCursor, mouse}`, `idle{since}`, `stillAlive`, `resyncRequired`, `sessionGone`.
 
-**Códigos de erro**: `protocolMajorMismatch`, `badRequest`, `unknownSession`, `sessionExited`, `spawnFailed` (com `errno` e `path`), `frameTooLarge`, `notCapable` (capability não negociada), `internal`. Lista fechada; código novo entra como capability.
+**Códigos de erro**: `protocolMajorMismatch`, `badRequest`, `unknownSession`, `sessionExited`, `spawnFailed` (com `errno` e `path`), `frameTooLarge`, `notCapable` (capability não negociada), `peerRejected` (peer não autenticado, enviado antes de fechar), `internal`. Lista fechada; código novo entra como capability.
 
 **Backpressure**: fila por cliente limitada a **2 MiB** (`08 AR-102`). Estourou: o daemon descarta a fila daquele cliente e envia `resyncRequired`; o cliente refaz `attach` em modo `snapshot`. A sessão nunca é bloqueada por um cliente lento. (O app tem outro limite, do lado dele: backlog de 4 MiB por pane antes de pedir snapshot, `08 AR-406`.)
 

@@ -3,7 +3,8 @@
 #
 # Contrato
 #   Entrada : project.yml, Packages/AgentBoxKit. Env: DEVELOPER_DIR, AGENTBOX_SIGN_IDENTITY (nome do
-#             certificado; padrão "Agent Box Local Signing"; "-" força ad-hoc), AGENTBOX_BUILD_DIR (padrão build/AgentBox).
+#             certificado; padrão "Agent Box Local Signing"; "-" força ad-hoc), AGENTBOX_SIGN_KEYCHAIN (caminho de um
+#             keychain efêmero de CI: procura e assina por nome nele, sem confiança de usuário), AGENTBOX_BUILD_DIR (padrão build/AgentBox).
 #   Efeitos : compila o app (xcodebuild Release, Swift 6 estrito, warnings como erro) e os executáveis SPM
 #             agentbox/agentboxd (swift build -c release), embute-os em Contents/MacOS e assina de dentro
 #             para fora (agentbox, agentboxd, app), SEM --deep, com --options runtime e sem entitlements.
@@ -38,9 +39,25 @@ xcodebuild -project AgentBox.xcodeproj -scheme AgentBox -configuration Release \
   > "$OUT/xcodebuild.log" 2>&1 || { tail -40 "$OUT/xcodebuild.log" >&2; fail "xcodebuild falhou (log: $OUT/xcodebuild.log)"; }
 tail -3 "$OUT/xcodebuild.log"
 
+# Identidade de assinatura
+IDENT="-"; SHA=""; SIGN_KEYCHAIN="${AGENTBOX_SIGN_KEYCHAIN:-}"
+if [ "$IDENT_NAME" != "-" ]; then
+  SHA="$(security find-certificate -c "$IDENT_NAME" -Z ${SIGN_KEYCHAIN:+"$SIGN_KEYCHAIN"} 2>/dev/null | awk '/^SHA-1 hash:/{print $3; exit}' || true)"
+  if [ -n "$SHA" ]; then IDENT="$SHA"; fi
+fi
+if [ "$IDENT" = "-" ]; then
+  echo "AVISO: identidade '$IDENT_NAME' ausente; assinando AD-HOC (rode scripts/make-dev-cert.sh uma vez para assinatura estável)." >&2
+fi
+
+
+# Peer auth (S-03/T1-07): o daemon ad-hoc só aceita peers do mesmo uid se o build o permitir explicitamente
+# (flag de compilação; o daemon ainda confere que ele próprio é ad-hoc). Com certificado, a flag não é passada.
+SWIFT_EXTRA=()
+if [ "$IDENT" = "-" ]; then SWIFT_EXTRA=(-Xswiftc -DAGENTBOX_ALLOW_ADHOC_PEERS); fi
+
 echo "build: swift build -c release (agentbox, agentboxd)"
 for prod in agentbox agentboxd; do
-  swift build -c release --package-path Packages/AgentBoxKit --product "$prod"
+  swift build -c release --package-path Packages/AgentBoxKit --product "$prod" ${SWIFT_EXTRA[@]+"${SWIFT_EXTRA[@]}"}
 done
 BIN="$(swift build -c release --package-path Packages/AgentBoxKit --show-bin-path)"
 
@@ -52,21 +69,13 @@ install -m 755 "$BIN/agentbox" "$APP/Contents/MacOS/agentbox"
 install -m 755 "$BIN/agentboxd" "$APP/Contents/MacOS/agentboxd"
 # LaunchAgent plist (Contents/Library/LaunchAgents) e Info.plist embutido do daemon entram com a tarefa do daemon.
 
-# Identidade de assinatura
-IDENT="-"; SHA=""
-if [ "$IDENT_NAME" != "-" ]; then
-  SHA="$(security find-certificate -c "$IDENT_NAME" -Z 2>/dev/null | awk '/^SHA-1 hash:/{print $3; exit}' || true)"
-  if [ -n "$SHA" ]; then IDENT="$SHA"; fi
-fi
-if [ "$IDENT" = "-" ]; then
-  echo "AVISO: identidade '$IDENT_NAME' ausente; assinando AD-HOC (rode scripts/make-dev-cert.sh uma vez para assinatura estável)." >&2
-fi
-
+SIGN_REF="$IDENT"; [ -z "$SIGN_KEYCHAIN" ] || SIGN_REF="$IDENT_NAME"
 sign() { # path identifier
   if [ "$IDENT" = "-" ]; then
     codesign --force --options runtime --timestamp=none --sign - --identifier "$2" "$1"
   else
-    codesign --force --options runtime --timestamp=none --sign "$IDENT" --identifier "$2" \
+    # Certificado efêmero/autoassinado sem confiança de usuário: o codesign só o acha por NOME + --keychain (S-03).
+    codesign --force --options runtime --timestamp=none --sign "$SIGN_REF" ${SIGN_KEYCHAIN:+--keychain "$SIGN_KEYCHAIN"} --identifier "$2" \
       -r="designated => identifier \"$2\" and certificate leaf = H\"$SHA\"" "$1"
   fi
 }

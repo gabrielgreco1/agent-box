@@ -9,6 +9,8 @@ public enum DaemonErrorCode: String, Sendable, Codable, CaseIterable {
     case spawnFailed
     case frameTooLarge
     case notCapable
+    /// Peer recusado na autenticação da conexão (uid ou requisito de assinatura; 06 §1.4, 08 AR-503).
+    case peerRejected
     case `internal`
 }
 
