@@ -25,14 +25,20 @@ public struct EnvFilter: Sendable, Equatable {
         denyNames: [
             "PWD", "OLDPWD", "SHLVL", "_", "TERM_SESSION_ID",
             "CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT", "CLAUDE_CODE_SSE_PORT",
-            "CODEX_THREAD_ID", "CODEX_SANDBOX", "CODEX_SANDBOX_NETWORK_DISABLED",
+            "CODEX_THREAD_ID", "CODEX_SANDBOX", "CODEX_SANDBOX_NETWORK_DISABLED", "CODEX_CI",
             // Artefatos da própria captura: o app define TERM/COLORTERM na composição (passo 3).
             "AB_ENV_OUT", "TERM", "COLORTERM",
         ],
         denyPrefixes: [
             "TERM_PROGRAM", "ITERM_", "WEZTERM_", "KITTY_", "GHOSTTY_", "VSCODE_", "ORCA_", "AGENTBOX_",
+            // Marcadores de uma sessão pai do Claude Code (CLAUDE_CODE_CHILD_SESSION desliga o transcript do filho).
+            "CLAUDE_CODE_", "CLAUDECODE", "CLAUDE_AGENT_",
+            // Sessão/sandbox do Codex pai (CODEX_HOME e afins de configuração do usuário continuam passando).
+            "CODEX_THREAD", "CODEX_SANDBOX", "CODEX_SESSION", "CODEX_INTERNAL",
         ],
         allowNames: [
+            // Configuração do usuário que o prefixo CLAUDE_CODE_ pegaria sem ser marcador de sessão.
+            "CLAUDE_CODE_OAUTH_TOKEN", "CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CODE_USE_VERTEX", "CLAUDE_CODE_USE_FOUNDRY",
             "SSH_AUTH_SOCK", "PATH",
             "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY", "ALL_PROXY",
             "http_proxy", "https_proxy", "no_proxy", "all_proxy",

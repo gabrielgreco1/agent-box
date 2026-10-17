@@ -50,6 +50,12 @@ public final class TerminalSurfaceView: TerminalView {
 
     @available(*, unavailable) required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }  // required init?(coder:) não usado
 
+    /// Clique no terminal sempre devolve o foco à superfície (um overlay aberto engole o clique antes, no hit test).
+    public override func mouseDown(with event: NSEvent) {
+        if let window, window.firstResponder !== self { window.makeFirstResponder(self) }
+        super.mouseDown(with: event)
+    }
+
     /// Menu de contexto do terminal (03 §4.5): construído por quem hospeda o pane (o menu depende do estado do pane).
     public var contextMenuProvider: (() -> NSMenu?)?
 

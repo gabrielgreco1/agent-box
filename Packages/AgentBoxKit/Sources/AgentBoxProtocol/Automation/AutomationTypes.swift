@@ -183,11 +183,17 @@ public struct AppStateSnapshot: Codable, Sendable, Equatable {
     public var window: UIWindowInfo?
     public var registeredActions: [ActionID]
     public var visibleControls: Int
+    /// Diagnóstico de foco: tipo do first responder da janela e se overlay/popover bloqueia o terminal.
+    public var firstResponder: String?
+    public var blocksTerminalInput: Bool?
 
     public init(
         app: String, version: String, pid: Int32, slice: ReleaseSlice, fixture: String?, automation: Bool,
-        window: UIWindowInfo?, registeredActions: [ActionID], visibleControls: Int
+        window: UIWindowInfo?, registeredActions: [ActionID], visibleControls: Int,
+        firstResponder: String? = nil, blocksTerminalInput: Bool? = nil
     ) {
+        self.firstResponder = firstResponder
+        self.blocksTerminalInput = blocksTerminalInput
         self.app = app
         self.version = version
         self.pid = pid

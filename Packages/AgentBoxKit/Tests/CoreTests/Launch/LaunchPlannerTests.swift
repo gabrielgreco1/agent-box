@@ -193,7 +193,7 @@ import Testing
         let plan = try LaunchSamples.plan(LaunchSpec(provider: .shell), catalog: ProfileCatalog(userProfiles: [profile]))
         let env = plan.environment
         // 2. denylist
-        for gone in ["ORCA_PANE_KEY", "CLAUDECODE", "PWD"] { #expect(env[gone] == nil, "\(gone) must not reach the terminal") }
+        for gone in ["ORCA_PANE_KEY", "CLAUDECODE", "CLAUDE_CODE_CHILD_SESSION", "PWD"] { #expect(env[gone] == nil, "\(gone) must not reach the terminal") }
         // allowlist e o resto do shell de login passam
         #expect(env["SSH_AUTH_SOCK"] == "/private/tmp/agent.sock")
         #expect(env["HTTPS_PROXY"] == "http://proxy:3128")

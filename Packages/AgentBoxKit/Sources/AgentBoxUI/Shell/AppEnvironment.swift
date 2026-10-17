@@ -87,6 +87,7 @@ public final class AppEnvironment {
         let screen = environment["AGENTBOX_SCREEN"]
         autoOnboarding = environment["AGENTBOX_SKIP_ONBOARDING"] != "1" && (screen == nil || screen == Self.setupDemoFixture)
         self.projects = ProjectsController(sidebar: sidebar, overlays: overlays, toasts: toasts, automationEnabled: automationEnabled)
+        surface.inputBlockedProbe = { [overlays] in overlays.blocksTerminalInput }
         elements.enablement = { [registry] id in registry.availability(of: id) }
         let storeRoot = StorePaths.default(environment: environment).root
         let slice2 = flags.isEnabled(.slice2)

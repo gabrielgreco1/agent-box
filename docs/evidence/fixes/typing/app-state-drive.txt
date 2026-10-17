@@ -1,0 +1,9 @@
+pid 83125
+-- onboarding open
+{'firstResponder': 'OverlayHostingView', 'blocksTerminalInput': True}
+{"action":{"actionID":"onboarding.done","message":"done","ok":true},"ok":true}
+-- after Done
+{'firstResponder': 'KeyViewProxy', 'blocksTerminalInput': False}
+{"action":{"actionID":"session.new","message":"opened","ok":true},"ok":true}
+-- after new session
+{'firstResponder': 'OverlayHostingView', 'blocksTerminalInput': True}

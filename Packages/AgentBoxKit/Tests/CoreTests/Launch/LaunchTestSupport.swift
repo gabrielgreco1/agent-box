@@ -49,7 +49,7 @@ enum LaunchSamples {
         "HOME": "/Users/example", "USER": "example", "SHELL": "/bin/zsh", "LANG": "pt_BR.UTF-8",
         "SSH_AUTH_SOCK": "/private/tmp/agent.sock", "HTTPS_PROXY": "http://proxy:3128",
         // Devem sair pela denylist (06 §1.7):
-        "ORCA_PANE_KEY": "pane-1", "CLAUDECODE": "1", "TERM_PROGRAM": "iTerm.app", "PWD": "/tmp",
+        "ORCA_PANE_KEY": "pane-1", "CLAUDECODE": "1", "CLAUDE_CODE_CHILD_SESSION": "1", "TERM_PROGRAM": "iTerm.app", "PWD": "/tmp",
     ]
 
     static func exe(_ provider: TerminalProvider) -> String {

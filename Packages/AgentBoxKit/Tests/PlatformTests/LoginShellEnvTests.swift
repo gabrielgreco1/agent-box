@@ -292,6 +292,21 @@ private func waitForFile(_ box: Sandbox, _ name: String, deadline: Duration = .s
         #expect(vars["BAR"] == "baz")
     }
 
+    @Test func inheritedParentAgentSessionMarkersAreDropped() {
+        let f = EnvFilter.default
+        let parent = [
+            "CLAUDE_CODE_CHILD_SESSION": "1", "CLAUDE_CODE_ENTRYPOINT": "cli", "CLAUDE_CODE_EXECPATH": "/x", "CLAUDECODE": "1",
+            "CLAUDE_AGENT_SDK_VERSION": "1", "ORCA_PANE_KEY": "p", "AGENTBOX_APP_SOCK": "/s", "TERM_PROGRAM": "iTerm.app",
+            "TERM_PROGRAM_VERSION": "3", "CODEX_THREAD_ID": "t", "CODEX_SANDBOX": "seatbelt", "CODEX_SANDBOX_NETWORK_DISABLED": "1",
+            "CODEX_CI": "1", "CODEX_SESSION_ID": "s",
+            // o que o usuário configurou continua
+            "PATH": "/usr/bin", "HOME": "/Users/u", "ANTHROPIC_API_KEY": "k", "CODEX_HOME": "/h", "CLAUDE_CODE_OAUTH_TOKEN": "tok",
+            "CLAUDE_CODE_USE_BEDROCK": "1", "CLAUDE_CONFIG_DIR": "/c",
+        ]
+        let kept = f.apply(to: parent)
+        #expect(Set(kept.keys) == ["PATH", "HOME", "ANTHROPIC_API_KEY", "CODEX_HOME", "CLAUDE_CODE_OAUTH_TOKEN", "CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CONFIG_DIR"])
+    }
+
     @Test func defaultFilterMatchesSpecDenylist() {
         let f = EnvFilter.default
         for name in ["PWD", "OLDPWD", "SHLVL", "_", "TERM_SESSION_ID", "TERM_PROGRAM", "TERM_PROGRAM_VERSION", "ITERM_PROFILE",

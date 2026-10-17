@@ -185,6 +185,7 @@ func waitUntil(_ timeout: Double = 3, _ condition: @MainActor () -> Bool) async 
         let motion = MotionPolicy()
         motion.mode = .instant
         controller.motion = motion
+        controller.isWindowActive = { _ in true }
         return (controller, scheduler)
     }
 
@@ -223,6 +224,23 @@ func waitUntil(_ timeout: Double = 3, _ condition: @MainActor () -> Bool) async 
         #expect(controller.isVisible)
         controller.dismiss()
         #expect(!controller.isVisible, "clique, rolagem ou tecla fecham")
+    }
+
+    @Test func windowLosingKeyHidesTheTooltipImmediately() async throws {
+        let (controller, scheduler) = makeController()
+        let window = NSWindow(contentRect: NSRect(x: -4000, y: -4000, width: 200, height: 100), styleMask: [.titled], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        defer { controller.dismiss(); window.close() }
+        controller.hoverBegan(key: UUID(), content: TooltipContent("Path"), delay: 0.05, side: .bottom, window: window) {
+            NSRect(x: -3900, y: -3950, width: 28, height: 28)
+        }
+        await scheduler.waitForSleepers()
+        await scheduler.advance(by: 0.05)
+        #expect(controller.isVisible)
+        // NSOpenPanel/sheet/outro app: o mouseExited nunca chega, a notificação esconde o balão.
+        NotificationCenter.default.post(name: NSWindow.didResignKeyNotification, object: window)
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(!controller.isVisible)
     }
 
     @Test func suppressedControllerNeverOpens() async {
