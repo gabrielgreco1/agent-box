@@ -100,6 +100,7 @@ public final class OverlayRouter {
     @discardableResult
     public func present(_ spec: OverlaySpec, from origin: A11yID? = nil) -> Bool {
         guard live.count < Self.maxDepth else { return false }
+        TooltipController.shared.dismiss(animated: false)
         let wasEmpty = live.isEmpty
         let frame = origin.flatMap(frameOf)
         stack.append(OverlayEntry(spec: spec, originID: origin, originFrame: frame))
@@ -144,6 +145,7 @@ public final class OverlayRouter {
     @discardableResult
     public func presentPopover(_ spec: PopoverSpec) -> Bool {
         closePopover(restoreFocus: false, animated: false)
+        TooltipController.shared.dismiss(animated: false)
         popover = PopoverEntry(spec: spec)
         if live.isEmpty { focus?.capture() } else { focus?.capturePopover() }
         record("M-105 begin")
@@ -286,6 +288,8 @@ public final class OverlayFocusCoordinator {
     public weak var window: NSWindow?
     public weak var hostView: NSView?
     private weak var saved: NSResponder?
+    /// Quando não há responder guardado útil (primeira abertura, onboarding), o foco vai para o terminal do pane focado.
+    public var fallbackFocus: (@MainActor () -> Void)?
 
     public init() {}
 
@@ -327,7 +331,9 @@ public final class OverlayFocusCoordinator {
         guard let window else { return }
         let target = saved
         saved = nil
-        if let target, window.makeFirstResponder(target) { return }
+        // Guardado era a janela/a contentView/algo fora da árvore: não é destino de digitação, o terminal é.
+        if let target, target !== window, target !== window.contentView, !(target is ChromeHostingView), window.makeFirstResponder(target) { return }
         window.makeFirstResponder(window.contentView)
+        fallbackFocus?()
     }
 }

@@ -505,6 +505,12 @@ final class WorkspaceModel {
         focusPulse = (terminalID, (focusPulse?.nonce ?? 0) + 1)
     }
 
+    /// Host do terminal do pane focado da aba ativa (watchdog de digitação).
+    func focusedHost() -> TerminalHostView? {
+        guard let id = focusedTerminalID else { return nil }
+        return runtime.existingEntry(for: id)?.host
+    }
+
     func focusTerminalOfActiveTab() {
         guard let id = focusedTerminalID else { return }
         runtime.existingEntry(for: id)?.host.focusTerminal()

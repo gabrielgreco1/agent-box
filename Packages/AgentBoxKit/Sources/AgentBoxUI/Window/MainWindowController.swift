@@ -1,4 +1,5 @@
 import AgentBoxDesignSystem
+import AgentBoxPlatform
 import AgentBoxProtocol
 import AppKit
 import SwiftUI
@@ -40,6 +41,17 @@ final class ChromeContainerView: NSView {
     }
 }
 
+/// Janela principal: tecla que chega e nenhum responder aceita (first responder preso na chrome, view oculta) vai para
+/// `onUnhandledKey`, que devolve o foco ao terminal e reenvia (watchdog de digitação).
+final class AgentBoxWindow: NSWindow {
+    var onUnhandledKey: ((NSEvent) -> Bool)?
+
+    override func keyDown(with event: NSEvent) {
+        if let onUnhandledKey, onUnhandledKey(event) { return }
+        super.keyDown(with: event)
+    }
+}
+
 /// Janela principal (03 §1.1, 00 T5): `fullSizeContentView`, titlebar transparente, sem `NSToolbar`,
 /// semáforos nativos reposicionados, mínimo 760×480, inicial 1440×900.
 @MainActor
@@ -72,7 +84,7 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
         self.settingsHost = settingsHost
         container = ChromeContainerView(split: split.view, strip: strip, overlay: overlayHost, settings: settingsHost)
 
-        let window = NSWindow(
+        let window = AgentBoxWindow(
             contentRect: NSRect(x: 0, y: 0, width: DS.Layout.windowDefaultWidth, height: DS.Layout.windowDefaultHeight),
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered, defer: false)
@@ -89,6 +101,7 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
         window.contentViewController = nil
         super.init(window: window)
         window.delegate = self
+        window.onUnhandledKey = { [weak self] event in self?.recoverTypingFocus(for: event) ?? false }
 
         container.stripWidth = { [weak self] in self?.currentStripWidth() ?? 0 }
         window.center()
@@ -98,6 +111,7 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
         overlayFocus.window = window
         overlayFocus.hostView = overlayHost
         env.overlays.focus = overlayFocus
+        overlayFocus.fallbackFocus = { [weak env] in env?.workspace.focusTerminalOfActiveTab() }
         env.elements.register(mainToken, id: .windowMain, kind: "window", label: "Agent Box", value: nil, action: nil, parent: nil)
         registerActions()
         observeSettings()
@@ -107,6 +121,27 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
     }
 
     @available(*, unavailable) required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
+
+    private let focusLog = LogFacade(.app, category: "focus")
+
+    /// Watchdog: `keyDown` chegou à janela sem que nenhum responder o tratasse. Sem overlay e sem Settings, o terminal do
+    /// pane focado recebe o foco e a tecla. Devolve `true` se a tecla foi reenviada.
+    func recoverTypingFocus(for event: NSEvent) -> Bool {
+        let responder = window?.firstResponder.map { String(describing: type(of: $0)) } ?? "nil"
+        let blocked = env.overlays.blocksTerminalInput
+        let settingsOpen = !settingsHost.isHidden
+        guard !event.modifierFlags.contains(.command), !blocked, !settingsOpen, let host = env.workspace.focusedHost() else {
+            focusLog.publicError("keyDown reached the window but no terminal accepts it")
+            focusLog.error("responder=\(responder) overlayBlocks=\(blocked) settingsOpen=\(settingsOpen)")
+            return false
+        }
+        focusLog.publicError("keyDown reached the window unhandled; refocusing the terminal")
+        focusLog.error("responder=\(responder)")
+        host.focusTerminal()
+        guard window?.firstResponder === host.surface else { return false }
+        host.surface.keyDown(with: event)
+        return true
+    }
 
     /// Abre sem ativar o app (o chamador decide se traz para frente).
     /// Testes desligam: a janela nunca é ordenada para a frente (o AppKit puxaria uma janela titulada para dentro da tela).
@@ -146,7 +181,11 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
             self.split.view.isHidden = open
             self.settingsHost.isHidden = !open
             self.container.needsLayout = true
-            if open { self.window?.makeFirstResponder(self.settingsHost) }
+            if open {
+                self.window?.makeFirstResponder(self.settingsHost)
+            } else {
+                self.env.workspace.focusTerminalOfActiveTab()
+            }
         }
     }
 
@@ -195,6 +234,22 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
     }
 
     // MARK: NSWindowDelegate
+
+    /// Voltou de um NSOpenPanel, sheet ou outro app: o foco volta ao terminal, salvo overlay, Settings ou campo de texto.
+    public func windowDidBecomeKey(_ notification: Notification) {
+        restoreTerminalFocusIfLost()
+    }
+
+    public func windowDidResignKey(_ notification: Notification) {
+        TooltipController.shared.dismiss(animated: false)
+    }
+
+    func restoreTerminalFocusIfLost() {
+        guard let window, !env.overlays.blocksTerminalInput, settingsHost.isHidden else { return }
+        let responder = window.firstResponder
+        if responder is NSText { return }
+        if let host = env.workspace.focusedHost(), responder !== host.surface { host.focusTerminal() }
+    }
 
     public func windowDidResize(_ notification: Notification) {
         positioner?.apply()

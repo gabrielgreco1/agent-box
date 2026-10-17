@@ -21,6 +21,9 @@ public final class WindowAutomation: AutomationSurface {
 
     public func uiTree(root: A11yID?) -> UITreeSnapshot { store.snapshot(root: root) }
 
+    /// Ligado pela janela: `OverlayRouter.blocksTerminalInput`.
+    public var inputBlockedProbe: (@MainActor () -> Bool)?
+
     public func appState(registeredActions: [ActionID]) -> AppStateSnapshot {
         let info = Bundle.main.infoDictionary
         return AppStateSnapshot(
@@ -32,7 +35,12 @@ public final class WindowAutomation: AutomationSurface {
             automation: automationEnabled,
             window: store.windowInfo(),
             registeredActions: registeredActions,
-            visibleControls: store.count)
+            visibleControls: store.count,
+            firstResponder: store.window?.firstResponder.map { r in
+                let id = (r as? NSView)?.accessibilityIdentifier() ?? ""
+                return id.isEmpty ? String(describing: type(of: r)) : "\(type(of: r)) [\(id)]"
+            },
+            blocksTerminalInput: inputBlockedProbe?())
     }
 
     public func screenshot(_ target: ScreenshotTarget) async throws -> ScreenshotResult {

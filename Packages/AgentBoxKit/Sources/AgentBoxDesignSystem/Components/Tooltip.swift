@@ -61,6 +61,8 @@ public final class TooltipController {
 
     /// Verdadeiro enquanto um overlay ou menu cobre a janela: tooltips do fundo ficam quietos.
     public var isSuppressed: () -> Bool = { false }
+    /// Só a janela key de um app ativo mostra tooltip (perdeu o foco para um NSOpenPanel: nada novo abre). Testes injetam `true`.
+    var isWindowActive: (NSWindow) -> Bool = { $0.isKeyWindow && NSApp.isActive }
     var clock: () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }
     /// Espera dos atrasos de abrir e fechar; testes injetam `ManualScheduler`.
     var sleep: DSSleep = dsSystemSleep
@@ -80,8 +82,33 @@ public final class TooltipController {
     /// Testes desligam: o painel nunca é ordenado na tela (o estado do tooltip continua igual, só não aparece janela).
     // SAFETY: gravado uma vez no bootstrap dos testes (main actor), antes de qualquer tooltip; produção nunca escreve.
     nonisolated(unsafe) public static var orderingEnabled = true
+    private var observers: [any NSObjectProtocol] = []
+    private weak var hoverWindow: NSWindow?
 
     public init() {}
+
+    /// Janela perde o key (NSOpenPanel, sheet, outro app) ou sheet abre: o `mouseExited` nunca chega, então some aqui.
+    private func installWindowObservers() {
+        guard observers.isEmpty else { return }
+        let center = NotificationCenter.default
+        let names: [Notification.Name] = [
+            NSWindow.didResignKeyNotification, NSWindow.willBeginSheetNotification, NSApplication.didResignActiveNotification,
+            NSWindow.willMiniaturizeNotification, NSWindow.willCloseNotification,
+        ]
+        observers = names.map { name in
+            center.addObserver(forName: name, object: nil, queue: .main) { [weak self] note in
+                let source = note.object as? NSWindow
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    // O próprio painel do tooltip nunca vira key; ignora-o.
+                    if let source, source === self.panel { return }
+                    // Só importa a janela do tooltip (ou o app inteiro perdendo foco); outras janelas não o afetam.
+                    if let source, source !== self.hoverWindow { return }
+                    self.dismiss(animated: false)
+                }
+            }
+        }
+    }
 
     public var isVisible: Bool { visibleKey != nil }
     public var currentContent: TooltipContent? { visibleKey == nil ? nil : model.content }
@@ -94,6 +121,9 @@ public final class TooltipController {
         anchor: @escaping () -> NSRect?
     ) {
         guard !content.text.isEmpty, !isSuppressed() else { return }
+        installWindowObservers()
+        hoverWindow = window
+        if let window, !isWindowActive(window) { return }
         cancelPending()
         let hiddenAgo = hiddenAt.map { clock() - $0 }
         let wait = Self.effectiveDelay(base: delay, tooltipVisible: visibleKey != nil, hiddenAgo: hiddenAgo)
@@ -104,6 +134,7 @@ public final class TooltipController {
         pendingTask = Task { [weak self] in
             if wait > 0 { await delay(wait) }
             guard !Task.isCancelled, let self, self.pendingKey == key else { return }
+            if let window, !self.isWindowActive(window) { self.cancelPending(); return }
             self.show(key: key, content: content, side: side, window: window, anchor: anchor, animated: !instant)
         }
     }
@@ -115,9 +146,13 @@ public final class TooltipController {
     }
 
     /// Clique, rolagem ou digitação: some na hora (02 §12.14).
-    public func dismiss() {
+    public func dismiss() { dismiss(animated: true) }
+
+    /// `animated == false`: some na hora (perda de foco, sheet, overlay), sem esperar a animação de saída.
+    public func dismiss(animated: Bool) {
         cancelPending()
-        if visibleKey != nil { hide(animated: true) }
+        if visibleKey != nil { hide(animated: animated) }
+        if !animated { hideTask?.cancel(); panel?.orderOut(nil) }
         removeMonitor()
     }
 
