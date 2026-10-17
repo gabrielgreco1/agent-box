@@ -12,6 +12,39 @@
         }
       }
     },
+    "%@ Everything keeps running in the background and comes back when you reopen Agent Box.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ Everything keeps running in the background and comes back when you reopen Agent Box."
+          }
+        }
+      }
+    },
+    "%@ Quitting stops them.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ Quitting stops them."
+          }
+        }
+      }
+    },
+    "%@ and %@ are still running.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ and %@ are still running."
+          }
+        }
+      }
+    },
     "%@ exited.": {
       "extractionState": "manual",
       "localizations": {
@@ -56,6 +89,50 @@
         }
       }
     },
+    "%lld agents": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld agents"
+          }
+        }
+      }
+    },
+    "%lld agents are still running.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld agents are still running."
+          }
+        }
+      }
+    },
+    "%lld shells": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld shells"
+          }
+        }
+      }
+    },
+    "%lld shells are still running.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld shells are still running."
+          }
+        }
+      }
+    },
     "%lld terminals are still running. Closing ends their processes.": {
       "extractionState": "manual",
       "localizations": {
@@ -85,6 +162,72 @@
           "stringUnit": {
             "state": "translated",
             "value": "+%lld terminals"
+          }
+        }
+      }
+    },
+    "1 agent": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 agent"
+          }
+        }
+      }
+    },
+    "1 agent is still running.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 agent is still running."
+          }
+        }
+      }
+    },
+    "1 shell": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 shell"
+          }
+        }
+      }
+    },
+    "1 shell is still running.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 shell is still running."
+          }
+        }
+      }
+    },
+    "7-day": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7-day"
+          }
+        }
+      }
+    },
+    "7-day window": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7-day window"
           }
         }
       }
@@ -342,6 +485,17 @@
         }
       }
     },
+    "Agents by session": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agents by session"
+          }
+        }
+      }
+    },
     "Alerts": {
       "extractionState": "manual",
       "localizations": {
@@ -364,6 +518,17 @@
         }
       }
     },
+    "Allow Agent Box in Login Items so your agents keep running after you quit. Until then they keep running only while this Mac session lasts.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow Agent Box in Login Items so your agents keep running after you quit. Until then they keep running only while this Mac session lasts."
+          }
+        }
+      }
+    },
     "Allow Notifications": {
       "extractionState": "manual",
       "localizations": {
@@ -375,6 +540,17 @@
         }
       }
     },
+    "Allow in Login Items": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow in Login Items"
+          }
+        }
+      }
+    },
     "Also delete run folders": {
       "extractionState": "manual",
       "localizations": {
@@ -382,6 +558,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Also delete run folders"
+          }
+        }
+      }
+    },
+    "App": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App"
           }
         }
       }
@@ -503,6 +690,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Background"
+          }
+        }
+      }
+    },
+    "Background agents need approval": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Background agents need approval"
           }
         }
       }
@@ -650,6 +848,39 @@
         }
       }
     },
+    "By hour of day": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "By hour of day"
+          }
+        }
+      }
+    },
+    "CPU": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CPU"
+          }
+        }
+      }
+    },
+    "Cache hit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cache hit"
+          }
+        }
+      }
+    },
     "Cancel": {
       "extractionState": "manual",
       "localizations": {
@@ -767,6 +998,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choose…"
+          }
+        }
+      }
+    },
+    "Claude": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude"
           }
         }
       }
@@ -925,6 +1167,17 @@
         }
       }
     },
+    "Codex": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codex"
+          }
+        }
+      }
+    },
     "Collapse All Sessions": {
       "extractionState": "manual",
       "localizations": {
@@ -943,6 +1196,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Collapse Pane"
+          }
+        }
+      }
+    },
+    "Compressed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compressed"
           }
         }
       }
@@ -1134,6 +1398,17 @@
         }
       }
     },
+    "Cost": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cost"
+          }
+        }
+      }
+    },
     "Couldn't add the project.": {
       "extractionState": "manual",
       "localizations": {
@@ -1310,6 +1585,17 @@
         }
       }
     },
+    "Data": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Data"
+          }
+        }
+      }
+    },
     "Decline…": {
       "extractionState": "manual",
       "localizations": {
@@ -1453,6 +1739,17 @@
         }
       }
     },
+    "Disk": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disk"
+          }
+        }
+      }
+    },
     "Dock badge": {
       "extractionState": "manual",
       "localizations": {
@@ -1475,6 +1772,17 @@
         }
       }
     },
+    "Docker isn't running, so there are no computers to show.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Docker isn't running, so there are no computers to show."
+          }
+        }
+      }
+    },
     "Don't ask again": {
       "extractionState": "manual",
       "localizations": {
@@ -1493,6 +1801,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Done"
+          }
+        }
+      }
+    },
+    "Down": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Down"
           }
         }
       }
@@ -1548,6 +1867,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Equalize Pane Sizes"
+          }
+        }
+      }
+    },
+    "Estimated against your busiest earlier window. Connect the status line for exact limits.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Estimated against your busiest earlier window. Connect the status line for exact limits."
           }
         }
       }
@@ -1970,6 +2300,17 @@
         }
       }
     },
+    "Keep Running": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep Running"
+          }
+        }
+      }
+    },
     "Keep Setting Up": {
       "extractionState": "manual",
       "localizations": {
@@ -2010,6 +2351,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Larger"
+          }
+        }
+      }
+    },
+    "Last 30 days": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last 30 days"
+          }
+        }
+      }
+    },
+    "Last 7 days": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last 7 days"
           }
         }
       }
@@ -2065,6 +2428,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Log In"
+          }
+        }
+      }
+    },
+    "Machine": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Machine"
           }
         }
       }
@@ -2146,6 +2520,28 @@
         }
       }
     },
+    "Memory": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Memory"
+          }
+        }
+      }
+    },
+    "Messages": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Messages"
+          }
+        }
+      }
+    },
     "Mode": {
       "extractionState": "manual",
       "localizations": {
@@ -2164,6 +2560,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Model"
+          }
+        }
+      }
+    },
+    "Models": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Models"
           }
         }
       }
@@ -2274,6 +2681,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Needs you"
+          }
+        }
+      }
+    },
+    "Network": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Network"
           }
         }
       }
@@ -2443,6 +2861,28 @@
         }
       }
     },
+    "No Claude usage found yet.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Claude usage found yet."
+          }
+        }
+      }
+    },
+    "No Codex usage found yet.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Codex usage found yet."
+          }
+        }
+      }
+    },
     "No Project (Clean Session)": {
       "extractionState": "manual",
       "localizations": {
@@ -2476,6 +2916,17 @@
         }
       }
     },
+    "No computers running.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No computers running."
+          }
+        }
+      }
+    },
     "No computers yet. Agents create them when they need a browser.": {
       "extractionState": "manual",
       "localizations": {
@@ -2505,6 +2956,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "No projects yet."
+          }
+        }
+      }
+    },
+    "No proxies yet. Add one in Settings to see its usage here.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No proxies yet. Add one in Settings to see its usage here."
           }
         }
       }
@@ -2685,6 +3147,17 @@
         }
       }
     },
+    "Open Agent Box": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Agent Box"
+          }
+        }
+      }
+    },
     "Open System Settings": {
       "extractionState": "manual",
       "localizations": {
@@ -2736,6 +3209,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Optional. Leave empty for the agent's default."
+          }
+        }
+      }
+    },
+    "Output": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Output"
           }
         }
       }
@@ -2802,6 +3286,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Preparing…"
+          }
+        }
+      }
+    },
+    "Pressure critical": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pressure critical"
+          }
+        }
+      }
+    },
+    "Pressure high": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pressure high"
+          }
+        }
+      }
+    },
+    "Pressure normal": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pressure normal"
           }
         }
       }
@@ -2890,6 +3407,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "Proxy"
+          }
+        }
+      }
+    },
+    "Quit Agent Box Completely": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quit Agent Box Completely"
+          }
+        }
+      }
+    },
+    "Quit Agent Box?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quit Agent Box?"
+          }
+        }
+      }
+    },
+    "Read": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read"
+          }
+        }
+      }
+    },
+    "Reading this Mac…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading this Mac…"
           }
         }
       }
@@ -3026,6 +3587,17 @@
         }
       }
     },
+    "Requests": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Requests"
+          }
+        }
+      }
+    },
     "Reset": {
       "extractionState": "manual",
       "localizations": {
@@ -3055,6 +3627,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reset Title"
+          }
+        }
+      }
+    },
+    "Resets in": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resets in"
           }
         }
       }
@@ -3455,6 +4038,17 @@
         }
       }
     },
+    "Signed out": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Signed out"
+          }
+        }
+      }
+    },
     "Size": {
       "extractionState": "manual",
       "localizations": {
@@ -3664,6 +4258,50 @@
         }
       }
     },
+    "Stop %@?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop %@?"
+          }
+        }
+      }
+    },
+    "Stop All Agents…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop All Agents…"
+          }
+        }
+      }
+    },
+    "Stop All and Quit…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop All and Quit…"
+          }
+        }
+      }
+    },
+    "Stop and Quit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop and Quit"
+          }
+        }
+      }
+    },
     "Stopped": {
       "extractionState": "manual",
       "localizations": {
@@ -3715,6 +4353,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Suppress when the session is visible"
+          }
+        }
+      }
+    },
+    "Swap used": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swap used"
           }
         }
       }
@@ -3972,6 +4621,39 @@
         }
       }
     },
+    "Today": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today"
+          }
+        }
+      }
+    },
+    "Tokens": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tokens"
+          }
+        }
+      }
+    },
+    "Top apps": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Top apps"
+          }
+        }
+      }
+    },
     "Try Again": {
       "extractionState": "manual",
       "localizations": {
@@ -4023,6 +4705,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Unread"
+          }
+        }
+      }
+    },
+    "Unsaved work in those terminals is lost.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unsaved work in those terminals is lost."
+          }
+        }
+      }
+    },
+    "Up": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Up"
+          }
+        }
+      }
+    },
+    "Usage limits": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usage limits"
           }
         }
       }
@@ -4148,6 +4863,17 @@
         }
       }
     },
+    "Wired": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wired"
+          }
+        }
+      }
+    },
     "Working": {
       "extractionState": "manual",
       "localizations": {
@@ -4203,6 +4929,17 @@
         }
       }
     },
+    "Write": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Write"
+          }
+        }
+      }
+    },
     "branch %@": {
       "extractionState": "manual",
       "localizations": {
@@ -4221,6 +4958,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "e.g. Logged in, continue from page 3"
+          }
+        }
+      }
+    },
+    "est.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "est."
           }
         }
       }
@@ -4298,259 +5046,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "↵ Open · ⌘↵ Start with prompt · ⇧↵ Split · Esc Close"
-          }
-        }
-      }
-    },
-    "Quit Agent Box?": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Quit Agent Box?"
-          }
-        }
-      }
-    },
-    "%@ Everything keeps running in the background and comes back when you reopen Agent Box.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ Everything keeps running in the background and comes back when you reopen Agent Box."
-          }
-        }
-      }
-    },
-    "%@ Quitting stops them.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ Quitting stops them."
-          }
-        }
-      }
-    },
-    "Stop %@?": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stop %@?"
-          }
-        }
-      }
-    },
-    "Unsaved work in those terminals is lost.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unsaved work in those terminals is lost."
-          }
-        }
-      }
-    },
-    "Keep Running": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Keep Running"
-          }
-        }
-      }
-    },
-    "Stop All and Quit…": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stop All and Quit…"
-          }
-        }
-      }
-    },
-    "1 agent": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 agent"
-          }
-        }
-      }
-    },
-    "%lld agents": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld agents"
-          }
-        }
-      }
-    },
-    "1 shell": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 shell"
-          }
-        }
-      }
-    },
-    "%lld shells": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld shells"
-          }
-        }
-      }
-    },
-    "1 agent is still running.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 agent is still running."
-          }
-        }
-      }
-    },
-    "%lld agents are still running.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld agents are still running."
-          }
-        }
-      }
-    },
-    "1 shell is still running.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 shell is still running."
-          }
-        }
-      }
-    },
-    "%lld shells are still running.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld shells are still running."
-          }
-        }
-      }
-    },
-    "%@ and %@ are still running.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ and %@ are still running."
-          }
-        }
-      }
-    },
-    "Open Agent Box": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open Agent Box"
-          }
-        }
-      }
-    },
-    "Stop All Agents…": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stop All Agents…"
-          }
-        }
-      }
-    },
-    "Quit Agent Box Completely": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Quit Agent Box Completely"
-          }
-        }
-      }
-    },
-    "Background agents need approval": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Background agents need approval"
-          }
-        }
-      }
-    },
-    "Allow Agent Box in Login Items so your agents keep running after you quit. Until then they keep running only while this Mac session lasts.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Allow Agent Box in Login Items so your agents keep running after you quit. Until then they keep running only while this Mac session lasts."
-          }
-        }
-      }
-    },
-    "Allow in Login Items": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Allow in Login Items"
-          }
-        }
-      }
-    },
-    "Stop and Quit": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stop and Quit"
           }
         }
       }
