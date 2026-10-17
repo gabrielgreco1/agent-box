@@ -1,0 +1,20 @@
+# bootstrap.sh negativo - 2026-10-17T03:09:54Z
+
+## Xcode major adulterado (27)
+$ TOOL_VERSIONS_FILE=<adulterado> scripts/bootstrap.sh
+ERRO: Xcode 26.3; exigido major 27.x (>= 26.3)
+exit=1
+
+## XcodeGen versao adulterada (2.45.0; URL/SHA ainda de 2.46.0)
+$ TOOL_VERSIONS_FILE=<adulterado> scripts/bootstrap.sh
+ok: Xcode 26.3
+ok: ripgrep 15.1.0
+ERRO: xcodegen instalado é '2.46.0'; fixado 2.45.0
+exit=1
+
+## SHA-256 do XcodeGen adulterado
+$ TOOL_VERSIONS_FILE=<adulterado> scripts/bootstrap.sh
+ok: Xcode 26.3
+ok: ripgrep 15.1.0
+ERRO: SHA-256 diverge para https://github.com/yonaskolb/XcodeGen/releases/download/2.46.0/xcodegen.zip (esperado 000034b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806, obtido 4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806)
+exit=1

@@ -16,3 +16,5 @@ work/
 
 __pycache__/
 *.py[cod]
+.tools/
+DerivedData/

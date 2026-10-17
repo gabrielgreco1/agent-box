@@ -1,0 +1,9 @@
+# bootstrap.sh positivo (instalacao limpa em .tools/) - 2026-10-17T03:09:59Z
+$ scripts/bootstrap.sh --fonts
+ok: Xcode 26.3
+ok: ripgrep 15.1.0
+ok: xcodegen 2.46.0 (.tools/bin/xcodegen)
+ok: Geist 1.8.1 (SHA-256 conferido)
+ok: pins de Package.resolved (nenhum divergente)
+bootstrap: OK
+exit=0
