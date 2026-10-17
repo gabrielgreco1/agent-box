@@ -1,0 +1,28 @@
+{
+  "orcaVersion": "1.4.219",
+  "asarSha256": "579d814bca0d04448414d07ac9547ca06b1c84ff9d008c98951fb6a91a066218",
+  "status": "pending-capture",
+  "records": [],
+  "pending": {
+    "sizes": ["1440x900", "760x480"],
+    "screens": [
+      "janela vazia", "sidebar com 3 projetos (card ativo, hover, unread, pendente, vazio, F-LONG)",
+      "seção Sessions", "tab row (ativa, hover, overflow, rename)", "dois panes em split com header",
+      "find bar", "estados do pane (running, exited, couldn't start)",
+      "composer (variantes de Where, Advanced aberto, erro)", "Quick Launch", "palette",
+      "confirmações (fechar terminal, ⌘Q, apagar sessão)", "toast", "menus de contexto",
+      "landing", "onboarding mínimo", "Settings (Agents e launch profiles)"
+    ],
+    "crops": [
+      "faixa de titlebar com semáforos e nome do app", "sidebar inteira", "item de nav da sidebar",
+      "card de worktree/sessão", "header da seção Projects", "tab row (tab ativa e botão +)",
+      "canto superior direito (Command e toggle)", "header de pane do terminal"
+    ],
+    "measuredLayoutJson": "tokens/measured-layout.json (não criado: depende das capturas)"
+  },
+  "notes": [
+    "Nenhum PNG capturado nesta sessão. Motivo: o Stage Manager está ativo (com.apple.WindowManager GloballyEnabled=1) e a janela do Orca (CGWindowID 125) aparece só como miniatura de 143x160 pt em (15,669), com distorção 3D. Não há captura 1:1 utilizável.",
+    "Capturas de 1440x900 e 760x480 e os estados com fixtures (05 §0.3) ficam pendentes de uma sessão com o dono, porque exigem colocar a janela do Orca nesses tamanhos e preparar os fixtures, o que não se faz de forma passiva.",
+    "Pré-requisito para a sessão com o dono: a janela do Orca em tela normal (fora do Stage Manager ou com ele desligado) e tema escuro."
+  ]
+}
