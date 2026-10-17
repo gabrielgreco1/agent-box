@@ -1,0 +1,72 @@
+import Foundation
+
+/// Filtro do env capturado (06 §1.7, passo 2 da composição). Valores nunca passam por aqui em logs.
+/// Regra: o que casa com `allow*` sempre fica (vence a denylist); o que casa com `deny*` sai; o resto fica.
+public struct EnvFilter: Sendable, Equatable {
+    public var denyNames: Set<String>
+    public var denyPrefixes: [String]
+    public var allowNames: Set<String>
+    public var allowPrefixes: [String]
+
+    public init(
+        denyNames: Set<String> = [],
+        denyPrefixes: [String] = [],
+        allowNames: Set<String> = [],
+        allowPrefixes: [String] = []
+    ) {
+        self.denyNames = denyNames
+        self.denyPrefixes = denyPrefixes
+        self.allowNames = allowNames
+        self.allowPrefixes = allowPrefixes
+    }
+
+    /// Denylist canônica de 06 §1.7 (revisada a cada versão de CLI) e allowlist do que deve passar como está.
+    public static let `default` = EnvFilter(
+        denyNames: [
+            "PWD", "OLDPWD", "SHLVL", "_", "TERM_SESSION_ID",
+            "CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT", "CLAUDE_CODE_SSE_PORT",
+            "CODEX_THREAD_ID", "CODEX_SANDBOX", "CODEX_SANDBOX_NETWORK_DISABLED",
+            // Artefatos da própria captura: o app define TERM/COLORTERM na composição (passo 3).
+            "AB_ENV_OUT", "TERM", "COLORTERM",
+        ],
+        denyPrefixes: [
+            "TERM_PROGRAM", "ITERM_", "WEZTERM_", "KITTY_", "GHOSTTY_", "VSCODE_", "ORCA_", "AGENTBOX_",
+        ],
+        allowNames: [
+            "SSH_AUTH_SOCK", "PATH",
+            "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY", "ALL_PROXY",
+            "http_proxy", "https_proxy", "no_proxy", "all_proxy",
+        ]
+    )
+
+    public func keeps(_ name: String) -> Bool {
+        if allowNames.contains(name) || allowPrefixes.contains(where: { name.hasPrefix($0) }) { return true }
+        if denyNames.contains(name) || denyPrefixes.contains(where: { name.hasPrefix($0) }) { return false }
+        return true
+    }
+
+    public func apply(to variables: [String: String]) -> [String: String] {
+        variables.filter { keeps($0.key) }
+    }
+
+    /// Cópia com regras extras (configuração por produto ou por teste).
+    public func adding(
+        denyNames: Set<String> = [], denyPrefixes: [String] = [],
+        allowNames: Set<String> = [], allowPrefixes: [String] = []
+    ) -> EnvFilter {
+        var copy = self
+        copy.denyNames.formUnion(denyNames)
+        copy.denyPrefixes.append(contentsOf: denyPrefixes)
+        copy.allowNames.formUnion(allowNames)
+        copy.allowPrefixes.append(contentsOf: allowPrefixes)
+        return copy
+    }
+}
+
+/// Nomes que parecem segredo (KEY/TOKEN/SECRET/PASS/AUTH). Servem só para sinalizar e redigir; nunca expõem valores.
+public enum SecretNames {
+    public static func isSecretLike(_ name: String) -> Bool {
+        let upper = name.uppercased()
+        return ["KEY", "TOKEN", "SECRET", "PASS", "AUTH"].contains { upper.contains($0) }
+    }
+}
