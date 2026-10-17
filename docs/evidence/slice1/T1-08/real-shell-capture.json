@@ -1,0 +1,47 @@
+{
+  "claudecode_in_result" : false,
+  "durations_s" : [
+    0.035000000000000003,
+    0.028000000000000001,
+    0.029000000000000001,
+    0.029000000000000001,
+    0.028000000000000001
+  ],
+  "input_env_had_orca_and_claudecode" : true,
+  "key_count" : 10,
+  "keys" : [
+    "HOME",
+    "LANG",
+    "LOGNAME",
+    "MOONSHOT_API_KEY",
+    "OPENROUTER_API_KEY",
+    "PATH",
+    "SHELL",
+    "TMPDIR",
+    "USER",
+    "ZAI_API_KEY"
+  ],
+  "orca_keys_in_result" : [
+
+  ],
+  "path_entry_count" : 16,
+  "proxy_keys_present" : [
+
+  ],
+  "runs" : 5,
+  "secret_like_key_names_only" : [
+    "MOONSHOT_API_KEY",
+    "OPENROUTER_API_KEY",
+    "ZAI_API_KEY"
+  ],
+  "shell" : "\/bin\/zsh",
+  "source" : "interactive",
+  "ssh_auth_sock_present" : false,
+  "task" : "T1-08",
+  "which_in_captured_path" : {
+    "claude" : "~\/.local\/bin",
+    "codex" : "~\/.local\/bin",
+    "gh" : "\/opt\/homebrew\/bin",
+    "node" : "~\/.local\/bin"
+  }
+}
