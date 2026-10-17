@@ -64,19 +64,21 @@ enum LaunchSamples {
 
     static func input(
         _ spec: LaunchSpec, mode: LaunchMode = .automatic, capabilities: CLICapabilities? = nil,
-        catalog: ProfileCatalog = ProfileCatalog(), projectID: UUID? = nil, terminalAddDirs: [String] = []
+        catalog: ProfileCatalog = ProfileCatalog(), projectID: UUID? = nil, terminalAddDirs: [String] = [],
+        slice: LaunchSlice = .slice1, injection: LaunchInjection? = nil
     ) -> LaunchPlanInput {
         LaunchPlanInput(
             spec: spec, terminalID: terminalID, runID: runID, cwd: cwd, projectID: projectID, terminalAddDirs: terminalAddDirs,
             catalog: catalog, executablePath: exe(spec.provider), capabilities: capabilities,
-            loginEnvironment: loginEnvironment, launchDirectory: launchDirectory, mode: mode, slice: .slice1,
-            appVersion: "1.0.0", appSocketPath: "/tmp/ab/run/app.sock"
+            loginEnvironment: loginEnvironment, launchDirectory: launchDirectory, mode: mode, slice: slice,
+            appVersion: "1.0.0", appSocketPath: "/tmp/ab/run/app.sock", injection: injection
         )
     }
 
     static func plan(_ spec: LaunchSpec, mode: LaunchMode = .automatic, capabilities: CLICapabilities? = nil,
-                     catalog: ProfileCatalog = ProfileCatalog(), projectID: UUID? = nil) throws -> LaunchPlan {
-        try LaunchPlanner.plan(input(spec, mode: mode, capabilities: capabilities, catalog: catalog, projectID: projectID), newUUID: { fixedID })
+                     catalog: ProfileCatalog = ProfileCatalog(), projectID: UUID? = nil,
+                     slice: LaunchSlice = .slice1, injection: LaunchInjection? = nil) throws -> LaunchPlan {
+        try LaunchPlanner.plan(input(spec, mode: mode, capabilities: capabilities, catalog: catalog, projectID: projectID, slice: slice, injection: injection), newUUID: { fixedID })
     }
 
     /// Capabilities como o `--help` real instalado reporta.

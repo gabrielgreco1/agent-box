@@ -47,13 +47,16 @@ public struct LaunchPlanInput: Sendable {
     public var slice: LaunchSlice
     public var appVersion: String
     public var appSocketPath: String
+    /// Conteúdo das injeções por lançamento. Só vale quando `slice >= .slice2` (feature flag de fatia).
+    public var injection: LaunchInjection?
 
     public init(
         spec: LaunchSpec, terminalID: UUID, runID: UUID, cwd: String, projectID: UUID? = nil, terminalAddDirs: [String] = [],
         catalog: ProfileCatalog = ProfileCatalog(), executablePath: String, capabilities: CLICapabilities? = nil,
         loginEnvironment: [String: String], launchDirectory: URL, mode: LaunchMode = .automatic, slice: LaunchSlice = .slice1,
-        appVersion: String = "0.0.0", appSocketPath: String
+        appVersion: String = "0.0.0", appSocketPath: String, injection: LaunchInjection? = nil
     ) {
+        self.injection = injection
         self.spec = spec; self.terminalID = terminalID; self.runID = runID; self.cwd = cwd; self.projectID = projectID
         self.terminalAddDirs = terminalAddDirs; self.catalog = catalog; self.executablePath = executablePath
         self.capabilities = capabilities; self.loginEnvironment = loginEnvironment; self.launchDirectory = launchDirectory
@@ -75,10 +78,13 @@ public enum LaunchPlanner {
 
         let context = AdapterContext(
             executablePath: input.executablePath, cwd: input.cwd, runID: input.runID, terminalID: input.terminalID,
-            launchDirectory: input.launchDirectory, mode: mode, environment: input.loginEnvironment, newUUID: newUUID
+            launchDirectory: input.launchDirectory, mode: mode, environment: input.loginEnvironment, newUUID: newUUID,
+            injection: input.slice >= .slice2 ? input.injection : nil
         )
         let capabilities = input.capabilities ?? CLICapabilities.baseline(for: adapter)
         let output = try adapter.build(launch, context: context, capabilities: capabilities)
+        let violations = InjectionValidator.violations(injected: output.argv.injected, launchDirectory: input.launchDirectory, slice: input.slice)
+        if let first = violations.first { throw LaunchPlanError.injectionViolation(first) }
 
         let composer = LaunchEnvironmentComposer(appVersion: input.appVersion, appSocketPath: input.appSocketPath)
         let composed = composer.compose(

@@ -78,6 +78,8 @@ public enum LaunchPlanError: Error, Equatable, Sendable {
     case invalidPermissionMode(provider: TerminalProvider, mode: String)
     case noShellAvailable
     case promptFileUnreadable(String)
+    /// O segmento `injected` saiu da allowlist da fatia ou apontou para fora de `run/launch/<runID>/` (06 §2.4.1).
+    case injectionViolation(String)
 }
 
 /// LaunchSpec + perfil já fundidos (campos do spec vencem os do perfil).

@@ -23,6 +23,50 @@ public enum HookCommandLine {
     }
 }
 
+/// Conteúdo das injeções por lançamento (Fatia 2+, 06 §2.8). Tudo é regenerado a cada start e a cada resume.
+public struct LaunchInjection: Sendable, Equatable {
+    /// Caminho absoluto do helper `agentbox` que os hooks chamam.
+    public var helperPath: String
+    /// Hashes de trust dos hooks do Codex (sondados via `hooks/list`); vazio = fallback rollout `estimated`.
+    public var codexHookHashes: [HookEventName: String]
+    /// Claude: JSON de `--mcp-config`. `nil`/vazio = flag omitida.
+    public var claudeMCPConfig: Data?
+    /// Claude: arquivos do plugin (`plugin/.claude-plugin/plugin.json`, skills…), nomes relativos ao diretório do
+    /// lançamento. Vazio = `--plugin-dir` omitida.
+    public var claudePluginFiles: [LaunchFile]
+
+    public init(helperPath: String, codexHookHashes: [HookEventName: String] = [:], claudeMCPConfig: Data? = nil, claudePluginFiles: [LaunchFile] = []) {
+        self.helperPath = helperPath; self.codexHookHashes = codexHookHashes
+        self.claudeMCPConfig = claudeMCPConfig; self.claudePluginFiles = claudePluginFiles
+    }
+}
+
+extension LaunchInjection {
+    static let mcpFileName = "mcp.json"
+    static let pluginDirectoryName = "plugin"
+
+    /// Claude: `--settings` sempre; `--mcp-config` e `--plugin-dir` só com conteúdo.
+    func claudeInjection(launchDirectory: URL) throws -> (injected: [String], files: [LaunchFile]) {
+        let dir = launchDirectory.standardizedFileURL.path
+        var files = [try ClaudeHookSettings.launchFile(helperPath: helperPath)]
+        var injected = ClaudeHookSettings.injectedArguments(settingsPath: "\(dir)/\(ClaudeHookSettings.fileName)")
+        if let mcp = claudeMCPConfig, !mcp.isEmpty {
+            files.append(LaunchFile(name: Self.mcpFileName, contents: mcp))
+            injected += ["--mcp-config", "\(dir)/\(Self.mcpFileName)"]
+        }
+        if !claudePluginFiles.isEmpty {
+            files += claudePluginFiles
+            injected += ["--plugin-dir", "\(dir)/\(Self.pluginDirectoryName)"]
+        }
+        return (injected, files)
+    }
+
+    /// Codex: `-c hooks.<Evento>=…` e, com hashes, `-c hooks.state={…}` (P18). Nada em arquivo.
+    func codexInjection() throws -> [String] {
+        try CodexHookConfig.arguments(helperPath: helperPath, hashes: codexHookHashes).arguments
+    }
+}
+
 // MARK: - Claude
 
 public enum ClaudeHookSettings {
