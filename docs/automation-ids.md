@@ -101,6 +101,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `tabs.quickCommands`
 - `tabs.paneActions`
 - `tabs.rightPanelToggle`
+- `tabs.dropIndicator`
 
 ### Panes
 
@@ -136,6 +137,9 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `pane.<id>.rateLimit`
 - `pane.<id>.tooNarrow`
 - `pane.divider.<id>`
+- `pane.dropOverlay`
+- `pane.dropZone.<zone>`
+- `pane.dragGhost`
 - `pane.empty`
 - `pane.empty.newAgent`
 - `pane.empty.newTerminal`
@@ -609,6 +613,9 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `tab.quickCommands` | Quick Commands | — | v11 |
 | `tabs.paneActions` | Pane Actions (menu ⋯ da tab row) | — | slice1 |
 | `tab.reorder` | Reorder Tab (arrastar na tab row) | — | slice1 |
+| `tab.dropOnPane` | Drop Tab on Pane (arrastar tab para a área de panes) | — | slice1 |
+| `pane.move` | Move Pane (arrastar o cabeçalho sobre outro pane) | — | slice1 |
+| `pane.detach` | Detach Pane to Tab (arrastar o cabeçalho para a tab row) | — | slice1 |
 | `pane.resizeDivider` | Resize Divider (arrastar o divisor) | — | slice1 |
 | `find.caseSensitive` | Case Sensitive (busca no terminal) | — | slice1 |
 | `find.regex` | Regex (busca no terminal) | — | slice1 |

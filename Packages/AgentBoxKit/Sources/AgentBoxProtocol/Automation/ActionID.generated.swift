@@ -164,6 +164,9 @@ extension ActionID {
     public static let tabQuickCommands = ActionID(unchecked: "tab.quickCommands")
     public static let tabsPaneActions = ActionID(unchecked: "tabs.paneActions")
     public static let tabReorder = ActionID(unchecked: "tab.reorder")
+    public static let tabDropOnPane = ActionID(unchecked: "tab.dropOnPane")
+    public static let paneMove = ActionID(unchecked: "pane.move")
+    public static let paneDetach = ActionID(unchecked: "pane.detach")
     public static let paneResizeDivider = ActionID(unchecked: "pane.resizeDivider")
     public static let findCaseSensitive = ActionID(unchecked: "find.caseSensitive")
     public static let findRegex = ActionID(unchecked: "find.regex")
@@ -541,6 +544,9 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "tab.quickCommands"), label: "Quick Commands", shortcut: "", slice: .v11),
         ActionSpec(id: ActionID(unchecked: "tabs.paneActions"), label: "Pane Actions (menu ⋯ da tab row)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "tab.reorder"), label: "Reorder Tab (arrastar na tab row)", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "tab.dropOnPane"), label: "Drop Tab on Pane (arrastar tab para a área de panes)", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "pane.move"), label: "Move Pane (arrastar o cabeçalho sobre outro pane)", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "pane.detach"), label: "Detach Pane to Tab (arrastar o cabeçalho para a tab row)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "pane.resizeDivider"), label: "Resize Divider (arrastar o divisor)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "find.caseSensitive"), label: "Case Sensitive (busca no terminal)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "find.regex"), label: "Regex (busca no terminal)", shortcut: "", slice: .slice1),

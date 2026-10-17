@@ -371,7 +371,7 @@ Regras (`audit/07 #31`, M-208): gatilhos duplo clique, `Rename…`, ⌥⌘R (ses
 
 ### 3.1 Anatomia
 
-32 de altura abaixo de 4 de arrasto (total 36), fundo `chrome #171717`, `border-bottom`. Uma tab row por sessão (as tabs são **da sessão selecionada**). Grupos de split por arrasto (v1.1, TA-119) terão tab row própria.
+32 de altura abaixo de 4 de arrasto (total 36), fundo `chrome #171717`, `border-bottom`. Uma tab row por sessão (as tabs são **da sessão selecionada**). Arrastar uma tab para a área de panes cria splits ou troca de lugar (§3.4, v1, F11); não há tab row por grupo.
 
 ```
 [tab][tab][tab]  [+]                      [▷ Command](v1.1) [⋯] [▯]
@@ -413,7 +413,9 @@ Duplo clique no espaço vazio da tab row: nova tab com o agente padrão (⌥⌘T
 
 - Clique seleciona (M-304); **se o terminal já está visível num pane da tab, só foca**; nunca substitui o conteúdo de outro pane (`audit/03 bug 5`).
 - Clique do meio ou ✕ fecha (confirmação se processo rodando, §16.1; M-302); ⇧⌘T reabre (até 10 por sessão; relança com `--resume` quando há ID).
-- Arrastar reordena (ativação 12 pt; Esc cancela; M-303). Arrastar para fora da janela: `Open in New Window` só para tabs de computador. Arrastar a tab até a borda de um pane para fazer split é v1.1 (TA-119, M-306).
+- Arrastar reordena (ativação 12 pt; Esc cancela; M-303). Arrastar para fora da janela: `Open in New Window` só para tabs de computador.
+- **Arrastar tab para os panes (v1, F11, M-306).** Ao sair da tab row sobre a área de panes, o pane sob o cursor mostra as zonas de drop: esquerda, direita, cima e baixo (25% de cada lado) criam um split com a tab arrastada naquele lado (todos os panes dela entram juntos); o miolo (centro) troca de lugar o pane principal da tab com o pane de destino. Prévia translúcida (`locate` a 14%) da área resultante, 200 ms `standard`; sem espaço para 240 × 120 a prévia fica vermelha e soltar mostra o toast do §4.3. Soltar aplica e persiste; os terminais **não** são recriados (mesma sessão do daemon, um resize de PTY por pane). Esc, soltar fora dos panes ou perder o foco da janela cancela e o teclado volta ao terminal. Uma tab não pode ser solta sobre os próprios panes.
+- **Pane ↔ tab (v1, F11).** Arrastar o cabeçalho de um pane sobre a tab row o transforma em tab (barra de inserção `tabs.dropIndicator`); sobre outro pane usa as mesmas zonas (mover pane; centro troca de lugar). Mesmas regras de Esc e foco. Equivalentes por ação: `tab.dropOnPane`, `pane.move`, `pane.detach` (§24).
 - Duplo clique no título renomeia (§2.11).
 - `⌃1…9` seleciona; `⇧⌘]`/`⇧⌘[` próxima/anterior; `⌃⇥` recente.
 
@@ -1485,8 +1487,8 @@ Atalhos reservados para o terminal (nunca capturados pelo app): ⌃ + letra, ⌥
 | Erros | `<region>.errorBoundary`, `<region>.errorBoundary.retry`, `<region>.errorBoundary.copy` |
 | Genéricos | `<host>.status`, `<host>.hoverCard`, `<panel>.empty`, `tooltip`, `menuPanel.<name>`, `popover.<name>[.<field>/.confirm]` |
 | Sidebar | `sidebar`, `sidebar.selection`, `sidebar.search`, `sidebar.search.clear`, `sidebar.search.empty`, `sidebar.search.empty.clear`, `sidebar.nav.inbox`, `sidebar.nav.inbox.badge`, `sidebar.nav.computers`, `sidebar.nav.library`, `sidebar.projects.filter`, `sidebar.projects.filterMenu`, `sidebar.projects.add`, `sidebar.projects.newSession`, `sidebar.project.<id>[.toggle/.menu/.newSession/.showMore/.rename]`, `sidebar.session.<id>[.name/.status/.archive/.prChip/.note/.summaryPill/.hoverCard/.phase/.error/.agents/.rename/.revealGlow/.showMore]`, `sidebar.session.<id>.pin` (v1.1), `sidebar.session.<id>.agent.<terminalId>[.status/.lastMessage/.children.toggle]`, `sidebar.session.<id>.child.<childId>[.status/.glyph/.connector]`, `sidebar.pending.<id>[.cancel]`, `sidebar.cleanSessions`, `sidebar.cleanSessions.new`, `sidebar.footer.settings`, `sidebar.footer.reveal` |
-| Tabs | `tabs.tab.<terminalId>[.close/.title/.restart/.status]`, `tabs.activeIndicator`, `tabs.overflow.leading`, `tabs.overflow.trailing`, `tabs.new`, `tabs.quickCommands` (v1.1), `tabs.paneActions`, `tabs.rightPanelToggle` |
-| Panes | `pane.<id>`, `pane.<id>.terminal`, `pane.<id>.header`, `pane.<id>.status`, `.splitRight`, `.splitDown`, `.expand`, `.close`, `.cover`, `.rimFlash`, `.attention`, `.zoomPill`, `.feedbackPill`, `.ignition[.cancel]`, `.ignition.step.<stepKey>`, `.exitBanner`, `.exitOverlay[.restart/.close/.resume]`, `.startError`, `.interrupted[.resume]`, `.daemonBanner`, `.closing.forceQuit`, `.containerPopover` (v1.1), `.containerPhases` (v1.1), `.containerStopped` (v1.1), `.rateLimit` (v1.1), `.tooNarrow`; `pane.divider.<id>`; `pane.empty[.newAgent/.newTerminal/.reopen/.start/.resume]` |
+| Tabs | `tabs.tab.<terminalId>[.close/.title/.restart/.status]`, `tabs.activeIndicator`, `tabs.overflow.leading`, `tabs.overflow.trailing`, `tabs.new`, `tabs.quickCommands` (v1.1), `tabs.paneActions`, `tabs.rightPanelToggle`, `tabs.dropIndicator` |
+| Panes | `pane.<id>`, `pane.<id>.terminal`, `pane.<id>.header`, `pane.<id>.status`, `.splitRight`, `.splitDown`, `.expand`, `.close`, `.cover`, `.rimFlash`, `.attention`, `.zoomPill`, `.feedbackPill`, `.ignition[.cancel]`, `.ignition.step.<stepKey>`, `.exitBanner`, `.exitOverlay[.restart/.close/.resume]`, `.startError`, `.interrupted[.resume]`, `.daemonBanner`, `.closing.forceQuit`, `.containerPopover` (v1.1), `.containerPhases` (v1.1), `.containerStopped` (v1.1), `.rateLimit` (v1.1), `.tooNarrow`; `pane.divider.<id>`, `pane.dropOverlay`, `pane.dropZone.<zone>`, `pane.dragGhost`; `pane.empty[.newAgent/.newTerminal/.reopen/.start/.resume]` |
 | Find | `find.field`, `find.count`, `find.caseSensitive`, `find.regex`, `find.previous`, `find.next`, `find.close` |
 | Status bar | `statusBar`, `statusBar.usage.claude`, `statusBar.usage.codex`, `statusBar.agents`, `statusBar.computers`, `statusBar.proxyUsage`, `statusBar.docker`, `statusBar.background` |
 | Overlays (geral) | `overlay.scrim`, `overlay.<name>`, `overlay.<name>.advanced`, `overlay.<name>.<field>.error`, `overlay.<name>.submit`, `overlay.<name>.cancel` |
@@ -1686,6 +1688,9 @@ Toda interação da UI é uma ação do registro (`ActionRegistry`: `ActionID` �
 | Quick Commands | `tab.quickCommands` | — | Split button com comandos salvos | — | v1.1 | `testAction_tab_quickCommands` |
 | Pane Actions (menu ⋯ da tab row) | `tabs.paneActions` | — | Menu com `Split Right`, `Split Down`, `Equalize Pane Sizes`, `Expand Pane`, `Close Other Panes` (§3, cada item é a ação do próprio ActionID) | Só aparece com 2+ panes | v1 | `testAction_tabs_paneActions` |
 | Reorder Tab (arrastar na tab row) | `tab.reorder` | — | Reordena a tab por arrasto (M-303, §3.4); a ordem persiste | — | v1 | `testAction_tab_reorder` |
+| Drop Tab on Pane (arrastar tab para a área de panes) | `tab.dropOnPane` | — | Solta a tab sobre um pane: `set(<tabId>=<terminalId>@<left\|right\|top\|bottom\|center>)` cria o split do lado escolhido ou, no centro, troca de lugar (§3.4, M-306); persiste e não recria terminais | Sem espaço: toast §4.3 | v1 | `testAction_tab_dropOnPane` |
+| Move Pane (arrastar o cabeçalho sobre outro pane) | `pane.move` | — | Move o pane com `set(<terminalId>=<targetTerminalId>@<zona>)`: split do lado ou troca de lugar no centro (§4.3) | Sem espaço: toast §4.3 | v1 | `testAction_pane_move` |
+| Detach Pane to Tab (arrastar o cabeçalho para a tab row) | `pane.detach` | — | Transforma o pane em tab: `select(<terminalId>)` (ao fim da tab de origem) ou `set(<terminalId>=<índice>)` | Tab com um só pane: `Only one pane` | v1 | `testAction_pane_detach` |
 | Resize Divider (arrastar o divisor) | `pane.resizeDivider` | — | Muda as proporções do split; no máximo 1 resize de PTY por quadro e o final ao soltar (§4.3, M-202) | Mínimo 240 × 120 pt por pane | v1 | `testAction_pane_resizeDivider` |
 | Case Sensitive (busca no terminal) | `find.caseSensitive` | — | Alterna a busca com distinção de maiúsculas e refaz a contagem (§4.4) | — | v1 | `testAction_find_caseSensitive` |
 | Regex (busca no terminal) | `find.regex` | — | Alterna a busca por expressão regular; regex inválida mostra `Invalid pattern` no contador (§4.4) | — | v1 | `testAction_find_regex` |

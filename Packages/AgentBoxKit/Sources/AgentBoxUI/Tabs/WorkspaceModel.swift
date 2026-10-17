@@ -64,6 +64,8 @@ final class WorkspaceModel {
     /// Tamanho da área de panes (medido pela view); decide o limite de 240 × 120 dos splits.
     @ObservationIgnored var contentSize: CGSize = .zero
     @ObservationIgnored var overlays: OverlayRouter?
+    /// Arrasto de tabs e panes (F11): zonas de drop, reordenação e destacar pane em tab.
+    @ObservationIgnored let dragController = PaneDragController()
     @ObservationIgnored var toasts: ToastCenter?
     /// Agente padrão (Settings › Agents) e se o CLI dele está instalado (`nil` = ainda não sondado): ⌥⌘T e Quick Launch.
     @ObservationIgnored var defaultAgent: () -> TerminalProvider = { .claude }
@@ -110,6 +112,7 @@ final class WorkspaceModel {
         runtime.onEvent = { [weak self] id, event in self?.handle(event, terminalID: id) }
         runtime.onFocusRequested = { [weak self] id in self?.focus(terminalID: id) }
         runtime.onDaemonRecovered = { [weak self] in self?.verifyAfterDaemonLoss() }
+        dragController.model = self
     }
 
     // MARK: Observadores (partes AppKit)
@@ -799,10 +802,18 @@ final class WorkspaceModel {
         guard let sid = currentSessionID, let store else { return }
         Task { @MainActor in
             await settlePersistence()
-            guard let closed = try? await store.tabs(sessionID: sid, includeClosed: true).filter({ $0.closedAt != nil })
-                .sorted(by: { ($0.closedAt ?? .distantPast) > ($1.closedAt ?? .distantPast) }).prefix(Self.reopenLimit).first
-            else { return }
-            let stored = (try? await store.terminals(tabID: closed.id, includeDeleted: true)) ?? []
+            let candidates = (try? await store.tabs(sessionID: sid, includeClosed: true).filter({ $0.closedAt != nil })
+                .sorted(by: { ($0.closedAt ?? .distantPast) > ($1.closedAt ?? .distantPast) }).prefix(Self.reopenLimit)) ?? []
+            // Uma tab fundida em outra por arrasto (F11) continua "fechada" no banco, mas seus terminais já vivem na tab de destino.
+            var picked: (tab: Tab, terminals: [Terminal])?
+            for candidate in candidates {
+                let stored = (try? await store.terminals(tabID: candidate.id, includeDeleted: true)) ?? []
+                if stored.contains(where: { candidate.layout.pane(forTerminal: $0.id) != nil }) {
+                    picked = (candidate, stored)
+                    break
+                }
+            }
+            guard let (closed, stored) = picked else { return }
             closedTabIDs.remove(closed.id)
             var tab = closed
             tab.closedAt = nil
@@ -1141,6 +1152,210 @@ final class WorkspaceModel {
             self.save(terminal: id)
             self.titleTasks[id] = nil
         }
+    }
+}
+
+// MARK: Arrastar tab ou pane para a área de panes (F11)
+
+/// O que está sendo arrastado: uma tab inteira (todos os panes dela) ou um pane (identificado pelo terminal).
+enum PaneDragPayload: Hashable, Sendable {
+    case tab(UUID)
+    case pane(UUID)
+}
+
+enum DropOutcome: Equatable, Sendable { case applied, noRoom, invalid }
+
+extension WorkspaceModel {
+    /// Resultado calculado de um drop, sem tocar no estado: o mesmo plano serve para a prévia (válido ou sem espaço) e para aplicar.
+    struct DropPlan {
+        var sid: UUID
+        var targetTabID: UUID
+        var targetLayout: PaneLayout
+        var targetFocus: UUID?
+        /// Mesma tab de destino quando o pane só muda de lugar dentro dela.
+        var sourceTabID: UUID
+        /// Layout restante da origem; `nil` = a tab de origem ficou sem panes e some.
+        var sourceLayout: PaneLayout?
+        var sourceFocus: UUID?
+        /// Terminais que mudam de tab, com o novo `tabID`.
+        var retargeted: [UUID: UUID]
+        /// Split a conferir contra o mínimo de 240 × 120 (layout em que o pane de destino existe).
+        var roomCheck: (layout: PaneLayout, paneID: UUID, axis: SplitAxis)?
+    }
+
+    func planDrop(_ payload: PaneDragPayload, onTerminal targetTerminal: UUID, zone: PaneDropZone) -> DropPlan? {
+        guard let (sid, target) = locate(terminal: targetTerminal), let targetPane = target.layout.pane(forTerminal: targetTerminal) else { return nil }
+        switch payload {
+        case .tab(let sourceID):
+            guard sourceID != target.id, let (sourceSID, source) = locate(tab: sourceID), sourceSID == sid else { return nil }
+            let moving = source.layout.terminalIDs
+            if let axis = zone.axis {
+                guard let layout = target.layout.inserting(source.layout, beside: targetPane.id, zone: zone) else { return nil }
+                return DropPlan(
+                    sid: sid, targetTabID: target.id, targetLayout: layout, targetFocus: source.focusedTerminalID ?? moving.first,
+                    sourceTabID: source.id, sourceLayout: nil, sourceFocus: nil,
+                    retargeted: Dictionary(uniqueKeysWithValues: moving.map { ($0, target.id) }),
+                    roomCheck: (target.layout, targetPane.id, axis))
+            }
+            let movingPane = source.focusedTerminalID.flatMap { source.layout.pane(forTerminal: $0) } ?? source.layout.firstPane
+            guard let newTarget = target.layout.replacingPane(targetPane.id, with: movingPane),
+                  let newSource = source.layout.replacingPane(movingPane.id, with: targetPane)
+            else { return nil }
+            var retarget: [UUID: UUID] = [targetTerminal: source.id]
+            var movedTerminal: UUID?
+            if case .terminal(let id) = movingPane.content { retarget[id] = target.id; movedTerminal = id }
+            let sourceFocus = source.focusedTerminalID == movedTerminal ? targetTerminal : source.focusedTerminalID
+            return DropPlan(
+                sid: sid, targetTabID: target.id, targetLayout: newTarget, targetFocus: movedTerminal ?? target.focusedTerminalID,
+                sourceTabID: source.id, sourceLayout: newSource, sourceFocus: sourceFocus, retargeted: retarget, roomCheck: nil)
+        case .pane(let terminalID):
+            guard terminalID != targetTerminal, let (sourceSID, source) = locate(terminal: terminalID), sourceSID == sid,
+                  let movingPane = source.layout.pane(forTerminal: terminalID)
+            else { return nil }
+            let sameTab = source.id == target.id
+            if let axis = zone.axis {
+                if sameTab {
+                    guard let base = target.layout.removing(paneID: movingPane.id),
+                          let layout = base.inserting(.leaf(movingPane), beside: targetPane.id, zone: zone)
+                    else { return nil }
+                    return DropPlan(
+                        sid: sid, targetTabID: target.id, targetLayout: layout, targetFocus: terminalID, sourceTabID: source.id,
+                        sourceLayout: nil, sourceFocus: nil, retargeted: [:], roomCheck: (base, targetPane.id, axis))
+                }
+                guard let layout = target.layout.inserting(.leaf(movingPane), beside: targetPane.id, zone: zone) else { return nil }
+                let remaining = source.layout.removing(paneID: movingPane.id)
+                var sourceFocus = source.focusedTerminalID
+                if sourceFocus == terminalID, let remaining {
+                    let successor = source.layout.focusSuccessor(afterRemoving: movingPane.id)
+                    if case .terminal(let id)? = successor?.content { sourceFocus = id } else { sourceFocus = remaining.terminalIDs.first }
+                }
+                return DropPlan(
+                    sid: sid, targetTabID: target.id, targetLayout: layout, targetFocus: terminalID, sourceTabID: source.id,
+                    sourceLayout: remaining, sourceFocus: sourceFocus, retargeted: [terminalID: target.id],
+                    roomCheck: (target.layout, targetPane.id, axis))
+            }
+            if sameTab {
+                guard let layout = target.layout.swappingPanes(movingPane.id, targetPane.id) else { return nil }
+                return DropPlan(
+                    sid: sid, targetTabID: target.id, targetLayout: layout, targetFocus: terminalID, sourceTabID: source.id,
+                    sourceLayout: nil, sourceFocus: nil, retargeted: [:], roomCheck: nil)
+            }
+            guard let newTarget = target.layout.replacingPane(targetPane.id, with: movingPane),
+                  let newSource = source.layout.replacingPane(movingPane.id, with: targetPane)
+            else { return nil }
+            let sourceFocus = source.focusedTerminalID == terminalID ? targetTerminal : source.focusedTerminalID
+            return DropPlan(
+                sid: sid, targetTabID: target.id, targetLayout: newTarget, targetFocus: terminalID, sourceTabID: source.id,
+                sourceLayout: newSource, sourceFocus: sourceFocus, retargeted: [terminalID: target.id, targetTerminal: source.id],
+                roomCheck: nil)
+        }
+    }
+
+    private func hasRoom(_ plan: DropPlan) -> Bool {
+        guard let check = plan.roomCheck, contentSize != .zero else { return true }
+        return check.layout.canSplit(paneID: check.paneID, axis: check.axis, in: CGRect(origin: .zero, size: contentSize))
+    }
+
+    /// Simulação do drop (prévia): aplicável, sem espaço (240 × 120) ou inválido.
+    func evaluateDrop(_ payload: PaneDragPayload, onTerminal target: UUID, zone: PaneDropZone) -> DropOutcome {
+        guard let plan = planDrop(payload, onTerminal: target, zone: zone) else { return .invalid }
+        return hasRoom(plan) ? .applied : .noRoom
+    }
+
+    /// Aplica o drop: split do lado escolhido com a tab ou o pane arrastado, ou troca de lugar no centro. Os terminais não são
+    /// recriados (as views e as sessões do daemon seguem), há um único `notify` e a persistência sai na ordem normal.
+    @discardableResult
+    func performDrop(_ payload: PaneDragPayload, onTerminal target: UUID, zone: PaneDropZone) -> DropOutcome {
+        guard let plan = planDrop(payload, onTerminal: target, zone: zone) else { return .invalid }
+        guard hasRoom(plan) else {
+            toasts?.show(kind: .info, title: String(localized: "Not enough room to split. Close a pane or widen the window.", bundle: .module))
+            return .noRoom
+        }
+        apply(plan)
+        return .applied
+    }
+
+    private func apply(_ plan: DropPlan) {
+        guard var state = states[plan.sid], let ti = state.tabs.firstIndex(where: { $0.id == plan.targetTabID }) else { return }
+        state.tabs[ti].layout = plan.targetLayout
+        state.tabs[ti].focusedTerminalID = plan.targetFocus
+        var closed: Tab?
+        let sameTab = plan.sourceTabID == plan.targetTabID
+        if !sameTab, let si = state.tabs.firstIndex(where: { $0.id == plan.sourceTabID }) {
+            if let remaining = plan.sourceLayout {
+                state.tabs[si].layout = remaining
+                state.tabs[si].focusedTerminalID = plan.sourceFocus
+            } else {
+                var gone = state.tabs.remove(at: si)
+                gone.closedAt = Date()
+                closedTabIDs.insert(gone.id)
+                state.recent.removeAll { $0 == gone.id }
+                closed = gone
+            }
+        }
+        for (terminalID, tabID) in plan.retargeted { state.terminals[terminalID]?.tabID = tabID }
+        let moved = plan.retargeted.keys.compactMap { state.terminals[$0] }
+        let sourceStillThere = !sameTab && plan.sourceLayout != nil
+        if activeTabIDs[plan.sid] != plan.targetTabID {
+            activeTabIDs[plan.sid] = plan.targetTabID
+            state.recent.removeAll { $0 == plan.targetTabID }
+            state.recent.insert(plan.targetTabID, at: 0)
+            saveUIState()
+        }
+        states[plan.sid] = state
+        expandedPanes[plan.targetTabID] = nil
+        expandedPanes[plan.sourceTabID] = nil
+        persist { store in for t in moved { try await store.save(t) } }
+        saveLayout(of: plan.targetTabID, final: true)
+        if sourceStillThere { saveLayout(of: plan.sourceTabID, final: true) }
+        if let closed { persist { try await $0.save(closed) } }
+        if let focus = plan.targetFocus { pulse(focus) }
+        notify()
+        returnFocusToTerminal()
+    }
+
+    /// Arranca o pane da tab (`terminalID`) para uma tab própria, na posição `index` (padrão: logo à direita da tab de origem).
+    @discardableResult
+    func detachPane(_ terminalID: UUID, toIndex index: Int? = nil) -> DropOutcome {
+        guard let (sid, source) = locate(terminal: terminalID), source.layout.leafCount > 1,
+              let pane = source.layout.pane(forTerminal: terminalID), let remaining = source.layout.removing(paneID: pane.id),
+              var state = states[sid], let si = state.tabs.firstIndex(where: { $0.id == source.id }), var terminal = state.terminals[terminalID]
+        else { return .invalid }
+        let position = min(max(index ?? si + 1, 0), state.tabs.count)
+        let tabID = UUID.v7()
+        var sourceFocus = source.focusedTerminalID
+        if sourceFocus == terminalID {
+            if case .terminal(let id)? = source.layout.focusSuccessor(afterRemoving: pane.id)?.content { sourceFocus = id } else { sourceFocus = remaining.terminalIDs.first }
+        }
+        state.tabs[si].layout = remaining
+        state.tabs[si].focusedTerminalID = sourceFocus
+        let tab = Tab(id: tabID, sessionID: sid, title: terminal.title, sortIndex: position, layout: .leaf(pane), focusedTerminalID: terminalID)
+        state.tabs.insert(tab, at: position)
+        for i in state.tabs.indices { state.tabs[i].sortIndex = i }
+        terminal.tabID = tabID
+        state.terminals[terminalID] = terminal
+        state.recent.removeAll { $0 == tabID }
+        state.recent.insert(tabID, at: 0)
+        states[sid] = state
+        activeTabIDs[sid] = tabID
+        expandedPanes[source.id] = nil
+        let saved = state.tabs, movedTerminal = terminal
+        persist { store in
+            for t in saved { try await store.save(t) }
+            try await store.save(movedTerminal)
+        }
+        saveUIState()
+        recentlyOpenedTab = tabID
+        pulse(terminalID)
+        notify()
+        returnFocusToTerminal()
+        return .applied
+    }
+
+    /// O teclado volta ao terminal depois de qualquer arrasto (a view nova só existe depois do próximo layout).
+    func returnFocusToTerminal() {
+        focusTerminalOfActiveTab()
+        DispatchQueue.main.async { [weak self] in self?.focusTerminalOfActiveTab() }
     }
 }
 

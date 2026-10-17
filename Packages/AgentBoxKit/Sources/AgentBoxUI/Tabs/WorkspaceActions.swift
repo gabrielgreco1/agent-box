@@ -138,6 +138,44 @@ extension WorkspaceModel {
             return "\(tabs.firstIndex { $0.id == id } ?? -1)"
         }
 
+        // Arrastar para a área de panes (F11): as mesmas operações do arrasto, acionáveis por `ctl ui action`.
+        func dropArgument(_ arg: ActionArgument, _ id: ActionID) throws -> (UUID, UUID, PaneDropZone) {
+            let sides = (arg.value ?? "").split(separator: "=", maxSplits: 1).map(String.init)
+            let rest = sides.count == 2 ? sides[1].split(separator: "@").map(String.init) : []
+            guard arg.kind == .set, sides.count == 2, rest.count == 2, let source = UUID(uuidString: sides[0]),
+                  let target = UUID(uuidString: rest[0]), let zone = PaneDropZone(rawValue: rest[1])
+            else { throw ActionError.failed(id, message: "expected set(<id>=<terminalId>@left|right|top|bottom|center)") }
+            return (source, target, zone)
+        }
+        func dropResult(_ outcome: DropOutcome, _ id: ActionID) throws -> String? {
+            switch outcome {
+            case .applied: return "applied"
+            case .noRoom: return "noRoom"
+            case .invalid: throw ActionError.failed(id, message: "that drop is not possible here")
+            }
+        }
+        try reg(.tabDropOnPane, enablement: hasTab) { [unowned self] arg in
+            let (tabID, target, zone) = try dropArgument(arg, .tabDropOnPane)
+            return try dropResult(performDrop(.tab(tabID), onTerminal: target, zone: zone), .tabDropOnPane)
+        }
+        try reg(.paneMove, enablement: hasPanes) { [unowned self] arg in
+            let (source, target, zone) = try dropArgument(arg, .paneMove)
+            return try dropResult(performDrop(.pane(source), onTerminal: target, zone: zone), .paneMove)
+        }
+        try reg(.paneDetach, enablement: hasPanes) { [unowned self] arg in
+            let outcome: DropOutcome
+            if arg.kind == .select, let id = uuid(arg) {
+                outcome = detachPane(id)
+            } else {
+                let parts = (arg.value ?? "").split(separator: "=").map(String.init)
+                guard arg.kind == .set, parts.count == 2, let id = UUID(uuidString: parts[0]), let index = Int(parts[1]) else {
+                    throw ActionError.failed(.paneDetach, message: "expected select(<terminalId>) or set(<terminalId>=<index>)")
+                }
+                outcome = detachPane(id, toIndex: index)
+            }
+            return try dropResult(outcome, .paneDetach)
+        }
+
         // Panes
         try reg(.paneSplitRight, enablement: hasTab) { [unowned self] arg in
             try splitResult(split(.horizontal, source: uuid(arg), shell: NSEvent.modifierFlags.contains(.option)), .paneSplitRight)

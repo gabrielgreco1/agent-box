@@ -264,7 +264,7 @@ Modelo (por sessão): **Session → Tab[] → árvore de splits → Pane → Ter
 | TA-116 | P0 | v1 | Item na barra de menus (03 §17) com contagem, "Needs You", "Working", Open, Stop All, Quit Completely | Com 1 agente em needs input, o ícone mostra "1"; clicar no item abre a janela no pane certo; "Quit Agent Box Completely" tira o ícone e não mata nenhum PTY |
 | TA-117 | P1 | v1 | Upgrade com `drainWhenIdle` (mesma major) e compatibilidade N-1 (major nova) | Teste de §1.10 passa; Diagnostics mostra o daemon pendente |
 | TA-118 | P1 | v1 | Modo degradado sem aprovação do item de login, com aviso no quit | Negar a aprovação: terminais funcionam; o overlay de quit diz "Agents will stop when you quit" |
-| TA-119 | P1 | v1.1 | Grupos de tabs lado a lado por arraste | Arrastar uma tab até a borda direita cria grupo; layout persiste |
+| TA-119 | P1 | v1 | Tab ou cabeçalho de pane arrastado para as zonas de drop de um pane (esquerda/direita/cima/baixo criam split; centro troca de lugar); cabeçalho arrastado para a tab row vira tab | Soltar na borda direita cria o split; layout persiste; o terminal mantém o mesmo processo (F11) |
 | TA-120 | P2 | later | Serializador de células no lugar do replay de bytes | Só se um teste de artefato visual falhar com o ring |
 
 ---

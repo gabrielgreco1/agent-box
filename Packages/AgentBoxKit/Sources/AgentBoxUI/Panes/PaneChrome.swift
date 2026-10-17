@@ -36,6 +36,8 @@ final class PaneChromeModel {
     /// Interrupted (T1-23): por que o processo sumiu e se o Resume usa o ID nativo (senão vira "Continue Last").
     var interruption: InterruptionReason = .unexpected
     var exactResume = true
+    /// Arrasto do cabeçalho (F11): vira tab ou muda de lugar sobre outro pane.
+    var drag: PaneDragController?
 
     var id: String { terminalID.uuidString }
     var agentName: String { provider.isAgent ? ProviderAdapters.name(provider) : String(localized: "Terminal", bundle: .module) }
@@ -59,7 +61,12 @@ struct PaneHeaderView: View {
         }
         .padding(.horizontal, PaneMetrics.headerPaddingH)
         .frame(height: PaneMetrics.headerHeight)
-        .background(DS.Color.terminalBackground)
+        .background {
+            ZStack {
+                DS.Color.terminalBackground
+                PaneDragSource(controller: model.drag, payload: .pane(model.terminalID), title: { model.title })
+            }
+        }
         .overlay(alignment: .bottom) { DS.Color.paneTitleSeparator.frame(height: PaneMetrics.separator) }
         .a11y(.paneHeader(model.id), kind: "container", label: model.title)
     }

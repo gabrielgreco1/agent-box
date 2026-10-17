@@ -111,6 +111,10 @@ final class WorkspaceViewController: NSViewController {
         pending.inputBlocked = blocked
         let root = WorkspaceRootView(landing: landing, tabRow: tabRow, area: area, pending: pending)
         view = root
+        env.workspace.dragController.tabRowRect = { [weak tabRow] in
+            guard let tabRow, tabRow.window != nil, tabRow.superview != nil else { return nil }
+            return tabRow.convert(tabRow.bounds, to: nil)
+        }
         root.setWorkspaceVisible(env.workspace.currentSessionID != nil)
         env.workspace.addListener { [weak root, weak env] in
             guard let root, let env else { return }
