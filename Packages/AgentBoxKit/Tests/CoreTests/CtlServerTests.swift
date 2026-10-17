@@ -11,6 +11,8 @@ actor FakeDispatcher: ActionDispatching {
     private var tree: UITreeSnapshot
     private(set) var performed: [ActionID] = []
     private(set) var recording = false
+    /// Quantas vezes a árvore foi consultada: marca que o `ui wait` já está em curso no servidor.
+    private(set) var treeQueries = 0
 
     init(tree: UITreeSnapshot) { self.tree = tree }
 
@@ -31,6 +33,7 @@ actor FakeDispatcher: ActionDispatching {
     func actionID(forControl id: A11yID) async -> ActionID? { tree.find(id)?.action }
 
     func uiTree(root: A11yID?) async -> UITreeSnapshot {
+        treeQueries += 1
         guard let root else { return tree }
         guard let node = tree.find(root) else { return UITreeSnapshot(window: tree.window, roots: []) }
         return UITreeSnapshot(window: tree.window, roots: [node])
@@ -193,14 +196,17 @@ private func ctl(_ path: String, _ request: CtlRequest, service: AppSockService 
 
     @Test func waitAppearsWhenElementShowsUp() async throws {
         try await withServer(dispatcher: FakeDispatcher(tree: UITreeSnapshot(window: nil, roots: []))) { path, d in
-            Task {
-                try? await Task.sleep(for: .milliseconds(200))
+            // Ordem, não tempo: o elemento só aparece depois que o servidor já consultou a árvore ao menos uma vez
+            // (o wait está em curso e viu o elemento ausente). O prazo de 30 s só existe para não travar a suíte.
+            let appearer = Task {
+                let end = ContinuousClock.now + .seconds(30)
+                while await d.treeQueries == 0, ContinuousClock.now < end { try? await Task.sleep(for: .milliseconds(5)) }
                 await d.setTree(sampleTree)
             }
-            let res = try await ctl(path, CtlRequest(command: .uiWait, element: .windowAppName, waitState: .appear, timeoutMs: 3000)).response
+            let res = try await ctl(path, CtlRequest(command: .uiWait, element: .windowAppName, waitState: .appear, timeoutMs: 30_000)).response
+            await appearer.value
             #expect(res?.ok == true)
             #expect(res?.waited?.id == .windowAppName)
-            // waitedMs depende de quando o pedido chega em relação ao setTree; sob carga pode ser curto.
             #expect(res?.waitedMs != nil)
         }
     }

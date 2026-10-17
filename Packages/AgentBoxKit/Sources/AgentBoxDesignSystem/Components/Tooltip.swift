@@ -62,6 +62,9 @@ public final class TooltipController {
     /// Verdadeiro enquanto um overlay ou menu cobre a janela: tooltips do fundo ficam quietos.
     public var isSuppressed: () -> Bool = { false }
     var clock: () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }
+    /// Espera dos atrasos de abrir e fechar; testes injetam `ManualScheduler`.
+    var sleep: DSSleep = dsSystemSleep
+    var motion: MotionPolicy = .shared
 
     public private(set) var visibleKey: UUID?
     public private(set) var pendingKey: UUID?
@@ -93,8 +96,9 @@ public final class TooltipController {
         let instant = wait == 0
         installMonitor()
         pendingKey = key
+        let delay = self.sleep
         pendingTask = Task { [weak self] in
-            if wait > 0 { try? await Task.sleep(for: .seconds(wait)) }
+            if wait > 0 { await delay(wait) }
             guard !Task.isCancelled, let self, self.pendingKey == key else { return }
             self.show(key: key, content: content, side: side, window: window, anchor: anchor, animated: !instant)
         }
@@ -129,7 +133,7 @@ public final class TooltipController {
         let panel = ensurePanel()
         model.content = content
         model.side = side
-        model.animated = animated && MotionPolicy.shared.resolution != .none
+        model.animated = animated && motion.resolution != .none
         let host = panel.contentView as? NSHostingView<TooltipBubbleHost>
         host?.layoutSubtreeIfNeeded()
         let size = host?.fittingSize ?? NSSize(width: 120, height: 40)
@@ -172,8 +176,9 @@ public final class TooltipController {
         model.visible = false
         let wait = (animated && model.animated) ? MotionTokens.Duration.fast : 0
         hideTask?.cancel()
+        let delay = self.sleep
         hideTask = Task { [weak self] in
-            if wait > 0 { try? await Task.sleep(for: .seconds(wait * 2 / 3)) }
+            if wait > 0 { await delay(wait * 2 / 3) }
             guard !Task.isCancelled, let self else { return }
             self.panel?.orderOut(nil)
         }

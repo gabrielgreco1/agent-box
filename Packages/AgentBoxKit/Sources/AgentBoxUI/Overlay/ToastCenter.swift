@@ -45,6 +45,10 @@ public final class ToastCenter {
         AccessibilityNotification.Announcement(s).post()
     }
 
+    /// Política de motion e espera injetáveis (padrão: globais); testes passam instâncias próprias.
+    @ObservationIgnored public var motion: MotionPolicy = .shared
+    @ObservationIgnored public var sleep: DSSleep = dsSystemSleep
+
     public init() {}
 
     public static func defaultDuration(kind: DSToastKind, hasUndo: Bool) -> Double? {
@@ -65,7 +69,7 @@ public final class ToastCenter {
     ) -> UUID {
         let seconds: Double? = duration ?? Self.defaultDuration(kind: kind, hasUndo: undo)
         let item = ToastItem(kind: kind, title: title, detail: detail, action: action, duration: seconds, timeBar: undo && seconds != nil)
-        withAnimation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.base)) {
+        withAnimation(motion.animation(MotionTokens.Easing.standard, MotionTokens.Duration.base)) {
             items.append(item)
         }
         announce([title, detail].compactMap { $0 }.joined(separator: ". "), kind == .error)
@@ -79,7 +83,7 @@ public final class ToastCenter {
         deadlines[id] = nil
         remaining[id] = nil
         paused.remove(id)
-        withAnimation(MotionPolicy.shared.animation(MotionTokens.Easing.exit, MotionTokens.Duration.fast)) {
+        withAnimation(motion.animation(MotionTokens.Easing.exit, MotionTokens.Duration.fast)) {
             items.removeAll { $0.id == id }
         }
         cardFrames[id] = nil
@@ -113,8 +117,9 @@ public final class ToastCenter {
     private func startTimer(_ id: UUID, _ seconds: Double) {
         deadlines[id] = Date().addingTimeInterval(seconds)
         timers[id]?.cancel()
+        let delay = self.sleep
         timers[id] = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(seconds))
+            await delay(seconds)
             guard !Task.isCancelled else { return }
             self?.dismiss(id)
         }
