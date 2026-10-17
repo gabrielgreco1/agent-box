@@ -1,0 +1,364 @@
+[0/4] Write swift-version--58304C5D6DBC2206.txt
+[1/3] Linking SwiftTermBuildInfoGenerator-tool
+[2/3] Applying SwiftTermBuildInfoGenerator-tool
+[0/1] Planning build
+[1/1] Compiling plugin GenerateManual
+[2/2] Compiling plugin GenerateDoccReference
+[3/3] Compiling plugin SwiftTermBuildInfoPlugin
+Building for debugging...
+[3/12] Write swift-version--58304C5D6DBC2206.txt
+[4/25] Linking SwiftTermBuildInfoGenerator-tool
+[6/25] Compiling AgentBoxProtocol Version.swift
+[7/25] Compiling AgentBoxProtocol Module.swift
+[8/25] Compiling AgentBoxProtocol Requests.swift
+[9/25] Compiling AgentBoxProtocol OutboundQueue.swift
+[10/25] Compiling AgentBoxProtocol Identifiers.swift
+[11/25] Compiling AgentBoxProtocol Handshake.swift
+[12/25] Compiling AgentBoxProtocol Frames.swift
+[13/25] Compiling AgentBoxProtocol Events.swift
+[14/25] Compiling AgentBoxProtocol Errors.swift
+[15/25] Emitting module AgentBoxProtocol
+[16/25] Compiling AgentBoxProtocol Replies.swift
+[16/25] Generate SwiftTerm build information
+[18/46] Emitting module AgentBoxDesignSystem
+[19/46] Compiling AgentBoxDesignSystem Module.swift
+[20/46] Emitting module AgentBoxTerminalCore
+[21/46] Compiling AgentBoxTerminalCore Module.swift
+[22/48] Compiling AgentBoxPlatform UDSSupport.swift
+[23/48] Compiling AgentBoxPlatform UDSListener.swift
+[24/48] Compiling AgentBoxPlatform LogFacade.swift
+[25/48] Compiling AgentBoxPlatform UDSClient.swift
+[26/48] Compiling AgentBoxPlatform FramedConnection.swift
+[27/48] Compiling AgentBoxPlatform Module.swift
+[28/48] Emitting module AgentBoxPlatform
+[29/48] Compiling AgentBoxPlatform UDSConnection.swift
+[30/48] Compiling TerminalCoreTests SmokeTests.swift
+[31/48] Emitting module TerminalCoreTests
+[32/64] Emitting module AgentBoxDocker
+[33/64] Compiling AgentBoxDocker Module.swift
+[34/64] Emitting module AgentBoxStore
+[35/64] Compiling AgentBoxStore Module.swift
+[36/64] Compiling agentboxd main.swift
+[37/64] Emitting module agentboxd
+[38/65] Compiling agentbox AgentBoxCLI.swift
+[39/65] Emitting module agentbox
+[40/68] Emitting module DaemonTests
+[41/68] Compiling DaemonTests SmokeTests.swift
+[42/68] Emitting module AgentBoxCore
+[43/68] Compiling AgentBoxCore Module.swift
+[44/68] Compiling DockerTests SmokeTests.swift
+[45/68] Emitting module DockerTests
+[46/70] Emitting module StoreTests
+[47/70] Compiling StoreTests SmokeTests.swift
+[48/72] Emitting module AgentBoxUI
+[49/72] Compiling AgentBoxUI Module.swift
+[50/72] Emitting module CoreTests
+[51/72] Compiling CoreTests SmokeTests.swift
+[51/72] Linking agentbox
+[52/74] Applying agentbox
+[54/74] Compiling ProtocolTests TestSupport.swift
+[55/74] Compiling ProtocolTests HandshakeTests.swift
+[56/74] Compiling UISnapshotTests SmokeTests.swift
+[57/74] Emitting module UISnapshotTests
+[57/74] Linking agentboxd
+[58/74] Applying agentboxd
+[60/74] Compiling PlatformTests SmokeTests.swift
+[61/74] Compiling PlatformTests UDSTestSupport.swift
+[62/74] Compiling PlatformTests UDSTransportTests.swift
+[63/74] Compiling ProtocolTests SmokeTests.swift
+[64/74] Compiling ProtocolTests resource_bundle_accessor.swift
+[65/74] Compiling ProtocolTests FrameCodecTests.swift
+[66/74] Emitting module ProtocolTests
+[67/74] Compiling ProtocolTests BackpressureTests.swift
+[68/74] Compiling ProtocolTests RoundTripTests.swift
+[69/74] Compiling ProtocolTests FixtureTests.swift
+[70/74] Compiling PlatformTests LogFacadeTests.swift
+[71/74] Emitting module PlatformTests
+[72/74] Compiling PlatformTests FramedDaemonTransportTests.swift
+[73/76] Emitting module AgentBoxKitPackageTests
+[74/76] Compiling AgentBoxKitPackageTests runner.swift
+[74/75] Linking AgentBoxKitPackageTests
+Build complete! (8.34s)
+Test Suite 'All tests' started at 2026-10-17 01:00:28.660.
+Test Suite 'All tests' passed at 2026-10-17 01:00:28.661.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+◇ Test run started.
+↳ Testing Library Version: 1501
+↳ Target Platform: arm64e-apple-macos14.0
+◇ Suite FramedDaemonTransportTests started.
+◇ Suite LogFacadeTests started.
+◇ Suite UDSTransportTests started.
+◇ Suite UISnapshotSmoke started.
+◇ Suite PlatformTestsSmoke started.
+◇ Suite TerminalCoreTestsSmoke started.
+◇ Suite StoreTestsSmoke started.
+◇ Suite DaemonSmoke started.
+◇ Suite CommandValidationTests started.
+◇ Suite DockerTestsSmoke started.
+◇ Suite FrameCodecTests started.
+◇ Suite BackpressureTests started.
+◇ Suite FixtureTests started.
+◇ Suite HandshakeTests started.
+◇ Suite ProtocolTestsSmoke started.
+◇ Suite CoreTestsSmoke started.
+◇ Suite RoundTripTests started.
+◇ Test maxSizeFrameCrossesTheSocketIntact() started.
+◇ Test subsystemsMatchCanonicalIdentifiers() started.
+◇ Test facadeKeepsCategory() started.
+◇ Test corruptedFramesAreSurfacedNotSwallowed() started.
+◇ Test oversizedFrameGetsFrameTooLargeErrorAndDisconnect() started.
+◇ Test clientNWithoutCompatRejectsDaemonNMinus1() started.
+◇ Test uiModulesLink() started.
+◇ Test nonHelloFirstFrameIsRejectedWithBadRequest() started.
+◇ Test oversizedFirstFrameDuringHandshakeIsRejected() started.
+◇ Test majorMismatchOverTheWire() started.
+◇ Test cancellingReceiveClosesTheConnection() started.
+◇ Test pathTooLongIsRejected() started.
+◇ Test appNTalksToDaemonNMinus1ThroughCompatibilityClient() started.
+◇ Test insecureDirectoryIsRejected() started.
+◇ Test concurrentReceiveIsRejected() started.
+◇ Test goodFramesBeforeCorruptionAreStillDelivered() started.
+◇ Test staleSocketFileIsReplaced() started.
+◇ Test closeWakesPendingReceiveAndFailsLaterSends() started.
+◇ Test defaultHandshakeTimeoutIsTwoSeconds() started.
+◇ Test truncatedFrameThenDisconnectIsReportedAtEndOfStream() started.
+◇ Test manyConcurrentClientsEachHandshake() started.
+◇ Test liveServerIsNotStolen() started.
+◇ Test heavyTransferDoesNotStarveTheCooperativePool() started.
+◇ Test inputFramesComeBackAsContiguousOutput() started.
+◇ Test adoptedListeningDescriptorAcceptsWithoutBindOrUnlink() started.
+◇ Test handshakeThenPingAndListAgainstFakeDaemon() started.
+◇ Test moduleLinks() started.
+◇ Test closingTheListenerRemovesTheSocketAndEndsTheStream() started.
+◇ Test echoesLargePayloadThroughPartialWrites() started.
+◇ Test connectToMissingSocketFails() started.
+◇ Test daemonDependenciesLink() started.
+◇ Test socketFileIsOwnerOnly() started.
+◇ Test createRejectsBadFields() started.
+◇ Test outboundQueuePumpedToASlowSocketResyncsInsteadOfBlocking() started.
+◇ Test validCommandsPass() started.
+◇ Test framesSplitAcrossManyWritesReassemble() started.
+◇ Test regularFileAtPathIsNotRemoved() started.
+◇ Test overflowDropsQueuedOutputAndEmitsResyncRequired() started.
+◇ Test peerCloseYieldsEndOfStream() started.
+◇ Test malformedControlJSONIsRejected() started.
+◇ Test moduleLinks() started.
+◇ Test resizeAttachSignalSubscribeTextSnapshotRejectBadFields() started.
+◇ Test moduleLinks() started.
+◇ Test handshakeTimeoutClosesTheConnection() started.
+◇ Test decoderRejectsHugeLengthsWithoutWaitingForPayload() started.
+◇ Test sendSuspendsUntilThePeerDrains() started.
+◇ Test limitsAreCanonical() started.
+◇ Test sessionNeverBlocksOnASlowClient() started.
+◇ Test moduleLinks() started.
+◇ Test compatibilityFixturesTolerateUnknownFieldsAndCapabilities() started.
+◇ Test shortOutputAndInputPayloadsAreRejected() started.
+◇ Test fixtureAttachModesAndSubscribeScopes() started.
+◇ Test binaryFrameFixturesDecodeAndReencodeByteForByte() started.
+◇ Test protocolVersionOrdering() started.
+◇ Test oversizedFrameIsRejectedNotQueued() started.
+◇ Test goodFramesBeforeABadOneAreStillDelivered() started.
+◇ Test queueUnderLimitAcceptsAndPreservesOrder() started.
+◇ Test firstMessageMustBeHello() started.
+◇ Test moduleLinks() started.
+◇ Test decoderRejectsOversizedLengthAsSoonAsThePrefixArrives() started.
+◇ Test removeOutputForgetsPendingFramesAndResyncState() started.
+◇ Test pendingBytesAccountingStaysExactAcrossOverflow() started.
+◇ Test majorTwoHelloFixtureIsRejectedByMajorOneDaemon() started.
+◇ Test invalidFixturesAreRejectedAsMalformedControl() started.
+◇ Test notNegotiatedCapabilityDisablesTheOperationWithNotCapable() started.
+◇ Test fixturesCoverEveryOpEventAndErrorCode() started.
+◇ Test connectionLevelErrorHasNoRequestID() started.
+◇ Test everyV1FixtureDecodesAndReencodesToIdenticalBytes() started.
+◇ Test outputIsDiscardedWhileAwaitingResyncThenResumesAfterReattach() started.
+◇ Test sequenceValidatorDetectsGapsAndOverlaps() started.
+◇ Test spawnFailedFixtureCarriesErrnoAndPath() started.
+◇ Test defaultLimitIsTwoMiB() started.
+◇ Test sameVersionNegotiatesFullCapabilities() started.
+◇ Test frameLayoutIsLengthKindPayloadBigEndian() started.
+◇ Test timeoutFailsTheHandshake() started.
+◇ Test controlFramesAreAcceptedEvenAboveTheLimit() started.
+◇ Test moduleLinks() started.
+◇ Test controlFramesAreNeverDropped() started.
+◇ Test frameWithLengthAboveOneMiBIsRejectedOnEncode() started.
+◇ Test binaryFrameFixturesHaveExpectedContent() started.
+◇ Test outputSeqIsContiguousByteOffset() started.
+◇ Test majorMismatchIsRejectedWithErrorCode() started.
+◇ Test invalidInputOriginIsRejected() started.
+◇ Test secondHelloAfterEstablishedIsRejected() started.
+◇ Test frameOfExactlyOneMiBIsAccepted() started.
+◇ Test capabilityIntersectionPreservesOrderAndDedupes() started.
+◇ Test frameTooLargeMapsToErrorCode() started.
+◇ Test manyFramesInOneChunkAndRandomChunkBoundaries() started.
+◇ Test clientAcceptsMatchingAck() started.
+◇ Test fuzzedGarbageNeverCrashesAndEitherFailsOrParses() started.
+◇ Test clientRejectsDaemonOfAnotherMajor() started.
+◇ Test drainReturnsValidFramesBeforeTheFirstInvalidOne() started.
+◇ Test clientFlagsDaemonOlderThanMinimum() started.
+◇ Test clientValidatesReplyIDAndKind() started.
+◇ Test decoderCompactsItsBufferUnderSustainedLoad() started.
+◇ Test truncatedErrorReportsExpectedAndAvailable() started.
+◇ Test byteByByteFeedingReassemblesEveryFrame() started.
+◇ Test appNConnectsToDaemonNMinus1WithCompatibilityClient() started.
+◇ Test clientIntersectsAckCapabilitiesWithItsOwn() started.
+◇ Test unknownKindIsRejected() started.
+◇ Test nMinus1FixturesNegotiateAgainstCurrentBuild() started.
+◇ Test everyStrictPrefixOfAFrameYieldsNothingAndTruncatedAtEOF() started.
+◇ Test zeroLengthFrameIsRejected() started.
+◇ Test compatibilityResultIsFlaggedWhenDaemonMajorDiffersFromCurrent() started.
+◇ Test olderMajorFromClientIsRejectedToo() started.
+◇ Test oversizedControlMessageIsRejectedOnEncode() started.
+◇ Test noCommonCapabilitiesStillEstablishes() started.
+◇ Test capabilitiesAreTheIntersectionAndMinorIsTheMinimum() started.
+◇ Test daemonNRejectsClientNMinus1AndClientNRejectsDaemonNMinus1WithoutCompat() started.
+◇ Test invalidUTF8ControlPayloadIsRejected() started.
+◇ Test clientSurfacesDaemonErrorReply() started.
+◇ Test inputOriginRawValuesAreCanonical() started.
+◇ Test fuzzedBitFlipsInValidFramesNeverCrash() started.
+◇ Test sessionIDBinaryAndTextForms() started.
+◇ Test inputByteCountsAccumulateAndSerializeByName() started.
+◇ Test everyControlMessageRoundTripsThroughFrames() started.
+◇ Test samplesCoverEveryOpEventAndErrorCode() started.
+◇ Test datesKeepMillisecondPrecisionAndAcceptNoFractionInput() started.
+◇ Test wireShapeMatchesSpecExamples() started.
+◇ Test everyControlMessageRoundTripsThroughJSON() started.
+◇ Test outputAndInputFramesRoundTripWithRandomPayloads() started.
+✔ Test subsystemsMatchCanonicalIdentifiers() passed after 0.006 seconds.
+✔ Test facadeKeepsCategory() passed after 0.006 seconds.
+✔ Test defaultHandshakeTimeoutIsTwoSeconds() passed after 0.007 seconds.
+✔ Test moduleLinks() passed after 0.009 seconds.
+✔ Test daemonDependenciesLink() passed after 0.009 seconds.
+✔ Test createRejectsBadFields() passed after 0.009 seconds.
+✔ Test validCommandsPass() passed after 0.009 seconds.
+✔ Test overflowDropsQueuedOutputAndEmitsResyncRequired() passed after 0.009 seconds.
+✔ Test moduleLinks() passed after 0.009 seconds.
+✔ Test resizeAttachSignalSubscribeTextSnapshotRejectBadFields() passed after 0.009 seconds.
+✔ Test limitsAreCanonical() passed after 0.009 seconds.
+✔ Test protocolVersionOrdering() passed after 0.009 seconds.
+✔ Test oversizedFrameIsRejectedNotQueued() passed after 0.010 seconds.
+✔ Test queueUnderLimitAcceptsAndPreservesOrder() passed after 0.010 seconds.
+✔ Test moduleLinks() passed after 0.010 seconds.
+✔ Test sessionNeverBlocksOnASlowClient() passed after 0.010 seconds.
+✔ Test removeOutputForgetsPendingFramesAndResyncState() passed after 0.011 seconds.
+✔ Test firstMessageMustBeHello() passed after 0.011 seconds.
+✔ Test pendingBytesAccountingStaysExactAcrossOverflow() passed after 0.011 seconds.
+✔ Test decoderRejectsHugeLengthsWithoutWaitingForPayload() passed after 0.011 seconds.
+✔ Test goodFramesBeforeABadOneAreStillDelivered() passed after 0.011 seconds.
+✔ Test moduleLinks() passed after 0.011 seconds.
+✔ Test moduleLinks() passed after 0.012 seconds.
+✔ Test sequenceValidatorDetectsGapsAndOverlaps() passed after 0.011 seconds.
+✔ Test outputIsDiscardedWhileAwaitingResyncThenResumesAfterReattach() passed after 0.011 seconds.
+✔ Test malformedControlJSONIsRejected() passed after 0.012 seconds.
+✔ Test defaultLimitIsTwoMiB() passed after 0.011 seconds.
+✔ Test notNegotiatedCapabilityDisablesTheOperationWithNotCapable() passed after 0.012 seconds.
+✔ Test decoderRejectsOversizedLengthAsSoonAsThePrefixArrives() passed after 0.012 seconds.
+✔ Test timeoutFailsTheHandshake() passed after 0.011 seconds.
+✔ Test moduleLinks() passed after 0.011 seconds.
+✔ Test sameVersionNegotiatesFullCapabilities() passed after 0.011 seconds.
+✔ Test controlFramesAreAcceptedEvenAboveTheLimit() passed after 0.011 seconds.
+✔ Test controlFramesAreNeverDropped() passed after 0.011 seconds.
+✔ Test outputSeqIsContiguousByteOffset() passed after 0.011 seconds.
+✔ Test majorMismatchIsRejectedWithErrorCode() passed after 0.011 seconds.
+✔ Test secondHelloAfterEstablishedIsRejected() passed after 0.011 seconds.
+✔ Test frameWithLengthAboveOneMiBIsRejectedOnEncode() passed after 0.011 seconds.
+✔ Test capabilityIntersectionPreservesOrderAndDedupes() passed after 0.011 seconds.
+✔ Test frameTooLargeMapsToErrorCode() passed after 0.011 seconds.
+✔ Test invalidInputOriginIsRejected() passed after 0.012 seconds.
+✔ Test frameOfExactlyOneMiBIsAccepted() passed after 0.012 seconds.
+✔ Test clientAcceptsMatchingAck() passed after 0.012 seconds.
+✔ Test shortOutputAndInputPayloadsAreRejected() passed after 0.012 seconds.
+✔ Test clientRejectsDaemonOfAnotherMajor() passed after 0.012 seconds.
+✔ Test drainReturnsValidFramesBeforeTheFirstInvalidOne() passed after 0.012 seconds.
+✔ Test clientFlagsDaemonOlderThanMinimum() passed after 0.012 seconds.
+✔ Test clientValidatesReplyIDAndKind() passed after 0.012 seconds.
+✔ Test connectionLevelErrorHasNoRequestID() passed after 0.012 seconds.
+✔ Test majorTwoHelloFixtureIsRejectedByMajorOneDaemon() passed after 0.012 seconds.
+✔ Test spawnFailedFixtureCarriesErrnoAndPath() passed after 0.012 seconds.
+✔ Test appNConnectsToDaemonNMinus1WithCompatibilityClient() passed after 0.010 seconds.
+✔ Test frameLayoutIsLengthKindPayloadBigEndian() passed after 0.012 seconds.
+✔ Test fixtureAttachModesAndSubscribeScopes() passed after 0.013 seconds.
+✔ Test clientIntersectsAckCapabilitiesWithItsOwn() passed after 0.010 seconds.
+✔ Test truncatedErrorReportsExpectedAndAvailable() passed after 0.010 seconds.
+✔ Test zeroLengthFrameIsRejected() passed after 0.009 seconds.
+✔ Test compatibilityResultIsFlaggedWhenDaemonMajorDiffersFromCurrent() passed after 0.009 seconds.
+✔ Test unknownKindIsRejected() passed after 0.009 seconds.
+✔ Test olderMajorFromClientIsRejectedToo() passed after 0.009 seconds.
+✔ Test noCommonCapabilitiesStillEstablishes() passed after 0.008 seconds.
+✔ Test capabilitiesAreTheIntersectionAndMinorIsTheMinimum() passed after 0.008 seconds.
+✔ Test daemonNRejectsClientNMinus1AndClientNRejectsDaemonNMinus1WithoutCompat() passed after 0.008 seconds.
+✔ Test invalidUTF8ControlPayloadIsRejected() passed after 0.008 seconds.
+✔ Test clientSurfacesDaemonErrorReply() passed after 0.010 seconds.
+✔ Test inputOriginRawValuesAreCanonical() passed after 0.008 seconds.
+✔ Test binaryFrameFixturesHaveExpectedContent() passed after 0.013 seconds.
+✔ Test sessionIDBinaryAndTextForms() passed after 0.008 seconds.
+✔ Test inputByteCountsAccumulateAndSerializeByName() passed after 0.008 seconds.
+✔ Test nMinus1FixturesNegotiateAgainstCurrentBuild() passed after 0.009 seconds.
+✔ Test samplesCoverEveryOpEventAndErrorCode() passed after 0.007 seconds.
+✔ Test compatibilityFixturesTolerateUnknownFieldsAndCapabilities() passed after 0.013 seconds.
+✔ Test datesKeepMillisecondPrecisionAndAcceptNoFractionInput() passed after 0.007 seconds.
+✔ Test wireShapeMatchesSpecExamples() passed after 0.007 seconds.
+✔ Test binaryFrameFixturesDecodeAndReencodeByteForByte() passed after 0.013 seconds.
+✔ Test connectToMissingSocketFails() passed after 0.013 seconds.
+✔ Test everyControlMessageRoundTripsThroughFrames() passed after 0.008 seconds.
+✔ Suite LogFacadeTests passed after 0.014 seconds.
+✔ Test everyControlMessageRoundTripsThroughJSON() passed after 0.008 seconds.
+✔ Test socketFileIsOwnerOnly() passed after 0.014 seconds.
+✔ Test regularFileAtPathIsNotRemoved() passed after 0.014 seconds.
+✔ Suite PlatformTestsSmoke passed after 0.015 seconds.
+✔ Test pathTooLongIsRejected() passed after 0.014 seconds.
+✔ Suite DaemonSmoke passed after 0.015 seconds.
+✔ Suite BackpressureTests passed after 0.015 seconds.
+✔ Suite ProtocolTestsSmoke passed after 0.015 seconds.
+✔ Suite CommandValidationTests passed after 0.015 seconds.
+✔ Suite StoreTestsSmoke passed after 0.015 seconds.
+✔ Suite DockerTestsSmoke passed after 0.015 seconds.
+✔ Suite TerminalCoreTestsSmoke passed after 0.015 seconds.
+✔ Suite CoreTestsSmoke passed after 0.015 seconds.
+✔ Test insecureDirectoryIsRejected() passed after 0.015 seconds.
+✔ Test uiModulesLink() passed after 0.015 seconds.
+✔ Test invalidFixturesAreRejectedAsMalformedControl() passed after 0.015 seconds.
+✔ Suite HandshakeTests passed after 0.015 seconds.
+✔ Test staleSocketFileIsReplaced() passed after 0.015 seconds.
+✔ Suite UISnapshotSmoke passed after 0.016 seconds.
+✔ Test liveServerIsNotStolen() passed after 0.016 seconds.
+✔ Test corruptedFramesAreSurfacedNotSwallowed() passed after 0.017 seconds.
+✔ Test truncatedFrameThenDisconnectIsReportedAtEndOfStream() passed after 0.017 seconds.
+✔ Test goodFramesBeforeCorruptionAreStillDelivered() passed after 0.018 seconds.
+✔ Test peerCloseYieldsEndOfStream() passed after 0.020 seconds.
+✔ Test appNTalksToDaemonNMinus1ThroughCompatibilityClient() passed after 0.020 seconds.
+✔ Test outboundQueuePumpedToASlowSocketResyncsInsteadOfBlocking() passed after 0.020 seconds.
+✔ Test oversizedControlMessageIsRejectedOnEncode() passed after 0.016 seconds.
+✔ Test byteByByteFeedingReassemblesEveryFrame() passed after 0.017 seconds.
+✔ Test nonHelloFirstFrameIsRejectedWithBadRequest() passed after 0.021 seconds.
+✔ Test oversizedFirstFrameDuringHandshakeIsRejected() passed after 0.021 seconds.
+✔ Test majorMismatchOverTheWire() passed after 0.022 seconds.
+✔ Test handshakeThenPingAndListAgainstFakeDaemon() passed after 0.023 seconds.
+✔ Test clientNWithoutCompatRejectsDaemonNMinus1() passed after 0.023 seconds.
+✔ Test oversizedFrameGetsFrameTooLargeErrorAndDisconnect() passed after 0.024 seconds.
+✔ Test inputFramesComeBackAsContiguousOutput() passed after 0.024 seconds.
+✔ Test manyConcurrentClientsEachHandshake() passed after 0.024 seconds.
+✔ Test fixturesCoverEveryOpEventAndErrorCode() passed after 0.024 seconds.
+✔ Test everyStrictPrefixOfAFrameYieldsNothingAndTruncatedAtEOF() passed after 0.021 seconds.
+✔ Test everyV1FixtureDecodesAndReencodesToIdenticalBytes() passed after 0.025 seconds.
+✔ Suite FixtureTests passed after 0.026 seconds.
+✔ Test fuzzedBitFlipsInValidFramesNeverCrash() passed after 0.024 seconds.
+✔ Test maxSizeFrameCrossesTheSocketIntact() passed after 0.031 seconds.
+✔ Test decoderCompactsItsBufferUnderSustainedLoad() passed after 0.032 seconds.
+✔ Test manyFramesInOneChunkAndRandomChunkBoundaries() passed after 0.064 seconds.
+✔ Test closeWakesPendingReceiveAndFailsLaterSends() passed after 0.066 seconds.
+✔ Test cancellingReceiveClosesTheConnection() passed after 0.066 seconds.
+✔ Test concurrentReceiveIsRejected() passed after 0.066 seconds.
+✔ Test framesSplitAcrossManyWritesReassemble() passed after 0.073 seconds.
+✔ Test fuzzedGarbageNeverCrashesAndEitherFailsOrParses() passed after 0.104 seconds.
+✔ Suite FrameCodecTests passed after 0.105 seconds.
+✔ Test closingTheListenerRemovesTheSocketAndEndsTheStream() passed after 0.114 seconds.
+✔ Test adoptedListeningDescriptorAcceptsWithoutBindOrUnlink() passed after 0.120 seconds.
+✔ Test outputAndInputFramesRoundTripWithRandomPayloads() passed after 0.135 seconds.
+✔ Suite RoundTripTests passed after 0.141 seconds.
+✔ Test handshakeTimeoutClosesTheConnection() passed after 0.318 seconds.
+✔ Suite FramedDaemonTransportTests passed after 0.319 seconds.
+✔ Test echoesLargePayloadThroughPartialWrites() passed after 0.350 seconds.
+✔ Test sendSuspendsUntilThePeerDrains() passed after 0.443 seconds.
+✔ Test heavyTransferDoesNotStarveTheCooperativePool() passed after 0.539 seconds.
+✔ Suite UDSTransportTests passed after 0.539 seconds.
+✔ Test run with 121 tests in 17 suites passed after 0.539 seconds.

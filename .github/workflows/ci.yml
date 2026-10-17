@@ -44,6 +44,8 @@ jobs:
         run: |
           scripts/lint.sh --self-test
           scripts/lint.sh
+          scripts/lint-ui.sh --self-test
+          scripts/lint-ui.sh
 
       - name: Unit tests (AgentBoxKit)
         run: swift test --package-path Packages/AgentBoxKit -Xswiftc -warnings-as-errors

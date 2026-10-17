@@ -1,0 +1,222 @@
+  modes rep 1: replay=true redraw=true daemonRef=true snap=0..66 nocut gap=false
+  modes rep 2: replay=true redraw=true daemonRef=true snap=0..66 nocut gap=false
+  modes rep 3: replay=true redraw=true daemonRef=true snap=0..66 nocut gap=false
+  modes rep 4: replay=true redraw=true daemonRef=true snap=0..66 nocut gap=false
+  modes rep 5: replay=true redraw=true daemonRef=true snap=0..66 nocut gap=false
+  modes rep 6: replay=true redraw=true daemonRef=true snap=0..66 nocut gap=false
+  modes rep 7: replay=true redraw=true daemonRef=true snap=0..66 nocut gap=false
+  modes rep 8: replay=true redraw=true daemonRef=true snap=0..66 nocut gap=false
+  modes rep 9: replay=true redraw=true daemonRef=true snap=0..66 nocut gap=false
+  modes rep 10: replay=true redraw=true daemonRef=true snap=0..66 nocut gap=false
+  modes rep 11: replay=true redraw=true daemonRef=true snap=0..66 nocut gap=false
+  modes rep 12: replay=true redraw=true daemonRef=true snap=0..66 nocut gap=false
+  modes rep 13: replay=true redraw=true daemonRef=true snap=0..66 nocut gap=false
+  modes rep 14: replay=true redraw=true daemonRef=true snap=0..66 nocut gap=false
+  modes rep 15: replay=true redraw=true daemonRef=true snap=0..66 nocut gap=false
+  modes rep 16: replay=true redraw=true daemonRef=true snap=0..66 nocut gap=false
+  modes rep 17: replay=true redraw=true daemonRef=true snap=0..66 nocut gap=false
+  modes rep 18: replay=true redraw=true daemonRef=true snap=0..66 nocut gap=false
+  modes rep 19: replay=true redraw=true daemonRef=true snap=0..66 nocut gap=false
+  modes rep 20: replay=true redraw=true daemonRef=true snap=0..66 nocut gap=false
+SUMMARY modes: replay-only 20/20, after-redraw 20/20, daemon-ref==A 20/20  (last attach: 0..66 nocut)
+  zsh rep 1: replay=true redraw=true daemonRef=true snap=0..668 nocut gap=false
+  zsh rep 2: replay=true redraw=true daemonRef=true snap=0..668 nocut gap=false
+  zsh rep 3: replay=true redraw=true daemonRef=true snap=0..668 nocut gap=false
+  zsh rep 4: replay=true redraw=true daemonRef=true snap=0..668 nocut gap=false
+  zsh rep 5: replay=true redraw=true daemonRef=true snap=0..668 nocut gap=false
+  zsh rep 6: replay=true redraw=true daemonRef=true snap=0..668 nocut gap=false
+  zsh rep 7: replay=true redraw=true daemonRef=true snap=0..668 nocut gap=false
+  zsh rep 8: replay=true redraw=true daemonRef=true snap=0..668 nocut gap=false
+  zsh rep 9: replay=true redraw=true daemonRef=true snap=0..668 nocut gap=false
+  zsh rep 10: replay=true redraw=true daemonRef=true snap=0..668 nocut gap=false
+  zsh rep 11: replay=true redraw=true daemonRef=true snap=0..668 nocut gap=false
+  zsh rep 12: replay=true redraw=true daemonRef=true snap=0..668 nocut gap=false
+  zsh rep 13: replay=true redraw=true daemonRef=true snap=0..668 nocut gap=false
+  zsh rep 14: replay=true redraw=true daemonRef=true snap=0..668 nocut gap=false
+  zsh rep 15: replay=true redraw=true daemonRef=true snap=0..668 nocut gap=false
+  zsh rep 16: replay=true redraw=true daemonRef=true snap=0..668 nocut gap=false
+  zsh rep 17: replay=true redraw=true daemonRef=true snap=0..668 nocut gap=false
+  zsh rep 18: replay=true redraw=true daemonRef=true snap=0..668 nocut gap=false
+  zsh rep 19: replay=true redraw=true daemonRef=true snap=0..668 nocut gap=false
+  zsh rep 20: replay=true redraw=true daemonRef=true snap=0..668 nocut gap=false
+SUMMARY zsh: replay-only 20/20, after-redraw 20/20, daemon-ref==A 20/20  (last attach: 0..668 nocut)
+  less rep 1: replay=true redraw=true daemonRef=true snap=0..4367 cut gap=false
+  less rep 2: replay=true redraw=true daemonRef=true snap=0..4367 cut gap=false
+  less rep 3: replay=true redraw=true daemonRef=true snap=0..4367 cut gap=false
+  less rep 4: replay=true redraw=true daemonRef=true snap=0..4367 cut gap=false
+  less rep 5: replay=true redraw=true daemonRef=true snap=0..4367 cut gap=false
+  less rep 6: replay=true redraw=true daemonRef=true snap=0..4367 cut gap=false
+  less rep 7: replay=true redraw=true daemonRef=true snap=0..4367 cut gap=false
+  less rep 8: replay=true redraw=true daemonRef=true snap=0..4367 cut gap=false
+  less rep 9: replay=true redraw=true daemonRef=true snap=0..4367 cut gap=false
+  less rep 10: replay=true redraw=true daemonRef=true snap=0..4367 cut gap=false
+  less rep 11: replay=true redraw=true daemonRef=true snap=0..4367 cut gap=false
+  less rep 12: replay=true redraw=true daemonRef=true snap=0..4367 cut gap=false
+  less rep 13: replay=true redraw=true daemonRef=true snap=0..4367 cut gap=false
+  less rep 14: replay=true redraw=true daemonRef=true snap=0..4367 cut gap=false
+  less rep 15: replay=true redraw=true daemonRef=true snap=0..4367 cut gap=false
+  less rep 16: replay=true redraw=true daemonRef=true snap=0..4367 cut gap=false
+  less rep 17: replay=true redraw=true daemonRef=true snap=0..4367 cut gap=false
+  less rep 18: replay=true redraw=true daemonRef=true snap=0..4367 cut gap=false
+  less rep 19: replay=true redraw=true daemonRef=true snap=0..4367 cut gap=false
+  less rep 20: replay=true redraw=true daemonRef=true snap=0..4367 cut gap=false
+SUMMARY less: replay-only 20/20, after-redraw 20/20, daemon-ref==A 20/20  (last attach: 0..4367 cut)
+  vim rep 1: replay=true redraw=true daemonRef=true snap=84..3724 cut gap=false
+  vim rep 2: replay=true redraw=true daemonRef=true snap=84..3724 cut gap=false
+  vim rep 3: replay=true redraw=true daemonRef=true snap=84..3724 cut gap=false
+  vim rep 4: replay=true redraw=true daemonRef=true snap=84..3724 cut gap=false
+  vim rep 5: replay=true redraw=true daemonRef=true snap=84..3724 cut gap=false
+  vim rep 6: replay=true redraw=true daemonRef=true snap=84..3724 cut gap=false
+  vim rep 7: replay=true redraw=true daemonRef=true snap=84..3724 cut gap=false
+  vim rep 8: replay=true redraw=true daemonRef=true snap=84..3724 cut gap=false
+  vim rep 9: replay=true redraw=true daemonRef=true snap=84..3724 cut gap=false
+  vim rep 10: replay=true redraw=true daemonRef=true snap=84..3724 cut gap=false
+  vim rep 11: replay=true redraw=true daemonRef=true snap=84..3724 cut gap=false
+  vim rep 12: replay=true redraw=true daemonRef=true snap=84..3724 cut gap=false
+  vim rep 13: replay=true redraw=true daemonRef=true snap=84..3724 cut gap=false
+  vim rep 14: replay=true redraw=true daemonRef=true snap=84..3724 cut gap=false
+  vim rep 15: replay=true redraw=true daemonRef=true snap=84..3724 cut gap=false
+  vim rep 16: replay=true redraw=true daemonRef=true snap=84..3724 cut gap=false
+  vim rep 17: replay=true redraw=true daemonRef=true snap=84..3724 cut gap=false
+  vim rep 18: replay=true redraw=true daemonRef=true snap=84..3724 cut gap=false
+  vim rep 19: replay=true redraw=true daemonRef=true snap=84..3724 cut gap=false
+  vim rep 20: replay=true redraw=true daemonRef=true snap=84..3724 cut gap=false
+SUMMARY vim: replay-only 20/20, after-redraw 20/20, daemon-ref==A 20/20  (last attach: 84..3724 cut)
+  vim-after-flood rep 1: replay=true redraw=true daemonRef=true snap=8127068..8130507 cut gap=false
+  vim-after-flood rep 2: replay=true redraw=true daemonRef=true snap=8127068..8130507 cut gap=false
+  vim-after-flood rep 3: replay=true redraw=true daemonRef=true snap=8127068..8130507 cut gap=false
+  vim-after-flood rep 4: replay=true redraw=true daemonRef=true snap=8127068..8130507 cut gap=false
+  vim-after-flood rep 5: replay=true redraw=true daemonRef=true snap=8127068..8130507 cut gap=false
+  vim-after-flood rep 6: replay=true redraw=true daemonRef=true snap=8127068..8130507 cut gap=false
+  vim-after-flood rep 7: replay=true redraw=true daemonRef=true snap=8127068..8130507 cut gap=false
+  vim-after-flood rep 8: replay=true redraw=true daemonRef=true snap=8127068..8130507 cut gap=false
+  vim-after-flood rep 9: replay=true redraw=true daemonRef=true snap=8127068..8130507 cut gap=false
+  vim-after-flood rep 10: replay=true redraw=true daemonRef=true snap=8127068..8130507 cut gap=false
+  vim-after-flood rep 11: replay=true redraw=true daemonRef=true snap=8127068..8130507 cut gap=false
+  vim-after-flood rep 12: replay=true redraw=true daemonRef=true snap=8127068..8130507 cut gap=false
+  vim-after-flood rep 13: replay=true redraw=true daemonRef=true snap=8127068..8130507 cut gap=false
+  vim-after-flood rep 14: replay=true redraw=true daemonRef=true snap=8127068..8130507 cut gap=false
+  vim-after-flood rep 15: replay=true redraw=true daemonRef=true snap=8127068..8130507 cut gap=false
+  vim-after-flood rep 16: replay=true redraw=true daemonRef=true snap=8127068..8130507 cut gap=false
+  vim-after-flood rep 17: replay=true redraw=true daemonRef=true snap=8127068..8130507 cut gap=false
+  vim-after-flood rep 18: replay=true redraw=true daemonRef=true snap=8127068..8130507 cut gap=false
+  vim-after-flood rep 19: replay=true redraw=true daemonRef=true snap=8127068..8130507 cut gap=false
+  vim-after-flood rep 20: replay=true redraw=true daemonRef=true snap=8127068..8130507 cut gap=false
+SUMMARY vim-after-flood: replay-only 20/20, after-redraw 20/20, daemon-ref==A 20/20  (last attach: 8127068..8130507 cut)
+  flood-nocut rep 1: replay=true redraw=true daemonRef=true snap=3932688..8126992 nocut gap=false
+  flood-nocut rep 2: replay=true redraw=true daemonRef=true snap=3932688..8126992 nocut gap=false
+  flood-nocut rep 3: replay=true redraw=true daemonRef=true snap=3932688..8126992 nocut gap=false
+  flood-nocut rep 4: replay=true redraw=true daemonRef=true snap=3932688..8126992 nocut gap=false
+  flood-nocut rep 5: replay=true redraw=true daemonRef=true snap=3932688..8126992 nocut gap=false
+  flood-nocut rep 6: replay=true redraw=true daemonRef=true snap=3932688..8126992 nocut gap=false
+  flood-nocut rep 7: replay=true redraw=true daemonRef=true snap=3932688..8126992 nocut gap=false
+  flood-nocut rep 8: replay=true redraw=true daemonRef=true snap=3932688..8126992 nocut gap=false
+  flood-nocut rep 9: replay=true redraw=true daemonRef=true snap=3932688..8126992 nocut gap=false
+  flood-nocut rep 10: replay=true redraw=true daemonRef=true snap=3932688..8126992 nocut gap=false
+  flood-nocut rep 11: replay=true redraw=true daemonRef=true snap=3932688..8126992 nocut gap=false
+  flood-nocut rep 12: replay=true redraw=true daemonRef=true snap=3932688..8126992 nocut gap=false
+  flood-nocut rep 13: replay=true redraw=true daemonRef=true snap=3932688..8126992 nocut gap=false
+  flood-nocut rep 14: replay=true redraw=true daemonRef=true snap=3932688..8126992 nocut gap=false
+  flood-nocut rep 15: replay=true redraw=true daemonRef=true snap=3932688..8126992 nocut gap=false
+  flood-nocut rep 16: replay=true redraw=true daemonRef=true snap=3932688..8126992 nocut gap=false
+  flood-nocut rep 17: replay=true redraw=true daemonRef=true snap=3932688..8126992 nocut gap=false
+  flood-nocut rep 18: replay=true redraw=true daemonRef=true snap=3932688..8126992 nocut gap=false
+  flood-nocut rep 19: replay=true redraw=true daemonRef=true snap=3932688..8126992 nocut gap=false
+  flood-nocut rep 20: replay=true redraw=true daemonRef=true snap=3932688..8126992 nocut gap=false
+SUMMARY flood-nocut: replay-only 20/20, after-redraw 20/20, daemon-ref==A 20/20  (last attach: 3932688..8126992 nocut)
+  alt-overflow rep 1: replay=false redraw=false daemonRef=true snap=4063800..8258104 nocut gap=false
+  alt-overflow rep 2: replay=false redraw=false daemonRef=true snap=4063800..8258104 nocut gap=false
+  alt-overflow rep 3: replay=false redraw=false daemonRef=true snap=4063800..8258104 nocut gap=false
+  alt-overflow rep 4: replay=false redraw=false daemonRef=true snap=4063800..8258104 nocut gap=false
+  alt-overflow rep 5: replay=false redraw=false daemonRef=true snap=4063800..8258104 nocut gap=false
+  alt-overflow rep 6: replay=false redraw=false daemonRef=true snap=4063800..8258104 nocut gap=false
+  alt-overflow rep 7: replay=false redraw=false daemonRef=true snap=4063800..8258104 nocut gap=false
+  alt-overflow rep 8: replay=false redraw=false daemonRef=true snap=4063800..8258104 nocut gap=false
+  alt-overflow rep 9: replay=false redraw=false daemonRef=true snap=4063800..8258104 nocut gap=false
+  alt-overflow rep 10: replay=false redraw=false daemonRef=true snap=4063800..8258104 nocut gap=false
+  alt-overflow rep 11: replay=false redraw=false daemonRef=true snap=4063800..8258104 nocut gap=false
+  alt-overflow rep 12: replay=false redraw=false daemonRef=true snap=4063800..8258104 nocut gap=false
+  alt-overflow rep 13: replay=false redraw=false daemonRef=true snap=4063800..8258104 nocut gap=false
+  alt-overflow rep 14: replay=false redraw=false daemonRef=true snap=4063800..8258104 nocut gap=false
+  alt-overflow rep 15: replay=false redraw=false daemonRef=true snap=4063800..8258104 nocut gap=false
+  alt-overflow rep 16: replay=false redraw=false daemonRef=true snap=4063800..8258104 nocut gap=false
+  alt-overflow rep 17: replay=false redraw=false daemonRef=true snap=4063800..8258104 nocut gap=false
+  alt-overflow rep 18: replay=false redraw=false daemonRef=true snap=4063800..8258104 nocut gap=false
+  alt-overflow rep 19: replay=false redraw=false daemonRef=true snap=4063800..8258104 nocut gap=false
+  alt-overflow rep 20: replay=false redraw=false daemonRef=true snap=4063800..8258104 nocut gap=false
+SUMMARY alt-overflow: replay-only 0/20, after-redraw 0/20, daemon-ref==A 20/20  (last attach: 4063800..8258104 nocut)
+  FAIL rep 1 replay-only equal=false, after-redraw equal=false
+  [A vs B-replay]
+  row 0: A="row of alt content"
+         B="row of alt contentt"
+  row 3: A="--modes alt=true bp=false appCursor=false mouse=vt200 cursor=16,2 size=100x30"
+         B="--modes alt=false bp=false appCursor=false mouse=off cursor=16,2 size=100x30"
+  [Observer vs B-redraw]
+  row 0: A="row of alt content"
+         B="row of alt contentt"
+  row 3: A="--modes alt=true bp=false appCursor=false mouse=vt200 cursor=16,2 size=100x30"
+         B="--modes alt=false bp=false appCursor=false mouse=off cursor=16,2 size=100x30"
+  FAIL rep 2 replay-only equal=false, after-redraw equal=false
+  [A vs B-replay]
+  row 0: A="row of alt content"
+         B="row of alt contentt"
+  row 3: A="--modes alt=true bp=false appCursor=false mouse=vt200 cursor=16,2 size=100x30"
+         B="--modes alt=false bp=false appCursor=false mouse=off cursor=16,2 size=100x30"
+  [Observer vs B-redraw]
+  row 0: A="row of alt content"
+         B="row of alt contentt"
+  row 3: A="--modes alt=true bp=false appCursor=false mouse=vt200 cursor=16,2 size=100x30"
+         B="--modes alt=false bp=false appCursor=false mouse=off cursor=16,2 size=100x30"
+  claude rep 1: replay=true redraw=true daemonRef=true snap=0..3182 nocut gap=false
+  claude rep 2: replay=true redraw=true daemonRef=true snap=0..3182 nocut gap=false
+  claude rep 3: replay=true redraw=true daemonRef=true snap=0..3182 nocut gap=false
+  claude rep 4: replay=true redraw=true daemonRef=true snap=0..3182 nocut gap=false
+  claude rep 5: replay=true redraw=true daemonRef=true snap=0..3182 nocut gap=false
+  claude rep 6: replay=true redraw=true daemonRef=true snap=0..3182 nocut gap=false
+  claude rep 7: replay=true redraw=true daemonRef=true snap=0..3182 nocut gap=false
+  claude rep 8: replay=true redraw=true daemonRef=true snap=0..3182 nocut gap=false
+  claude rep 9: replay=true redraw=true daemonRef=true snap=0..3182 nocut gap=false
+  claude rep 10: replay=true redraw=true daemonRef=true snap=0..3182 nocut gap=false
+  claude rep 11: replay=true redraw=true daemonRef=true snap=0..3182 nocut gap=false
+  claude rep 12: replay=true redraw=true daemonRef=true snap=0..3182 nocut gap=false
+  claude rep 13: replay=true redraw=true daemonRef=true snap=0..3182 nocut gap=false
+  claude rep 14: replay=true redraw=true daemonRef=true snap=0..3182 nocut gap=false
+  claude rep 15: replay=true redraw=true daemonRef=true snap=0..3182 nocut gap=false
+  claude rep 16: replay=true redraw=true daemonRef=true snap=0..3182 nocut gap=false
+  claude rep 17: replay=true redraw=true daemonRef=true snap=0..3182 nocut gap=false
+  claude rep 18: replay=true redraw=true daemonRef=true snap=0..3182 nocut gap=false
+  claude rep 19: replay=true redraw=true daemonRef=true snap=0..3182 nocut gap=false
+  claude rep 20: replay=true redraw=true daemonRef=true snap=0..3182 nocut gap=false
+SUMMARY claude: replay-only 20/20, after-redraw 20/20, daemon-ref==A 20/20  (last attach: 0..3182 nocut)
+  codex rep 1: replay=true redraw=true daemonRef=true snap=69..11106 cut gap=false
+  codex rep 2: replay=true redraw=true daemonRef=true snap=69..11106 cut gap=false
+  codex rep 3: replay=true redraw=true daemonRef=true snap=69..11106 cut gap=false
+  codex rep 4: replay=true redraw=true daemonRef=true snap=69..11106 cut gap=false
+  codex rep 5: replay=true redraw=true daemonRef=true snap=69..11106 cut gap=false
+  codex rep 6: replay=true redraw=true daemonRef=true snap=69..11106 cut gap=false
+  codex rep 7: replay=true redraw=true daemonRef=true snap=69..11106 cut gap=false
+  codex rep 8: replay=true redraw=true daemonRef=true snap=69..11149 cut gap=false
+  codex rep 9: replay=true redraw=true daemonRef=true snap=69..11106 cut gap=false
+  codex rep 10: replay=true redraw=true daemonRef=true snap=69..11149 cut gap=false
+  codex rep 11: replay=true redraw=true daemonRef=true snap=69..11106 cut gap=false
+  codex rep 12: replay=true redraw=true daemonRef=true snap=69..11106 cut gap=false
+  codex rep 13: replay=true redraw=true daemonRef=true snap=69..11106 cut gap=false
+  codex rep 14: replay=true redraw=true daemonRef=true snap=69..11106 cut gap=false
+  codex rep 15: replay=true redraw=true daemonRef=true snap=69..11106 cut gap=false
+  codex rep 16: replay=true redraw=true daemonRef=true snap=69..11106 cut gap=false
+  codex rep 17: replay=true redraw=true daemonRef=true snap=69..11106 cut gap=false
+  codex rep 18: replay=true redraw=true daemonRef=true snap=69..11106 cut gap=false
+  codex rep 19: replay=true redraw=true daemonRef=true snap=69..11106 cut gap=false
+  codex rep 20: replay=true redraw=true daemonRef=true snap=69..11106 cut gap=false
+SUMMARY codex: replay-only 20/20, after-redraw 20/20, daemon-ref==A 20/20  (last attach: 69..11106 cut)
+
+==== ALL ====
+SUMMARY modes: replay-only 20/20, after-redraw 20/20, daemon-ref==A 20/20  (last attach: 0..66 nocut)
+SUMMARY zsh: replay-only 20/20, after-redraw 20/20, daemon-ref==A 20/20  (last attach: 0..668 nocut)
+SUMMARY less: replay-only 20/20, after-redraw 20/20, daemon-ref==A 20/20  (last attach: 0..4367 cut)
+SUMMARY vim: replay-only 20/20, after-redraw 20/20, daemon-ref==A 20/20  (last attach: 84..3724 cut)
+SUMMARY vim-after-flood: replay-only 20/20, after-redraw 20/20, daemon-ref==A 20/20  (last attach: 8127068..8130507 cut)
+SUMMARY flood-nocut: replay-only 20/20, after-redraw 20/20, daemon-ref==A 20/20  (last attach: 3932688..8126992 nocut)
+SUMMARY alt-overflow: replay-only 0/20, after-redraw 0/20, daemon-ref==A 20/20  (last attach: 4063800..8258104 nocut)
+SUMMARY claude: replay-only 20/20, after-redraw 20/20, daemon-ref==A 20/20  (last attach: 0..3182 nocut)
+SUMMARY codex: replay-only 20/20, after-redraw 20/20, daemon-ref==A 20/20  (last attach: 69..11106 cut)

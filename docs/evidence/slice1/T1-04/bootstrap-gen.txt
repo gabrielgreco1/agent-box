@@ -1,0 +1,10 @@
+ok: Xcode 26.3
+ok: ripgrep 15.1.0
+ok: xcodegen 2.46.0 (.tools/bin/xcodegen)
+ok: pins de Package.resolved (nenhum divergente)
+bootstrap: OK
+No "base" settings found
+No "debug config" settings found
+No "release config" settings found
+No "macOS" settings found
+gen: AgentBox.xcodeproj gerado

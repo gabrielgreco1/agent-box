@@ -1,4 +1,4 @@
-// Placeholder (T1-01): helper `agentbox` (futuros subcomandos `mcp`, `hook`, `ctl`).
+// Helper `agentbox` (subcomandos `ctl` agora; `mcp` e `hook` em tarefas seguintes).
 import AgentBoxPlatform
 import AgentBoxProtocol
 import ArgumentParser
@@ -7,10 +7,7 @@ import ArgumentParser
 struct AgentBoxCLI: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "agentbox",
-        abstract: "Agent Box helper (mcp, hook, ctl)."
+        abstract: "Agent Box helper (mcp, hook, ctl).",
+        subcommands: [CtlCommand.self]
     )
-
-    func run() async throws {
-        throw CleanExit.helpRequest(self)
-    }
 }

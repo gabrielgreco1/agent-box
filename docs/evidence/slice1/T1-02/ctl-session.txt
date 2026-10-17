@@ -1,0 +1,30 @@
+$ ctl ui wait window.appName --timeout 2
+{"ok":true,"waited":{"children":[],"enabled":true,"frame":{"height":13,"width":49.5,"x":16,"y":48},"id":"window.appName","kind":"text","label":"Agent Box"},"waitedMs":0}
+rc=0
+$ ctl ui action app.hideAppName
+{"action":{"actionID":"app.hideAppName","message":"hidden","ok":true},"ok":true}
+rc=0
+$ ctl ui wait window.appName --state gone --timeout 2
+{"ok":true,"waitedMs":0}
+rc=0
+$ ctl ui action app.hideAppName
+{"action":{"actionID":"app.hideAppName","message":"shown","ok":true},"ok":true}
+rc=0
+$ ctl ui action view.toggleRightPanel
+{"error":{"code":"action_unavailable","message":"view.toggleRightPanel belongs to a later slice (slice2) and is not part of this build"},"ok":false}
+rc=1
+$ ctl ui action session.new
+{"error":{"code":"action_not_registered","message":"session.new has no handler registered"},"ok":false}
+rc=1
+$ ctl ui action window.titlebar
+{"error":{"code":"unknown_target","message":"control window.titlebar is not on screen or has no action"},"ok":false}
+rc=1
+$ ctl ui wait sidebar --timeout 0.3
+{"error":{"code":"timeout","message":"sidebar did not reach state appear within 300 ms"},"ok":false}
+rc=1
+$ ctl screenshot --element window.titlebar --size 760x480 --out docs/evidence/slice1/T1-02/ctl-screenshot-titlebar-760.png
+{"fidelity":"appkit","note":"ScreenCaptureKit unavailable (The user declined TCCs for application, window, display capture); AppKit render does not include Metal layers","ok":true,"out":"docs/evidence/slice1/T1-02/ctl-screenshot-titlebar-760.png","pixelHeight":90,"pixelWidth":2880,"scale":2}
+rc=0
+$ ctl record start --out /private/tmp/claude-501/abx/t.mov
+{"error":{"code":"recording_failed","message":"could not start recording: The user declined TCCs for application, window, display capture"},"ok":false}
+rc=1

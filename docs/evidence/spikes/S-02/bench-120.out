@@ -1,0 +1,13 @@
+loaded yes data: 209715200
+  yes-200M run: 47.728 s  4.2 MiB/s
+  yes-200M run: 48.335 s  4.1 MiB/s
+  yes-200M run: 47.660 s  4.2 MiB/s
+RESULT yes-200M bytes=209715200 best=4.2 MiB/s activeBytes=1214720
+ansi dump generated: 67108866
+  ansi-64M run: 2.449 s  26.1 MiB/s
+  ansi-64M run: 2.449 s  26.1 MiB/s
+  ansi-64M run: 2.450 s  26.1 MiB/s
+RESULT ansi-64M bytes=67108866 best=26.1 MiB/s activeBytes=955841
+  ansi-16M-1KiBchunks run: 0.616 s  26.0 MiB/s
+  ansi-16M-1KiBchunks run: 0.613 s  26.1 MiB/s
+RESULT ansi-16M-1KiBchunks bytes=16777216 best=26.1 MiB/s activeBytes=965424
