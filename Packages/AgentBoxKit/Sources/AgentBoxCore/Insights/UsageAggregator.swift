@@ -57,6 +57,7 @@ public enum UsageAggregator {
         // Dias (hoje e os 6 anteriores).
         let todayStart = cal.startOfDay(for: now)
         let days: [Date] = (0..<7).reversed().compactMap { cal.date(byAdding: .day, value: -$0, to: todayStart) }
+        var dayMessages = [Date: Int]()
         var dayCounts = [Date: (TokenCounts, Double)]()
         for d in days { dayCounts[d] = (.zero, 0) }
         var hourWeights = Array(repeating: 0.0, count: 24)
@@ -76,6 +77,7 @@ public enum UsageAggregator {
             if var entry = dayCounts[day] {
                 entry.0 += b.counts; entry.1 += c
                 dayCounts[day] = entry
+                dayMessages[day, default: 0] += b.messages
             }
             var m = models[b.model] ?? (.zero, 0)
             m.0 += b.counts; m.1 += c
@@ -88,6 +90,7 @@ public enum UsageAggregator {
         summary.dailyWeek = days.map { DailyUsage(dayStart: $0, counts: dayCounts[$0]?.0 ?? .zero, costUSD: dayCounts[$0]?.1 ?? 0) }
         summary.today = summary.dailyWeek.last?.counts ?? .zero
         summary.todayCostUSD = summary.dailyWeek.last?.costUSD ?? 0
+        summary.todayMessages = dayMessages[todayStart] ?? 0
         summary.week = summary.dailyWeek.reduce(.zero) { $0 + $1.counts }
         summary.weekCostUSD = summary.dailyWeek.reduce(0) { $0 + $1.costUSD }
         summary.hourOfDay = hourWeights
@@ -117,7 +120,6 @@ public enum UsageAggregator {
         var counts: TokenCounts
         var cost: Double
         var messages: Int
-        var metric: Double { cost > 0 ? cost : Double(counts.fresh) }
     }
 
     static func collapseByHour(_ buckets: [UsageBucket], cost: (UsageBucket) -> Double) -> [(hour: Int64, totals: HourTotals)] {
@@ -153,11 +155,7 @@ public enum UsageAggregator {
         let nowTs = Int64(now.timeIntervalSince1970)
         let len = Int64(blockLength)
         var active: Block?
-        var history = all
-        if let last = all.last, nowTs < last.start + len, nowTs - (last.lastHour + 3600) < len {
-            active = last
-            history.removeLast()
-        }
+        if let last = all.last, nowTs < last.start + len, nowTs - (last.lastHour + 3600) < len { active = last }
         let counts = active?.totals.counts ?? .zero
         let activeCost = active?.totals.cost ?? 0
         let messages = active?.totals.messages ?? 0
@@ -168,18 +166,8 @@ public enum UsageAggregator {
             return LimitWindow(kind: .fiveHour, source: .reported, usedFraction: reported.usedFraction, resetsAt: reported.resetsAt ?? end,
                                startedAt: start, counts: counts, costUSD: activeCost, messages: messages)
         }
-        guard let active else {
-            return LimitWindow(kind: .fiveHour, source: .estimated, usedFraction: 0, resetsAt: nil)
-        }
-        let peak = history.map(\.totals.metric).max()
-        var fraction: Double?
-        var exceeds = false
-        if let peak, peak > 0 {
-            fraction = min(1, active.totals.metric / peak)
-            exceeds = active.totals.metric > peak
-        }
-        return LimitWindow(kind: .fiveHour, source: .estimated, usedFraction: fraction, resetsAt: end, startedAt: start,
-                           counts: counts, costUSD: activeCost, messages: messages, exceedsPeak: exceeds)
+        return LimitWindow(kind: .fiveHour, source: .unavailable, usedFraction: nil, resetsAt: nil, startedAt: start,
+                           counts: counts, costUSD: activeCost, messages: messages)
     }
 
     static func sevenDayWindow(hours: [(hour: Int64, totals: HourTotals)], now: Date, calendar: Calendar, reported: ReportedLimit?) -> LimitWindow? {
@@ -193,27 +181,12 @@ public enum UsageAggregator {
             return t
         }
         let current = window(ending: nowTs)
-        let oldest = hours.first?.hour ?? nowTs
         if let reported, reported.resetsAt.map({ $0 > now }) ?? true {
             return LimitWindow(kind: .sevenDay, source: .reported, usedFraction: reported.usedFraction, resetsAt: reported.resetsAt,
                                startedAt: now.addingTimeInterval(-weekLength), counts: current.counts, costUSD: current.cost, messages: current.messages)
         }
-        // Pico: janelas de 7 d completas e anteriores, amostradas de dia em dia, só onde há histórico suficiente.
-        var peak: Double?
-        var k: Int64 = 1
-        while nowTs - k * 86_400 - week >= oldest - 86_400, k < 60 {
-            let m = window(ending: nowTs - k * 86_400).metric
-            peak = max(peak ?? 0, m)
-            k += 1
-        }
-        var fraction: Double?
-        var exceeds = false
-        if let peak, peak > 0 {
-            fraction = min(1, current.metric / peak)
-            exceeds = current.metric > peak
-        }
-        return LimitWindow(kind: .sevenDay, source: .estimated, usedFraction: fraction, resetsAt: nil,
+        return LimitWindow(kind: .sevenDay, source: .unavailable, usedFraction: nil, resetsAt: nil,
                            startedAt: now.addingTimeInterval(-weekLength), counts: current.counts, costUSD: current.cost,
-                           messages: current.messages, exceedsPeak: exceeds)
+                           messages: current.messages)
     }
 }

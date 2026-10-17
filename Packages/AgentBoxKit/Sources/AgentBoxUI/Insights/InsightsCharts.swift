@@ -21,8 +21,8 @@ struct HourHeatmap: View {
                     let level = InsightsFormat.heatLevel(hour < values.count ? values[hour] : 0, max: peak)
                     RoundedRectangle(cornerRadius: DS.Radius.xs)
                         .fill(fill(level))
-                        .aspectRatio(1, contentMode: .fit)
-                        .frame(maxWidth: InsightsMetrics.heatCell + DS.Space.s1)
+                        .frame(maxWidth: InsightsMetrics.heatMaxCell)
+                        .frame(height: InsightsMetrics.heatCell)
                         .overlay {
                             if hour == currentHour {
                                 RoundedRectangle(cornerRadius: DS.Radius.xs).strokeBorder(DS.Color.textSecondary, lineWidth: DSMetrics.hairline)
@@ -49,10 +49,10 @@ struct HourHeatmap: View {
     private func fill(_ level: Int) -> Color {
         switch level {
         case 0: DS.Color.fg6
-        case 1: DS.Color.textPrimary.opacity(0.22)
-        case 2: DS.Color.textPrimary.opacity(0.42)
-        case 3: DS.Color.textPrimary.opacity(0.68)
-        default: DS.Color.textPrimary.opacity(0.95)
+        case 1: DS.Color.textPrimary.opacity(0.16)
+        case 2: DS.Color.textPrimary.opacity(0.3)
+        case 3: DS.Color.textPrimary.opacity(0.48)
+        default: DS.Color.textPrimary.opacity(0.7)
         }
     }
 }
@@ -104,17 +104,16 @@ struct WeekSparkline: View {
                 Rectangle().fill(DS.Color.border).frame(height: DSMetrics.hairline).frame(maxHeight: .infinity, alignment: .bottom)
                 AnimatedValue(value: 1) { progress in
                     PolylineShape(points: normalized, progress: progress)
-                        .stroke(DS.Color.textPrimary.opacity(0.85), style: StrokeStyle(lineWidth: MotionTokens.Stroke.ring, lineCap: .round, lineJoin: .round))
+                        .stroke(DS.Color.textPrimary.opacity(0.6), style: StrokeStyle(lineWidth: MotionTokens.Stroke.liveBorder, lineCap: .round, lineJoin: .round))
                 }
                 GeometryReader { proxy in
-                    ForEach(Array(normalized.enumerated()), id: \.offset) { i, v in
-                        let last = i == normalized.count - 1
+                    // Só o ponto de hoje: o resto é a linha.
+                    if let v = normalized.last {
                         Circle()
-                            .fill(last ? DS.Color.textPrimary : DS.Color.chrome)
-                            .overlay(Circle().strokeBorder(DS.Color.textPrimary.opacity(last ? 1 : 0.7), lineWidth: MotionTokens.Stroke.liveBorder))
-                            .frame(width: last ? DS.Space.s2 : DS.Space.s1_5, height: last ? DS.Space.s2 : DS.Space.s1_5)
-                            .position(x: normalized.count > 1 ? proxy.size.width * CGFloat(i) / CGFloat(normalized.count - 1) : proxy.size.width / 2,
-                                      y: proxy.size.height - CGFloat(v) * proxy.size.height)
+                            .fill(DS.Color.textPrimary)
+                            .frame(width: DS.Space.s1_5, height: DS.Space.s1_5)
+                            .position(x: proxy.size.width - DS.Space.s0_5,
+                                      y: min(max(DS.Space.s1, proxy.size.height - CGFloat(v) * proxy.size.height), proxy.size.height - DS.Space.s1))
                     }
                 }
             }
@@ -230,7 +229,7 @@ struct SegmentedBar: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(DS.Color.fg8)
         }
-        .frame(height: DS.Space.s2)
+        .frame(height: DS.Space.s1_5)
         .clipShape(RoundedRectangle(cornerRadius: DS.Radius.xs))
     }
 }

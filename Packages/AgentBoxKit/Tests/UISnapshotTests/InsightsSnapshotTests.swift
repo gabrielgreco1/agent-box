@@ -1,5 +1,6 @@
 import AgentBoxCore
 import AgentBoxDesignSystem
+import AgentBoxProtocol
 import AppKit
 import SnapshotTesting
 import SwiftUI
@@ -11,12 +12,21 @@ import Testing
 /// larga (480) e compacta (220). Dados 100% sintéticos (`InsightsPreviewData`). Gravar com `AB_RECORD_SNAPSHOTS=1`.
 @MainActor
 @Suite(.serialized) struct InsightsSnapshotTests {
+    func registry(for model: InsightsModel) -> ActionRegistry {
+        let elements = UIElementStore()
+        let flags = SliceFlags()
+        let registry = ActionRegistry(flags: flags, surface: WindowAutomation(store: elements, flags: flags, fixture: nil, automationEnabled: false))
+        try? model.register(in: registry)
+        return registry
+    }
+
     func snap(_ model: InsightsModel, compact: Bool = false, size: CGSize, name: String, line: UInt = #line) {
         DSFonts.registerIfNeeded()
         let previous = MotionPolicy.shared.preference
         MotionPolicy.shared.preference = .on  // valores finais, sem contagem em andamento
         defer { MotionPolicy.shared.preference = previous }
         let root = InsightsModuleView(model: model, compact: compact)
+            .environment(\.actionRegistry, registry(for: model))
             .frame(width: size.width, height: size.height)
             .environment(\.colorScheme, .dark)
         let host = NSHostingView(rootView: root)
@@ -28,23 +38,37 @@ import Testing
         }
     }
 
-    static let tall = CGSize(width: 310, height: 1_040)
+    static let tall = CGSize(width: 310, height: 760)
 
     @Test func claudeFull() { snap(InsightsPreviewData.model(tab: .claude), size: Self.tall, name: "claude-310") }
-    @Test func claudeEstimated() { snap(InsightsPreviewData.model(tab: .claude, estimated: true), size: CGSize(width: 310, height: 760), name: "claude-estimated-310") }
-    @Test func claudeWide() { snap(InsightsPreviewData.model(tab: .claude), size: CGSize(width: 480, height: 1_040), name: "claude-480") }
-    @Test func codexFull() { snap(InsightsPreviewData.model(tab: .codex), size: CGSize(width: 310, height: 1_000), name: "codex-310") }
-    @Test func machineFull() { snap(InsightsPreviewData.model(tab: .machine), size: CGSize(width: 310, height: 1_180), name: "machine-310") }
-    @Test func proxyFull() { snap(InsightsPreviewData.model(tab: .proxy), size: CGSize(width: 310, height: 620), name: "proxy-310") }
+    @Test func claudeWithoutExactLimits() {
+        snap(InsightsPreviewData.model(tab: .claude, exact: false), size: CGSize(width: 310, height: 440), name: "claude-no-exact-310")
+    }
+    @Test func claudeNeedsRefresh() {
+        var s = InsightsPreviewData.snapshot(exact: false, limits: .needsClaudeRefresh)
+        s.claude = InsightsPreviewData.provider(.claude, exact: false)
+        snap(InsightsPreviewData.model(tab: .claude, snapshot: s), size: CGSize(width: 310, height: 440), name: "claude-refresh-310")
+    }
+    @Test func claudeNearLimit() {
+        var s = InsightsPreviewData.snapshot()
+        s.claude = InsightsPreviewData.provider(.claude, level: 0.82, weekly: 0.97)
+        snap(InsightsPreviewData.model(tab: .claude, snapshot: s), size: CGSize(width: 310, height: 760), name: "claude-near-limit-310")
+    }
+    @Test func claudeWide() { snap(InsightsPreviewData.model(tab: .claude), size: CGSize(width: 560, height: 560), name: "claude-wide-560") }
+    @Test func claudeCondensed() { snap(InsightsPreviewData.model(tab: .claude), size: CGSize(width: 380, height: 420), name: "claude-condensed-380") }
+    @Test func codexFull() { snap(InsightsPreviewData.model(tab: .codex), size: Self.tall, name: "codex-310") }
+    @Test func machineFull() { snap(InsightsPreviewData.model(tab: .machine), size: CGSize(width: 310, height: 1_000), name: "machine-310") }
+    @Test func machineWide() { snap(InsightsPreviewData.model(tab: .machine), size: CGSize(width: 560, height: 640), name: "machine-wide-560") }
+    @Test func proxyFull() { snap(InsightsPreviewData.model(tab: .proxy), size: CGSize(width: 310, height: 520), name: "proxy-310") }
 
     @Test func compactTabs() {
         for tab in InsightsTab.allCases {
-            snap(InsightsPreviewData.model(tab: tab), size: CGSize(width: 220, height: 420), name: "\(tab.rawValue)-compact-220")
+            snap(InsightsPreviewData.model(tab: tab), size: CGSize(width: 260, height: 220), name: "\(tab.rawValue)-compact-260")
         }
     }
 
     @Test func forcedCompactAtNormalWidth() {
-        snap(InsightsPreviewData.model(tab: .machine), compact: true, size: CGSize(width: 310, height: 420), name: "machine-forced-compact-310")
+        snap(InsightsPreviewData.model(tab: .machine), compact: true, size: CGSize(width: 310, height: 260), name: "machine-forced-compact-310")
     }
 
     @Test func emptyStates() {
@@ -59,18 +83,73 @@ import Testing
         s.computers = []
         s.machine?.cpu = CPUSample(total: 0.93, user: 0.8, system: 0.13, perCore: Array(repeating: 0.93, count: 14), load1: 12, load5: 9, load15: 6)
         s.machine?.memory?.pressure = .critical
-        snap(InsightsPreviewData.model(tab: .machine, snapshot: s), size: CGSize(width: 310, height: 1_180), name: "machine-stressed-310")
+        snap(InsightsPreviewData.model(tab: .machine, snapshot: s), size: CGSize(width: 310, height: 1_000), name: "machine-stressed-310")
+    }
+}
+
+/// Teste de layout (F21): renderiza o módulo em várias combinações de tamanho e falha se algum elemento sair dos limites.
+/// Com altura abaixo do mínimo do modo compacto o módulo rola por dentro; fora disso nada pode passar da caixa.
+@MainActor
+@Suite(.serialized) struct InsightsLayoutTests {
+    nonisolated static let sizes: [CGSize] = [
+        CGSize(width: 260, height: 200), CGSize(width: 320, height: 300), CGSize(width: 380, height: 500), CGSize(width: 520, height: 800),
+        CGSize(width: 260, height: 700), CGSize(width: 300, height: 260), CGSize(width: 480, height: 240), CGSize(width: 600, height: 420),
+        CGSize(width: 720, height: 300), CGSize(width: 340, height: 900),
+    ]
+    /// Altura mínima do módulo inteiro (abas + modo compacto) abaixo da qual a rolagem interna é permitida.
+    nonisolated static let compactMinHeight: CGFloat = 170
+
+    func probe(_ tab: InsightsTab, size: CGSize, exact: Bool = true) -> [String: CGRect] {
+        DSFonts.registerIfNeeded()
+        let probe = LayoutProbe()
+        let model = InsightsPreviewData.model(tab: tab, exact: exact)
+        let host = NSHostingView(rootView: InsightsModuleView(model: model)
+            .environment(\.layoutProbe, probe)
+            .frame(width: size.width, height: size.height))
+        host.frame = NSRect(origin: .zero, size: size)
+        host.layoutSubtreeIfNeeded()
+        for _ in 0..<4 {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.03))
+            host.layoutSubtreeIfNeeded()
+        }
+        return probe.frames
     }
 
-    @Test func contentFitsTheColumnAtEveryWidth() {
-        DSFonts.registerIfNeeded()
-        for width in [220.0, 260, 310, 480] {
-            for tab in InsightsTab.allCases {
-                let host = NSHostingView(rootView: InsightsModuleView(model: InsightsPreviewData.model(tab: tab))
-                    .frame(width: width, height: 900))
-                host.frame = NSRect(x: 0, y: 0, width: width, height: 900)
-                host.layoutSubtreeIfNeeded()
-                #expect(host.fittingSize.width <= width + 0.5, "\(tab) overflows at \(width)")
+    @Test(arguments: InsightsTab.allCases, sizes)
+    func nothingLeavesTheBox(tab: InsightsTab, size: CGSize) {
+        let frames = probe(tab, size: size)
+        #expect(!frames.isEmpty, "no probes reported for \(tab) at \(size)")
+        let bounds = CGRect(origin: .zero, size: size).insetBy(dx: -0.5, dy: -0.5)
+        for (id, frame) in frames {
+            #expect(frame.minX >= bounds.minX && frame.maxX <= bounds.maxX, "\(tab) \(id) leaves horizontally at \(size): \(frame)")
+            if size.height >= Self.compactMinHeight {
+                #expect(frame.minY >= bounds.minY && frame.maxY <= bounds.maxY, "\(tab) \(id) leaves vertically at \(size): \(frame)")
+            }
+        }
+    }
+
+    @Test func layoutModeFollowsTheBreakpoints() {
+        func modes(_ size: CGSize) -> Set<String> { Set(probe(.claude, size: size).keys.filter { $0.hasPrefix("pane.") }) }
+        #expect(modes(CGSize(width: 700, height: 800)) == ["pane.wide"])
+        #expect(modes(CGSize(width: 380, height: 900)) == ["pane.medium"])
+        #expect(modes(CGSize(width: 260, height: 800)) == ["pane.compact"])
+        // Sem altura para a coluna inteira o módulo desce para o próximo layout que cabe.
+        #expect(modes(CGSize(width: 380, height: 420)) == ["pane.condensed"])
+        #expect(modes(CGSize(width: 380, height: 200)) == ["pane.compact"])
+    }
+
+    @Test func compactStillShowsBothLimitBars() {
+        let frames = probe(.claude, size: CGSize(width: 260, height: 200))
+        #expect(frames["limits.5h"] != nil && frames["limits.7d"] != nil)
+    }
+
+    @Test func missingExactLimitsStillFits() {
+        for size in Self.sizes {
+            let frames = probe(.claude, size: size, exact: false)
+            let bounds = CGRect(origin: .zero, size: size).insetBy(dx: -0.5, dy: -0.5)
+            for (id, frame) in frames {
+                #expect(frame.minX >= bounds.minX && frame.maxX <= bounds.maxX, "\(id) leaves horizontally at \(size)")
+                if size.height >= Self.compactMinHeight { #expect(frame.maxY <= bounds.maxY, "\(id) leaves vertically at \(size)") }
             }
         }
     }

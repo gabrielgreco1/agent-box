@@ -7,21 +7,59 @@ struct InsightsMachinePane: View {
     let snapshot: InsightsSnapshot
     let history: InsightsHistory
     @Binding var sortByMemory: Bool
-    let compact: Bool
+    let width: CGFloat
 
     var body: some View {
         if let machine = snapshot.machine {
-            if compact { compactBody(machine) } else { fullBody(machine) }
+            InsightsAdaptive(width: width) {
+                wideBody(machine)
+            } medium: {
+                mediumBody(machine)
+            } condensed: {
+                condensedBody(machine)
+            } compact: {
+                compactBody(machine)
+            }
         } else {
             DSEmptyState(String(localized: "Reading this Mac…", bundle: .module))
         }
     }
 
-    // MARK: Cheio
+    // MARK: Largo (duas colunas) e médio (uma coluna)
 
-    private func fullBody(_ m: MachineSnapshot) -> some View {
+    private func wideBody(_ m: MachineSnapshot) -> some View {
+        HStack(alignment: .top, spacing: DS.Space.s4) {
+            VStack(alignment: .leading, spacing: .zero) {
+                InsightsSection(title: "CPU", trailing: m.cpu.map { "load " + String(format: "%.2f", $0.load1) }, rule: false) { cpuBlock(m) }
+                InsightsSection(title: "Memory", trailing: m.memory.map { InsightsFormat.bytes($0.totalBytes) }) { memoryBlock(m) }
+                InsightsSection(title: "Disk", trailing: nil) { diskBlock(m) }
+            }
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+            VStack(alignment: .leading, spacing: .zero) {
+                InsightsSection(title: "Network", trailing: nil, rule: false) { networkBlock(m) }
+                InsightsSection(title: "Top apps", trailing: nil) { appsBlock(m) }
+                InsightsSection(title: "Computers", trailing: nil) { computersBlock }
+                if !snapshot.agents.isEmpty {
+                    InsightsSection(title: "Agents by session", trailing: nil) { agentsBlock }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+        }
+        .layoutProbe("pane.wide")
+    }
+
+    private func condensedBody(_ m: MachineSnapshot) -> some View {
         VStack(alignment: .leading, spacing: .zero) {
-            InsightsSection(title: "CPU", trailing: m.cpu.map { "load " + String(format: "%.2f", $0.load1) }) { cpuBlock(m) }
+            InsightsSection(title: "CPU", trailing: m.cpu.map { "load " + String(format: "%.2f", $0.load1) }, rule: false) { cpuBlock(m) }
+            InsightsSection(title: "Memory", trailing: m.memory.map { InsightsFormat.bytes($0.totalBytes) }) { memoryBlock(m) }
+            InsightsSection(title: "Disk", trailing: nil) { diskBlock(m) }
+        }
+        .layoutProbe("pane.condensed")
+    }
+
+    private func mediumBody(_ m: MachineSnapshot) -> some View {
+        VStack(alignment: .leading, spacing: .zero) {
+            InsightsSection(title: "CPU", trailing: m.cpu.map { "load " + String(format: "%.2f", $0.load1) }, rule: false) { cpuBlock(m) }
             InsightsSection(title: "Memory", trailing: m.memory.map { InsightsFormat.bytes($0.totalBytes) }) { memoryBlock(m) }
             InsightsSection(title: "Disk", trailing: nil) { diskBlock(m) }
             InsightsSection(title: "Network", trailing: nil) { networkBlock(m) }
@@ -31,13 +69,14 @@ struct InsightsMachinePane: View {
                 InsightsSection(title: "Agents by session", trailing: nil) { agentsBlock }
             }
         }
+        .layoutProbe("pane.medium")
     }
 
     private func cpuBlock(_ m: MachineSnapshot) -> some View {
         VStack(alignment: .leading, spacing: DS.Space.s2) {
             HStack(alignment: .firstTextBaseline) {
                 AnimatedNumber(value: (m.cpu?.total ?? 0) * 100) { "\(Int($0.rounded()))%" }
-                    .dsFont(DS.Font.pageTitle).foregroundStyle(InsightsTone.color(for: m.cpu?.total ?? 0))
+                    .dsFont(DS.Font.control).foregroundStyle(InsightsTone.color(for: m.cpu?.total ?? 0))
                 Spacer(minLength: DS.Space.s1)
                 if let c = m.cpu {
                     Text(verbatim: "user \(InsightsFormat.percent(c.user)) · system \(InsightsFormat.percent(c.system))").dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textTertiary)
@@ -54,7 +93,7 @@ struct InsightsMachinePane: View {
         return VStack(alignment: .leading, spacing: DS.Space.s2) {
             HStack(alignment: .firstTextBaseline) {
                 AnimatedNumber(value: (mem?.usedFraction ?? 0) * 100) { "\(Int($0.rounded()))%" }
-                    .dsFont(DS.Font.pageTitle).foregroundStyle(DS.Color.textPrimary)
+                    .dsFont(DS.Font.control).foregroundStyle(DS.Color.textPrimary)
                 Text(verbatim: InsightsFormat.bytes(mem?.usedBytes ?? 0)).dsFont(DS.Font.control).foregroundStyle(DS.Color.textSecondary)
                 Spacer(minLength: DS.Space.s1)
                 if let p = mem?.pressure { pressureBadge(p) }
@@ -94,12 +133,12 @@ struct InsightsMachinePane: View {
         return VStack(alignment: .leading, spacing: DS.Space.s2) {
             HStack(alignment: .firstTextBaseline) {
                 AnimatedNumber(value: (d?.usedFraction ?? 0) * 100) { "\(Int($0.rounded()))%" }
-                    .dsFont(DS.Font.pageTitle).foregroundStyle(InsightsTone.color(for: d?.usedFraction ?? 0))
+                    .dsFont(DS.Font.control).foregroundStyle(InsightsTone.color(for: d?.usedFraction ?? 0))
                 Text(verbatim: "used").dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
                 Spacer(minLength: DS.Space.s1)
                 Text(verbatim: InsightsFormat.bytes(d?.freeBytes ?? 0) + " free").dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textSecondary)
             }
-            TickBar(fraction: d?.usedFraction)
+            ThinBar(fraction: d?.usedFraction)
             HStack(spacing: DS.Space.s4) {
                 rateLabel("arrow.down.doc", d?.readBytesPerSec ?? 0, "Read")
                 rateLabel("arrow.up.doc", d?.writeBytesPerSec ?? 0, "Write")
@@ -215,7 +254,7 @@ struct InsightsMachinePane: View {
     // MARK: Compacto
 
     private func compactBody(_ m: MachineSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: DS.Space.s3) {
+        VStack(alignment: .leading, spacing: DS.Space.s2) {
             compactRow("CPU", m.cpu?.total, text: m.cpu.map { InsightsFormat.percent($0.total) })
             compactRow("MEM", m.memory?.usedFraction, text: m.memory.map { InsightsFormat.percent($0.usedFraction) })
             compactRow("DISK", m.disk?.usedFraction, text: m.disk.map { InsightsFormat.percent($0.usedFraction) })
@@ -230,6 +269,7 @@ struct InsightsMachinePane: View {
                 InsightsStat(label: "Computers", value: "\(snapshot.computers.count)")
             }
         }
+        .layoutProbe("pane.compact")
     }
 
     private func compactRow(_ label: String, _ fraction: Double?, text: String?) -> some View {
@@ -237,9 +277,9 @@ struct InsightsMachinePane: View {
             HStack {
                 Text(verbatim: label).dsFont(DS.Font.micro).foregroundStyle(DS.Color.textSecondary)
                 Spacer(minLength: DS.Space.s1)
-                Text(verbatim: text ?? "–").dsFont(DS.Font.bodyStrong).monospacedDigit().foregroundStyle(InsightsTone.color(for: fraction ?? 0))
+                Text(verbatim: text ?? "–").dsFont(DS.Font.label).monospacedDigit().foregroundStyle(InsightsTone.color(for: fraction ?? 0))
             }
-            TickBar(fraction: fraction)
+            ThinBar(fraction: fraction)
         }
     }
 }
@@ -247,19 +287,40 @@ struct InsightsMachinePane: View {
 /// Aba Proxy: uso por proxy cadastrado (requisições, dados, custo) e barras dos últimos dias.
 struct InsightsProxyPane: View {
     let proxies: [ProxyUsageSummary]
-    let compact: Bool
+    let width: CGFloat
 
     var body: some View {
         if proxies.isEmpty {
             DSEmptyState(String(localized: "No proxies yet. Add one in Settings to see its usage here.", bundle: .module))
         } else {
-            VStack(alignment: .leading, spacing: .zero) {
-                ForEach(proxies) { p in
-                    InsightsSection(title: LocalizedStringKey(p.name), trailing: p.isDefault ? "default" : nil) {
-                        if compact { compactBody(p) } else { fullBody(p) }
-                    }
+            InsightsAdaptive(width: width) {
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: DS.Space.s4, alignment: .top), GridItem(.flexible(), alignment: .top)],
+                          alignment: .leading, spacing: .zero) {
+                    ForEach(proxies) { p in section(p, compact: false, rule: false) }
                 }
+                .layoutProbe("pane.wide")
+            } medium: {
+                VStack(alignment: .leading, spacing: .zero) {
+                    ForEach(Array(proxies.enumerated()), id: \.element.id) { i, p in section(p, compact: false, rule: i > 0) }
+                }
+                .layoutProbe("pane.medium")
+            } condensed: {
+                VStack(alignment: .leading, spacing: .zero) {
+                    ForEach(Array(proxies.enumerated()), id: \.element.id) { i, p in section(p, compact: true, rule: i > 0) }
+                }
+                .layoutProbe("pane.condensed")
+            } compact: {
+                VStack(alignment: .leading, spacing: .zero) {
+                    ForEach(Array(proxies.enumerated()), id: \.element.id) { i, p in section(p, compact: true, rule: i > 0) }
+                }
+                .layoutProbe("pane.compact")
             }
+        }
+    }
+
+    private func section(_ p: ProxyUsageSummary, compact: Bool, rule: Bool) -> some View {
+        InsightsSection(title: LocalizedStringKey(p.name), trailing: p.isDefault ? "default" : nil, rule: rule) {
+            if compact { compactBody(p) } else { fullBody(p) }
         }
     }
 
@@ -267,7 +328,7 @@ struct InsightsProxyPane: View {
         VStack(alignment: .leading, spacing: DS.Space.s2) {
             HStack(alignment: .firstTextBaseline) {
                 AnimatedNumber(value: Double(p.requests)) { InsightsFormat.tokens(Int($0)) }
-                    .dsFont(DS.Font.pageTitle).foregroundStyle(DS.Color.textPrimary)
+                    .dsFont(DS.Font.control).foregroundStyle(DS.Color.textPrimary)
                 Text(verbatim: "requests").dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
                 Spacer(minLength: DS.Space.s1)
                 Text(verbatim: InsightsFormat.micros(p.costMicros)).dsFont(DS.Font.control).foregroundStyle(DS.Color.textSecondary)
@@ -279,10 +340,12 @@ struct InsightsProxyPane: View {
     }
 
     private func compactBody(_ p: ProxyUsageSummary) -> some View {
-        VStack(spacing: DS.Space.s1_5) {
-            InsightsStat(label: "Requests", value: InsightsFormat.tokens(p.requests), emphasis: true)
-            InsightsStat(label: "Data", value: InsightsFormat.bytes(UInt64(max(0, p.bytes))))
-            InsightsStat(label: "Cost", value: InsightsFormat.micros(p.costMicros))
+        HStack(alignment: .firstTextBaseline, spacing: DS.Space.s2) {
+            Text(verbatim: InsightsFormat.tokens(p.requests)).dsFont(DS.Font.label).monospacedDigit().foregroundStyle(DS.Color.textPrimary)
+            Text(verbatim: "requests").dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+            Spacer(minLength: DS.Space.s1)
+            Text(verbatim: InsightsFormat.bytes(UInt64(max(0, p.bytes))) + " · " + InsightsFormat.micros(p.costMicros))
+                .dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textSecondary).lineLimit(1)
         }
     }
 }

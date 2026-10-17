@@ -48,66 +48,42 @@ import Testing
         #expect(s.hourOfDay == Array(repeating: 0, count: 24))
     }
 
-    @Test func fiveHourBlockStartsAtFirstHourAndEstimatesAgainstPeak() throws {
-        // Bloco antigo grande (pico) há ~30 h; bloco ativo menor começando há 2 h.
-        let old = [bucket(31, input: 4_000_000), bucket(30, input: 4_000_000)]  // US$ 40
+    @Test func fiveHourBlockKeepsLocalTotalsButNeverEstimatesAFraction() throws {
+        // Bloco antigo grande há ~30 h; bloco ativo menor começando há 2 h. Sem número do provedor não há fração.
+        let old = [bucket(31, input: 4_000_000), bucket(30, input: 4_000_000)]
         let active = [bucket(2, input: 1_000_000), bucket(1, input: 1_000_000)]  // US$ 10
-        let s = summarize(old + active)
-        let w = try #require(s.fiveHour)
-        #expect(w.source == .estimated)
-        #expect(abs(try #require(w.usedFraction) - 0.25) < 0.0001)
+        let w = try #require(summarize(old + active).fiveHour)
+        #expect(w.source == .unavailable)
+        #expect(w.usedFraction == nil)
+        #expect(w.resetsAt == nil)
         #expect(w.costUSD == 10)
         #expect(w.messages == 2)
-        #expect(!w.exceedsPeak)
-        // 12:00 menos 2 h = 10:00 → bloco 10:00–15:00.
-        #expect(w.resetsAt == InsightsFixtures.now.addingTimeInterval(3 * 3600))
     }
 
     @Test func fiveHourWindowExpiresAfterFiveHoursOfSilence() throws {
-        let s = summarize([bucket(8, input: 1_000_000)])
-        let w = try #require(s.fiveHour)
-        #expect(w.usedFraction == 0)
-        #expect(w.resetsAt == nil)
+        let w = try #require(summarize([bucket(8, input: 1_000_000)]).fiveHour)
+        #expect(w.usedFraction == nil)
         #expect(w.costUSD == 0)
     }
 
-    @Test func fiveHourWithoutHistoryHasNoFraction() throws {
-        let w = try #require(summarize([bucket(1)]).fiveHour)
-        #expect(w.usedFraction == nil)
-        #expect(w.costUSD == 5)
-    }
-
-    @Test func exceedingThePeakCapsAtOne() throws {
-        let w = try #require(summarize([bucket(20, input: 1_000_000), bucket(1, input: 3_000_000)]).fiveHour)
-        #expect(w.usedFraction == 1)
-        #expect(w.exceedsPeak)
-    }
-
-    @Test func reportedLimitsOverrideEstimates() throws {
+    @Test func reportedLimitsCarryTheProvidersNumbers() throws {
         let reset = now.addingTimeInterval(7200)
-        let s = summarize([bucket(1)], reported: ReportedLimits(fiveHour: .init(usedFraction: 0.42, resetsAt: reset),
-                                                                sevenDay: .init(usedFraction: 0.1, resetsAt: now.addingTimeInterval(86_400))))
+        let s = summarize([bucket(1)], reported: ReportedLimits(fiveHour: .init(usedFraction: 0.67, resetsAt: reset),
+                                                                sevenDay: .init(usedFraction: 0.88, resetsAt: now.addingTimeInterval(86_400))))
         #expect(s.fiveHour?.source == .reported)
-        #expect(s.fiveHour?.usedFraction == 0.42)
+        #expect(s.fiveHour?.usedFraction == 0.67)
         #expect(s.fiveHour?.resetsAt == reset)
+        #expect(s.fiveHour?.costUSD == 5)
         #expect(s.sevenDay?.source == .reported)
-        #expect(s.sevenDay?.usedFraction == 0.1)
+        #expect(s.sevenDay?.usedFraction == 0.88)
     }
 
-    @Test func expiredReportedWindowFallsBack() {
+    @Test func expiredReportedWindowShowsNothingInsteadOfEstimating() throws {
         let s = summarize([bucket(1)], reported: ReportedLimits(fiveHour: .init(usedFraction: 0.9, resetsAt: now.addingTimeInterval(-60))))
-        #expect(s.fiveHour?.source == .estimated)
-    }
-
-    @Test func sevenDayEstimateComparesWithEarlierWeeks() throws {
-        // Semana de 10 dias atrás pesada (US$ 50 em um dia); esta semana leve (US$ 10).
-        let heavy = [bucket(10 * 24 + 3, input: 10_000_000)]
-        let light = [bucket(5, input: 2_000_000)]
-        let w = try #require(summarize(heavy + light).sevenDay)
-        #expect(w.source == .estimated)
-        let f = try #require(w.usedFraction)
-        #expect(f > 0 && f < 0.5)
-        #expect(w.costUSD == 10)
+        #expect(s.fiveHour?.source == .unavailable)
+        #expect(s.fiveHour?.usedFraction == nil)
+        #expect(s.sevenDay?.usedFraction == nil)
+        #expect(s.sevenDay?.costUSD == 5)
     }
 
     @Test func dayHourModelAndSessionBreakdowns() throws {

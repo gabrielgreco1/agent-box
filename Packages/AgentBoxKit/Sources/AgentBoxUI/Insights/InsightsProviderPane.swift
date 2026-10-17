@@ -2,23 +2,24 @@ import AgentBoxCore
 import AgentBoxDesignSystem
 import SwiftUI
 
-/// Bloco com título (12/500), hairline acima e conteúdo. Sem card: o painel já é a superfície.
+/// Bloco com título (micro, caixa alta), hairline acima e conteúdo. Sem card: o painel já é a superfície.
 struct InsightsSection<Content: View>: View {
     let title: LocalizedStringKey
     var trailing: String?
+    var rule = true
     @ViewBuilder let content: Content
 
     var body: some View {
         VStack(alignment: .leading, spacing: DS.Space.s2) {
-            HStack {
-                Text(title, bundle: .module).dsFont(DS.Font.label).foregroundStyle(DS.Color.textSecondary)
+            HStack(spacing: DS.Space.s2) {
+                Text(title, bundle: .module).dsFont(DS.Font.micro).textCase(.uppercase).foregroundStyle(DS.Color.textTertiary).lineLimit(1)
                 Spacer(minLength: DS.Space.s2)
-                if let trailing { Text(verbatim: trailing).dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textTertiary) }
+                if let trailing { Text(verbatim: trailing).dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textTertiary).lineLimit(1) }
             }
             content
         }
-        .padding(.vertical, DS.Space.s3)
-        .overlay(alignment: .top) { Rectangle().fill(DS.Color.border).frame(height: DSMetrics.hairline) }
+        .padding(.vertical, DS.Space.s2_5)
+        .overlay(alignment: .top) { if rule { Rectangle().fill(DS.Color.border).frame(height: DSMetrics.hairline) } }
     }
 }
 
@@ -30,19 +31,21 @@ struct InsightsStat: View {
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: DS.Space.s2) {
-            Text(label, bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
+            Text(label, bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary).lineLimit(1)
             Spacer(minLength: DS.Space.s1)
-            Text(verbatim: value).dsFont(emphasis ? DS.Font.bodyStrong : DS.Font.body).monospacedDigit()
+            Text(verbatim: value).dsFont(emphasis ? DS.Font.label : DS.Font.small).monospacedDigit()
                 .foregroundStyle(DS.Color.textPrimary).lineLimit(1)
         }
     }
 }
 
-/// Aba de um provedor (Claude ou Codex): janelas de limite, hoje, tendência, hora do dia, modelos e sessões.
+/// Aba de um provedor (Claude ou Codex): limites de 5 h e semanal, números secundários, tendência e listas.
+/// Três layouts (largo, médio, compacto) escolhidos por `InsightsAdaptive` conforme o espaço.
 struct InsightsProviderPane: View {
     let summary: ProviderSummary
     let now: Date
-    let compact: Bool
+    let width: CGFloat
+    var limitsStatus: ClaudeLimitsStatus = .notEnabled
     var scanning = false
 
     var body: some View {
@@ -50,127 +53,206 @@ struct InsightsProviderPane: View {
             DSEmptyState(summary.provider == .claude
                 ? String(localized: "No Claude usage found yet.", bundle: .module)
                 : String(localized: "No Codex usage found yet.", bundle: .module))
-        } else if compact {
-            compactBody
         } else {
-            fullBody
-        }
-    }
-
-    // MARK: Cheio
-
-    private var fullBody: some View {
-        VStack(alignment: .leading, spacing: .zero) {
-            header
-            windowsSection
-            InsightsSection(title: "Today", trailing: nil) { todayBlock }
-            InsightsSection(title: "Last 7 days", trailing: InsightsFormat.tokens(summary.week.fresh) + " tokens · " + InsightsFormat.cost(summary.weekCostUSD)) {
-                WeekSparkline(days: summary.dailyWeek)
-            }
-            InsightsSection(title: "By hour of day", trailing: nil) {
-                HourHeatmap(values: summary.hourOfDay, currentHour: Calendar.current.component(.hour, from: now))
-            }
-            if !summary.topModels.isEmpty {
-                InsightsSection(title: "Models", trailing: nil) { modelRows }
-            }
-            if !summary.topSessions.isEmpty {
-                InsightsSection(title: "Sessions", trailing: nil) { sessionRows }
-            }
-            if !summary.unpricedModels.isEmpty {
-                Text(verbatim: "Cost estimate leaves out \(summary.unpricedModels.count) model\(summary.unpricedModels.count == 1 ? "" : "s") without a price.")
-                    .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
-                    .padding(.top, DS.Space.s1)
+            InsightsAdaptive(width: width) {
+                wideBody
+            } medium: {
+                mediumBody
+            } condensed: {
+                condensedBody
+            } compact: {
+                compactBody
             }
         }
     }
+
+    // MARK: Largo (duas colunas)
+
+    private var wideBody: some View {
+        HStack(alignment: .top, spacing: DS.Space.s4) {
+            VStack(alignment: .leading, spacing: DS.Space.s3) {
+                header.layoutProbe("header")
+                limits.layoutProbe("limits")
+                exactNote(compact: false).layoutProbe("exact")
+                statsGrid.layoutProbe("grid")
+            }
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+            VStack(alignment: .leading, spacing: .zero) {
+                trendSection(rule: false)
+                heatSection
+                modelsSection
+                sessionsSection
+                unpricedNote
+            }
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+        }
+        .layoutProbe("pane.wide")
+    }
+
+    // MARK: Médio (uma coluna)
+
+    private var mediumBody: some View {
+        VStack(alignment: .leading, spacing: DS.Space.s3) {
+            header.layoutProbe("header")
+            limits.layoutProbe("limits")
+            exactNote(compact: false).layoutProbe("exact")
+            statsGrid.layoutProbe("grid")
+            VStack(alignment: .leading, spacing: .zero) {
+                trendSection(rule: true)
+                heatSection
+                modelsSection
+                sessionsSection
+                unpricedNote
+            }
+        }
+        .layoutProbe("pane.medium")
+    }
+
+    // MARK: Condensado (uma coluna sem tendência nem listas)
+
+    private var condensedBody: some View {
+        VStack(alignment: .leading, spacing: DS.Space.s3) {
+            header.layoutProbe("header")
+            limits.layoutProbe("limits")
+            exactNote(compact: false).layoutProbe("exact")
+            statsGrid.layoutProbe("grid")
+        }
+        .layoutProbe("pane.condensed")
+    }
+
+    // MARK: Compacto (só barras e números principais)
+
+    private var compactBody: some View {
+        VStack(alignment: .leading, spacing: DS.Space.s2) {
+            LimitRow(label: "5 h", fraction: summary.fiveHour?.usedFraction, resetsAt: summary.fiveHour?.resetsAt, now: now, compact: true)
+                .layoutProbe("limits.5h")
+            LimitRow(label: "Week", fraction: summary.sevenDay?.usedFraction, resetsAt: summary.sevenDay?.resetsAt, now: now, compact: true)
+                .layoutProbe("limits.7d")
+            HStack(spacing: DS.Space.s2) {
+                Text("Today", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
+                Spacer(minLength: DS.Space.s1)
+                Text(verbatim: InsightsFormat.cost(summary.todayCostUSD) + " · " + InsightsFormat.tokens(summary.today.fresh))
+                    .dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
+            }
+            .layoutProbe("today")
+            exactNote(compact: true).layoutProbe("exact")
+        }
+        .layoutProbe("pane.compact")
+    }
+
+    // MARK: Peças
 
     private var header: some View {
         HStack(spacing: DS.Space.s2) {
             DSAgentLogo(summary.provider.agentKind, size: DS.Space.s4)
-            Text(verbatim: summary.provider == .claude ? "Claude" : "Codex").dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary)
+            Text(verbatim: summary.provider == .claude ? "Claude" : "Codex").dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary)
             if let plan = InsightsFormat.plan(summary.plan?.plan) { DSBadge(plan) }
             Spacer(minLength: .zero)
             if scanning { DSSpinner(size: DS.Space.s3, delayed: true) }
             if let p = summary.plan, !p.loggedIn { DSBadge(String(localized: "Signed out", bundle: .module), variant: .warning) }
         }
-        .padding(.bottom, DS.Space.s3)
     }
 
-    private var windowsSection: some View {
-        InsightsSection(title: "Usage limits", trailing: nil) {
-            VStack(alignment: .leading, spacing: DS.Space.s4) {
-                HStack(alignment: .center, spacing: DS.Space.s4) {
-                    RingMeter(fraction: summary.fiveHour?.usedFraction, elapsed: elapsed(summary.fiveHour, length: UsageAggregator.blockLength),
-                              estimated: summary.fiveHour?.source == .estimated, caption: "5h")
-                    VStack(spacing: DS.Space.s1_5) {
-                        InsightsStat(label: "Resets in", value: resetText(summary.fiveHour), emphasis: true)
-                        InsightsStat(label: "Cost", value: InsightsFormat.cost(summary.fiveHour?.costUSD ?? 0))
-                        InsightsStat(label: "Tokens", value: InsightsFormat.tokens(summary.fiveHour?.counts.fresh ?? 0))
-                        InsightsStat(label: "Messages", value: "\(summary.fiveHour?.messages ?? 0)")
-                    }
-                }
-                weekBlock
-                if summary.fiveHour?.source == .estimated || summary.sevenDay?.source == .estimated {
-                    Text("Estimated against your busiest earlier window. Connect the status line for exact limits.")
-                        .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
-                }
+    private var limits: some View {
+        VStack(alignment: .leading, spacing: DS.Space.s3) {
+            LimitRow(label: "Session (5 h)", fraction: summary.fiveHour?.usedFraction, resetsAt: summary.fiveHour?.resetsAt, now: now)
+            LimitRow(label: "Weekly (7 d)", fraction: summary.sevenDay?.usedFraction, resetsAt: summary.sevenDay?.resetsAt, now: now)
+        }
+    }
+
+    /// Só o Claude tem a fonte exata sob demanda. Aparece enquanto a decisão não foi tomada ou o dado não chegou.
+    @ViewBuilder private func exactNote(compact: Bool) -> some View {
+        if summary.provider == .claude {
+            let missing = summary.fiveHour?.usedFraction == nil || summary.sevenDay?.usedFraction == nil
+            switch limitsStatus {
+            case .notEnabled:
+                if missing || !compact { showButton(compact: compact) }
+            case .loading:
+                note(String(localized: "Reading exact limits…", bundle: .module))
+            case .needsClaudeRefresh:
+                note(String(localized: "Open Claude Code to refresh", bundle: .module), tone: DS.Color.warning)
+            case .unavailable:
+                if missing { note(String(localized: "Exact limits unavailable right now", bundle: .module)) }
+            case .live:
+                EmptyView()
             }
         }
     }
 
-    private var weekBlock: some View {
+    private func note(_ text: String, tone: Color = DS.Color.textTertiary) -> some View {
+        Text(verbatim: text).dsFont(DS.Font.small).foregroundStyle(tone).lineLimit(2).fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func showButton(compact: Bool) -> some View {
         VStack(alignment: .leading, spacing: DS.Space.s1_5) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("7-day window").dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
-                Spacer(minLength: DS.Space.s1)
-                if let f = summary.sevenDay?.usedFraction {
-                    AnimatedNumber(value: f * 100) { "\(Int($0.rounded()))%" }.dsFont(DS.Font.bodyStrong).foregroundStyle(InsightsTone.color(for: f))
-                } else {
-                    Text(verbatim: "–").dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textTertiary)
-                }
+            if !compact {
+                Text("Exact limits come from your Claude Code sign-in. Agent Box reads it only after you click.", bundle: .module)
+                    .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).fixedSize(horizontal: false, vertical: true)
             }
-            TickBar(fraction: summary.sevenDay?.usedFraction, elapsed: elapsed(summary.sevenDay, length: UsageAggregator.weekLength),
-                    estimated: summary.sevenDay?.source == .estimated)
-            HStack {
-                Text(verbatim: InsightsFormat.cost(summary.sevenDay?.costUSD ?? 0) + " · " + InsightsFormat.tokens(summary.sevenDay?.counts.fresh ?? 0) + " tokens")
-                    .dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textTertiary)
-                Spacer(minLength: DS.Space.s1)
-                if let r = summary.sevenDay?.resetsAt {
-                    Text(verbatim: "resets in " + InsightsFormat.duration(r.timeIntervalSince(now))).dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textTertiary)
-                }
+            ActionButton(.insightsShowExactLimits, id: .rightPanelInsightsShowExactLimits) {
+                Text("Show exact limits", bundle: .module)
             }
+            .buttonStyle(DSButtonStyle(.secondary, .xs))
         }
-        .accessibilityElement(children: .combine)
     }
 
-    private var todayBlock: some View {
-        let t = summary.today
-        let reads = Double(t.cacheRead)
-        let denominator = reads + Double(t.input + t.cacheWrite)
-        return VStack(spacing: DS.Space.s1_5) {
-            HStack(alignment: .firstTextBaseline) {
-                AnimatedNumber(value: summary.todayCostUSD) { InsightsFormat.cost($0) }
-                    .dsFont(DS.Font.pageTitle).foregroundStyle(DS.Color.textPrimary)
-                Spacer(minLength: DS.Space.s1)
-                AnimatedNumber(value: Double(t.fresh)) { InsightsFormat.tokens(Int($0)) }
-                    .dsFont(DS.Font.control).foregroundStyle(DS.Color.textSecondary)
-                Text(verbatim: "tokens").dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
-            }
-            InsightsStat(label: "Output", value: InsightsFormat.tokens(t.output))
-            InsightsStat(label: "Cache hit", value: denominator > 0 ? InsightsFormat.percent(reads / denominator) : "–")
+    private var statsGrid: some View {
+        let s = summary
+        return InsightsStatGrid(
+            headers: ["Cost", "Tokens", "Messages"],
+            rows: [
+                InsightsStatRow(id: "5h", label: "5 h", values: [InsightsFormat.cost(s.fiveHour?.costUSD ?? 0),
+                                                                InsightsFormat.tokens(s.fiveHour?.counts.fresh ?? 0), "\(s.fiveHour?.messages ?? 0)"]),
+                InsightsStatRow(id: "today", label: "Today", values: [InsightsFormat.cost(s.todayCostUSD), InsightsFormat.tokens(s.today.fresh), "\(s.todayMessages)"]),
+                InsightsStatRow(id: "7d", label: "7 d", values: [InsightsFormat.cost(s.sevenDay?.costUSD ?? s.weekCostUSD),
+                                                               InsightsFormat.tokens(s.sevenDay?.counts.fresh ?? s.week.fresh), "\(s.sevenDay?.messages ?? 0)"]),
+            ])
+    }
+
+    private func trendSection(rule: Bool) -> some View {
+        InsightsSection(title: "Last 7 days", trailing: InsightsFormat.tokens(summary.week.fresh) + " · " + InsightsFormat.cost(summary.weekCostUSD), rule: rule) {
+            WeekSparkline(days: summary.dailyWeek)
+        }
+        .layoutProbe("trend")
+    }
+
+    private var heatSection: some View {
+        InsightsSection(title: "By hour of day") {
+            HourHeatmap(values: summary.hourOfDay, currentHour: Calendar.current.component(.hour, from: now))
+        }
+        .layoutProbe("heat")
+    }
+
+    @ViewBuilder private var modelsSection: some View {
+        if !summary.topModels.isEmpty {
+            InsightsSection(title: "Models") { modelRows }.layoutProbe("models")
+        }
+    }
+
+    @ViewBuilder private var sessionsSection: some View {
+        if !summary.topSessions.isEmpty {
+            InsightsSection(title: "Sessions") { sessionRows }.layoutProbe("sessions")
+        }
+    }
+
+    @ViewBuilder private var unpricedNote: some View {
+        if !summary.unpricedModels.isEmpty {
+            Text(verbatim: "Cost estimate leaves out \(summary.unpricedModels.count) model\(summary.unpricedModels.count == 1 ? "" : "s") without a price.")
+                .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).fixedSize(horizontal: false, vertical: true)
+                .padding(.top, DS.Space.s1)
         }
     }
 
     private var modelRows: some View {
-        VStack(spacing: DS.Space.s2) {
-            ForEach(summary.topModels) { m in
+        VStack(spacing: DS.Space.s1_5) {
+            ForEach(summary.topModels.prefix(4)) { m in
                 VStack(spacing: DS.Space.s1) {
                     HStack(spacing: DS.Space.s2) {
                         Text(verbatim: InsightsFormat.modelName(m.model)).dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textPrimary).lineLimit(1).truncationMode(.middle)
                         Spacer(minLength: DS.Space.s1)
-                        Text(verbatim: InsightsFormat.percent(m.share)).dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textSecondary)
+                        Text(verbatim: InsightsFormat.percent(m.share)).dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textTertiary)
                         Text(verbatim: InsightsFormat.cost(m.costUSD)).dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textPrimary)
-                            .frame(minWidth: DS.Space.s10, alignment: .trailing)
+                            .frame(minWidth: DS.Space.s8, alignment: .trailing)
                     }
                     ShareBar(fraction: m.share)
                 }
@@ -180,16 +262,15 @@ struct InsightsProviderPane: View {
 
     private var sessionRows: some View {
         let top = max(summary.topSessions.first?.costUSD ?? 0, 0.0001)
-        return VStack(spacing: DS.Space.s2) {
-            ForEach(summary.topSessions) { s in
+        return VStack(spacing: DS.Space.s1_5) {
+            ForEach(summary.topSessions.prefix(4)) { s in
                 VStack(spacing: DS.Space.s1) {
                     HStack(spacing: DS.Space.s1_5) {
                         Text(verbatim: s.label ?? "Session " + String(s.session.prefix(6))).dsFont(DS.Font.small).foregroundStyle(DS.Color.textPrimary).lineLimit(1).truncationMode(.middle)
                         if s.sidechainMessages > 0 { DSBadge("+\(s.sidechainMessages) sub", variant: .mono) }
                         Spacer(minLength: DS.Space.s1)
-                        Text(verbatim: InsightsFormat.tokens(s.counts.fresh)).dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textSecondary)
                         Text(verbatim: InsightsFormat.cost(s.costUSD)).dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textPrimary)
-                            .frame(minWidth: DS.Space.s10, alignment: .trailing)
+                            .frame(minWidth: DS.Space.s8, alignment: .trailing)
                         Text(verbatim: InsightsFormat.ago(s.lastActive, now: now)).dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textTertiary)
                             .frame(minWidth: DS.Space.s6, alignment: .trailing)
                     }
@@ -197,39 +278,5 @@ struct InsightsProviderPane: View {
                 }
             }
         }
-    }
-
-    // MARK: Compacto (só os números principais)
-
-    private var compactBody: some View {
-        VStack(alignment: .leading, spacing: DS.Space.s3) {
-            HStack(spacing: DS.Space.s3) {
-                RingMeter(fraction: summary.fiveHour?.usedFraction, elapsed: nil, estimated: summary.fiveHour?.source == .estimated, caption: "5h", compact: true)
-                VStack(alignment: .leading, spacing: DS.Space.s1) {
-                    HStack(spacing: DS.Space.s1) {
-                        DSAgentLogo(summary.provider.agentKind, size: DS.Space.s3)
-                        Text(verbatim: InsightsFormat.plan(summary.plan?.plan) ?? "").dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
-                    }
-                    Text(verbatim: resetText(summary.fiveHour)).dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textTertiary)
-                }
-            }
-            InsightsStat(label: "7-day", value: summary.sevenDay?.usedFraction.map { InsightsFormat.percent($0) } ?? "–", emphasis: true)
-            TickBar(fraction: summary.sevenDay?.usedFraction, estimated: summary.sevenDay?.source == .estimated)
-            InsightsStat(label: "Today", value: InsightsFormat.cost(summary.todayCostUSD))
-            InsightsStat(label: "Tokens", value: InsightsFormat.tokens(summary.today.fresh))
-        }
-    }
-
-    // MARK: Auxiliares
-
-    private func resetText(_ w: LimitWindow?) -> String {
-        guard let r = w?.resetsAt, r > now else { return "No active window" }
-        return InsightsFormat.duration(r.timeIntervalSince(now))
-    }
-
-    /// Fração do tempo da janela já decorrida, para o cursor de ritmo (só com horário de reset conhecido).
-    private func elapsed(_ w: LimitWindow?, length: TimeInterval) -> Double? {
-        guard let r = w?.resetsAt, r > now else { return nil }
-        return min(1, max(0, 1 - r.timeIntervalSince(now) / length))
     }
 }

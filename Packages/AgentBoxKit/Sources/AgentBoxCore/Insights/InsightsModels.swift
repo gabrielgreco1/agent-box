@@ -76,31 +76,28 @@ public struct UsageBucket: Codable, Hashable, Sendable {
 public enum LimitKind: String, Codable, Sendable { case fiveHour, sevenDay }
 
 public enum LimitSource: String, Codable, Sendable {
-    /// Veio do próprio provedor (status line do Claude, `rate_limits` do rollout do Codex).
+    /// Número exato do provedor: endpoint de uso do Claude Code, `rate_limits` da status line/hooks ou do rollout do Codex.
     case reported
-    /// Estimado a partir do uso local contra o seu pico histórico.
-    case estimated
+    /// Sem número exato do provedor: só os totais locais da janela. A fração fica `nil` (a UI mostra "—"); nunca se estima.
+    case unavailable
 }
 
 /// Uma janela de limite (5 h ou 7 d).
 public struct LimitWindow: Codable, Sendable, Equatable {
     public var kind: LimitKind
     public var source: LimitSource
-    /// 0…1 (pode passar de 1 se o provedor reportar). `nil` = sem referência para estimar.
+    /// 0…1 (pode passar de 1 se o provedor reportar). `nil` = sem número exato.
     public var usedFraction: Double?
     public var resetsAt: Date?
     public var startedAt: Date?
     public var counts: TokenCounts
     public var costUSD: Double
     public var messages: Int
-    /// Estimativa: o uso atual passou o pico anterior (a fração fica em 1).
-    public var exceedsPeak: Bool
 
     public init(kind: LimitKind, source: LimitSource, usedFraction: Double?, resetsAt: Date?, startedAt: Date? = nil,
-                counts: TokenCounts = .zero, costUSD: Double = 0, messages: Int = 0, exceedsPeak: Bool = false) {
+                counts: TokenCounts = .zero, costUSD: Double = 0, messages: Int = 0) {
         self.kind = kind; self.source = source; self.usedFraction = usedFraction; self.resetsAt = resetsAt
         self.startedAt = startedAt; self.counts = counts; self.costUSD = costUSD; self.messages = messages
-        self.exceedsPeak = exceedsPeak
     }
 }
 
@@ -161,6 +158,7 @@ public struct ProviderSummary: Codable, Sendable, Equatable {
     public var sevenDay: LimitWindow?
     public var today: TokenCounts
     public var todayCostUSD: Double
+    public var todayMessages: Int
     public var week: TokenCounts
     public var weekCostUSD: Double
     /// 24 posições (hora local do dia), peso = tokens novos dos últimos 14 dias.
@@ -174,7 +172,7 @@ public struct ProviderSummary: Codable, Sendable, Equatable {
 
     public static func empty(_ provider: InsightsProvider, at date: Date = Date()) -> ProviderSummary {
         ProviderSummary(provider: provider, generatedAt: date, plan: nil, fiveHour: nil, sevenDay: nil, today: .zero,
-                        todayCostUSD: 0, week: .zero, weekCostUSD: 0, hourOfDay: Array(repeating: 0, count: 24),
+                        todayCostUSD: 0, todayMessages: 0, week: .zero, weekCostUSD: 0, hourOfDay: Array(repeating: 0, count: 24),
                         dailyWeek: [], topModels: [], topSessions: [], unpricedModels: [], hasData: false)
     }
 }

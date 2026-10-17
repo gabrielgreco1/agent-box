@@ -261,6 +261,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `rightPanel.module.<id>.minimize`
 - `rightPanel.divider`
 - `rightPanel.insights.empty`
+- `rightPanel.insights.showExactLimits`
 - `tabs.filesToggle`
 - `tabs.insightsToggle`
 
@@ -819,3 +820,4 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `files.copyPath` | Copy Path | — | slice1 |
 | `files.openIn` | Open in… | — | slice1 |
 | `files.openInTarget` | Open in Target | — | slice1 |
+| `insights.showExactLimits` | Show Exact Limits | — | slice1 |

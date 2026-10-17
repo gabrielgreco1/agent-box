@@ -57,6 +57,19 @@ import Testing
         #expect(snap.planType == "plus")
     }
 
+    @Test func codexLimitsAcceptRelativeResetsInSeconds() {
+        let t = InsightsFixtures.now
+        let line = "{\"timestamp\":\"\(InsightsFixtures.iso(t))\",\"type\":\"event_msg\",\"payload\":{\"type\":\"token_count\",\"info\":null,"
+            + "\"rate_limits\":{\"primary\":{\"used_percent\":67.5,\"window_minutes\":300,\"resets_in_seconds\":6840},"
+            + "\"secondary\":{\"used_percent\":88,\"window_minutes\":10080,\"resets_in_seconds\":172800},\"plan_type\":\"pro\"}}}"
+        guard case .limits(let snap)? = CodexRolloutParser.parse(Data(line.utf8)).first else { Issue.record("sem limites"); return }
+        #expect(snap.primary?.resetsAt == t.addingTimeInterval(6840))
+        #expect(snap.secondary?.resetsAt == t.addingTimeInterval(172_800))
+        let reported = CodexRateLimits.reported(snap, now: t)
+        #expect(reported.fiveHour?.usedFraction == 0.675)
+        #expect(reported.sevenDay?.usedFraction == 0.88)
+    }
+
     @Test func codexLimitsNullAndCorruptLines() {
         let t = InsightsFixtures.now
         let nulls = InsightsFixtures.codexTokens(input: 10, cached: 0, output: 1, at: t)

@@ -232,6 +232,28 @@
         }
       }
     },
+    "5 h": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 h"
+          }
+        }
+      }
+    },
+    "7 d": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7 d"
+          }
+        }
+      }
+    },
     "7-day": {
       "extractionState": "manual",
       "localizations": {
@@ -1992,6 +2014,39 @@
         }
       }
     },
+    "Exact limits are on.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exact limits are on."
+          }
+        }
+      }
+    },
+    "Exact limits come from your Claude Code sign-in. Agent Box reads it only after you click.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exact limits come from your Claude Code sign-in. Agent Box reads it only after you click."
+          }
+        }
+      }
+    },
+    "Exact limits unavailable right now": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exact limits unavailable right now"
+          }
+        }
+      }
+    },
     "Executable": {
       "extractionState": "manual",
       "localizations": {
@@ -3400,6 +3455,17 @@
         }
       }
     },
+    "Open Claude Code to refresh": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Claude Code to refresh"
+          }
+        }
+      }
+    },
     "Open System Settings": {
       "extractionState": "manual",
       "localizations": {
@@ -3763,6 +3829,17 @@
         }
       }
     },
+    "Reading exact limits…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading exact limits…"
+          }
+        }
+      }
+    },
     "Reading this Mac…": {
       "extractionState": "manual",
       "localizations": {
@@ -3972,6 +4049,17 @@
         }
       }
     },
+    "Resets in %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resets in %@"
+          }
+        }
+      }
+    },
     "Restart": {
       "extractionState": "manual",
       "localizations": {
@@ -4170,6 +4258,17 @@
         }
       }
     },
+    "Select a file to read it here.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select a file to read it here."
+          }
+        }
+      }
+    },
     "Select a project": {
       "extractionState": "manual",
       "localizations": {
@@ -4221,6 +4320,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Session"
+          }
+        }
+      }
+    },
+    "Session (5 h)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Session (5 h)"
           }
         }
       }
@@ -4375,6 +4485,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Show Session Folder"
+          }
+        }
+      }
+    },
+    "Show exact limits": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show exact limits"
           }
         }
       }
@@ -5233,6 +5354,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Waiting on 1 subagent"
+          }
+        }
+      }
+    },
+    "Week": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Week"
+          }
+        }
+      }
+    },
+    "Weekly (7 d)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly (7 d)"
           }
         }
       }

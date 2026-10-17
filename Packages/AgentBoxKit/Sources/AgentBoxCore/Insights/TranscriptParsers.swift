@@ -115,8 +115,8 @@ public enum CodexRolloutParser {
                 if !counts.isEmpty { out.append(.tokenTotals(counts, at: ts)) }
             }
             if let limits = payload["rate_limits"] as? [String: Any] {
-                let primary = window(limits["primary"])
-                let secondary = window(limits["secondary"])
+                let primary = window(limits["primary"], observedAt: ts)
+                let secondary = window(limits["secondary"], observedAt: ts)
                 if primary != nil || secondary != nil {
                     out.append(.limits(CodexLimitSnapshot(observedAt: ts, primary: primary, secondary: secondary,
                                                           planType: limits["plan_type"] as? String)))
@@ -128,14 +128,18 @@ public enum CodexRolloutParser {
         }
     }
 
-    private static func window(_ any: Any?) -> CodexLimitWindow? {
+    /// `resets_at` (epoch ou ISO) ou, em versões antigas do Codex, `resets_in_seconds` relativo ao momento da leitura.
+    private static func window(_ any: Any?, observedAt: Date) -> CodexLimitWindow? {
         guard let d = any as? [String: Any], let used = (d["used_percent"] as? NSNumber)?.doubleValue else { return nil }
         var resets: Date?
         if let at = (d["resets_at"] as? NSNumber)?.doubleValue {
             resets = Date(timeIntervalSince1970: at)
         } else if let at = d["resets_at"] as? String {
             resets = ISOTimestamp.parse(at)
+        } else if let secs = (d["resets_in_seconds"] as? NSNumber)?.doubleValue {
+            resets = observedAt.addingTimeInterval(secs)
         }
-        return CodexLimitWindow(usedPercent: used, windowMinutes: (d["window_minutes"] as? NSNumber)?.intValue, resetsAt: resets)
+        return CodexLimitWindow(usedPercent: used, windowMinutes: (d["window_minutes"] as? NSNumber)?.intValue
+                                ?? (d["window_duration_mins"] as? NSNumber)?.intValue, resetsAt: resets)
     }
 }

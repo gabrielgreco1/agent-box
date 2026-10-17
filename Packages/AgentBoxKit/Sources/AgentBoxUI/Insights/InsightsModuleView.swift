@@ -2,8 +2,8 @@ import AgentBoxCore
 import AgentBoxDesignSystem
 import SwiftUI
 
-/// Raiz do módulo Insights do painel direito. `compact` força o modo compacto; abaixo de `InsightsMetrics.compactWidth`
-/// ele também liga sozinho (só os números principais, abas só com ícone).
+/// Raiz do módulo Insights do painel direito. Adapta-se continuamente ao espaço (`InsightsAdaptive`): duas colunas, uma coluna ou
+/// só barras e números principais; `compact` força o modo compacto e abaixo de `InsightsMetrics.iconTabsBelowWidth` as abas viram ícones.
 public struct InsightsModuleView: View {
     @Bindable private var model: InsightsModel
     private let forceCompact: Bool
@@ -16,20 +16,22 @@ public struct InsightsModuleView: View {
 
     public var body: some View {
         GeometryReader { proxy in
-            let compact = forceCompact || proxy.size.width < InsightsMetrics.compactWidth
+            let narrow = forceCompact || proxy.size.width < InsightsMetrics.iconTabsBelowWidth
+            // Compacto forçado (contêiner estreito) vale como largura abaixo do breakpoint médio.
+            let width = forceCompact ? min(proxy.size.width, InsightsMetrics.mediumMinWidth - 1) : proxy.size.width
+            let gutter = narrow ? DS.Space.s2 : DS.Space.s3
             VStack(spacing: .zero) {
-                tabStrip(compact: compact)
-                    .padding(.horizontal, compact ? DS.Space.s2 : DS.Space.s3)
+                tabStrip(compact: narrow)
+                    .padding(.horizontal, gutter)
                     .padding(.vertical, DS.Space.s2)
-                ScrollView {
-                    pane(compact: compact)
-                        .padding(.horizontal, compact ? DS.Space.s2 : DS.Space.s3)
-                        .padding(.bottom, DS.Space.s4)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .scrollIndicators(.hidden)
+                    .layoutProbe("tabs")
+                pane(width: width)
+                    .padding(.horizontal, gutter)
+                    .padding(.bottom, DS.Space.s2)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }
-            .frame(width: proxy.size.width, height: proxy.size.height)
+            .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topLeading)
+            .layoutProbeRoot()
         }
         .background(DS.Color.panel)
         .onAppear { model.viewDidAppear() }
@@ -37,13 +39,16 @@ public struct InsightsModuleView: View {
         .accessibilityElement(children: .contain)
     }
 
-    @ViewBuilder private func pane(compact: Bool) -> some View {
+    @ViewBuilder private func pane(width: CGFloat) -> some View {
         switch model.tab {
-        case .claude: InsightsProviderPane(summary: model.snapshot.claude, now: model.now, compact: compact, scanning: model.snapshot.scanning)
-        case .codex: InsightsProviderPane(summary: model.snapshot.codex, now: model.now, compact: compact, scanning: model.snapshot.scanning)
+        case .claude:
+            InsightsProviderPane(summary: model.snapshot.claude, now: model.now, width: width,
+                                 limitsStatus: model.snapshot.claudeLimits, scanning: model.snapshot.scanning)
+        case .codex:
+            InsightsProviderPane(summary: model.snapshot.codex, now: model.now, width: width, scanning: model.snapshot.scanning)
         case .machine:
-            InsightsMachinePane(snapshot: model.snapshot, history: model.history, sortByMemory: $model.appsSortedByMemory, compact: compact)
-        case .proxy: InsightsProxyPane(proxies: model.snapshot.proxies, compact: compact)
+            InsightsMachinePane(snapshot: model.snapshot, history: model.history, sortByMemory: $model.appsSortedByMemory, width: width)
+        case .proxy: InsightsProxyPane(proxies: model.snapshot.proxies, width: width)
         }
     }
 

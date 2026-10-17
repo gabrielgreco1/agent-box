@@ -21,6 +21,7 @@ struct FileViewerView: View {
             if controller.search.isActive { searchBar }
             content
         }
+        .layoutProbe("viewer")
         .a11y(.rightPanelFilesViewer, kind: "container", label: viewer.name, value: viewer.path)
     }
 

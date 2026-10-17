@@ -10,9 +10,16 @@ public struct InsightsConfig: Sendable {
     public var retentionDays: Int
     public var machineInterval: TimeInterval
     public var usageRefreshInterval: TimeInterval
+    /// Intervalo do endpoint de limites exatos do Claude (só roda com o módulo visível e depois do consentimento).
+    public var exactLimitsInterval: TimeInterval
+    /// Arquivo que guarda só a decisão "Show exact limits". Padrão: ao lado do livro-razão.
+    public var exactLimitsConsentURL: URL
 
     public init(claudeProjects: URL, codexSessions: URL, ledgerURL: URL, claudeRateLimitsURL: URL, priceTableURL: URL? = nil,
-                retentionDays: Int = 35, machineInterval: TimeInterval = 1.5, usageRefreshInterval: TimeInterval = 60) {
+                retentionDays: Int = 35, machineInterval: TimeInterval = 1.5, usageRefreshInterval: TimeInterval = 60,
+                exactLimitsInterval: TimeInterval = 60, exactLimitsConsentURL: URL? = nil) {
+        self.exactLimitsInterval = exactLimitsInterval
+        self.exactLimitsConsentURL = exactLimitsConsentURL ?? ledgerURL.deletingLastPathComponent().appendingPathComponent("exact-limits-consent.json")
         self.claudeProjects = claudeProjects; self.codexSessions = codexSessions; self.ledgerURL = ledgerURL
         self.claudeRateLimitsURL = claudeRateLimitsURL; self.priceTableURL = priceTableURL
         self.retentionDays = retentionDays; self.machineInterval = machineInterval; self.usageRefreshInterval = usageRefreshInterval
@@ -48,6 +55,7 @@ public actor InsightsService {
     private let calendar: Calendar
     private let clock: @Sendable () -> Date
     private let sampler: MachineSampler
+    private let limitsClient: ClaudeLimitsClient
 
     private var ledger = UsageLedger()
     private var snapshot = InsightsSnapshot.empty
@@ -59,6 +67,9 @@ public actor InsightsService {
     private var started = false
     private var machineTask: Task<Void, Never>?
     private var usageTask: Task<Void, Never>?
+    private var limitsTask: Task<Void, Never>?
+    private var exactEnabled = false
+    private var exactLimits: ClaudeExactLimits?
     private var watcher: TreeWatcher?
     private var plans: (claude: PlanInfo?, codex: PlanInfo?, at: Date?) = (nil, nil, nil)
     private var agentRefs: [AgentSessionRef] = []
@@ -70,9 +81,11 @@ public actor InsightsService {
 
     public init(config: InsightsConfig, agents: (any InsightsAgentSource)? = nil, proxies: (any InsightsProxySource)? = nil,
                 computers: (any InsightsComputerSource)? = nil, runner: any InsightsCommandRunner = SystemInsightsCommandRunner(),
+                limitsClient: ClaudeLimitsClient = ClaudeLimitsClient(),
                 calendar: Calendar = .current, clock: @escaping @Sendable () -> Date = { Date() }) {
         self.config = config; self.agents = agents; self.proxies = proxies; self.computers = computers
         self.runner = runner; self.calendar = calendar; self.clock = clock
+        self.limitsClient = limitsClient
         self.sampler = MachineSampler()
     }
 
@@ -107,6 +120,8 @@ public actor InsightsService {
         guard !started else { return }
         started = true
         ledger = UsageLedgerStore.load(from: config.ledgerURL)
+        exactEnabled = ExactLimitsConsentStore(url: config.exactLimitsConsentURL).load()
+        snapshot.claudeLimits = exactEnabled ? .loading : .notEnabled
         if let url = config.priceTableURL { prices = PriceTable.load(from: url) }
         recompute()
         publish()
@@ -122,6 +137,7 @@ public actor InsightsService {
     public func stop() {
         machineTask?.cancel(); machineTask = nil
         usageTask?.cancel(); usageTask = nil
+        limitsTask?.cancel(); limitsTask = nil
         watcher?.stop(); watcher = nil
         for c in subscribers.values { c.finish() }
         subscribers.removeAll()
@@ -151,10 +167,44 @@ public actor InsightsService {
                     await self.refreshUsage()
                 }
             }
+            limitsTask = Task { [weak self] in
+                while !Task.isCancelled {
+                    guard let self else { return }
+                    await self.refreshExactLimits()
+                    let interval = self.config.exactLimitsInterval
+                    try? await Task.sleep(for: .seconds(interval))
+                }
+            }
         } else {
             machineTask?.cancel(); machineTask = nil
             usageTask?.cancel(); usageTask = nil
+            limitsTask?.cancel(); limitsTask = nil
         }
+    }
+
+    // MARK: Limites exatos do Claude
+
+    /// Chamado pelo clique explícito em "Show exact limits": grava a decisão (só ela) e faz a primeira leitura do Keychain.
+    public func enableExactLimits() async {
+        ExactLimitsConsentStore(url: config.exactLimitsConsentURL).save(true)
+        exactEnabled = true
+        snapshot.claudeLimits = .loading
+        publish()
+        await refreshExactLimits()
+    }
+
+    /// Uma leitura do endpoint de uso. Sem consentimento não faz nada (o Keychain nunca é tocado).
+    public func refreshExactLimits() async {
+        guard exactEnabled else { return }
+        switch await limitsClient.fetch() {
+        case .success(let limits):
+            exactLimits = limits
+            snapshot.claudeLimits = .live(fetchedAt: limits.fetchedAt)
+        case .needsClaudeRefresh: snapshot.claudeLimits = .needsClaudeRefresh
+        case .unavailable: snapshot.claudeLimits = .unavailable
+        }
+        recompute()
+        publish()
     }
 
     private func usageChanged() async {
@@ -283,14 +333,19 @@ public actor InsightsService {
         let now = clock()
         var titles: [String: String] = [:]
         for ref in agentRefs { for id in ref.nativeConversationIDs { titles[id] = ref.title } }
-        let claudeSnapshot = ClaudeRateLimitCapture.load(from: config.claudeRateLimitsURL)
+        // Prioridade: endpoint exato > `rate_limits` capturados da status line/hooks. Sem nenhum dos dois não há fração (nunca estima).
+        var claudeReported = ClaudeRateLimitCapture.reported(ClaudeRateLimitCapture.load(from: config.claudeRateLimitsURL), now: now)
+        if let exact = exactLimits?.reported(now: now) {
+            claudeReported.fiveHour = exact.fiveHour ?? claudeReported.fiveHour
+            claudeReported.sevenDay = exact.sevenDay ?? claudeReported.sevenDay
+        }
         let all = Array(ledger.buckets.values)
 
         func input(_ p: InsightsProvider, reported: ReportedLimits, plan: PlanInfo?) -> UsageAggregator.Input {
             UsageAggregator.Input(provider: p, buckets: all, now: now, calendar: calendar, prices: prices, reported: reported,
                                   plan: plan, sessionLabels: ledger.sessionLabels, sessionTitles: titles)
         }
-        snapshot.claude = UsageAggregator.summarize(input(.claude, reported: ClaudeRateLimitCapture.reported(claudeSnapshot, now: now), plan: plans.claude))
+        snapshot.claude = UsageAggregator.summarize(input(.claude, reported: claudeReported, plan: plans.claude))
         var codexPlan = plans.codex
         if codexPlan?.plan == nil, let t = ledger.codexLimits?.planType { codexPlan?.plan = t }
         snapshot.codex = UsageAggregator.summarize(input(.codex, reported: CodexRateLimits.reported(ledger.codexLimits, now: now), plan: codexPlan))
@@ -298,6 +353,7 @@ public actor InsightsService {
         snapshot.proxies = proxySummaries
         snapshot.computers = computerUsage
         snapshot.dockerAvailable = dockerAvailable
+        if !exactEnabled { snapshot.claudeLimits = .notEnabled }
     }
 
     func agentRows(all: [UsageBucket], now: Date) -> [AgentSessionUsage] {

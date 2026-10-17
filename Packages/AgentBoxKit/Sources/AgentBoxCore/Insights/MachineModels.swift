@@ -164,6 +164,21 @@ public struct ProxyUsageSummary: Codable, Sendable, Equatable, Identifiable {
     }
 }
 
+/// Estado da fonte exata dos limites do Claude (endpoint de uso do Claude Code). O app só toca o Keychain depois do clique
+/// explícito em "Show exact limits" (P23); a decisão é guardada, o token nunca.
+public enum ClaudeLimitsStatus: Sendable, Equatable {
+    /// O usuário ainda não pediu os limites exatos: nada leu o Keychain.
+    case notEnabled
+    /// Habilitado; aguardando a primeira resposta.
+    case loading
+    /// Última leitura bem-sucedida.
+    case live(fetchedAt: Date)
+    /// Token do Claude Code expirado ou recusado: abrir o Claude Code o renova.
+    case needsClaudeRefresh
+    /// Sem credencial do Claude Code, sem rede ou resposta inesperada. A última leitura boa (se houver) segue valendo até o reset.
+    case unavailable
+}
+
 /// Estado completo do módulo, publicado pelo `InsightsService`.
 public struct InsightsSnapshot: Sendable, Equatable {
     public var generatedAt: Date
@@ -175,13 +190,15 @@ public struct InsightsSnapshot: Sendable, Equatable {
     public var agents: [AgentSessionUsage]
     public var proxies: [ProxyUsageSummary]
     public var scanning: Bool
+    public var claudeLimits: ClaudeLimitsStatus
 
     public init(generatedAt: Date = Date(), claude: ProviderSummary = .empty(.claude), codex: ProviderSummary = .empty(.codex),
                 machine: MachineSnapshot? = nil, computers: [ComputerUsage] = [], dockerAvailable: Bool = false,
-                agents: [AgentSessionUsage] = [], proxies: [ProxyUsageSummary] = [], scanning: Bool = false) {
+                agents: [AgentSessionUsage] = [], proxies: [ProxyUsageSummary] = [], scanning: Bool = false,
+                claudeLimits: ClaudeLimitsStatus = .notEnabled) {
         self.generatedAt = generatedAt; self.claude = claude; self.codex = codex; self.machine = machine
         self.computers = computers; self.dockerAvailable = dockerAvailable; self.agents = agents
-        self.proxies = proxies; self.scanning = scanning
+        self.proxies = proxies; self.scanning = scanning; self.claudeLimits = claudeLimits
     }
 
     public static let empty = InsightsSnapshot()
