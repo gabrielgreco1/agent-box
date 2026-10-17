@@ -302,6 +302,8 @@ extension A11yID {
     public static let overlayConfirmDeleteDeleteRuns = A11yID(unchecked: "overlay.confirmDelete.deleteRuns")
     /// `overlay.confirmDelete.dontAsk`
     public static let overlayConfirmDeleteDontAsk = A11yID(unchecked: "overlay.confirmDelete.dontAsk")
+    /// `overlay.confirmDelete.changes`
+    public static let overlayConfirmDeleteChanges = A11yID(unchecked: "overlay.confirmDelete.changes")
     /// `overlay.confirmDelete.cancel`
     public static let overlayConfirmDeleteCancel = A11yID(unchecked: "overlay.confirmDelete.cancel")
     /// `overlay.confirmDelete.confirm`
@@ -1399,6 +1401,7 @@ extension A11yID {
         A11yIDSpec(pattern: "overlay.confirmDelete.trashFolder", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmDelete.deleteRuns", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmDelete.dontAsk", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmDelete.changes", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmDelete.cancel", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmDelete.confirm", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmRemoveProject", surface: "Dialogs"),

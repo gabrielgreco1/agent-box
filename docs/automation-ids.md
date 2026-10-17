@@ -350,6 +350,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `overlay.confirmDelete.trashFolder`
 - `overlay.confirmDelete.deleteRuns`
 - `overlay.confirmDelete.dontAsk`
+- `overlay.confirmDelete.changes`
 - `overlay.confirmDelete.cancel`
 - `overlay.confirmDelete.confirm`
 - `overlay.confirmRemoveProject`
@@ -477,6 +478,11 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `session.moveFolderIntoProject` | Move Folder into Project… | — | v11 |
 | `session.archive` | Archive Session… | — | slice1 |
 | `session.delete` | Delete Session… | ⇧⌘⌫ | slice1 |
+| `session.restore` | Restore Session | — | slice1 |
+| `session.undoArchive` | Undo (toast `Session archived.`) | — | slice1 |
+| `session.undoDelete` | Undo (toast `Session deleted.`) | — | slice1 |
+| `item.openIn` | Open in… | — | slice1 |
+| `item.openInTarget` | Open in <app> (item do menu `Open in…`) | — | slice1 |
 | `session.locateFolder` | Locate Folder… | — | slice1 |
 | `sidebar.revealCurrent` | Reveal Current Session | — | slice1 |
 | `session.nextNeedingAttention` | Next Needing Attention | ⇧⌘A | slice2 |

@@ -62,6 +62,8 @@ public final class AppEnvironment {
     private var quickLaunch: QuickLaunchController?
     /// Composer ⌘N (T1-20): overlay, ações `composer.*` e `session.new*`.
     private(set) var composer: ComposerController?
+    /// "Open in…" e "Open in Editor" (T1-27).
+    private(set) var openIn: OpenInController?
     private let environmentVariables: [String: String]
     private let log = LogFacade(.app, category: "ui")
 
@@ -225,6 +227,9 @@ public final class AppEnvironment {
             runsRoot: { CleanSessionPaths.runsRoot(isolatedHome: isolatedHome) }, automationEnabled: automationEnabled)
         cleanSessions = clean
         do { try clean.register(in: registry) } catch { log.publicError("duplicate clean session registration") }
+        let open = OpenInController(sidebar: sidebar, overlays: overlays, toasts: toasts, elements: elements)
+        openIn = open
+        do { try open.register(in: registry) } catch { log.publicError("duplicate open-in registration") }
         let quick = QuickLaunchController(workspace: workspace, overlays: overlays, elements: elements, settings: settings)
         quickLaunch = quick
         do { try quick.register(in: registry) } catch { log.publicError("duplicate quick launch registration") }
@@ -334,6 +339,7 @@ public final class AppEnvironment {
             }
             launcher?.attach(store: opened)
             cleanSessions?.attach(store: opened)
+            openIn?.attach(store: opened)
             await restoreSessions(store: opened)
             await composer?.attach(store: opened)
             // A evidência de atenção semeia depois do restore: os terminais "running" de mentira não viram `interrupted`.

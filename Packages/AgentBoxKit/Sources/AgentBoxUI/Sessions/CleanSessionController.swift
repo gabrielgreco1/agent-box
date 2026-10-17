@@ -48,8 +48,14 @@ final class CleanSessionController {
     var picker: any FolderPicking = CleanFolderPicker()
     /// Move para o Lixo do macOS (recuperável); os testes trocam por um destino temporário.
     var trashItem: (URL) throws -> Void = CleanSessionFolders.systemTrash
+    /// Checagem prévia e remoção de worktree (06 §5.2); os testes trocam pelo serviço de um sandbox.
+    var removal = SessionRemovalService()
     private var store: AgentBoxStore?
     private var pendingArchive: UUID?
+    /// Toast de Undo vivo por sessão (arquivar e apagar), para fechar o toast quando o Undo é usado.
+    private var undoToasts: [UUID: UUID] = [:]
+    /// Registros apagados nos últimos segundos, para o Undo do toast `Session deleted.` (restaura só o registro).
+    private var deletedSessions: [UUID: Session] = [:]
     private(set) var pendingDelete: DeleteSessionState?
     private(set) var pendingMove: MoveToProjectState?
     private weak var registry: ActionRegistry?
@@ -146,7 +152,24 @@ final class CleanSessionController {
         archived.lifecycle = .archived
         archived.archivedAt = Date()
         try await store.save(archived)
-        toasts.show(kind: .success, title: String(localized: "Session archived.", bundle: .module))
+        undoToasts[session.id] = toasts.show(
+            kind: .success, title: String(localized: "Session archived.", bundle: .module),
+            action: ToastAction(.sessionUndoArchive, title: String(localized: "Undo", bundle: .module), argument: .select(session.id.uuidString)),
+            undo: true)
+    }
+
+    /// Desarquiva (menu `Restore Session`, Undo do toast): volta a `active`; os terminais ficam parados (03 §24.2).
+    @discardableResult
+    func restore(_ id: UUID, select: Bool) async throws -> Session {
+        guard let store, var session = try await store.session(id: id), session.lifecycle == .archived || session.archivedAt != nil else {
+            throw ActionError.failed(.sessionRestore, message: "Session not found")
+        }
+        session.lifecycle = .active
+        session.archivedAt = nil
+        try await store.save(session)
+        if let toast = undoToasts.removeValue(forKey: id) { toasts.dismiss(toast) }
+        if select { _ = sidebar.select(id) }
+        return session
     }
 
     // MARK: Apagar
@@ -155,20 +178,108 @@ final class CleanSessionController {
     /// (recuperável) e, se pedido, apaga os run folders (AC-1108). Pasta escolhida nunca é tocada (AC-1105).
     func delete(_ state: DeleteSessionState) async throws {
         guard let store, let session = sidebar.session(state.sessionID) else { throw ActionError.failed(.dialogDeleteSessionConfirm, message: "Session not found") }
-        sidebar.leave(session: session.id)
-        await workspace.stopTerminals(ofSession: session.id)
+        var detail: String?
+        if state.isWorktree {
+            // Primeiro o disco: se o Git recusar, a sessão e o registro ficam como estavam.
+            await workspace.stopTerminals(ofSession: session.id)
+            detail = try await removeWorktree(of: session, state: state)
+            sidebar.leave(session: session.id)
+        } else {
+            sidebar.leave(session: session.id)
+            await workspace.stopTerminals(ofSession: session.id)
+        }
         try await store.deleteSession(id: session.id)
+        if state.isWorktree, let worktreeID = session.worktreeID { try await store.deleteWorktree(id: worktreeID) }
+        var trashedFolder = false
         if state.managedFolder, state.trashFolder {
             do {
                 try CleanSessionFolders.trash(folder: session.folderPath, managed: session.managedFolder, sessionsRoot: sessionsRoot(), mover: trashItem)
+                trashedFolder = true
             } catch {
                 log.error("could not trash session folder: \(error)")
                 toasts.show(kind: .error, title: String(localized: "Couldn't move the folder to the Trash.", bundle: .module), detail: error.localizedDescription)
             }
         }
         if state.deleteRuns { _ = try? CleanSessionFolders.deleteRunFolders(forSession: session.id, runsRoot: runsRoot()) }
-        if state.dontAsk, let registry { _ = try? await registry.perform(.settingsGeneralConfirmDeleteSession, .set("off")) }
-        toasts.show(kind: .success, title: String(localized: "Session deleted.", bundle: .module))
+        if state.dontAsk, state.showsDontAsk, let registry { _ = try? await registry.perform(.settingsGeneralConfirmDeleteSession, .set("off")) }
+        // Undo restaura só o registro: não é oferecido quando a pasta saiu do disco (worktree) ou foi para o Lixo.
+        if state.isWorktree || trashedFolder {
+            toasts.show(kind: .success, title: String(localized: "Session deleted.", bundle: .module), detail: detail)
+        } else {
+            deletedSessions[session.id] = session
+            undoToasts[session.id] = toasts.show(
+                kind: .success, title: String(localized: "Session deleted.", bundle: .module),
+                action: ToastAction(.sessionUndoDelete, title: String(localized: "Undo", bundle: .module), argument: .select(session.id.uuidString)),
+                undo: true)
+        }
+    }
+
+    /// Remove o worktree da sessão pelo `GitService`. Relê o estado antes: se surgiu trabalho novo desde que o diálogo listou o que se
+    /// perde, não apaga (a confirmação não cobre o que o usuário não viu). `force` só vale para o que o diálogo mostrou.
+    private func removeWorktree(of session: Session, state: DeleteSessionState) async throws -> String? {
+        let action = ActionID.dialogDeleteSessionConfirm
+        guard let worktree = sidebar.worktree(of: session), let project = sidebar.project(session.projectID ?? UUID()), let shown = state.preview else {
+            throw ActionError.failed(action, message: "Worktree not found")
+        }
+        let repository = URL(fileURLWithPath: project.rootPath, isDirectory: true)
+        let path = URL(fileURLWithPath: worktree.path, isDirectory: true)
+        do {
+            let fresh = try await removal.preview(repositoryURL: repository, worktreePath: path)
+            if fresh.uncommittedFiles > shown.uncommittedFiles || fresh.unpublished > shown.unpublished {
+                toasts.show(kind: .error, title: String(localized: "The worktree changed.", bundle: .module),
+                            detail: String(localized: "Review what will be lost and delete again.", bundle: .module))
+                throw ActionError.failed(action, message: "The worktree changed")
+            }
+            let outcome = try await removal.remove(
+                repositoryURL: repository, worktreePath: path, deleteBranch: !state.keepBranch && state.showsKeepBranch, force: shown.hasUncommittedChanges)
+            if outcome.branchNotMerged, let branch = outcome.branch {
+                return String(localized: "The branch \"\(branch)\" isn't merged, so it was kept.", bundle: .module)
+            }
+            return nil
+        } catch let error as ActionError {
+            throw error
+        } catch {
+            log.error("could not remove worktree: \(error)")
+            toasts.show(kind: .error, title: String(localized: "Couldn't delete the worktree.", bundle: .module), detail: error.localizedDescription)
+            throw ActionError.failed(action, message: error.localizedDescription)
+        }
+    }
+
+    /// Lê o worktree antes do diálogo (06 §5.2). Worktree que o Git já não conhece e que não existe no disco só perde o registro.
+    func deleteState(for session: Session) async throws -> DeleteSessionState {
+        guard session.kind == .worktree else {
+            return DeleteSessionState(sessionID: session.id, title: session.title, managedFolder: session.kind == .clean && session.managedFolder)
+        }
+        guard let worktree = sidebar.worktree(of: session), let project = sidebar.project(session.projectID ?? UUID()) else {
+            throw ActionError.failed(.sessionDelete, message: "Worktree not found")
+        }
+        let path = URL(fileURLWithPath: worktree.path, isDirectory: true)
+        let preview: SessionRemovalPreview
+        do {
+            preview = try await removal.preview(repositoryURL: URL(fileURLWithPath: project.rootPath, isDirectory: true), worktreePath: path)
+        } catch {
+            guard !SessionFolderProbe.isDirectory(path.path) else {
+                log.error("could not inspect worktree: \(error)")
+                toasts.show(kind: .error, title: String(localized: "Couldn't check the worktree.", bundle: .module), detail: error.localizedDescription)
+                throw ActionError.failed(.sessionDelete, message: error.localizedDescription)
+            }
+            preview = SessionRemovalPreview(worktreePath: path.path, branch: nil, missingOnDisk: true)
+        }
+        return DeleteSessionState(
+            sessionID: session.id, title: session.title, managedFolder: false, isWorktree: true,
+            branch: preview.branch ?? worktree.branch, preview: preview)
+    }
+
+    func undoDelete(_ id: UUID) async throws {
+        guard let store, let session = deletedSessions.removeValue(forKey: id) else { throw ActionError.failed(.sessionUndoDelete, message: "Session not found") }
+        do {
+            try await store.save(session)
+        } catch {
+            toasts.show(kind: .error, title: String(localized: "Couldn't restore the session.", bundle: .module), detail: error.localizedDescription)
+            throw ActionError.failed(.sessionUndoDelete, message: error.localizedDescription)
+        }
+        if let toast = undoToasts.removeValue(forKey: id) { toasts.dismiss(toast) }
+        _ = sidebar.select(id)
     }
 
     // MARK: Promover
@@ -224,15 +335,18 @@ final class CleanSessionController {
         }
 
         // Apagar (03 §16.5)
+        func flag(_ arg: ActionArgument, current: Bool) -> Bool {
+            switch arg.value {
+            case "on": true
+            case "off": false
+            default: !current
+            }
+        }
         try registry.register(.sessionDelete) { [unowned self] arg in
             let session = try target(arg, .sessionDelete)
-            guard session.kind == .clean else {
-                toasts.show(kind: .info, title: String(localized: "Deleting worktree and project sessions isn't available yet.", bundle: .module),
-                            detail: String(localized: "Archive it instead.", bundle: .module))
-                return "unsupported"
-            }
-            let state = DeleteSessionState(sessionID: session.id, title: session.title, managedFolder: session.managedFolder)
-            guard settings.settings.general.confirmDeleteSession else {
+            let state = try await deleteState(for: session)
+            // Sem perda de dados e com a confirmação desligada em Settings, apaga direto; com perda, o diálogo sempre aparece.
+            if !settings.settings.general.confirmDeleteSession, !state.losesData {
                 try await delete(state)
                 return "deleted"
             }
@@ -241,12 +355,29 @@ final class CleanSessionController {
             if !opened { pendingDelete = nil }
             return opened ? "confirming" : "busy"
         }
-        func flag(_ arg: ActionArgument, current: Bool) -> Bool {
-            switch arg.value {
-            case "on": true
-            case "off": false
-            default: !current
+        try registry.register(.dialogDeleteSessionKeepBranch) { [unowned self] arg in
+            guard let state = pendingDelete, state.showsKeepBranch else { return nil }
+            state.keepBranch = flag(arg, current: state.keepBranch)
+            return state.keepBranch ? "on" : "off"
+        }
+        try registry.register(.sessionRestore) { [unowned self] arg in
+            let id = try target(arg, .sessionRestore).id
+            try await restore(id, select: false)
+            return "restored"
+        }
+        try registry.register(.sessionUndoArchive) { [unowned self] arg in
+            guard arg.kind == .select, let raw = arg.value, let id = UUID(uuidString: raw) else {
+                throw ActionError.failed(.sessionUndoArchive, message: "expected select(<sessionId>)")
             }
+            try await restore(id, select: true)
+            return "restored"
+        }
+        try registry.register(.sessionUndoDelete) { [unowned self] arg in
+            guard arg.kind == .select, let raw = arg.value, let id = UUID(uuidString: raw) else {
+                throw ActionError.failed(.sessionUndoDelete, message: "expected select(<sessionId>)")
+            }
+            try await undoDelete(id)
+            return "restored"
         }
         try registry.register(.dialogDeleteSessionTrashFolder) { [unowned self] arg in
             guard let state = pendingDelete else { return nil }
