@@ -28,7 +28,7 @@ final class ChromeHostingView: NSHostingView<AnyView> {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 }
 
-/// Sidebar (vazia até a T1-13) e centro (landing mínima). Sidebar 280 (220–500), recolhível (⌘B). Painel direito oculto.
+/// Sidebar (T1-13) e centro (landing mínima). Sidebar 280 (220–500), recolhível (⌘B). Painel direito oculto.
 @MainActor
 final class MainSplitViewController: NSSplitViewController {
     private let env: AppEnvironment
@@ -39,7 +39,9 @@ final class MainSplitViewController: NSSplitViewController {
     init(env: AppEnvironment) {
         self.env = env
         let sidebarVC = NSViewController()
-        let sidebarView = ChromeHostingView(content: SidebarView().environment(\.elementStore, env.elements).environment(\.a11yParent, .windowMain))
+        let sidebarView = ChromeHostingView(
+            content: SidebarView(model: env.sidebar).environment(\.elementStore, env.elements).environment(\.actionRegistry, env.registry)
+                .environment(\.a11yParent, .windowMain))
         sidebarView.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
         sidebarVC.view = sidebarView
         let contentVC = NSViewController()
@@ -84,15 +86,6 @@ final class MainSplitViewController: NSSplitViewController {
         } else {
             sidebarItem.animator().isCollapsed = collapsed
         }
-    }
-}
-
-/// Sidebar sem conteúdo (a estrutura é a T1-13): só o fundo `sidebar`.
-struct SidebarView: View {
-    var body: some View {
-        DS.Color.sidebar
-            .ignoresSafeArea()
-            .a11y(.sidebar, kind: "container")
     }
 }
 

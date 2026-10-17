@@ -482,6 +482,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `session.select8` | Previous / Next Session, Select Session 1–9, Focus Session List | ⌘8 | slice1 |
 | `session.select9` | Previous / Next Session, Select Session 1–9, Focus Session List | ⌘9 | slice1 |
 | `sidebar.focus` | Previous / Next Session, Select Session 1–9, Focus Session List | ⇧⌘↑ / ⇧⌘↓ / ⌘1…⌘9 / ⇧⌘0 | slice1 |
+| `session.select` | Select Session (clique no card) | — | slice1 |
+| `session.toggleAgents` | Expand / Collapse Agent Rows (pílula-resumo, → / ← no card) | → / ← | slice1 |
 | `child.askParentToRelaunch` | Ask Parent to Relaunch | — | slice3 |
 | `child.showTranscript` | Show Transcript | — | slice3 |
 | `child.showComputer` | Show Computer | — | slice3 |

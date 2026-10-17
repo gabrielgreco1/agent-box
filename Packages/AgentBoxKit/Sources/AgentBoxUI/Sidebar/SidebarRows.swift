@@ -1,0 +1,480 @@
+import AgentBoxDesignSystem
+import AgentBoxProtocol
+import AppKit
+import SwiftUI
+
+extension ActionRegistry {
+    /// `true` se o controle da ação deve aparecer: a fatia já existe e a tarefa dona já registrou o handler.
+    /// Evita botão morto na sidebar enquanto o fluxo (composer, arquivar, apagar...) ainda não existe (AC-T28).
+    func isOffered(_ id: ActionID) -> Bool {
+        switch availability(of: id) {
+        case .unavailable, .unregistered: false
+        case .disabled, .enabled: true
+        }
+    }
+}
+
+/// Texto com o trecho casado da busca em `warning/20` (M-207).
+struct HighlightedText: View {
+    let text: String
+    let query: String
+    let style: DSTextStyle
+    let color: Color
+
+    var body: some View {
+        Text(attributed)
+            .dsFont(style)
+            .foregroundStyle(color)
+            .lineLimit(1)
+            .truncationMode(.tail)
+    }
+
+    private var attributed: AttributedString {
+        var a = AttributedString(text)
+        let q = query.trimmingCharacters(in: .whitespaces)
+        if !q.isEmpty, let r = a.range(of: q, options: [.caseInsensitive, .diacriticInsensitive]) {
+            a[r].backgroundColor = DS.ColorSpec.warning.scaled(0.2).color
+        }
+        return a
+    }
+}
+
+// MARK: Linha de projeto (03 §2.5)
+
+struct ProjectRowView: View {
+    let model: SidebarModel
+    let data: ProjectSectionData
+    @Environment(\.actionRegistry) private var registry
+    @State private var hovering = false
+
+    var body: some View {
+        let pid = data.id.uuidString
+        ZStack(alignment: .trailing) {
+            ActionButton(.sidebarProjectToggle, id: .sidebarProject(pid), argument: .select(pid)) {
+                HStack(spacing: SidebarMetrics.projectGap) {
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: SidebarMetrics.chevron, weight: .medium))
+                        .foregroundStyle(DS.Color.textSecondary)
+                        .rotationEffect(.degrees(data.collapsed ? -90 : 0))
+                        .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.fast), value: data.collapsed)
+                        .frame(width: SidebarMetrics.chevron, height: SidebarMetrics.chevron)
+                        .a11y(.sidebarProjectToggle(pid), kind: "image")
+                    repoIcon
+                    Text(verbatim: data.name)
+                        .dsFont(DS.Font.bodyStrong)
+                        .foregroundStyle(DS.Color.textPrimary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                    Spacer(minLength: DS.Space.s1)
+                    if data.collapsed, !hovering {
+                        Text(verbatim: "\(data.sessionCount)")
+                            .dsFont(DS.Font.microNumeric)
+                            .foregroundStyle(DS.Color.textTertiary)
+                    }
+                }
+                .padding(.leading, SidebarMetrics.projectPaddingLeading)
+                .padding(.trailing, SidebarMetrics.sectionPaddingH)
+                .frame(height: SidebarMetrics.projectRowHeight)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(hovering ? DS.Color.fg5 : Color.clear)
+                .contentShape(Rectangle())
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(Text(verbatim: projectLabel))
+                .accessibilityValue(Text(verbatim: data.collapsed ? "collapsed" : "expanded"))
+            }
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(.isHeader)
+            if hovering {
+                HStack(spacing: DS.Space.s0_5) {
+                    ProjectMenuButton(model: model, project: data.id)
+                    if let registry, registry.isOffered(.projectNewSession) {
+                        DSIconButton(
+                            .projectNewSession, id: .sidebarProjectNewSession(pid), symbol: "plus",
+                            name: String(localized: "New Session in \(data.name)…", bundle: .module), variant: .row)
+                    }
+                }
+                .padding(.trailing, DS.Space.s2)
+            }
+        }
+        .frame(height: SidebarMetrics.projectRowHeight)
+        .onHover { hovering = $0 }
+        .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: hovering)
+        .contextMenu { ProjectMenuItems(model: model, project: data.id) }
+        .overlay { focusRing(model.keyboardFocus == .project(data.id)) }
+    }
+
+    private var projectLabel: String {
+        let n = data.sessionCount
+        return String(localized: "\(data.name), \(n) sessions", bundle: .module)
+    }
+
+    private var repoIcon: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: SidebarMetrics.repoRadius).fill(DS.Color.secondary)
+            Image(systemName: data.kind == .git ? "arrow.triangle.branch" : "folder")
+                .font(.system(size: SidebarMetrics.repoGlyph - DS.Space.s0_5, weight: .medium))
+                .foregroundStyle(DS.Color.textSecondary)
+        }
+        .frame(width: SidebarMetrics.repoBox, height: SidebarMetrics.repoBox)
+    }
+}
+
+/// Anel de foco por teclado: interno, 2 pt `ring/50` (DS §13).
+@ViewBuilder
+func focusRing(_ visible: Bool, radius: CGFloat = SidebarMetrics.agentRowRadius) -> some View {
+    if visible {
+        RoundedRectangle(cornerRadius: radius)
+            .strokeBorder(DS.ColorSpec.ring.scaled(0.5).color, lineWidth: MotionTokens.Stroke.ring)
+            .allowsHitTesting(false)
+    }
+}
+
+// MARK: Linha pendente (03 §2.9)
+
+struct PendingRowView: View {
+    let model: SidebarModel
+    let data: PendingRowData
+    @Environment(\.actionRegistry) private var registry
+    @State private var hovering = false
+
+    var body: some View {
+        let pid = data.id.uuidString
+        ZStack(alignment: .trailing) {
+            HStack(alignment: .center, spacing: SidebarMetrics.statusGap) {
+                ZStack {
+                    if data.failed {
+                        DSAgentIndicator(.alert, size: .lg)
+                            .transition(.scale(scale: 0.6).combined(with: .opacity))
+                    } else {
+                        DSSpinner(size: SidebarMetrics.pendingSpinner)
+                    }
+                }
+                .frame(width: SidebarMetrics.statusColumn, height: SidebarMetrics.pendingHeight)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(verbatim: data.name)
+                        .dsFont(DS.Font.body)
+                        .foregroundStyle(DS.Color.textSecondary)
+                        .lineLimit(1)
+                    Text(verbatim: data.phaseText)
+                        .dsFont(DS.Font.small)
+                        .foregroundStyle(data.failed ? DS.Color.destructive : DS.Color.textTertiary)
+                        .lineLimit(1)
+                        .id(data.phaseText)
+                        .transition(MotionPolicy.shared.reduceMotion ? .opacity : .push(from: .bottom))
+                        .a11y(.sidebarSessionPhase(pid), kind: "text", label: data.phaseText)
+                }
+                .clipped()
+                Spacer(minLength: DS.Space.s1)
+            }
+            .padding(.horizontal, SidebarMetrics.cardPaddingH)
+            .frame(height: SidebarMetrics.pendingHeight + SidebarMetrics.line2Height)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: SidebarMetrics.cardRadius).fill(hovering ? DS.Color.hoverRow : Color.clear))
+            .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.fast), value: data.phaseText)
+            .animation(MotionPolicy.shared.animation(MotionTokens.Easing.expoOut, MotionTokens.Duration.disclosure), value: data.failed)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(Text(verbatim: "\(data.name), \(data.phaseText)"))
+            if hovering || data.failed {
+                if let registry, registry.isOffered(data.failed ? .sessionDiscardPending : .sessionCancelLaunch) {
+                    DSIconButton(
+                        data.failed ? .sessionDiscardPending : .sessionCancelLaunch, id: .sidebarPendingCancel(pid),
+                        symbol: "xmark", name: data.failed ? String(localized: "Discard", bundle: .module) : String(localized: "Cancel", bundle: .module),
+                        variant: .row)
+                    .padding(.trailing, SidebarMetrics.cardPaddingH)
+                }
+            }
+        }
+        .padding(.leading, SidebarMetrics.cardMarginLeading)
+        .padding(.trailing, SidebarMetrics.cardMarginTrailing)
+        .onHover { hovering = $0 }
+        .a11y(.sidebarPending(pid), kind: "row", label: data.name)
+        .overlay { focusRing(model.keyboardFocus == .pending(data.id), radius: SidebarMetrics.cardRadius) }
+    }
+}
+
+// MARK: Card de sessão (03 §2.6, DS §12.9)
+
+struct SessionCardView: View {
+    let model: SidebarModel
+    let data: SessionCardData
+    let query: String
+    let selection: Namespace.ID
+    let glowing: Bool
+    @Environment(\.actionRegistry) private var registry
+    @State private var hovering = false
+
+    var body: some View {
+        let sid = data.id.uuidString
+        let renaming = model.renamingSession == data.id
+        VStack(alignment: .leading, spacing: SidebarMetrics.cardGap) {
+            if renaming {
+                header(renaming: true)
+            } else {
+                ActionButton(.sessionSelect, id: .sidebarSession(sid), argument: .select(sid)) {
+                    header(renaming: false)
+                        .contentShape(Rectangle())
+                        .accessibilityElement(children: .combine)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text(verbatim: data.a11yLabel))
+                .accessibilityAddTraits(data.selected ? .isSelected : [])
+                .accessibilityAction(named: Text("Rename…", bundle: .module)) {
+                    guard let registry else { return }
+                    Task { _ = try? await registry.perform(.sessionRename, .select(sid)) }
+                }
+            }
+            if !data.agentRows.isEmpty, !data.agentsCollapsed {
+                agents
+            } else if data.groupedTerminals > 0, !data.agentsCollapsed, data.agentRows.isEmpty {
+                groupedRow
+            }
+        }
+        .padding(.vertical, verticalPadding)
+        .padding(.horizontal, SidebarMetrics.cardPaddingH)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background { surface }
+        .overlay { focusRing(model.keyboardFocus == .session(data.id), radius: SidebarMetrics.cardRadius) }
+        .overlay { glow }
+        .padding(.leading, SidebarMetrics.cardMarginLeading)
+        .padding(.trailing, SidebarMetrics.cardMarginTrailing)
+        .onHover { hovering = $0 }
+        .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: hovering)
+        .contextMenu { SessionMenuItems(model: model, session: data.id) }
+    }
+
+    private var verticalPadding: CGFloat {
+        let titleOnly = data.agentRows.isEmpty && data.groupedTerminals == 0
+        return titleOnly ? SidebarMetrics.cardPaddingVTitleOnly : SidebarMetrics.cardPaddingV
+    }
+
+    @ViewBuilder private var surface: some View {
+        ZStack {
+            if hovering, !data.selected {
+                RoundedRectangle(cornerRadius: SidebarMetrics.cardRadius).fill(DS.Color.hoverRow)
+            }
+            if data.selected {
+                RoundedRectangle(cornerRadius: SidebarMetrics.cardRadius).fill(DS.Color.fg10)
+                    .overlay(RoundedRectangle(cornerRadius: SidebarMetrics.cardRadius).strokeBorder(DS.Color.fg18, lineWidth: DSMetrics.hairline))
+                    .matchedGeometryEffect(id: "selection", in: selection)
+            }
+        }
+        .animation(MotionPolicy.shared.animation(MotionTokens.Springs.snappy), value: data.selected)
+    }
+
+    @ViewBuilder private var glow: some View {
+        RoundedRectangle(cornerRadius: SidebarMetrics.cardRadius)
+            .strokeBorder(DS.Color.locate, lineWidth: MotionTokens.Stroke.rim)
+            .opacity(glowing ? 1 : 0)
+            .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: glowing)
+            .allowsHitTesting(false)
+            .a11y(.sidebarSessionRevealGlow(data.id.uuidString), kind: "container", value: glowing ? "on" : "off")
+    }
+
+    // Colunas de status + linhas 1 e 2.
+    private func header(renaming: Bool) -> some View {
+        let sid = data.id.uuidString
+        return HStack(alignment: .top, spacing: SidebarMetrics.statusGap) {
+            statusColumn
+            VStack(alignment: .leading, spacing: SidebarMetrics.cardGap) {
+                HStack(spacing: DS.Space.s1_5) {
+                    if renaming {
+                        InlineRenameField(
+                            initialText: data.title, font: renameFont,
+                            onCommit: { text in
+                                guard let registry else { return }
+                                Task { _ = try? await registry.perform(.sessionRename, .set(text)) }
+                            },
+                            onCancel: { model.cancelRename() }
+                        )
+                        .padding(.horizontal, DS.Space.s1)
+                        .frame(height: SidebarMetrics.line1Height)
+                        .background(RoundedRectangle(cornerRadius: DS.Radius.xs * 2).fill(DS.ColorSpec.paneTitleInputBackground.color))
+                        .overlay(RoundedRectangle(cornerRadius: DS.Radius.xs * 2).strokeBorder(DS.ColorSpec.ring.scaled(0.5).color, lineWidth: DSMetrics.hairline))
+                        .a11y(.sidebarSessionRename(sid), kind: "textfield", value: data.title)
+                    } else {
+                        HighlightedText(
+                            text: data.title, query: query, style: DS.Font.body,
+                            color: data.unread ? DS.Color.textPrimary : DS.Color.textPrimary.opacity(0.8))
+                            .fontWeight(data.unread ? .semibold : .regular)
+                            .a11y(.sidebarSessionName(sid), kind: "text", label: data.title)
+                            .simultaneousGesture(
+                                TapGesture(count: 2).onEnded {
+                                    guard let registry else { return }
+                                    Task { _ = try? await registry.perform(.sessionRename, .select(sid)) }
+                                })
+                    }
+                    ForEach(Array(data.badges.enumerated()), id: \.offset) { _, badge in
+                        DSBadge(badge.title, variant: badge.variant)
+                    }
+                    Spacer(minLength: DS.Space.s1)
+                    trailing
+                }
+                .frame(height: SidebarMetrics.line1Height)
+                line2
+                    .frame(height: SidebarMetrics.line2Height)
+            }
+        }
+    }
+
+    private var renameFont: NSFont { DS.Font.body.nsFont }
+
+    private var statusColumn: some View {
+        ZStack(alignment: .topTrailing) {
+            DSAgentIndicator(data.glyph, size: .md)
+                .frame(width: SidebarMetrics.statusColumn, height: SidebarMetrics.line1Height)
+                .a11y(.sidebarSessionStatus(data.id.uuidString), kind: "image", label: data.stateLabel)
+            if data.unread {
+                Circle().fill(DS.Color.unread)
+                    .frame(width: SidebarMetrics.unreadDot, height: SidebarMetrics.unreadDot)
+            }
+        }
+        .frame(width: SidebarMetrics.statusColumn)
+    }
+
+    @ViewBuilder private var trailing: some View {
+        if hovering, let registry, registry.isOffered(.sessionArchive) {
+            DSIconButton(
+                .sessionArchive, id: .sidebarSessionArchive(data.id.uuidString), symbol: "archivebox",
+                name: String(localized: "Archive Session…", bundle: .module), variant: .row)
+        } else {
+            Text(verbatim: data.timeText)
+                .dsFont(DS.Font.microNumeric)
+                .foregroundStyle(DS.Color.textTertiary)
+                .lineLimit(1)
+                .fixedSize()
+        }
+    }
+
+    @ViewBuilder private var line2: some View {
+        HStack(spacing: SidebarMetrics.statusGap) {
+            switch data.line2 {
+            case .branch(let b):
+                Image(systemName: "arrow.triangle.branch").font(.system(size: SidebarMetrics.line2Icon))
+                HighlightedText(text: b, query: query, style: DS.Font.small, color: DS.Color.textSecondary)
+                    .truncationMode(.middle)
+            case .folder(let f):
+                Image(systemName: "folder").font(.system(size: SidebarMetrics.line2Icon))
+                HighlightedText(text: f, query: query, style: DS.Font.small, color: DS.Color.textSecondary)
+                    .truncationMode(.middle)
+            case .missingFolder:
+                Image(systemName: "exclamationmark.circle").font(.system(size: SidebarMetrics.line2Icon))
+                    .foregroundStyle(DS.Color.destructive)
+                Text("Folder not found", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.destructive)
+            }
+            if data.notStarted {
+                Text("Not started", bundle: .module)
+                    .dsFont(DS.Font.small)
+                    .foregroundStyle(DS.Color.textTertiary)
+                    .lineLimit(1)
+                    .fixedSize()
+            }
+            Spacer(minLength: .zero)
+        }
+        .foregroundStyle(DS.Color.textSecondary)
+    }
+
+    // MARK: Linhas de agente (03 §2.7) e pílula-resumo (03 §2.6)
+
+    private var agentIndent: CGFloat { SidebarMetrics.statusColumn + SidebarMetrics.statusGap }
+
+    @ViewBuilder private var agents: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if let summary = data.summary {
+                SummaryPillView(model: model, data: data, summary: summary)
+            }
+            if data.summary == nil || data.summaryExpanded {
+                ForEach(data.agentRows) { row in
+                    AgentRowView(model: model, row: row, query: query)
+                }
+            }
+            if data.groupedTerminals > 0 {
+                groupedRow
+            }
+        }
+        .padding(.leading, agentIndent - SidebarMetrics.agentRowPaddingH)
+        .a11y(.sidebarSessionAgents(data.id.uuidString), kind: "container")
+    }
+
+    private var groupedRow: some View {
+        Text("+\(data.groupedTerminals) terminals", bundle: .module)
+            .dsFont(DS.Font.small)
+            .foregroundStyle(DS.Color.textTertiary)
+            .padding(.horizontal, SidebarMetrics.agentRowPaddingH)
+            .frame(height: SidebarMetrics.agentRowHeight, alignment: .leading)
+            .padding(.leading, data.agentRows.isEmpty ? agentIndent - SidebarMetrics.agentRowPaddingH : .zero)
+    }
+}
+
+struct AgentRowView: View {
+    let model: SidebarModel
+    let row: AgentRowData
+    let query: String
+    @Environment(\.actionRegistry) private var registry
+    @State private var hovering = false
+
+    var body: some View {
+        let sid = row.sessionID.uuidString, tid = row.id.uuidString
+        let content = HStack(spacing: SidebarMetrics.agentRowGap) {
+            DSAgentIndicator(row.glyph, size: .sm)
+                .a11y(.sidebarSessionAgentStatus(sid, tid), kind: "image", label: row.stateLabel)
+            DSAgentLogo(row.provider, size: SidebarMetrics.agentLogo)
+            HStack(spacing: DS.Space.s1) {
+                HighlightedText(text: row.lead, query: query, style: DS.Font.small, color: DS.Color.textSecondary.opacity(0.9))
+                    .a11y(.sidebarSessionAgentLastMessage(sid, tid), kind: "text", label: row.lead)
+                if let trail = row.trail {
+                    Text(verbatim: trail).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary.opacity(0.65)).lineLimit(1)
+                }
+            }
+            Spacer(minLength: DS.Space.s1)
+            Text(verbatim: row.timeText).dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textTertiary.opacity(0.6)).fixedSize()
+        }
+        .padding(.horizontal, SidebarMetrics.agentRowPaddingH)
+        .frame(height: SidebarMetrics.agentRowHeight)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: SidebarMetrics.agentRowRadius).fill(hovering ? DS.Color.hoverAgentRow : Color.clear))
+        .overlay { focusRing(model.keyboardFocus == .agent(session: row.sessionID, terminal: row.id)) }
+        .contentShape(Rectangle())
+        .onHover { hovering = $0 }
+        .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: hovering)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text(verbatim: "\(SidebarProjector.providerName(row.provider)), \(row.lead), \(row.stateLabel)"))
+        if let registry, registry.isOffered(.paneShow) {
+            ActionButton(.paneShow, id: .sidebarSessionAgent(sid, tid), argument: .select(tid)) { content }
+                .buttonStyle(.plain)
+        } else {
+            content.a11y(.sidebarSessionAgent(sid, tid), kind: "row", label: row.lead)
+        }
+    }
+}
+
+struct SummaryPillView: View {
+    let model: SidebarModel
+    let data: SessionCardData
+    let summary: [SummaryGroup]
+
+    var body: some View {
+        let sid = data.id.uuidString
+        ActionButton(.sessionToggleAgents, id: .sidebarSessionSummaryPill(sid), argument: .select(sid)) {
+            HStack(spacing: DS.Space.s2) {
+                ForEach(Array(summary.enumerated()), id: \.offset) { _, group in
+                    HStack(spacing: DS.Space.s1) {
+                        DSAgentIndicator(group.glyph, size: .sm)
+                        ForEach(Array(group.providers.enumerated()), id: \.offset) { _, p in DSAgentLogo(p, size: SidebarMetrics.summaryLogo) }
+                        Text(verbatim: "\(group.count)").dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textSecondary)
+                    }
+                }
+                Spacer(minLength: DS.Space.s1)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: SidebarMetrics.chevron, weight: .medium))
+                    .foregroundStyle(DS.Color.textSecondary)
+                    .rotationEffect(.degrees(data.summaryExpanded ? 180 : 0))
+            }
+            .padding(.horizontal, SidebarMetrics.agentRowPaddingH)
+            .frame(height: SidebarMetrics.agentRowHeight)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text(verbatim: String(localized: "with \(data.agentRows.count) terminals", bundle: .module)))
+        .accessibilityValue(Text(verbatim: data.summaryExpanded ? "expanded" : "collapsed"))
+    }
+}

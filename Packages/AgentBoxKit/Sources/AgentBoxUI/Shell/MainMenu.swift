@@ -50,6 +50,24 @@ enum MainMenu {
                 m.addItem(ActionMenuItem(.navBack, title: "Back", key: left, modifiers: [.option, .command], registry: registry))
                 m.addItem(ActionMenuItem(.navForward, title: "Forward", key: right, modifiers: [.option, .command], registry: registry))
             })
+        let up = String(UnicodeScalar(NSUpArrowFunctionKey)!)
+        let down = String(UnicodeScalar(NSDownArrowFunctionKey)!)
+        let selects: [ActionID] = [
+            .sessionSelect1, .sessionSelect2, .sessionSelect3, .sessionSelect4, .sessionSelect5,
+            .sessionSelect6, .sessionSelect7, .sessionSelect8, .sessionSelect9,
+        ]
+        main.addItem(
+            submenu(title: "Session") { m in
+                m.addItem(ActionMenuItem(.sessionRename, title: "Rename Session…", key: "r", modifiers: [.option, .command], registry: registry))
+                m.addItem(.separator())
+                m.addItem(ActionMenuItem(.sessionPrevious, title: "Previous Session", key: up, modifiers: [.shift, .command], registry: registry))
+                m.addItem(ActionMenuItem(.sessionNext, title: "Next Session", key: down, modifiers: [.shift, .command], registry: registry))
+                for (i, action) in selects.enumerated() {
+                    m.addItem(ActionMenuItem(action, title: "Select Session \(i + 1)", key: "\(i + 1)", registry: registry))
+                }
+                m.addItem(.separator())
+                m.addItem(ActionMenuItem(.sidebarFocus, title: "Focus Session List", key: "0", modifiers: [.shift, .command], registry: registry))
+            })
         let window = submenu(title: "Window") { m in
             // lint-ui: allow buttons seletor padrão do sistema (sem ação de produto)
             m.addItem(NSMenuItem(title: "Minimize", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m"))
