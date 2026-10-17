@@ -1321,7 +1321,7 @@
         }
       }
     },
-    "Settings…": {
+    "settings.menu": {
       "extractionState": "manual",
       "localizations": {
         "en": {

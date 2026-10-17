@@ -8,7 +8,7 @@ struct StoreMigration: Sendable {
 
 enum StoreMigrations {
     /// `v1_initial`: só as tabelas da Fatia 1 mais `setting` e `ui_state` (08 AR-311).
-    /// `agent_run` e demais tabelas entram em `v2_activity` e seguintes.
+    /// `agent_run` e demais tabelas entram em `v2_activity` e seguintes (publicada: nunca editar).
     static let v1Initial = StoreMigration(id: "v1_initial") { db in
         try db.execute(sql: """
         CREATE TABLE project (
@@ -145,8 +145,8 @@ enum StoreMigrations {
     }
 
     /// `v3_computers` (Fatia 3, 08 §3.2): computadores no modo leve, fila, perfis de browser, pedidos de ajuda e proxies.
-    /// `v2_activity` (agent_run, secret) ainda não existe: `owner_run_id`, `help_request.run_id` e `proxy.secret_id` ficam
-    /// sem FK, como `batch_id` (R1 D-06). Sem colunas de limite ou orçamento no proxy (P13).
+    /// Colunas `owner_run_id`, `help_request.run_id` e `proxy.secret_id` ficam sem FK, como `batch_id` (R1 D-06).
+    /// Sem colunas de limite ou orçamento no proxy (P13).
     static let v3Computers = StoreMigration(id: "v3_computers") { db in
         try db.execute(sql: """
         CREATE TABLE proxy (
@@ -241,7 +241,133 @@ enum StoreMigrations {
         """)
     }
 
-    static let all: [StoreMigration] = [v1Initial, v3Computers]
+    /// `v2_activity` (Fatia 2, 08 AR-311): atividade de agentes, atenção, inbox, catálogo, segredos, importação e métricas.
+    /// `agent_event` ganha `event_id` (chave de idempotência do helper, única por execução) e `at_ns` (ordem de ocorrência
+    /// em nanossegundos, para eventos fora de sequência); `at` segue em ms conforme AR-310.
+    static let v2Activity = StoreMigration(id: "v2_activity") { db in
+        try db.execute(sql: """
+        CREATE TABLE agent_run (
+            id TEXT PRIMARY KEY NOT NULL,
+            terminal_id TEXT REFERENCES terminal(id) ON DELETE SET NULL,
+            parent_run_id TEXT REFERENCES agent_run(id) ON DELETE CASCADE,
+            root_run_id TEXT NOT NULL,
+            kind TEXT NOT NULL CHECK (kind IN ('main','native_subagent','teammate','app_worker_light','app_worker_isolated')),
+            harness TEXT NOT NULL CHECK (harness IN ('claude','codex','opencode','shell','custom')),
+            agent_type TEXT,
+            provider_session_id TEXT,
+            provider_agent_id TEXT,
+            mode TEXT CHECK (mode IS NULL OR mode IN ('light','isolated')),
+            batch_id TEXT,
+            status TEXT NOT NULL CHECK (status IN
+                ('starting','idle','working','needs_input','waiting_on_subagents','done','failed','blocked','interrupted','unknown','stalled')),
+            status_kind TEXT CHECK (status_kind IS NULL OR status_kind IN ('question','permission','other')),
+            estimated INTEGER NOT NULL DEFAULT 0 CHECK (estimated IN (0,1)),
+            status_reason TEXT,
+            subtitle TEXT,
+            started_at INTEGER NOT NULL,
+            last_event_at INTEGER,
+            ended_at INTEGER
+        ) STRICT;
+        CREATE INDEX agent_run_parent ON agent_run(parent_run_id);
+        CREATE INDEX agent_run_terminal ON agent_run(terminal_id);
+        CREATE INDEX agent_run_status ON agent_run(status);
+
+        CREATE TABLE agent_event (
+            run_id TEXT NOT NULL REFERENCES agent_run(id) ON DELETE CASCADE,
+            seq INTEGER NOT NULL,
+            event_id TEXT NOT NULL,
+            type TEXT NOT NULL,
+            payload_json TEXT NOT NULL CHECK (json_valid(payload_json) AND length(payload_json) <= 16384),
+            at INTEGER NOT NULL,
+            at_ns INTEGER NOT NULL,
+            PRIMARY KEY (run_id, seq)
+        ) STRICT;
+        CREATE UNIQUE INDEX agent_event_event_id ON agent_event(run_id, event_id);
+        CREATE INDEX agent_event_order ON agent_event(run_id, at_ns, seq);
+        CREATE INDEX agent_event_at ON agent_event(at);
+
+        CREATE TABLE attention (
+            id TEXT PRIMARY KEY NOT NULL,
+            kind TEXT NOT NULL,
+            priority INTEGER NOT NULL CHECK (priority BETWEEN 1 AND 3),
+            source_kind TEXT NOT NULL,
+            source_id TEXT NOT NULL,
+            reason TEXT,
+            payload_json TEXT NOT NULL DEFAULT '{}' CHECK (json_valid(payload_json)),
+            created_at INTEGER NOT NULL,
+            seen_at INTEGER,
+            resolved_at INTEGER
+        ) STRICT;
+        CREATE INDEX attention_resolved ON attention(resolved_at);
+
+        CREATE TABLE inbox_event (
+            id TEXT PRIMARY KEY NOT NULL,
+            session_id TEXT REFERENCES session(id) ON DELETE CASCADE,
+            kind TEXT NOT NULL,
+            payload_json TEXT NOT NULL DEFAULT '{}' CHECK (json_valid(payload_json)),
+            created_at INTEGER NOT NULL,
+            read_at INTEGER
+        ) STRICT;
+
+        CREATE TABLE catalog_item (
+            id TEXT PRIMARY KEY NOT NULL,
+            source TEXT NOT NULL CHECK (source IN ('claude','codex','agents','opencode','plugin')),
+            kind TEXT NOT NULL CHECK (kind IN ('agent','skill','plugin','mcp','instructions')),
+            path TEXT NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            content_hash TEXT,
+            clients_json TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(clients_json)),
+            discovered_at INTEGER NOT NULL,
+            missing_at INTEGER
+        ) STRICT;
+
+        CREATE TABLE secret (
+            id TEXT PRIMARY KEY NOT NULL,
+            name TEXT NOT NULL UNIQUE,
+            default_env_name TEXT,
+            ciphertext BLOB NOT NULL,
+            nonce BLOB NOT NULL,
+            key_version INTEGER NOT NULL,
+            note TEXT,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL,
+            last_used_at INTEGER
+        ) STRICT;
+
+        CREATE TABLE secret_binding (
+            secret_id TEXT NOT NULL REFERENCES secret(id) ON DELETE CASCADE,
+            target_kind TEXT NOT NULL CHECK (target_kind IN ('profile','session','computer','proxy')),
+            target_id TEXT NOT NULL,
+            env_name TEXT NOT NULL,
+            PRIMARY KEY (secret_id, target_kind, target_id, env_name)
+        ) STRICT;
+
+        CREATE TABLE import_run (
+            id TEXT PRIMARY KEY NOT NULL,
+            source TEXT NOT NULL CHECK (source IN ('agentbox_json','orca','agentbox_cli')),
+            source_path TEXT NOT NULL,
+            source_fingerprint TEXT,
+            dry_run INTEGER NOT NULL DEFAULT 0 CHECK (dry_run IN (0,1)),
+            status TEXT NOT NULL,
+            summary_json TEXT NOT NULL DEFAULT '{}' CHECK (json_valid(summary_json)),
+            started_at INTEGER NOT NULL,
+            finished_at INTEGER
+        ) STRICT;
+
+        CREATE TABLE metric (
+            id TEXT PRIMARY KEY NOT NULL,
+            name TEXT NOT NULL,
+            value REAL NOT NULL,
+            unit TEXT,
+            tags_json TEXT NOT NULL DEFAULT '{}' CHECK (json_valid(tags_json)),
+            at INTEGER NOT NULL
+        ) STRICT;
+        CREATE INDEX metric_name_at ON metric(name, at);
+        """)
+    }
+
+    static let all: [StoreMigration] = [v1Initial, v2Activity, v3Computers]
 
     static func migrator(_ migrations: [StoreMigration]) -> DatabaseMigrator {
         var m = DatabaseMigrator()

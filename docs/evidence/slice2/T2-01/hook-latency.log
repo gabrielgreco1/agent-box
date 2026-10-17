@@ -1,0 +1,6 @@
+binary=/Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/build/AgentBox/Agent Box.app/Contents/MacOS/agentbox
+spawn baseline (/usr/bin/true): p50=4.9 ms p95=9.1 ms
+closed  runs= 200 p50=  16.9 ms  p95=  20.2 ms  max=  23.5 ms  spooled=True
+live    runs= 200 p50=  15.5 ms  p95=  20.3 ms  max=  28.8 ms  spooled=False
+hung    runs=  20 p50= 220.5 ms  p95= 224.9 ms  max= 224.9 ms  spooled=True
+AR-707 (p95 <= 30 ms closed/live, hung gives up near 200 ms): OK
