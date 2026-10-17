@@ -98,7 +98,8 @@ public struct ResultValidator: Sendable {
     public func validate(result: JSON, evidence: [String: [String]]) throws -> ResultValidation {
         guard case .object(let top) = result else { throw ToolError.invalid("result must be an object") }
         for pointer in evidence.keys where Self.resolve(pointer, in: result) == nil {
-            throw ToolError.invalid("evidence pointer does not exist in result: \(pointer)", details: ["pointer": .string(pointer)])
+            let hint = pointer.hasPrefix("/") ? "" : " (evidence keys are JSON Pointers into result, for example /title or /items/0/price)"
+            throw ToolError.invalid("evidence pointer does not exist in result: \(pointer)\(hint)", details: ["pointer": .string(pointer)])
         }
         var pointers = top.keys.sorted().map { "/" + Self.escape($0) }
         for pointer in evidence.keys.sorted() where !pointers.contains(pointer) { pointers.append(pointer) }

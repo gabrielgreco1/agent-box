@@ -87,9 +87,13 @@ public enum LaunchPlanner {
         if let first = violations.first { throw LaunchPlanError.injectionViolation(first) }
 
         let composer = LaunchEnvironmentComposer(appVersion: input.appVersion, appSocketPath: input.appSocketPath)
+        // Env por lançamento do Claude (CS-325: limite de subagentes; CS-310: agent teams desligado, sem a variável do shell de login).
+        let claudeInjection = (spec.provider == .claude && input.slice >= .slice2) ? input.injection : nil
+        var captured = input.loginEnvironment
+        for name in claudeInjection?.claudeUnsetEnvironment ?? [] { captured[name] = nil }
         let composed = composer.compose(
-            captured: input.loginEnvironment, terminalID: input.terminalID, runID: input.runID,
-            profileEnv: launch.env, overrides: [:]
+            captured: captured, terminalID: input.terminalID, runID: input.runID,
+            profileEnv: launch.env, overrides: claudeInjection?.claudeEnvironment ?? [:]
         )
 
         var updated = spec

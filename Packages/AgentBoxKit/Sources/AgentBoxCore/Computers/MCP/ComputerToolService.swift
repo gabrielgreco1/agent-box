@@ -35,6 +35,8 @@ struct Args {
 /// configuração do processo MCP), nunca por argumento. Cada chamada devolve em ≤ 50 s; o que for longo tem `*_poll`/`*_wait`.
 public actor ComputerToolService {
     public let hub: ComputerHub
+    /// Ferramentas do pai (T3-04): reservar, consultar, liberar e mandar mensagem. `nil` = só ferramentas de worker.
+    let orchestrator: (any ParentOrchestrating)?
     var jobs: [String: JobMeta] = [:]
 
     struct JobMeta {
@@ -45,7 +47,10 @@ public actor ComputerToolService {
         var logged = false
     }
 
-    public init(hub: ComputerHub) { self.hub = hub }
+    public init(hub: ComputerHub, orchestrator: (any ParentOrchestrating)? = nil) {
+        self.hub = hub
+        self.orchestrator = orchestrator
+    }
 
     /// Ferramentas que precisam do container vivo (as demais só tocam o host: diário, reqlog, ajuda, resultado).
     static let needsContainer: Set<String> = [
@@ -57,8 +62,16 @@ public actor ComputerToolService {
     /// Ponto de entrada: valida o schema, executa e traduz o erro para o conjunto fechado de códigos.
     public func call(_ name: String, arguments: JSON, child: String) async -> ToolOutcome {
         let started = ContinuousClock.now
-        guard let definition = ToolCatalog.byName[name] else {
+        let role = await hub.role(of: child) ?? .worker
+        guard let definition = ToolCatalog.byName[name] ?? ToolCatalog.parentByName[name] else {
             return Self.failure(ToolError(.notFound, "unknown tool \(name)"), box: nil)
+        }
+        let isParentTool = ToolCatalog.parentByName[name] != nil
+        if isParentTool != (role == .parent) {
+            return Self.failure(ToolError(
+                .blockedByPolicy,
+                isParentTool ? "\(name) belongs to the parent session; workers use the computer they claimed"
+                    : "\(name) belongs to the worker subagents; reserve computers with boxes_reserve and spawn a worker for each"), box: nil)
         }
         let cleaned = JSON.object(ObjectSpec.stripNulls(arguments.object ?? [:]))
         if arguments.object == nil && !arguments.isNull { return Self.failure(.invalid("arguments must be an object"), box: nil) }
@@ -69,6 +82,15 @@ public actor ComputerToolService {
         var boxName: String?
         do {
             let args = Args(cleaned)
+            if isParentTool {
+                var result = try await executeParent(name, args, parent: child)
+                if case .object(var object) = result.json {
+                    let ms = started.duration(to: .now).components
+                    object["took_ms"] = .int(Int(ms.seconds * 1000 + ms.attoseconds / 1_000_000_000_000_000))
+                    result.json = .object(object)
+                }
+                return ToolOutcome(content: [["type": "text", "text": .string(result.json.text)]], isError: false)
+            }
             let computer = definition.access == .identity ? nil : try await hub.computer(for: child)
             boxName = computer?.name
             if let computer {
@@ -115,7 +137,7 @@ public actor ComputerToolService {
         if name == "box_claim" { return try await claim(args, child: child) }
         guard let c = computer else { throw ToolError(.notClaimed, "call box_claim first") }
         switch name {
-        case "box_status": return try await status(c)
+        case "box_status": return try await status(c, child: child)
         case "box_release": return try await releaseBox(args, child: child, c)
         case "computer_mode": return try await mode(args, c)
         case "exec": return try await exec(args, c)
@@ -156,10 +178,11 @@ public actor ComputerToolService {
         if let position = await computer.queuePosition { out["position"] = .int(position) }
         if let profile = computer.profile { out["profile"] = .string(profile) }
         if let previous = await computer.takePreviousRun() { out["previous_run"] = previous }
+        if let messages = await orchestrator?.drainParentMessages(for: child), !messages.isEmpty { out["parent_messages"] = .array(messages) }
         return ToolResult(.object(out))
     }
 
-    func status(_ c: ManagedComputer) async throws -> ToolResult {
+    func status(_ c: ManagedComputer, child: String) async throws -> ToolResult {
         let state = await c.state
         var out: [String: JSON] = [
             "box": .string(c.name), "state": .string(state.rawValue), "display": .string(await c.display.rawValue), "lease": .string(await c.lease.rawValue),
@@ -173,7 +196,28 @@ public actor ComputerToolService {
         }
         out["usage"] = (try? await c.backend.usage()) ?? Self.emptyUsage
         if let help = await c.openHelpID { out["help_open"] = .string(help) }
+        // P12, CS-307: mensagens do pai a este filho nativo saem aqui (e no claim), sempre registradas na timeline.
+        if let messages = await orchestrator?.drainParentMessages(for: child), !messages.isEmpty { out["parent_messages"] = .array(messages) }
         return ToolResult(.object(out))
+    }
+
+    // MARK: Ferramentas do pai (07 §4.2)
+
+    func executeParent(_ name: String, _ args: Args, parent: String) async throws -> ToolResult {
+        guard let orchestrator else { throw ToolError(.notSupported, "this app build has no orchestrator") }
+        switch name {
+        case "boxes_reserve":
+            let display = args.string("display").flatMap(ComputerDisplay.init(rawValue:)) ?? .headless
+            let request = ReserveRequest(
+                names: args.strings("names") ?? [], display: display, profile: args.string("profile"), proxy: args.string("proxy"),
+                proxiesAllowed: args.strings("proxies_allowed") ?? [], batch: args.string("batch"), keep24h: args.string("keep") == "24h",
+                allowHosts: args.strings("allow_hosts") ?? [])
+            return ToolResult(await orchestrator.reserve(parent: parent, request))
+        case "boxes_status": return ToolResult(await orchestrator.status(parent: parent, names: args.strings("names"), batch: args.string("batch")))
+        case "boxes_release": return ToolResult(await orchestrator.release(parent: parent, names: args.strings("names") ?? [], keep24h: args.string("keep") == "24h"))
+        case "agent_message": return ToolResult(try await orchestrator.message(parent: parent, to: args.string("child_id") ?? "", text: args.string("text") ?? ""))
+        default: throw ToolError(.notFound, "tool \(name) is not implemented")
+        }
     }
 
     static let emptyUsage: JSON = ["requests": 0, "tunnels": 0, "bytes": 0, "renders": 0]

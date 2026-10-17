@@ -408,7 +408,47 @@ enum StoreMigrations {
     }
 
 
-    static let all: [StoreMigration] = [v1Initial, v2Activity, v3Computers, v4VaultCatalog, v5ProxyExt]
+    /// `v6_agent_tree` (T3-04, 07 §4, CS-307, CS-320): árvore pai -> filhos da orquestração (cada slot de worker do pai, com o computador
+    /// reservado para ele e a correlação com o `agent_run` do filho nativo) e as mensagens do pai aos filhos que ele criou (P12).
+    /// Encadeada após `v5_proxy_ext`; tabelas novas, nada existente é tocado. Os ids de pai e filho são as identidades MCP do lançamento
+    /// (texto, sem FK dura: o `agent_run` do pai nasce com o primeiro hook e a árvore precisa existir antes).
+    static let v6AgentTree = StoreMigration(id: "v6_agent_tree") { db in
+        try db.execute(sql: """
+        CREATE TABLE orchestration_child (
+            id TEXT PRIMARY KEY NOT NULL,
+            parent_id TEXT NOT NULL,
+            parent_run_id TEXT,
+            slot INTEGER NOT NULL CHECK (slot >= 1),
+            agent_type TEXT NOT NULL,
+            computer_name TEXT,
+            batch_id TEXT,
+            run_id TEXT,
+            provider_agent_id TEXT,
+            state TEXT NOT NULL DEFAULT 'idle' CHECK (state IN ('idle','reserved','claimed','released','ended','expired')),
+            created_at INTEGER NOT NULL,
+            reserved_at INTEGER,
+            claimed_at INTEGER,
+            released_at INTEGER,
+            ended_at INTEGER,
+            UNIQUE (parent_id, slot)
+        ) STRICT;
+        CREATE INDEX orchestration_child_parent ON orchestration_child(parent_id, state);
+        CREATE INDEX orchestration_child_computer ON orchestration_child(computer_name);
+
+        CREATE TABLE agent_message (
+            id TEXT PRIMARY KEY NOT NULL,
+            parent_id TEXT NOT NULL,
+            child_id TEXT NOT NULL REFERENCES orchestration_child(id) ON DELETE CASCADE,
+            text TEXT NOT NULL CHECK (length(text) BETWEEN 1 AND 16000),
+            delivery TEXT NOT NULL CHECK (delivery IN ('pty','inbox','queued')),
+            created_at INTEGER NOT NULL,
+            delivered_at INTEGER
+        ) STRICT;
+        CREATE INDEX agent_message_child ON agent_message(child_id, delivered_at);
+        """)
+    }
+
+    static let all: [StoreMigration] = [v1Initial, v2Activity, v3Computers, v4VaultCatalog, v5ProxyExt, v6AgentTree]
 
     static func migrator(_ migrations: [StoreMigration]) -> DatabaseMigrator {
         var m = DatabaseMigrator()

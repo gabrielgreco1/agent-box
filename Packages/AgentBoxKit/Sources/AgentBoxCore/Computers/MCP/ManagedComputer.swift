@@ -56,6 +56,8 @@ public enum ComputerEvent: Sendable, Equatable {
     case doing(computer: String, text: String)
     case blocked(computer: String, text: String)
     case released(computer: String)
+    /// Reservado e nunca reivindicado em 10 min (CS-302): `"Unclaimed computer"`.
+    case unclaimed(computer: String)
 }
 
 /// Um computador no ar: estado, dono (filho que reivindicou), lease, pedidos de ajuda e os logs do run que ficam fora do

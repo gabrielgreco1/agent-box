@@ -34,10 +34,23 @@ public struct LaunchInjection: Sendable, Equatable {
     /// Claude: arquivos do plugin (`plugin/.claude-plugin/plugin.json`, skills…), nomes relativos ao diretório do
     /// lançamento. Vazio = `--plugin-dir` omitida.
     public var claudePluginFiles: [LaunchFile]
+    /// Claude: JSON de `--agents` (definições de subagente com `mcpServers` inline como ARRAY, S-08). `nil`/vazio = flag omitida.
+    public var claudeAgentsJSON: Data?
+    /// Claude: regras de `permissions.deny` de `--settings` (ex.: `Skill(agentbox)`, S4). Valem também com `--dangerously-skip-permissions`.
+    public var claudeDenyRules: [String]
+    /// Claude: variáveis de ambiente do lançamento (ex.: `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`, CS-325).
+    public var claudeEnvironment: [String: String]
+    /// Claude: variáveis que NÃO podem chegar ao CLI mesmo vindas do shell de login (agent teams desligado, CS-310).
+    public var claudeUnsetEnvironment: [String]
 
-    public init(helperPath: String, codexHookHashes: [HookEventName: String] = [:], claudeMCPConfig: Data? = nil, claudePluginFiles: [LaunchFile] = []) {
+    public init(
+        helperPath: String, codexHookHashes: [HookEventName: String] = [:], claudeMCPConfig: Data? = nil, claudePluginFiles: [LaunchFile] = [],
+        claudeAgentsJSON: Data? = nil, claudeDenyRules: [String] = [], claudeEnvironment: [String: String] = [:], claudeUnsetEnvironment: [String] = []
+    ) {
         self.helperPath = helperPath; self.codexHookHashes = codexHookHashes
         self.claudeMCPConfig = claudeMCPConfig; self.claudePluginFiles = claudePluginFiles
+        self.claudeAgentsJSON = claudeAgentsJSON; self.claudeDenyRules = claudeDenyRules
+        self.claudeEnvironment = claudeEnvironment; self.claudeUnsetEnvironment = claudeUnsetEnvironment
     }
 }
 
@@ -48,7 +61,7 @@ extension LaunchInjection {
     /// Claude: `--settings` sempre; `--mcp-config` e `--plugin-dir` só com conteúdo.
     func claudeInjection(launchDirectory: URL) throws -> (injected: [String], files: [LaunchFile]) {
         let dir = launchDirectory.standardizedFileURL.path
-        var files = [try ClaudeHookSettings.launchFile(helperPath: helperPath)]
+        var files = [try ClaudeHookSettings.launchFile(helperPath: helperPath, denyRules: claudeDenyRules)]
         var injected = ClaudeHookSettings.injectedArguments(settingsPath: "\(dir)/\(ClaudeHookSettings.fileName)")
         if let mcp = claudeMCPConfig, !mcp.isEmpty {
             files.append(LaunchFile(name: Self.mcpFileName, contents: mcp))
@@ -57,6 +70,10 @@ extension LaunchInjection {
         if !claudePluginFiles.isEmpty {
             files += claudePluginFiles
             injected += ["--plugin-dir", "\(dir)/\(Self.pluginDirectoryName)"]
+        }
+        if let agents = claudeAgentsJSON, !agents.isEmpty {
+            // `--agents` leva o JSON inline (o arquivo só vale com `--print`); fica no argv como UM argumento.
+            injected += ["--agents", String(decoding: agents, as: UTF8.self)]
         }
         return (injected, files)
     }
@@ -74,7 +91,7 @@ public enum ClaudeHookSettings {
 
     /// `{"hooks": {"<Evento>": [{"hooks": [{"type": "command", "command": "...", "timeout": 5}]}]}}` (06 §2.8).
     /// Saída determinística (chaves ordenadas). Hooks de `--settings` somam com os globais (S-05, V1 confirmado).
-    public static func settingsJSON(helperPath: String) throws -> Data {
+    public static func settingsJSON(helperPath: String, denyRules: [String] = []) throws -> Data {
         var hooks: [String: Any] = [:]
         for event in HookEventName.claudeRegistered {
             hooks[event.rawValue] = [[
@@ -85,12 +102,14 @@ public enum ClaudeHookSettings {
                 ] as [String: Any]]
             ]]
         }
-        return try JSONSerialization.data(withJSONObject: ["hooks": hooks], options: [.sortedKeys, .prettyPrinted, .withoutEscapingSlashes])
+        var root: [String: Any] = ["hooks": hooks]
+        if !denyRules.isEmpty { root["permissions"] = ["deny": denyRules] }
+        return try JSONSerialization.data(withJSONObject: root, options: [.sortedKeys, .prettyPrinted, .withoutEscapingSlashes])
     }
 
     /// Arquivo para `AB/run/launch/<runID>/settings.json` (`0600`).
-    public static func launchFile(helperPath: String) throws -> LaunchFile {
-        LaunchFile(name: fileName, contents: try settingsJSON(helperPath: helperPath))
+    public static func launchFile(helperPath: String, denyRules: [String] = []) throws -> LaunchFile {
+        LaunchFile(name: fileName, contents: try settingsJSON(helperPath: helperPath, denyRules: denyRules))
     }
 
     /// Segmento `injected` do argv (T2-02 o usa; aqui só a forma).

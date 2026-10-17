@@ -1,0 +1,6 @@
+== deny (settings: {"permissions":{"deny":["Skill(agentbox)"]}})
+init: skills listing contains agentbox: True | Skill tool present: True
+tool_use Skill {"skill": "agentbox"}
+tool_result is_error=True Skill execution blocked by permission rules
+text SKILL_RESULT=denied Skill execution blocked by permission rules
+cost_usd 0.00442472
