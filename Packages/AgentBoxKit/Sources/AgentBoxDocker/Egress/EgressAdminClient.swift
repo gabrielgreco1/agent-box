@@ -86,11 +86,17 @@ public struct EgressAdminClient: Sendable {
         self.session = URLSession(configuration: configuration)
     }
 
-    private func request(_ method: String, _ path: String, authorized: Bool = true) async throws -> (status: Int, body: Data) {
+    private func request(_ method: String, _ path: String, authorized: Bool = true, body: Data? = nil,
+                         timeout: TimeInterval = 10) async throws -> (status: Int, body: Data) {
         guard let url = URL(string: "http://127.0.0.1:\(port)\(path)") else { throw EgressAdminError.malformed(path) }
         var request = URLRequest(url: url)
         request.httpMethod = method
+        request.timeoutInterval = timeout
         if authorized { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
+        if let body {
+            request.httpBody = body
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        }
         let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse else { throw EgressAdminError.malformed("sem HTTP") }
         return (http.statusCode, data)
@@ -154,6 +160,40 @@ public struct EgressAdminClient: Sendable {
     public func responseBody(id: String) async throws -> String {
         String(decoding: try ok(try await request("GET", "/v1/reqlog/\(id)/body?kind=response")), as: UTF8.self)
     }
+
+    // MARK: T3-03: runtime, ingest e render
+
+    /// `POST /runtime/v1/<op>`: reverse proxy autenticado do egress até o servidor de controle do runtime (07 §2.2). Devolve o
+    /// status e o JSON do runtime sem interpretar (o Core mapeia os códigos de erro).
+    public func runtimeCall(_ operation: String, body: Data, timeout: TimeInterval = 125) async throws -> (status: Int, body: Data) {
+        guard operation.allSatisfy({ $0.isLetter || $0 == "_" }) else { throw EgressAdminError.malformed(operation) }
+        return try await request("POST", "/runtime/v1/\(operation)", body: body, timeout: timeout)
+    }
+
+    /// `GET /runtime/v1/health` (aberto no runtime; passa pelo egress autenticado): `true` com o browser pronto.
+    public func runtimeReady() async -> Bool {
+        guard let result = try? await request("GET", "/runtime/v1/health", timeout: 5), result.status == 200,
+              case .object(let root)? = try? JSONDecoder().decode(JSONAny.self, from: result.body) else { return false }
+        return root["ready"]?.bool == true
+    }
+
+    /// Registro `observed` do app (`http_request`, `render`): o egress redige, encadeia e devolve o id.
+    public func ingest(_ payload: Data) async throws -> String {
+        let result = try await request("POST", "/v1/reqlog/ingest", body: payload, timeout: 20)
+        guard result.status == 200 else { throw EgressAdminError.http(status: result.status, body: String(decoding: result.body, as: UTF8.self)) }
+        guard case .object(let root) = try JSONDecoder().decode(JSONAny.self, from: result.body), let id = root["id"]?.string else {
+            throw EgressAdminError.malformed("ingest")
+        }
+        return id
+    }
+
+    /// `POST /v1/render`. Status 501 + `{error:"not_supported"}` quando o proxy selecionado não tem render.
+    public func render(_ payload: Data, timeout: TimeInterval = 125) async throws -> (status: Int, body: Data) {
+        try await request("POST", "/v1/render", body: payload, timeout: timeout)
+    }
+
+    /// `GET <path>` autenticado, corpo cru (`/v1/proxy`, `/v1/usage`). Status diferente de 200 lança.
+    public func get(_ path: String) async throws -> Data { try ok(try await request("GET", path)) }
 
     /// Relê `egress.json`, aplica e derruba os túneis do caminho anterior (07 CS-141). Devolve quantos fechou.
     public func reloadProxy() async throws -> Int {

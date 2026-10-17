@@ -1,24 +1,38 @@
 """Admin API do egress (publicada só em 127.0.0.1 pelo app; 07 CS-111, CS-603, 08 AR-107).
 
 Autenticada pelo token do computador (arquivo montado, nunca env): `Authorization: Bearer <token>`. Só `/v1/health` é aberto
-e não devolve nada além de "ok". Não há rota que escreva no reqlog: quem escreve é o proxy.
+e não devolve nada além de "ok". Quem tem o token é o app e o `runtime`; o `work` nunca o recebe.
+
+Rotas autenticadas (T3-03 acrescenta as três últimas):
+- leitura: `/v1/usage`, `/v1/proxy`, `/v1/reqlog`, `/v1/reqlog/<id>/body`, `POST /v1/proxy/reload`;
+- `POST /v1/reqlog/ingest`: registro `observed` entregue pelo app (http_request, render) ou pelo runtime (browser);
+- `POST /v1/render`: render pelo modo API do proxy selecionado (`not_supported` se ele não tem);
+- `/runtime/v1/<op>`: reverse proxy para o servidor de controle do runtime (o app só fala com o egress).
 """
 from __future__ import annotations
 
 import asyncio
+import base64
 import hmac
 import json
 from urllib.parse import parse_qs, urlsplit
 
+from . import render as rd
 from .config import load_config
 from .proxy import EgressProxy, header_value, parse_head
+from .ssrf import Blocked
+
+RUNTIME_ADDRESS = ("runtime", 8765)
+MAX_BODY = 48 * 1024 * 1024
 
 
 class AdminServer:
-    def __init__(self, proxy: EgressProxy, token: str | None, config_loader=lambda: load_config(required=True)):
+    def __init__(self, proxy: EgressProxy, token: str | None, config_loader=lambda: load_config(required=True),
+                 runtime_address: tuple[str, int] = RUNTIME_ADDRESS):
         self.proxy = proxy
         self.token = token
         self.config_loader = config_loader
+        self.runtime_address = runtime_address
 
     def _authorized(self, headers) -> bool:
         if not self.token:
@@ -39,8 +53,21 @@ class AdminServer:
             target = rest.rpartition(" ")[0]
             url = urlsplit(target)
             query = parse_qs(url.query)
+            request_body = b""
+            bad_body = False
             try:
-                status, ctype, body = await self.route(method, url.path, query, headers)
+                length = int(header_value(headers, "content-length") or 0)
+                if length > MAX_BODY:
+                    raise ValueError("body too large")
+                if length > 0:
+                    request_body = await asyncio.wait_for(reader.readexactly(length), 60)
+            except Exception:
+                bad_body = True
+            try:
+                if bad_body:
+                    status, ctype, body = 400, "application/json", {"error": "bad_request"}
+                else:
+                    status, ctype, body = await self.route(method, url.path, query, headers, request_body)
             except Exception as exc:  # config inválida etc.: o estado anterior fica; nunca devolve valores de segredo
                 status, ctype, body = 500, "application/json", {"error": "internal", "type": type(exc).__name__}
             data = body if isinstance(body, bytes) else json.dumps(body, sort_keys=True).encode()
@@ -54,7 +81,7 @@ class AdminServer:
             except Exception:
                 pass
 
-    async def route(self, method: str, path: str, query, headers):
+    async def route(self, method: str, path: str, query, headers, request_body: bytes = b""):
         if method == "GET" and path == "/v1/health":
             return 200, "application/json", {"ok": True}
         if not self._authorized(headers):
@@ -68,6 +95,7 @@ class AdminServer:
                 "via": p.config.via, "scheme": up.scheme if up else None, "host": up.host if up else None,
                 "port": up.port if up else None, "geo": up.geo_country if up else None,
                 "allow_cidrs": p.config.allow_cidrs, "allow_hosts": p.config.allow_hosts,
+                "render_supported": p.config.render is not None,
             }
         if method == "GET" and path == "/v1/reqlog":
             since = (query.get("since") or [None])[0]
@@ -82,9 +110,111 @@ class AdminServer:
             if file is None:
                 return 404, "application/json", {"error": "not_found"}
             return 200, "text/plain; charset=utf-8", file.read_bytes()
+        if method == "POST" and path == "/v1/reqlog/ingest":
+            try:
+                written = p.ingest(json.loads(request_body))
+            except (ValueError, TypeError, KeyError, AttributeError, FileExistsError) as exc:
+                return 400, "application/json", {"error": "invalid_argument", "message": str(exc)[:200]}
+            return 200, "application/json", {"id": written["id"]}
+        if method == "POST" and path == "/v1/render":
+            return await self.render(request_body)
+        if path.startswith("/runtime/"):
+            return await self.forward_to_runtime(method, path[len("/runtime"):], headers, request_body)
         if method == "POST" and path == "/v1/proxy/reload":
             cfg = await asyncio.to_thread(self.config_loader)  # pode esperar o bind do host enxergar o arquivo novo
             closed = p.apply_config(cfg)
             p.flush_usage()
-            return 200, "application/json", {"applied": True, "via": cfg.via, "closed_tunnels": closed}
+            return 200, "application/json", {"applied": True, "via": cfg.via, "closed_tunnels": closed,
+                                             "render_supported": cfg.render is not None}
         return 404, "application/json", {"error": "not_found"}
+
+    # ----- reverse proxy do runtime (07 §2.2: o app só fala com o egress) ----------------------------------------------------
+    async def forward_to_runtime(self, method: str, path: str, headers, body: bytes):
+        """`/runtime/v1/<op>` -> `runtime:8765/v1/<op>`, repassando o token do computador. O runtime confere o mesmo token."""
+        auth = header_value(headers, "authorization") or ""
+        host, port = self.runtime_address
+        try:
+            reader, writer = await asyncio.wait_for(asyncio.open_connection(host, port), 5)
+        except (OSError, asyncio.TimeoutError):
+            return 503, "application/json", {"error": "box_restarted", "message": "runtime is not reachable"}
+        try:
+            writer.write((f"{method} {path} HTTP/1.1\r\nHost: runtime\r\nAuthorization: {auth}\r\nContent-Type: application/json\r\n"
+                          f"Content-Length: {len(body)}\r\nConnection: close\r\n\r\n").encode() + body)
+            await writer.drain()
+            raw = await asyncio.wait_for(reader.read(), 125)
+        except (OSError, asyncio.TimeoutError):
+            return 504, "application/json", {"error": "timeout", "message": "runtime did not answer in time"}
+        finally:
+            writer.close()
+        head, _, payload = raw.partition(b"\r\n\r\n")
+        try:
+            status = int(head.split(b" ", 2)[1])
+        except (IndexError, ValueError):
+            return 502, "application/json", {"error": "box_restarted", "message": "bad answer from runtime"}
+        return status, "application/json", payload
+
+    # ----- render (CS-146) ----------------------------------------------------------------------------------------------------
+    async def render(self, request_body: bytes):
+        p = self.proxy
+        cfg = p.config.render
+        if cfg is None:
+            return 501, "application/json", {"error": "not_supported", "message": "the selected proxy has no render capability"}
+        try:
+            req = json.loads(request_body)
+            url = req["url"]
+            parts = urlsplit(url)
+            if parts.scheme not in ("http", "https") or not parts.hostname:
+                raise ValueError("url must be absolute http(s)")
+        except (ValueError, KeyError, TypeError) as exc:
+            return 400, "application/json", {"error": "invalid_argument", "message": str(exc)[:200]}
+        host, port = parts.hostname, parts.port or (443 if parts.scheme == "https" else 80)
+        try:
+            await p._check_destination(host, port)
+        except Blocked as exc:
+            return 403, "application/json", {"error": "blocked_by_policy", "message": f"blocked: {exc.reason}",
+                                             "details": {"reason": exc.reason}}
+        started = p.clock()
+        try:
+            status, out = await asyncio.to_thread(rd.call_provider, cfg, rd.build_body(req))
+        except rd.RenderError as exc:
+            p.usage_for_via().errors += 1
+            return exc.status, "application/json", {"error": exc.code, "message": exc.message}
+        red = p.reqlog.redactor
+        html = out.get("browserHtml", "") if isinstance(out, dict) else ""
+        rid = rd.new_id(p)
+        record = {"id": rid, "source": "render-api", "kind": "render", "method": "RENDER", "url": url, "status": status,
+                  "duration_ms": round((p.clock() - started) * 1000)}
+        wall = rd.detect_wall(html)
+        if wall:
+            record["blocked"] = True
+            record["blocked_reason"] = f"anti-bot page in rendered HTML ({wall})"
+        if status != 200:
+            record["error"] = "proxy_error"
+            record["error_detail"] = json.dumps(out)[:600]
+        captures = []
+        capture_ids = []
+        for item in (out.get("networkCapture") or []) if isinstance(out, dict) else []:
+            text = base64.b64decode(item.get("httpResponseBody", "") or "").decode("utf-8", "replace")
+            cid = rd.new_id(p)
+            p.ingest({"record": {"id": cid, "source": "render-api:capture", "method": item.get("method", "GET"),
+                                 "url": item.get("url"), "status": item.get("statusCode"), "parent": rid},
+                      "response_body": text})
+            capture_ids.append(cid)
+            captures.append({"id": cid, "url": item.get("url"), "status": item.get("statusCode"), "snippet": red.text(text[:500])})
+        record["captures"] = capture_ids
+        written = p.ingest({"record": record, "response_body": html})
+        usage = p.usage_for_via()
+        if status == 200:
+            usage.renders += 1
+        p.dirty = True
+        content = rd.visible_text(html) if req.get("output") == "text" else html
+        reply: dict = {"request_id": written["id"], "status": status, "content": red.text(content[:rd.INLINE_LIMIT]),
+                       "truncated": len(content) > rd.INLINE_LIMIT, "body_file": written.get("response_body_file"),
+                       "captures": captures, "usage": {"renders": usage.renders}}
+        if wall:
+            reply["blocked"] = record["blocked_reason"]
+        if status != 200:
+            reply["error"] = "proxy_error"
+            reply["message"] = f"render provider answered {status}"
+            reply["details"] = {"upstream_status": status}
+        return 200, "application/json", reply

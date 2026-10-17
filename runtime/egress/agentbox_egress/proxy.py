@@ -82,7 +82,9 @@ class EgressProxy:
         if hasattr(self, "config"):
             closed = self.close_all("proxy_switch")
         self.config = config
-        secrets = config.upstream.secrets() if config.upstream else []
+        secrets = list(config.upstream.secrets()) if config.upstream else []
+        if config.render:
+            secrets.append(config.render.api_key)
         redactor = rl.Redactor(secrets, config.extra_redact_headers)
         if hasattr(self, "reqlog"):
             self.reqlog.redactor = redactor
@@ -125,6 +127,48 @@ class EgressProxy:
 
     def _u(self) -> Usage:
         return self.usage.setdefault(self.config.via, Usage())
+
+    def usage_for_via(self) -> Usage:
+        return self._u()
+
+    # ----- registros enviados por quem tem o token (app e runtime) -------------------------------------------------------
+    INGEST_SOURCES = {"browser", "work:python", "work:curl", "work:other", "render-api", "render-api:capture"}
+    INGEST_FIELDS = ("id", "source", "kind", "method", "url", "host", "type", "status", "content_type", "request_headers",
+                     "response_headers", "duration_ms", "error", "error_detail", "ttfb_ms", "parent", "final_url", "impersonate",
+                     "blocked", "blocked_reason", "captures")
+
+    def ingest(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Grava um registro `observed` entregue pelo app (http_request, render) ou pelo runtime (browser). O chamador já
+        passou pela autenticação por token: o `work` nunca o tem. O egress redige e encadeia como em qualquer outro registro."""
+        rec_in = payload.get("record")
+        if not isinstance(rec_in, dict):
+            raise ValueError("record must be an object")
+        source = rec_in.get("source")
+        if source not in self.INGEST_SOURCES:
+            raise ValueError(f"source must be one of {sorted(self.INGEST_SOURCES)}")
+        red = self.reqlog.redactor
+        rid = rec_in.get("id") or rl.new_ulid(int(self.clock() * 1000))
+        if not (isinstance(rid, str) and len(rid) == 26 and all(c in rl._ULID_ALPHABET for c in rid)):
+            raise ValueError("id must be a ULID")
+        record: dict[str, Any] = {k: rec_in[k] for k in self.INGEST_FIELDS if k in rec_in}
+        record.update(id=rid, trust="observed", via=self.config.via)
+        if isinstance(record.get("url"), str):
+            record["url"] = red.url(record["url"])
+        if isinstance(record.get("final_url"), str):
+            record["final_url"] = red.url(record["final_url"])
+        for key in ("request_headers", "response_headers"):
+            if key in record:
+                record[key] = red.headers([(str(k), str(v)) for k, v in record[key]])
+        for key in ("error", "error_detail", "blocked_reason"):
+            if isinstance(record.get(key), str):
+                record[key] = red.text(record[key])
+        for kind, limit in (("request", rl.REQUEST_BODY_LIMIT), ("response", rl.RESPONSE_BODY_LIMIT)):
+            body = payload.get(f"{kind}_body")
+            if isinstance(body, str) and body:
+                record.update(self.reqlog.write_body(rid, kind, body.encode("utf-8"), limit))
+        written = self.reqlog.append(record)
+        self.dirty = True
+        return written
 
     # ----- servidor -----------------------------------------------------------------------------------------------------
     async def handle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
