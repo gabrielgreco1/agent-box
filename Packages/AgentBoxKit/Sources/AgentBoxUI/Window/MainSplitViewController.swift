@@ -44,12 +44,18 @@ final class MainSplitViewController: NSSplitViewController {
                 .environment(\.a11yParent, .windowMain))
         sidebarView.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
         sidebarVC.view = sidebarView
-        let contentVC = NSViewController()
-        let contentView = ChromeHostingView(
-            content: LandingView(automationOn: env.automationEnabled).environment(\.elementStore, env.elements).environment(\.actionRegistry, env.registry)
-                .environment(\.a11yParent, .windowMain))
-        contentView.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
-        contentVC.view = contentView
+        let contentVC: NSViewController
+        if env.fixture == "terminal-demo" {
+            // Tela de dev da T1-09 (um pane de terminal real); o pane do produto chega com a T1-15.
+            contentVC = TerminalDemoViewController(env: env)
+        } else {
+            contentVC = NSViewController()
+            let contentView = ChromeHostingView(
+                content: LandingView(automationOn: env.automationEnabled).environment(\.elementStore, env.elements).environment(\.actionRegistry, env.registry)
+                    .environment(\.a11yParent, .windowMain))
+            contentView.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
+            contentVC.view = contentView
+        }
         sidebarItem = NSSplitViewItem(viewController: sidebarVC)
         contentItem = NSSplitViewItem(viewController: contentVC)
         super.init(nibName: nil, bundle: nil)

@@ -1,0 +1,24 @@
+Build complete! (5.55s)
+== 1.20.0
+wide plain                                   total=18 <e6><97><a5>\0<e6><9c><ac>\0<e8><aa><9e>\0_ok
+overwrite first half-cell of wide            total=13 .x<e6><9c><ac>\0<e8><aa><9e>\0
+overwrite second cell of wide (CUP col2)     total=15 <e6><97><a5>x<e6><9c><ac>\0<e8><aa><9e>\0
+EL from col 2 (mid wide)                     total=7 <e6><97><a5>\0
+EL from col 3                                total=7 <e6><97><a5>\0
+wide at last col wrap                        total=20 aaaaaaaaa
+CUP past, no text                            total=9 ab\0\0\0c
+erase chars ECH mid-wide                     total=13 <e6><97><a5>\0\0\0<e8><aa><9e>\0
+ICH mid-wide                                 total=17 <e6><97><a5>\0\0\0<e6><9c><ac>\0<e8><aa><9e>\0
+DCH mid-wide                                 total=14 <e6><97><a5><e6><9c><ac>\0<e8><aa><9e>\0
+Build complete! (6.70s)
+== 1.99.0
+wide plain                                   total=15 <e6><97><a5><e6><9c><ac><e8><aa><9e>_ok
+overwrite first half-cell of wide            total=11 .x<e6><9c><ac><e8><aa><9e>
+overwrite second cell of wide (CUP col2)     total=11 _x<e6><9c><ac><e8><aa><9e>
+EL from col 2 (mid wide)                     total=3 
+EL from col 3                                total=6 <e6><97><a5>
+wide at last col wrap                        total=18 aaaaaaaaa
+CUP past, no text                            total=9 ab___c
+erase chars ECH mid-wide                     total=10 ____<e8><aa><9e>
+ICH mid-wide                                 total=13 ____<e6><9c><ac><e8><aa><9e>
+DCH mid-wide                                 total=10 _<e6><9c><ac><e8><aa><9e>

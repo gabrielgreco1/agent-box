@@ -474,6 +474,17 @@
         }
       }
     },
+    "Find in terminal…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find in terminal…"
+          }
+        }
+      }
+    },
     "Folder not found": {
       "extractionState": "manual",
       "localizations": {
@@ -712,6 +723,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "No projects yet."
+          }
+        }
+      }
+    },
+    "No results": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No results"
           }
         }
       }

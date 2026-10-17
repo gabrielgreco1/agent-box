@@ -33,6 +33,8 @@ public final class AppEnvironment {
     public let toasts = ToastCenter()
     let sidebar = SidebarModel()
     public let keyBindings: KeyBindingRegistry
+    /// Pane de terminal focado: destino das ações de zoom, busca, copiar/colar e limpar (T1-09).
+    public let terminalRouter = TerminalActionRouter()
     public let automationEnabled: Bool
     public let fixture: String?
     public let socketPath: String
@@ -62,6 +64,7 @@ public final class AppEnvironment {
         wireOverlays()
         if fixture == Self.overlayDemoFixture || fixture == SidebarFixtures.screenID { registerOverlayDemo() }
         if fixture == SidebarFixtures.screenID { registerSidebarDemo() }
+        do { try terminalRouter.register(in: registry) } catch { log.publicError("duplicate terminal action registration") }
     }
 
     /// Ações reais da casca vazia; as demais entram com a tela que as possui.

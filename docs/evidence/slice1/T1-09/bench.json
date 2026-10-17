@@ -1,0 +1,134 @@
+{
+  "AR-702-4panes-cat" : {
+    "echo" : {
+      "keysSent" : 300,
+      "keyToEmulatorMs" : {
+        "count" : 300,
+        "max" : 5.5267080000000002,
+        "mean" : 0.34898943666666665,
+        "p50" : 0.189666,
+        "p95" : 0.96704100000000004,
+        "p99" : 2.6920000000000002
+      },
+      "keyToPresentedFrameMs" : {
+        "count" : 300,
+        "max" : 11.895375,
+        "mean" : 2.9907891633333321,
+        "p50" : 3.407,
+        "p95" : 4.5682499999999999,
+        "p99" : 5.304125
+      },
+      "timeouts" : 0
+    },
+    "floodersMiBPerSecond" : [
+      23.268785380011884,
+      22.85366586435066,
+      22.510008318349257
+    ],
+    "mainGapP99Ms" : 2.4558330000000002,
+    "mainMaxGapMs" : 2.6885409999999998
+  },
+  "AR-702-4panes-yes" : {
+    "echo" : {
+      "keysSent" : 300,
+      "keyToEmulatorMs" : {
+        "count" : 300,
+        "max" : 0.53674999999999995,
+        "mean" : 0.19828333666666662,
+        "p50" : 0.18737500000000001,
+        "p95" : 0.29512500000000003,
+        "p99" : 0.38724999999999998
+      },
+      "keyToPresentedFrameMs" : {
+        "count" : 300,
+        "max" : 5.4889590000000004,
+        "mean" : 3.7192191633333338,
+        "p50" : 3.591666,
+        "p95" : 5.3615000000000004,
+        "p99" : 5.4757920000000002
+      },
+      "timeouts" : 0
+    },
+    "floodersMiBPerSecond" : [
+      0.46521507622222846,
+      0.46030067254595602,
+      0.46277104103213385
+    ],
+    "mainGapP99Ms" : 2.4245420000000002,
+    "mainMaxGapMs" : 2.8596249999999999
+  },
+  "AR-702-idle" : {
+    "keysSent" : 300,
+    "keyToEmulatorMs" : {
+      "count" : 300,
+      "max" : 1.2091670000000001,
+      "mean" : 0.22121235333333342,
+      "p50" : 0.208125,
+      "p95" : 0.27187499999999998,
+      "p99" : 0.44454199999999999
+    },
+    "keyToPresentedFrameMs" : {
+      "count" : 300,
+      "max" : 9.5464579999999994,
+      "mean" : 2.767308749999998,
+      "p50" : 2.552333,
+      "p95" : 3.9001250000000001,
+      "p99" : 9.3741660000000007
+    },
+    "timeouts" : 0
+  },
+  "AR-702-idle-p95-ms" : 3.9001250000000001,
+  "AR-702-loaded-cat-p95-ms" : 4.5682499999999999,
+  "AR-702-loaded-yes-p95-ms" : 5.3615000000000004,
+  "AR-703-cat" : {
+    "completed" : true,
+    "mainGapP99Ms" : 2.4754170000000002,
+    "mainMaxGapMs" : 10.197625,
+    "megabytes" : 50,
+    "MiBPerSecond" : 43.572612929825006,
+    "otherPaneEcho" : {
+      "keysSent" : 150,
+      "keyToEmulatorMs" : {
+        "count" : 150,
+        "max" : 0.96308400000000005,
+        "mean" : 0.22252198000000004,
+        "p50" : 0.21529200000000001,
+        "p95" : 0.28916700000000001,
+        "p99" : 0.70874999999999999
+      },
+      "keyToPresentedFrameMs" : {
+        "count" : 150,
+        "max" : 4.7044170000000003,
+        "mean" : 3.4710464266666676,
+        "p50" : 3.5557080000000001,
+        "p95" : 4.5990000000000002,
+        "p99" : 4.7013749999999996
+      },
+      "timeouts" : 0
+    },
+    "seconds" : 1.1475097919999999
+  },
+  "AR-704" : {
+    "appFootprintMiBAfter" : 234.14170074462891,
+    "appFootprintMiBBefore" : 8.360107421875,
+    "daemonFootprintMiBAfter" : 47.703788757324219,
+    "daemonFootprintMiBBefore" : 3.7662200927734375,
+    "panes" : 8,
+    "paneSizePt" : "580x400 (2x2 numa janela de 1440 com sidebar de 280)",
+    "perDaemonSessionMiB" : 5.4921960830688477,
+    "perViewMiB" : 28.222699165344238,
+    "scrollbackLines" : 5000
+  },
+  "failures" : [
+
+  ],
+  "machine" : {
+    "arch" : "arm64",
+    "cpus" : 14,
+    "date" : "2026-10-17T05:26:34Z",
+    "os" : "Version 27.0.1 (Build 26A434)",
+    "quick" : false,
+    "swiftTerm" : "1.99.0 (2dad6a1)"
+  },
+  "passed" : true
+}
