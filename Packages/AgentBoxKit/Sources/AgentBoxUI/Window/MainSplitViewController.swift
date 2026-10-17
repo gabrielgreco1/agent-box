@@ -11,6 +11,11 @@ final class ChromeSplitView: NSSplitView {
 
 /// Hosting view sem safe area: a faixa e o conteúdo desenham sob a titlebar (`fullSizeContentView`).
 final class ChromeHostingView: NSHostingView<AnyView> {
+    /// Enquanto há overlay, estas views recusam o foco: Tab e cliques ficam dentro do overlay (02 §12.17).
+    var inputBlocked: () -> Bool = { false }
+
+    override var acceptsFirstResponder: Bool { inputBlocked() ? false : super.acceptsFirstResponder }
+
     init(content: some View) {
         super.init(rootView: AnyView(content))
         safeAreaRegions = []
@@ -34,11 +39,15 @@ final class MainSplitViewController: NSSplitViewController {
     init(env: AppEnvironment) {
         self.env = env
         let sidebarVC = NSViewController()
-        sidebarVC.view = ChromeHostingView(content: SidebarView().environment(\.elementStore, env.elements).environment(\.a11yParent, .windowMain))
+        let sidebarView = ChromeHostingView(content: SidebarView().environment(\.elementStore, env.elements).environment(\.a11yParent, .windowMain))
+        sidebarView.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
+        sidebarVC.view = sidebarView
         let contentVC = NSViewController()
-        contentVC.view = ChromeHostingView(
+        let contentView = ChromeHostingView(
             content: LandingView(automationOn: env.automationEnabled).environment(\.elementStore, env.elements).environment(\.actionRegistry, env.registry)
                 .environment(\.a11yParent, .windowMain))
+        contentView.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
+        contentVC.view = contentView
         sidebarItem = NSSplitViewItem(viewController: sidebarVC)
         contentItem = NSSplitViewItem(viewController: contentVC)
         super.init(nibName: nil, bundle: nil)

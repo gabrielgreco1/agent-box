@@ -6,33 +6,46 @@ import SwiftUI
 /// Desabilitado só por pré-condição real, com o motivo no tooltip.
 public struct ActionButton<Label: View>: View {
     private let action: ActionID
-    private let a11yID: A11yID
+    private let a11yID: A11yID?
+    private let argument: ActionArgument
+    private let tooltip: String?
     private let label: Label
     @Environment(\.actionRegistry) private var registry
 
-    public init(_ action: ActionID, id: A11yID, @ViewBuilder label: () -> Label) {
+    /// `id` é nulo para partes de um controle composto (segmentos, itens), que não entram sozinhas na árvore de automação:
+    /// o controle pai registra o `A11yID` e a ação segue acessível por `ctl ui action`.
+    public init(
+        _ action: ActionID, id: A11yID? = nil, argument: ActionArgument = .press, tooltip: String? = nil,
+        @ViewBuilder label: () -> Label
+    ) {
         self.action = action
         self.a11yID = id
+        self.argument = argument
+        self.tooltip = tooltip
         self.label = label()
     }
 
     public var body: some View {
         if let registry, registry.isRendered(action) {
             let availability = registry.availability(of: action)
-            Button {
-                Task { _ = try? await registry.perform(action, .press) }
+            let button = Button {
+                Task { _ = try? await registry.perform(action, argument) }
             } label: {
                 label
             }
             .disabled(!availability.isEnabled)
-            .help(Self.tooltip(availability))
-            .a11y(a11yID, kind: "button", label: action.spec.label, action: action)
+            .help(Self.tooltip(availability, fallback: tooltip))
+            if let a11yID {
+                button.a11y(a11yID, kind: "button", label: action.spec.label, action: action)
+            } else {
+                button
+            }
         }
     }
 
-    private static func tooltip(_ availability: ActionAvailability) -> String {
+    private static func tooltip(_ availability: ActionAvailability, fallback: String?) -> String {
         if case .disabled(let reason) = availability { return reason }
-        return ""
+        return fallback ?? ""
     }
 }
 

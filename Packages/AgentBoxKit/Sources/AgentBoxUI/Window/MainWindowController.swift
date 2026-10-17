@@ -9,14 +9,18 @@ import SwiftUI
 final class ChromeContainerView: NSView {
     let strip: NSView
     let split: NSView
+    /// Overlays e toasts: acima de tudo, cobrindo a janela inteira (02 §12.17).
+    let overlay: NSView
     var stripWidth: () -> CGFloat = { 0 }
 
-    init(split: NSView, strip: NSView) {
+    init(split: NSView, strip: NSView, overlay: NSView) {
         self.split = split
         self.strip = strip
+        self.overlay = overlay
         super.init(frame: .zero)
         addSubview(split)
         addSubview(strip)
+        addSubview(overlay)
     }
 
     @available(*, unavailable) required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
@@ -24,6 +28,7 @@ final class ChromeContainerView: NSView {
     override func layout() {
         super.layout()
         split.frame = bounds
+        overlay.frame = bounds
         let h = DS.Layout.titlebarHeight
         strip.frame = NSRect(x: 0, y: bounds.height - h, width: min(stripWidth(), bounds.width), height: h)
     }
@@ -37,6 +42,8 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
     private let split: MainSplitViewController
     private let container: ChromeContainerView
     private let strip: ChromeHostingView
+    private let overlayHost: OverlayHostingView
+    private let overlayFocus = OverlayFocusCoordinator()
     private var positioner: TrafficLightPositioner?
     private var observers: [any NSObjectProtocol] = []
     private let mainToken = UUID()
@@ -47,8 +54,11 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
         split = MainSplitViewController(env: env)
         let strip = ChromeHostingView(
             content: TitlebarStrip(env: env).environment(\.elementStore, env.elements).environment(\.a11yParent, .windowMain))
+        strip.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
         self.strip = strip
-        container = ChromeContainerView(split: split.view, strip: strip)
+        let overlayHost = OverlayHostingView(router: env.overlays, toasts: env.toasts, registry: env.registry, elements: env.elements)
+        self.overlayHost = overlayHost
+        container = ChromeContainerView(split: split.view, strip: strip, overlay: overlayHost)
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: DS.Layout.windowDefaultWidth, height: DS.Layout.windowDefaultHeight),
@@ -73,6 +83,9 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
         if let autosaveName { window.setFrameAutosaveName(autosaveName) }
         positioner = TrafficLightPositioner(window: window)
         env.elements.window = window
+        overlayFocus.window = window
+        overlayFocus.hostView = overlayHost
+        env.overlays.focus = overlayFocus
         env.elements.register(mainToken, id: .windowMain, kind: "window", label: "Agent Box", value: nil, action: nil, parent: nil)
         registerActions()
         observeLayout()
