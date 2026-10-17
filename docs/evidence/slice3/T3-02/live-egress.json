@@ -1,7 +1,7 @@
 {
   "chained_http_upstream" : "origin viu 172.18.0.3 (tinyproxy), egress=172.18.0.6; reqlog via=test-http; túnel CONNECT encadeado com Proxy-Authorization",
   "chained_socks5_upstream" : "origin viu 172.18.0.4 (servidor SOCKS5 de teste); reqlog via=test-socks; senha errada -> 502 proxy_error",
-  "egress_image" : "agentbox-egress-test-ba9c1dc7:ctx-b973c3b1c49b (base python:3.13-alpine fixada por digest)",
+  "egress_image" : "agentbox-egress-test-0d8479e7:ctx-fe2d16edf2eb (base python:3.13-alpine fixada por digest)",
   "internet_via_egress_informational" : "<!doctype html><html lang=en><head><meta charset=utf-8><link rel=icon href=data:,><meta name=viewport content=\"width=dev | rc=0 | ",
   "log_integrity" : "Log integrity: OK (16 linhas, escritas pelo egress no bind rw do host)",
   "log_tamper_detected" : "Tampered at line 2",
@@ -12,12 +12,12 @@
   "reqlog_http" : "GET index.html status=200 via=direct; url no log: http:\/\/origin:8080\/index.html?api_key=[redacted]&q=1",
   "reqlog_tunnel" : "CONNECT origin:8080 up=56 down=241",
   "runtime" : "desktop: Engine 29.6.2, aarch64",
-  "secrets_mount" : "\/run\/host_mark\/private \/run\/agentbox fakeowner ro,relatime,fakeowner 0 0 | total 8 | -r--------    1 egress   egress         180 Oct 17 07:49 egress.json | -r--------    1 egress   egress          64 Oct 17 07:49 token | touch: \/run\/agentbox\/x: Read-only file system | 10003 | ",
-  "ssrf_blocked" : "13 bloqueios no reqlog; motivos: cgnat, internal-name, link-local, loopback, private; alvos: http:\/\/169.254.169.254\/latest\/meta-data\/ http:\/\/127.0.0.1:8790\/v1\/usage http:\/\/10.0.0.1\/ http:\/\/192.168.0.1\/ http:\/\/100.64.0.1\/ http:\/\/host.docker.internal:8080\/ http:\/\/gateway.docker.internal\/ http:\/\/2130706433\/ http:\/\/[::1]\/ http:\/\/localhost\/ http:\/\/172.20.0.2:8790\/v1\/health http:\/\/93.184.216.34@127.0.0.1\/",
+  "secrets_mount" : "\/run\/host_mark\/private \/run\/agentbox fakeowner ro,relatime,fakeowner 0 0 | total 8 | -r--------    1 egress   egress         180 Oct 17 08:54 egress.json | -r--------    1 egress   egress          64 Oct 17 08:54 token | touch: \/run\/agentbox\/x: Read-only file system | 10003 | ",
+  "ssrf_blocked" : "13 bloqueios no reqlog; motivos: cgnat, internal-name, link-local, loopback, private; alvos: http:\/\/169.254.169.254\/latest\/meta-data\/ http:\/\/127.0.0.1:8790\/v1\/usage http:\/\/10.0.0.1\/ http:\/\/192.168.0.1\/ http:\/\/100.64.0.1\/ http:\/\/host.docker.internal:8080\/ http:\/\/gateway.docker.internal\/ http:\/\/2130706433\/ http:\/\/[::1]\/ http:\/\/localhost\/ http:\/\/172.19.0.2:8790\/v1\/health http:\/\/93.184.216.34@127.0.0.1\/",
   "teardown" : "egress + rede + pasta de segredos removidos por computador (CS-180)",
-  "topology" : "rede agentbox-net-7ceb58f3-c1a4-4645-a360-d9a3c95a25d8 internal=true; work sem portas; egress publica 127.0.0.1:53700->8790; work só na rede interna",
+  "topology" : "rede agentbox-net-503cec47-431b-400d-abd7-18c29a5da506 internal=true; work sem portas; egress publica 127.0.0.1:61373->8790; work só na rede interna",
   "upstream_credentials_confined" : "senha do upstream ausente de: inspect do egress, env\/arquivos do work, docker logs, reqlog no host",
   "usage_direct" : "requests=3 tunnels=1 blocked=13 up=56 down=738",
   "work_has_no_secrets" : "ls: \/run\/agentbox: No such file or directory | done | ",
-  "work_no_route_out" : "wget_noproxy=1 | ping=1 | 172.20.0.0\/16 dev eth0 scope link  src 172.20.0.3  | "
+  "work_no_route_out" : "wget_noproxy=1 | ping=1 | 172.19.0.0\/16 dev eth0 scope link  src 172.19.0.3  | "
 }

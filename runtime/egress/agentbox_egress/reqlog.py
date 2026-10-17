@@ -185,15 +185,20 @@ class ReqLog:
         out: list[dict[str, Any]] = []
         if not self.file.exists():
             return out
+        everything: list[dict[str, Any]] = []
         with self.file.open("rb") as handle:
             for raw in handle:
-                if not raw.strip():
-                    continue
-                rec = json.loads(raw)
-                if since_id is not None and rec["id"] <= since_id:
-                    continue
-                out.append(rec)
-        return out[-limit:] if since_id is None else out[:limit]
+                if raw.strip():
+                    everything.append(json.loads(raw))
+        if since_id is None:
+            return everything[-limit:]
+        # Ordem do ARQUIVO (não do id): registros do browser chegam ao fim da requisição com o ULID do começo dela.
+        position = next((i for i, rec in enumerate(everything) if rec["id"] == since_id), None)
+        if position is None:
+            out = [rec for rec in everything if rec["id"] > since_id]
+        else:
+            out = everything[position + 1:]
+        return out[:limit]
 
     def body_path(self, relative: str) -> Path | None:
         path = (self.directory / relative).resolve()

@@ -50,9 +50,19 @@ class Upstream:
 
 
 @dataclass
+class Render:
+    """Modo API/render do provedor do proxy selecionado (07 CS-146). A chave só existe aqui (arquivo 0400 do egress)."""
+    adapter: str  # zyte
+    endpoint: str
+    api_key: str
+    cost_note: str | None = None
+
+
+@dataclass
 class Config:
     via: str = "direct"
     upstream: Upstream | None = None
+    render: Render | None = None
     proxy_port: int = 3128
     admin_port: int = 8790
     internal_subnet: str | None = None
@@ -78,8 +88,14 @@ class Config:
             )
             if upstream.scheme not in ("http", "https", "socks5"):
                 raise ValueError(f"scheme de proxy inválido: {upstream.scheme}")
+        rd = data.get("render")
+        render = None
+        if rd:
+            render = Render(adapter=rd.get("adapter", "zyte"), endpoint=rd["endpoint"], api_key=rd["api_key"])
+            if render.adapter != "zyte":
+                raise ValueError(f"adaptador de render inválido: {render.adapter}")
         cfg = Config(
-            via=data.get("via", "direct" if upstream is None else "proxy"), upstream=upstream,
+            via=data.get("via", "direct" if upstream is None else "proxy"), upstream=upstream, render=render,
             proxy_port=int(data.get("proxy_port", 3128)), admin_port=int(data.get("admin_port", 8790)),
             internal_subnet=data.get("internal_subnet"), bind=data.get("bind"),
             allow_cidrs=list(data.get("allow_cidrs", [])), allow_hosts=list(data.get("allow_hosts", [])),

@@ -1,0 +1,65 @@
+# T3-03 · Runtime e ferramentas MCP
+
+Base: 07 §2 (runtime, work, egress), §3 (ferramentas MCP, schemas e códigos de erro fixos), §7 (segurança); 08 §0/§1 (o MCP mora no app; `agentbox mcp` fala com o app por `app.sock`); 00 T9, T12, P12, P13; spike S-08 (`mcpServers` inline por subagente, um processo MCP por filho). Depende de T3-01 (Docker, imagens) e T3-02 (egress).
+
+## O que entrou
+
+| Peça | Onde | Notas |
+|---|---|---|
+| Imagem `agentbox-box` com os dois papéis | `runtime/box/` | **runtime** (uid 10001): Xvfb `:99` sempre, Chromium **headed** do Playwright (`--no-sandbox` dentro do container; o container é o sandbox), servidor de controle `agentbox_runtime` em `:8765` (HTTP, token por arquivo, `X-AgentBox-Runtime: 2`), Openbox ligado só em `desktop`. **work** (uid 10002): `curl`, `jq`, `python3` com `curl_cffi`, `requests`, `httpx`, `lxml`, `bs4`, `openpyxl`, `playwright`, e `abx-http` (o `http_request`). Base fixada por digest, pip com versões exatas, sem pins de apt |
+| Servidor de controle do runtime | `runtime/box/agentbox_runtime/` | operações `open, read, screenshot, click, type, press, select, scroll, wait, eval, cookies, tabs, back, forward, reload, download, upload, status, mode`. Escritas serializadas por lock; leituras (read, screenshot, status, eval, tabs list, cookies get) não o disputam (CS-193). Listener passivo de rede: cada requisição do browser (menos image/font/stylesheet/media) vira um registro enviado ao egress; a ferramenta só devolve depois de o registro estar gravado |
+| Egress (T3-02 estendido) | `runtime/egress/agentbox_egress/{admin,proxy,render,config,reqlog}.py` | `POST /v1/reqlog/ingest` (registro `observed` do app e do runtime, redigido e encadeado pelo egress; `trust` e `via` vêm do egress, não do chamador), `POST /v1/render` (modo API do proxy selecionado, adaptador Zyte; `not_supported` sem capacidade; alvo passa pelo filtro SSRF; marca `blocked` para página anti-bot), reverse proxy `/runtime/v1/<op>` até o runtime (o app só fala com o egress), `since` do reqlog por ordem do arquivo |
+| Provisionamento | `AgentBoxDocker/Computers/ComputerProvisioner.swift` | rede interna + egress + `runtime` (se o display não é `http`) + `work`; volume de perfil efêmero; segredos de tarefa montados só leitura em `/run/agentbox/secrets` no `work`; teardown por label |
+| MCP no app | `AgentBoxCore/Computers/MCP/` | `ToolCatalog` (38 ferramentas com schemas exatos), `Schema` (validação no servidor, XOR e "pelo menos um"), `ComputerToolService` (browser, exec, http, reqlog, proxy/render, diário/timeline/resultado, ajuda), `ComputerHub` (roteamento por filho), `ManagedComputer` (estado, dono, lease, pedidos de ajuda, logs encadeados), `ComputerMCPServer` (JSON-RPC 2.0), `McpServiceProvider` (serviço `mcp` de `app.sock`), `PathGuard`, `ResultValidator`, `RunFolder`/`ChainedLog`, `DockerComputerBackend` |
+| Helper | `Sources/agentbox/Mcp/McpCommand.swift` | `agentbox mcp --child <id> --capability <token>`: stdio ↔ `app.sock`, uma conexão por requisição (chamadas longas não bloqueiam as outras), reabre o app em segundo plano e espera 10 s, e sem app responde erro de ferramenta legível `app_unavailable` em vez de sair com erro (AR-110) |
+
+### Decisões e desvios (todos pequenos, nenhum contradiz o 00)
+
+- **O reqlog é lido do host.** `logs/requests.jsonl` é escrito só pelo egress; o app o lê direto (corpos em `logs/bodies/`, confinados). O `http_request` e o `render` entram nele pelo `ingest` do egress, com `trust:"observed"`, porque o próprio app grava o registro. O egress também registra a mesma conexão por conta própria (o agente não forja isso).
+- **Hash encadeado em todos os logs do app** (`journal.jsonl`, `commands.jsonl`, `help.jsonl`, `events.jsonl`) no mesmo formato do reqlog; `ReqlogIntegrity.verify` confere os cinco (CS-149).
+- **Identidade**: uma conexão por requisição com `McpIdentity {child, capability}`; `ComputerHub.authorize` compara a capability em tempo constante. A capability é correlação de lançamento, nunca aparece em schema (teste confere). O nome do computador em `box_claim` é dica: o filho só opera o que reivindicou (`not_claimed`), a segunda reivindicação devolve `already_claimed` com `details.owner`.
+- **Caminhos**: `..` que escapa, absoluto fora de `/work`, NUL e **qualquer symlink** no caminho são `path_rejected` (conservador: o agente cria os symlinks). No host, `openat` + `O_NOFOLLOW` componente a componente; escrita nunca segue symlink existente.
+- **Anti-bot**: nenhum header ou fingerprint é alterado; o runtime usa o Chromium do Playwright como está.
+- `box_release` gera `logs/timeline.md` e chama o `ComputerLifecycle` injetado (T3-04); o teardown em si é do `ComputerProvisioner.teardown` (usado pelo teste vivo).
+
+## Resultado
+
+`scripts/gen.sh`, `scripts/build.sh`, `scripts/lint.sh` (+ `--self-test`) passam. `swift test` com `AGENTBOX_TEST_DOCKER=1`: **1107 testes**; em `swift-test-full.log` (última execução) 1106 passam e 1 falhou, `WorkspaceIntegrationTests` (daemon + zsh, T1, sem relação com esta tarefa), por timeout sob a carga do teste Docker em paralelo; isolado ele passa (1,2 s), e a execução anterior da suíte inteira passou com 1105 de 1105. Python: egress 60, runtime 10.
+
+## Testes
+
+- **Unidade** (`CoreTests/Computers/MCP`, sem Docker): schemas lidos do próprio 07 §3.2 (nome, parâmetros e obrigatoriedade de cada ferramenta contra a assinatura do capítulo; padrões; teto ≤ 50 s em todo `*_s`; sem combinadores no topo), validação (obrigatório, desconhecido, tipo, enum, faixa, XOR, aninhado), conjunto fechado de 16 códigos de erro, `PathGuard` (`..`, absoluto, NUL, symlink de arquivo e de diretório, escrita por symlink, raiz atrás de symlink), `ResultValidator` (CA-203, herança de ponteiro, `result.json` escrito à mão), `ChainedLog` (cadeia, reabertura, adulteração com número da linha), roteamento por filho (200 chamadas intercaladas, `already_claimed`, `not_claimed`, `box_released`, `queued`), ajuda (idempotente, `help_wait` repetido, escritas pausadas, resolve com nota e estado, `Take Over`), exec (stdin, cwd, env, `secret_env` só pelo nome, timeout com saída parcial, `exec_start`/`poll`/`cancel`, log de comandos), `http_request` (spec ao `work`, ingest, XOR, `save_body_as`, cookies do browser por host, classificação `blocked_by_policy` pelo reqlog), reqlog (filtros, corpo paginado, `as_curl` sem cabeçalhos redigidos), proxy/render, browser (mapeamento para o runtime, display `http`, screenshot, upload, download, cookies, `save_as`), diário, timeline, `result_submit` (inclusive symlink e `..` em citação), JSON-RPC (initialize, versão, `tools/list`, notificações, erros), socket `app.sock` real, helper `agentbox mcp` real como processo, config do egress com render. Python: `runtime/box/tests` (10) e `runtime/egress/tests` (60, 11 novos de ingest, render e reverse proxy).
+- **Integração real** (`AGENTBOX_TEST_DOCKER=1`, `LiveComputerTests`): builda as imagens reais, sobe um computador `headless` (rede interna, egress, runtime com Chromium headed, work) e uma página local servida pelo próprio teste numa bridge de teste (sem internet externa): navegar, ler (text, html, links, forms com senha mascarada, accessibility), screenshot (PNG real), clicar com XHR que aparece no reqlog `observed`, digitar, selecionar, enviar formulário, history, scroll, eval, abas, cookies (jar para `http_request`), download e upload em `/work`, `http_request` com `curl_cffi` (GET, POST JSON e form, `impersonate`) pelo egress, SSRF (metadata, `host.docker.internal`, RFC 1918) com motivo, `exec` com stdin (uid 10002, cwd, saída, stderr, exit, sem rota para fora, sem token, API do runtime 401, CDP inalcançável, ferramentas do work), segredo de tarefa por arquivo, timeout que mata o grupo, `exec_start`/`exec_cancel` ≤ 6 s com exit 143/137 no `commands.jsonl`, symlinks do agente (CA-207), diário, `result_submit` com evidência validada (`verified`/`cited_missing`/`not_verified`), timeline, pedido de ajuda com pausa de escritas e retomada, troca de proxy e `render` com adaptador falso do Zyte (chave só no egress), inspeção dos três containers (nenhum token ou chave em env/argv/inspect, hardening, só o egress publica porta), cadeia de hash íntegra, e teardown sem sobras. Resultado e números em `live-mcp.json`.
+
+## Cobertura dos ACs
+
+| AC | Estado |
+|---|---|
+| AC-411 (`Take Over` em Phoenix recusa escritas com `human_in_control`, Austin segue) | Coberto na regra e no roteamento (`RoutingTests.takeOverOnOneComputerDoesNotPauseTheOther`); o clique em `Take Over` é da T3-05 (a UI chama `ManagedComputer.takeOver()`) |
+| AC-412 (a página não recarrega, mesmos cookies, nenhum browser reiniciado) | **Parcial**: o runtime é headed em Xvfb sempre e a troca `headless` ↔ `desktop` mantém marcador do DOM, cookie e reqlog sem navegação nova (teste vivo, `mode_switch` em `live-mcp.json`). O viewer em si é da T3-05 |
+| AC-415 (`exec` com curl, `curl_cffi`, jq; `http_request` com POST, headers e cookies; `browser_click`/`type`/`eval`) | Coberto no teste vivo com Chromium real; os comandos ficam em `logs/commands.jsonl` e `logs/commands/NNNN.log` (a aba "Commands" é da T3-05) |
+| AC-416 (requests do browser, do curl e do Python no mesmo log, filtros XHR e Errors, "Copy as cURL" reproduz, `reqlog_query`) | Coberto: browser (`observed`), `http_request` (`observed`, `work:python`) e o `curl` do work (registro do egress) no mesmo `requests.jsonl`; `reqlog_as_curl` do XHR do browser é **reexecutado no work e reproduz a resposta** (teste vivo). A janela "Network" é da T3-05 |
+| AC-428 (regras do worker) | **Só a parte UNIT do texto**: as regras de conduta de CS-331 viajam no `instructions` do servidor MCP (≤ 1500 caracteres, testado). A skill `agentbox-boxes`, o template de brief e o `agentbox-worker` são da T3-04 (CS-330/331/332) |
+| CA-105, CA-106 | Cobertos no teste vivo (sem rota para fora, metadata, `host.docker.internal`, RFC 1918, `browser_open` recusado com motivo no reqlog) |
+| CA-202, CA-203, CA-204, CA-205, CA-207 | Cobertos (unidade e teste vivo). CA-207 sem `fs_usage`: a leitura fora do run é impossível por construção (`openat` + `O_NOFOLLOW`) e o teste prova que nada foi lido nem escrito fora |
+| CA-206 | Coberto com o adaptador **falso** do Zyte (a chave Basic é conferida): capturas no reqlog `source:"render-api"`, `renders` sobe 1, proxy sem render devolve `not_supported`. Não foi chamada a Zyte real (spike S6) |
+| CA-107 (parte) | `proxy_set` entre proxies permitidos, `blocked_by_policy` fora da lista e `closed N open tunnels` no diário; o encadeamento HTTP/SOCKS5 já é da T3-02 |
+
+## O que **não** foi feito
+
+- `desktop_action` (CS-220, P1) e as ferramentas da v1.1 (`report_progress`, `ask_parent`). O servidor só anuncia o que implementa.
+- Viewer, `Take Over`/`Hand Back` na UI, x11vnc/noVNC: T3-05. O estado `lease` e a regra de pausa existem e são testados; a UI chama `takeOver()`/`handBack()`/`resolveHelp()`.
+- `boxes_reserve`, `ComputerScheduler`, skill de orquestração, fila persistente, `box_collect` e o lifecycle de `box_release` (T3-04, T3-06). `ComputerLifecycle` é o ponto de injeção; o teste vivo chama o teardown direto.
+- Persistência dos computadores no SQLite (`computer`, `help_request`): o estado vive no `ManagedComputer`; a tabela da T3-01 continua sem uso.
+- Troca de display `http` ↔ `headless` em computador vivo (precisa de outro conjunto de containers): `not_supported`. `headless` ↔ `desktop` liga/desliga o Openbox sem recarregar (sem `xrandr`).
+- Wrappers `curl`/hook de `requests` dentro do `work` com registro `reported` e a marca `unconfirmed` (CS-148b): o `http_request` do agente é `observed`; processos que o agente rodar no `work` (curl, Python) saem pelo egress e aparecem como registro de túnel/HTTP do egress, sem fonte `work:*`. `reqlog`, `proxy`, `render`, `note` são ferramentas MCP, não comandos no `work` (o `work` não tem token, T9).
+- Corpos de requisições HTTPS feitas por processos do `work` (só o egress vê o túnel; Deep Capture é `later`).
+- `proxy_status().usage.today` e `.batch`: o egress só conhece o computador; `today` repete o uso do computador até a T4-01 agregar.
+- Imagem no GHCR (sem push), BuildKit no app (a Engine API só faz o builder clássico, T3-01).
+- Teste em OrbStack e Colima (não instalados).
+- `x11vnc` ligado sem viewer (CS-190): entra com o viewer na T3-05.
+- Backup de perfil nomeado e `Sign In Once` (CS-171..176): o volume de perfil nomeado é suportado (`profileVolume`), a proteção de atualização do Chromium não.
+
+## Limpeza
+
+Todo recurso de teste leva `agentbox.test=1` e `agentbox.test_run=<id>`; a limpeza só remove os que têm os dois labels e o teste falha se sobrar algum (contêineres, redes, volumes, imagens). Ao final, `docker ps -a`, `docker network ls` e `docker volume ls` filtrados por `agentbox.test=1` estão vazios, e removi as imagens que eu mesmo tinha puxado ou construído para depuração (`agentbox-box-dev`, `agentbox-egress-dev`, `python:3.13-alpine` e a base do Playwright, que não existiam antes). `docker images` voltou às 3 que já existiam.

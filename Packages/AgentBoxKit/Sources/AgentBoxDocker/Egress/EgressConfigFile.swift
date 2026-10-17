@@ -21,11 +21,23 @@ public struct EgressUpstream: Sendable, Equatable {
     }
 }
 
+/// Modo API/render do provedor (07 CS-146). A chave só existe no arquivo 0400 do egress.
+public struct EgressRender: Sendable, Equatable {
+    public var adapter: String  // zyte
+    public var endpoint: String
+    public var apiKey: String
+    public init(adapter: String = "zyte", endpoint: String, apiKey: String) {
+        self.adapter = adapter; self.endpoint = endpoint; self.apiKey = apiKey
+    }
+}
+
 /// Conteúdo de `egress.json` (lido pelo `agentbox_egress.config`). Política, mais o upstream com credenciais quando há.
 public struct EgressConfigFile: Sendable, Equatable {
     /// `direct` ou o nome do `ProxyProfile` (vai para `via` no reqlog).
     public var via: String
     public var upstream: EgressUpstream?
+    /// Só quando o proxy escolhido declara o modo render (CS-146); sem isso o egress responde `not_supported`.
+    public var render: EgressRender?
     public var internalSubnet: String
     public var proxyPort: Int
     public var adminPort: Int
@@ -38,10 +50,10 @@ public struct EgressConfigFile: Sendable, Equatable {
     public static let defaultProxyPort = 3128
     public static let defaultAdminPort = 8790
 
-    public init(via: String = "direct", upstream: EgressUpstream? = nil, internalSubnet: String, proxyPort: Int = defaultProxyPort,
+    public init(via: String = "direct", upstream: EgressUpstream? = nil, render: EgressRender? = nil, internalSubnet: String, proxyPort: Int = defaultProxyPort,
                 adminPort: Int = defaultAdminPort, allowCIDRs: [String] = [], allowHosts: [String] = [], noise: [String]? = nil,
                 bodyQuotaBytes: Int? = nil) {
-        self.via = via; self.upstream = upstream; self.internalSubnet = internalSubnet; self.proxyPort = proxyPort
+        self.via = via; self.upstream = upstream; self.render = render; self.internalSubnet = internalSubnet; self.proxyPort = proxyPort
         self.adminPort = adminPort; self.allowCIDRs = allowCIDRs; self.allowHosts = allowHosts; self.noise = noise
         self.bodyQuotaBytes = bodyQuotaBytes
     }
@@ -63,6 +75,9 @@ public struct EgressConfigFile: Sendable, Equatable {
                 u["geo"] = ["country": country, "mode": up.geoMode, "template": up.geoTemplate, "header": up.geoHeader]
             }
             root["upstream"] = u
+        }
+        if let render {
+            root["render"] = ["adapter": render.adapter, "endpoint": render.endpoint, "api_key": render.apiKey]
         }
         return try JSONSerialization.data(withJSONObject: root, options: [.sortedKeys, .prettyPrinted])
     }

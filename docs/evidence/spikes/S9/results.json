@@ -2,8 +2,8 @@
   "binary_roundtrip" : "2097152 bytes de stdin voltam idênticos em stdout; saída de 16777216 bytes sem perda",
   "hijack_upgrade" : "HTTP 101, Content-Type application\/vnd.docker.multiplexed-stream",
   "runtime" : "desktop Engine 29.6.2 API 1.55; cliente usa \/v1.43",
-  "sigkill_escalation" : "exit 137 in 1.106991875 seconds",
-  "sigterm_group" : "exit 143 in 0.038274292 seconds",
+  "sigkill_escalation" : "exit 137 in 1.204930917 seconds",
+  "sigterm_group" : "exit 143 in 0.094443334 seconds",
   "stdin_half_close" : "cat devolve o stdin inteiro e termina: o half-close (shutdown SHUT_WR) chega ao processo pelo proxy do Docker Desktop",
   "stdout_stderr_multiplexed" : "frames de 8 bytes separam stdout e stderr; exit code via exec inspect",
   "timeout_and_cancel" : "collect(timeout:) e Task.cancel() encerram o grupo (nenhum sleep sobra) e lançam .timeout\/.cancelled"

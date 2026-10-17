@@ -6,8 +6,8 @@
 #     momento do build e a imagem resultante é identificada pelo digest e pela tag de hash do contexto
 #     (`agentbox-box:ctx-<sha12>`, scripts/build-runtime-image.sh);
 #   - pacotes Python com versão exata em requirements.txt.
-# A API de ações, o listener CDP e as ferramentas da box entram na T3-03; aqui fica o chão: usuários, pacotes e
-# entrypoint por papel.
+# T3-03: papel `runtime` = Xvfb + Chromium headed + servidor de controle (`agentbox_runtime`); papel `work` = ferramentas
+# (`abx-http` com curl_cffi). O CDP nunca sai do processo do runtime; o `work` não tem token nem rota para fora.
 FROM mcr.microsoft.com/playwright/python:v1.63.0-noble@sha256:72bd171a9ffc2b4b59532aaa6210e21014d07093120dc25528870c0b840da1f0
 
 ENV DEBIAN_FRONTEND=noninteractive PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
@@ -24,12 +24,17 @@ RUN python -m pip install --ignore-installed -r /tmp/requirements.txt && rm -f /
 # runtime (10001) e work (10002); o egress usa a própria imagem (T3-02, uid 10003).
 RUN useradd --uid 10001 --create-home --shell /usr/sbin/nologin runtime \
     && useradd --uid 10002 --create-home --shell /usr/sbin/nologin work \
-    && mkdir -p /opt/agentbox /work \
-    && chown work:work /work
+    && mkdir -p /opt/agentbox/bin /work /profile \
+    && chown work:work /work \
+    && chown runtime:runtime /profile
 
 # Sem `COPY --chmod`: sintaxe só do BuildKit; o contexto também precisa buildar pelo builder clássico da Engine API.
 COPY entrypoint.sh /opt/agentbox/entrypoint.sh
-RUN chmod 0755 /opt/agentbox/entrypoint.sh
+COPY agentbox_runtime /opt/agentbox/agentbox_runtime
+COPY bin/abx-http /opt/agentbox/bin/abx-http
+RUN chmod 0755 /opt/agentbox/entrypoint.sh /opt/agentbox/bin/abx-http
+
+ENV PYTHONPATH=/opt/agentbox PATH=/opt/agentbox/bin:$PATH
 
 ENV AGENTBOX_ROLE=work
 ENTRYPOINT ["/opt/agentbox/entrypoint.sh"]
