@@ -84,6 +84,15 @@ public struct GitService: Sendable {
         throw GitError.baseRefMissing("origin/main")
     }
 
+    /// URL do remote `origin` sem credenciais embutidas (`https://user:token@host/x` vira `https://host/x`); nil sem remote.
+    public func remoteURL(in repositoryURL: URL) async throws -> String? {
+        let result = try await runner.run(["config", "--get", "remote.origin.url"], in: repositoryURL, kind: .read,
+                                          timeout: timeouts.read)
+        guard result.succeeded else { return nil }
+        let raw = result.stdout.trimmed
+        return raw.isEmpty ? nil : GitNaming.stripCredentials(raw)
+    }
+
     /// Prefixo de branch a partir de `git config user.name` (06 §5.2; o login do `gh` entra na Fatia 2).
     public func gitUsernamePrefix(in repositoryURL: URL) async throws -> GitBranchPrefix {
         let result = try await runner.run(["config", "--get", "user.name"], in: repositoryURL, kind: .read,

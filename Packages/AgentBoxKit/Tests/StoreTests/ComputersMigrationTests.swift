@@ -13,7 +13,7 @@ import Testing
 
     @Test func migratesFromV1FixtureKeepingDataAndBackingUpFirst() async throws {
         let home = try TempHome(); defer { home.remove() }
-        let before = try await home.openStore(day: 0, migrations: [StoreMigrations.v1Initial])
+        let before = try await home.openStore(day: 0, migrations: [StoreMigrations.v1Initial, StoreMigrations.v2Activity])
         let project = Fixture.project()
         try await before.save(project)
         let session = Fixture.cleanSession()

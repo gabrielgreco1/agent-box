@@ -48,12 +48,14 @@ struct CtlSessionFactory: Sendable {
 actor CtlSession {
     private let dispatcher: any ActionDispatching
     private let isEnabled: @Sendable () -> Bool
-    private var greeted = false
+    private var greeted: Bool
     private let log = LogFacade(.app, category: "ctl")
 
-    init(dispatcher: any ActionDispatching, isEnabled: @escaping @Sendable () -> Bool) {
+    /// `greeted: true` quando o handshake de serviço já foi feito por outro roteador (`AppSockHub`).
+    init(dispatcher: any ActionDispatching, isEnabled: @escaping @Sendable () -> Bool, greeted: Bool = false) {
         self.dispatcher = dispatcher
         self.isEnabled = isEnabled
+        self.greeted = greeted
     }
 
     func receive(_ frame: Data) async -> AppSockReply {

@@ -45,7 +45,7 @@ Tabela única para tudo que vira código, teste ou caminho em disco. Os outros c
 | Coisa | Valor canônico |
 |---|---|
 | Env da execução (entra em todo terminal) | `AGENTBOX_PANE_ID` (= `terminal.id`), `AGENTBOX_RUN_ID` (id da execução; novo a cada start ou resume), `AGENTBOX_APP_SOCK` (caminho absoluto de `app.sock`). Nenhuma outra `AGENTBOX_*` chega ao terminal (denylist). Não existem `AGENTBOX_TERMINAL_ID`, `_HOOK_SOCKET`, `_HOOK_TOKEN`, `_SESSION` |
-| Env só de desenvolvimento e teste | `AGENTBOX_HOME`, `AGENTBOX_AUTOMATION=1`, `AGENTBOX_FAKE_RUNTIME=1`, `AGENTBOX_REAL_CLI=1`, `AGENTBOX_DOCKER_CONTEXT`, `AGENTBOX_TEST_CORRUPT_DB=1` |
+| Env só de desenvolvimento e teste | `AGENTBOX_HOME`, `AGENTBOX_AUTOMATION=1`, `AGENTBOX_FAKE_RUNTIME=1`, `AGENTBOX_REAL_CLI=1`, `AGENTBOX_DOCKER_CONTEXT`, `AGENTBOX_TEST_CORRUPT_DB=1`, `AGENTBOX_HOOK_TIMEOUT_MS` (prazo de entrega do `agentbox hook`; só testes, padrão 200) |
 | Comando de hook | `"<bundle>/Contents/MacOS/agentbox" hook --provider <claude\|codex> --event <Evento>` |
 | Entrega do hook | frame ao serviço `hook` de `app.sock`, timeout **200 ms**; p95 do helper ≤ 30 ms; `timeout` do hook nas settings do CLI: 5 s |
 | Spool de hooks | `AB/run/spool/hooks/<runID>.jsonl` (`0600`), 4 MiB por arquivo com marcador `truncated`; consumo por kqueue |
@@ -403,7 +403,7 @@ Scrollback, logs e transcripts dos CLIs ficam **fora** do banco. Transcripts nun
 | Tabela | Colunas |
 |---|---|
 | `agent_run` | `id` PK, `terminal_id` FK NULL, `parent_run_id` FK NULL, `root_run_id`, `kind` (`main`/`native_subagent`/`teammate`/`app_worker_light`/`app_worker_isolated`), `harness`, `agent_type`, `provider_session_id`, `provider_agent_id`, `mode` (`light`/`isolated`/NULL), `batch_id` NULL (sem FK até `v4_batches`, R1 D-06), `status` (`starting`/`idle`/`working`/`needs_input`/`waiting_on_subagents`/`done`/`failed`/`blocked`/`interrupted`/`unknown`/`stalled`), `status_kind` (`question`/`permission`/`other`/NULL), `estimated` (0/1), `status_reason`, `subtitle` (última nota DOING), `started_at`, `last_event_at`, `ended_at` |
-| `agent_event` | `run_id` FK, `seq`, `type`, `payload_json` (sanitizado, ≤ 16 KiB), `at`. PK (`run_id`, `seq`). Retenção: 30 dias **e** 10 mil por execução |
+| `agent_event` | `run_id` FK, `seq`, `event_id` (id gerado pelo helper; UNIQUE por execução: idempotência entre socket e spool), `type`, `payload_json` (sanitizado, ≤ 16 KiB), `at` (ms), `at_ns` (ocorrência em ns, define a ordem do redutor com eventos fora de sequência). PK (`run_id`, `seq`). Retenção: 30 dias **e** 10 mil por execução. O estado de `agent_run` é projeção dos eventos reaplicados em ordem de `at_ns`; `type` também guarda os sintéticos `ProcessExit` e `PtyLost` (T2-01) |
 | `attention` | `id` PK, `kind`, `priority` (1–3, 01 §5.12), `source_kind`, `source_id`, `reason`, `payload_json`, `created_at`, `seen_at`, `resolved_at` |
 | `inbox_event` | `id` PK, `session_id` FK NULL, `kind`, `payload_json`, `created_at`, `read_at` |
 | `catalog_item` | `id` PK, `source` (`claude`/`codex`/`agents`/`opencode`/`plugin`), `kind` (`agent`/`skill`/`plugin`/`mcp`/`instructions`), `path`, `name`, `description`, `content_hash`, `clients_json`, `discovered_at`, `missing_at` |

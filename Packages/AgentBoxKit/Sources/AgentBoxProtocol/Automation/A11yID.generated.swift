@@ -296,6 +296,10 @@ extension A11yID {
     public static let overlayConfirmDeleteDeleteRuns = A11yID(unchecked: "overlay.confirmDelete.deleteRuns")
     /// `overlay.confirmDelete.confirm`
     public static let overlayConfirmDeleteConfirm = A11yID(unchecked: "overlay.confirmDelete.confirm")
+    /// `overlay.confirmRemoveProject`
+    public static let overlayConfirmRemoveProject = A11yID(unchecked: "overlay.confirmRemoveProject")
+    /// `overlay.confirmRemoveProject.cancel`
+    public static let overlayConfirmRemoveProjectCancel = A11yID(unchecked: "overlay.confirmRemoveProject.cancel")
     /// `overlay.confirmRemoveProject.confirm`
     public static let overlayConfirmRemoveProjectConfirm = A11yID(unchecked: "overlay.confirmRemoveProject.confirm")
     /// `overlay.resume`
@@ -444,6 +448,11 @@ extension A11yID {
     /// `sidebar.project.<id>.showMore`
     public static func sidebarProjectShowMore(_ id: String) -> A11yID {
         A11yID(unchecked: "sidebar.project.\(A11yID.segment(id)).showMore")
+    }
+
+    /// `sidebar.project.<id>.rename`
+    public static func sidebarProjectRename(_ id: String) -> A11yID {
+        A11yID(unchecked: "sidebar.project.\(A11yID.segment(id)).rename")
     }
 
     /// `sidebar.session.<id>`
@@ -1129,6 +1138,7 @@ extension A11yID {
         A11yIDSpec(pattern: "sidebar.project.<id>.menu", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.project.<id>.newSession", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.project.<id>.showMore", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.project.<id>.rename", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.session.<id>", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.session.<id>.name", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.session.<id>.status", surface: "Sidebar"),
@@ -1374,6 +1384,8 @@ extension A11yID {
         A11yIDSpec(pattern: "overlay.confirmDelete.trashFolder", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmDelete.deleteRuns", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmDelete.confirm", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmRemoveProject", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmRemoveProject.cancel", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmRemoveProject.confirm", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.resume", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.resume.row.<id>", surface: "Dialogs"),

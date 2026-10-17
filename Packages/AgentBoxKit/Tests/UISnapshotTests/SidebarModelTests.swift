@@ -222,7 +222,8 @@ import Testing
     @Test func actionsWithoutAnOwnerAreNotOffered() {
         let env = AppEnvironment(environment: [:])
         #expect(!env.registry.isOffered(.sessionArchive), "arquivar é de T1-27")
-        #expect(!env.registry.isOffered(.projectAdd))
+        #expect(env.registry.isOffered(.projectAdd), "adicionar projeto é de T1-19")
+        #expect(!env.registry.isOffered(.projectNewSession), "composer é de T1-20")
         #expect(!env.registry.isOffered(.sessionEditNote), "fatia futura")
         #expect(env.registry.isOffered(.sessionRename))
     }

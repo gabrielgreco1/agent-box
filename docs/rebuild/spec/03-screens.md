@@ -205,7 +205,7 @@ Menu **Sort and Filter** (popover 240):
 - separador
 - `Open in Editor` ⇧⌘O · `Reveal in Finder` · `Open on GitHub` (se remote GitHub) · `Copy Path`
 - separador
-- `Collapse All Sessions` (recolhe as linhas de agente de todos os cards do projeto) · `Hide Project` (some da sidebar; volta por `Show › Hidden Projects`)
+- `Rename…` · `Collapse All Sessions` (recolhe as linhas de agente de todos os cards do projeto) · `Hide Project` (some da sidebar; volta por `Show › Hidden Projects`)
 - separador
 - `Remove Project…` (destrutivo; confirmação §16.6; nunca apaga arquivos)
 - com ⌥: `Refresh Git` · `Copy Project ID` (sem "Reauthorize Folder…": não há bookmarks, AR-533)
@@ -1173,7 +1173,7 @@ Fechar vários (Close Other Tabs, fechar sessão com 3 rodando): `Close 3 termin
 - Título: `Remove "<project>" from Agent Box?`
 - Texto: `Its <n> sessions are archived. No files, worktrees or branches are deleted.`
 - Botões: `[Cancel]` · `[Remove Project]` (destructive).
-- IDs: `overlay.confirmRemoveProject`, `.confirm`.
+- IDs: `overlay.confirmRemoveProject`, `.cancel`, `.confirm`.
 
 ### 16.7 Resume agents (após reboot ou em lote)
 
@@ -1477,7 +1477,7 @@ Atalhos reservados para o terminal (nunca capturados pelo app): ⌃ + letra, ⌥
 | Janela | `window.main`, `window.titlebar`, `window.appName`, `window.sidebarToggle`, `window.historyBack`, `window.historyForward`, `window.automationBadge`, `window.daemonBanner`, `window.databaseBanner` |
 | Erros | `<region>.errorBoundary`, `<region>.errorBoundary.retry`, `<region>.errorBoundary.copy` |
 | Genéricos | `<host>.status`, `<host>.hoverCard`, `<panel>.empty`, `tooltip`, `menuPanel.<name>`, `popover.<name>[.<field>/.confirm]` |
-| Sidebar | `sidebar`, `sidebar.selection`, `sidebar.search`, `sidebar.search.clear`, `sidebar.search.empty`, `sidebar.search.empty.clear`, `sidebar.nav.inbox`, `sidebar.nav.inbox.badge`, `sidebar.nav.computers`, `sidebar.nav.library`, `sidebar.projects.filter`, `sidebar.projects.filterMenu`, `sidebar.projects.add`, `sidebar.projects.newSession`, `sidebar.project.<id>[.toggle/.menu/.newSession/.showMore]`, `sidebar.session.<id>[.name/.status/.archive/.prChip/.note/.summaryPill/.hoverCard/.phase/.error/.agents/.rename/.revealGlow/.showMore]`, `sidebar.session.<id>.pin` (v1.1), `sidebar.session.<id>.agent.<terminalId>[.status/.lastMessage/.children.toggle]`, `sidebar.session.<id>.child.<childId>[.status/.glyph/.connector]`, `sidebar.pending.<id>[.cancel]`, `sidebar.cleanSessions`, `sidebar.cleanSessions.new`, `sidebar.footer.settings`, `sidebar.footer.reveal` |
+| Sidebar | `sidebar`, `sidebar.selection`, `sidebar.search`, `sidebar.search.clear`, `sidebar.search.empty`, `sidebar.search.empty.clear`, `sidebar.nav.inbox`, `sidebar.nav.inbox.badge`, `sidebar.nav.computers`, `sidebar.nav.library`, `sidebar.projects.filter`, `sidebar.projects.filterMenu`, `sidebar.projects.add`, `sidebar.projects.newSession`, `sidebar.project.<id>[.toggle/.menu/.newSession/.showMore/.rename]`, `sidebar.session.<id>[.name/.status/.archive/.prChip/.note/.summaryPill/.hoverCard/.phase/.error/.agents/.rename/.revealGlow/.showMore]`, `sidebar.session.<id>.pin` (v1.1), `sidebar.session.<id>.agent.<terminalId>[.status/.lastMessage/.children.toggle]`, `sidebar.session.<id>.child.<childId>[.status/.glyph/.connector]`, `sidebar.pending.<id>[.cancel]`, `sidebar.cleanSessions`, `sidebar.cleanSessions.new`, `sidebar.footer.settings`, `sidebar.footer.reveal` |
 | Tabs | `tabs.tab.<terminalId>[.close/.title/.restart/.status]`, `tabs.activeIndicator`, `tabs.overflow.leading`, `tabs.overflow.trailing`, `tabs.new`, `tabs.quickCommands` (v1.1), `tabs.paneActions`, `tabs.rightPanelToggle` |
 | Panes | `pane.<id>`, `pane.<id>.terminal`, `pane.<id>.header`, `pane.<id>.status`, `.splitRight`, `.splitDown`, `.expand`, `.close`, `.cover`, `.rimFlash`, `.attention`, `.zoomPill`, `.feedbackPill`, `.ignition[.cancel]`, `.ignition.step.<stepKey>`, `.exitBanner`, `.exitOverlay[.restart/.close/.resume]`, `.startError`, `.interrupted[.resume]`, `.daemonBanner`, `.closing.forceQuit`, `.containerPopover` (v1.1), `.containerPhases` (v1.1), `.containerStopped` (v1.1), `.rateLimit` (v1.1), `.tooNarrow`; `pane.divider.<id>`; `pane.empty[.newAgent/.newTerminal/.reopen/.start/.resume]` |
 | Find | `find.field`, `find.count`, `find.caseSensitive`, `find.regex`, `find.previous`, `find.next`, `find.close` |
@@ -1492,7 +1492,7 @@ Atalhos reservados para o terminal (nunca capturados pelo app): ⌃ + letra, ⌥
 | Páginas | `computers.page`, `computers.cleanUp` (v1.1), `computers.dockerBanner`, `computers.empty`, `computers.row.<id>`, `computers.queue.row.<id>.cancel`; `batch.<batchId>.page`, `batch.<batchId>.row.<childId>`, `batch.<batchId>.collectAll`, `batch.<batchId>.archive`; `library.page`, `library.section`, `library.search`, `library.source`, `library.new`, `library.empty`, `library.row.<kind>.<id>`, `library.detail.{newSession,enable,insert,openInEditor,reveal}`, `library.profile.{name,agent,model,permissions,args,env,default}` |
 | Settings | `settings.page`, `settings.back`, `settings.search`, `settings.nav.<section>`, `settings.<section>.<key>`, `settings.computers.proxies.row.<proxyId>`, `settings.computers.proxies.add`, `settings.computers.proxies.test` |
 | Onboarding | `onboarding`, `onboarding.step.<name>`, `onboarding.item.<key>`, `onboarding.import.<group>`, `onboarding.import.item.<n>`, `onboarding.import.confirm`, `onboarding.done`, `onboarding.skip` |
-| Dialogs | `overlay.confirmClose[.dontAsk/.cancel/.confirm]`, `overlay.confirmArchive.confirm`, `overlay.confirmStopComputer.confirm`, `overlay.confirmDeleteComputer.confirm`, `overlay.confirmDelete[.keepBranch/.trashFolder/.deleteRuns/.confirm]`, `overlay.confirmRemoveProject.confirm`, `overlay.resume[.row.<id>/.confirm]`, `overlay.moveToProject[.project/.confirm]`, `overlay.addProject.{choose,clone,clone.url,clone.submit,importOrca}`, `overlay.confirmQuit[.keepRunning/.stopAll/.cancel/.dontAsk]`, `overlay.confirmSkipPermissions.confirm`, `overlay.renameBranch[.name/.submit]`, `overlay.about[.licenses/.copy]`, `overlay.newBatch.*`, `popover.paste[.text/.confirm]` |
+| Dialogs | `overlay.confirmClose[.dontAsk/.cancel/.confirm]`, `overlay.confirmArchive.confirm`, `overlay.confirmStopComputer.confirm`, `overlay.confirmDeleteComputer.confirm`, `overlay.confirmDelete[.keepBranch/.trashFolder/.deleteRuns/.confirm]`, `overlay.confirmRemoveProject[.cancel/.confirm]`, `overlay.resume[.row.<id>/.confirm]`, `overlay.moveToProject[.project/.confirm]`, `overlay.addProject.{choose,clone,clone.url,clone.submit,importOrca}`, `overlay.confirmQuit[.keepRunning/.stopAll/.cancel/.dontAsk]`, `overlay.confirmSkipPermissions.confirm`, `overlay.renameBranch[.name/.submit]`, `overlay.about[.licenses/.copy]`, `overlay.newBatch.*`, `popover.paste[.text/.confirm]` |
 | Landing | `landing`, `landing.addProject`, `landing.newCleanSession`, `landing.importOrca`, `landing.newSession` |
 | Menu bar | `menuBar.icon`, `menuBar.item.<sessionId>`, `menuBar.open`, `menuBar.newSession`, `menuBar.newCleanSession`, `menuBar.stopAll`, `menuBar.quitCompletely` |
 | Menus do app | `menu.<group>.<actionId>` (actionId de §24) |
@@ -1595,6 +1595,7 @@ Toda interação da UI é uma ação do registro (`ActionRegistry`: `ActionID` �
 | Copy Branch Name | `session.copyBranch` | — | Copia a branch | Sessão sem Git: não aparece | v1 | `testAction_session_copyBranch` |
 | Collapse All Sessions | `project.collapseAll` | — | Recolhe as linhas de agente de todos os cards do projeto | — | v1 | `testAction_project_collapseAll` |
 | Hide Project | `project.hide` | — | Some da sidebar; volta por `Show › Hidden Projects` | — | v1 | `testAction_project_hide` |
+| Rename Project… | `project.rename` | — | Edita o nome do projeto inline na linha (↵ confirma, Esc cancela; vazio volta ao nome da pasta). Não renomeia a pasta | — | v1 | `testAction_project_rename` |
 | Remove Project… | `project.remove` | — | §16.6 | — | v1 | `testAction_project_remove` |
 | Refresh Git (⌥) | `item.refreshGit` | ⌥ | Refaz status, branch e PR do item | Sem Git: não aparece | v1 | `testAction_item_refreshGit` |
 | Copy Project/Session ID (⌥) | `item.copyId` | ⌥ | Copia o ID | — | v1 | `testAction_item_copyId` |
@@ -1791,6 +1792,7 @@ Cada botão e checkbox dos diálogos de §16 é uma ação. `Cancel` (Esc) exist
 | Keep the branch / Move folder to Trash / Also delete run folders (§16.5) | `dialog.deleteSession.keepBranch` / `dialog.deleteSession.trashFolder` / `dialog.deleteSession.deleteRuns` | — | Alternam as opções do apagar (padrões em §16.5) | Cada checkbox só aparece no tipo de sessão a que se aplica | v1 | `testAction_dialog_deleteSession_keepBranch` · `testAction_dialog_deleteSession_trashFolder` · `testAction_dialog_deleteSession_deleteRuns` |
 | Don't ask again (§16.5) | `dialog.deleteSession.dontAsk` | — | Desliga a confirmação; só aparece quando não há perda de dados | — | v1 | `testAction_dialog_deleteSession_dontAsk` |
 | Remove Project (§16.6) | `dialog.removeProject.confirm` | — | Arquiva as sessões e remove o projeto do app; nenhum arquivo é apagado | — | v1 | `testAction_dialog_removeProject_confirm` |
+| Cancel (§16.6) | `dialog.removeProject.cancel` | Esc | Fecha o overlay | — | v1 | `testAction_dialog_removeProject_cancel` |
 | Resume <n> / Not Now (§16.7) | `dialog.resumeAgents.confirm` / `dialog.resumeAgents.cancel` | — | Retoma os agentes marcados / fecha sem retomar | `Resume <n>` com 0 marcados: `Select at least one agent.` | v1 | `testAction_dialog_resumeAgents_confirm` · `testAction_dialog_resumeAgents_cancel` |
 | Select All / Select None / linha com checkbox (§16.7) | `dialog.resumeAgents.selectAll` / `dialog.resumeAgents.selectNone` / `dialog.resumeAgents.toggleRow` | — | Marca ou desmarca os agentes da lista | — | v1 | `testAction_dialog_resumeAgents_selectAll` · `testAction_dialog_resumeAgents_selectNone` · `testAction_dialog_resumeAgents_toggleRow` |
 | Move / Convert (§16.8) | `dialog.moveToProject.confirm` | — | Move a sessão limpa para o projeto escolhido ou a converte em projeto; agentes seguem rodando (mesmo PID) | Sem projeto escolhido: `Choose a project.` | v1 | `testAction_dialog_moveToProject_confirm` |

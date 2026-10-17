@@ -91,4 +91,11 @@ import Testing
             _ = model.beginRename(id)
         }
     }
+
+    @Test func renamingProjectInline() {
+        let cast = SidebarFixtures.full(now: Self.now)
+        snap("renamingProject", cast: cast, size: CGSize(width: 280, height: 480)) { model in
+            _ = model.beginRenameProject(cast.projects[0].id)
+        }
+    }
 }

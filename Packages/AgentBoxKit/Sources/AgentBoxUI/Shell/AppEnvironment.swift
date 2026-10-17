@@ -35,6 +35,7 @@ public final class AppEnvironment {
     let sidebar = SidebarModel()
     /// Tab row e árvore de panes da sessão selecionada (T1-14).
     let workspace: WorkspaceModel
+    let projects: ProjectsController
     public let keyBindings: KeyBindingRegistry
     /// Pane de terminal focado: destino das ações de zoom, busca, copiar/colar e limpar (T1-09).
     public let terminalRouter = TerminalActionRouter()
@@ -61,6 +62,7 @@ public final class AppEnvironment {
         do { bindings = try KeyBindingRegistry.canonical() } catch { log.publicError("canonical key bindings invalid") }
         if !bindings.conflicts().isEmpty { log.publicError("key binding conflicts detected") }
         self.keyBindings = bindings
+        self.projects = ProjectsController(sidebar: sidebar, overlays: overlays, toasts: toasts, automationEnabled: automationEnabled)
         elements.enablement = { [registry] id in registry.availability(of: id) }
         let storeRoot = StorePaths.default(environment: environment).root
         let loginProvider = LoginShellEnvProvider(
@@ -74,6 +76,7 @@ public final class AppEnvironment {
         workspace = WorkspaceModel(runtime: runtime)
         registerShellActions()
         do { try sidebar.registerActions(in: registry) } catch { log.publicError("duplicate sidebar action registration") }
+        do { try projects.registerActions(in: registry) } catch { log.publicError("duplicate project action registration") }
         wireOverlays()
         wireWorkspace()
         if fixture == Self.overlayDemoFixture || fixture == SidebarFixtures.screenID { registerOverlayDemo() }
@@ -212,7 +215,7 @@ public final class AppEnvironment {
     /// Fixture `AGENTBOX_SCREEN=sidebar-demo`: controles cujo fluxo é de outra tarefa (composer, adicionar projeto, Settings,
     /// páginas) ganham handlers de exemplo para a evidência visual mostrar a sidebar completa. Nada disso roda em uso normal.
     private func registerSidebarDemo() {
-        for id in [ActionID.projectAdd, .sessionNewClean, .appSettings, .projectNewSession, .pageInbox, .pageComputers, .pageLibrary] {
+        for id in [ActionID.sessionNewClean, .appSettings, .projectNewSession, .pageInbox, .pageComputers, .pageLibrary] {
             try? registry.register(id) { _ in "demo" }
         }
     }
@@ -235,6 +238,7 @@ public final class AppEnvironment {
             }
             await workspace.attach(store: opened)
             await sidebar.attach(store: opened)
+            projects.attach(store: opened)
         } catch {
             log.error("store failed to open: \(error)")
         }
@@ -300,6 +304,7 @@ public final class AppEnvironment {
 
     public func stop() async {
         sidebar.detach()
+        projects.detach()
         await ctl?.stop()
         ctl = nil
     }

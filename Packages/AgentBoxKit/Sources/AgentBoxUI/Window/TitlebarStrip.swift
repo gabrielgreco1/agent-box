@@ -114,7 +114,7 @@ enum AppMenuEntries {
     static var entries: [DSMenuEntry] {
         [
             .item(DSMenuItem("about", String(localized: "About Agent Box", bundle: .module), action: .appAbout)),
-            .item(DSMenuItem("settings", String(localized: "Settings…", bundle: .module), shortcut: ActionID.appSettings.spec.shortcut, action: .appSettings)),
+            .item(DSMenuItem("settings", String(localized: "settings.menu", defaultValue: "Settings…", bundle: .module), shortcut: ActionID.appSettings.spec.shortcut, action: .appSettings)),
             .separator("checks"),
             .item(DSMenuItem("checkProblems", String(localized: "Check for Problems", bundle: .module), action: .appCheckProblems)),
             .item(DSMenuItem("hideAppName", String(localized: "Hide App Name", bundle: .module), action: .appHideAppName)),
