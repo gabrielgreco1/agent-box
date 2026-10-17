@@ -28,6 +28,14 @@ Fonte de verdade para todos os capítulos da spec. Data: 2026-10-16. Auditoria q
 | P15 | Padrões propostos em 01-product §8 adotados: worktrees novas em `~/orca/workspaces/<repo>/` na transição; termo de UI "Computer" ("box" só em ferramentas/logs/pastas); sessões importadas do Orca entram sem processo rodando; primeiro ⌘Q com agentes vivos mostra aviso (overlay, T5) com "Keep Running" como padrão; nome automático de sessão limpa tipo `quiet-harbor`, renomear a sessão não renomeia a pasta; runs do CLI antigo importados na v1.1. |
 | P16 | Conflitos técnicos, de nomes, números, IDs e atalhos apontados em `docs/rebuild/review/R1..R3` são resolvidos pela recomendação dos revisores, salvo quando contradizem esta página. |
 
+## Decisões delegadas (dono deu autonomia total em 2026-10-17)
+
+| # | Decisão |
+|---|---|
+| P17 | Tokens visuais seguem os valores **reais** extraídos do Orca 1.4.219 (`docs/rebuild/reference/orca-1.4.219/tokens/`): paleta Tailwind v4 do Orca, raios, line-heights. Onde 02 divergir, o token extraído vence. |
+| P18 | D-Codex-1 = **opção B**: o app passa o trust dos próprios hooks via `-c 'hooks.state=…'` inline (S-05), sem escrever em `~/.codex`. Fallback: rollout com estado `estimated`. Adapter Codex usa `--no-daemon` por padrão. |
+| P19 | Desenvolvimento por agentes Haiku 5.5 (tarefas mecânicas/checagens) e Sonnet 5.5 (código), gerenciados pela sessão principal. Gate P14 (OK do dono por tela) passa a ser: comparação lado a lado gerada e revisada pela sessão principal; o dono revisa o conjunto ao fim de cada fatia. |
+
 ## Decisões técnicas (recomendações dos revisores adotadas)
 
 | # | Decisão |

@@ -1,0 +1,96 @@
+[
+ {
+  "ident": "A",
+  "pid": 37198,
+  "ppid": 36902,
+  "t": 1792206571.415467,
+  "ev": "start"
+ },
+ {
+  "ident": "A",
+  "pid": 37198,
+  "ppid": 36902,
+  "t": 1792206571.415797,
+  "ev": "rpc",
+  "method": "server/discover"
+ },
+ {
+  "ident": "A",
+  "pid": 37198,
+  "ppid": 36902,
+  "t": 1792206571.416439,
+  "ev": "rpc",
+  "method": "initialize"
+ },
+ {
+  "ident": "A",
+  "pid": 37198,
+  "ppid": 36902,
+  "t": 1792206571.4177861,
+  "ev": "rpc",
+  "method": "notifications/initialized"
+ },
+ {
+  "ident": "A",
+  "pid": 37198,
+  "ppid": 36902,
+  "t": 1792206571.417927,
+  "ev": "rpc",
+  "method": "tools/list"
+ },
+ {
+  "ident": "B",
+  "pid": 37237,
+  "ppid": 36902,
+  "t": 1792206571.7261481,
+  "ev": "start"
+ },
+ {
+  "ident": "B",
+  "pid": 37237,
+  "ppid": 36902,
+  "t": 1792206571.726331,
+  "ev": "rpc",
+  "method": "server/discover"
+ },
+ {
+  "ident": "B",
+  "pid": 37237,
+  "ppid": 36902,
+  "t": 1792206571.726824,
+  "ev": "rpc",
+  "method": "initialize"
+ },
+ {
+  "ident": "B",
+  "pid": 37237,
+  "ppid": 36902,
+  "t": 1792206571.7280378,
+  "ev": "rpc",
+  "method": "notifications/initialized"
+ },
+ {
+  "ident": "B",
+  "pid": 37237,
+  "ppid": 36902,
+  "t": 1792206571.728169,
+  "ev": "rpc",
+  "method": "tools/list"
+ },
+ {
+  "ident": "A",
+  "pid": 37198,
+  "ppid": 36902,
+  "t": 1792206572.4484138,
+  "ev": "rpc",
+  "method": "tools/call"
+ },
+ {
+  "ident": "B",
+  "pid": 37237,
+  "ppid": 36902,
+  "t": 1792206572.83598,
+  "ev": "rpc",
+  "method": "tools/call"
+ }
+]

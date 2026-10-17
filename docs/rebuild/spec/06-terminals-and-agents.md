@@ -177,11 +177,11 @@ create ─► running ──exit──► exited(code|signal) ──forget──
 
 O daemon nasce com o env mínimo do launchd. O **app** captura o env do usuário e o envia em cada `create`.
 
-**Captura** (no startup do app, fora do main thread, e em Settings › Terminal › "Reload Shell Environment"). Esta ordem é a canônica (`08 §0`, `08 AR-103`); o spike S-06 a confirma com o zsh do dono (p10k/oh-my-zsh):
+**Captura** (no startup do app, fora do main thread, e em Settings › Terminal › "Reload Shell Environment"). Esta ordem é a canônica (`08 §0`, `08 AR-103`); o spike S-06 (2026-10-17, `docs/evidence/spikes/S-06/README.md`) a mediu com o zsh 5.9 do dono (sem p10k nem oh-my-zsh; o `~/.zshrc` só exporta PATH, define funções e faz `source` de arquivos de chaves). Não há premissa de tema de prompt: o que protege o app de rc lento ou barulhento é o marcador, o timeout e o `SIGKILL`:
 
 1. Shell = `$SHELL` do usuário (`getpwuid`), nunca `zsh` fixo.
-2. Primeira tentativa: shell **interativo de login** dentro de um PTY oculto, `stdin` vazio, `TERM=dumb`, comando `-l -i -c 'printf "\n__AB_ENV__\n"; /usr/bin/env -0'`. Lê só o que vem depois do marcador (ignora banners, instant prompt do p10k, avisos do oh-my-zsh). Timeout 5 s.
-3. Falhou ou estourou: `-l -c` sem PTY, mesmo marcador, timeout 3 s.
+2. Primeira tentativa: shell **interativo de login** dentro de um PTY oculto (`pty.fork`), `stdin` vazio, `TERM=dumb`, comando `-l -i -c 'printf "\n__AB_ENV__\n"; /usr/bin/env -0 > "$AB_ENV_OUT"; printf "\n__AB_ENV_END__\n"'`. **O env sai por arquivo** (`AB_ENV_OUT`, criado pelo app em `AB/run/`, modo 0600, apagado em seguida), não pelo PTY: o PTY troca `\n` por `\r\n` e corrompe valores multilinha (certificados); com `env -0 > arquivo` o valor sai byte a byte (S-06, teste 3). O marcador `__AB_ENV_END__` só sinaliza o fim; tudo antes dele (banners, avisos, sequências ANSI de rc barulhento) é ignorado. **Timeout 5 s e `SIGKILL` no grupo do PTY**; sem processo órfão (S-06, caso 2c: rc que dorme 60 s foi cortado sem sobras). Medido: mediana 32 ms; 0,76 s com um rc sintético barulhento.
+3. Falhou ou estourou: `-l -c` **sem PTY e sem `-i`**, mesmo marcador, timeout 3 s (20 ms medidos). **Não é caminho normal:** sem `-i` o `.zshrc` não roda e o PATH perde entradas (no Mac do dono, `~/.opencode/bin`). Quando este fallback é o usado, o Diagnostics mostra o banner `Using non-interactive shell environment` (nunca silencioso) e marca a fonte como `non-interactive`.
 4. Falhou: env do launchd + diretórios conhecidos no PATH (`~/.local/bin`, `~/.bun/bin`, `/opt/homebrew/bin`, `/usr/local/bin`, nvm atual). Banner no Diagnostics: "Using fallback environment".
 5. Fica só em memória (pode ter tokens). Diagnostics mostra a fonte, a duração e a lista de chaves (sem valores).
 
@@ -203,9 +203,9 @@ Consequências verificáveis:
 
 Modelo (por sessão): **Session → Tab[] → árvore de splits → Pane → Terminal**. Uma tab é um grupo de panes, como no Orca; não é "um terminal por tab".
 
-- **Splits ilimitados**: ⌘D (à direita), ⌘⇧D (abaixo). Limite só físico: um pane não fica menor que 240 × 120 pt (03 §4.3); abaixo disso o split é recusado com o toast "Not enough room to split. Close a pane or widen the window." O limite atual de 5 panes (`WorkspaceStore.swift:112`) some.
+- **Splits ilimitados**: ⌘D (à direita), ⇧⌘D (abaixo). Limite só físico: um pane não fica menor que 240 × 120 pt (03 §4.3); abaixo disso o split é recusado com o toast "Not enough room to split. Close a pane or widen the window." O limite atual de 5 panes (`WorkspaceStore.swift:112`) some.
 - **Foco**: clique, ⌘] / ⌘[ (próximo/anterior). ⌥⌘←/→ é histórico (voltar/avançar), como no Orca (03 §21); não há foco direcional por setas. O pane focado é first responder do terminal. Pane inativo com opacidade 0,8 (DS4 de 02).
-- **Zoom**: ⌘⇧↵ expande o pane focado dentro da tab; repete para voltar.
+- **Zoom**: ⇧⌘↵ expande o pane focado dentro da tab; repete para voltar.
 - **Tabs**: ⌘T abre um shell numa tab nova; ⌥⌘T abre o agente padrão; ⌥⌘N abre o lançador (Quick Launch, 03 §7) para escolher agente, perfil e prompt (tabela de atalhos: 03 §21). ⌘W fecha o pane focado (a tab some com o último pane); reordenar por arraste; título dinâmico (OSC 0/2, ou `-n/--name` do Claude), com renomear manual que prevalece.
 - **Novo pane** em split herda o cwd atual do pane de origem (último OSC 7) e o provider escolhido no lançador.
 - **Divisores**: 3 pt visíveis, 9 pt de clique. Resize do PTY: em transição animada, um só, no início (04 R2; ao fechar painel, no fim); em arrasto, no máximo 1 por quadro e o final ao soltar (04 M-202). Teste: uma transição gera exatamente um `resize` no protocolo (`08 AR-710`).
@@ -254,7 +254,7 @@ Modelo (por sessão): **Session → Tab[] → árvore de splits → Pane → Ter
 | TA-109 | P1 | v1 | Cold log desligável por terminal e global; retenção de 7 dias após o `exit` | Com a opção desligada, nenhum arquivo em `AB/sessions/<id>/`; arquivos de sessões antigas são apagados na limpeza diária |
 | TA-110 | P0 | v1 | Env do shell de login conforme §1.7 (captura com marcador, fallback, denylist, variáveis do app) | Num terminal aberto por app lançado pelo Finder: `which claude node gh` resolvem como no Terminal.app; `echo $SSH_AUTH_SOCK` não é vazio; `env | grep ORCA_` é vazio mesmo se o app foi aberto de dentro do Orca; um `export FOO_PROXY` no `.zshrc` aparece |
 | TA-111 | P1 | v1 | "Reload Shell Environment" e Diagnostics com fonte, duração e chaves | Editar o `.zshrc`, recarregar, abrir terminal novo: a variável nova existe; terminais já abertos não mudam |
-| TA-112 | P0 | v1 | Tabs como grupos de panes; splits ilimitados com mínimo físico; foco por teclado; zoom | 12 panes numa tab de 1440 pt; ⌘]/⌘[ percorrem todos; ⌘⇧↵ expande e volta sem relançar processo |
+| TA-112 | P0 | v1 | Tabs como grupos de panes; splits ilimitados com mínimo físico; foco por teclado; zoom | 12 panes numa tab de 1440 pt; ⌘]/⌘[ percorrem todos; ⇧⌘↵ expande e volta sem relançar processo |
 | TA-113 | P0 | v1 | Layout, tab ativa e foco persistidos em SQLite com debounce, restaurados ao abrir | Arrastar divisor por 5 s gera ≤ 2 escritas; reabrir mostra as mesmas frações (±1 pt) e o mesmo pane focado |
 | TA-114 | P0 | v1 | ⌘W e apagar terminal/sessão com confirmação quando há processo; Force Quit só por ação explícita | Fechar pane com Claude vivo pede confirmação; Cancel não envia sinal; nenhum SIGKILL sem clique em Force Quit |
 | TA-115 | P0 | v1 | Overlay de quit com Keep Running / Stop All and Quit… no primeiro ⌘Q (P15); modo accessory; sem helper de login | Com 2 agentes, ⌘Q + Keep Running: sem ícone no Dock, item na barra de menus presente, hooks continuam chegando (notificação de fim de turno aparece) |
@@ -307,7 +307,7 @@ Cada adapter declara capabilities verificadas por versão. A detecção roda no 
 | Hooks, statusLine, deny rules | `--settings <arquivo>` | Mescla com as settings do usuário (verificar: hooks de várias fontes rodam todos) |
 | MCP do Agent Box | `--mcp-config <arquivo>` | **Sem** `--strict-mcp-config`: os MCPs do usuário continuam |
 | Skills/plugins da sessão | `--plugin-dir <dir|zip>` (repetível) | |
-| Agentes da sessão / agente principal | `--agents <json|arquivo>`, `--agent <nome>` | |
+| Agentes da sessão / agente principal | `--agents <json|arquivo>`, `--agent <nome>` | Formato verificado em 2.1.302 (S-08): `mcpServers` de cada subagente é um **array** de `{ "<nome>": {command,args} }` (um objeto `{nome:{…}}` é recusado com `expected array, received object`); `tools` do filho limitado a `mcp__<nome>__*`; nome de servidor único por filho (`agentbox-<runId>-<n>`) |
 | Modelo de fallback | `--fallback-model` | Opcional no perfil |
 | Não usados | `--bg`, `-w/--worktree`, `--tmux`, `--bare`, `--safe-mode`, `--remote-control` | O daemon e o GitService cobrem; `--remote-control` é later. `--bare` e `--safe-mode` **desligam hooks**: se um perfil (inclusive importado do Orca) trouxer uma delas em `extraArgs`, o perfil mostra o aviso "Activity status is unavailable with --bare" e o terminal fica `unknown` (R3 §1) |
 
@@ -322,10 +322,10 @@ Cada adapter declara capabilities verificadas por versão. A detecção roda no 
 | Modelo / perfil | `-m`, `-p/--profile` | |
 | Sandbox / aprovação | `-s read-only|workspace-write|danger-full-access`, `-a on-request|never`, `--dangerously-bypass-approvals-and-sandbox` | |
 | Diretórios extras | `--add-dir` | |
-| MCP, hooks, overrides | `-c chave=valor` (TOML) | `-c mcp_servers.agentbox.command=…` etc. Hooks por `-c` provavelmente caem na regra de *trust* por hash (§3.3.1) |
+| MCP, hooks, overrides | `-c chave=valor` (TOML) | `-c mcp_servers.agentbox.command=…` etc. Hooks por `-c` entram como `untrusted` e só rodam com o trust inline de §3.3.1 (`-c 'hooks.state={…}'`, P18) |
 | Scrollback nativo | `--no-alt-screen` | Opção do perfil (padrão desligado) |
 | Mensagem para sessão existente | `codex queue --thread <id> --message` | Later (steering) |
-| App-server compartilhado | `--no-daemon` | O Codex 0.160 sobe um app-server daemon compartilhado por padrão (`daemon_auto_start`). Decisão pendente do spike S-05(c): se a TUI lançada pelo app delegar a sessão a um daemon fora do grupo de processos do PTY, o adapter passa `--no-daemon` por padrão, para que `kill` do pane encerre o agente, o ID seja capturável e o Orca e o Agent Box não dividam o mesmo processo. Enquanto o spike não fecha, o adapter **não** passa a flag e a capability fica registrada |
+| App-server compartilhado | `--no-daemon` | **Padrão do adapter Codex (S-05(c), `docs/evidence/spikes/S-05/README.md`; P18).** O daemon (`codex app-server daemon`) roda com ppid 1 e pgid próprio, socket em `~/.codex/app-server-control/`, fora do grupo do PTY. O adapter passa `--no-daemon` para que a sessão e os `-c` por lançamento fiquem no processo do pane, `kill` do pane encerre o agente e o ID seja capturável. Capability `noDaemon` registrada por versão do Codex (se a versão não aceita a flag, o lançamento segue sem ela e o Diagnostics avisa). A TUI do Codex atualiza `[tui]` em `~/.codex/config.toml` por conta própria a cada lançamento, independente do Agent Box: a regra "o app não escreve em `~/.codex`" vale para o app, não para o Codex |
 | Nunca usar | `--dangerously-bypass-hook-trust`, `--worktree`, `--remote` | |
 
 O Codex 0.160 **não** tem `--session-id`. Captura do ID na §2.5.
@@ -387,7 +387,7 @@ Regra dos critérios de aceite (vale para AC-307, AC-309 e os testes de argv de 
 
 | Provider | Como o app obtém o ID | Quando muda |
 |---|---|---|
-| Claude | Gera UUID v4 e lança com `--session-id`. Grava em `terminal.native_conversation_id` antes do spawn | `/clear`, `/compact` ou resume que troca o ID: o hook `SessionStart` traz `session_id` e `source`; o app atualiza (E9) |
+| Claude | Gera UUID v4 e lança com `--session-id`. Grava em `terminal.native_conversation_id` antes do spawn | `/clear`, `/compact` ou resume que troca o ID: o hook `SessionStart` traz `session_id` e `source`; o app atualiza (`audit/01` E9) |
 | Codex | 1º hook `SessionStart` por lançamento (campo `session_id`, verificar); 2º fallback: primeiro `~/.codex/sessions/AAAA/MM/DD/rollout-*.jsonl` criado após o spawn cuja linha `session_meta` tem `cwd` igual e `timestamp ≥ spawn − 2 s`; nome em `~/.codex/session_index.jsonl` (`id`, `thread_name`) | Novo `SessionStart` |
 | OpenCode | `opencode session list --format json` antes e 5 s depois do spawn; a sessão nova com o mesmo diretório (campos verificar) | Novo poll após `exit` |
 | Shell | — | — |
@@ -419,7 +419,7 @@ Diretório por execução: `AB/run/launch/<runID>/` (`0700`), criado no start, *
 
 | Injeção | Claude | Codex | OpenCode |
 |---|---|---|---|
-| Hooks de atividade (§3) | `--settings settings.json` com `hooks` apontando para `"<bundle>/Contents/MacOS/agentbox" hook --provider claude --event <Evento>` | Estratégia da §3.3.1 (hooks por `-c` só se o spike S-05 provar que funcionam sem gravar *trust* global, ou se o dono aceitar o *trust* gravado pelo próprio Codex; senão, tail do rollout). Nunca `--dangerously-bypass-hook-trust` | — (estimado) |
+| Hooks de atividade (§3) | `--settings settings.json` com `hooks` apontando para `"<bundle>/Contents/MacOS/agentbox" hook --provider claude --event <Evento>` | Estratégia da §3.3.1 (P18: hooks por `-c` com *trust* inline `-c 'hooks.state={…}'`, sem gravar em `~/.codex`; fallback: tail do rollout `estimated`). Nunca `--dangerously-bypass-hook-trust` | — (estimado) |
 | MCP do Agent Box | `--mcp-config mcp.json` (`agentbox mcp --run <runID>`) | `-c mcp_servers.agentbox.command="…"`, `-c mcp_servers.agentbox.args=[…]` (v1.1, R7.4) | later |
 | Skill de orquestração do app | plugin `agentbox` em `--plugin-dir` | later | later |
 | Skills/agentes da sessão | `--plugin-dir` (plugin gerado) e `--agents agents.json` | §4.3 | `--agent` |
@@ -512,7 +512,7 @@ Agregação (card de sessão, menu bar, Dock): a de 01 §6.3.
 
 | Evento | Transição | Campos usados |
 |---|---|---|
-| `SessionStart` | → `idle`; atualiza ID nativo | `session_id`, `source`, `transcript_path`, `cwd` |
+| `SessionStart` | → `idle`; atualiza ID nativo | `session_id`, `source`, `transcript_path`, `cwd` (V1 confirmado em 2.1.302, S-05(a): hooks de `--settings` **somam** com os globais do Orca e de projeto, não os substituem; payloads em `docs/evidence/spikes/S-05/`. `Notification` não foi verificado: em `-p` não dispara, e a TUI grava confiança de pasta em `~/.claude.json`; V13 segue aberto) |
 | `UserPromptSubmit` | → `working` | — |
 | `PreToolUse` | → `working`; subtítulo "Running Bash", "Editing x.swift"; se `tool_name` for a ferramenta de pergunta ao usuário (`AskUserQuestion`, verificar nome) → `needsInput(question)` | `tool_name`, alvo curto |
 | `PostToolUse` / `PostToolUseFailure` | → `working` (sai de `needsInput(question)`) | `tool_name` |
@@ -520,30 +520,31 @@ Agregação (card de sessão, menu bar, Dock): a de 01 §6.3.
 | `Notification` | `permission_prompt` → `needsInput(permission)`; `idle_prompt` sem turno ativo → mantém `done`; outros → `needsInput(other)` | `notification_type`, `message` |
 | `Stop` | Filhos vivos > 0 → `waitingOnSubagents(n)`; senão → `done` | `last_assistant_message` (verificar; fallback §3.4) |
 | `StopFailure` | → `failed(reason)` | erro/motivo (ex.: limite de uso) |
-| `SubagentStart` / `SubagentStop` | contador de filhos por `agent_id`; último `SubagentStop` com pai em `waitingOnSubagents` → `done` | `agent_id`, `agent_type`, `last_assistant_message` |
+| `SubagentStart` / `SubagentStop` | contador de filhos vivos por `agent_id`; último `SubagentStop` com pai em `waitingOnSubagents` → `done` | Confirmados em 2.1.302 (S-08): `agent_id`, `agent_type`; no `SubagentStop`, `last_assistant_message`, `agent_transcript_path`. Hooks de `PreToolUse`/`PostToolUse` **dentro do filho** trazem `agent_id`, `agent_type` e, para ferramenta MCP, `mcp_server{name, source:"agent"}`; os do pai (ferramenta `Agent`) não trazem `agent_id` e têm `tool_use_id`. O filho é identificado por `agent_id`/`agent_type`; o `agent_id` é gerado pelo Claude a cada execução e só serve de correlação, nunca de autenticação (07) |
 | `SessionEnd` | Aguarda `exit` do daemon | `reason` |
 | `exit` do daemon | `code == 0` → `exited`; ≠ 0 → `failed("exited with 1")` | — |
 
 **Codex 0.160** (hooks estáveis; eventos conferidos no `hooks.json` existente: `SessionStart`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `PermissionRequest`, `Stop`, `SubagentStart`, `SubagentStop`): mesmo mapeamento, sem `Notification`/`StopFailure`. Falha de turno vem do rollout (`rate_limits.primary.used_percent = 100`, erros) lido por tail do arquivo do terminal. Campos exatos dos payloads: verificar (§7).
 
-#### 3.3.1 Codex: hooks exigem *trust* por hash (problema contra T10) e estratégia
+#### 3.3.1 Codex: hooks exigem *trust* por hash; decisão P18 (opção B) e estratégia
 
-**O problema** (R3 §1, conferido na máquina): os hooks do Codex 0.160 só rodam depois de "confiados". O Codex grava a confiança por hash em `~/.codex/config.toml` (`[hooks.state."<arquivo>:<evento>:i:j"] trusted_hash = "sha256:…"`). Hooks passados por `-c` (como a versão anterior desta seção previa) provavelmente caem na mesma regra: ou não rodam, ou pedem aprovação na TUI a cada hash novo. As saídas óbvias batem em decisões fechadas:
+**O problema** (R3 §1, conferido na máquina): os hooks do Codex 0.160 só rodam depois de "confiados". O Codex grava a confiança por hash em `~/.codex/config.toml` (`[hooks.state."<arquivo>:<evento>:i:j"] trusted_hash = "sha256:…"`).
 
-| Saída | Por que não serve sem decisão |
-|---|---|
-| O app grava o `trusted_hash` no `config.toml` | Escrita em config global do usuário: viola T10 e a regra 3 da §0 |
-| `--dangerously-bypass-hook-trust` | Proibido (§2.2) |
-| `CODEX_HOME` temporário por lançamento (antiga saída de `08`) | Muda onde o Codex lê login, histórico e `session_index`; copiar `auth.json` é proibido por P7/A14 e symlinks tornam o "temporário" global de novo |
-| O usuário aprova uma vez na TUI e o **próprio Codex** grava o trust | O app não escreve nada, mas o efeito é uma entrada nova no `config.toml` do usuário. É zona cinzenta de T10: **decisão do dono** (D-Codex-1) |
+**O que o spike S-05 mediu** (2026-10-17, Codex 0.160.0, `docs/evidence/spikes/S-05/README.md`): hooks de `-c` entram como `source=sessionFlags`, chave `/<session-flags>/config.toml:<evento>:i:j`, `untrusted`, e **não executam**. O `currentHash` é estável para o mesmo comando e `timeout` (não depende de cwd nem de repetição) e muda se qualquer um dos dois mudar. O trust pode ser fornecido **no próprio lançamento**, sem escrever em `~/.codex/config.toml`: `-c 'hooks.state={"<chave>"={trusted_hash="<hash>"}}'` (a forma de tabela inline funciona; a forma pontilhada `hooks.state."<chave>".trusted_hash=…` é ignorada). Com isso `SessionStart` (traz `transcript_path`, o rollout, já no primeiro evento) e `UserPromptSubmit` (traz `turn_id`, `prompt`) dispararam na TUI e no `codex exec`. O `permission_mode` do payload não é confiável para o estado (veio `bypassPermissions` com `-s read-only`). **Pendente (cota do Codex esgotada até 22/10/2026):** payloads de `PreToolUse`, `PostToolUse`, `Stop`/`last_assistant_message` e `SubagentStart/Stop`; reexecutar `codex_trusted_run.py` do spike depois disso.
 
-**Estratégia** (sem violar T10 enquanto o dono não decidir):
+**Decisão (P18, D-Codex-1 = opção B).** O app passa o trust dos **próprios** hooks por `-c 'hooks.state={…}'` inline, a cada lançamento. Isto não usa `--dangerously-bypass-hook-trust` (vale só para os hooks listados, por hash), não grava nada em `~/.codex` e dispensa clique, mas é auto-confiança declarada: o hash é o do hook que o app mesmo gera. O dono aceitou isso em P18 (delegado). Fica proibido: gravar `trusted_hash` no `config.toml`, `--dangerously-bypass-hook-trust` e `CODEX_HOME` temporário.
 
-1. **Fatia 1**: nenhum hook; Codex aparece `unknown` como todos os agentes.
-2. **Spike S-05(b)** (`08 §11`), antes da Fatia 2: medir (a) se hooks por `-c` rodam sem trust; (b) se o hash de um hook gerado com conteúdo estável (mesmo helper, mesmos argumentos, sem caminhos por execução no comando) é estável entre lançamentos, de modo que uma aprovação na TUI valha para sempre; (c) quais eventos do rollout dão `working`/`done`/`needsInput`/`failed`.
-3. **Baseline da Fatia 2, sempre disponível**: estado por **tail do rollout** do terminal (`~/.codex/sessions/AAAA/MM/DD/rollout-*.jsonl`, encontrado como em §2.5), só leitura, marcado `estimated`. É a saída que funciona sem escrever nada.
-4. **Hooks por `-c`** substituem o rollout só se o S-05 mostrar que rodam sem trust, **ou** se o dono aceitar D-Codex-1 (trust gravado pelo Codex com clique do usuário). Nesse caso o primeiro lançamento mostra no pane "Codex asks to trust Agent Box hooks once" e o app continua sem escrever em `~/.codex`.
-5. **Alternativas avaliadas no spike, sem compromisso**: `-c notify=[…]` por lançamento encadeando o `notify` original do Codex Computer Use (só dá fim de turno); Codex app-server/`codex app-server` com eventos JSON-RPC (exigiria o app dirigir o Codex fora da TUI, contra P9/terminal; registrado como later); o app-server daemon compartilhado (`daemon_auto_start`), que também decide o `--no-daemon` da §2.2 (S-05(c)).
+**Procedimento por lançamento do adapter Codex** (com `--no-daemon`, §2.2):
+
+1. Os hooks do helper são sempre os mesmos: `"<bundle>/Contents/MacOS/agentbox" hook --provider codex --event <Evento>`, `timeout=5`, **sem run id nem pane no comando** (correlação só por env, §1.7). Assim o hash não muda entre execuções nem entre versões do app apenas por caminho.
+2. O app sobe um app-server de sonda (`codex app-server --listen stdio://`, ~0,3 s) com os mesmos `-c hooks.<Evento>=[…]` e chama `hooks/list` para ler o `currentHash` de cada hook; guarda em cache por (versão do Codex, hash da definição) e só refaz a sonda quando a definição ou a versão mudam.
+3. Lança o Codex com os `-c hooks.<Evento>=[…]` e com `-c 'hooks.state={…}'` contendo o `trusted_hash` de cada chave `/<session-flags>/config.toml:<evento>:i:j`.
+4. **Fallback:** se a sonda falhar, o trust não entrar (o `hooks/list` pós-lançamento mostra `untrusted`) ou a versão do Codex mudar o formato, o terminal usa **tail do rollout** (`~/.codex/sessions/AAAA/MM/DD/rollout-*.jsonl`, como em §2.5), só leitura, estado marcado `estimated`, e o Diagnostics mostra o motivo. O rollout continua sendo o baseline sempre disponível.
+5. O `Stop` do Codex só fecha o turno se o payload real for confirmado pela reexecução pendente; até lá, `done` do Codex vem do rollout (`estimated`).
+
+Alternativas avaliadas no spike, sem compromisso: `-c notify=[…]` por lançamento (só fim de turno; o `notify` global do Computer Use é substituído, não encadeado, a menos que o helper o chame); app-server JSON-RPC (`hooks/list`, `thread/*`; viável para sonda, contra P9 como transporte do agente).
+
+**Fatias.** Fatia 1: nenhum hook; Codex aparece `unknown` como todos os agentes. Fatia 2: rollout `estimated` sempre ativo + hooks `-c` com trust inline (P18).
 
 Nenhum caminho usa `--dangerously-bypass-hook-trust` nem grava em `~/.codex/*` pelo app.
 
@@ -583,7 +584,7 @@ Nenhum caminho usa `--dangerously-bypass-hook-trust` nem grava em `~/.codex/*` p
 | TA-304 | P0 | v1 | Estado `waitingOnSubagents` quando o pai para com filhos vivos | Pedir ao Claude dois subagentes em background: o pai fica "Waiting on 2 subagents" até o último `SubagentStop`, depois `done` |
 | TA-305 | P0 | v1 | `needsInput` por permissão e por pergunta | Claude em `manual` pedindo para rodar `ls` vira `needsInput(permission)` em ≤ 1 s; aprovar volta a `working` |
 | TA-306 | P0 | v1 | Última mensagem por terminal na sidebar (uma linha, hover com o texto) | Depois de um turno, a linha mostra o começo da resposta, sem ANSI |
-| TA-307 | P1 | v1 | Estado do Codex conforme §3.3.1: rollout (`estimated`) como baseline; hooks por lançamento só se S-05 ou D-Codex-1 liberarem; nenhuma escrita em `~/.codex` | Num `codex` lançado pelo app, um turno mostra `working` e depois `done`; checksum de `~/.codex/config.toml` e `hooks.json` igual antes e depois |
+| TA-307 | P1 | v1 | Estado do Codex conforme §3.3.1: rollout (`estimated`) como baseline; hooks por lançamento com trust inline `-c 'hooks.state={…}'` e `--no-daemon` (P18, S-05); nenhuma escrita do app em `~/.codex` | Num `codex` lançado pelo app, um turno mostra `working` e depois `done`; checksum de `~/.codex/config.toml` e `hooks.json` igual antes e depois |
 | TA-308 | P1 | v1 | Estado estimado para OpenCode e shell (OSC 133), marcado como estimado | Shell com OSC 133: `sleep 2` mostra working e depois done; tooltip diz "estimated" no OpenCode |
 | TA-309 | P0 | v1 | Notificações com formato, supressão, toggles e clique levando ao pane | Com o app em segundo plano, fim de turno gera notificação; clicar foca o pane certo com rim flash; com o pane visível e a janela key, não há notificação |
 | TA-310 | P0 | v1 | Badge do Dock e contagem no item da barra de menus | 2 agentes em needs input → badge "2"; ver os dois panes zera |
@@ -626,7 +627,7 @@ Escopo v1: **catálogo só leitura** das fontes nativas, ativação por sessão 
 |---|---|---|---|
 | Global (usuário/projeto/plugin instalado) | Sempre ativo pelo próprio CLI; o app só mostra | Sempre ativo (agentes `.toml`, `~/.agents/skills`) | Sempre ativo (config) |
 | Skill ativada na sessão | Plugin gerado por lançamento `AB/run/launch/<runID>/plugin-session/` com `.claude-plugin/plugin.json` (`name: "agentbox-session"`) e `skills/<nome>` como symlink para a pasta de origem (verificar que o Claude segue symlink; senão, cópia por lançamento sem hash) → `--plugin-dir`. Invocação `/agentbox-session:<nome>` | Não suportado na 0.160 sem escrever em pasta lida pelo Codex (verificar `-c` para caminhos de skills). A UI diz "Not available in Codex" | later |
-| Agente ativado na sessão (subagente) | `--agents agents.json` gerado do frontmatter + corpo (`description`, `prompt`, `tools`, `model`, `skills`, `mcpServers`) | Agentes só via `~/.codex/agents` (verificar override por `-c`) | config por lançamento (later) |
+| Agente ativado na sessão (subagente) | `--agents agents.json` gerado do frontmatter + corpo (`description`, `prompt`, `tools`, `model`, `skills`, `mcpServers` como **array**, S-08) | Agentes só via `~/.codex/agents` (verificar override por `-c`) | config por lançamento (later) |
 | Agente principal | `--agent <nome>` | — | `--agent <nome>` |
 | Plugin ativado na sessão | `--plugin-dir <pasta|zip>` | — | — |
 | Desligar um item global só numa sessão | Não suportado de forma seletiva (o `--disable-slash-commands` desliga todas as skills). A UI diz isso em vez de prometer (R9.1). Exceção: bloqueio por `permissions.deny` (§2.9) | — | — |
@@ -706,7 +707,7 @@ Regras de produto:
 
 - "Delete Session…" numa sessão de worktree mostra, antes de qualquer ação: terminais vivos (precisam parar), arquivos alterados e não rastreados, commits não publicados (`git rev-list --count @{u}..HEAD`; sem upstream: commits à frente da base), se o Orca também lista o worktree (§6.4), se o PR está aberto.
 - Opções: [Archive] (esconde da sidebar e mantém o worktree em disco) e [Delete Worktree] (`git worktree remove <path>`, depois `git worktree prune`), com checkbox "Also delete branch `<b>`" (`git branch -d`; `-D` só com segunda confirmação quando não mesclada).
-- `--force` só com confirmação explícita que lista o que será perdido. Nunca `stash`, `reset` ou `clean` automáticos (F4).
+- `--force` só com confirmação explícita que lista o que será perdido. Nunca `stash`, `reset` ou `clean` automáticos (`audit/01` F4).
 
 ### 5.3 Status local na sidebar
 
@@ -879,18 +880,18 @@ Rodam com `AGENTBOX_REAL_CLI=1`, contra as versões instaladas, antes de qualque
 
 | # | Verificar | Como | Se falhar |
 |---|---|---|---|
-| V1 | Hooks de `--settings` rodam junto com os hooks do usuário (Orca) e recebem `session_id`, `source`, `last_assistant_message`, `notification_type` | Claude real com `--settings` de teste gravando payloads | Ler a última mensagem do transcript (§3.4) |
+| V1 | Hooks de `--settings` rodam junto com os hooks do usuário (Orca) e recebem `session_id`, `source`, `last_assistant_message`, `notification_type` (**confirmado em 2.1.302, S-05(a)**, exceto `notification_type`) | Claude real com `--settings` de teste gravando payloads | Ler a última mensagem do transcript (§3.4) |
 | V2 | Nome da ferramenta de pergunta ao usuário (`AskUserQuestion`?) e evento de permissão em `manual` | Prompt que força pergunta e comando que pede permissão | Ficar só com `PermissionRequest`/`Notification` |
 | V3 | `permissions.deny: ["Skill(agentbox)"]` bloqueia a skill mesmo com `--dangerously-skip-permissions` | Claude real pedindo para usar a skill | Opção "Disable globally…" como recomendação |
 | V4 | `--plugin-dir` segue symlinks de `skills/<nome>` | Plugin gerado com symlink | Cópia por lançamento |
 | V5 | `--resume <id>` com `--settings`/`--mcp-config`/`--plugin-dir`/`--agents` regenerados restaura tudo | Lançar, encerrar, retomar, conferir `/skills` e `/mcp` | — (bloqueante para TA-209) |
-| V6 | Codex aceita hooks e `mcp_servers` por `-c`; exige *trust* (provável, §3.3.1)? Hash estável entre lançamentos? Campos de `SessionStart`/`Stop` | `codex` real com `-c` (parte do spike S-05) | Estado do Codex por tail do rollout, marcado "estimated" (baseline de §3.3.1) |
+| V6 | Codex aceita hooks e `mcp_servers` por `-c`; exige *trust*? Hash estável entre lançamentos? Campos de `SessionStart`/`Stop` | **Respondido em S-05 (2026-10-17):** exige trust (`untrusted` não executa); hash estável com comando e `timeout` constantes; trust inline por `-c 'hooks.state={…}'`; `SessionStart`/`UserPromptSubmit` capturados. **Aberto:** `PreToolUse`/`PostToolUse`/`Stop` e `mcp_servers` por `-c` (reexecutar depois de 22/10/2026) | Estado do Codex por tail do rollout, marcado "estimated" (baseline de §3.3.1) |
 | V7 | `opencode session list --format json` traz diretório e data | CLI real | ID manual no Resume do OpenCode |
 | V8 | `claude --resume <id>` depois de mover a pasta da sessão | Mover pasta de teste | Bloquear "Move Folder" com conversa a retomar |
 | V9 | Bracketed paste chega ao prompt do Claude e do Codex sem enviar | Colagem via daemon | Só clipboard |
 | V10 | `gh run view --log-failed --job <id>` aceita o `databaseId` do CheckRun | Repo de teste com check falho | Log do run inteiro filtrado por nome do job |
-| V11 | Captura do env (`-l -i -c` com marcador) com p10k/oh-my-zsh não trava nem polui | Shell do dono (spike S-06) | Fallback `-l -c` |
-| V12 | Codex app-server daemon compartilhado: a TUI lançada pelo app delega a sessão a um processo fora do grupo do PTY? Efeito de `--no-daemon` em captura de ID, `kill` e convivência com o Orca | `codex` real com e sem `--no-daemon`, `ps -o pgid` (spike S-05(c)) | Passar `--no-daemon` por padrão no adapter |
+| V11 | Captura do env (`-l -i -c` com marcador, env por arquivo) não trava nem polui | **Respondido em S-06 (2026-10-17)** com o zsh do dono (sem p10k nem oh-my-zsh): 32 ms, 0 lixo fora dos marcadores, `claude node gh codex` resolvem. Rc sintético barulhento 0,76 s; rc que trava cortado em 5 s | Fallback `-l -c` marcado `non-interactive` |
+| V12 | Codex app-server daemon compartilhado: a TUI lançada pelo app delega a sessão a um processo fora do grupo do PTY? Efeito de `--no-daemon` em captura de ID, `kill` e convivência com o Orca | **Respondido em S-05(c):** o daemon vive fora do PTY (ppid 1, pgid próprio); `--no-daemon` é seguro e barato e vira padrão. Não provado em qual processo a thread vive (turnos falharam por cota) | `--no-daemon` por padrão no adapter (P18) |
 | V13 | `claude agents --json`, encadeamento de `statusLine` com `rate_limits.five_hour/seven_day`, `notification_type` = `permission_prompt`/`idle_prompt`, timeout de hook de 5 s, `-n/--name` como título, `--session-id` + `/clear` | Claude real | Recurso correspondente desabilitado com motivo |
 
 Testes automáticos sem CLI real (CI macOS): protocolo do daemon (handshake, idempotência, reattach com seq, backpressure, N-1), autenticação do peer com binário assinado por outra identidade, argv por adapter e perfil, máquina de estados com fixtures de payloads gravados, drenagem do spool, parser de `.worktreeinclude` (casos do Orca), mapeamento da importação com um SQLite de fixture anonimizado, `git status --porcelain=v2` com repos temporários.

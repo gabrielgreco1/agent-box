@@ -10,6 +10,7 @@ Convenções:
 - Toda string de UI está em **inglês** (P2). O texto da spec é português.
 - "Orca:" aponta para o arquivo-fonte de onde o valor foi tirado (relativo a `src/renderer/src/` do pacote de referência `docs/rebuild/reference/orca-1.4.219/`, salvo indicação).
 - Referência à auditoria sempre com prefixo `audit/NN` (ex.: `audit/07 #3`). "07" sozinho é o capítulo 07 da spec.
+- **Tokens = valores reais do Orca 1.4.219 (P17).** Cores de estado, raios e line-heights seguem `docs/rebuild/reference/orca-1.4.219/tokens/*.json` (paleta Tailwind v4 do Orca, não a v3). Onde este capítulo divergir do extraído, o extraído vence. Errata da Fatia 0 aplicada em 2026-10-17 (`docs/evidence/slice0/F0-1-F0-4-report.md` §3.1): `blue-400` `#54a2ff`, `violet-400` `#a685ff`, `orange-500` `#fe6e00`, `orange-300` `#ffb96d`, `emerald-500` `#00bb7f`, `red-500` `#fb2c36`, `amber-500` `#f99c00`, `yellow-500` `#edb200`, `purple-400` `#c07eff`, `rose-500` `#ff2357`; raios `rSM` 6 e `rMD` 8; line-heights `menuItem` 16, `composerTitle` 24, `dialogTitle` 28, `pageTitle` 32, `paletteInput` 24. `success` (`#86efac`), `overlayCard`, `menuMaterial` e `terminalBackground` não têm variável no CSS extraído (ficam como estão; conferir no JS do Orca na F0-3).
 - Versões: **v1**, **v1.1** e **later** (01 §4). "P2" é sempre a decisão P2 do `00` (UI em inglês), nunca prioridade.
 - A pasta `design/` do repositório é **legado** do app antigo (telas em PT-BR com Manrope, `design/motion/timeline.html`): não é referência. Os tokens desta spec nascem em `design/tokens/*.json` limpos (R3 §3, F0-6).
 
@@ -30,7 +31,7 @@ Conferidas no código do Orca. Estas linhas valem sobre os relatórios.
 | DS7 | ⌘K | 01 AA8 e app atual usam ⌘K para busca/palette | **⌘K = Clear Terminal**, **⌘J = palette** (padrão de Terminal.app/iTerm/Ghostty e do Orca) | `shared/keybindings/definitions-core-3.ts:258` |
 | DS8 | ⌘, | Orca não tem atalho para Settings | **⌘, = Settings** (padrão macOS). Terminal não recebe ⌘, | HIG |
 | DS9 | Anel de foco | Orca usa 3 px `ring/50`; audit/07 sugere 2 pt; 04 usava 2 pt | **3 pt** `ring` a 50% (fidelidade ao Orca), desenhado por fora do controle (outset), raio = raio do controle + 3. Token `stroke.focusRing = 3` (04); o `stroke.ring = 2` de 04 é só o traço do spinner | `components/ui/button.tsx:8`, `input.tsx:15` |
-| DS10 | Cor do spinner "working" | audit/06 E1 propõe arco na cor do provider | **Amarelo `#eab308` para todo agente**, como no Orca. Quem é o agente já é dito pelo logo ao lado; o indicador diz só o estado | `AgentStateDot.tsx` (comentário "one for *who*, one for *what state*") |
+| DS10 | Cor do spinner "working" | audit/06 E1 propõe arco na cor do provider | **Amarelo `#edb200` para todo agente**, como no Orca. Quem é o agente já é dito pelo logo ao lado; o indicador diz só o estado | `AgentStateDot.tsx` (comentário "one for *who*, one for *what state*") |
 | DS11 | Fonte da UI | 04 aceita SF Pro como alternativa | **Geist Variable embutida** (OFL). SF Pro só como fallback automático se a fonte não carregar | config do dono `appFontFamily: Geist` |
 | DS12 | Tooltip nativo | audit/04 §7 diz que `.help()` basta | **Tooltip próprio** (com keycap) na titlebar, tab bar, header de pane, status bar e ícones de ação; `.help()` só em controles de formulário | `audit/07 #27` |
 | DS13 | Tema claro | Orca tem claro/escuro/sistema | **Só escuro na v1**, `NSApp.appearance = .darkAqua`. Tokens claros já documentados (§2.11) para não refazer | `audit/07 #19` |
@@ -120,9 +121,9 @@ Implementação: `enum DS.Color` no alvo `AgentBoxDesignSystem` (`Packages/Agent
 | `destructive` | `#ff6568` | Texto/ícone de erro e de ação destrutiva; borda de input inválido |
 | `destructiveFill` | `#ff6568` @ 60% | Fundo do botão destructive (Orca `dark:bg-destructive/60`) |
 | `success` | `#86efac` | Texto de sucesso ("Connected", "Logged in") |
-| `warning` | `#eab308` | Aviso não bloqueante ("Token expires in 12 days") |
-| `locate` | `#60a5fa` (blue-400) | Rim flash de localizar pane (M-309) |
-| `aiAccent` | `#a78bfa` (violet-400) | Cor de "agente no controle" do computador (§2.8) |
+| `warning` | `#edb200` | Aviso não bloqueante ("Token expires in 12 days") |
+| `locate` | `#54a2ff` (blue-400) | Rim flash de localizar pane (M-309) |
+| `aiAccent` | `#a685ff` (violet-400) | Cor de "agente no controle" do computador (§2.8) |
 
 Fundos de aviso: `warning/10` com borda `warning/25`; erro: `destructive/10` com borda `destructive/40` (badge `rename failed` do Orca).
 
@@ -133,16 +134,16 @@ Fonte: `T10` (hooks por lançamento), `AgentStateDot.tsx`, estados de domínio d
 | Estado (modelo) | Label (UI, tooltip e VoiceOver) | Glifo | Cor | Lucide | Movimento (`04-motion`) |
 |---|---|---|---|---|---|
 | `starting` (processo lançado, sem evento de sessão) | `Starting` | Spinner genérico `md` cinza | `#a1a1a1` | — | M-811 |
-| `working` | `Working` | Arco 270°, traço 2 pt, topo transparente | `#eab308` | — (desenhado) | M-401 (12 passos/s, fase sincronizada) |
-| `needsInput` (subtipos `question`, `permission`, `other`) | `Needs input` | Balão com `?` | `#f97316` (orange-500); texto relacionado `#fdba74` | `MessageCircleQuestion` | M-402 (ripple 2× na entrada) |
-| `waitingOnSubagents` (turno acabou, filhos rodando; R6.1) | `Waiting on subagents` | Ícone de atividade (estático) | `#eab308` | `Activity` | M-405 |
-| `done` (turno concluído) | `Done` | Check em círculo (tabs, linhas, inbox) / bolinha (coluna do card) | `#10b981` (emerald-500) | `CircleCheck` | M-403 |
-| `failed` | `Failed` | Bolinha | `#ef4444` (red-500) | — | M-404 |
-| `blocked` (subagente com `BLOCKED` no diário, CS-260) | `Blocked` | Bolinha | `#ef4444` | — | M-404 |
+| `working` | `Working` | Arco 270°, traço 2 pt, topo transparente | `#edb200` | — (desenhado) | M-401 (12 passos/s, fase sincronizada) |
+| `needsInput` (subtipos `question`, `permission`, `other`) | `Needs input` | Balão com `?` | `#fe6e00` (orange-500); texto relacionado `#ffb96d` | `MessageCircleQuestion` | M-402 (ripple 2× na entrada) |
+| `waitingOnSubagents` (turno acabou, filhos rodando; R6.1) | `Waiting on subagents` | Ícone de atividade (estático) | `#edb200` | `Activity` | M-405 |
+| `done` (turno concluído) | `Done` | Check em círculo (tabs, linhas, inbox) / bolinha (coluna do card) | `#00bb7f` (emerald-500) | `CircleCheck` | M-403 |
+| `failed` | `Failed` | Bolinha | `#fb2c36` (red-500) | — | M-404 |
+| `blocked` (subagente com `BLOCKED` no diário, CS-260) | `Blocked` | Bolinha | `#fb2c36` | — | M-404 |
 | `interrupted` (reboot, processo morto) | `Interrupted` | Bolinha | `#a1a1a1` | — | nenhum (M-404b) |
 | `idle` (`done` visto e sem atividade há 30 min, ou agente recém-iniciado sem prompt) | `Idle` | Bolinha | `#737373` @ 40% | — | M-406 |
-| `unknown` (sem hooks, ou hooks calados além da janela) | `Status unavailable` (tooltip com o motivo, ex. `Status unavailable — hooks not connected`) | Círculo tracejado | `#f59e0b` (amber-500) | `CircleDashed` | M-407 |
-| `stalled` (v1.1, subagente sem atividade há 10 min) | `Stalled?` | Círculo tracejado | `#f59e0b` | `CircleDashed` | nenhum |
+| `unknown` (sem hooks, ou hooks calados além da janela) | `Status unavailable` (tooltip com o motivo, ex. `Status unavailable — hooks not connected`) | Círculo tracejado | `#f99c00` (amber-500) | `CircleDashed` | M-407 |
+| `stalled` (v1.1, subagente sem atividade há 10 min) | `Stalled?` | Círculo tracejado | `#f99c00` | `CircleDashed` | nenhum |
 | *(shell puro, sem agente)* | — | nenhum glifo | — | — | — |
 
 `estimated` não é estado: é uma marca (OpenCode, shell) que acrescenta `(estimated)` ao tooltip. `exited` é estado de processo (§2.7), não de agente.
@@ -157,7 +158,7 @@ Tamanhos do indicador (`AgentStateDot` do Orca; 04 M-4xx usa estas caixas):
 
 **Estado agregado do card de sessão** (coluna de status): a agregação de 01 §6.3, o pior estado entre os agentes: `needsInput` > `failed`/`blocked` > `working` > `waitingOnSubagents` > `done` não lido > `interrupted` > `done` lido > `idle` > `unknown`. Pedido de ajuda de computador conta como `needsInput`. `done` lido vira bolinha emerald; `idle` vira bolinha cinza 40%.
 
-**Não lido** (`unread`): bolinha `#f59e0b` de 6 pt no canto superior direito da coluna de status do card, nome em 600, tab com overlay `amber-500/10`, item com ponto na inbox, badge no Dock, ponto no ícone da menu bar.
+**Não lido** (`unread`): bolinha `#f99c00` de 6 pt no canto superior direito da coluna de status do card, nome em 600, tab com overlay `amber-500/10`, item com ponto na inbox, badge no Dock, ponto no ícone da menu bar.
 
 ### 2.7 Processo / terminal
 
@@ -168,12 +169,12 @@ O estado do processo é separado do estado do agente (um shell não tem agente; 
 | `launching` | `Starting…` | Spinner `md` cinza `#a1a1a1` (ignição só depois de 300 ms, M-503/M-506) | Header de pane, tab, linha de agente (até o primeiro byte) |
 | `running` | — (o estado do agente assume) | — | — |
 | `exited(0)` | `Exited` | Bolinha `#737373` | Tab, linha |
-| `exited(≠0)` / sinal externo | `Exited with code <n>` / `Killed (<SIGNAME>)` | Bolinha `#ef4444` | Tab, linha, overlay no pane (M-312) |
+| `exited(≠0)` / sinal externo | `Exited with code <n>` / `Killed (<SIGNAME>)` | Bolinha `#fb2c36` | Tab, linha, overlay no pane (M-312) |
 | `killed` (parado pelo usuário) | `Stopped` | Bolinha `#737373` | Tab, linha |
-| `failedToStart` | `Couldn't start` | Bolinha `#ef4444` | Tab, linha, estado do pane (M-313) |
+| `failedToStart` | `Couldn't start` | Bolinha `#fb2c36` | Tab, linha, estado do pane (M-313) |
 | `interrupted` (reboot ou PTY perdido) | `Interrupted` | Bolinha `#a1a1a1` | Tab, linha, pane esmaecido |
 | `containerPhases` (isolado, v1.1) | `Preparing container…` | `BoxProvisioningGlyph` (M-601) | Tab, linha, pane |
-| `containerStopped` (isolado, v1.1) | `Container stopped` | Bolinha `#ef4444` | Tab, linha, pane |
+| `containerStopped` (isolado, v1.1) | `Container stopped` | Bolinha `#fb2c36` | Tab, linha, pane |
 | `daemonUnavailable` (estado de UI, não de domínio) | `Reconnecting…` | Spinner `md` cinza | Banner no pane (M-003) |
 | *(sessão importada, nunca iniciada)* | `Not started` | nenhum glifo | Card e centro (03 §4.7) |
 
@@ -186,14 +187,14 @@ Reanexar ao daemon (`reattached`) não é estado: o pane volta como `running`.
 | `provisioning` | `Starting computer…` | `BoxProvisioningGlyph` (caixa tracejada, M-601) | `#a1a1a1` |
 | `queued` | `Waiting for memory · 3 of 15 queued` (curto: `Queued`) | Ícone `Hourglass` 12 (M-602) | `#a1a1a1` |
 | `ready`, ninguém usando | `Ready` (pill de controle sem dono: `Idle`) | Ícone `Monitor` 12 | `#a1a1a1` |
-| `agentControl` | `Claude is using this computer` (pill `Claude is using`) | Borda viva no viewer + pill; ícone `Monitor` com arco `working` (M-604/M-605) | `aiAccent #a78bfa` |
+| `agentControl` | `Claude is using this computer` (pill `Claude is using`) | Borda viva no viewer + pill; ícone `Monitor` com arco `working` (M-604/M-605) | `aiAccent #a685ff` |
 | `agentControl`, agente sem ação há > 10 s | `Claude has control` (pill sem spinner) | Borda viva parada | `aiAccent` |
-| `revoking` | `Requesting control…` | Pill com spinner (M-606) | `#a78bfa` → dessatura |
+| `revoking` | `Requesting control…` | Pill com spinner (M-606) | `#a685ff` → dessatura |
 | `humanControl` | `You're in control` | Borda 2 pt sólida + pill (M-607) | `#fafafa` |
-| `helpRequested` | `Needs you · CAPTCHA` | Borda que respira + banner (M-609) | `#f97316` |
-| `reconnecting` / `delayed` | `Reconnecting…` / `Slow connection` | Frame a 40% de saturação + pill (M-610) | `#a1a1a1` / `#eab308` |
+| `helpRequested` | `Needs you · CAPTCHA` | Borda que respira + banner (M-609) | `#fe6e00` |
+| `reconnecting` / `delayed` | `Reconnecting…` / `Slow connection` | Frame a 40% de saturação + pill (M-610) | `#a1a1a1` / `#edb200` |
 | `stopped` | `Stopped` | Ícone `Monitor` a 50% | `#737373` |
-| `failed` / `oom` | `Computer failed` / `Out of memory` | Bolinha | `#ef4444` |
+| `failed` / `oom` | `Computer failed` / `Out of memory` | Bolinha | `#fb2c36` |
 
 Selo de **modo** (P5), sempre ao lado do logo do agente. Na escolha (composer, Settings) os modos se chamam `On This Mac` e `In Container`:
 - **In Container** (CLI no container, v1.1): ícone `Box` 10 pt `#a1a1a1`, tooltip `Runs in a container`. Clicável no header do pane: popover com CPU, memória e imagem (03 §4.2).
@@ -206,14 +207,14 @@ Selo de **modo** (P5), sempre ao lado do logo do agente. Na escolha (composer, S
 | `gitAdded` / `gitModified` / `gitDeleted` / `gitUntracked` / `gitRenamed` | `#81b88b` / `#e2c08d` / `#c74e39` / `#73c991` / `#73c991` | Letras de status de arquivo (A/M/D/U/R) no Source Control; ponto de "dirty" no card (`gitModified`, 6 pt) |
 | `diffAddedBg` / `diffAddedGutter` | `#81b88b` @ 16% / @ 30% | Diff só leitura |
 | `diffRemovedBg` / `diffRemovedGutter` | `#c74e39` @ 18% / @ 32% | Diff só leitura |
-| `prOpen` | `#10b981` @ 80% | Ícone `GitPullRequest` |
+| `prOpen` | `#00bb7f` @ 80% | Ícone `GitPullRequest` |
 | `prDraft` | `#a1a1a1` @ 50% | Ícone `GitPullRequestDraft` |
-| `prMerged` | `#c084fc` (purple-400) @ 70% | Ícone `GitMerge` |
+| `prMerged` | `#c07eff` (purple-400) @ 70% | Ícone `GitMerge` |
 | `prClosed` | `#a1a1a1` @ 60% | Ícone `GitPullRequestClosed` |
-| `checksFailing` | `#f43f5e` (rose-500) @ 85% | Ícone `CircleX` 12 / chip |
-| `checksPending` | `#f59e0b` @ 85% | Ícone `CircleDot` 12 (estático) |
-| `checksPassing` | `#10b981` @ 80% | Ícone `CircleCheck` 12 |
-| `conflict` | `#f59e0b` | Badge `GitMerge` "Conflicts" |
+| `checksFailing` | `#ff2357` (rose-500) @ 85% | Ícone `CircleX` 12 / chip |
+| `checksPending` | `#f99c00` @ 85% | Ícone `CircleDot` 12 (estático) |
+| `checksPassing` | `#00bb7f` @ 80% | Ícone `CircleCheck` 12 |
+| `conflict` | `#f99c00` | Badge `GitMerge` "Conflicts" |
 
 ### 2.10 Logos de agentes
 
@@ -302,7 +303,7 @@ Regras globais: tracking **+0,01 em** em toda a UI (13 pt → +0,13 pt); itens d
 | `label` | 12 / 500 / 16 | Labels de campo do composer e de dialogs, botões `xs`, status bar, tooltips |
 | `sectionLabel` | 12 / 600 / 16 | "Projects", "Sessions", cabeçalhos de grupo da inbox e da palette |
 | `tab` | 12 / 400 (ativa 500) / 16 | Título da tab |
-| `menuItem` | 12 / 450 / 17 | Itens de menu, context menu, popover de lista |
+| `menuItem` | 12 / 450 / 16 | Itens de menu, context menu, popover de lista |
 | `body` | 13 / 400 / 20 | Nome da sessão lida (400 `fg/80`), itens do Settings, linhas de lista, texto de páginas |
 | `bodyStrong` | 13 / 600 / 20 | Nome da sessão não lida, nome de projeto, títulos de linha na Library |
 | `nav` | 13 / 500 / 18, tracking −0,025 em | Search e itens de nav da sidebar |
@@ -310,11 +311,11 @@ Regras globais: tracking **+0,01 em** em toda a UI (13 pt → +0,13 pt); itens d
 | `control` | 14 / 500 / 20 | Texto de botões `sm`/`default`/`lg` |
 | `input` | 14 / 400 / 20 (13 dentro da sidebar e da palette compacta) | Inputs, textareas, selects |
 | `dialogBody` | 14 / 400 / 20 | Descrição de dialog, texto de onboarding |
-| `composerTitle` | 16 / 600 / 22 | Título do composer e de overlays médios |
-| `dialogTitle` | 18 / 600 / 24 | Título de dialog padrão e de confirmação |
-| `pageTitle` | 24 / 600 / 30 | Título de seção no Settings, título das páginas Library/Computers (Orca `text-2xl font-semibold`) |
+| `composerTitle` | 16 / 600 / 24 | Título do composer e de overlays médios |
+| `dialogTitle` | 18 / 600 / 28 | Título de dialog padrão e de confirmação |
+| `pageTitle` | 24 / 600 / 32 | Título de seção no Settings, título das páginas Library/Computers (Orca `text-2xl font-semibold`) |
 | `display` | 28 / 600 / 34 | "Agent Box" na landing vazia (Orca usa 36/700 em caixa alta para a marca; aqui fica menor e sem caixa alta para não virar "hero") |
-| `paletteInput` | 16 / 400 / 22 | Campo da palette ⌘J (input de 48 pt) |
+| `paletteInput` | 16 / 400 / 24 | Campo da palette ⌘J (input de 48 pt) |
 
 Regras: nada abaixo de 9 pt; nada acima de 28; no máximo **dois pesos** por componente; texto longo trunca com `…` no fim (nomes) ou no meio (caminhos: `~/orca/…/arizona/sandperch`); a versão completa vai para o tooltip.
 
@@ -368,8 +369,8 @@ Regras: nada abaixo de 9 pt; nada acima de 28; no máximo **dois pesos** por com
 | Token | pt | Uso |
 |---|---|---|
 | `rXS` | 2 | Logos PNG, keycap interno |
-| `rSM` | 4 | Botões da titlebar, badges, linhas de agente/filhas, botão ✕ da tab, keycaps |
-| `rMD` | 6 | Checkbox, thumbnails de computador, chips de filtro |
+| `rSM` | 6 | Botões da titlebar, badges, linhas de agente/filhas, botão ✕ da tab, keycaps |
+| `rMD` | 8 | Checkbox, thumbnails de computador, chips de filtro |
 | `rControl` | 8 | Botões, inputs, selects, nav items, Search, itens de menu, botão "+" da tab bar, segmented |
 | `rCard` | 10 | Card de sessão, dialog, itens da sidebar do Settings, card de inbox |
 | `rMenu` | 11 | Menus, context menus, popovers, hover cards |
@@ -399,7 +400,7 @@ Raio de foco = raio do controle + 3 (`DS9`).
 | Activity bar ativa | sublinhado 2 pt `textPrimary` de 25% a 75% da largura |
 | Viewer: agente no controle | traço 1,5 pt `aiAccent` (borda viva, M-604) |
 | Viewer: humano no controle | 2 pt `#fafafa` sólido |
-| Viewer: pedido de ajuda | 2 pt `#f97316` respirando |
+| Viewer: pedido de ajuda | 2 pt `#fe6e00` respirando |
 
 ---
 
@@ -612,7 +613,7 @@ Caixa com altura 16 (14 em `keycap`), padding 0×4, raio 4, fundo `secondary`, t
 | `neutral` (sidebar) | 16 | 10/500 | 0×6 | 4 | texto `fg/70`, borda `fg/20`, fundo `fg/6` | `Main` (checkout principal), `Detached`, `Container` (v1.1) |
 | `error` | 16 | 10/500 + `AlertCircle` 10 | 0×6 | 4 | texto `destructive`, borda `destructive/40`, fundo `destructive/10` | `Rename failed`, `Setup failed` |
 | `warning` | 16 | 10/500 | 0×6 | 4 | texto `warning`, borda `warning/25`, fundo `warning/10` | `Conflicts`, `Token expiring` |
-| `count` | 16 (mín. 16 de largura) | 10/600 tabular | 0×5 | full | fundo `#f97316`, texto `#171717` quando há AttentionItems de prioridade 1–2 (01 §5.12); senão fundo `secondary`, texto `textSecondary` | Contador no nav Inbox, na menu bar (M-701, M-810) |
+| `count` | 16 (mín. 16 de largura) | 10/600 tabular | 0×5 | full | fundo `#fe6e00`, texto `#171717` quando há AttentionItems de prioridade 1–2 (01 §5.12); senão fundo `secondary`, texto `textSecondary` | Contador no nav Inbox, na menu bar (M-701, M-810) |
 | `pill` | 16 | 10/600 | 0×6 | full | fundo `primary`, texto `#171717` | `New` (recurso novo; raro) |
 | `chip` (PR) | 18 | 11/500 tabular | 0×6 | 4 | fundo transparente, hover `accent/50`; ícone de PR 13 colorido + `#412` `textSecondary` + glifo de checks 12 | Chip de PR no card e no painel |
 | `mono` | 16 | SF Mono 10 | 0×4 | 4 | fundo `accent`, texto `textSecondary` | Nome de modelo destacado, flag (`--dangerously-skip-permissions` em revisão) |
@@ -649,9 +650,9 @@ SwiftUI: `ScrollView(.horizontal, showsIndicators: false)` + `HStack(spacing: 0)
 | Section header (Projects/Sessions) | 32 | 0×8 | `sectionLabel` `textSecondary/80` | — | — |
 | Project row | 28 | esquerda 10 | ícone 16 (caixa r4, glifo 14) + `bodyStrong` | `fg5`; ações aparecem | — |
 | Session card | variável (§12.9) | | | | |
-| Agent row | 24 | 0×4, gap 4, r4 | `small` `textSecondary` | `hoverAgentRow` | pane focado: `sidebarSelected` |
+| Agent row | 24 | 0×4, gap 4, r6 (`rSM`) | `small` `textSecondary` | `hoverAgentRow` | pane focado: `sidebarSelected` |
 | Child row | 24 | esquerda +12, conector em L | `small` | idem | idem |
-| Menu item | 25 (lh 17 + 4×2) | 8×4, r8 | `menuItem` | `white/14` | check à esquerda (pl 28) |
+| Menu item | 24 (lh 16 + 4×2) | 8×4, r8 | `menuItem` | `white/14` | check à esquerda (pl 28) |
 | Settings nav item | 30 | 12×6, r10 | 13/500 | `fg5` | `panelSelected` |
 | Generic list row (Library, Computers, inbox) | 32 (uma linha) / 48 (duas linhas) | 8×12 | `body` + `small` | `fg5` | `fg10` + borda `fg18` (como o card) |
 | Table row (Computers, Network) | 28 | 0×12 | `body` / mono 12 | `fg5` | `fg10` |
@@ -716,7 +717,7 @@ SwiftUI: `Toggle` com `ToggleStyle` próprio (`DSSwitchStyle`, `DSCheckboxStyle`
 
 ### 12.15 Menu e context menu
 
-- Visual (Orca `dropdown-menu.tsx`): mín. 176, raio 11, padding 4, `menuMaterial` + borda `white/14` + `shadowMenu`; item 12/450 lh 17, padding 8×4, raio 8, foco/hover `white/14`; ícone 14 `textSecondary` à esquerda; atalho à direita em `textTertiary`; separador 1 pt `border/60` com margem 3; cabeçalho de grupo 11/500 `textSecondary` (ex.: "Session"); destrutivo em `destructive` com hover `destructive/20`; desabilitado 50% com tooltip do motivo.
+- Visual (Orca `dropdown-menu.tsx`): mín. 176, raio 11, padding 4, `menuMaterial` + borda `white/14` + `shadowMenu`; item 12/450 lh 16, padding 8×4, raio 8, foco/hover `white/14`; ícone 14 `textSecondary` à esquerda; atalho à direita em `textTertiary`; separador 1 pt `border/60` com margem 3; cabeçalho de grupo 11/500 `textSecondary` (ex.: "Session"); destrutivo em `destructive` com hover `destructive/20`; desabilitado 50% com tooltip do motivo.
 - **Context menus** (clique direito em card, linha, tab, terminal, viewer): **`NSMenu` nativo** (`audit/07 #3`, `audit/04 §7`): o comportamento nativo (teclado, VoiceOver, submenus, tipo-ahead) vale mais que o pixel e já é escuro e translúcido com `darkAqua`. Ícones via `NSMenuItem.image` com os PDFs lucide (template, 14). SwiftUI `.contextMenu` gera `NSMenu` e é aceito para cards e linhas; o terminal usa `menu(for:)` no `NSView` hospedeiro.
 - **Dropdowns ricos** (filtro do header "Projects", "+" da tab bar, menus com busca, combobox): popover SwiftUI com o visual acima (`DSMenuPanel`), aberto por clique, fechado por Esc/clique fora; navegação ↑↓ ↵.
 - Itens técnicos (Copy Terminal ID, Refresh Git, Show Hook Log, Show Launch Details) só aparecem com **⌥ pressionado** (`NSMenuItem.isAlternate` / `allowsKeyEquivalentWhenHidden`) ou com `Show technical details in menus` ligado, padrão do Orca (`audit/07 #30`). Não existe "Reauthorize Folder…": o app não usa security-scoped bookmarks (AR-533).

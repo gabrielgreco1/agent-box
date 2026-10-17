@@ -1,0 +1,40 @@
+{
+ "child-a": {
+  "description": "Child A. Use for tasks addressed to child-a.",
+  "prompt": "You are child-a. Call the whoami MCP tool exactly once and reply with its text only.",
+  "model": "haiku",
+  "tools": [
+   "mcp__whoami-a__whoami"
+  ],
+  "mcpServers": [
+   {
+    "whoami-a": {
+     "command": "python3",
+     "args": [
+      "/private/tmp/claude-501/-Users-gabriel-orca-workspaces-agent-box-otter/5dda428d-ecea-4852-b667-584fd17012cc/scratchpad/spikes/s08/mcp_whoami.py",
+      "A"
+     ]
+    }
+   }
+  ]
+ },
+ "child-b": {
+  "description": "Child B. Use for tasks addressed to child-b.",
+  "prompt": "You are child-b. Call the whoami MCP tool exactly once and reply with its text only.",
+  "model": "haiku",
+  "tools": [
+   "mcp__whoami-b__whoami"
+  ],
+  "mcpServers": [
+   {
+    "whoami-b": {
+     "command": "python3",
+     "args": [
+      "/private/tmp/claude-501/-Users-gabriel-orca-workspaces-agent-box-otter/5dda428d-ecea-4852-b667-584fd17012cc/scratchpad/spikes/s08/mcp_whoami.py",
+      "B"
+     ]
+    }
+   }
+  ]
+ }
+}

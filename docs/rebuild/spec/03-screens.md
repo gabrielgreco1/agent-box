@@ -406,7 +406,7 @@ ID: `tabs.tab.<terminalId>`, `.close`, `.title`, `.restart`.
 | `+` | `toolbar` 28×28, `Plus` 14 | Abre **Quick Launch** ancorado (§7) | `New Tab ⌥⌘N` | `tabs.new` |
 | `▷ Command` (v1.1) | 28 de altura, `Play` 14 + `"Command"` 12/500 muted; vira split button com comandos salvos | Quick Commands | `Quick Commands` | `tabs.quickCommands` |
 | `⋯` | `toolbar`, só com 2+ panes na tab | Menu: `Split Right ⌘D`, `Split Down ⇧⌘D`, `Equalize Pane Sizes`, `Expand Pane ⇧⌘↵`, `Close Other Panes` (ações em §24) | `Pane Actions` | `tabs.paneActions` |
-| Toggle painel direito | `titlebar`, `PanelRight` 16 | Abre/fecha painel (§10) | `Toggle Right Panel ⌘L` | `tabs.rightPanelToggle` |
+| Toggle painel direito (Fatia 2 em diante; na Fatia 1 o painel é oculto e o botão não existe) | `titlebar`, `PanelRight` 16 | Abre/fecha painel (§10) | `Toggle Right Panel ⌘L` | `tabs.rightPanelToggle` |
 
 Duplo clique no espaço vazio da tab row: nova tab com o agente padrão (⌥⌘T). Área vazia arrasta a janela.
 
@@ -609,7 +609,7 @@ Popover `DSMenuPanel` 300 de largura ancorado ao `+` (por atalho, ancorado ao `+
 | Campo | placeholder `Start an agent or type a prompt…` (32) | `overlay.quickLaunch.input` |
 | Agentes | `New Claude Code Tab` (logo) `⌥⌘T` se padrão · `New Codex Tab` · `New OpenCode Tab` · `New Terminal` `⌘T` | `overlay.quickLaunch.item.<agent>` |
 | Perfis | perfis do agente padrão e de outros, com flags em `mono` | `overlay.quickLaunch.profile.<id>` |
-| Outros | `Resume a Conversation…` (abre o painel direito na aba Conversations, escopo Session) · `Open Computer…` (submenu com os computadores da sessão; abre o viewer; desabilitado sem computadores: `No computers in this session`) · `Agent Settings…` (abre Settings › Agents) | `overlay.quickLaunch.resume`, `.openComputer`, `.agentSettings` |
+| Outros | `Resume a Conversation…` (Fatia 2 em diante: abre o painel direito na aba Conversations, escopo Session; **não aparece na Fatia 1**, em que o painel direito é oculto) · `Open Computer…` (submenu com os computadores da sessão; abre o viewer; desabilitado sem computadores: `No computers in this session`) · `Agent Settings…` (abre Settings › Agents) | `overlay.quickLaunch.resume`, `.openComputer`, `.agentSettings` |
 | Rodapé | `small` `textTertiary`: `↵ Open · ⌘↵ Start with prompt · Esc Close` | — |
 
 Digitar filtra a lista; se o texto não casa com nenhum item, a primeira linha vira `Start Claude Code with "<text>"` (agente padrão) e ⌘↵ lança qualquer item selecionado com o texto como prompt. ⇧↵ abre em split à direita.
@@ -754,7 +754,7 @@ Para sessões com Git. Sessão limpa: empty state `This session isn't a Git repo
 - Header: `Computers` + `3 running` (+ `· proxy $0.31 today` se o provedor informa) + `[+]` (`row`, tooltip `New Computer…` — cria computador manual ligado ao terminal focado, tipo padrão de Settings › Computers, modo On This Mac; desabilitado sem terminal de agente focado: `Focus an agent terminal first.`).
 - Lista de **thumbnails** (DS §12.25), largura do painel − 24 (≈ 286×179 + rodapé 20), gap 12, ordenada por "needs you" > em uso > parado. Cada uma: frame vivo (≤ 1 fps, CS-403), borda de estado, rodapé com nome, dono (`logo 10` + agente), estado, uso do proxy (se informado). Hover amplia a miniatura (M-612) e mostra a URL atual e a última nota do journal.
 - Clique: abre o viewer numa tab (§12). Botões no hover sobre a thumbnail: `Take Over` (`MousePointer2`), `Open in New Window`, `⋯` (menu da linha filha §2.8).
-- Pedido de ajuda: a thumbnail ganha faixa `#f97316` no topo com `Needs you · CAPTCHA` e `[Take Over]`.
+- Pedido de ajuda: a thumbnail ganha faixa `#fe6e00` no topo com `Needs you · CAPTCHA` e `[Take Over]`.
 - Vazio (M-905): `No computers in this session. Agents create them when they need a browser.`
 - IDs: `rightPanel.computers.new`, `rightPanel.computers.empty`, `rightPanel.computers.thumb.<computerId>`, `.takeOver`.
 
@@ -806,7 +806,7 @@ Abre como **tab** (`computer`) na sessão dona; pode ir para janela própria (`O
 | Ícone + nome | `Monitor` 14 + nome 13/500 | duplo clique renomeia | `viewer.<id>.name` |
 | Modo | `DSCombobox xs`: `HTTP` · `Headless` · `Desktop` | Troca o tipo (preserva URL, cookies e storage, R4.4); trocar para HTTP pede confirmação `Switch <computer> to HTTP? The browser closes; cookies stay in the profile.` | `viewer.<id>.mode` |
 | URL | mono 12 `textSecondary`, truncado no meio; clique copia (toast `Copied URL.`) | — | `viewer.<id>.url` |
-| Pill de controle | 22 de altura, raio full, 11/500: agente `logo 10 + spinner + "Claude is using"` em `aiAccent/15` com texto `aiAccent`; agente parado há > 10 s `"Claude has control"` (sem spinner); humano `"You're in control"` em `fg10`; ajuda `"Needs you"` em `#f97316/15`; ocioso `"Idle"` | — | `viewer.<id>.controlPill` |
+| Pill de controle | 22 de altura, raio full, 11/500: agente `logo 10 + spinner + "Claude is using"` em `aiAccent/15` com texto `aiAccent`; agente parado há > 10 s `"Claude has control"` (sem spinner); humano `"You're in control"` em `fg10`; ajuda `"Needs you"` em `#fe6e00/15`; ocioso `"Idle"` | — | `viewer.<id>.controlPill` |
 | Take Over / Hand Back | `primary xs` (`MousePointer2` / `Hand`) | ⇧⌘R; Hand Back abre o popover de nota (§11.5) | `viewer.<id>.takeOver`, `viewer.<id>.handBack` |
 | Pop out | `toolbar`, `ExternalLink` 14, tooltip `Open in New Window` | Move o viewer para janela própria | `viewer.<id>.popOut` |
 | Mais | `Ellipsis` → `Show Network`, `Show Journal`, `Show Files`, `Show Timeline` (abrem no painel direito › Computers › detalhe, §11.7), `Proxy ▸` (`None` · proxies de Settings › Computers › Proxies, com check no atual; P13; aplicação em 07), `Paste to Computer` (digita o texto do clipboard no computador, só com humano no controle; antes mostra o popover §16.12 com o texto), `Copy Selection from Computer` (copia a seleção do computador para o clipboard do Mac), `Reconnect`, separador, `Stop Computer…`, com ⌥ `Copy Computer ID`, `Open Shell` | — | `viewer.<id>.more` |
@@ -823,7 +823,7 @@ Abre como **tab** (`computer`) na sessão dona; pode ir para janela própria (`O
 | Agente no controle | Borda viva 1,5 `aiAccent` (`viewer.<id>.controlFrame`); cursor fantasma e ripple de clique do agente (`.ghostCursor`, `.clickRipple`, M-605); input humano bloqueado (clique mostra tooltip `Claude is using this computer. Take over to interact.`) | — |
 | `revoking` | Borda acelera e dessatura; botão `Requesting control…` com spinner, desabilitado (M-606) | Após 10 s sem ACK: `[Force Take Over]` (`destructive xs`) |
 | Humano no controle | Borda 2 sólida `#fafafa`; teclado e mouse vão para o computador (M-607) | Selo de teclado capturado (§11.6) |
-| Pedido de ajuda | Borda 2 `#f97316` respirando + **banner** de 40 sob a strip (fundo `#f97316/10`, borda inferior `/25`): `TriangleAlert` + `<computer> needs you · <reason>` + `[Take Over]` (primary xs) + `[Decline…]` (ghost xs; popover com motivo opcional `Reason (optional)` e `[Decline]`, texto `The agent will be told you declined.`; CS-432) (M-609, `viewer.<id>.helpBanner`) | — |
+| Pedido de ajuda | Borda 2 `#fe6e00` respirando + **banner** de 40 sob a strip (fundo `#fe6e00/10`, borda inferior `/25`): `TriangleAlert` + `<computer> needs you · <reason>` + `[Take Over]` (primary xs) + `[Decline…]` (ghost xs; popover com motivo opcional `Reason (optional)` e `[Decline]`, texto `The agent will be told you declined.`; CS-432) (M-609, `viewer.<id>.helpBanner`) | — |
 | `reconnecting` / `delayed` | Último frame 40% saturação + pill `Reconnecting…` / `Slow connection` (M-610, `viewer.<id>.status`) | `[Reconnect]` |
 | `disconnected` | Frame escuro 30% + cartão `Disconnected from <computer>.` (M-611, `viewer.<id>.disconnected`) | `[Reconnect]` · `[Open Diagnostics]` |
 | `stopped` | Último frame 30% + cartão `This computer is stopped.` (M-613) | `[Start Computer]` · `[Close Tab]` |
@@ -837,7 +837,17 @@ Ancorado ao botão `Hand Back`, 300 de largura: label `Note for Claude Code (opt
 
 ### 11.6 Captura de teclado
 
-Com o humano no controle e o canvas focado, todo atalho vai para o computador, **exceto**: ⌘Q, ⇧⌘R (Hand Back), ⌘⎋ (soltar o teclado) e ⌃⌥ pressionados juntos (soltar). Selo no canto superior esquerdo do canvas (pílula `chrome` 22, `Keyboard` 12 + `Keyboard captured · ⌃⌥ to release`), some 3 s após capturar e volta no hover do canto. ID `viewer.<id>.keyboardBadge`.
+Com o humano no controle e o canvas focado, todo atalho vai para o computador (Cmd → Ctrl, 07 CS-420), **exceto** o conjunto reservado do app, que tem prioridade (08 A16) e nunca chega ao computador:
+
+| Reservado | Efeito |
+|---|---|
+| ⌘Q | Quit (overlay §16.10) |
+| ⌘W | Fecha a tab do viewer (escopo Viewer, §21); o computador segue rodando |
+| ⇧⌘R | Hand Back |
+| ⌘⎋ ou ⌃⌥ (juntos) | Solta o teclado |
+| ⌘H, ⌘M, ⌃⌘F | Sistema (esconder, minimizar, tela cheia) |
+
+Os demais atalhos **Global** de §21 (⌘N, ⌘T, ⌘J, ⌘1…⌘9, ⌘,, ⇧⌘T, ⌘B e outros) **não valem** com o canvas capturado: vão ao computador (por exemplo, ⌘T abre uma aba no browser do computador). Para usá-los, solte o teclado (⌘⎋ ou ⌃⌥) ou clique fora do canvas. ⌘C e ⌘V têm linhas próprias de escopo Viewer em §21. Ao soltar o teclado, o escopo Viewer deixa de valer e a tabela de §21 volta ao normal. Selo no canto superior esquerdo do canvas (pílula `chrome` 22, `Keyboard` 12 + `Keyboard captured · ⌃⌥ to release`), some 3 s após capturar e volta no hover do canto. ID `viewer.<id>.keyboardBadge`. Teste: XCUI com ⌘W, ⌘Q, ⌘⎋, ⌃⌥ e ⌘T (AC-414, 05).
 
 ### 11.7 Detalhe do computador ou do filho no painel
 
@@ -1381,9 +1391,9 @@ IDs: `landing`, `landing.addProject`, `landing.newCleanSession`, `landing.import
 
 Esta tabela é a fonte única de atalhos; 02, 04, 05, 06 e 07 a citam. Ela bate com o Orca (`shared/keybindings/definitions-core-2.ts`: ⌘T = terminal, ⌥⌘T = agente, ⌥⌘←/→ = histórico).
 
-Escopos: **Global** (funciona com o terminal focado; o app intercepta antes do PTY), **App** (fora do terminal ou via menu), **Terminal** (pane de terminal focado), **Find** (find bar aberta), **Viewer** (canvas do computador com controle humano), **Sidebar** (lista focada), **Settings** (página Settings aberta), **Overlay** (overlay aberto). Em conflito, o escopo mais específico vence. Teclas não listadas com o terminal focado vão para o PTY (teclado do terminal e tabela tecla → bytes em `06`).
+Escopos: **Global** (funciona com o terminal focado; o app intercepta antes do PTY), **App** (fora do terminal ou via menu), **Terminal** (pane de terminal focado), **Find** (find bar aberta), **Viewer** (canvas do computador com controle humano), **Sidebar** (lista focada), **Settings** (página Settings aberta), **Overlay** (overlay aberto), **Palette** (palette ⌘J ou Quick Launch aberta) e **Menu** (menu ou context menu aberto). **Palette é escopo próprio, mais específico que Overlay:** enquanto a palette ou o Quick Launch está aberto, as linhas de escopo Overlay `Submit` (⌘↵) e `Next / Previous field` (⇥ / ⇧⇥) **não valem**; ⌘↵ e ⇥ têm só o significado das linhas Palette. Em conflito, o escopo mais específico vence. Teclas não listadas com o terminal focado vão para o PTY (teclado do terminal e tabela tecla → bytes em `06`).
 
-Implementação: `KeyBindingRegistry` com escopo explícito por atalho. Um teste falha se dois atalhos colidem no mesmo escopo ou se um atalho Global colide com a lista reservada ao terminal (fim desta seção). Item de menu cujo escopo não está ativo (ex.: ⇧⌘⌫ com o terminal focado) tem o key equivalent removido na validação do menu, e a tecla vai para o PTY.
+Implementação: `KeyBindingRegistry` com escopo explícito por atalho. Um teste falha se dois atalhos colidem no mesmo escopo, se um atalho Global colide com a lista reservada ao terminal (fim desta seção) ou se um atalho de escopo Overlay colide com um de Palette sem que a tabela declare qual substitui qual (a verificação trata Palette como um escopo e a regra acima como a única substituição permitida). Resultado da verificação da errata da Fatia 0: `docs/evidence/slice0/errata-check.md`. Item de menu cujo escopo não está ativo (ex.: ⇧⌘⌫ com o terminal focado) tem o key equivalent removido na validação do menu, e a tecla vai para o PTY.
 
 | Grupo | Ação | Atalho | Escopo | Nota |
 |---|---|---|---|---|
@@ -1422,10 +1432,11 @@ Implementação: `KeyBindingRegistry` com escopo explícito por atalho. Um teste
 | Find | Close Find | Esc | Find | devolve foco ao terminal |
 | Terminal | Clear | ⌘K | Terminal | DS7 |
 | Terminal | Copy / Paste / Select All | ⌘C / ⌘V / ⌘A | Terminal | |
+| Terminal | Send Interrupt | ⌃C | Terminal | reservado ao terminal: vai ao PTY como ^C (o app não captura). O item de menu `Send Interrupt` (`terminal.sendInterrupt`) envia SIGINT ao grupo em primeiro plano pelo daemon |
 | Terminal | Font Bigger / Smaller / Reset | ⌘= / ⌘- / ⌘0 | Terminal | por pane; fora do terminal desabilitado na v1 (zoom da UI: later) |
 | Terminal | Open link | ⌘-clique | Terminal | |
 | Panels | Toggle Sidebar | ⌘B | Global | |
-| Panels | Toggle Right Panel | ⌘L | Global | |
+| Panels | Toggle Right Panel | ⌘L | Global | **Fatia 2 em diante.** Na Fatia 1 o painel direito é oculto (09 T1-10): o atalho e o item de menu não existem |
 | Panels | Source Control | ⇧⌘G | Global (exceto Find) | |
 | Panels | Computers panel | ⇧⌘C | Global | aba da sessão; a página global Computers não tem atalho |
 | Panels | Conversations | ⇧⌘H | Global | |
@@ -1434,20 +1445,24 @@ Implementação: `KeyBindingRegistry` com escopo explícito por atalho. Um teste
 | Pages | Close page | Esc | App | sem campo focado |
 | Computer | Take Over / Hand Back | ⇧⌘R | Global (com viewer ativo) / Viewer | Hand Back abre a nota; ⌘↵ confirma |
 | Computer | Release Keyboard | ⌘⎋ ou ⌃⌥ | Viewer | sempre reservado, nunca vai ao computador |
-| Overlay | Submit | ⌘↵ | Overlay | |
+| Computer | Close Viewer Tab | ⌘W | Viewer | o app mantém ⌘W com o teclado capturado (08 A16): fecha a tab do viewer, nunca vai ao computador; o computador segue rodando |
+| Computer | Copy (dentro do computador) | ⌘C | Viewer | vai ao computador como ⌃C (Cmd → Ctrl, 07 CS-420); não toca o clipboard do Mac (07 CS-422) |
+| Computer | Paste to Computer | ⌘V | Viewer | só com controle humano: digita no computador o texto do clipboard do Mac (07 CS-422, §11.2); sem controle humano não faz nada |
+| Overlay | Submit | ⌘↵ | Overlay | não vale na palette nem no Quick Launch (escopo Palette) |
 | Overlay | Cancel / Close | Esc | Overlay | |
-| Overlay | Next / Previous field | ⇥ / ⇧⇥ | Overlay | foco preso no overlay |
-| Palette | Open in Split | ⇧↵ | Overlay (palette, quick launch) | |
-| Palette | New Session with text | ⌘↵ | Overlay (palette) | |
-| Palette | Cycle filter | ⇥ | Overlay (palette) | |
-| Palette | Insert mode | `/` no início do campo | Overlay (palette) | §8 |
+| Overlay | Next / Previous field | ⇥ / ⇧⇥ | Overlay | foco preso no overlay; não vale na palette nem no Quick Launch (⇥ é `Cycle filter` lá) |
+| Palette | Open in Split | ⇧↵ | Palette | palette e Quick Launch |
+| Palette | New Session with text / Start with prompt | ⌘↵ | Palette | palette: `New Session "<text>"`; Quick Launch: lança o item com o texto como prompt |
+| Palette | Cycle filter | ⇥ | Palette | só a palette (§8) |
+| Palette | Insert mode | `/` no início do campo | Palette | §8 (Fatia 4) |
 | Sidebar | Move / Expand / Collapse | ↑ ↓ / → / ← | Sidebar | |
 | Sidebar | Focus terminal of item | ↵ | Sidebar | |
 | Sidebar | Show details | Space | Sidebar | hover card |
 | Window | Minimize / Full Screen | ⌘M / ⌃⌘F | Global | sistema |
+| Menus | Itens extras (Refresh Git, Copy Project/Session/Terminal/Conversation/Pane ID, Show Launch Details, Rename Branch, Show Hook Log, Copy Computer ID, Open Shell) | ⌥ (segurar ao abrir o menu) | Menu | convenção do Orca; modificador isolado, não colide com atalho; os itens estão em §24 com a marca (⌥) |
 | Debug | Motion Lab | ⌃⌥⌘M | Global | só builds de desenvolvimento (04); ⌥⌘M é "Minimize All" do sistema e não é usado |
 
-Não existem: ⇧⌘E (o "Reveal Current Session" é o botão do rodapé, §2.12), ⌥⌘ setas para panes, ⇧⌘T no viewer, ⌘T como lançador.
+Fora da tabela por serem convenção de campo de texto (setas, ↵ e Esc dentro de inputs) ou do sistema. Não existem: ⇧⌘E (o "Reveal Current Session" é o botão do rodapé, §2.12), ⌥⌘ setas para panes, ⇧⌘T no viewer, ⌘T como lançador.
 
 Atalhos reservados para o terminal (nunca capturados pelo app): ⌃ + letra, ⌥ + letra (conforme Option as Meta), ⌘← / ⌘→ / ⌘⌫ (traduzidos para ^A / ^E / ^U), ⇧↵ (CSI-u), ⌥← / ⌥→ (palavra). Exceções deliberadas, todas Global: ⌃⇥, ⌃⇧⇥, ⌃1…⌃9. Detalhes em `06`.
 
@@ -1532,167 +1547,261 @@ Toda interação da UI é uma ação do registro (`ActionRegistry`: `ActionID` �
 - O `ActionID` é `<grupo>.<ação>` em lowerCamelCase e dá o sufixo do ID do item de menu (`menu.<grupo>.<ação>`).
 - Cada `ActionID` tem um XCUITest com clique ou atalho real que confere o efeito declarado (estado, navegação ou erro específico; "erro visível" genérico não conta), e o teste de cobertura cruza esta tabela com os testes (AC-T02).
 - "Desabilitado" traz o tooltip exato do motivo. Ação de versão futura não aparece (não é desabilitada).
+- A coluna **Atalho** repete o atalho canônico de §21 (`—` = sem atalho; `⌥` = item extra do menu com ⌥ pressionado, convenção de §21). A coluna **Teste (XCUITest)** dá o nome do teste: `testAction_<ActionID>` em `AgentBoxUITests/Actions/`, que dispara a ação por atalho real quando há atalho e por clique quando não há (AC-T02 cruza esta coluna com os testes que existem). Em linhas com mais de um ActionID há um teste por ID.
 - Atalhos: §21. Microcopy de cada overlay: seções citadas.
+- Fatia 1 (09 §3): o painel direito é oculto, então `view.toggleRightPanel` (⌘L), `tab.quickLaunchResume` e `sidebar.search` são da Fatia 2 e **não existem** na UI da Fatia 1.
+- Controles de Settings (§24.6) ficam cobertos por regra (`settings.<section>.<key>`) até a tela de Settings mínimo (09 T1-26) fixar a lista de chaves; aí cada chave ganha linha.
 
 ### 24.1 App e janela
 
-| Ação | ActionID | Efeito | Desabilitado (tooltip) | Versão |
-|---|---|---|---|---|
-| About Agent Box | `app.about` | Overlay §16.14 | — | v1 |
-| Settings… | `app.settings` | Abre Settings na última seção | — | v1 |
-| Set Up Agent Box… / Run Diagnostics | `app.setup` | Abre o onboarding (§15); `Run Diagnostics` abre Settings › Diagnostics e roda as checagens | — | v1 |
-| Check for Problems | `app.checkProblems` | Abre Settings › Diagnostics e roda `Run All Checks Again` | — | v1 |
-| Hide App Name | `app.hideAppName` | Esconde o nome na faixa da titlebar; volta em Settings › Appearance | — | v1 |
-| Quit Agent Box | `app.quit` | §16.10 | — | v1 |
-| Quit Agent Box Completely | `app.quitCompletely` | Encerra o app e o ícone; agentes seguem no background service | — | v1 |
-| Toggle Sidebar / Right Panel | `view.toggleSidebar` / `view.toggleRightPanel` | Recolhe/expande (M-201 / M-108) | Right Panel com página aberta: `Close the page first.` | v1 |
-| Show Status Bar | `view.toggleStatusBar` | Mostra/esconde a status bar (também `Hide Status Bar` no menu dela) | — | v1 |
-| Back / Forward | `nav.back` / `nav.forward` | Navega no histórico (§0) | `No earlier page` / `No later page` | v1 |
-| Bigger / Smaller / Actual Size | `terminal.fontBigger` / `.fontSmaller` / `.fontReset` | Fonte do pane focado | Sem terminal focado: `Interface zoom isn't available yet.` | v1 |
-| Hide from Sidebar | `sidebar.hideNavItem` | Esconde o item de nav | — | v1 |
-| Agent Box Help | `help.open` | Abre no navegador a página de ajuda empacotada (`Help/index.html`: atalhos, modelo de segurança, links) | — | v1 |
-| Keyboard Shortcuts | `help.shortcuts` | Settings › Shortcuts | — | v1 |
-| Reveal Logs in Finder | `help.revealLogs` | Mostra a pasta de logs | — | v1 |
-| Export Diagnostics… | `help.exportDiagnostics` | Lista de arquivos e salva o .zip redigido (AR-603) | — | v1 |
-| Open Diagnostics | `app.openDiagnostics` | Settings › Diagnostics, na linha que motivou (deep link) | — | v1 |
-| Restart Background Service | `app.restartBackgroundService` | Confirma `Running terminals will reconnect.`; reinicia o serviço e reanexa | — | v1 |
-| Try Again / Copy Details (região com erro) | `app.errorTryAgain` / `app.copyDetails` | Remonta a região / copia erro, região e versão | — | v1 |
-| Reveal Corrupt File | `app.revealCorruptFile` | Mostra o arquivo corrompido no Finder | — | v1 |
+| Ação | ActionID | Atalho | Efeito | Desabilitado (tooltip) | Versão | Teste (XCUITest) |
+|---|---|---|---|---|---|---|
+| About Agent Box | `app.about` | — | Overlay §16.14 | — | v1 | `testAction_app_about` |
+| Settings… | `app.settings` | ⌘, | Abre Settings na última seção | — | v1 | `testAction_app_settings` |
+| Set Up Agent Box… / Run Diagnostics | `app.setup` | — | Abre o onboarding (§15); `Run Diagnostics` abre Settings › Diagnostics e roda as checagens | — | v1 | `testAction_app_setup` |
+| Check for Problems | `app.checkProblems` | — | Abre Settings › Diagnostics e roda `Run All Checks Again` | — | v1 | `testAction_app_checkProblems` |
+| Hide App Name | `app.hideAppName` | — | Esconde o nome na faixa da titlebar; volta em Settings › Appearance | — | v1 | `testAction_app_hideAppName` |
+| Quit Agent Box | `app.quit` | ⌘Q | §16.10 | — | v1 | `testAction_app_quit` |
+| Quit Agent Box Completely | `app.quitCompletely` | — | Encerra o app e o ícone; agentes seguem no background service | — | v1 | `testAction_app_quitCompletely` |
+| Toggle Sidebar / Right Panel | `view.toggleSidebar` / `view.toggleRightPanel` | ⌘B / ⌘L (Fatia 2) | Recolhe/expande (M-201 / M-108) | Right Panel com página aberta: `Close the page first.` | v1 (Toggle Sidebar: Fatia 1; Toggle Right Panel: Fatia 2, o painel direito é oculto na Fatia 1 e o controle não existe) | `testAction_view_toggleSidebar` · `testAction_view_toggleRightPanel` |
+| Show Status Bar | `view.toggleStatusBar` | — | Mostra/esconde a status bar (também `Hide Status Bar` no menu dela) | — | v1 | `testAction_view_toggleStatusBar` |
+| Back / Forward | `nav.back` / `nav.forward` | ⌥⌘← / ⌥⌘→ | Navega no histórico (§0) | `No earlier page` / `No later page` | v1 | `testAction_nav_back` · `testAction_nav_forward` |
+| Bigger / Smaller / Actual Size | `terminal.fontBigger` / `.fontSmaller` / `.fontReset` | ⌘= / ⌘- / ⌘0 | Fonte do pane focado | Sem terminal focado: `Interface zoom isn't available yet.` | v1 | `testAction_terminal_fontBigger` · `testAction_terminal_fontSmaller` · `testAction_terminal_fontReset` |
+| Hide from Sidebar | `sidebar.hideNavItem` | — | Esconde o item de nav | — | v1 | `testAction_sidebar_hideNavItem` |
+| Agent Box Help | `help.open` | — | Abre no navegador a página de ajuda empacotada (`Help/index.html`: atalhos, modelo de segurança, links) | — | v1 | `testAction_help_open` |
+| Keyboard Shortcuts | `help.shortcuts` | ⌘/ | Settings › Shortcuts | — | v1 | `testAction_help_shortcuts` |
+| Reveal Logs in Finder | `help.revealLogs` | — | Mostra a pasta de logs | — | v1 | `testAction_help_revealLogs` |
+| Export Diagnostics… | `help.exportDiagnostics` | — | Lista de arquivos e salva o .zip redigido (AR-603) | — | v1 | `testAction_help_exportDiagnostics` |
+| Open Diagnostics | `app.openDiagnostics` | — | Settings › Diagnostics, na linha que motivou (deep link) | — | v1 | `testAction_app_openDiagnostics` |
+| Restart Background Service | `app.restartBackgroundService` | — | Confirma `Running terminals will reconnect.`; reinicia o serviço e reanexa | — | v1 | `testAction_app_restartBackgroundService` |
+| Try Again / Copy Details (região com erro) | `app.errorTryAgain` / `app.copyDetails` | — | Remonta a região / copia erro, região e versão | — | v1 | `testAction_app_errorTryAgain` · `testAction_app_copyDetails` |
+| Reveal Corrupt File | `app.revealCorruptFile` | — | Mostra o arquivo corrompido no Finder | — | v1 | `testAction_app_revealCorruptFile` |
 
 ### 24.2 Sidebar, projetos e sessões
 
-| Ação | ActionID | Efeito | Desabilitado (tooltip) | Versão |
-|---|---|---|---|---|
-| New Session… | `session.new` | Composer (§6) com o projeto atual | — | v1 |
-| New Clean Session | `session.newClean` | Cria `~/AgentBox/sessions/<nome>` e abre o agente padrão (§2.10) | Agente padrão não instalado: `Install <agent> or choose another default agent.` | v1 |
-| New Clean Session in Folder… | `session.newCleanInFolder` | `NSOpenPanel` → sessão na pasta escolhida + agente padrão | idem | v1 |
-| Add Project… | `project.add` | Overlay §16.9 | — | v1 |
-| Sort and Filter / Reset | `sidebar.sortFilter` / `sidebar.resetFilters` | Popover §2.4 / volta ao padrão | — | v1 |
-| Clear Search / Clear Filters | `sidebar.clearSearch` / `sidebar.clearFilters` | Limpa a busca / `Show` | — | v1 |
-| Show <n> more | `project.showMore` | Mostra todas as sessões do projeto | — | v1 |
-| New Session in <project>… / from Branch or PR… | `project.newSession` / `project.newSessionFromRef` | Composer com o projeto; o segundo com foco em `Create from` | — | v1 |
-| Open in Editor | `item.openInEditor` | Abre a pasta (sessão ou projeto) no editor de Settings › General | Nenhum editor configurado: `Choose an editor in Settings › General.` | v1 |
-| Reveal in Finder / Copy Path | `item.revealInFinder` / `item.copyPath` | Finder / copia o caminho real | Pasta sumiu: `Folder not found` | v1 |
-| Open on GitHub | `item.openOnGitHub` | Abre o repo (projeto) ou a branch (sessão) no navegador | Sem remote GitHub: não aparece | v1 |
-| Copy Branch Name | `session.copyBranch` | Copia a branch | Sessão sem Git: não aparece | v1 |
-| Collapse All Sessions | `project.collapseAll` | Recolhe as linhas de agente de todos os cards do projeto | — | v1 |
-| Hide Project | `project.hide` | Some da sidebar; volta por `Show › Hidden Projects` | — | v1 |
-| Remove Project… | `project.remove` | §16.6 | — | v1 |
-| Refresh Git (⌥) | `item.refreshGit` | Refaz status, branch e PR do item | Sem Git: não aparece | v1 |
-| Copy Project/Session ID (⌥) | `item.copyId` | Copia o ID | — | v1 |
-| Show Launch Details (⌥) | `terminal.showLaunchDetails` | Popover com argv, cwd, env (nomes, sem valores) e perfil do último lançamento | Sem lançamento: `Not started yet` | v1 |
-| Rename… | `session.rename` | Inline (§2.11) | — | v1 |
-| Rename Branch… (⌥) | `session.renameBranch` | §16.13 | Branch com upstream: `This branch is already pushed.` | v1 |
-| Edit Note… | `session.editNote` | Inline na linha 3 | — | v1 (Fatia 2) |
-| Mark as Read / Unread | `session.markRead` / `session.markUnread` | Alterna o não lido | — | v1 |
-| Mute / Unmute Notifications | `session.mute` / `session.unmute` | Para de gerar notificações do sistema e badge para a sessão (a Inbox continua recebendo); ícone `BellOff` 10 após o nome | — | v1 (Fatia 2) |
-| Pin / Unpin Session | `session.pin` | Fixa no topo do projeto | — | v1.1 |
-| Resume Agents… | `session.resumeAgents` | §16.7 | Sem terminais interrompidos: não aparece | v1 |
-| Move to Project… / Convert to Project… | `session.moveToProject` / `session.convertToProject` | §16.8 | Só sessão limpa (não aparece nas outras) | v1 |
-| Move Folder into Project… | `session.moveFolderIntoProject` | §16.8 | Terminais rodando: `Stop all terminals in this session first` | v1.1 |
-| Archive Session… | `session.archive` | §16.2 | — | v1 |
-| Delete Session… | `session.delete` | §16.5 | — | v1 |
-| Locate Folder… | `session.locateFolder` | `NSOpenPanel`; nova pasta passa a ser a da sessão (worktree: valida que é a mesma worktree do repositório) | — | v1 |
-| Reveal Current Session | `sidebar.revealCurrent` | Rola até o card ativo (M-211) | Sem sessão: `No session selected` | v1 |
-| Next Needing Attention | `session.nextNeedingAttention` | Vai ao próximo AttentionItem por prioridade e espera | Nada pendente: `Nothing needs attention` | v1 (Fatia 2) |
-| Previous / Next Session, Select Session 1–9, Focus Session List | `session.previous` / `.next` / `.select<n>` / `sidebar.focus` | Navegação | — | v1 |
-| Ask Parent to Relaunch | `child.askParentToRelaunch` | Popover §16.12 e cola no prompt do pai sem Enter | Pai não está vivo: `The parent agent isn't running.` | v1 |
-| Show Transcript / Show Computer / Copy Agent ID | `child.showTranscript` / `child.showComputer` / `child.copyId` | Painel Conversations no transcript / abre o viewer / copia | Sem computador: `Show Computer` não aparece | v1 |
-| Message… | `child.message` | Popover de mensagem ao filho | — | v1.1 |
-| Stop Subagent | `child.stop` | Para o filho pelo adapter | Adapter sem a capacidade: não aparece | v1 |
+| Ação | ActionID | Atalho | Efeito | Desabilitado (tooltip) | Versão | Teste (XCUITest) |
+|---|---|---|---|---|---|---|
+| New Session… | `session.new` | ⌘N | Composer (§6) com o projeto atual | — | v1 | `testAction_session_new` |
+| New Clean Session | `session.newClean` | ⇧⌘N | Cria `~/AgentBox/sessions/<nome>` e abre o agente padrão (§2.10); também o `+` da seção Sessions | Agente padrão não instalado: `Install <agent> or choose another default agent.` | v1 | `testAction_session_newClean` |
+| New Clean Session in Folder… | `session.newCleanInFolder` | ⌥⇧⌘N | `NSOpenPanel` → sessão na pasta escolhida + agente padrão | idem | v1 | `testAction_session_newCleanInFolder` |
+| Add Project… | `project.add` | — | Overlay §16.9 | — | v1 | `testAction_project_add` |
+| Sort and Filter / Reset | `sidebar.sortFilter` / `sidebar.resetFilters` | — | Popover §2.4 / volta ao padrão | — | v1 | `testAction_sidebar_sortFilter` · `testAction_sidebar_resetFilters` |
+| Clear Search / Clear Filters | `sidebar.clearSearch` / `sidebar.clearFilters` | — | Limpa a busca / `Show` | — | v1 (a busca é da Fatia 2; `Show` na Fatia 1) | `testAction_sidebar_clearSearch` · `testAction_sidebar_clearFilters` |
+| Show <n> more | `project.showMore` | — | Mostra todas as sessões do projeto | — | v1 | `testAction_project_showMore` |
+| New Session in <project>… / from Branch or PR… | `project.newSession` / `project.newSessionFromRef` | — | Composer com o projeto; o segundo com foco em `Create from` | — | v1 | `testAction_project_newSession` · `testAction_project_newSessionFromRef` |
+| Open in Editor | `item.openInEditor` | ⇧⌘O | Abre a pasta (sessão ou projeto) no editor de Settings › General | Nenhum editor configurado: `Choose an editor in Settings › General.` | v1 | `testAction_item_openInEditor` |
+| Reveal in Finder / Copy Path | `item.revealInFinder` / `item.copyPath` | — | Finder / copia o caminho real | Pasta sumiu: `Folder not found` | v1 | `testAction_item_revealInFinder` · `testAction_item_copyPath` |
+| Open on GitHub | `item.openOnGitHub` | — | Abre o repo (projeto) ou a branch (sessão) no navegador | Sem remote GitHub: não aparece | v1 | `testAction_item_openOnGitHub` |
+| Copy Branch Name | `session.copyBranch` | — | Copia a branch | Sessão sem Git: não aparece | v1 | `testAction_session_copyBranch` |
+| Collapse All Sessions | `project.collapseAll` | — | Recolhe as linhas de agente de todos os cards do projeto | — | v1 | `testAction_project_collapseAll` |
+| Hide Project | `project.hide` | — | Some da sidebar; volta por `Show › Hidden Projects` | — | v1 | `testAction_project_hide` |
+| Remove Project… | `project.remove` | — | §16.6 | — | v1 | `testAction_project_remove` |
+| Refresh Git (⌥) | `item.refreshGit` | ⌥ | Refaz status, branch e PR do item | Sem Git: não aparece | v1 | `testAction_item_refreshGit` |
+| Copy Project/Session ID (⌥) | `item.copyId` | ⌥ | Copia o ID | — | v1 | `testAction_item_copyId` |
+| Show Launch Details (⌥) | `terminal.showLaunchDetails` | ⌥ | Popover com argv, cwd, env (nomes, sem valores) e perfil do último lançamento | Sem lançamento: `Not started yet` | v1 | `testAction_terminal_showLaunchDetails` |
+| Rename… | `session.rename` | ⌥⌘R | Inline (§2.11) | — | v1 | `testAction_session_rename` |
+| Rename Branch… (⌥) | `session.renameBranch` | ⌥ | §16.13 | Branch com upstream: `This branch is already pushed.` | v1 | `testAction_session_renameBranch` |
+| Edit Note… | `session.editNote` | — | Inline na linha 3 | — | v1 (Fatia 2) | `testAction_session_editNote` |
+| Mark as Read / Unread | `session.markRead` / `session.markUnread` | — | Alterna o não lido | — | v1 | `testAction_session_markRead` · `testAction_session_markUnread` |
+| Mute / Unmute Notifications | `session.mute` / `session.unmute` | — | Para de gerar notificações do sistema e badge para a sessão (a Inbox continua recebendo); ícone `BellOff` 10 após o nome | — | v1 (Fatia 2) | `testAction_session_mute` · `testAction_session_unmute` |
+| Pin / Unpin Session | `session.pin` | — | Fixa no topo do projeto | — | v1.1 | `testAction_session_pin` |
+| Resume Agents… | `session.resumeAgents` | — | §16.7 | Sem terminais interrompidos: não aparece | v1 | `testAction_session_resumeAgents` |
+| Move to Project… / Convert to Project… | `session.moveToProject` / `session.convertToProject` | — | §16.8 | Só sessão limpa (não aparece nas outras) | v1 | `testAction_session_moveToProject` · `testAction_session_convertToProject` |
+| Move Folder into Project… | `session.moveFolderIntoProject` | — | §16.8 | Terminais rodando: `Stop all terminals in this session first` | v1.1 | `testAction_session_moveFolderIntoProject` |
+| Archive Session… | `session.archive` | — | §16.2 | — | v1 | `testAction_session_archive` |
+| Delete Session… | `session.delete` | ⇧⌘⌫ | §16.5 | — | v1 | `testAction_session_delete` |
+| Locate Folder… | `session.locateFolder` | — | `NSOpenPanel`; nova pasta passa a ser a da sessão (worktree: valida que é a mesma worktree do repositório) | — | v1 | `testAction_session_locateFolder` |
+| Reveal Current Session | `sidebar.revealCurrent` | — | Rola até o card ativo (M-211) | Sem sessão: `No session selected` | v1 | `testAction_sidebar_revealCurrent` |
+| Next Needing Attention | `session.nextNeedingAttention` | ⇧⌘A | Vai ao próximo AttentionItem por prioridade e espera | Nada pendente: `Nothing needs attention` | v1 (Fatia 2) | `testAction_session_nextNeedingAttention` |
+| Previous / Next Session, Select Session 1–9, Focus Session List | `session.previous` / `.next` / `.select<n>` / `sidebar.focus` | ⇧⌘↑ / ⇧⌘↓ / ⌘1…⌘9 / ⇧⌘0 | Navegação | — | v1 | `testAction_session_previous` · `testAction_session_next` · `testAction_session_selectN` · `testAction_sidebar_focus` |
+| Ask Parent to Relaunch | `child.askParentToRelaunch` | — | Popover §16.12 e cola no prompt do pai sem Enter | Pai não está vivo: `The parent agent isn't running.` | v1 | `testAction_child_askParentToRelaunch` |
+| Show Transcript / Show Computer / Copy Agent ID | `child.showTranscript` / `child.showComputer` / `child.copyId` | — | Painel Conversations no transcript / abre o viewer / copia | Sem computador: `Show Computer` não aparece | v1 | `testAction_child_showTranscript` · `testAction_child_showComputer` · `testAction_child_copyId` |
+| Message… | `child.message` | — | Popover de mensagem ao filho | — | v1.1 | `testAction_child_message` |
+| Stop Subagent | `child.stop` | — | Para o filho pelo adapter | Adapter sem a capacidade: não aparece | v1 | `testAction_child_stop` |
+| Search (campo da sidebar) | `sidebar.search` | ⌘F (sidebar focada) | Foca o campo (§2.2); digitar filtra; Esc limpa e sai. A busca **não** está na Fatia 1 (01 §4.1, 09 T1-13) | — | v1 (Fatia 2) | `testAction_sidebar_search` |
+| Expand / Collapse Project (clique na linha) | `sidebar.project.toggle` | → / ← | Expande ou recolhe as sessões do projeto (M-806); lembra o estado | — | v1 | `testAction_sidebar_project_toggle` |
+| Cancel (linha pendente, PhaseList e ignição) | `session.cancelLaunch` | — | Aborta a criação (fetch, worktree ou início do agente), remove a linha pendente e não deixa pasta nem branch criadas por esta tentativa (§2.9, §4.6, §6.4) | Já concluído: `Session already created` | v1 | `testAction_session_cancelLaunch` |
+| Try Again (criação da sessão) | `session.retryLaunch` | — | Repete a criação com os mesmos dados do composer (§6.4) | — | v1 | `testAction_session_retryLaunch` |
+| Use Existing Branch | `session.useExistingBranch` | — | Reaproveita a branch que já existe em vez de criar (§6.4) | Sem conflito de branch: não aparece | v1 | `testAction_session_useExistingBranch` |
+| Create Without Fetching | `session.createWithoutFetch` | — | Cria a worktree a partir da base local sem `git fetch` (§6.4) | Fetch não falhou: não aparece | v1 | `testAction_session_createWithoutFetch` |
+| Discard (sessão que falhou ao criar) | `session.discardPending` | — | Remove a linha pendente com erro e não cria a sessão (§6.4) | — | v1 | `testAction_session_discardPending` |
 
 ### 24.3 Tabs, panes e terminal
 
-| Ação | ActionID | Efeito | Desabilitado (tooltip) | Versão |
-|---|---|---|---|---|
-| New Tab… (Quick Launch) | `tab.quickLaunch` | §7 | Sem sessão: `Select a session first.` | v1 |
-| New Agent Tab | `tab.newAgent` | Tab com o agente e perfil padrão | idem | v1 |
-| New Terminal | `tab.newTerminal` | Tab com shell na pasta da sessão | idem | v1 |
-| New <Agent> Tab (Quick Launch, New Tab ▸) | `tab.newWithAgent` | Tab com o agente escolhido | Não instalado: `Not installed` | v1 |
-| Start <agent> with "<text>" | `tab.newWithPrompt` | Tab com o texto como prompt inicial (argumento) | — | v1 |
-| Close Pane / Close Tab | `pane.close` / `tab.close` | Fecha (§16.1 se rodando) | — | v1 |
-| Close Other Tabs / Tabs to the Right | `tab.closeOthers` / `tab.closeRight` | Fecha as outras / à direita (confirmação agrupada) | Sem outras: `No other tabs` | v1 |
-| Reopen Closed Tab | `tab.reopen` | Relança a última fechada (com `--resume` se houver ID) | Nada fechado: `No closed tabs` | v1 |
-| Close Window | `window.close` | Fecha a janela (o app continua) | — | v1 |
-| Next / Previous / Recent Tab, Select Tab 1–9 | `tab.next` / `.previous` / `.recent` / `.select<n>` | Troca a tab ativa | — | v1 |
-| Rename… / Reset Title | `tab.rename` / `tab.resetTitle` | Inline / volta ao título dinâmico (OSC ou nome do agente) | Reset sem rename: `Title isn't customized` | v1 |
-| Split Right / Down | `pane.splitRight` / `pane.splitDown` | Novo pane com o mesmo agente e perfil (⌥: shell) | Sem espaço: toast §4.3 | v1 |
-| Next / Previous Pane | `pane.next` / `pane.previous` | Move o foco | Um só pane: `Only one pane` | v1 |
-| Expand / Collapse Pane | `pane.toggleExpand` | §4.3 | Um só pane: `Only one pane` | v1 |
-| Equalize Pane Sizes | `pane.equalize` | Divide o espaço igualmente na árvore da tab | Um só pane: `Only one pane` | v1 |
-| Close Other Panes | `pane.closeOthers` | Fecha os outros panes da tab (confirmação agrupada) | Um só pane: `Only one pane` | v1 |
-| Show Pane | `pane.show` | Seleciona a tab e foca o pane (rim flash) | — | v1 |
-| Restart / Restart with ▸ | `terminal.restart` / `terminal.restartWithProfile` | Relança no mesmo cwd (com o perfil escolhido; sem resume) | Processo vivo: `Restart` pede §16.1 antes | v1 |
-| Resume Conversation | `terminal.resume` | Relança com `--resume <id>` e flags regeneradas | Sem ID: `No conversation ID for this terminal` | v1 |
-| Start Fresh | `terminal.startFresh` | Relança o agente sem resume | — | v1 |
-| Copy Resume Command | `terminal.copyResumeCommand` | Copia o comando de resume | Sem ID: idem | v1 |
-| Copy Terminal / Conversation / Pane ID (⌥) | `terminal.copyId` / `.copyConversationId` / `pane.copyId` | Copia | Sem conversa: `No conversation ID` | v1 |
-| Show Hook Log (⌥) | `terminal.showHookLog` | Popover com os últimos 50 eventos de hook do terminal (hora, evento, estado resultante) | Sem hooks: `No hook events yet` | v1 (Fatia 2) |
-| Send Interrupt (⌃C) | `terminal.sendInterrupt` | Envia SIGINT ao grupo em primeiro plano | Processo saiu: `Process isn't running` | v1 |
-| Force Quit Process… / Force Quit | `terminal.forceQuit` | Confirma `Force quit "<process>"?` e envia SIGKILL ao grupo | idem | v1 |
-| Find… / Next / Previous / Close | `find.open` / `.next` / `.previous` / `.close` | §4.4 (⌘F roteado, §21) | — | v1 |
-| Clear Terminal | `terminal.clear` | Limpa a tela e o scrollback visível (`ED 3`) | — | v1 |
-| Copy / Paste / Select All | `edit.copy` / `.paste` / `.selectAll` | Clipboard do terminal (paste por bracketed paste) | Copy sem seleção: `Nothing selected` | v1 |
-| Open Link / Copy Link / Open File | `terminal.openLink` / `.copyLink` / `.openFile` | Navegador / copia / editor de Settings | — | v1 |
-| Open Computer | `terminal.openComputer` | Abre o viewer do computador do agente | Sem computador: não aparece | v1 (Fatia 3) |
-| Open in another terminal | `terminal.openElsewhere` | Abre o app de terminal de Settings › General com o comando de resume na pasta | — | v1 |
-| Insert Skill or Agent… | `prompt.insertSkillOrAgent` | Palette em modo `/` (§8) | Sem pane de agente: `Focus an agent terminal first.` | v1 (Fatia 4) |
-| Insert in Prompt | `prompt.insertItem` | Cola a invocação no prompt do pane focado (sem Enter) | idem | v1 (Fatia 4) |
-| Quick Commands | `tab.quickCommands` | Split button com comandos salvos | — | v1.1 |
+| Ação | ActionID | Atalho | Efeito | Desabilitado (tooltip) | Versão | Teste (XCUITest) |
+|---|---|---|---|---|---|---|
+| New Tab… (Quick Launch) | `tab.quickLaunch` | ⌥⌘N | §7 | Sem sessão: `Select a session first.` | v1 | `testAction_tab_quickLaunch` |
+| New Agent Tab | `tab.newAgent` | ⌥⌘T | Tab com o agente e perfil padrão | idem | v1 | `testAction_tab_newAgent` |
+| New Terminal | `tab.newTerminal` | ⌘T | Tab com shell na pasta da sessão | idem | v1 | `testAction_tab_newTerminal` |
+| New <Agent> Tab (Quick Launch, New Tab ▸) | `tab.newWithAgent` | — | Tab com o agente escolhido | Não instalado: `Not installed` | v1 | `testAction_tab_newWithAgent` |
+| Start <agent> with "<text>" | `tab.newWithPrompt` | — | Tab com o texto como prompt inicial (argumento) | — | v1 | `testAction_tab_newWithPrompt` |
+| Close Pane / Close Tab | `pane.close` / `tab.close` | ⌘W / ⌘W (1 pane) | Fecha (§16.1 se rodando) | — | v1 | `testAction_pane_close` · `testAction_tab_close` |
+| Close Other Tabs / Tabs to the Right | `tab.closeOthers` / `tab.closeRight` | — | Fecha as outras / à direita (confirmação agrupada) | Sem outras: `No other tabs` | v1 | `testAction_tab_closeOthers` · `testAction_tab_closeRight` |
+| Reopen Closed Tab | `tab.reopen` | ⇧⌘T | Relança a última fechada (com `--resume` se houver ID) | Nada fechado: `No closed tabs` | v1 | `testAction_tab_reopen` |
+| Close Window | `window.close` | ⇧⌘W | Fecha a janela (o app continua) | — | v1 | `testAction_window_close` |
+| Next / Previous / Recent Tab, Select Tab 1–9 | `tab.next` / `.previous` / `.recent` / `.select<n>` | ⇧⌘] / ⇧⌘[ / ⌃⇥ / ⌃1…⌃9 | Troca a tab ativa | — | v1 | `testAction_tab_next` · `testAction_tab_previous` · `testAction_tab_recent` · `testAction_tab_selectN` |
+| Rename… / Reset Title | `tab.rename` / `tab.resetTitle` | ⌘R | Inline / volta ao título dinâmico (OSC ou nome do agente) | Reset sem rename: `Title isn't customized` | v1 | `testAction_tab_rename` · `testAction_tab_resetTitle` |
+| Split Right / Down | `pane.splitRight` / `pane.splitDown` | ⌘D / ⇧⌘D | Novo pane com o mesmo agente e perfil (⌥: shell) | Sem espaço: toast §4.3 | v1 | `testAction_pane_splitRight` · `testAction_pane_splitDown` |
+| Next / Previous Pane | `pane.next` / `pane.previous` | ⌘] / ⌘[ | Move o foco | Um só pane: `Only one pane` | v1 | `testAction_pane_next` · `testAction_pane_previous` |
+| Expand / Collapse Pane | `pane.toggleExpand` | ⇧⌘↵ | §4.3; também a pílula `N hidden panes` (`pane.<id>.zoomPill`) | Um só pane: `Only one pane` | v1 | `testAction_pane_toggleExpand` |
+| Equalize Pane Sizes | `pane.equalize` | — | Divide o espaço igualmente na árvore da tab; também duplo clique no divisor (§4.3) | Um só pane: `Only one pane` | v1 | `testAction_pane_equalize` |
+| Close Other Panes | `pane.closeOthers` | — | Fecha os outros panes da tab (confirmação agrupada) | Um só pane: `Only one pane` | v1 | `testAction_pane_closeOthers` |
+| Show Pane | `pane.show` | — | Seleciona a tab e foca o pane (rim flash) | — | v1 | `testAction_pane_show` |
+| Restart / Restart with ▸ | `terminal.restart` / `terminal.restartWithProfile` | — | Relança no mesmo cwd (com o perfil escolhido; sem resume) | Processo vivo: `Restart` pede §16.1 antes | v1 | `testAction_terminal_restart` · `testAction_terminal_restartWithProfile` |
+| Resume Conversation | `terminal.resume` | — | Relança com `--resume <id>` e flags regeneradas | Sem ID: `No conversation ID for this terminal` | v1 | `testAction_terminal_resume` |
+| Start Fresh | `terminal.startFresh` | — | Relança o agente sem resume | — | v1 | `testAction_terminal_startFresh` |
+| Copy Resume Command | `terminal.copyResumeCommand` | — | Copia o comando de resume | Sem ID: idem | v1 | `testAction_terminal_copyResumeCommand` |
+| Copy Terminal / Conversation / Pane ID (⌥) | `terminal.copyId` / `.copyConversationId` / `pane.copyId` | ⌥ | Copia | Sem conversa: `No conversation ID` | v1 | `testAction_terminal_copyId` · `testAction_terminal_copyConversationId` · `testAction_pane_copyId` |
+| Show Hook Log (⌥) | `terminal.showHookLog` | ⌥ | Popover com os últimos 50 eventos de hook do terminal (hora, evento, estado resultante) | Sem hooks: `No hook events yet` | v1 (Fatia 2) | `testAction_terminal_showHookLog` |
+| Send Interrupt (⌃C) | `terminal.sendInterrupt` | ⌃C | Envia SIGINT ao grupo em primeiro plano | Processo saiu: `Process isn't running` | v1 | `testAction_terminal_sendInterrupt` |
+| Force Quit Process… / Force Quit | `terminal.forceQuit` | — | Confirma `Force quit "<process>"?` e envia SIGKILL ao grupo | idem | v1 | `testAction_terminal_forceQuit` |
+| Find… / Next / Previous / Close | `find.open` / `.next` / `.previous` / `.close` | ⌘F / ⌘G / ↵ / ⇧⌘G / ⇧↵ / Esc | §4.4 (⌘F roteado, §21) | — | v1 | `testAction_find_open` · `testAction_find_next` · `testAction_find_previous` · `testAction_find_close` |
+| Clear Terminal | `terminal.clear` | ⌘K | Limpa a tela e o scrollback visível (`ED 3`) | — | v1 | `testAction_terminal_clear` |
+| Copy / Paste / Select All | `edit.copy` / `.paste` / `.selectAll` | ⌘C / ⌘V / ⌘A | Clipboard do terminal (paste por bracketed paste) | Copy sem seleção: `Nothing selected` | v1 | `testAction_edit_copy` · `testAction_edit_paste` · `testAction_edit_selectAll` |
+| Open Link / Copy Link / Open File | `terminal.openLink` / `.copyLink` / `.openFile` | ⌘-clique | Navegador / copia / editor de Settings | — | v1 | `testAction_terminal_openLink` · `testAction_terminal_copyLink` · `testAction_terminal_openFile` |
+| Open Computer | `terminal.openComputer` | — | Abre o viewer do computador do agente | Sem computador: não aparece | v1 (Fatia 3) | `testAction_terminal_openComputer` |
+| Open in another terminal | `terminal.openElsewhere` | — | Abre o app de terminal de Settings › General com o comando de resume na pasta | — | v1 | `testAction_terminal_openElsewhere` |
+| Insert Skill or Agent… | `prompt.insertSkillOrAgent` | — | Palette em modo `/` (§8) | Sem pane de agente: `Focus an agent terminal first.` | v1 (Fatia 4) | `testAction_prompt_insertSkillOrAgent` |
+| Insert in Prompt | `prompt.insertItem` | — | Cola a invocação no prompt do pane focado (sem Enter) | idem | v1 (Fatia 4) | `testAction_prompt_insertItem` |
+| Quick Commands | `tab.quickCommands` | — | Split button com comandos salvos | — | v1.1 | `testAction_tab_quickCommands` |
+| Pane Actions (menu ⋯ da tab row) | `tabs.paneActions` | — | Menu com `Split Right`, `Split Down`, `Equalize Pane Sizes`, `Expand Pane`, `Close Other Panes` (§3, cada item é a ação do próprio ActionID) | Só aparece com 2+ panes | v1 | `testAction_tabs_paneActions` |
+| Reorder Tab (arrastar na tab row) | `tab.reorder` | — | Reordena a tab por arrasto (M-303, §3.4); a ordem persiste | — | v1 | `testAction_tab_reorder` |
+| Resize Divider (arrastar o divisor) | `pane.resizeDivider` | — | Muda as proporções do split; no máximo 1 resize de PTY por quadro e o final ao soltar (§4.3, M-202) | Mínimo 240 × 120 pt por pane | v1 | `testAction_pane_resizeDivider` |
+| Case Sensitive (busca no terminal) | `find.caseSensitive` | — | Alterna a busca com distinção de maiúsculas e refaz a contagem (§4.4) | — | v1 | `testAction_find_caseSensitive` |
+| Regex (busca no terminal) | `find.regex` | — | Alterna a busca por expressão regular; regex inválida mostra `Invalid pattern` no contador (§4.4) | — | v1 | `testAction_find_regex` |
+| Search field e contador (busca no terminal) | `find.query` | — | Digitar busca com destaque no buffer; contador `3/17` ou `No results` (`find.field`, `find.count`, §4.4) | — | v1 | `testAction_find_query` |
+| Try Again (agente não iniciou) | `terminal.retryStart` | — | Relança o agente no mesmo pane (estado `Couldn't start`, §4.6) | — | v1 | `testAction_terminal_retryStart` |
+| Open Agent Settings | `agent.openSettings` | — | Abre Settings › Agents (do estado `Couldn't start`, do Quick Launch `Agent Settings…` e do rodapé `Manage Agents…` do composer) | — | v1 | `testAction_agent_openSettings` |
+| Copy Details (agente não iniciou) | `terminal.copyStartError` | — | Copia o erro, o argv sem segredos e a versão (§4.6) | — | v1 | `testAction_terminal_copyStartError` |
+| Cancel (fechando, `The process didn't exit.`) | `terminal.cancelClose` | — | Mantém o terminal aberto e dispensa o banner de fechamento (§4.6) | — | v1 | `testAction_terminal_cancelClose` |
+| Resume a Conversation… (Quick Launch) | `tab.quickLaunchResume` | — | Abre o painel direito em Conversations, escopo Session (§7, §10.5) | Fatia 1: não aparece (painel direito oculto) | v1 (Fatia 2) | `testAction_tab_quickLaunchResume` |
 
 ### 24.4 Painéis, páginas e notificações
 
-| Ação | ActionID | Efeito | Desabilitado (tooltip) | Versão |
-|---|---|---|---|---|
-| Source Control / Checks / Computers Panel / Conversations / Context | `panel.sourceControl` / `.checks` / `.computers` / `.conversations` / `.context` | Abre o painel na aba | — | v1 (Checks e Source Control: Fatia 2; Computers: Fatia 3) |
-| Refresh (Source Control, Checks) | `panel.refresh` | Refaz a consulta Git/`gh` | Rodando: `Refreshing…` | v1 |
-| Create Pull Request… | `git.createPR` | Overlay pequeno de §10.2 e `gh pr create` | Sem push: `Push the branch first.` | v1 (Fatia 2) |
-| Open on GitHub / Copy URL (PR) | `git.openPR` / `git.copyPRURL` | Navegador / copia | — | v1 |
-| Log In (gh, Claude, Codex) | `account.logIn` | Tab com o comando de login do CLI | — | v1 |
-| Send Failures to Claude Code | `checks.sendFailures` | Popover §16.12 | — | v1.1 |
-| Resume in New Tab / in Split, Show Transcript | `conversation.resume` / `.resumeSplit` / `.showTranscript` | §10.5 | Ativa noutro terminal: aviso `Open in another terminal` antes | v1 |
-| Restart Agents with Resume | `context.restartWithResume` | §10.6 | Sem agentes com ID: `No agents can resume` | v1 |
-| Toggle item in this session | `context.toggleItem` | Ativação aditiva por sessão | Global: não tem switch | v1 (Fatia 4) |
-| Open Library / Library | `page.library` | Página §13 | — | v1 (Fatia 4) |
-| Computers (página) | `page.computers` | Página §12.3 | — | v1 (Fatia 3) |
-| Inbox | `page.inbox` | Feed §9.1 | — | v1 (Fatia 2) |
-| Close page | `page.close` | Volta à sessão | — | v1 |
-| Mark as Read / Mark All as Read | `inbox.markRead` / `inbox.markAllRead` | Marca lido | Nada não lido: `Nothing unread` | v1 |
-| Open (notificação) | `notification.open` | Ativa o app e seleciona sessão/pane/viewer com rim flash | — | v1 |
-| Send Test Notification | `settings.testNotification` | Envia uma notificação de exemplo | Permissão negada: `Notifications are off for Agent Box.` | v1 |
-| Pause / Resume Notifications for 1 Hour | `notifications.pause` | Silencia notificações do sistema por 1 h | — | v1.1 |
-| Library: New Session with Agent / Profile | `library.newSessionWith` | Composer com agente (`--agent`) ou perfil | — | v1 (Fatia 4) |
-| Library: Enable / Disable in This Session | `library.toggleInSession` | Ativação aditiva, vale no próximo lançamento | Sem sessão: `Select a session first.` | v1 (Fatia 4) |
-| Library: Open in Editor / Reveal in Finder | `library.openInEditor` / `library.reveal` | Abre o arquivo | — | v1 |
-| Library: New Profile / Duplicate / Delete… | `profile.new` / `.duplicate` / `.delete` | Cria / copia / apaga perfil | Último perfil: `An agent needs at least one profile.` | v1 |
-| Library: New Agent… / Import Skill Folder… / Edit | `library.newAgent` / `.importSkill` / `.edit` | Criar e editar com backup | — | v1.1 |
-| Block in Agent Box / Disable Globally… / Keep / Restore Skill | `conflict.block` / `.disableGlobal` / `.keep` / `.restore` | Deny por lançamento / move a skill global para backup com confirmação / nada / desfaz | — | v1 |
+| Ação | ActionID | Atalho | Efeito | Desabilitado (tooltip) | Versão | Teste (XCUITest) |
+|---|---|---|---|---|---|---|
+| Source Control / Checks / Computers Panel / Conversations / Context | `panel.sourceControl` / `.checks` / `.computers` / `.conversations` / `.context` | ⇧⌘G / ⇧⌘C / ⇧⌘H | Abre o painel na aba | — | v1 (Checks e Source Control: Fatia 2; Computers: Fatia 3) | `testAction_panel_sourceControl` · `testAction_panel_checks` · `testAction_panel_computers` · `testAction_panel_conversations` · `testAction_panel_context` |
+| Refresh (Source Control, Checks) | `panel.refresh` | — | Refaz a consulta Git/`gh` | Rodando: `Refreshing…` | v1 | `testAction_panel_refresh` |
+| Create Pull Request… | `git.createPR` | — | Overlay pequeno de §10.2 e `gh pr create` | Sem push: `Push the branch first.` | v1 (Fatia 2) | `testAction_git_createPR` |
+| Open on GitHub / Copy URL (PR) | `git.openPR` / `git.copyPRURL` | — | Navegador / copia | — | v1 | `testAction_git_openPR` · `testAction_git_copyPRURL` |
+| Log In (gh, Claude, Codex) | `account.logIn` | — | Tab com o comando de login do CLI | — | v1 | `testAction_account_logIn` |
+| Send Failures to Claude Code | `checks.sendFailures` | — | Popover §16.12 | — | v1.1 | `testAction_checks_sendFailures` |
+| Resume in New Tab / in Split, Show Transcript | `conversation.resume` / `.resumeSplit` / `.showTranscript` | — | §10.5 | Ativa noutro terminal: aviso `Open in another terminal` antes | v1 | `testAction_conversation_resume` · `testAction_conversation_resumeSplit` · `testAction_conversation_showTranscript` |
+| Restart Agents with Resume | `context.restartWithResume` | — | §10.6 | Sem agentes com ID: `No agents can resume` | v1 | `testAction_context_restartWithResume` |
+| Toggle item in this session | `context.toggleItem` | — | Ativação aditiva por sessão | Global: não tem switch | v1 (Fatia 4) | `testAction_context_toggleItem` |
+| Open Library / Library | `page.library` | ⇧⌘L | Página §13 | — | v1 (Fatia 4) | `testAction_page_library` |
+| Computers (página) | `page.computers` | — | Página §12.3 | — | v1 (Fatia 3) | `testAction_page_computers` |
+| Inbox | `page.inbox` | ⇧⌘I | Feed §9.1 | — | v1 (Fatia 2) | `testAction_page_inbox` |
+| Close page | `page.close` | Esc | Volta à sessão | — | v1 | `testAction_page_close` |
+| Mark as Read / Mark All as Read | `inbox.markRead` / `inbox.markAllRead` | — | Marca lido | Nada não lido: `Nothing unread` | v1 | `testAction_inbox_markRead` · `testAction_inbox_markAllRead` |
+| Open (notificação) | `notification.open` | — | Ativa o app e seleciona sessão/pane/viewer com rim flash | — | v1 | `testAction_notification_open` |
+| Send Test Notification | `settings.testNotification` | — | Envia uma notificação de exemplo | Permissão negada: `Notifications are off for Agent Box.` | v1 | `testAction_settings_testNotification` |
+| Pause / Resume Notifications for 1 Hour | `notifications.pause` | — | Silencia notificações do sistema por 1 h | — | v1.1 | `testAction_notifications_pause` |
+| Library: New Session with Agent / Profile | `library.newSessionWith` | — | Composer com agente (`--agent`) ou perfil | — | v1 (Fatia 4) | `testAction_library_newSessionWith` |
+| Library: Enable / Disable in This Session | `library.toggleInSession` | — | Ativação aditiva, vale no próximo lançamento | Sem sessão: `Select a session first.` | v1 (Fatia 4) | `testAction_library_toggleInSession` |
+| Library: Open in Editor / Reveal in Finder | `library.openInEditor` / `library.reveal` | — | Abre o arquivo | — | v1 | `testAction_library_openInEditor` · `testAction_library_reveal` |
+| Library: New Profile / Duplicate / Delete… | `profile.new` / `.duplicate` / `.delete` | — | Cria / copia / apaga perfil | Último perfil: `An agent needs at least one profile.` | v1 | `testAction_profile_new` · `testAction_profile_duplicate` · `testAction_profile_delete` |
+| Library: New Agent… / Import Skill Folder… / Edit | `library.newAgent` / `.importSkill` / `.edit` | — | Criar e editar com backup | — | v1.1 | `testAction_library_newAgent` · `testAction_library_importSkill` · `testAction_library_edit` |
+| Block in Agent Box / Disable Globally… / Keep / Restore Skill | `conflict.block` / `.disableGlobal` / `.keep` / `.restore` | — | Deny por lançamento / move a skill global para backup com confirmação / nada / desfaz | — | v1 | `testAction_conflict_block` · `testAction_conflict_disableGlobal` · `testAction_conflict_keep` · `testAction_conflict_restore` |
 
 ### 24.5 Computadores e lotes
 
-| Ação | ActionID | Efeito | Desabilitado (tooltip) | Versão |
-|---|---|---|---|---|
-| Open Viewer / Open in New Window | `computer.openViewer` / `.popOut` | Tab do viewer / janela própria | — | v1 (Fatia 3) |
-| Take Over / Hand Back / Force Take Over | `computer.takeOver` / `.handBack` / `.forceTakeOver` | Controle humano (§11) | Computador parado: `This computer is stopped.` | v1 (Fatia 3) |
-| Decline… (pedido de ajuda) | `computer.declineHelp` | Popover com motivo; o agente recebe `declined` | — | v1 (Fatia 3) |
-| Release Keyboard | `computer.releaseKeyboard` | Solta a captura | Sem captura: não age | v1 (Fatia 3) |
-| Show Network / Journal / Files / Timeline | `computer.showTab` | Detalhe no painel (§11.7) | — | v1 (Fatia 3) |
-| Change type (HTTP/Headless/Desktop) | `computer.setDisplay` | Troca o tipo (confirmação para HTTP) | — | v1 (Fatia 3) |
-| Proxy ▸ | `computer.setProxy` | Define o proxy do computador (07 CS-161) | Nenhum proxy: só `None` | v1 (Fatia 3) |
-| Paste to Computer / Copy Selection from Computer | `computer.paste` / `computer.copySelection` | §11.2 | Sem controle humano: `Take over first.` | v1 (Fatia 3) |
-| Reconnect | `computer.reconnect` | Reabre o stream | — | v1 (Fatia 3) |
-| Start Computer | `computer.start` | Sobe o computador parado | Docker parado: `Docker isn't running` | v1 (Fatia 3) |
-| Stop Computer… / Delete Computer… | `computer.stop` / `computer.delete` | §16.3 / §16.4 | — | v1 (Fatia 3) |
-| New Computer… | `computer.new` | Cria computador ligado ao terminal focado | Sem terminal de agente: `Focus an agent terminal first.` | v1 (Fatia 3) |
-| Copy Computer ID / Open Shell (⌥) | `computer.copyId` / `computer.openShell` | Copia / tab de shell no container `work` | — | v1 (Fatia 3) |
-| Cancel (fila, provisionando) | `computer.cancel` | Tira da fila ou cancela a criação | — | v1 (Fatia 3) |
-| Start Docker / Docker Settings | `docker.start` / `docker.settings` | Abre o runtime do contexto ativo / Settings › Docker | — | v1 (Fatia 3) |
-| Update / Build Locally / Download (imagem) | `image.update` / `.buildLocal` / `.download` | Baixa por digest / constrói / baixa em segundo plano | Rodando: rótulo de progresso | v1 (Fatia 3) |
-| Clean Up… | `computers.cleanUp` | Assistente de limpeza | — | v1.1 |
-| New Batch… | `batch.new` | Overlay §16.15 | Sem terminal Claude disponível: `Install Claude Code first.` | v1 (Fatia 3) |
-| Collect All / Archive Batch | `batch.collectAll` / `batch.archive` | `batch_collect` de todos / arquiva o lote e para os computadores | Filhos rodando (Archive): confirmação `Stop <n> running subagents?` | v1 (Fatia 3) |
-| Add Proxy / Test Proxy / Delete… | `proxy.add` / `proxy.test` / `proxy.delete` | §14.2 Computers › Proxies | Proxy em uso (Delete): `Used by <n> computers.` | v1 (Fatia 3) |
+| Ação | ActionID | Atalho | Efeito | Desabilitado (tooltip) | Versão | Teste (XCUITest) |
+|---|---|---|---|---|---|---|
+| Open Viewer / Open in New Window | `computer.openViewer` / `.popOut` | — | Tab do viewer / janela própria | — | v1 (Fatia 3) | `testAction_computer_openViewer` · `testAction_computer_popOut` |
+| Take Over / Hand Back / Force Take Over | `computer.takeOver` / `.handBack` / `.forceTakeOver` | ⇧⌘R | Controle humano (§11) | Computador parado: `This computer is stopped.` | v1 (Fatia 3) | `testAction_computer_takeOver` · `testAction_computer_handBack` · `testAction_computer_forceTakeOver` |
+| Decline… (pedido de ajuda) | `computer.declineHelp` | — | Popover com motivo; o agente recebe `declined` | — | v1 (Fatia 3) | `testAction_computer_declineHelp` |
+| Release Keyboard | `computer.releaseKeyboard` | ⌘⎋ / ⌃⌥ | Solta a captura | Sem captura: não age | v1 (Fatia 3) | `testAction_computer_releaseKeyboard` |
+| Show Network / Journal / Files / Timeline | `computer.showTab` | — | Detalhe no painel (§11.7) | — | v1 (Fatia 3) | `testAction_computer_showTab` |
+| Change type (HTTP/Headless/Desktop) | `computer.setDisplay` | — | Troca o tipo (confirmação para HTTP) | — | v1 (Fatia 3) | `testAction_computer_setDisplay` |
+| Proxy ▸ | `computer.setProxy` | — | Define o proxy do computador (07 CS-161) | Nenhum proxy: só `None` | v1 (Fatia 3) | `testAction_computer_setProxy` |
+| Paste to Computer / Copy Selection from Computer | `computer.paste` / `computer.copySelection` | — | §11.2 | Sem controle humano: `Take over first.` | v1 (Fatia 3) | `testAction_computer_paste` · `testAction_computer_copySelection` |
+| Reconnect | `computer.reconnect` | — | Reabre o stream | — | v1 (Fatia 3) | `testAction_computer_reconnect` |
+| Start Computer | `computer.start` | — | Sobe o computador parado | Docker parado: `Docker isn't running` | v1 (Fatia 3) | `testAction_computer_start` |
+| Stop Computer… / Delete Computer… | `computer.stop` / `computer.delete` | — | §16.3 / §16.4 | — | v1 (Fatia 3) | `testAction_computer_stop` · `testAction_computer_delete` |
+| New Computer… | `computer.new` | — | Cria computador ligado ao terminal focado | Sem terminal de agente: `Focus an agent terminal first.` | v1 (Fatia 3) | `testAction_computer_new` |
+| Copy Computer ID / Open Shell (⌥) | `computer.copyId` / `computer.openShell` | ⌥ | Copia / tab de shell no container `work` | — | v1 (Fatia 3) | `testAction_computer_copyId` · `testAction_computer_openShell` |
+| Cancel (fila, provisionando) | `computer.cancel` | — | Tira da fila ou cancela a criação | — | v1 (Fatia 3) | `testAction_computer_cancel` |
+| Start Docker / Docker Settings | `docker.start` / `docker.settings` | — | Abre o runtime do contexto ativo / Settings › Docker | — | v1 (Fatia 3) | `testAction_docker_start` · `testAction_docker_settings` |
+| Update / Build Locally / Download (imagem) | `image.update` / `.buildLocal` / `.download` | — | Baixa por digest / constrói / baixa em segundo plano | Rodando: rótulo de progresso | v1 (Fatia 3) | `testAction_image_update` · `testAction_image_buildLocal` · `testAction_image_download` |
+| Clean Up… | `computers.cleanUp` | — | Assistente de limpeza | — | v1.1 | `testAction_computers_cleanUp` |
+| New Batch… | `batch.new` | — | Overlay §16.15 | Sem terminal Claude disponível: `Install Claude Code first.` | v1 (Fatia 3) | `testAction_batch_new` |
+| Collect All / Archive Batch | `batch.collectAll` / `batch.archive` | — | `batch_collect` de todos / arquiva o lote e para os computadores | Filhos rodando (Archive): confirmação `Stop <n> running subagents?` | v1 (Fatia 3) | `testAction_batch_collectAll` · `testAction_batch_archive` |
+| Add Proxy / Test Proxy / Delete… | `proxy.add` / `proxy.test` / `proxy.delete` | — | §14.2 Computers › Proxies | Proxy em uso (Delete): `Used by <n> computers.` | v1 (Fatia 3) | `testAction_proxy_add` · `testAction_proxy_test` · `testAction_proxy_delete` |
 
 ### 24.6 Settings e onboarding
 
 Cada controle de §14 é uma ação `settings.<section>.<key>` que grava o valor (regra de §14.1). Botões próprios: `Change…` (`settings.pickPath`), `Detect Again` / `Check Again` (`agent.detect`), `Edit Profiles…` (`library.profiles`), `Show Details` (`agent.hookDetails`), `Allow in Login Items` (`app.allowLoginItem`, abre System Settings › Login Items), `Open System Settings` (`app.openSystemSettings`), `Reset` "Don't ask again" (`settings.resetConfirmations`), `Import Again…` (`import.orca`), `Reveal Keybindings File` (`settings.revealKeybindings`), `Back Up Now` (`db.backup`), `Export Database…` (`db.export`), `Restore from Backup…` (`db.restore`), `Reload Shell Environment` (`terminal.reloadEnv`), `Read` security model (`help.securityModel`), `Reset Agent Box…` (`app.reset`, confirmação digitando `reset`), `Add Credential` / `Import .env File…` / `Reveal` / `Edit` / `Delete…` (`credential.*`, Reveal pede Touch ID). Onboarding: `Log In` (`account.logIn`), `Install…` (`agent.installHelp`), `Start Docker`, `Download`, `Allow` (`notifications.request`), `Review…` / `Import` / `Back` (`import.orca*`), `Skip for Now` / `Done` (`onboarding.skip` / `onboarding.done`). Nenhum desses fica sem efeito: quando a pré-condição falta, o botão fica desabilitado com o motivo em uma linha.
+
+### 24.7 Command palette e Quick Launch
+
+| Ação | ActionID | Atalho | Efeito | Desabilitado (tooltip) | Versão | Teste (XCUITest) |
+|---|---|---|---|---|---|---|
+| Jump To… (abrir a palette) | `palette.open` | ⌘J | Abre a palette (§8, M-104) | — | v1 | `testAction_palette_open` |
+| Open Row | `palette.openRow` | ↵ | Abre a sessão, terminal, computador, projeto ou comando selecionado | Sem linha selecionada | v1 | `testAction_palette_openRow` |
+| Open in Split | `palette.openInSplit` | ⇧↵ | Abre o terminal selecionado em split à direita (palette e Quick Launch) | Item que não é terminal nem agente: `Not available for this item` | v1 | `testAction_palette_openInSplit` |
+| New Session "<text>" / Start with prompt | `palette.newSessionWithText` | ⌘↵ | Palette: abre o composer com o texto como prompt. Quick Launch: lança o item selecionado com o texto como prompt (T11) | Texto vazio: `Type a prompt first` | v1 | `testAction_palette_newSessionWithText` |
+| Cycle filter | `palette.cycleFilter` | ⇥ | Alterna `All · Sessions · Terminals · Computers · Commands` | — | v1 | `testAction_palette_cycleFilter` |
+| Insert mode (`/`) | `palette.insertMode` | `/` no início do campo | Põe a palette em modo `Insert Skill or Agent` (§8) | Sem pane de agente: `Focus an agent terminal first.` | v1 (Fatia 4) | `testAction_palette_insertMode` |
+
+### 24.8 Composer de nova sessão (§6)
+
+Uma linha por controle de §6.1, §6.2 e §6.3. IDs de acessibilidade (`overlay.composer.*`) em §6 e §22.
+
+| Ação | ActionID | Atalho | Efeito | Desabilitado (tooltip) | Versão | Teste (XCUITest) |
+|---|---|---|---|---|---|---|
+| Project (combobox) | `composer.setProject` | — | Escolhe o projeto, `No Project (Clean Session)` ou `Add a New Project…` (esta abre §16.9 e volta ao composer) | — | v1 | `testAction_composer_setProject` |
+| Where (segmented) | `composer.setWhere` | — | `New Worktree`, `Existing Worktree`, `Main Checkout` (com projeto); `New Folder`, `Choose Folder…` (sem projeto) | — | v1 | `testAction_composer_setWhere` |
+| Create from (campo, base e chip `Branch exists`) | `composer.setBase` | — | Aceita branch, `#123` ou URL de PR/issue; o seletor `origin/main ⌄` troca a base; o chip avisa que a branch existe | — | v1 | `testAction_composer_setBase` |
+| Reuse existing branch (chip e link `Reuse it`) | `composer.reuseBranch` | — | Troca para reaproveitar a branch que já existe | Sem conflito de branch: não aparece | v1 | `testAction_composer_reuseBranch` |
+| Worktree (combobox, Existing Worktree) | `composer.setWorktree` | — | Escolhe uma worktree do projeto; em uso mostra aviso `Used by <session>` | — | v1 | `testAction_composer_setWorktree` |
+| Folder `[Choose…]` | `composer.chooseFolder` | — | `NSOpenPanel` escuro; guarda o caminho (§6.1 3c) | — | v1 | `testAction_composer_chooseFolder` |
+| Agent (combobox) | `composer.setAgent` | — | Escolhe o agente; o perfil é refiltrado | Agente não instalado: `Not installed` | v1 | `testAction_composer_setAgent` |
+| Set as Default (agente) | `composer.setDefaultAgent` | — | Torna o agente escolhido o padrão de Settings › Agents | Já é o padrão: `Already the default` | v1 | `testAction_composer_setDefaultAgent` |
+| Manage Agents… (rodapé do combobox de agente) | `composer.manageAgents` | — | Abre Settings › Agents (como `agent.openSettings`, §24.3) | — | v1 | `testAction_composer_manageAgents` |
+| Profile (combobox) | `composer.setProfile` | — | Escolhe o perfil do agente; flags aparecem em mono | — | v1 | `testAction_composer_setProfile` |
+| Edit Profiles… (rodapé do combobox de perfil) | `composer.editProfiles` | — | Abre Library › Profiles (como `library.profiles`, §24.6) | — | v1 | `testAction_composer_editProfiles` |
+| Prompt | `composer.setPrompt` | — | Edita o prompt inicial, que vai como argumento do CLI; acima de 16 KiB vira arquivo referenciado | — | v1 | `testAction_composer_setPrompt` |
+| Advanced (disclosure) | `composer.toggleAdvanced` | — | Abre ou fecha as opções avançadas; o estado é lembrado | — | v1 | `testAction_composer_toggleAdvanced` |
+| Session name | `composer.setSessionName` | — | Edita o nome (placeholder com o nome automático) | — | v1 | `testAction_composer_setSessionName` |
+| Branch name | `composer.setBranchName` | — | Edita a branch da nova worktree | Só com `New Worktree`: campo ausente nos outros modos | v1 | `testAction_composer_setBranchName` |
+| Worktree location `[Change…]` | `composer.changeLocation` | — | `NSOpenPanel` para a raiz das worktrees deste projeto | Só com `New Worktree` | v1 | `testAction_composer_changeLocation` |
+| Create More (switch) | `composer.createMore` | — | Mantém o overlay aberto e limpa o prompt depois de criar | — | v1 | `testAction_composer_createMore` |
+| Create Session | `composer.submit` | ⌘↵ (de qualquer campo) | Valida, fecha o overlay e cria a sessão (§6.4) | Sem projeto ou pasta: `Choose a project or folder first.` | v1 | `testAction_composer_submit` |
+| Cancel | `composer.cancel` | Esc | Fecha o composer. Com prompt digitado, Esc pede `Discard this session?` | — | v1 | `testAction_composer_cancel` |
+| Keep Editing / Discard (confirmação inline) | `composer.keepEditing` / `composer.discard` | — | `Keep Editing` volta ao composer; `Discard` fecha e descarta o rascunho | — | v1 | `testAction_composer_keepEditing` · `testAction_composer_discard` |
+
+### 24.9 Diálogos de confirmação (§16)
+
+Cada botão e checkbox dos diálogos de §16 é uma ação. `Cancel` (Esc) existe em todos e tem o ActionID `dialog.<nome>.cancel`; `Confirm` é o botão primário. IDs de acessibilidade dos overlays: `overlay.confirm*` em §16.
+
+| Ação | ActionID | Atalho | Efeito | Desabilitado (tooltip) | Versão | Teste (XCUITest) |
+|---|---|---|---|---|---|---|
+| Close Terminal (confirma §16.1, inclui `Close <n> terminals?`) | `dialog.closeTerminal.confirm` | — | Fecha o terminal (ou os <n> terminais listados): SIGHUP/SIGTERM no grupo; sem sair em 5 s, `The process didn't exit.` com `Force Quit` | — | v1 | `testAction_dialog_closeTerminal_confirm` |
+| Cancel (§16.1) | `dialog.closeTerminal.cancel` | Esc | Fecha o overlay e mantém o terminal | — | v1 | `testAction_dialog_closeTerminal_cancel` |
+| Don't ask again (§16.1) | `dialog.closeTerminal.dontAsk` | — | Desliga `Confirm before closing a running terminal` | — | v1 | `testAction_dialog_closeTerminal_dontAsk` |
+| Archive (§16.2) | `dialog.archive.confirm` | — | Arquiva a sessão; toast `Session archived.` com `Undo` | — | v1 | `testAction_dialog_archive_confirm` |
+| Cancel (§16.2) | `dialog.archive.cancel` | Esc | Fecha o overlay | — | v1 | `testAction_dialog_archive_cancel` |
+| Stop Computer (§16.3) | `dialog.stopComputer.confirm` | — | Para o computador (`computer.stop`) | — | v1 (Fatia 3) | `testAction_dialog_stopComputer_confirm` |
+| Delete Computer (§16.4) | `dialog.deleteComputer.confirm` | — | Apaga o container e o perfil (`computer.delete`) | — | v1 (Fatia 3) | `testAction_dialog_deleteComputer_confirm` |
+| Delete Session (§16.5) | `dialog.deleteSession.confirm` | — | Apaga a sessão com as opções marcadas; toast `Session deleted.` com `Undo` | — | v1 | `testAction_dialog_deleteSession_confirm` |
+| Cancel (§16.5) | `dialog.deleteSession.cancel` | Esc | Fecha o overlay | — | v1 | `testAction_dialog_deleteSession_cancel` |
+| Keep the branch / Move folder to Trash / Also delete run folders (§16.5) | `dialog.deleteSession.keepBranch` / `dialog.deleteSession.trashFolder` / `dialog.deleteSession.deleteRuns` | — | Alternam as opções do apagar (padrões em §16.5) | Cada checkbox só aparece no tipo de sessão a que se aplica | v1 | `testAction_dialog_deleteSession_keepBranch` · `testAction_dialog_deleteSession_trashFolder` · `testAction_dialog_deleteSession_deleteRuns` |
+| Don't ask again (§16.5) | `dialog.deleteSession.dontAsk` | — | Desliga a confirmação; só aparece quando não há perda de dados | — | v1 | `testAction_dialog_deleteSession_dontAsk` |
+| Remove Project (§16.6) | `dialog.removeProject.confirm` | — | Arquiva as sessões e remove o projeto do app; nenhum arquivo é apagado | — | v1 | `testAction_dialog_removeProject_confirm` |
+| Resume <n> / Not Now (§16.7) | `dialog.resumeAgents.confirm` / `dialog.resumeAgents.cancel` | — | Retoma os agentes marcados / fecha sem retomar | `Resume <n>` com 0 marcados: `Select at least one agent.` | v1 | `testAction_dialog_resumeAgents_confirm` · `testAction_dialog_resumeAgents_cancel` |
+| Select All / Select None / linha com checkbox (§16.7) | `dialog.resumeAgents.selectAll` / `dialog.resumeAgents.selectNone` / `dialog.resumeAgents.toggleRow` | — | Marca ou desmarca os agentes da lista | — | v1 | `testAction_dialog_resumeAgents_selectAll` · `testAction_dialog_resumeAgents_selectNone` · `testAction_dialog_resumeAgents_toggleRow` |
+| Move / Convert (§16.8) | `dialog.moveToProject.confirm` | — | Move a sessão limpa para o projeto escolhido ou a converte em projeto; agentes seguem rodando (mesmo PID) | Sem projeto escolhido: `Choose a project.` | v1 | `testAction_dialog_moveToProject_confirm` |
+| Project (combobox, §16.8) | `dialog.moveToProject.setProject` | — | Escolhe o projeto ou `Convert to Project` | — | v1 | `testAction_dialog_moveToProject_setProject` |
+| Choose a Folder… / Import from Orca… / Clone from URL (§16.9) | `dialog.addProject.choose` / `dialog.addProject.importOrca` / `dialog.addProject.clone` | — | Escolhe a pasta / abre o passo 2 do onboarding / clona por URL (clone: v1.1) | — | v1 | `testAction_dialog_addProject_choose` · `testAction_dialog_addProject_importOrca` · `testAction_dialog_addProject_clone` |
+| Add <n> Projects / Stop Scan (§16.9) | `dialog.addProject.addFound` / `dialog.addProject.stopScan` | — | Adiciona os repositórios marcados / interrompe o scan da pasta | — | v1 | `testAction_dialog_addProject_addFound` · `testAction_dialog_addProject_stopScan` |
+| Keep Running (§16.10) | `dialog.quit.keepRunning` | ↵ | Fecha a janela e deixa o app em modo accessory; agentes seguem vivos | — | v1 | `testAction_dialog_quit_keepRunning` |
+| Stop All and Quit… (§16.10) | `dialog.quit.stopAll` | — | Abre a segunda confirmação `Stop <n> agents and <m> computers?` | — | v1 | `testAction_dialog_quit_stopAll` |
+| Stop All and Quit (segunda confirmação, §16.10) | `dialog.quit.stopAllConfirm` | — | Encerra os agentes e computadores e o app | — | v1 | `testAction_dialog_quit_stopAllConfirm` |
+| Cancel (§16.10) | `dialog.quit.cancel` | Esc | Fecha o overlay e mantém tudo como está | — | v1 | `testAction_dialog_quit_cancel` |
+| Don't ask again (§16.10) | `dialog.quit.dontAsk` | — | Desliga `Ask before quitting with running agents` | — | v1 | `testAction_dialog_quit_dontAsk` |
+| Use Skip Permissions (§16.11) | `dialog.skipPermissions.confirm` | — | Lança com `Skip Permissions` e lembra a escolha para o perfil | — | v1 | `testAction_dialog_skipPermissions_confirm` |
+| Paste (§16.12) | `dialog.pasteToAgent.confirm` | — | Cola o texto no prompt do agente com bracketed paste, sem Enter (T11) | Agente não está esperando entrada: `The agent isn't ready for input.` | v1 | `testAction_dialog_pasteToAgent_confirm` |
+| Rename Branch (§16.13) | `dialog.renameBranch.confirm` | — | Renomeia a branch local (`session.renameBranch`) | Nome vazio ou igual: `Enter a new name.` | v1 | `testAction_dialog_renameBranch_confirm` |
+| Licenses… / Copy Version Info (§16.14) | `dialog.about.licenses` / `dialog.about.copy` | — | Lista as licenças / copia versão, build, protocolo e schema | — | v1 | `testAction_dialog_about_licenses` · `testAction_dialog_about_copy` |
+| Start Batch / Import CSV… (§16.15) | `dialog.newBatch.confirm` / `dialog.newBatch.importCSV` | ⌘↵ | Inicia o lote (abre o terminal Claude pai) / importa os alvos de um CSV | Sem alvos: `Add at least one target.` | v1 (Fatia 3) | `testAction_dialog_newBatch_confirm` · `testAction_dialog_newBatch_importCSV` |

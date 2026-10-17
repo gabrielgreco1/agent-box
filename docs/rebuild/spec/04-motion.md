@@ -9,7 +9,7 @@ Toda string entre aspas que aparece na tela está em inglês. O resto do texto e
 
 ### Correspondência de IDs: auditoria 06 → este capítulo
 
-Os capítulos 02 e 03 citavam os IDs da auditoria (`A1…F6`, `E0…E4`, e em 03 a forma `M:C9`). Eles foram substituídos pelos IDs `M-xxx` abaixo (R1 §4). A tabela fica só para referência histórica; nenhum capítulo deve citar o ID antigo. Atenção: a auditoria usa `D1…D13` no inventário (§1.2) e `D1…D9` no catálogo (§4.D); a coluna abaixo usa o catálogo.
+Os capítulos 02 e 03 citavam os IDs da auditoria (`A1…F6`, `E0…E4`, e em 03 uma forma com prefixo `M` e dois-pontos. Eles foram substituídos pelos IDs `M-xxx` abaixo (R1 §4). A tabela fica só para referência histórica; nenhum capítulo deve citar o ID antigo. Atenção: a auditoria usa `D1…D13` no inventário (§1.2) e `D1…D9` no catálogo (§4.D); a coluna abaixo usa o catálogo.
 
 | audit/06 | Momento | 04 |
 |---|---|---|
@@ -115,7 +115,7 @@ O `audit/07` (correção 5) apontou números inconsistentes. Conferi cada um no 
 | Anel de atenção | 1,8 s, 0,68 → 2,4 | — | `contextual-tour-target-ring` 1,8 s `ease-out` **infinito**, 0,72 → 0 em 72% (`main.css:2993-3005`) | Mesmo desenho, mas **2 ciclos e para** |
 | "Conteúdo entrando" 320–380 ms `(.2,.8,.2,1)` | Tratado como padrão do Orca | — | `browserTabIn`, `browserViewIn`, `md-block-in` e `tasks-workspace-in` existem só em `components/feature-wall/` (storyboards de marketing), não na UI de produto | A curva `standard (.2,.8,.2,1)` fica como token nosso. A duração de UI direta cai para 200 ms; 320+ ms só em revelações (M-503) |
 | Cor de "working" | Cor do provider (Claude laranja) | `yellow-500` | `border-yellow-500` (`AgentWorkingSpinner.tsx`) | `yellow-500` para todos os providers; a identidade do provider fica no logo, não no spinner |
-| A1 (abrir o app) | Terminais restaurados em "Pronto para iniciar" | — | — (audit/07, correção 6) | Reanexação com buffer já preenchido; processo morto = estado `Interrupted` de 03 §4.6 (scrollback a 50% + banner com "Resume" / "Start Fresh" / "Close") (M-001, M-002) |
+| Abrir o app (M-001) | Terminais restaurados em "Pronto para iniciar" | — | — (audit/07, correção 6) | Reanexação com buffer já preenchido; processo morto = estado `Interrupted` de 03 §4.6 (scrollback a 50% + banner com "Resume" / "Start Fresh" / "Close") (M-001, M-002) |
 
 Também revisei duas regras de `audit/06`:
 - **Curva de saída.** `(.7,0,.84,0)` tem 2% de progresso aos 60 ms e 47% aos 133 ms (de 150 ms): parece atraso seguido de corte. Ela fica restrita ao fechamento de painel por recorte (`exitClip`). Fades de saída usam `exit = (.42,0,1,1)` (o `ease-in` do CSS, que o Orca usa no `update-card-exit`).
@@ -399,7 +399,7 @@ Detalhe quadro a quadro de M-101, M-108 e M-109 em §7.1.
 | M-208 | Renomear inline | Duplo clique / Enter | 0,12 `ease` → 0,24 | Fundo do campo surge no lugar do rótulo; ao confirmar, `contentTransition(.interpolate)` do texto. | SUI | sem interpolação | `sidebar.session.<id>.name` |
 | M-209 | Apagar ou arquivar sessão | Confirmação (M-103) | 0,12 `exit` → 0,18 `exit` | Linha: fade → altura 0. Vizinhas sobem com `snappy`. Ao apagar: toast "Session deleted." · "Undo" (8 s, M-110; R1 K-20). | SUI | fade | `sidebar.session.<id>` |
 | M-210 | Hover em linha | Hover | 0,12 `ease` | Fundo 0 → hover; botões de ação trailing aparecem com opacidade (0,12). Sem escala. | SUI | igual | — |
-| M-211 | Revelar sessão atual / item navegado | Botão "Reveal Current Session" do rodapé (03 §2.12), clique em notificação ou item da Inbox. Sem atalho (o ⌘⇧E antigo não existe em 03 §21) | scroll 0,30 `drawer` → `revealGlow` 1,5 s | Scroll até a linha; quando assenta, glow 1,5 pt + anel 1 pt + glow 14 pt na cor `blue-400`, keyframes do Orca. | AK (scroll) + CA (glow) | scroll instantâneo + borda estática 0,6 s | `sidebar.footer.reveal`, `sidebar.session.<id>.revealGlow`† |
+| M-211 | Revelar sessão atual / item navegado | Botão "Reveal Current Session" do rodapé (03 §2.12), clique em notificação ou item da Inbox. Sem atalho (o ⇧⌘E antigo não existe em 03 §21) | scroll 0,30 `drawer` → `revealGlow` 1,5 s | Scroll até a linha; quando assenta, glow 1,5 pt + anel 1 pt + glow 14 pt na cor `blue-400`, keyframes do Orca. | AK (scroll) + CA (glow) | scroll instantâneo + borda estática 0,6 s | `sidebar.footer.reveal`, `sidebar.session.<id>.revealGlow`† |
 | M-212 | Sessão limpa movida para projeto (P10) | "Move to Project…" (R1 K-34) | `panel` | A linha sobe (escala `dragLift` + sombra, 0,12), viaja da seção "Sessions" (P11) até a posição no grupo do projeto (`matchedGeometryEffect`) e assenta. A seção de origem fecha o espaço com `snappy`. | SUI | crossfade nas duas posições | `sidebar.session.<id>` |
 | M-213 | Linha filha (subagente) brota do pai | Hook `SubagentStart` ou `boxes_reserve` | conector 0,24 `expoOut` → linha 0,20 `standard`; vários filhos: stagger `children` | Conector em L se desenha do pai até a posição do filho (`trim` 0 → 1); a linha sobe 4 pt com fade. Com computador (Fatia 3): o glifo M-601 aparece no lugar do ícone. | SUI (`Path.trim`) | fade | `sidebar.session.<sessionId>.child.<childId>`, `.connector`† |
 | M-214 | Arrastar sessão para reordenar/agrupar | Drag | lift 0,12; vizinhas `snappy`; soltar `drag` | Linha levantada: escala 1,02 + sombra; vizinhas abrem espaço; ao soltar, assenta com `drag`. | SUI | sem escala | `sidebar.session.<id>` |
@@ -817,19 +817,19 @@ Um momento só passa de `ported` para `verified` quando cumpre tudo abaixo, os d
 
 | # | Critério | Como verificar |
 |---|---|---|
-| A1 | Durações e curvas vêm de tokens | CI: lint sem literais de animação; teste de paridade (§9.4) verde |
-| A2 | Coreografia igual ao storyboard aprovado | `compare.sh`: vídeo lado a lado app × storyboard; o dono aprova assistindo. Nos quadros-chave de §7, diferença ≤ 1 quadro e ≤ 2% nas propriedades medidas (scrub no Motion Lab + leitura do `presentation()`) |
-| A3 | Ordem e duração dos eventos | XCUITest/integração lê `agentbox ctl motion events` e confere a sequência de fases (ex.: `M-501 begin → landed → M-503 begin → M-504 begin → M-501 end`) e cada duração com tolerância de ±16 ms (`mode = .normal`) |
-| A4 | Funcional em `instant` | Suíte XCUITest completa com `-AgentBoxMotionMode instant`: mesmos eventos, duração 0, nenhum teste depende de `sleep` |
-| A5 | Reduce Motion | Suíte com `-AgentBoxReduceMotion YES`: cada momento emite o fallback esperado (ex.: `M-501 chipFlight=skipped`); screenshots por momento mostram estado legível sem movimento; nenhum loop ativo além de zero no `LoopHost` |
-| A6 | Terminal intocado | Contador de resizes de PTY (exposto em `agentbox ctl debug pty-resizes`) = **exatamente 1** por transição de layout (M-201, M-108, M-306, M-307) e 0 para os demais momentos. Teste automatizado |
-| A7 | Sem hitches | Instruments, template *Animation Hitches*, a 120 Hz, com os 4 terminais em stress do Motion Lab, disparando cada momento de prioridade A. Meta: 0 hitches; reprova acima de 5 ms/s de hitch time. Automatizado no lane de performance com `xcrun xctrace record --template 'Animation Hitches' --launch …` e um parser que extrai o hitch ratio |
-| A8 | Custo dos loops | 10 indicadores `working` visíveis por 60 s: CPU do app ≤ 2% de um núcleo e do WindowServer ≤ 3% acima da linha de base (`top -l` amostrado pelo script de performance); instrumento *Core Animation* mostra 12 commits/s para o spinner |
-| A9 | Pausa fora de vista | Janela ocluída por 10 s: 0 commits de loop (instrumento Core Animation / contador do `LoopHost`); ao voltar, as fases batem com a fase global (teste unitário do cálculo de `beginTime`) |
-| A10 | Input não espera | XCUITest: abrir dialog e apertar Esc seguido de digitação imediata; todos os caracteres chegam ao PTY (eco verificado). Arrastar divisor durante M-201 não trava |
-| A11 | Sem quadro quebrado | Gravação do Motion Lab revisada quadro a quadro (contact sheet a 30 fps com `sheet.py`): nenhum quadro com flash do canvas, conteúdo fora do container, salto de layout ou texto sobreposto |
-| A12 | Acessibilidade | Todo elemento animado listado tem o `accessibilityIdentifier` do catálogo; indicadores expõem `accessibilityValue`; anúncios de VoiceOver de 02 §14.2 ligados aos momentos M-402, M-403, M-404, M-607, M-608 e M-609 conferidos com Accessibility Inspector |
-| A13 | Interrompível | Teste: disparar M-201 duas vezes em 100 ms; disparar M-101 e Esc no f3; trocar de tab durante M-301. O estado final é correto, sem salto e com um único resize |
+| MA1 | Durações e curvas vêm de tokens | CI: lint sem literais de animação; teste de paridade (§9.4) verde |
+| MA2 | Coreografia igual ao storyboard aprovado | `compare.sh`: vídeo lado a lado app × storyboard; o dono aprova assistindo. Nos quadros-chave de §7, diferença ≤ 1 quadro e ≤ 2% nas propriedades medidas (scrub no Motion Lab + leitura do `presentation()`) |
+| MA3 | Ordem e duração dos eventos | XCUITest/integração lê `agentbox ctl motion events` e confere a sequência de fases (ex.: `M-501 begin → landed → M-503 begin → M-504 begin → M-501 end`) e cada duração com tolerância de ±16 ms (`mode = .normal`) |
+| MA4 | Funcional em `instant` | Suíte XCUITest completa com `-AgentBoxMotionMode instant`: mesmos eventos, duração 0, nenhum teste depende de `sleep` |
+| MA5 | Reduce Motion | Suíte com `-AgentBoxReduceMotion YES`: cada momento emite o fallback esperado (ex.: `M-501 chipFlight=skipped`); screenshots por momento mostram estado legível sem movimento; nenhum loop ativo além de zero no `LoopHost` |
+| MA6 | Terminal intocado | Contador de resizes de PTY (exposto em `agentbox ctl debug pty-resizes`) = **exatamente 1** por transição de layout (M-201, M-108, M-306, M-307) e 0 para os demais momentos. Teste automatizado |
+| MA7 | Sem hitches | Instruments, template *Animation Hitches*, a 120 Hz, com os 4 terminais em stress do Motion Lab, disparando cada momento de prioridade A. Meta: 0 hitches; reprova acima de 5 ms/s de hitch time. Automatizado no lane de performance com `xcrun xctrace record --template 'Animation Hitches' --launch …` e um parser que extrai o hitch ratio |
+| MA8 | Custo dos loops | 10 indicadores `working` visíveis por 60 s: CPU do app ≤ 2% de um núcleo e do WindowServer ≤ 3% acima da linha de base (`top -l` amostrado pelo script de performance); instrumento *Core Animation* mostra 12 commits/s para o spinner |
+| MA9 | Pausa fora de vista | Janela ocluída por 10 s: 0 commits de loop (instrumento Core Animation / contador do `LoopHost`); ao voltar, as fases batem com a fase global (teste unitário do cálculo de `beginTime`) |
+| MA10 | Input não espera | XCUITest: abrir dialog e apertar Esc seguido de digitação imediata; todos os caracteres chegam ao PTY (eco verificado). Arrastar divisor durante M-201 não trava |
+| MA11 | Sem quadro quebrado | Gravação do Motion Lab revisada quadro a quadro (contact sheet a 30 fps com `sheet.py`): nenhum quadro com flash do canvas, conteúdo fora do container, salto de layout ou texto sobreposto |
+| MA12 | Acessibilidade | Todo elemento animado listado tem o `accessibilityIdentifier` do catálogo; indicadores expõem `accessibilityValue`; anúncios de VoiceOver de 02 §14.2 ligados aos momentos M-402, M-403, M-404, M-607, M-608 e M-609 conferidos com Accessibility Inspector |
+| MA13 | Interrompível | Teste: disparar M-201 duas vezes em 100 ms; disparar M-101 e Esc no f3; trocar de tab durante M-301. O estado final é correto, sem salto e com um único resize |
 
 ### 11.2 Por entrega
 
@@ -840,7 +840,7 @@ Um momento só passa de `ported` para `verified` quando cumpre tudo abaixo, os d
 
 - `-AgentBoxMotionMode normal|instant|slow:<fator>` e `-AgentBoxReduceMotion YES|NO` como launch arguments (só respeitados em builds de teste ou com o canal de automação ligado).
 - `agentbox ctl motion events --follow` emite JSON por linha: `{"id":"M-501","phase":"landed","t":0.421,"target":"sidebar.pending.8F2…","reduced":false}`.
-- `agentbox ctl motion trigger M-xxx [--fixture …]` dispara um momento com dados simulados (o mesmo motor do Motion Lab). É o que os testes de A2/A3 usam.
+- `agentbox ctl motion trigger M-xxx [--fixture …]` dispara um momento com dados simulados (o mesmo motor do Motion Lab). É o que os testes de MA2/MA3 usam.
 - Signposts `Motion` com begin/end por ID aparecem no Instruments ao lado do *Animation Hitches*, o que permite atribuir um hitch a um momento.
 
 ---
@@ -860,7 +860,7 @@ Os rótulos de prioridade deste capítulo são **A / B / C**. Eles substituem os
 
 ### 12.2 Em que fatia cada momento fica `verified`
 
-As fatias são as de 01 §4.1. Um momento só pode ficar `verified` (§11.1) quando os dados reais que o disparam existem; antes disso ele pode estar `ported` no Motion Lab com fontes simuladas. Isso resolve a dependência apontada em R3 §4.1: a Fatia 1 não precisa (nem pode) entregar "computador em uso".
+As fatias são as de 01 §4.1. Um momento só pode ficar `verified` (§11.1, critérios MA1…MA13) quando os dados reais que o disparam existem; antes disso ele pode estar `ported` no Motion Lab com fontes simuladas. Isso resolve a dependência apontada em R3 §4.1: a Fatia 1 não precisa (nem pode) entregar "computador em uso".
 
 | Fatia | Momentos | Dado que destrava |
 |---|---|---|

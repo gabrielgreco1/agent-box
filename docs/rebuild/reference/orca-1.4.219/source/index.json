@@ -1,0 +1,42 @@
+{
+  "asar_sha256": "579d814bca0d04448414d07ac9547ca06b1c84ff9d008c98951fb6a91a066218",
+  "files": [
+    {
+      "bytes": 709,
+      "path": "out/renderer/assets/AgentKanbanBoard-DnUULYwG.css",
+      "sha256": "ae36929018bae965a34ade428720ebaa2a47aa658f3389d969af90736d539792",
+      "tema_escuro": false
+    },
+    {
+      "bytes": 588719,
+      "path": "out/renderer/assets/I18nProvider-b7VZ0bXG.css",
+      "sha256": "7ee249f776f7b5497d08f92037eabbd09e0faaae7673377719fa6e56fbaf6dd2",
+      "tema_escuro": true
+    },
+    {
+      "bytes": 329342,
+      "path": "out/renderer/assets/ImageViewer-DfITYsd0.css",
+      "sha256": "11be4083d771da979294227a1c046c262d8a0d0c72aea01d3e7b20fc72d79c83",
+      "tema_escuro": false
+    },
+    {
+      "bytes": 147420,
+      "path": "out/renderer/assets/editor-CNIb8Czn.css",
+      "sha256": "89b24087c110f6886b25b4324d2c041f1070cebced28375fee482ae5a32c9537",
+      "tema_escuro": false
+    },
+    {
+      "bytes": 308917,
+      "path": "out/renderer/assets/monaco-setup-C9n_FGUq.css",
+      "sha256": "77660a86d56f326634a55778082cf428df90ebb3515d9969176d5d7af9338fe1",
+      "tema_escuro": false
+    },
+    {
+      "bytes": 4690,
+      "path": "out/renderer/assets/xterm-BH8SIjS7.css",
+      "sha256": "a34b73a9590c97707631d64adb6392fe1d035017d243396eb674171d5b1bb510",
+      "tema_escuro": false
+    }
+  ],
+  "orca_version": "1.4.219"
+}

@@ -31,10 +31,10 @@ Responsáveis: agentes executam, o dono decide e aprova onde indicado. Nenhuma t
 
 | # | Item | Dono | Pronto quando |
 |---|---|---|---|
-| F0-1 | Errata aplicada nos capítulos (nomes canônicos de 08 §0, IDs de motion `M-xxx`, `accessibilityIdentifier` de 02 §17 e 03 §22, atalhos de 03 §21) | Agente redige; dono aprova | `grep` por `M:[A-F][0-9]` retorna 0; nenhum nome de 08 §0 divergente |
+| F0-1 | Errata aplicada nos capítulos (nomes canônicos de 08 §0, IDs de motion `M-xxx`, `accessibilityIdentifier` de 02 §17 e 03 §22, atalhos de 03 §21) | Agente redige; dono aprova | `grep` por `M:[A-F][0-9]` retorna 0; nenhum nome de 08 §0 divergente. **Concluído em 2026-10-17 nos capítulos 02, 03, 04, 06, 07:** ver [`errata-check.md`](../../evidence/slice0/errata-check.md) e o relatório [`F0-1-F0-4-report.md`](../../evidence/slice0/F0-1-F0-4-report.md). Restam fora desses capítulos: três nomes a acrescentar em 08 §0 (`AGENTBOX_CAPACITY_ESTIMATES`, `boxes/`, `previous/`) e a política sobre as 7 negações de `scratchpad` |
 | F0-2 | Fatia 1 redefinida em 01 §4.1 | — | Feito (P16); só confirmar que 09 §3 e 01 §4.1 batem |
 | F0-3 | Pacote de referência visual do Orca 1.4.219 (§2.3) | Agente com Gravação de Tela; dono valida | `manifest.json` cobre todas as superfícies da Fatia 1 nos dois tamanhos; script de extração reproduz os tokens |
-| F0-4 | Tabela de ações da Fatia 1 | Agente; dono revisa | 03 §24 já existe; conferir que todo controle visível na Fatia 1 tem linha (ID, rótulo, atalho, efeito, desabilitado com motivo, teste). Controle sem linha sai da UI |
+| F0-4 | Tabela de ações da Fatia 1 | Agente; dono revisa | 03 §24 já existe; conferir que todo controle visível na Fatia 1 tem linha (ID, rótulo, atalho, efeito, desabilitado com motivo, teste). Controle sem linha sai da UI. **Concluído em 2026-10-17:** 03 §24 agora tem as colunas Atalho e Teste e linhas para o composer inteiro, a linha pendente, `Open Agent Settings`, os diálogos de §16, a busca do terminal, o menu ⋯ dos panes e a palette ([relatório](../../evidence/slice0/F0-1-F0-4-report.md), [`errata-check.md`](../../evidence/slice0/errata-check.md)). Settings segue por regra até T1-26 |
 | F0-5 | Spikes S-01…S-08 (§2.2) | Agentes em paralelo | Relatório e evidência em `docs/evidence/spikes/<id>/`; decisão escrita no capítulo dono |
 | F0-6 | `design/` antigo para `legacy/design/`; `Package.swift`, `Sources/` e `Tests/` antigos fora do caminho do build (08 AR-202) | Dono aprova o destino; agente move | T1-01 não encontra código antigo no caminho do build |
 | F0-7 | Versões fixadas (§2.5) | Agente | `scripts/bootstrap.sh` falha com versão errada |
@@ -49,10 +49,10 @@ Cada spike grava a evidência em `docs/evidence/spikes/<id>/` e escreve o result
 | S-02 | SwiftTerm 1.20.0 × 1.99.0: Metal, `feed` fora do main, `send` de outra thread, busca, OSC 133/7, latência com 4 panes e `yes \| head -c 200M` | Agente; dono ratifica a versão | Medição nos dois; decisão de versão escrita na AR-122 | T1-09 |
 | S-03 | Peer auth (`LOCAL_PEERTOKEN` + `SecCodeCheckValidity`) com certificado local, runner do XCUITest e CI | Agente | Peer aceito e recusado; receita de CI com certificado efêmero (08 §8.4) | T1-07 |
 | S-04 | Reattach: replay do ring desde o ponto de corte, preâmbulo de modos, redraw `cols-1`, com Claude, Codex e `vim` | Agente | `textSnapshot` antes e depois iguais em 20 repetições; vídeo | T1-06 |
-| S-05 | Hooks por lançamento: (a) Claude `--settings` soma com os hooks do Orca; (b) Codex `-c hooks…`: trust exigido? hash estável?; (c) Codex app-server daemon × `--no-daemon` | Agente executa; **dono decide D-Codex-1** (§7) | Payloads gravados como fixtures em `docs/evidence/`; decisão escrita em 06 §3.3.1 e §2.2 | Define o adapter da Fatia 1 (T1-15); bloqueia T2-02/T2-03 |
-| S-06 | Captura do env de login (`-l -i -c` com marcador em PTY oculto) com o zsh do dono (p10k/oh-my-zsh) | Agente no Mac do dono | Captura em menos de 1 s, sem lixo; `which claude node gh` resolve | T1-08 |
+| S-05 | Hooks por lançamento: (a) Claude `--settings` soma com os hooks do Orca; (b) Codex `-c hooks…`: trust exigido? hash estável?; (c) Codex app-server daemon × `--no-daemon` | Agente executa; D-Codex-1 decidida em P18 (opção B) | Payloads gravados como fixtures em `docs/evidence/`; decisão escrita em 06 §3.3.1 e §2.2 | Define o adapter da Fatia 1 (T1-15); bloqueia T2-02/T2-03. **Concluído em 2026-10-17** ([evidência](../../evidence/spikes/S-05/README.md)): (a) confirmado; (b) `untrusted` não executa, hash estável, trust inline por `-c 'hooks.state={…}'`; (c) daemon fora do PTY, `--no-daemon` por padrão. Pendente: payloads Codex de `PreToolUse`/`PostToolUse`/`Stop` (cota até 22/10/2026) |
+| S-06 | Captura do env de login (`-l -i -c` com marcador em PTY oculto) com o zsh do dono (sem p10k nem oh-my-zsh, confirmado no S-06) | Agente no Mac do dono | Captura em menos de 1 s, sem lixo; `which claude node gh` resolve | T1-08. **Concluído em 2026-10-17** ([evidência](../../evidence/spikes/S-06/README.md)): 32 ms, sem lixo, env por arquivo, fallback `-l -c` marcado `non-interactive` |
 | S-07 | `ctl screenshot` via ScreenCaptureKit da própria janela com camadas Metal, com e sem Gravação de Tela | Agente; dono concede a permissão | PNG fiel do terminal Metal | T1-02 e toda evidência visual |
-| S-08 | `mcpServers` inline por subagente e `agent_id` nos hooks (07 S1) na versão do Claude instalada | Agente | Fixture com dois filhos distinguíveis | Modelo de identidade do modo leve (Fatia 3) |
+| S-08 | `mcpServers` inline por subagente e `agent_id` nos hooks (07 S1) na versão do Claude instalada | Agente | Fixture com dois filhos distinguíveis | Modelo de identidade do modo leve (Fatia 3). **Concluído em 2026-10-17** ([evidência](../../evidence/spikes/S-08/README.md)): `mcpServers` como array; `agent_id`/`agent_type`/`mcp_server` nos hooks do filho |
 
 Os demais spikes de 07 (S2, S3, S4, S6, S8, S9) ficam na Fatia 3 (§4.5.3); S5 e S7, na abertura da v1.1.
 
@@ -140,7 +140,7 @@ Reconciliação com R3 §10: as 25 tarefas de R3 (T-01…T-25) viram **T1-01…T
 - Evidência: [T] varredura e lint; PNG e JSON da árvore.
 
 **T1-03 · Tokens e fontes**
-- Escopo: `design/tokens/*.json` a partir de 02 §2–§8; `gen-tokens.py` gera `DS.Color/Font/Space/Radius` e `MotionTokens.generated.swift` + `tokens.js`; Geist embutida com `OFL.txt`; teste de paridade JS↔Swift (04 A1); página de amostras.
+- Escopo: `design/tokens/*.json` a partir de 02 §2–§8; `gen-tokens.py` gera `DS.Color/Font/Space/Radius` e `MotionTokens.generated.swift` + `tokens.js`; Geist embutida com `OFL.txt`; teste de paridade JS↔Swift (04 MA1); página de amostras.
 - Arquivos: `design/tokens/`, `design/motion/tokens.json`, `scripts/gen-tokens.py`, `AgentBoxDesignSystem/Tokens/`.
 - Depende de: T1-01. Compara com `tokens/` do pacote da §2.3.
 - Cobre: 02 §2–§8, §15, 04 §3, AC-T26 (parcial), AC-T27 (parcial).
@@ -233,7 +233,7 @@ Reconciliação com R3 §10: as 25 tarefas de R3 (T-01…T-25) viram **T1-01…T
 - Arquivos: `AgentBoxUI/Tabs/`, `AgentBoxUI/Panes/`.
 - Depende de: T1-09, T1-11, T1-05.
 - Cobre: 03 §3–§4, AC-T09, AC-T25 (parcial), AC-314.
-- Pronto quando: contador de resize do PTY = 1 por gesto (04 A6); resize, colapso ou troca de tab nunca recriam o PTY; XCUI de cada ação.
+- Pronto quando: contador de resize do PTY = 1 por gesto (04 MA6); resize, colapso ou troca de tab nunca recriam o PTY; XCUI de cada ação.
 - Evidência: [T]; [V] split e fechar; [SxS].
 
 **T1-15 · Adapters de lançamento e captura do ID nativo**
@@ -351,13 +351,13 @@ Antes de começar cada fatia, o mesmo ritual da Fatia 0 em miniatura: acrescenta
 
 ### 4.1 Fatia 2 · Atenção, GitHub e convivência com o Orca
 
-Pré-requisitos de verificação: S-05 e V1…V13 (08 §11.2); D-Codex-1 decidido (§7).
+Pré-requisitos de verificação: S-05 (concluído) e V1…V13 (08 §11.2); D-Codex-1 decidido em P18 (opção B).
 
 | Tarefa principal | Resumo | Depende de | ACs |
 |---|---|---|---|
 | T2-01 Atividade e spool | `v2_activity`, `agentbox hook` (sem python3) + spool, máquina de estados de 01 §6, última mensagem por terminal | Fatia 1 | AC-201, 202, AC-T24 |
 | T2-02 Injeções Claude por lançamento | `--settings`, `--mcp-config`, `--plugin-dir`; nada escrito em `~/.claude` | T2-01, S-05 | AC-112, 401 (parte) |
-| T2-03 Estratégia Codex | Hooks por `-c` conforme D-Codex-1, ou rollout `estimated` | T2-01, S-05, D-Codex-1 | AC-202, 601, 607 |
+| T2-03 Estratégia Codex | Hooks por `-c` com trust inline (P18) e `--no-daemon`, ou rollout `estimated` como fallback | T2-01, S-05, D-Codex-1 | AC-202, 601, 607 |
 | T2-04 Atenção e notificações | Notificações do sistema, Inbox (⇧⌘I), badge no Dock, "Next Needing Attention" (⇧⌘A), ⌘J, ⌘1…9, estado do pai considera os filhos | T2-01 | AC-204, 601…607, 611, 612 |
 | T2-05 GitHub | `gh`: chip de PR, checks, "Create PR", nota de status da sessão; painel direito (activity bar, Source Control só lista, Checks) | T2-01, Fatia 1 | AC-501, 503, 504, 208 |
 | T2-06 Colar no prompt por clique | "Paste into <Agent>" com bracketed paste sem Enter, origem `0x02` (T11) | T2-04 | AC-505, 506 |
@@ -492,7 +492,7 @@ Consolidadas de `review/E-*.md`, 07 §9, 08 §11 e R3 §12. Nenhuma bloqueia a F
 
 | # | Decisão | Origem | Recomendação registrada | Bloqueia |
 |---|---|---|---|---|
-| 1 | **D-Codex-1**: aceitar o trust de hooks do Codex gravado pelo próprio Codex após clique do usuário (zona cinzenta de T10) | 06 §3.3.1, 08 S-05 | Decidir após o S-05; baseline é rollout com estado `estimated` | T2-03 |
+| 1 | **D-Codex-1**: aceitar o trust de hooks do Codex gravado pelo próprio Codex após clique do usuário (zona cinzenta de T10) | 06 §3.3.1, 08 S-05 | **Decidida em P18 (opção B):** trust inline por `-c 'hooks.state={…}'`, sem escrever em `~/.codex`; fallback rollout `estimated` | T2-03 |
 | 2 | **Plano B do socket do daemon**: se o launchd não aceitar o caminho no home (S-01), usar `RunAtLoad=false` + `launchctl kickstart` e `bind` próprio em `AB/run/ptyd-v1.sock`, exceção a T1 que precisa ir ao 00 | 08 S-01 | A Fatia 1 roda no modo degradado até lá | T1-24 |
 | 3 | **Plano B do peer auth** se o S-03 reprovar: `getpeereid` + Team ID ad-hoc só em `DEBUG` por flag de compilação | 08 S-03 | Só aprovar se o S-03 falhar | T1-07 |
 | 4 | **Versão do SwiftTerm**: 1.20.0 fixo ou 1.99.0 conforme S-02 | R3 §12 item 6 | 1.20.0 agora | T1-09 |

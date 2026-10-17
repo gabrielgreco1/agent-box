@@ -1,0 +1,199 @@
+{
+  "asar_sha256": "579d814bca0d04448414d07ac9547ca06b1c84ff9d008c98951fb6a91a066218",
+  "css_file": "out/renderer/assets/I18nProvider-b7VZ0bXG.css",
+  "font_faces": [
+    {
+      "family": "Geist",
+      "style": "normal",
+      "weight": "100 900"
+    },
+    {
+      "family": "KaTeX_AMS",
+      "style": "normal",
+      "weight": "400"
+    },
+    {
+      "family": "KaTeX_Caligraphic",
+      "style": "normal",
+      "weight": "400"
+    },
+    {
+      "family": "KaTeX_Caligraphic",
+      "style": "normal",
+      "weight": "700"
+    },
+    {
+      "family": "KaTeX_Fraktur",
+      "style": "normal",
+      "weight": "400"
+    },
+    {
+      "family": "KaTeX_Fraktur",
+      "style": "normal",
+      "weight": "700"
+    },
+    {
+      "family": "KaTeX_Main",
+      "style": "italic",
+      "weight": "400"
+    },
+    {
+      "family": "KaTeX_Main",
+      "style": "normal",
+      "weight": "400"
+    },
+    {
+      "family": "KaTeX_Main",
+      "style": "italic",
+      "weight": "700"
+    },
+    {
+      "family": "KaTeX_Main",
+      "style": "normal",
+      "weight": "700"
+    },
+    {
+      "family": "KaTeX_Math",
+      "style": "italic",
+      "weight": "400"
+    },
+    {
+      "family": "KaTeX_Math",
+      "style": "italic",
+      "weight": "700"
+    },
+    {
+      "family": "KaTeX_SansSerif",
+      "style": "italic",
+      "weight": "400"
+    },
+    {
+      "family": "KaTeX_SansSerif",
+      "style": "normal",
+      "weight": "400"
+    },
+    {
+      "family": "KaTeX_SansSerif",
+      "style": "normal",
+      "weight": "700"
+    },
+    {
+      "family": "KaTeX_Script",
+      "style": "normal",
+      "weight": "400"
+    },
+    {
+      "family": "KaTeX_Size1",
+      "style": "normal",
+      "weight": "400"
+    },
+    {
+      "family": "KaTeX_Size2",
+      "style": "normal",
+      "weight": "400"
+    },
+    {
+      "family": "KaTeX_Size3",
+      "style": "normal",
+      "weight": "400"
+    },
+    {
+      "family": "KaTeX_Size4",
+      "style": "normal",
+      "weight": "400"
+    },
+    {
+      "family": "KaTeX_Typewriter",
+      "style": "normal",
+      "weight": "400"
+    },
+    {
+      "family": "Orca Nerd Font Symbols",
+      "style": "normal",
+      "weight": "400"
+    }
+  ],
+  "font_families": {
+    "--font-mono": "\"SF Mono\", SFMono-Regular, ui-monospace, \"Cascadia Code\", Menlo, Consolas, \"Liberation Mono\", monospace",
+    "--font-sans": "var(--app-font-family)"
+  },
+  "font_sizes_px_used": [
+    1.0,
+    9.0,
+    9.5,
+    10.0,
+    10.5,
+    11.0,
+    11.5,
+    12.0,
+    12.5,
+    13.0,
+    13.5,
+    14.0,
+    15.0,
+    15.5,
+    16.0,
+    17.0,
+    18.0,
+    20.0,
+    22.0,
+    26.0,
+    28.0,
+    34.0,
+    44.0,
+    48.0,
+    50.0,
+    52.0,
+    60.0
+  ],
+  "font_weight_vars": {
+    "--font-weight-bold": "700",
+    "--font-weight-light": "300",
+    "--font-weight-medium": "500",
+    "--font-weight-normal": "400",
+    "--font-weight-semibold": "600"
+  },
+  "font_weights_used": [
+    450,
+    500,
+    600,
+    650,
+    700,
+    800
+  ],
+  "line_heights_px_used": [
+    14.0,
+    15.0,
+    17.0,
+    18.0,
+    20.0,
+    24.0
+  ],
+  "orca_version": "1.4.219",
+  "text_scale": {
+    "--leading-normal": "1.5",
+    "--leading-relaxed": "1.625",
+    "--leading-snug": "1.375",
+    "--leading-tight": "1.25",
+    "--text-2xl": "1.5rem",
+    "--text-2xl--line-height": "calc(2 / 1.5)",
+    "--text-3xl": "1.875rem",
+    "--text-3xl--line-height": "calc(2.25 / 1.875)",
+    "--text-4xl": "2.25rem",
+    "--text-4xl--line-height": "calc(2.5 / 2.25)",
+    "--text-base": "1rem",
+    "--text-base--line-height": "calc(1.5 / 1)",
+    "--text-lg": "1.125rem",
+    "--text-lg--line-height": "calc(1.75 / 1.125)",
+    "--text-sm": ".875rem",
+    "--text-sm--line-height": "calc(1.25 / .875)",
+    "--text-xl": "1.25rem",
+    "--text-xl--line-height": "calc(1.75 / 1.25)",
+    "--text-xs": ".75rem",
+    "--text-xs--line-height": "calc(1 / .75)",
+    "--tracking-normal": "0em",
+    "--tracking-tight": "-.025em",
+    "--tracking-wide": ".025em",
+    "--tracking-wider": ".05em"
+  }
+}
