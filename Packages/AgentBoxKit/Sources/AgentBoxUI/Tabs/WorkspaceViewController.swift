@@ -162,6 +162,10 @@ final class WorkspaceViewController: NSViewController {
         view = root
         self.root = root
         trackApprovals()
+        env.workspace.dragController.tabRowRect = { [weak tabRow] in
+            guard let tabRow, tabRow.window != nil, tabRow.superview != nil else { return nil }
+            return tabRow.convert(tabRow.bounds, to: nil)
+        }
         root.setWorkspaceVisible(env.workspace.currentSessionID != nil)
         env.workspace.addListener { [weak root, weak env] in
             guard let root, let env else { return }

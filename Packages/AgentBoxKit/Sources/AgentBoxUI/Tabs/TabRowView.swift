@@ -23,20 +23,15 @@ enum TabMetrics {
     static let hairline: CGFloat = 1
     static let toolbarButton = DSIconButtonVariant.toolbar.box.width
     static let dragActivation: CGFloat = DS.Space.s3
+    static let dropBar: CGFloat = 2
+    /// Faixa à direita da tab reservada ao ✕ (fora da área de arrasto).
+    static let closeInset = DSIconButtonVariant.tabClose.box.width + 2 * DS.Space.s1_5
 }
 
-/// Estado da tab row que só a view usa: arrasto de reordenação e rolagem.
+/// Estado da tab row que só a view usa: rolagem. O arrasto (reordenar, soltar sobre um pane) vive no `PaneDragController`.
 @MainActor
 @Observable
 final class TabRowState {
-    struct Drag: Equatable {
-        var tabID: UUID
-        var startIndex: Int
-        var offset: CGFloat
-        var targetIndex: Int
-    }
-
-    var drag: Drag?
     var canScrollLeading = false
     var canScrollTrailing = false
 }
@@ -75,10 +70,34 @@ struct TabRowView: View {
             .padding(.top, TabMetrics.dragStrip)
         }
         .frame(height: TabMetrics.chromeHeight)
+        .overlay(alignment: .topLeading) { dropIndicator }
         .background(TabRowBackground())
         .background(DS.Color.chrome)
         .overlay(alignment: .bottom) { DS.Color.border.frame(height: TabMetrics.hairline) }
         .environment(\.actionRegistry, registry)
+    }
+
+    /// Barra de inserção quando um pane é arrastado sobre a tab row (vira tab nessa posição).
+    @ViewBuilder
+    private var dropIndicator: some View {
+        let drag = model.dragController
+        if case .tabRow(let index)? = drag.session?.target {
+            GeometryReader { geo in
+                let origin = geo.frame(in: .global).minX
+                let tabs = model.tabs
+                let x: CGFloat = {
+                    if index < tabs.count, let f = drag.tabFrames[tabs[index].id] { return f.minX - origin }
+                    if let last = tabs.last, let f = drag.tabFrames[last.id] { return f.maxX - origin }
+                    return 0
+                }()
+                DS.Color.locate
+                    .frame(width: TabMetrics.dropBar, height: TabMetrics.rowHeight)
+                    .offset(x: x - TabMetrics.dropBar / 2, y: TabMetrics.dragStrip)
+                    .a11y(.tabsDropIndicator, kind: "indicator")
+                    .transition(.opacity)
+            }
+            .allowsHitTesting(false)
+        }
     }
 
     /// 180 (220 com a janela ≥ 1280), encolhendo até o mínimo de 72 quando as tabs não cabem (03 §3.2).
@@ -94,7 +113,7 @@ struct TabRowView: View {
                 HStack(spacing: 0) {
                     ForEach(Array(model.tabs.enumerated()), id: \.element.id) { index, tab in
                         TabItemView(
-                            model: model, tab: tab, index: index, width: tabWidth, rowState: state, indicatorSpace: indicatorSpace)
+                            model: model, tab: tab, index: index, width: tabWidth, indicatorSpace: indicatorSpace)
                             .id(tab.id)
                     }
                 }
@@ -197,7 +216,6 @@ struct TabItemView: View {
     let tab: AgentBoxProtocol.Tab
     let index: Int
     let width: CGFloat
-    let rowState: TabRowState
     let indicatorSpace: Namespace.ID
     @Environment(\.actionRegistry) private var registry
     @State private var hovering = false
@@ -227,45 +245,52 @@ struct TabItemView: View {
         .background(unread && !isActive ? DS.Color.unreadTabOverlay : Color.clear)
         .overlay(alignment: .trailing) { DS.Color.border.frame(width: TabMetrics.hairline) }
         .overlay { MiddleClickCatcher { perform(.tabClose, .select(tabID)) } }
+        .overlay(alignment: .leading) {
+            if !renaming {
+                // Clique, duplo clique e arrasto: o ✕ à direita fica de fora e segue clicável.
+                PaneDragSource(
+                    controller: model.dragController, payload: .tab(tab.id), title: { title },
+                    onClick: { count in perform(count >= 2 ? .tabRename : .paneShow, .select(count >= 2 ? tabID : selectTarget)) }
+                )
+                .frame(width: max(TabMetrics.dropBar, width - TabMetrics.closeInset))
+            }
+        }
         .scaleEffect(dragging ? MotionTokens.Scale.dragLift : 1)
         .shadow(color: dragging ? DS.Color.border : .clear, radius: DS.Space.s1_5)
+        .opacity(draggedOut ? MotionTokens.Opacity.ghostIdle : 1)
         .offset(x: dragOffset)
         .zIndex(dragging ? 1 : 0)
         .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.fast), value: dragOffset)
+        .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.fast), value: draggedOut)
+        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { model.dragController.tabFrames[tab.id] = $0 }
         .onHover { hovering = $0 }
         .contextMenu { TabMenuItems(model: model, tab: tab) }
-        .simultaneousGesture(TapGesture(count: 2).onEnded { perform(.tabRename, .select(tabID)) })
-        .simultaneousGesture(reorderGesture)
         .transition(
             MotionPolicy.shared.reduceMotion
                 ? .opacity : .asymmetric(insertion: .opacity.combined(with: .scale(scale: MotionTokens.Scale.tabFromX, anchor: .leading)), removal: .opacity))
         .a11y(.tabsTab(tabID), kind: "tab", label: title, value: isActive ? "selected" : nil)
     }
 
-    private var dragging: Bool { rowState.drag?.tabID == tab.id }
+    /// A sessão de arrasto desta tab (ela é a arrastada), se houver.
+    private var session: PaneDragController.Session? {
+        guard let s = model.dragController.session, case .tab(let id) = s.payload, id == tab.id else { return nil }
+        return s
+    }
+
+    private var dragging: Bool { session?.overTabRow == true }
+
+    /// Arrastada para fora da tab row: fica na vaga, esmaecida, enquanto a etiqueta segue o cursor.
+    private var draggedOut: Bool { session.map { !$0.overTabRow } ?? false }
 
     /// Deslocamento em x: a tab arrastada segue o cursor; as outras abrem espaço (M-303).
     private var dragOffset: CGFloat {
-        guard let drag = rowState.drag else { return 0 }
-        if drag.tabID == tab.id { return drag.offset }
-        if drag.startIndex < drag.targetIndex, index > drag.startIndex, index <= drag.targetIndex { return -width }
-        if drag.startIndex > drag.targetIndex, index < drag.startIndex, index >= drag.targetIndex { return width }
+        guard let drag = model.dragController.session, case .tab(let id) = drag.payload, let start = drag.originIndex else { return 0 }
+        if id == tab.id { return drag.overTabRow ? drag.point.x - drag.start.x : 0 }
+        guard drag.overTabRow else { return 0 }
+        let target = model.dragController.reorderTarget(for: drag)
+        if start < target, index > start, index <= target { return -width }
+        if start > target, index < start, index >= target { return width }
         return 0
-    }
-
-    private var reorderGesture: some Gesture {
-        DragGesture(minimumDistance: TabMetrics.dragActivation, coordinateSpace: .local)
-            .onChanged { value in
-                let count = model.tabs.count
-                let moved = (value.translation.width / width).rounded()
-                let target = min(max(index + Int(moved), 0), max(count - 1, 0))
-                rowState.drag = TabRowState.Drag(tabID: tab.id, startIndex: index, offset: value.translation.width, targetIndex: target)
-            }
-            .onEnded { _ in
-                guard let drag = rowState.drag, drag.tabID == tab.id else { return }
-                rowState.drag = nil
-                if drag.targetIndex != drag.startIndex { perform(.tabReorder, .set("\(tabID)=\(drag.targetIndex)")) }
-            }
     }
 
     @ViewBuilder

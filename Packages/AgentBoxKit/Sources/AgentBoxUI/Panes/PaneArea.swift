@@ -23,6 +23,13 @@ final class ElementRegistration {
         store?.updateFrame(token, CGRect(x: rect.minX, y: top, width: rect.width, height: rect.height))
     }
 
+    /// Retângulo `rect` (espaço de `view`) em coordenadas da janela com o y do topo.
+    func updateFrame(of rect: CGRect, in view: NSView) {
+        guard let window = view.window, let content = window.contentView else { return }
+        let r = view.convert(rect, to: nil)
+        store?.updateFrame(token, CGRect(x: r.minX, y: content.bounds.height - r.maxY, width: r.width, height: r.height))
+    }
+
     func remove() { store?.unregister(token) }
 }
 
@@ -54,7 +61,7 @@ final class PaneContainerView: NSView {
 
     override var isFlipped: Bool { true }
 
-    init(entry: TerminalEntry, registry: ActionRegistry?, elements: UIElementStore?) {
+    init(entry: TerminalEntry, registry: ActionRegistry?, elements: UIElementStore?, drag: PaneDragController? = nil) {
         terminalID = entry.terminalID
         self.entry = entry
         self.elements = elements
@@ -62,6 +69,7 @@ final class PaneContainerView: NSView {
         elementStore = elements
         super.init(frame: .zero)
         chrome.terminalID = entry.terminalID
+        chrome.drag = drag
         wantsLayer = true
         layer?.masksToBounds = true
         dim.wantsLayer = true
@@ -495,6 +503,8 @@ final class PaneAreaView: NSView {
     private var emptyHost: NSHostingView<AnyView>?
     private var readyNotified: Set<UUID> = []
     private weak var lastFocusedHost: TerminalHostView?
+    /// Zonas de drop e prévia (F11): só existe enquanto há um arrasto sobre um pane.
+    private let dropOverlay: PaneDropOverlayView
 
     override var isFlipped: Bool { true }
 
@@ -503,10 +513,13 @@ final class PaneAreaView: NSView {
         self.registry = registry
         self.elements = elements
         self.router = router
+        dropOverlay = PaneDropOverlayView(elements: elements)
         super.init(frame: .zero)
         wantsLayer = true
         layer?.backgroundColor = DS.ColorSpec.canvas.nsColor.cgColor
         model.addListener { [weak self] in self?.modelChanged() }
+        model.dragController.paneArea = self
+        model.dragController.addListener { [weak self] in self?.dragChanged() }
     }
 
     @available(*, unavailable) required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }  // required init?(coder:) não usado
@@ -514,6 +527,35 @@ final class PaneAreaView: NSView {
     private func modelChanged() {
         reconcile()
         needsLayout = true
+    }
+
+    /// O pane (e a zona) sob o cursor durante um arrasto, em coordenadas desta view.
+    func dropHit(atWindowPoint point: NSPoint) -> (terminalID: UUID, zone: PaneDropZone, frame: CGRect)? {
+        guard model.isLoaded, let tab = model.activeTab else { return nil }
+        let local = convert(point, from: nil)
+        guard bounds.contains(local) else { return nil }
+        let expanded = model.expandedPane(in: tab)
+        let arrangement = tab.layout.arrangement(in: bounds)
+        for pane in tab.layout.panes {
+            guard case .terminal(let id) = pane.content else { continue }
+            if let expanded, expanded != pane.id { continue }
+            let frame = expanded == nil ? (arrangement.panes[pane.id] ?? .zero) : bounds
+            if frame.contains(local) { return (id, PaneDropZone.zone(at: local, in: frame), frame) }
+        }
+        return nil
+    }
+
+    private func dragChanged() {
+        let drag = model.dragController
+        var hover: (zone: PaneDropZone, outcome: DropOutcome, frame: CGRect)?
+        if case .pane(_, let zone, let outcome, let frame)? = drag.session?.target { hover = (zone, outcome, frame) }
+        if let hover {
+            if dropOverlay.superview == nil { addSubview(dropOverlay) }
+            dropOverlay.frame = bounds
+            dropOverlay.show(zone: hover.zone, outcome: hover.outcome, paneFrame: hover.frame)
+        } else if dropOverlay.superview != nil {
+            dropOverlay.hide()
+        }
     }
 
     /// Cria e remove containers conforme os terminais carregados.
@@ -526,7 +568,7 @@ final class PaneAreaView: NSView {
             readyNotified.remove(id)
         }
         for id in wanted where containers[id] == nil {
-            let container = PaneContainerView(entry: model.runtime.entry(for: id), registry: registry, elements: elements)
+            let container = PaneContainerView(entry: model.runtime.entry(for: id), registry: registry, elements: elements, drag: model.dragController)
             addSubview(container, positioned: .below, relativeTo: nil)
             containers[id] = container
         }
@@ -537,6 +579,10 @@ final class PaneAreaView: NSView {
         model.contentSize = bounds.size
         emptyHost?.frame = bounds
         position()
+        if dropOverlay.superview != nil {
+            dropOverlay.frame = bounds
+            addSubview(dropOverlay, positioned: .above, relativeTo: nil)
+        }
     }
 
     private func position() {
@@ -556,12 +602,14 @@ final class PaneAreaView: NSView {
             h.removeFromSuperview()
             emptyHost = nil
         }
-        for c in containers.values {
-            c.isHidden = true
-            c.setTreeVisible(false)
-        }
+        // Esconde só quem sai de cena: esconder e reexibir o pane focado a cada layout tira o teclado do terminal.
+        var shown: Set<UUID> = []
         var visibleDividers: Set<UUID> = []
         defer {
+            for (id, c) in containers where !shown.contains(id) {
+                c.isHidden = true
+                c.setTreeVisible(false)
+            }
             for (id, d) in dividers where !visibleDividers.contains(id) {
                 d.isHidden = true
                 d.setTreeVisible(false)
@@ -578,6 +626,7 @@ final class PaneAreaView: NSView {
             if let expandedPane, expandedPane != pane.id { continue }
             let frame = expandedPane == nil ? (arrangement.panes[pane.id] ?? .zero) : bounds
             guard frame.width > 0, frame.height > 0 else { continue }
+            shown.insert(terminalID)
             container.isHidden = false
             container.setTreeVisible(true)
             if container.frame != frame { container.frame = frame }

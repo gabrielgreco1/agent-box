@@ -72,6 +72,12 @@ extension A11yID {
     public static let tabsPaneActions = A11yID(unchecked: "tabs.paneActions")
     /// `tabs.rightPanelToggle`
     public static let tabsRightPanelToggle = A11yID(unchecked: "tabs.rightPanelToggle")
+    /// `tabs.dropIndicator`
+    public static let tabsDropIndicator = A11yID(unchecked: "tabs.dropIndicator")
+    /// `pane.dropOverlay`
+    public static let paneDropOverlay = A11yID(unchecked: "pane.dropOverlay")
+    /// `pane.dragGhost`
+    public static let paneDragGhost = A11yID(unchecked: "pane.dragGhost")
     /// `pane.empty`
     public static let paneEmpty = A11yID(unchecked: "pane.empty")
     /// `pane.empty.newAgent`
@@ -887,6 +893,11 @@ extension A11yID {
         A11yID(unchecked: "pane.divider.\(A11yID.segment(id))")
     }
 
+    /// `pane.dropZone.<zone>`
+    public static func paneDropZone(_ zone: String) -> A11yID {
+        A11yID(unchecked: "pane.dropZone.\(A11yID.segment(zone))")
+    }
+
     /// `overlay.<name>`
     public static func overlay(_ name: String) -> A11yID {
         A11yID(unchecked: "overlay.\(A11yID.segment(name))")
@@ -1329,6 +1340,7 @@ extension A11yID {
         A11yIDSpec(pattern: "tabs.quickCommands", surface: "Tabs"),
         A11yIDSpec(pattern: "tabs.paneActions", surface: "Tabs"),
         A11yIDSpec(pattern: "tabs.rightPanelToggle", surface: "Tabs"),
+        A11yIDSpec(pattern: "tabs.dropIndicator", surface: "Tabs"),
         A11yIDSpec(pattern: "pane.<id>", surface: "Panes"),
         A11yIDSpec(pattern: "pane.<id>.terminal", surface: "Panes"),
         A11yIDSpec(pattern: "pane.<id>.header", surface: "Panes"),
@@ -1366,6 +1378,9 @@ extension A11yID {
         A11yIDSpec(pattern: "pane.<id>.rateLimit", surface: "Panes"),
         A11yIDSpec(pattern: "pane.<id>.tooNarrow", surface: "Panes"),
         A11yIDSpec(pattern: "pane.divider.<id>", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.dropOverlay", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.dropZone.<zone>", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.dragGhost", surface: "Panes"),
         A11yIDSpec(pattern: "pane.empty", surface: "Panes"),
         A11yIDSpec(pattern: "pane.empty.newAgent", surface: "Panes"),
         A11yIDSpec(pattern: "pane.empty.newTerminal", surface: "Panes"),

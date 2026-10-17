@@ -40,6 +40,8 @@ final class PaneChromeModel {
     var subagentSession: UUID?
     var subagentMode: SubagentComputersMode = .off
     var subagentRestart = false
+    /// Arrasto do cabeçalho (F11): vira tab ou muda de lugar sobre outro pane.
+    var drag: PaneDragController?
 
     var id: String { terminalID.uuidString }
     var agentName: String { provider.isAgent ? ProviderAdapters.name(provider) : String(localized: "Terminal", bundle: .module) }
@@ -64,7 +66,12 @@ struct PaneHeaderView: View {
         }
         .padding(.horizontal, PaneMetrics.headerPaddingH)
         .frame(height: PaneMetrics.headerHeight)
-        .background(DS.Color.terminalBackground)
+        .background {
+            ZStack {
+                DS.Color.terminalBackground
+                PaneDragSource(controller: model.drag, payload: .pane(model.terminalID), title: { model.title })
+            }
+        }
         .overlay(alignment: .bottom) { DS.Color.paneTitleSeparator.frame(height: PaneMetrics.separator) }
         .a11y(.paneHeader(model.id), kind: "container", label: model.title)
     }
