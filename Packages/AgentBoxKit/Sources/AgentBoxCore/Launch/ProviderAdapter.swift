@@ -34,6 +34,9 @@ public struct AdapterContext: Sendable {
     public var newUUID: @Sendable () -> UUID
     /// Injeções por lançamento (Fatia 2+). `nil` na Fatia 1: o segmento `injected` fica vazio.
     public var injection: LaunchInjection?
+    /// Diz se uma conversa nativa com esse ID já existe em disco (Claude: transcript em `~/.claude/projects/*/<id>.jsonl`).
+    /// Relançar com `--session-id` de um ID que já existe falha com "Session ID … is already in use"; nesse caso usa `--resume`.
+    public var conversationExists: @Sendable (String) -> Bool = { ClaudeTranscripts.exists(id: $0) }
 
     public init(
         executablePath: String, cwd: String, runID: UUID, terminalID: UUID, launchDirectory: URL,
@@ -116,5 +119,16 @@ enum AdapterKit {
     ) {
         guard let value, !value.isEmpty else { return }
         if capabilities.supports(flag) { args += [flag, value] } else { warnings.append(unsupported(flag, adapter: adapter, field: field)) }
+    }
+}
+
+/// Transcripts do Claude Code por ID de sessão.
+public enum ClaudeTranscripts {
+    public static func exists(id: String, home: String = NSHomeDirectory()) -> Bool {
+        guard !id.isEmpty, !id.contains("/") else { return false }
+        let root = (home as NSString).appendingPathComponent(".claude/projects")
+        guard let dirs = try? FileManager.default.contentsOfDirectory(atPath: root) else { return false }
+        for dir in dirs where FileManager.default.fileExists(atPath: "\(root)/\(dir)/\(id).jsonl") { return true }
+        return false
     }
 }

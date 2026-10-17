@@ -55,7 +55,12 @@ public struct ClaudeAdapter: ProviderAdapter {
             warnings.append(LaunchWarning(.resumeWithoutID, "No conversation ID was captured; continuing the last conversation in this folder"))
             if capabilities.supports("--continue") { identity = ["-c"] }
         case .automatic:
-            if capabilities.supports("--session-id") {
+            if let existing = launch.nativeSessionID, context.conversationExists(existing), capabilities.supports("--resume") {
+                // Relançamento (Restart/Resume/reabertura) de uma conversa que já existe: retoma em vez de recriar o ID.
+                resuming = true
+                identity = ["--resume", existing]
+                nativeID = existing
+            } else if capabilities.supports("--session-id") {
                 let id = launch.nativeSessionID ?? context.newUUID().uuidString.lowercased()
                 identity = ["--session-id", id]
                 nativeID = id
