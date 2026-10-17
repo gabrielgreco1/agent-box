@@ -292,6 +292,15 @@ final class TerminalRuntime {
 
     func existingEntry(for terminalID: UUID) -> TerminalEntry? { entries[terminalID] }
 
+    /// Arrasto de divisor ou animação de painel em andamento: nenhum PTY recebe resize até acabar, e então cada um recebe um só
+    /// (04 R2/MA6, 06 §1.8). O emulador da UI continua acompanhando o layout quadro a quadro.
+    func setLayoutTransition(_ active: Bool) {
+        for entry in entries.values {
+            guard let coordinator = entry.binding?.resizeCoordinator else { continue }
+            if active { coordinator.beginTransition() } else { coordinator.endTransition() }
+        }
+    }
+
     /// Solta a view e a ligação (o terminal foi fechado). Não mata o processo: quem fecha chama `kill` antes.
     func dispose(_ terminalID: UUID) {
         guard let entry = entries.removeValue(forKey: terminalID) else { return }

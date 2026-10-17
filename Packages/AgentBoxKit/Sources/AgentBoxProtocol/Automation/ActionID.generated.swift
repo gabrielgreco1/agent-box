@@ -352,6 +352,28 @@ extension ActionID {
     public static let dialogAboutCopy = ActionID(unchecked: "dialog.about.copy")
     public static let dialogNewBatchConfirm = ActionID(unchecked: "dialog.newBatch.confirm")
     public static let dialogNewBatchImportCSV = ActionID(unchecked: "dialog.newBatch.importCSV")
+    public static let rightPanelToggleFiles = ActionID(unchecked: "rightPanel.toggleFiles")
+    public static let rightPanelToggleInsights = ActionID(unchecked: "rightPanel.toggleInsights")
+    public static let rightPanelToggle = ActionID(unchecked: "rightPanel.toggle")
+    public static let rightPanelMinimize = ActionID(unchecked: "rightPanel.minimize")
+    public static let rightPanelMove = ActionID(unchecked: "rightPanel.move")
+    public static let rightPanelSwap = ActionID(unchecked: "rightPanel.swap")
+    public static let rightPanelSetWidth = ActionID(unchecked: "rightPanel.setWidth")
+    public static let rightPanelSetSplit = ActionID(unchecked: "rightPanel.setSplit")
+    public static let filesOpen = ActionID(unchecked: "files.open")
+    public static let filesOpenExternal = ActionID(unchecked: "files.openExternal")
+    public static let filesCloseFile = ActionID(unchecked: "files.closeFile")
+    public static let filesTogglePin = ActionID(unchecked: "files.togglePin")
+    public static let filesShowSessionFolder = ActionID(unchecked: "files.showSessionFolder")
+    public static let filesToggleIgnored = ActionID(unchecked: "files.toggleIgnored")
+    public static let filesRefresh = ActionID(unchecked: "files.refresh")
+    public static let filesFind = ActionID(unchecked: "files.find")
+    public static let filesFindNext = ActionID(unchecked: "files.findNext")
+    public static let filesFindPrevious = ActionID(unchecked: "files.findPrevious")
+    public static let filesFindClose = ActionID(unchecked: "files.findClose")
+    public static let filesCopyPath = ActionID(unchecked: "files.copyPath")
+    public static let filesOpenIn = ActionID(unchecked: "files.openIn")
+    public static let filesOpenInTarget = ActionID(unchecked: "files.openInTarget")
 }
 
 extension ActionID {
@@ -707,5 +729,27 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "dialog.about.copy"), label: "Copy Version Info (§16.14)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.newBatch.confirm"), label: "Start Batch", shortcut: "⌘↵", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dialog.newBatch.importCSV"), label: "Import CSV… (§16.15)", shortcut: "⌘↵", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "rightPanel.toggleFiles"), label: "Toggle Files", shortcut: "⌥⌘1", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "rightPanel.toggleInsights"), label: "Toggle Insights", shortcut: "⌥⌘2", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "rightPanel.toggle"), label: "Toggle Right Panel", shortcut: "⌥⌘0", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "rightPanel.minimize"), label: "Minimize Module", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "rightPanel.move"), label: "Move Module", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "rightPanel.swap"), label: "Swap Modules", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "rightPanel.setWidth"), label: "Set Panel Width", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "rightPanel.setSplit"), label: "Set Panel Split", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "files.open"), label: "Open File or Folder", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "files.openExternal"), label: "Open in External Editor", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "files.closeFile"), label: "Back to Files", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "files.togglePin"), label: "Pin Folder / Follow Terminal", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "files.showSessionFolder"), label: "Show Session Folder", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "files.toggleIgnored"), label: "Show / Hide Ignored Files", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "files.refresh"), label: "Refresh (Files)", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "files.find"), label: "Find in File", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "files.findNext"), label: "Find Next", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "files.findPrevious"), label: "Find Previous", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "files.findClose"), label: "Close Find", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "files.copyPath"), label: "Copy Path", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "files.openIn"), label: "Open in…", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "files.openInTarget"), label: "Open in Target", shortcut: "", slice: .slice1),
     ]
 }

@@ -776,6 +776,17 @@ O que está carregado nesta sessão (`audit/08 N24`, R9.1). Somente leitura na v
 - Rodapé: `[Open Library]` (página §13).
 - IDs: `rightPanel.context.item.<kind>.<id>`, `.toggle`.
 
+### 10.7 Contêiner de módulos (Files, Insights, Computers)
+
+Decisão P22 (spec `10-right-panel.md`): o painel direito é um contêiner de módulos, não mais uma activity bar de abas. Esta subseção vale onde divergir de §10.1–§10.6, que passam a ser módulos futuros.
+
+- **Layout:** faixa de 36 alinhada com a tab row (os botões Files · Insights · painel flutuam no canto superior direito da janela, sobre a tab row com o painel fechado e sobre esta faixa com ele aberto) e, abaixo, até dois módulos de cima para baixo, cada um com header de 32 (ícone, título, acessório do módulo, `Minus` para minimizar; arrastar o header troca a posição). Divisor de 1 pt com área de arrasto de 9 entre os módulos; fração do módulo de cima padrão 2/3; nenhum módulo abaixo de 128 (header + 96).
+- **Largura:** padrão 380 (260–720), arrastando o divisor nativo entre o centro e o painel; o centro nunca fica abaixo de 320. Persistida em `ui_state` (`rightPanel`) com a ordem, a visibilidade e a fração. Janela < 1100 recolhe o painel sozinho (reabre ao alargar); abrir por botão ou atalho abaixo disso mantém aberto até a janela alargar ou o usuário fechar. Sem largura para o mínimo de 260: toast `The window is too narrow for the right panel.`.
+- **Modo compacto:** painel < 320: headers só com ícone, chip só com ícone, sem caminho nem contagem.
+- **Motion (M-108):** abre 0,30 `expoOut` e fecha 0,20 `exitClip`, por recorte a partir da borda esquerda; o split muda de largura uma vez (primeiro quadro da abertura, último do fechamento); o arrasto de qualquer divisor da janela segura o resize do PTY até soltar. Reduce Motion: crossfade 0,15.
+- **Files:** árvore do diretório da sessão; segue o cwd do terminal focado (OSC 7 e `cwd` dos hooks) com o chip `Following <Claude|Codex|OpenCode|Terminal>`; clicar no chip fixa a pasta (`Pinned`). Ignora `.git`, `node_modules` e o `.gitignore` (olho alterna). Alterados pelo `git status` com letra M/A/D/U/R e ponto nas pastas. Arquivo abre no visualizador (substitui a árvore, `←` volta): número de linha, realce leve, calha de alterações do git, busca, `Open in…`; ⌘-clique numa linha abre no editor externo.
+- **Computers** é o terceiro módulo (sem botão na faixa): ⇧⌘C o mostra no painel.
+
 ---
 
 ## 11. Viewer de computador
@@ -1432,6 +1443,7 @@ Implementação: `KeyBindingRegistry` com escopo explícito por atalho. Um teste
 | Terminal | Open link | ⌘-clique | Terminal | |
 | Panels | Toggle Sidebar | ⌘B | Global | |
 | Panels | Toggle Right Panel | ⌘L | Global | **Fatia 2 em diante.** Na Fatia 1 o painel direito é oculto (09 T1-10): o atalho e o item de menu não existem |
+| Panels | Toggle Files / Insights / Right Panel | ⌥⌘1 / ⌥⌘2 / ⌥⌘0 | Global | 10-right-panel §1: liga/desliga o módulo (botões Files e Insights da faixa de topo) e o painel inteiro; ⌥ com dígito não é do terminal (só ⌥ + letra é) |
 | Panels | Source Control | ⇧⌘G | Global (exceto Find) | |
 | Panels | Computers panel | ⇧⌘C | Global | aba da sessão; a página global Computers não tem atalho |
 | Panels | Conversations | ⇧⌘H | Global | |
@@ -1483,6 +1495,8 @@ Atalhos reservados para o terminal (nunca capturados pelo app): ⌃ + letra, ⌥
 | Palette | `overlay.palette`, `overlay.palette.input`, `overlay.palette.row.<kind>.<id>`, `overlay.palette.filter`, `overlay.palette.insertMode` |
 | Inbox | `inbox`, `inbox.filter`, `inbox.markAllRead`, `inbox.empty`, `inbox.item.<eventId>[.markRead/.takeOver]` |
 | Painel direito | `rightPanel`, `rightPanel.tab.<name>`, `rightPanel.tabs.indicator`, `rightPanel.sourceControl.{branch,refresh,pr,createPR,change.<path>}`, `rightPanel.checks.{row.<name>,refresh,sendFailures}`, `rightPanel.computers.{new,empty,thumb.<computerId>,thumb.<computerId>.takeOver}`, `rightPanel.conversations.{search,scope,row.<id>,row.<id>.resume}`, `rightPanel.context.item.<kind>.<id>[.toggle/.insert]`, `rightPanel.computer.<id>.tab.<name>` |
+| Painel direito (contêiner e módulos, 10-right-panel) | `rightPanel.module.<id>[.header/.minimize]`, `rightPanel.divider`, `rightPanel.insights.empty`, `tabs.filesToggle`, `tabs.insightsToggle` |
+| Painel direito (Files, 10-right-panel §2) | `rightPanel.files`, `rightPanel.files.chip`, `rightPanel.files.root`, `rightPanel.files.sessionFolder`, `rightPanel.files.showIgnored`, `rightPanel.files.refresh`, `rightPanel.files.tree`, `rightPanel.files.empty`, `rightPanel.files.row.<path>`, `rightPanel.files.viewer[.back/.name/.find/.findField/.findCount/.findNext/.findPrevious/.findClose/.openIn/.copyPath/.code/.empty]` |
 | Viewer | `viewer.<computerId>`, `.name`, `.mode`, `.url`, `.controlPill`, `.controlFrame`, `.ghostCursor`, `.clickRipple`, `.takeOver`, `.handBack[.note/.confirm]`, `.forceTakeOver`, `.helpBanner[.decline]`, `.connecting`, `.status`, `.disconnected`, `.popOut`, `.more`, `.strip[.thumb.<otherId>]`, `.keyboardBadge` |
 | Páginas | `computers.page`, `computers.cleanUp` (v1.1), `computers.dockerBanner`, `computers.empty`, `computers.row.<id>`, `computers.queue.row.<id>.cancel`; `batch.<batchId>.page`, `batch.<batchId>.row.<childId>`, `batch.<batchId>.collectAll`, `batch.<batchId>.archive`; `library.page`, `library.section`, `library.search`, `library.source`, `library.new`, `library.empty`, `library.row.<kind>.<id>`, `library.detail.{newSession,enable,insert,openInEditor,reveal}`, `library.profile.{name,agent,model,permissions,args,env,default}` |
 | Settings | `settings.page`, `settings.back`, `settings.search`, `settings.nav.<section>`, `settings.<section>.<key>`, `settings.computers.proxies.row.<proxyId>`, `settings.computers.proxies.add`, `settings.computers.proxies.test` |
@@ -1853,3 +1867,24 @@ Cada botão e checkbox dos diálogos de §16 é uma ação. `Cancel` (Esc) exist
 | Rename Branch (§16.13) | `dialog.renameBranch.confirm` | — | Renomeia a branch local (`session.renameBranch`) | Nome vazio ou igual: `Enter a new name.` | v1 | `testAction_dialog_renameBranch_confirm` |
 | Licenses… / Copy Version Info (§16.14) | `dialog.about.licenses` / `dialog.about.copy` | — | Lista as licenças / copia versão, build, protocolo e schema | — | v1 | `testAction_dialog_about_licenses` · `testAction_dialog_about_copy` |
 | Start Batch / Import CSV… (§16.15) | `dialog.newBatch.confirm` / `dialog.newBatch.importCSV` | ⌘↵ | Inicia o lote (abre o terminal Claude pai) / importa os alvos de um CSV | Sem alvos: `Add at least one target.` | v1 (Fatia 3) | `testAction_dialog_newBatch_confirm` · `testAction_dialog_newBatch_importCSV` |
+
+### 24.10 Painel direito: contêiner e Files (10-right-panel)
+
+| Ação | ActionID | Atalho | Efeito | Desabilitado (tooltip) | Versão | Teste (XCUITest) |
+|---|---|---|---|---|---|---|
+| Toggle Files / Toggle Insights | `rightPanel.toggleFiles` / `rightPanel.toggleInsights` | ⌥⌘1 / ⌥⌘2 | Liga ou desliga o módulo (abre o painel se estava fechado); o botão da faixa de topo mostra o estado | — | v1 | `testAction_rightPanel_toggleFiles` · `testAction_rightPanel_toggleInsights` |
+| Toggle Right Panel | `rightPanel.toggle` | ⌥⌘0 | Fecha o painel inteiro ou o reabre como estava | — | v1 | `testAction_rightPanel_toggle` |
+| Minimize Module | `rightPanel.minimize` | — | `select(<módulo>)`: esconde o módulo; o outro ocupa o painel; esconder o último fecha o painel | Nenhum aberto: `No module is open.` | v1 | `testAction_rightPanel_minimize` |
+| Move Module | `rightPanel.move` | — | `select(<módulo>:top ou bottom)`: solta o header sobre o slot e troca de posição | — | v1 | `testAction_rightPanel_move` |
+| Swap Modules | `rightPanel.swap` | — | Troca o módulo de cima com o de baixo | Menos de dois abertos: `Open both modules to swap them.` | v1 | `testAction_rightPanel_swap` |
+| Set Panel Width / Set Panel Split | `rightPanel.setWidth` / `rightPanel.setSplit` | — | `set(<pontos>)` / `set(<fração 0…1>)`: mesma coisa que arrastar, para automação | — | v1 | `testAction_rightPanel_setWidth` · `testAction_rightPanel_setSplit` |
+| Open File or Folder | `files.open` | — | `select(<caminho>)`: arquivo abre no visualizador (⌘ pressionado: no editor externo); pasta expande ou recolhe | — | v1 | `testAction_files_open` |
+| Open in External Editor | `files.openExternal` | — | `select(<caminho>)`: abre no editor preferido ou no app padrão | — | v1 | `testAction_files_openExternal` |
+| Back to Files | `files.closeFile` | — | Fecha o visualizador e volta à árvore | Nenhum arquivo aberto: `No file is open.` | v1 | `testAction_files_closeFile` |
+| Pin Folder / Follow Terminal | `files.togglePin` | — | Alterna o chip: `Pinned` na pasta atual ou `Following <agente>` | Sem sessão: `Select a session first.` | v1 | `testAction_files_togglePin` |
+| Show Session Folder | `files.showSessionFolder` | — | Fixa a árvore na pasta da sessão | Já nela: `Already showing the session folder.` | v1 | `testAction_files_showSessionFolder` |
+| Show / Hide Ignored Files | `files.toggleIgnored` | — | Alterna `.git`, `node_modules` e o que o `.gitignore` ignora (esmaecidos) | — | v1 | `testAction_files_toggleIgnored` |
+| Refresh (Files) | `files.refresh` | — | Relê a árvore, o git e o arquivo aberto | Sem sessão: `Select a session first.` | v1 | `testAction_files_refresh` |
+| Find in File / Find Next / Find Previous / Close Find | `files.find` / `files.findNext` / `files.findPrevious` / `files.findClose` | — | Barra de busca do visualizador (`set(<texto>)` busca direto); navega entre ocorrências | Sem arquivo: `Open a file first.`; sem ocorrências: `No results` | v1 | `testAction_files_find` · `testAction_files_findNext` · `testAction_files_findPrevious` · `testAction_files_findClose` |
+| Copy Path | `files.copyPath` | — | Copia o caminho do arquivo aberto; toast `Path copied.` | Sem arquivo: `No file is open.` | v1 | `testAction_files_copyPath` |
+| Open in… / Open in Target | `files.openIn` / `files.openInTarget` | — | Menu com Finder, app padrão e editores; `select(<alvo>)` abre o arquivo aberto | Sem arquivo: `No file is open.` | v1 | `testAction_files_openIn` · `testAction_files_openInTarget` |

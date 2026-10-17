@@ -71,6 +71,10 @@ enum MainMenu {
         main.addItem(
             submenu(title: "View") { m in
                 m.addItem(ActionMenuItem(.viewToggleSidebar, title: "Toggle Sidebar", key: "b", registry: registry))
+                m.addItem(ActionMenuItem(.rightPanelToggleFiles, title: "Files", key: "1", modifiers: [.option, .command], registry: registry))
+                m.addItem(ActionMenuItem(.rightPanelToggleInsights, title: "Insights", key: "2", modifiers: [.option, .command], registry: registry))
+                m.addItem(ActionMenuItem(.rightPanelToggle, title: "Toggle Right Panel", key: "0", modifiers: [.option, .command], registry: registry))
+                m.addItem(ActionMenuItem(.rightPanelSwap, title: "Swap Right Panel Modules", key: "", registry: registry))
                 m.addItem(ActionMenuItem(.panelComputers, title: "Computers Panel", key: "c", modifiers: [.shift, .command], registry: registry))
                 m.addItem(ActionMenuItem(.pageInbox, title: "Inbox", key: "i", modifiers: [.shift, .command], registry: registry))
                 m.addItem(ActionMenuItem(.navBack, title: "Back", key: left, modifiers: [.option, .command], registry: registry))

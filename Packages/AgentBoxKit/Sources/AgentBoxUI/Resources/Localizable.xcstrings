@@ -78,6 +78,17 @@
         }
       }
     },
+    "%@ isn't installed.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ isn't installed."
+          }
+        }
+      }
+    },
     "%@, %lld sessions": {
       "extractionState": "manual",
       "localizations": {
@@ -107,6 +118,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld agents are still running."
+          }
+        }
+      }
+    },
+    "%lld of %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld of %lld"
           }
         }
       }
@@ -551,6 +573,17 @@
         }
       }
     },
+    "Already showing the session folder.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Already showing the session folder."
+          }
+        }
+      }
+    },
     "Also delete run folders": {
       "extractionState": "manual",
       "localizations": {
@@ -679,6 +712,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Back to App"
+          }
+        }
+      }
+    },
+    "Back to Files": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back to Files"
           }
         }
       }
@@ -991,6 +1035,17 @@
         }
       }
     },
+    "Choose an editor in Settings › General.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose an editor in Settings › General."
+          }
+        }
+      }
+    },
     "Choose…": {
       "extractionState": "manual",
       "localizations": {
@@ -1086,6 +1141,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Close %lld terminals?"
+          }
+        }
+      }
+    },
+    "Close Find": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close Find"
           }
         }
       }
@@ -1431,6 +1497,28 @@
         }
       }
     },
+    "Couldn't open in %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't open in %@."
+          }
+        }
+      }
+    },
+    "Couldn't open the file.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't open the file."
+          }
+        }
+      }
+    },
     "Couldn't remove the project.": {
       "extractionState": "manual",
       "localizations": {
@@ -1614,6 +1702,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Default"
+          }
+        }
+      }
+    },
+    "Default App": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default App"
           }
         }
       }
@@ -1816,6 +1915,17 @@
         }
       }
     },
+    "Drag to move this module": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag to move this module"
+          }
+        }
+      }
+    },
     "Duplicate": {
       "extractionState": "manual",
       "localizations": {
@@ -1970,6 +2080,17 @@
         }
       }
     },
+    "Files": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Files"
+          }
+        }
+      }
+    },
     "Filter": {
       "extractionState": "manual",
       "localizations": {
@@ -1981,6 +2102,17 @@
         }
       }
     },
+    "Find in File": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find in File"
+          }
+        }
+      }
+    },
     "Find in terminal…": {
       "extractionState": "manual",
       "localizations": {
@@ -1988,6 +2120,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Find in terminal…"
+          }
+        }
+      }
+    },
+    "Finder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finder"
           }
         }
       }
@@ -2021,6 +2164,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Folders"
+          }
+        }
+      }
+    },
+    "Following %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Following %@"
+          }
+        }
+      }
+    },
+    "Following session": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Following session"
+          }
+        }
+      }
+    },
+    "Following the focused terminal's folder. Click to pin this folder.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Following the focused terminal's folder. Click to pin this folder."
           }
         }
       }
@@ -2157,6 +2333,17 @@
         }
       }
     },
+    "Hide Ignored Files": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide Ignored Files"
+          }
+        }
+      }
+    },
     "Hide Project": {
       "extractionState": "manual",
       "localizations": {
@@ -2212,6 +2399,17 @@
         }
       }
     },
+    "Imported from Orca": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Imported from Orca"
+          }
+        }
+      }
+    },
     "Inbox": {
       "extractionState": "manual",
       "localizations": {
@@ -2219,6 +2417,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Inbox"
+          }
+        }
+      }
+    },
+    "Insights": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Insights"
           }
         }
       }
@@ -2531,6 +2740,17 @@
         }
       }
     },
+    "Minimize": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minimize"
+          }
+        }
+      }
+    },
     "Mode": {
       "extractionState": "manual",
       "localizations": {
@@ -2839,6 +3059,17 @@
         }
       }
     },
+    "Next Match": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next Match"
+          }
+        }
+      }
+    },
     "No Claude usage found yet.": {
       "extractionState": "manual",
       "localizations": {
@@ -2916,6 +3147,17 @@
         }
       }
     },
+    "No file is open.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No file is open."
+          }
+        }
+      }
+    },
     "No folder chosen": {
       "extractionState": "manual",
       "localizations": {
@@ -2923,6 +3165,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "No folder chosen"
+          }
+        }
+      }
+    },
+    "No module is open.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No module is open."
           }
         }
       }
@@ -3114,6 +3367,28 @@
         }
       }
     },
+    "Off": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off"
+          }
+        }
+      }
+    },
+    "On": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On"
+          }
+        }
+      }
+    },
     "Open": {
       "extractionState": "manual",
       "localizations": {
@@ -3147,6 +3422,28 @@
         }
       }
     },
+    "Open a file first.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open a file first."
+          }
+        }
+      }
+    },
+    "Open both modules to swap them.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open both modules to swap them."
+          }
+        }
+      }
+    },
     "Open in Editor": {
       "extractionState": "manual",
       "localizations": {
@@ -3154,6 +3451,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Open in Editor"
+          }
+        }
+      }
+    },
+    "Open in…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open in…"
           }
         }
       }
@@ -3213,6 +3521,17 @@
         }
       }
     },
+    "Path copied.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Path copied."
+          }
+        }
+      }
+    },
     "Permissions": {
       "extractionState": "manual",
       "localizations": {
@@ -3231,6 +3550,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pick the folder the session works in. Agent Box won't create or delete anything in it."
+          }
+        }
+      }
+    },
+    "Pinned": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pinned"
+          }
+        }
+      }
+    },
+    "Pinned to this folder. Click to follow the terminal again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pinned to this folder. Click to follow the terminal again."
           }
         }
       }
@@ -3308,6 +3649,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Preview"
+          }
+        }
+      }
+    },
+    "Previous Match": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previous Match"
           }
         }
       }
@@ -3473,6 +3825,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reconnected to %lld running terminals."
+          }
+        }
+      }
+    },
+    "Refresh": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh"
           }
         }
       }
@@ -3840,6 +4203,17 @@
         }
       }
     },
+    "Select a session to browse its files.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select a session to browse its files."
+          }
+        }
+      }
+    },
     "Send Test Notification": {
       "extractionState": "manual",
       "localizations": {
@@ -3994,6 +4368,28 @@
         }
       }
     },
+    "Show Ignored Files": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Ignored Files"
+          }
+        }
+      }
+    },
+    "Show Session Folder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Session Folder"
+          }
+        }
+      }
+    },
     "Show less": {
       "extractionState": "manual",
       "localizations": {
@@ -4001,6 +4397,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Show less"
+          }
+        }
+      }
+    },
+    "Showing only the first part of this large file.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Showing only the first part of this large file."
           }
         }
       }
@@ -4544,6 +4951,17 @@
         }
       }
     },
+    "The window is too narrow for the right panel.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The window is too narrow for the right panel."
+          }
+        }
+      }
+    },
     "Theme": {
       "extractionState": "manual",
       "localizations": {
@@ -4562,6 +4980,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "This computer is stopped."
+          }
+        }
+      }
+    },
+    "This file isn't text. Open it in another app.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This file isn't text. Open it in another app."
+          }
+        }
+      }
+    },
+    "This folder is empty.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This folder is empty."
           }
         }
       }
@@ -4606,6 +5046,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Today"
+          }
+        }
+      }
+    },
+    "Toggle Right Panel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toggle Right Panel"
           }
         }
       }
@@ -4705,6 +5156,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Up"
+          }
+        }
+      }
+    },
+    "Usage and machine insights will appear here.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usage and machine insights will appear here."
           }
         }
       }

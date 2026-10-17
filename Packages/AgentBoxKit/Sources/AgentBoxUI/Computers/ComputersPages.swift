@@ -108,55 +108,37 @@ struct ComputerThumbnailView: View {
 
 // MARK: Painel direito: aba Computers (03 §10.4)
 
+/// Corpo do módulo Computers do painel direito (03 §10.4). O header (título e resumo) é do contêiner (`ComputersModule`).
 struct ComputersPanelView: View {
     let controller: ComputersController
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 0) {
-                ActionButton(.panelComputers, id: .rightPanelTab("computers"), tooltip: String(localized: "Computers", bundle: .module)) {
-                    Image(systemName: "display")
+        ScrollView {
+            LazyVStack(spacing: DS.Space.s3) {
+                if controller.model.rows.isEmpty {
+                    Text("No computers in this session. Agents create them when they need a browser.", bundle: .module)
+                        .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).multilineTextAlignment(.center)
+                        .padding(DS.Space.s4)
+                        .a11y(.rightPanelComputersEmpty, kind: "text")
                 }
-                .buttonStyle(DSIconButtonStyle(.activity, active: true))
-                Spacer(minLength: 0)
-            }
-            .frame(height: DSIconButtonVariant.activity.box.height)
-            .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
-            HStack {
-                Text("Computers", bundle: .module).dsFont(DS.Font.sectionLabel).foregroundStyle(DS.Color.textPrimary)
-                Text(verbatim: controller.model.summaryText).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
-                Spacer(minLength: 0)
-            }
-            .padding(.horizontal, DS.Space.s3)
-            .frame(height: DS.Space.s8)
-            ScrollView {
-                LazyVStack(spacing: DS.Space.s3) {
-                    if controller.model.rows.isEmpty {
-                        Text("No computers in this session. Agents create them when they need a browser.", bundle: .module)
-                            .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).multilineTextAlignment(.center)
-                            .padding(DS.Space.s4)
-                            .a11y(.rightPanelComputersEmpty, kind: "text")
-                    }
-                    ForEach(controller.model.rows) { row in
-                        ZStack(alignment: .bottomTrailing) {
-                            ActionButton(.computerOpenViewer, argument: .select(row.id)) {
-                                ComputerThumbnailView(row: row)
-                            }
-                            .buttonStyle(.plain)
-                            if row.snapshot.control == .agent {
-                                DSButton(.computerTakeOver, id: .rightPanelComputersThumbTakeOver(row.id), "Take Over", variant: .primary, size: .xs, argument: .select(row.id))
-                                    .padding(.trailing, DS.Space.s2).padding(.bottom, DS.Space.s8)
-                            }
+                ForEach(controller.model.rows) { row in
+                    ZStack(alignment: .bottomTrailing) {
+                        ActionButton(.computerOpenViewer, argument: .select(row.id)) {
+                            ComputerThumbnailView(row: row)
                         }
-                        .a11y(.rightPanelComputersThumb(row.id), kind: "thumbnail", label: row.id, value: row.snapshot.control.rawValue)
+                        .buttonStyle(.plain)
+                        if row.snapshot.control == .agent {
+                            DSButton(.computerTakeOver, id: .rightPanelComputersThumbTakeOver(row.id), "Take Over", variant: .primary, size: .xs, argument: .select(row.id))
+                                .padding(.trailing, DS.Space.s2).padding(.bottom, DS.Space.s8)
+                        }
                     }
+                    .a11y(.rightPanelComputersThumb(row.id), kind: "thumbnail", label: row.id, value: row.snapshot.control.rawValue)
                 }
-                .padding(DS.Space.s3)
             }
+            .padding(DS.Space.s3)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(DS.Color.panel)
-        .a11y(.rightPanel, kind: "container")
     }
 }
 

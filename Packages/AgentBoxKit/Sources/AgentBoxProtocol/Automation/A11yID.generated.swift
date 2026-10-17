@@ -212,6 +212,56 @@ extension A11yID {
     public static let rightPanelConversationsSearch = A11yID(unchecked: "rightPanel.conversations.search")
     /// `rightPanel.conversations.scope`
     public static let rightPanelConversationsScope = A11yID(unchecked: "rightPanel.conversations.scope")
+    /// `rightPanel.divider`
+    public static let rightPanelDivider = A11yID(unchecked: "rightPanel.divider")
+    /// `rightPanel.insights.empty`
+    public static let rightPanelInsightsEmpty = A11yID(unchecked: "rightPanel.insights.empty")
+    /// `tabs.filesToggle`
+    public static let tabsFilesToggle = A11yID(unchecked: "tabs.filesToggle")
+    /// `tabs.insightsToggle`
+    public static let tabsInsightsToggle = A11yID(unchecked: "tabs.insightsToggle")
+    /// `rightPanel.files`
+    public static let rightPanelFiles = A11yID(unchecked: "rightPanel.files")
+    /// `rightPanel.files.chip`
+    public static let rightPanelFilesChip = A11yID(unchecked: "rightPanel.files.chip")
+    /// `rightPanel.files.root`
+    public static let rightPanelFilesRoot = A11yID(unchecked: "rightPanel.files.root")
+    /// `rightPanel.files.sessionFolder`
+    public static let rightPanelFilesSessionFolder = A11yID(unchecked: "rightPanel.files.sessionFolder")
+    /// `rightPanel.files.showIgnored`
+    public static let rightPanelFilesShowIgnored = A11yID(unchecked: "rightPanel.files.showIgnored")
+    /// `rightPanel.files.refresh`
+    public static let rightPanelFilesRefresh = A11yID(unchecked: "rightPanel.files.refresh")
+    /// `rightPanel.files.tree`
+    public static let rightPanelFilesTree = A11yID(unchecked: "rightPanel.files.tree")
+    /// `rightPanel.files.empty`
+    public static let rightPanelFilesEmpty = A11yID(unchecked: "rightPanel.files.empty")
+    /// `rightPanel.files.viewer`
+    public static let rightPanelFilesViewer = A11yID(unchecked: "rightPanel.files.viewer")
+    /// `rightPanel.files.viewer.back`
+    public static let rightPanelFilesViewerBack = A11yID(unchecked: "rightPanel.files.viewer.back")
+    /// `rightPanel.files.viewer.name`
+    public static let rightPanelFilesViewerName = A11yID(unchecked: "rightPanel.files.viewer.name")
+    /// `rightPanel.files.viewer.find`
+    public static let rightPanelFilesViewerFind = A11yID(unchecked: "rightPanel.files.viewer.find")
+    /// `rightPanel.files.viewer.findField`
+    public static let rightPanelFilesViewerFindField = A11yID(unchecked: "rightPanel.files.viewer.findField")
+    /// `rightPanel.files.viewer.findCount`
+    public static let rightPanelFilesViewerFindCount = A11yID(unchecked: "rightPanel.files.viewer.findCount")
+    /// `rightPanel.files.viewer.findNext`
+    public static let rightPanelFilesViewerFindNext = A11yID(unchecked: "rightPanel.files.viewer.findNext")
+    /// `rightPanel.files.viewer.findPrevious`
+    public static let rightPanelFilesViewerFindPrevious = A11yID(unchecked: "rightPanel.files.viewer.findPrevious")
+    /// `rightPanel.files.viewer.findClose`
+    public static let rightPanelFilesViewerFindClose = A11yID(unchecked: "rightPanel.files.viewer.findClose")
+    /// `rightPanel.files.viewer.openIn`
+    public static let rightPanelFilesViewerOpenIn = A11yID(unchecked: "rightPanel.files.viewer.openIn")
+    /// `rightPanel.files.viewer.copyPath`
+    public static let rightPanelFilesViewerCopyPath = A11yID(unchecked: "rightPanel.files.viewer.copyPath")
+    /// `rightPanel.files.viewer.code`
+    public static let rightPanelFilesViewerCode = A11yID(unchecked: "rightPanel.files.viewer.code")
+    /// `rightPanel.files.viewer.empty`
+    public static let rightPanelFilesViewerEmpty = A11yID(unchecked: "rightPanel.files.viewer.empty")
     /// `computers.page`
     public static let computersPage = A11yID(unchecked: "computers.page")
     /// `computers.cleanUp`
@@ -890,6 +940,26 @@ extension A11yID {
         A11yID(unchecked: "rightPanel.computer.\(A11yID.segment(id)).tab.\(A11yID.segment(name))")
     }
 
+    /// `rightPanel.module.<id>`
+    public static func rightPanelModule(_ id: String) -> A11yID {
+        A11yID(unchecked: "rightPanel.module.\(A11yID.segment(id))")
+    }
+
+    /// `rightPanel.module.<id>.header`
+    public static func rightPanelModuleHeader(_ id: String) -> A11yID {
+        A11yID(unchecked: "rightPanel.module.\(A11yID.segment(id)).header")
+    }
+
+    /// `rightPanel.module.<id>.minimize`
+    public static func rightPanelModuleMinimize(_ id: String) -> A11yID {
+        A11yID(unchecked: "rightPanel.module.\(A11yID.segment(id)).minimize")
+    }
+
+    /// `rightPanel.files.row.<path>`
+    public static func rightPanelFilesRow(_ path: String) -> A11yID {
+        A11yID(unchecked: "rightPanel.files.row.\(A11yID.rawSegment(path, loose: true))")
+    }
+
     /// `viewer.<computerId>`
     public static func viewer(_ computerId: String) -> A11yID {
         A11yID(unchecked: "viewer.\(A11yID.segment(computerId))")
@@ -1305,6 +1375,35 @@ extension A11yID {
         A11yIDSpec(pattern: "rightPanel.context.item.<kind>.<id>.toggle", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.context.item.<kind>.<id>.insert", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.computer.<id>.tab.<name>", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.module.<id>", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
+        A11yIDSpec(pattern: "rightPanel.module.<id>.header", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
+        A11yIDSpec(pattern: "rightPanel.module.<id>.minimize", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
+        A11yIDSpec(pattern: "rightPanel.divider", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
+        A11yIDSpec(pattern: "rightPanel.insights.empty", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
+        A11yIDSpec(pattern: "tabs.filesToggle", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
+        A11yIDSpec(pattern: "tabs.insightsToggle", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
+        A11yIDSpec(pattern: "rightPanel.files", surface: "Painel direito (Files, 10-right-panel §2)"),
+        A11yIDSpec(pattern: "rightPanel.files.chip", surface: "Painel direito (Files, 10-right-panel §2)"),
+        A11yIDSpec(pattern: "rightPanel.files.root", surface: "Painel direito (Files, 10-right-panel §2)"),
+        A11yIDSpec(pattern: "rightPanel.files.sessionFolder", surface: "Painel direito (Files, 10-right-panel §2)"),
+        A11yIDSpec(pattern: "rightPanel.files.showIgnored", surface: "Painel direito (Files, 10-right-panel §2)"),
+        A11yIDSpec(pattern: "rightPanel.files.refresh", surface: "Painel direito (Files, 10-right-panel §2)"),
+        A11yIDSpec(pattern: "rightPanel.files.tree", surface: "Painel direito (Files, 10-right-panel §2)"),
+        A11yIDSpec(pattern: "rightPanel.files.empty", surface: "Painel direito (Files, 10-right-panel §2)"),
+        A11yIDSpec(pattern: "rightPanel.files.row.<path>", surface: "Painel direito (Files, 10-right-panel §2)"),
+        A11yIDSpec(pattern: "rightPanel.files.viewer", surface: "Painel direito (Files, 10-right-panel §2)"),
+        A11yIDSpec(pattern: "rightPanel.files.viewer.back", surface: "Painel direito (Files, 10-right-panel §2)"),
+        A11yIDSpec(pattern: "rightPanel.files.viewer.name", surface: "Painel direito (Files, 10-right-panel §2)"),
+        A11yIDSpec(pattern: "rightPanel.files.viewer.find", surface: "Painel direito (Files, 10-right-panel §2)"),
+        A11yIDSpec(pattern: "rightPanel.files.viewer.findField", surface: "Painel direito (Files, 10-right-panel §2)"),
+        A11yIDSpec(pattern: "rightPanel.files.viewer.findCount", surface: "Painel direito (Files, 10-right-panel §2)"),
+        A11yIDSpec(pattern: "rightPanel.files.viewer.findNext", surface: "Painel direito (Files, 10-right-panel §2)"),
+        A11yIDSpec(pattern: "rightPanel.files.viewer.findPrevious", surface: "Painel direito (Files, 10-right-panel §2)"),
+        A11yIDSpec(pattern: "rightPanel.files.viewer.findClose", surface: "Painel direito (Files, 10-right-panel §2)"),
+        A11yIDSpec(pattern: "rightPanel.files.viewer.openIn", surface: "Painel direito (Files, 10-right-panel §2)"),
+        A11yIDSpec(pattern: "rightPanel.files.viewer.copyPath", surface: "Painel direito (Files, 10-right-panel §2)"),
+        A11yIDSpec(pattern: "rightPanel.files.viewer.code", surface: "Painel direito (Files, 10-right-panel §2)"),
+        A11yIDSpec(pattern: "rightPanel.files.viewer.empty", surface: "Painel direito (Files, 10-right-panel §2)"),
         A11yIDSpec(pattern: "viewer.<computerId>", surface: "Viewer"),
         A11yIDSpec(pattern: "viewer.<computerId>.name", surface: "Viewer"),
         A11yIDSpec(pattern: "viewer.<computerId>.mode", surface: "Viewer"),

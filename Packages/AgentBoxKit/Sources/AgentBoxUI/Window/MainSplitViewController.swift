@@ -1,3 +1,4 @@
+import AgentBoxCore
 import AgentBoxDesignSystem
 import AgentBoxProtocol
 import AppKit
@@ -7,6 +8,15 @@ import SwiftUI
 final class ChromeSplitView: NSSplitView {
     override var dividerColor: NSColor { DS.ColorSpec.border.nsColor }
     override var dividerThickness: CGFloat { 1 }
+    /// Arrasto de um divisor (sidebar ou painel direito): os terminais seguram o resize do PTY até soltar (04 MA6, AC-RP02).
+    var onDividerDrag: (Bool) -> Void = { _ in }
+
+    override func mouseDown(with event: NSEvent) {
+        // Só chega aqui o clique no próprio split (os divisores); o das subviews não passa por aqui. O arrasto roda dentro do `super`.
+        onDividerDrag(true)
+        super.mouseDown(with: event)
+        onDividerDrag(false)
+    }
 }
 
 /// Hosting view sem safe area: a faixa e o conteúdo desenham sob a titlebar (`fullSizeContentView`).
@@ -34,9 +44,16 @@ final class MainSplitViewController: NSSplitViewController {
     private let env: AppEnvironment
     let sidebarItem: NSSplitViewItem
     let contentItem: NSSplitViewItem
-    /// Painel direito (03 §10): nasce recolhido; ⇧⌘C abre a aba Computers (T3-05).
+    /// Painel direito (10-right-panel): Files, Insights e Computers como módulos; largura, visibilidade e motion vêm de
+    /// `RightPanelController`.
     let rightItem: NSSplitViewItem
+    private let rightHost: RightPanelHostView
     private var didSetInitialWidth = false
+    /// Mudança de largura feita por código (não é arrasto do usuário).
+    private var applyingPanelWidth = false
+    private var panelTransitionToken = 0
+    /// A primeira apresentação (estado restaurado na abertura do app) não anima.
+    private var presentedOnce = false
 
     init(env: AppEnvironment) {
         self.env = env
@@ -54,11 +71,12 @@ final class MainSplitViewController: NSSplitViewController {
             contentVC = WorkspaceViewController(env: env)
         }
         let rightVC = NSViewController()
-        let rightView = ChromeHostingView(
-            content: ComputersPanelView(controller: env.computers).environment(\.elementStore, env.elements).environment(\.actionRegistry, env.registry)
+        let rightHost = RightPanelHostView(
+            content: RightPanelView(controller: env.rightPanel).environment(\.elementStore, env.elements).environment(\.actionRegistry, env.registry)
                 .environment(\.a11yParent, .windowMain))
-        rightView.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
-        rightVC.view = rightView
+        rightHost.hosting.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
+        rightVC.view = rightHost
+        self.rightHost = rightHost
         sidebarItem = NSSplitViewItem(viewController: sidebarVC)
         contentItem = NSSplitViewItem(viewController: contentVC)
         rightItem = NSSplitViewItem(viewController: rightVC)
@@ -72,8 +90,8 @@ final class MainSplitViewController: NSSplitViewController {
         sidebarItem.canCollapse = true
         sidebarItem.holdingPriority = NSLayoutConstraint.Priority(rawValue: NSLayoutConstraint.Priority.defaultLow.rawValue + 1)
         contentItem.minimumThickness = DS.Layout.windowMinWidth - DS.Layout.sidebarMaxWidth
-        rightItem.minimumThickness = DS.Layout.rightPanelMinWidth
-        rightItem.maximumThickness = DS.Layout.rightPanelMaxWidth
+        rightItem.minimumThickness = CGFloat(RightPanelGeometry.minWidth)
+        rightItem.maximumThickness = CGFloat(RightPanelGeometry.maxWidth)
         rightItem.canCollapse = true
         rightItem.isCollapsed = true
         rightItem.holdingPriority = NSLayoutConstraint.Priority(rawValue: NSLayoutConstraint.Priority.defaultLow.rawValue + 1)
@@ -81,7 +99,11 @@ final class MainSplitViewController: NSSplitViewController {
         addSplitViewItem(contentItem)
         addSplitViewItem(rightItem)
         split.autosaveName = nil
-        env.computers.onPanelChange = { [weak self] open in self?.setRightPanelOpen(open) }
+        split.onDividerDrag = { [workspace = env.workspace] dragging in workspace.runtime.setLayoutTransition(dragging) }
+        env.rightPanel.onPresentationChange = { [weak self] animated in self?.applyRightPanelPresentation(animated: animated) }
+        env.computers.onPanelChange = { [panel = env.rightPanel] open in
+            if open { panel.show(.computers) } else { panel.hide(.computers) }
+        }
     }
 
     @available(*, unavailable) required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
@@ -94,18 +116,79 @@ final class MainSplitViewController: NSSplitViewController {
             didSetInitialWidth = true
             splitView.setPosition(DS.Layout.sidebarWidth, ofDividerAt: 0)
         }
+        syncRightPanelWindow()
     }
 
-    func setRightPanelOpen(_ open: Bool) {
-        guard rightItem.isCollapsed == open else { return }
-        if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
-            rightItem.isCollapsed = !open
+    override func splitViewDidResizeSubviews(_ notification: Notification) {
+        super.splitViewDidResizeSubviews(notification)
+        syncRightPanelWindow()
+        // Arrasto do divisor do painel (mouse pressionado): grava a largura nova.
+        guard !applyingPanelWidth, !rightItem.isCollapsed, NSEvent.pressedMouseButtons & 1 != 0 else { return }
+        env.rightPanel.userResized(width: rightItem.viewController.view.frame.width)
+    }
+
+    /// Largura da janela e da sidebar para as regras do painel (recolhe abaixo de 1100, centro mínimo de 320).
+    private func syncRightPanelWindow() {
+        env.rightPanel.updateWindow(width: splitView.bounds.width, sidebarWidth: sidebarWidth)
+    }
+
+    /// Reflete `RightPanelController.isShown` e a largura efetiva no split. Abrir: o split expande de uma vez (um único resize do
+    /// terminal) e o painel é revelado por recorte; fechar: recorte e só no último quadro o split recolhe (M-108).
+    func applyRightPanelPresentation(animated: Bool) {
+        let panel = env.rightPanel
+        let reduceMotion = MotionPolicy.shared.reduceMotion
+        let instant = !animated || !presentedOnce || MotionPolicy.shared.mode == .instant || view.window?.isVisible != true
+        defer { presentedOnce = true }
+        panelTransitionToken += 1
+        let token = panelTransitionToken
+        if panel.isShown, let width = panel.effectiveWidth {
+            if rightItem.isCollapsed {
+                panel.isContentVisible = true
+                if !instant { rightHost.prepareReveal(reduceMotion: reduceMotion) }
+                setRightCollapsed(false)
+                setRightWidth(width)
+                if instant {
+                    rightHost.showInstantly()
+                } else {
+                    rightHost.reveal(
+                        reduceMotion: reduceMotion, duration: MotionTokens.Duration.panel,
+                        timing: Motion.caTiming(MotionTokens.Easing.expoOut))
+                }
+            } else {
+                setRightWidth(width)
+            }
+        } else if !rightItem.isCollapsed {
+            let finish: @MainActor () -> Void = { [weak self] in
+                guard let self, self.panelTransitionToken == token else { return }
+                self.setRightCollapsed(true)
+                panel.isContentVisible = false
+            }
+            if instant {
+                finish()
+                rightHost.showInstantly()
+            } else {
+                rightHost.conceal(
+                    reduceMotion: reduceMotion, duration: MotionTokens.Duration.base,
+                    timing: Motion.caTiming(MotionTokens.Easing.exitClip), completion: finish)
+            }
         } else {
-            rightItem.animator().isCollapsed = !open
+            panel.isContentVisible = false
         }
-        if open {
-            splitView.setPosition(max(0, splitView.bounds.width - DS.Layout.rightPanelWidth), ofDividerAt: 1)
-        }
+    }
+
+    private func setRightCollapsed(_ collapsed: Bool) {
+        applyingPanelWidth = true
+        defer { applyingPanelWidth = false }
+        rightItem.isCollapsed = collapsed
+        splitView.layoutSubtreeIfNeeded()
+    }
+
+    private func setRightWidth(_ width: CGFloat) {
+        guard splitView.bounds.width > 0, abs(rightItem.viewController.view.frame.width - width) > 0.5 else { return }
+        applyingPanelWidth = true
+        defer { applyingPanelWidth = false }
+        splitView.setPosition(max(0, splitView.bounds.width - width), ofDividerAt: 1)
+        splitView.layoutSubtreeIfNeeded()
     }
 
     func setSidebarCollapsed(_ collapsed: Bool) {

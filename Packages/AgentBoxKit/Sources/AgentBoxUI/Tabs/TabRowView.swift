@@ -44,6 +44,9 @@ final class TabRowState {
 /// Tab row (03 §3): tabs da sessão selecionada, `+`, menu de panes. Fundo `chrome`, borda inferior de 1 pt.
 struct TabRowView: View {
     let model: WorkspaceModel
+    /// Com o painel recolhido a tab row termina na borda da janela e reserva o canto para os botões do painel; com ele aberto
+    /// a tab row termina na borda do painel e os botões ficam sobre a barra dele.
+    var rightPanel: RightPanelController?
     @State private var state = TabRowState()
     @Environment(\.actionRegistry) private var registry
     @Namespace private var indicatorSpace
@@ -51,7 +54,9 @@ struct TabRowView: View {
     var body: some View {
         GeometryReader { geo in
             let showPaneActions = (model.activeTab?.layout.leafCount ?? 0) > 1
+            // O fim da faixa é dos botões Files · Insights · painel (overlay da janela, 10-right-panel §1).
             let reserved = TabMetrics.toolbarButton + DS.Space.s2 + (showPaneActions ? TabMetrics.toolbarButton + DS.Space.s1 : 0) + DS.Space.s4
+                + (rightPanel.map { $0.isContentVisible ? 0 : RightPanelMetrics.stripButtons } ?? 0)
             let available = max(0, geo.size.width - reserved)
             let width = tabWidth(count: model.tabs.count, available: available, window: geo.size.width)
             let content = width * CGFloat(model.tabs.count)
