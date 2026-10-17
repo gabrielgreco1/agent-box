@@ -15,7 +15,7 @@ public actor AgentBoxStore {
 
     nonisolated let writer: any DatabaseWriter
     private nonisolated let noticeContinuation: AsyncStream<StoreNotice>.Continuation
-    private nonisolated let clock: @Sendable () -> Date
+    nonisolated let clock: @Sendable () -> Date
     private nonisolated let debounce: Duration
     private nonisolated let log = LogFacade(.app, category: "store")
 
@@ -135,7 +135,7 @@ public actor AgentBoxStore {
 
     // MARK: - Acesso
 
-    private func write<T: Sendable>(_ body: @escaping @Sendable (Database) throws -> T) async throws -> T {
+    func write<T: Sendable>(_ body: @escaping @Sendable (Database) throws -> T) async throws -> T {
         guard mode == .readWrite else { throw StoreError.readOnly }
         do {
             return try await writer.write(body)
@@ -145,7 +145,7 @@ public actor AgentBoxStore {
         }
     }
 
-    private func read<T: Sendable>(_ body: @escaping @Sendable (Database) throws -> T) async throws -> T {
+    func read<T: Sendable>(_ body: @escaping @Sendable (Database) throws -> T) async throws -> T {
         do {
             return try await writer.read(body)
         } catch {

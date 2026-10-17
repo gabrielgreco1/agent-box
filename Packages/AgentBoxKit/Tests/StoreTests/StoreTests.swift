@@ -5,21 +5,24 @@ import Testing
 @testable import AgentBoxStore
 
 @Suite struct MigrationTests {
-    @Test func emptyDatabaseGetsOnlySlice1Tables() async throws {
+    @Test func emptyDatabaseGetsSlice1AndV2ActivityTables() async throws {
         let home = try TempHome(); defer { home.remove() }
         let store = try await home.openStore()
         #expect(store.openNotices.isEmpty)
         #expect(await store.mode == .readWrite)
         try await store.close()
         let tables = try tableNames(at: home.paths.databaseFile)
-        #expect(tables == ["grdb_migrations", "launch_profile", "project", "session", "setting", "tab", "terminal", "ui_state", "worktree"])
-        #expect(!tables.contains("agent_run"), "agent_run só entra em v2_activity")
+        #expect(tables == [
+            "agent_event", "agent_run", "attention", "catalog_item", "grdb_migrations", "import_run", "inbox_event", "launch_profile",
+            "metric", "project", "secret", "secret_binding", "session", "setting", "tab", "terminal", "ui_state", "worktree",
+        ])
+        #expect(!tables.contains("computer"), "computer só entra em v3_computers")
         let ids = try { () throws -> [String] in
             var c = Configuration(); c.readonly = true
             let q = try DatabaseQueue(path: home.paths.databaseFile.path, configuration: c)
             return try q.read { try String.fetchAll($0, sql: "SELECT identifier FROM grdb_migrations") }
         }()
-        #expect(ids == ["v1_initial"])
+        #expect(ids == ["v1_initial", "v2_activity"])
     }
 
     @Test func schemaIsStrictAndRejectsInconsistentSessions() async throws {
