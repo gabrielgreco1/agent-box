@@ -105,10 +105,15 @@ struct LandingView: View {
                 .font(DS.Font.dialogBody.font)
                 .foregroundStyle(DS.Color.textSecondary)
                 .multilineTextAlignment(.center)
-            if let registry, registry.isOffered(.projectAdd) {
-                DSButton(.projectAdd, id: .landingAddProject, "Add Project…", variant: .primary)
-                    .padding(.top, DS.Space.s4)
+            HStack(spacing: DS.Space.s2) {
+                if let registry, registry.isOffered(.projectAdd) {
+                    DSButton(.projectAdd, id: .landingAddProject, "Add Project…", variant: .primary)
+                }
+                if let registry, registry.isOffered(.sessionNewClean) {
+                    DSButton(.sessionNewClean, id: .landingNewCleanSession, "New Clean Session", variant: .secondary)
+                }
             }
+            .padding(.top, DS.Space.s4)
         }
         .padding(.horizontal, DS.Space.s4)
         .frame(maxWidth: .infinity, maxHeight: .infinity)

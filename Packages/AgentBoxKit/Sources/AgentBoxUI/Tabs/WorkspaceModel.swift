@@ -65,6 +65,9 @@ final class WorkspaceModel {
     @ObservationIgnored var contentSize: CGSize = .zero
     @ObservationIgnored var overlays: OverlayRouter?
     @ObservationIgnored var toasts: ToastCenter?
+    /// Agente padrão (Settings › Agents) e se o CLI dele está instalado (`nil` = ainda não sondado): ⌥⌘T e Quick Launch.
+    @ObservationIgnored var defaultAgent: () -> TerminalProvider = { .claude }
+    @ObservationIgnored var agentInstalled: (TerminalProvider) -> Bool? = { _ in nil }
     @ObservationIgnored let confirmationState = ConfirmationState()
 
     private(set) var currentSessionID: UUID?
@@ -374,6 +377,16 @@ final class WorkspaceModel {
         return tabID
     }
 
+    /// Abre uma tab (ou um split à direita, ⇧↵) a partir de um pedido do Quick Launch (03 §7).
+    @discardableResult
+    func open(_ request: QuickLaunchRequest) -> UUID? {
+        guard request.split else { return newTab(provider: request.provider, profileID: request.profileID, prompt: request.prompt) }
+        var spec = LaunchSpec(provider: request.provider, profileID: request.profileID)
+        spec.initialPrompt = request.prompt
+        guard case .created(let id) = split(.horizontal, spec: spec) else { return nil }
+        return id
+    }
+
     private func makeTerminal(tabID: UUID, spec: LaunchSpec, cwd: String, folder: String) -> Terminal {
         let adapter = ProviderAdapters.adapter(for: spec.provider)
         let title = spec.provider.isAgent ? adapter.displayName : URL(fileURLWithPath: folder).lastPathComponent
@@ -468,7 +481,7 @@ final class WorkspaceModel {
     enum SplitResult: Equatable { case created(UUID), noRoom, unavailable }
 
     @discardableResult
-    func split(_ axis: SplitAxis, source: UUID? = nil, shell: Bool = false) -> SplitResult {
+    func split(_ axis: SplitAxis, source: UUID? = nil, shell: Bool = false, spec explicit: LaunchSpec? = nil) -> SplitResult {
         guard let tab = activeTab, let sourceID = source ?? focusedTerminalID, let sourcePane = tab.layout.pane(forTerminal: sourceID),
               let origin = terminal(sourceID), let sid = currentSessionID
         else { return .unavailable }
@@ -482,7 +495,7 @@ final class WorkspaceModel {
         // Mesmo agente e perfil (⌥: shell). Sem prompt e sem ID nativo: o pane novo começa uma conversa nova.
         var spec = origin.launchSpec
         if shell { spec = LaunchSpec(provider: .shell) }
-        spec.initialPrompt = nil; spec.initialPromptFile = nil; spec.nativeSessionID = nil; spec.resumeOf = nil
+        if let explicit { spec = explicit } else { spec.initialPrompt = nil; spec.initialPromptFile = nil; spec.nativeSessionID = nil; spec.resumeOf = nil }
         var terminal = makeTerminal(tabID: tab.id, spec: spec, cwd: origin.cwd, folder: origin.cwd)
         terminal.title = spec.provider.isAgent ? ProviderAdapters.adapter(for: spec.provider).displayName : URL(fileURLWithPath: origin.cwd).lastPathComponent
         let pane = Pane(content: .terminal(terminal.id))
@@ -652,6 +665,17 @@ final class WorkspaceModel {
             finalizeRemoval(of: id)
         }
         notify()
+    }
+
+    /// Encerra o processo de todos os terminais de uma sessão (arquivar e apagar, 03 §16.2 e §16.5). Não mexe em layout nem em
+    /// registros: quem chama arquiva ou apaga a sessão depois.
+    func stopTerminals(ofSession sessionID: UUID) async {
+        let tabIDs = Set(snapshot.tabs.filter { $0.sessionID == sessionID }.map(\.id))
+        var terminals = Dictionary(uniqueKeysWithValues: snapshot.terminals.filter { tabIDs.contains($0.tabID) }.map { ($0.id, $0) })
+        for (id, live) in states[sessionID]?.terminals ?? [:] { terminals[id] = live }
+        for terminal in terminals.values where terminal.ptySessionID != nil && (terminal.state == .running || terminal.state == .launching) {
+            await runtime.kill(terminal, mode: .graceful)
+        }
     }
 
     func forceQuit(_ terminalID: UUID) {

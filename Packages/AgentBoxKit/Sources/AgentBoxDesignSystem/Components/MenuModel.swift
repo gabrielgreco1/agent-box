@@ -86,6 +86,9 @@ public enum DSMenuKey: Equatable, Sendable {
     case up, down, home, end, right, left, enter, escape, backspace, tab, backtab
 }
 
+/// Como o item foi ativado: Enter simples, ⌘↵ (Quick Launch: "com o texto como prompt") ou ⇧↵ (abrir em split).
+public enum DSMenuActivation: Equatable, Sendable { case plain, command, shift }
+
 public enum DSMenuOutcome: Equatable, Sendable {
     case none
     case activate(DSMenuItem)
@@ -106,6 +109,11 @@ public final class DSMenuNavigator {
     public private(set) var openSubmenuID: String?
     public private(set) var submenu: DSMenuNavigator?
 
+    /// Modificador da última ativação (`.activate`): quem recebe o resultado decide o que ⌘↵ e ⇧↵ significam.
+    public private(set) var activation: DSMenuActivation = .plain
+    /// Linha oferecida quando o texto digitado não casa com nenhum item (Quick Launch: `Start Claude Code with "<texto>"`).
+    @ObservationIgnored public var emptyFallback: (@MainActor (String) -> DSMenuItem?)?
+
     @ObservationIgnored private var typeAheadStamp: ContinuousClock.Instant?
     @ObservationIgnored public var typeAheadReset: Duration = .seconds(1)
 
@@ -125,7 +133,8 @@ public final class DSMenuNavigator {
     public var visibleEntries: [DSMenuEntry] {
         guard searchable, !query.isEmpty else { return entries }
         let needle = query.lowercased()
-        let matches = entries.compactMap(\.item).filter { !$0.pinned && Self.matches($0, needle) }.map(DSMenuEntry.item)
+        var matches = entries.compactMap(\.item).filter { !$0.pinned && Self.matches($0, needle) }.map(DSMenuEntry.item)
+        if matches.isEmpty, let fallback = emptyFallback?(query) { matches = [.item(fallback)] }
         let pinned = entries.compactMap(\.item).filter(\.pinned).map(DSMenuEntry.item)
         return pinned.isEmpty ? matches : matches + [.separator("pinned")] + pinned
     }
@@ -141,14 +150,15 @@ public final class DSMenuNavigator {
 
     // MARK: Teclado
 
-    public func handle(_ key: DSMenuKey) -> DSMenuOutcome {
+    public func handle(_ key: DSMenuKey, activation: DSMenuActivation = .plain) -> DSMenuOutcome {
+        self.activation = activation
         if let submenu {
             switch key {
             case .left, .escape:
                 closeSubmenu()
                 return .none
             default:
-                return submenu.handle(key)
+                return submenu.handle(key, activation: activation)
             }
         }
         switch key {

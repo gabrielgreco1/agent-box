@@ -280,6 +280,10 @@ extension A11yID {
     public static let overlayConfirmCloseCancel = A11yID(unchecked: "overlay.confirmClose.cancel")
     /// `overlay.confirmClose.confirm`
     public static let overlayConfirmCloseConfirm = A11yID(unchecked: "overlay.confirmClose.confirm")
+    /// `overlay.confirmArchive`
+    public static let overlayConfirmArchive = A11yID(unchecked: "overlay.confirmArchive")
+    /// `overlay.confirmArchive.cancel`
+    public static let overlayConfirmArchiveCancel = A11yID(unchecked: "overlay.confirmArchive.cancel")
     /// `overlay.confirmArchive.confirm`
     public static let overlayConfirmArchiveConfirm = A11yID(unchecked: "overlay.confirmArchive.confirm")
     /// `overlay.confirmStopComputer.confirm`
@@ -294,6 +298,10 @@ extension A11yID {
     public static let overlayConfirmDeleteTrashFolder = A11yID(unchecked: "overlay.confirmDelete.trashFolder")
     /// `overlay.confirmDelete.deleteRuns`
     public static let overlayConfirmDeleteDeleteRuns = A11yID(unchecked: "overlay.confirmDelete.deleteRuns")
+    /// `overlay.confirmDelete.dontAsk`
+    public static let overlayConfirmDeleteDontAsk = A11yID(unchecked: "overlay.confirmDelete.dontAsk")
+    /// `overlay.confirmDelete.cancel`
+    public static let overlayConfirmDeleteCancel = A11yID(unchecked: "overlay.confirmDelete.cancel")
     /// `overlay.confirmDelete.confirm`
     public static let overlayConfirmDeleteConfirm = A11yID(unchecked: "overlay.confirmDelete.confirm")
     /// `overlay.confirmRemoveProject`
@@ -310,6 +318,8 @@ extension A11yID {
     public static let overlayMoveToProject = A11yID(unchecked: "overlay.moveToProject")
     /// `overlay.moveToProject.project`
     public static let overlayMoveToProjectProject = A11yID(unchecked: "overlay.moveToProject.project")
+    /// `overlay.moveToProject.cancel`
+    public static let overlayMoveToProjectCancel = A11yID(unchecked: "overlay.moveToProject.cancel")
     /// `overlay.moveToProject.confirm`
     public static let overlayMoveToProjectConfirm = A11yID(unchecked: "overlay.moveToProject.confirm")
     /// `overlay.addProject.choose`
@@ -1376,6 +1386,8 @@ extension A11yID {
         A11yIDSpec(pattern: "overlay.confirmClose.dontAsk", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmClose.cancel", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmClose.confirm", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmArchive", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmArchive.cancel", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmArchive.confirm", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmStopComputer.confirm", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmDeleteComputer.confirm", surface: "Dialogs"),
@@ -1383,6 +1395,8 @@ extension A11yID {
         A11yIDSpec(pattern: "overlay.confirmDelete.keepBranch", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmDelete.trashFolder", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmDelete.deleteRuns", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmDelete.dontAsk", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmDelete.cancel", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmDelete.confirm", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmRemoveProject", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmRemoveProject.cancel", surface: "Dialogs"),
@@ -1392,6 +1406,7 @@ extension A11yID {
         A11yIDSpec(pattern: "overlay.resume.confirm", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.moveToProject", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.moveToProject.project", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.moveToProject.cancel", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.moveToProject.confirm", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.addProject.choose", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.addProject.clone", surface: "Dialogs"),

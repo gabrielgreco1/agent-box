@@ -27,7 +27,8 @@ final class SessionLauncher {
     private let sidebar: SidebarModel
     private let workspace: WorkspaceModel
     private let elements: UIElementStore
-    private let sessionsRoot: URL
+    /// Raiz das pastas de sessões limpas (Settings › General › Clean session folder; padrão `~/AgentBox/sessions`).
+    private let sessionsRoot: () -> URL
     private var store: AgentBoxStore?
     /// Terminal -> linha pendente que acompanha o lançamento.
     private var pendingByTerminal: [UUID: UUID] = [:]
@@ -36,7 +37,7 @@ final class SessionLauncher {
     /// Tempo mínimo da linha pendente (o chip precisa pousar nela, M-501).
     static let minimumPendingDuration: TimeInterval = 0.62
 
-    init(sidebar: SidebarModel, workspace: WorkspaceModel, elements: UIElementStore, sessionsRoot: URL) {
+    init(sidebar: SidebarModel, workspace: WorkspaceModel, elements: UIElementStore, sessionsRoot: @escaping () -> URL) {
         self.sidebar = sidebar
         self.workspace = workspace
         self.elements = elements
@@ -61,15 +62,24 @@ final class SessionLauncher {
         guard let store else { throw ActionError.failed(.sessionLaunch, message: "The store isn't open yet") }
         let provider = TerminalProvider(rawValue: request.provider ?? "claude") ?? .claude
         let prompt = request.prompt.flatMap { $0.isEmpty ? nil : $0 }
-        let title = Self.title(name: request.name, prompt: prompt, provider: provider)
         let sessionID = UUID.v7(), tabID = UUID.v7(), terminalID = UUID.v7(), pendingID = UUID.v7()
+        // Pasta: sem `cwd` o app cria `<raiz>/<nome-automático>` (nunca reaproveita uma pasta existente, AC-1102); com `cwd` usa a pasta
+        // escolhida e não cria nem apaga nada nela (AC-1105).
         let folder: URL
+        let managed: Bool
         if let cwd = request.cwd, !cwd.isEmpty {
             folder = URL(fileURLWithPath: cwd, isDirectory: true)
+            guard CleanSessionFolders.isDirectory(folder.path) else {
+                throw ActionError.failed(.sessionLaunch, message: "\(folder.path) isn't a folder")
+            }
+            managed = false
         } else {
-            folder = sessionsRoot.appendingPathComponent(Self.slug(title) + "-" + String(sessionID.uuidString.prefix(4)).lowercased(), isDirectory: true)
+            do { folder = try CleanSessionFolders.createManaged(root: sessionsRoot()) } catch {
+                throw ActionError.failed(.sessionLaunch, message: "Couldn't create the session folder: \(error.localizedDescription)")
+            }
+            managed = true
         }
-        try LaunchFolder.ensure(folder)
+        let title = Self.title(name: request.name, prompt: prompt, provider: provider, folder: folder)
 
         // 1. Linha pendente (M-501): a sessão fica escondida da lista até o terminal existir.
         let agent = ProviderAdapters.name(provider)
@@ -82,7 +92,7 @@ final class SessionLauncher {
         // 2. Sessão, tab e terminal no Store; o terminal é lançado quando o pane tem tamanho.
         let spec = LaunchSpec(provider: provider, model: request.model, extraArgs: request.args ?? [], customArgv: request.argv, initialPrompt: prompt)
         var session = Session(id: sessionID, kind: .clean, folderPath: folder.path, title: title)
-        session.managedFolder = request.cwd == nil
+        session.managedFolder = managed
         let terminal = Terminal(id: terminalID, tabID: tabID, provider: provider, title: title, cwd: folder.path, launchSpec: spec)
         let tab = Tab(id: tabID, sessionID: sessionID, title: title, layout: .leaf(Pane(content: .terminal(terminalID))), focusedTerminalID: terminalID)
         do {
@@ -152,12 +162,14 @@ final class SessionLauncher {
     // MARK: Nomes
 
     /// Com prompt, o título são as primeiras palavras como digitadas (AC-303); sem prompt, o nome do agente.
-    static func title(name: String?, prompt: String?, provider: TerminalProvider) -> String {
+    static func title(name: String?, prompt: String?, provider: TerminalProvider, folder: URL? = nil) -> String {
         if let name, !name.trimmingCharacters(in: .whitespaces).isEmpty { return name }
         if let prompt {
             let words = prompt.split(whereSeparator: \.isWhitespace).prefix(5).joined(separator: " ")
             if !words.isEmpty { return words }
         }
+        // Sem prompt, a sessão limpa tem o nome da pasta (o automático `quiet-harbor`, P15).
+        if let folder, !folder.lastPathComponent.isEmpty { return folder.lastPathComponent }
         return ProviderAdapters.name(provider)
     }
 

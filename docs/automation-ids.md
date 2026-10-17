@@ -339,6 +339,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `overlay.confirmClose.dontAsk`
 - `overlay.confirmClose.cancel`
 - `overlay.confirmClose.confirm`
+- `overlay.confirmArchive`
+- `overlay.confirmArchive.cancel`
 - `overlay.confirmArchive.confirm`
 - `overlay.confirmStopComputer.confirm`
 - `overlay.confirmDeleteComputer.confirm`
@@ -346,6 +348,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `overlay.confirmDelete.keepBranch`
 - `overlay.confirmDelete.trashFolder`
 - `overlay.confirmDelete.deleteRuns`
+- `overlay.confirmDelete.dontAsk`
+- `overlay.confirmDelete.cancel`
 - `overlay.confirmDelete.confirm`
 - `overlay.confirmRemoveProject`
 - `overlay.confirmRemoveProject.cancel`
@@ -355,6 +359,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `overlay.resume.confirm`
 - `overlay.moveToProject`
 - `overlay.moveToProject.project`
+- `overlay.moveToProject.cancel`
 - `overlay.moveToProject.confirm`
 - `overlay.addProject.choose`
 - `overlay.addProject.clone`
@@ -726,6 +731,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `dialog.resumeAgents.toggleRow` | linha com checkbox (§16.7) | — | slice1 |
 | `dialog.moveToProject.confirm` | Move / Convert (§16.8) | — | slice1 |
 | `dialog.moveToProject.setProject` | Project (combobox, §16.8) | — | slice1 |
+| `dialog.moveToProject.cancel` | Cancel (§16.8) | Esc | slice1 |
 | `dialog.addProject.choose` | Choose a Folder… | — | slice1 |
 | `dialog.addProject.importOrca` | Import from Orca… | — | slice1 |
 | `dialog.addProject.clone` | Clone from URL (§16.9) | — | slice1 |

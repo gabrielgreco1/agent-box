@@ -106,4 +106,69 @@ private final class Events: @unchecked Sendable {  // SAFETY: estado sob `lock`.
         await client.stop()
         await harness.stop()
     }
+
+    // MARK: Sessão limpa (T1-17): o agente roda na pasta gerenciada que o app acabou de criar
+
+    private func managedFolder() throws -> (root: URL, folder: URL) {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("abx-sessions-\(UUID().uuidString)", isDirectory: true)
+        return (root, try CleanSessionFolders.createManaged(root: root))
+    }
+
+    @Test func cleanSessionFolderIsTheCwdOfTheProcess() async throws {
+        let harness = try DaemonHarness()
+        try await harness.start()
+        let client = harness.makeClient()
+        try await client.start()
+        let (root, folder) = try managedFolder()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let c = coordinator(harness, client: client) { ["PATH": "/usr/bin:/bin:/usr/sbin:/sbin", "HOME": NSHomeDirectory(), "SHELL": "/bin/zsh", "LANG": "en_US.UTF-8"] }
+        let events = Events()
+        let spec = LaunchSpec(provider: .custom, customArgv: ["/bin/sh", "-c", "pwd -P; touch made-by-the-agent"])
+        let result = try await c.launch(LaunchJob(terminalID: UUID(), spec: spec, cwd: folder.path), onEvent: events.add)
+        _ = try await waitFor(client, result.summary.sessionID, state: .exited, timeout: .seconds(10))
+        let text = try await client.textSnapshot(sessionID: result.summary.sessionID, lines: 20)
+        #expect(text.contains(folder.resolvingSymlinksInPath().lastPathComponent))
+        #expect(FileManager.default.fileExists(atPath: folder.appendingPathComponent("made-by-the-agent").path))
+        await client.stop()
+        await harness.stop()
+    }
+
+    @Test func zshRunsInACleanSessionFolder() async throws {
+        let harness = try DaemonHarness()
+        try await harness.start()
+        let client = harness.makeClient()
+        try await client.start()
+        let (root, folder) = try managedFolder()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let c = coordinator(harness, client: client) { ["PATH": "/usr/bin:/bin:/usr/sbin:/sbin", "HOME": NSHomeDirectory(), "SHELL": "/bin/zsh", "LANG": "en_US.UTF-8"] }
+        let result = try await c.launch(LaunchJob(terminalID: UUID(), spec: LaunchSpec(provider: .shell), cwd: folder.path), onEvent: { _ in })
+        let running = try await waitFor(client, result.summary.sessionID, state: .running)
+        #expect(running.argv0.hasSuffix("zsh"))
+        #expect(running.inputBytesByOrigin.total == 0)
+        try await client.kill(sessionID: result.summary.sessionID, mode: .graceful)
+        _ = try await waitFor(client, result.summary.sessionID, state: .exited, timeout: .seconds(10))
+        await client.stop()
+        await harness.stop()
+    }
+
+    /// Custo: `claude -p --model haiku "reply OK"` na pasta de uma sessão limpa. Só com `AB_REAL_CLI=1`.
+    @Test(.enabled(if: ProcessInfo.processInfo.environment["AB_REAL_CLI"] == "1"))
+    func claudeHaikuRunsInACleanSessionFolder() async throws {
+        let harness = try DaemonHarness()
+        try await harness.start()
+        let client = harness.makeClient()
+        try await client.start()
+        let (root, folder) = try managedFolder()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let loginProvider = LoginShellEnvProvider()
+        let c = coordinator(harness, client: client) { await loginProvider.environment().variables }
+        let spec = LaunchSpec(provider: .claude, model: "haiku", extraArgs: ["-p"], initialPrompt: "reply OK")
+        let result = try await c.launch(LaunchJob(terminalID: UUID(), spec: spec, cwd: folder.path), onEvent: { _ in })
+        #expect(result.plan.cwd == folder.path)
+        let exited = try await waitFor(client, result.summary.sessionID, state: .exited, timeout: .seconds(90))
+        #expect(exited.exit?.code == 0)
+        #expect(try await client.textSnapshot(sessionID: result.summary.sessionID, lines: 40).contains("OK"))
+        await client.stop()
+        await harness.stop()
+    }
 }

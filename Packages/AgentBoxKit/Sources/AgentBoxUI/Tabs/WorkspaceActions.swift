@@ -1,3 +1,4 @@
+import AgentBoxCore
 import AgentBoxDesignSystem
 import AgentBoxProtocol
 import AppKit
@@ -31,25 +32,22 @@ extension WorkspaceModel {
 
         // Nova tab
         try reg(.tabNewTerminal, enablement: hasSession) { [unowned self] _ in newTab(provider: .shell)?.uuidString }
-        try reg(.tabNewAgent, enablement: hasSession) { [unowned self] _ in newTab(provider: .claude)?.uuidString }
+        // ⌥⌘T: agente e perfil padrão, sem seletor (03 §7). Não instalado: motivo com a saída (03 §24.3).
+        let defaultAgentReady: ActionRegistry.Enablement = { [unowned self] in
+            guard isLoaded else { return .disabled(reason: Self.noSession) }
+            let agent = defaultAgent()
+            if agentInstalled(agent) == false {
+                let name = AgentInfo.displayName(agent)
+                return .disabled(reason: String(localized: "Install \(name) or choose another default agent.", bundle: .module))
+            }
+            return .enabled
+        }
+        try reg(.tabNewAgent, enablement: defaultAgentReady) { [unowned self] _ in newTab(provider: defaultAgent())?.uuidString }
         try reg(.tabNewWithAgent, enablement: hasSession) { [unowned self] arg in
             guard arg.kind == .select, let raw = arg.value, let provider = TerminalProvider(rawValue: raw) else {
                 throw ActionError.failed(.tabNewWithAgent, message: "expected select(<provider>)")
             }
             return newTab(provider: provider)?.uuidString
-        }
-        try reg(.tabQuickLaunch, enablement: hasSession) { [unowned self] _ in
-            guard let overlays else { return nil }
-            let anchor = elements.frame(of: .tabsNew) ?? .zero
-            let agent = { (kind: DSAgentKind) in DSMenuItem.Icon.agent(kind) }
-            let entries: [DSMenuEntry] = [
-                .item(DSMenuItem("terminal", String(localized: "New Terminal", bundle: .module), icon: agent(.shell), shortcut: ActionID.tabNewTerminal.spec.shortcut, action: .tabNewTerminal)),
-                .separator("agents"),
-                .item(DSMenuItem("claude", String(localized: "New Claude Code Tab", bundle: .module), icon: agent(.claude), action: .tabNewWithAgent, argument: .select(TerminalProvider.claude.rawValue))),
-                .item(DSMenuItem("codex", String(localized: "New Codex Tab", bundle: .module), icon: agent(.codex), action: .tabNewWithAgent, argument: .select(TerminalProvider.codex.rawValue))),
-                .item(DSMenuItem("opencode", String(localized: "New OpenCode Tab", bundle: .module), icon: agent(.opencode), action: .tabNewWithAgent, argument: .select(TerminalProvider.opencode.rawValue))),
-            ]
-            return DSMenuPanel.present(router: overlays, registry: registry, name: "quickLaunch", anchor: anchor, entries: entries) ? "opened" : nil
         }
         try reg(.tabReopen, enablement: { [unowned self] in
             guard isLoaded else { return .disabled(reason: Self.noSession) }

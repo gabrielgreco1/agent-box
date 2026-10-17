@@ -265,6 +265,8 @@ struct SessionCardView: View {
         .padding(.trailing, SidebarMetrics.cardMarginTrailing)
         .onHover { hovering = $0 }
         .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: hovering)
+        // Sessão limpa: o caminho real da pasta aparece no hover, porque renomear a sessão não renomeia a pasta (AC-1103).
+        .dsTooltip(data.folderPath, enabled: data.kind == .clean && !renaming)
         .contextMenu { SessionMenuItems(model: model, session: data.id) }
     }
 
