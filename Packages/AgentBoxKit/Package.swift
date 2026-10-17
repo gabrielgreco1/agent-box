@@ -67,7 +67,12 @@ let package = Package(
         tests("ProtocolTests", ["AgentBoxProtocol"]),
         tests("PlatformTests", ["AgentBoxPlatform"]),
         tests("StoreTests", ["AgentBoxStore", "AgentBoxProtocol", "AgentBoxPlatform", grdb]),
-        tests("CoreTests", ["AgentBoxCore", "AgentBoxProtocol"]),
+        .testTarget(
+            name: "CoreTests",
+            dependencies: ["AgentBoxCore", "AgentBoxProtocol", "AgentBoxPlatform"],
+            exclude: ["Launch/Fixtures", "Launch/Golden"], // lidos por caminho (#filePath); golden gravado com AB_UPDATE_GOLDEN=1
+            swiftSettings: nonisolatedSettings
+        ),
         tests("DockerTests", ["AgentBoxDocker"]),
         tests("TerminalCoreTests", ["AgentBoxTerminalCore"]),
         tests("DesignSystemTests", ["AgentBoxDesignSystem"]),
