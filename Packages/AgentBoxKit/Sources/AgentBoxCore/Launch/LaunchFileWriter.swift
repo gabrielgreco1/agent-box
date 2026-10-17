@@ -10,6 +10,16 @@ public enum LaunchFileWriter {
         try fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: plan.launchDirectory.path)
         for file in plan.files {
             let url = plan.launchDirectory.appendingPathComponent(file.name)
+            // Nomes com subdiretório (`plugin/…`): os pais também ficam `0700`.
+            var parent = url.deletingLastPathComponent()
+            var created: [URL] = []
+            while parent.standardizedFileURL.path != plan.launchDirectory.standardizedFileURL.path, parent.path.count > plan.launchDirectory.path.count {
+                created.append(parent); parent = parent.deletingLastPathComponent()
+            }
+            for dir in created.reversed() {
+                try fm.createDirectory(at: dir, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+                try fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: dir.path)
+            }
             guard fm.createFile(atPath: url.path, contents: file.contents, attributes: [.posixPermissions: NSNumber(value: file.posixMode)]) else {
                 throw LaunchPlanError.promptFileUnreadable(url.path)
             }

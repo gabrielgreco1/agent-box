@@ -1,0 +1,60 @@
+{
+  "retrieved": "2026-10-16",
+  "notes": "Official vendor assets; originals preserved. Logos identify third-party integrations, not Agent Box ownership. Google ICO decoded to PNG without redrawing.",
+  "assets": [
+    {
+      "file": "claude.png",
+      "source": "https://anthropic.com/press-kit",
+      "member": "Anthropic media resources/Anthropic logos/Claude logos/3 Claude Spark/PNG/Claude Spark - Clay.png",
+      "sha256": "c7d8415b1edba67e5337d3684b480b563826f07be9e28e10ccc14bf92037ef6d"
+    },
+    {
+      "file": "claude-code-wordmark.png",
+      "source": "https://anthropic.com/press-kit",
+      "member": "Anthropic media resources/Anthropic logos/Claude logos/2 Claude Code logo/PNG/Claude Code logo - Ivory.png",
+      "sha256": "fa1dff0d379c332889be563efb39b6064f91689e3cc3072d8d0f9d9572cb1055"
+    },
+    {
+      "file": "codex.png",
+      "source": "/Applications/Codex.app/Contents/Resources/icon-codex-dark-color.png",
+      "member": "",
+      "sha256": "69fb4384e161be8a20dcb94a9ac34aea4fbfaeb67514110a71e7b0732eccb0fc"
+    },
+    {
+      "file": "docker.png",
+      "source": "https://www.docker.com/static/Docker-Logos-1.zip",
+      "member": "docker-logos/PNG/docker-mark-white.png",
+      "sha256": "c81cdb5fb94a62699bbdc409eda29adf4e1d65cb0f2e0b14297dc3fef374382e"
+    },
+    {
+      "file": "linkedin.png",
+      "source": "https://content.linkedin.com/content/dam/me/business/en-us/amp/xbu/linkedin-revised-brand-guidelines/logos/in-logo.zip",
+      "member": "in-logo/LI-In-Bug.png",
+      "sha256": "3c0149f26168b5fe0f43e68664abe40341a6443b3cd435d18a73e12f64f8b600"
+    },
+    {
+      "file": "x.png",
+      "source": "https://about.x.com/content/dam/about-twitter/x/brand-toolkit/x-logo.zip",
+      "member": "logo-white.png",
+      "sha256": "432bdd47255b48366843ec21d209e774f93b807e1fd0894fc983aad0dc7bd03b"
+    },
+    {
+      "file": "crunchbase.png",
+      "source": "https://cdn.prod.website-files.com/687e6d0359c517be389ea464/69257c9295545c9acddcaa0d_cb-webclip-256x256.png",
+      "member": "",
+      "sha256": "e173d6992ebb535bf47a22a39412756231ad446300116dc0ac848df315a41782"
+    },
+    {
+      "file": "google.png",
+      "source": "https://www.google.com/favicon.ico",
+      "member": "Lossless decode of largest ICO image",
+      "sha256": "5db49d9c0401a60449c34526976cdef142d2bf7b88b46c42362d12105eaed136"
+    },
+    {
+      "file": "opencode.png",
+      "source": "https://opencode.ai/opencode-brand-assets.zip",
+      "member": "OpenCode Brand Assets/Logo/opencode-logo-dark.png",
+      "sha256": "20c8b4794f4c988ab335a519980415ba94ea3442b5a794b920c5408be295bc53"
+    }
+  ]
+}

@@ -4,8 +4,8 @@ import Foundation
 
 /// Codex CLI (06 §2.2 e §3.3.1; `--help` conferido na 0.163.0, spike S-05 na 0.160.0).
 /// Ordem do argv: `executable`, `identity` (`resume <id>` | `resume --last`), `profile` (`--no-daemon` primeiro, depois
-/// modelo, esforço por `-c`, permissão, `--add-dir`, `extraArgs`), `injected` (vazio na Fatia 1), `prompt` (posicional).
-/// Fatia 1 não passa `-c hooks…` nem `-c hooks.state=…` (o trust inline de P18 entra na Fatia 2).
+/// modelo, esforço por `-c`, permissão, `--add-dir`, `extraArgs`), `injected` (vazio na Fatia 1; `-c hooks…` e `-c hooks.state=…` na Fatia 2), `prompt` (posicional).
+/// Fatia 1 não passa `-c hooks…` nem `-c hooks.state=…`; a Fatia 2 passa (trust inline de P18).
 public struct CodexAdapter: ProviderAdapter {
     public init() {}
 
@@ -118,6 +118,9 @@ public struct CodexAdapter: ProviderAdapter {
         warnings += filtered.warnings
         profile += filtered.kept.filter { !($0 == "--dangerously-bypass-approvals-and-sandbox" && profile.contains($0)) }
 
+        // Fatia 2 (P18): hooks por `-c` com trust inline; nada gravado em `~/.codex`. `--no-daemon` já está em `profile`.
+        let injected = try context.injection?.codexInjection() ?? []
+
         var prompt: [String] = []
         var files: [LaunchFile] = []
         if !resuming {
@@ -131,7 +134,7 @@ public struct CodexAdapter: ProviderAdapter {
         }
 
         let capture: NativeIDCaptureStrategy = resuming && nativeID != nil ? .assigned(nativeID ?? "") : .codexRollout(cwd: context.cwd)
-        let argv = ResolvedArgv(executable: [context.executablePath], identity: identity, profile: profile, injected: [], prompt: prompt)
+        let argv = ResolvedArgv(executable: [context.executablePath], identity: identity, profile: profile, injected: injected, prompt: prompt)
         return AdapterOutput(
             argv: argv, nativeConversationID: nativeID, capture: capture,
             skipsPermissions: AdapterKit.skipIndicator(in: profile), warnings: warnings, files: files

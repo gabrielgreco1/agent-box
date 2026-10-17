@@ -1550,7 +1550,7 @@ Toda interação da UI é uma ação do registro (`ActionRegistry`: `ActionID` �
 - A coluna **Atalho** repete o atalho canônico de §21 (`—` = sem atalho; `⌥` = item extra do menu com ⌥ pressionado, convenção de §21). A coluna **Teste (XCUITest)** dá o nome do teste: `testAction_<ActionID>` em `AgentBoxUITests/Actions/`, que dispara a ação por atalho real quando há atalho e por clique quando não há (AC-T02 cruza esta coluna com os testes que existem). Em linhas com mais de um ActionID há um teste por ID.
 - Atalhos: §21. Microcopy de cada overlay: seções citadas.
 - Fatia 1 (09 §3): o painel direito é oculto, então `view.toggleRightPanel` (⌘L), `tab.quickLaunchResume` e `sidebar.search` são da Fatia 2 e **não existem** na UI da Fatia 1.
-- Controles de Settings (§24.6) ficam cobertos por regra (`settings.<section>.<key>`) até a tela de Settings mínimo (09 T1-26) fixar a lista de chaves; aí cada chave ganha linha.
+- Controles de Settings (§24.6): a Fatia 1 (09 T1-26) fixou as chaves de General, Agents e Terminal e cada uma tem linha em §24.6; as chaves das seções de fatias futuras entram com a fatia delas.
 
 ### 24.1 App e janela
 
@@ -1735,6 +1735,36 @@ Toda interação da UI é uma ação do registro (`ActionRegistry`: `ActionID` �
 ### 24.6 Settings e onboarding
 
 Cada controle de §14 é uma ação `settings.<section>.<key>` que grava o valor (regra de §14.1). Botões próprios: `Change…` (`settings.pickPath`), `Detect Again` / `Check Again` (`agent.detect`), `Edit Profiles…` (`library.profiles`), `Show Details` (`agent.hookDetails`), `Allow in Login Items` (`app.allowLoginItem`, abre System Settings › Login Items), `Open System Settings` (`app.openSystemSettings`), `Reset` "Don't ask again" (`settings.resetConfirmations`), `Import Again…` (`import.orca`), `Reveal Keybindings File` (`settings.revealKeybindings`), `Back Up Now` (`db.backup`), `Export Database…` (`db.export`), `Restore from Backup…` (`db.restore`), `Reload Shell Environment` (`terminal.reloadEnv`), `Read` security model (`help.securityModel`), `Reset Agent Box…` (`app.reset`, confirmação digitando `reset`), `Add Credential` / `Import .env File…` / `Reveal` / `Edit` / `Delete…` (`credential.*`, Reveal pede Touch ID). Onboarding: `Log In` (`account.logIn`), `Install…` (`agent.installHelp`), `Start Docker`, `Download`, `Allow` (`notifications.request`), `Review…` / `Import` / `Back` (`import.orca*`), `Skip for Now` / `Done` (`onboarding.skip` / `onboarding.done`). Nenhum desses fica sem efeito: quando a pré-condição falta, o botão fica desabilitado com o motivo em uma linha.
+
+Chaves da Fatia 1 (T1-26). Todas gravam pela regra de §14.1 (switch, segmented, combobox e stepper na hora; texto no ↵ ou blur; debounce de 300 ms no Store). `set(on/off)` liga e desliga; `select(<valor>)` escolhe; `set(<texto>)` grava texto. Controles de seções de fatias futuras não existem na UI da Fatia 1 (AC-T28).
+
+| Ação | ActionID | Atalho | Efeito | Desabilitado (tooltip) | Versão | Teste (XCUITest) |
+|---|---|---|---|---|---|---|
+| Seção do Settings (nav) | `settings.openSection` | — | `select(general/agents/terminal)`: troca a seção e a lembra | — | v1 | `testAction_settings_openSection` |
+| Back to App | `settings.back` | Esc | Fecha o Settings e volta à página anterior | — | v1 | `testAction_settings_back` |
+| Keep agents running when you quit | `settings.general.keepAgentsRunning` | — | `set(on/off)` | — | v1 | `testAction_settings_general_keepAgentsRunning` |
+| Ask before quitting with running agents | `settings.general.askBeforeQuit` | — | `set(on/off)` | — | v1 | `testAction_settings_general_askBeforeQuit` |
+| Confirm before closing a running terminal | `settings.general.confirmCloseTerminal` | — | `set(on/off)` | — | v1 | `testAction_settings_general_confirmCloseTerminal` |
+| Confirm before deleting a session | `settings.general.confirmDeleteSession` | — | `set(on/off)` | — | v1 | `testAction_settings_general_confirmDeleteSession` |
+| Branch prefix | `settings.general.branchPrefix` / `settings.general.branchPrefixCustom` | — | `select(gitUser/custom/none)` / `set(<texto>)` | Custom: só com `Custom` escolhido | v1 | `testAction_settings_general_branchPrefix` · `testAction_settings_general_branchPrefixCustom` |
+| Worktree folder / Clean session folder | `settings.general.worktreeFolder` / `settings.general.cleanSessionFolder` | — | `set(<caminho>)`; caminho relativo ou vazio é inválido e não grava | — | v1 | `testAction_settings_general_worktreeFolder` · `testAction_settings_general_cleanSessionFolder` |
+| Change… | `settings.pickPath` | — | `select(worktreeFolder/cleanSessionFolder)`: `NSOpenPanel` de pasta | — | v1 | `testAction_settings_pickPath` |
+| Reset | `settings.resetConfirmations` | — | Religa as três confirmações; toast `Confirmations restored.` | — | v1 | `testAction_settings_resetConfirmations` |
+| Default agent | `settings.agents.defaultAgent` | — | `select(claude/codex/opencode/shell)` | — | v1 | `testAction_settings_agents_defaultAgent` |
+| Default profile | `settings.agents.defaultProfile` | — | `select(<provider>:<profileId>)`: perfil global padrão do agente | — | v1 | `testAction_settings_agents_defaultProfile` |
+| New Profile | `settings.agents.profileNew` | — | `select(<provider>)`: cria um perfil seu, sem pular permissões, e abre a edição | — | v1 | `testAction_settings_agents_profileNew` |
+| Duplicate | `settings.agents.profileDuplicate` | — | `select(<profileId>)`: copia o perfil (nome `<nome> copy`) e abre a edição | — | v1 | `testAction_settings_agents_profileDuplicate` |
+| Edit | `settings.agents.profileEdit` | — | `select(<profileId>)`: abre ou fecha a edição do perfil | Perfil pronto: `Built-in profiles can't be edited. Duplicate it to change flags.` | v1 | `testAction_settings_agents_profileEdit` |
+| Delete | `settings.agents.profileDelete` | — | `select(<profileId>)`: apaga o perfil seu; o padrão do agente volta ao perfil pronto | Perfil pronto: `Built-in profiles can't be deleted.` | v1 | `testAction_settings_agents_profileDelete` |
+| Profile name / Permissions / Model / Extra flags | `settings.agents.profileName` / `settings.agents.profilePermission` / `settings.agents.profileModel` / `settings.agents.profileArgs` | — | Editam o perfil aberto: `set(<texto>)`, `select(<modo>)`, `set(<modelo>)`, `set(<flags>)`; flag fora da lista do agente é inválida e não grava | — | v1 | `testAction_settings_agents_profileName` · `testAction_settings_agents_profilePermission` · `testAction_settings_agents_profileModel` · `testAction_settings_agents_profileArgs` |
+| Font | `settings.terminal.font` | — | `select(<família>)` | — | v1 | `testAction_settings_terminal_font` |
+| Size | `settings.terminal.size` | — | `select(inc/dec)` ou `set(<8…32>)` | Limite (`Minimum size is 8.` / `Maximum size is 32.`) | v1 | `testAction_settings_terminal_size` |
+| Theme | `settings.terminal.theme` | — | `select(<tema>)`; a v1 traz só a paleta do dono (DS §3) | — | v1 | `testAction_settings_terminal_theme` |
+| Cursor | `settings.terminal.cursor` / `settings.terminal.cursorBlink` | — | `select(block/bar/underline)` / `set(on/off)` | — | v1 | `testAction_settings_terminal_cursor` · `testAction_settings_terminal_cursorBlink` |
+| Detect Again / Check Again | `agent.detect` | — | Refaz a detecção de instalação, versão e login (somente leitura, nunca roda `login`); `select(<provider>)` ou todos | — | v1 | `testAction_agent_detect` |
+| Install… | `agent.installHelp` | — | `select(<provider>)`: abre a página de instalação no navegador | — | v1 | `testAction_agent_installHelp` |
+| Keep Setting Up / Skip (confirmação do onboarding) | `onboarding.keepSettingUp` / `onboarding.confirmSkip` | — | Fecha a confirmação inline / fecha o onboarding sem perder o já feito | — | v1 | `testAction_onboarding_keepSettingUp` · `testAction_onboarding_confirmSkip` |
+| Skip for Now / Done | `onboarding.skip` / `onboarding.done` | — | Abre `Skip setup?` inline / fecha o onboarding e o marca como visto | — | v1 | `testAction_onboarding_skip` · `testAction_onboarding_done` |
 
 ### 24.7 Command palette e Quick Launch
 
