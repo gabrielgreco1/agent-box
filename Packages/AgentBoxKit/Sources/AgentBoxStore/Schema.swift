@@ -367,7 +367,29 @@ enum StoreMigrations {
         """)
     }
 
-    static let all: [StoreMigration] = [v1Initial, v2Activity, v3Computers]
+    /// `v4_vault_catalog` (T2-10): metadados do Vault (`secret`, 01 §5.13) e do catálogo por referência
+    /// (`catalog_item`, 06 §4.1). Só `ALTER TABLE ADD COLUMN`; as tabelas de `v2_activity` ficam como publicadas.
+    /// `catalog_item.id` = hash de fonte + caminho; `missing_at` marca o item cuja origem sumiu (nunca apagamos o histórico).
+    static let v4VaultCatalog = StoreMigration(id: "v4_vault_catalog") { db in
+        try db.execute(sql: """
+        ALTER TABLE secret ADD COLUMN kind TEXT NOT NULL DEFAULT 'envVar'
+            CHECK (kind IN ('proxyCredential','envVar','claudeSetupToken','codexBoxIdentity','githubPAT','boxMasterKey'));
+        ALTER TABLE secret ADD COLUMN scope TEXT NOT NULL DEFAULT 'global' CHECK (scope IN ('global','project'));
+        ALTER TABLE secret ADD COLUMN delivery TEXT NOT NULL DEFAULT 'profileEnv'
+            CHECK (delivery IN ('sidecarOnly','profileEnv','boxFileReadOnly'));
+        ALTER TABLE secret ADD COLUMN expires_at INTEGER;
+        ALTER TABLE secret ADD COLUMN imported_from TEXT;
+
+        ALTER TABLE catalog_item ADD COLUMN scope TEXT NOT NULL DEFAULT 'user' CHECK (scope IN ('user','project','plugin'));
+        ALTER TABLE catalog_item ADD COLUMN mtime INTEGER;
+        ALTER TABLE catalog_item ADD COLUMN frontmatter_json TEXT CHECK (frontmatter_json IS NULL OR json_valid(frontmatter_json));
+        ALTER TABLE catalog_item ADD COLUMN parse_error TEXT;
+        ALTER TABLE catalog_item ADD COLUMN shadowed_by TEXT;
+        CREATE INDEX catalog_item_name ON catalog_item(kind, name);
+        """)
+    }
+
+    static let all: [StoreMigration] = [v1Initial, v2Activity, v3Computers, v4VaultCatalog]
 
     static func migrator(_ migrations: [StoreMigration]) -> DatabaseMigrator {
         var m = DatabaseMigrator()
