@@ -34,6 +34,7 @@ public final class UDSConnection: @unchecked Sendable {
     private var cancelledSources = 0
     private var writes: [PendingWrite] = []
     private var writeFailure: UDSError?
+    private var finishWritingRequested = false
 
     /// Assume a posse do descritor (já não bloqueante, `CLOEXEC`, `NOSIGPIPE`).
     init(adopting fd: Int32, peer: PeerCredentials? = nil) {
@@ -66,8 +67,22 @@ public final class UDSConnection: @unchecked Sendable {
         }
     }
 
+    /// Half-close da escrita (`shutdown(SHUT_WR)`) depois que todos os bytes enfileirados foram aceitos pelo kernel.
+    /// A leitura continua aberta. É assim que o stdin de um exec hijacked do Docker recebe EOF (07 CS-102).
+    public func finishWriting() {
+        queue.async {
+            guard !self.closed, !self.finishWritingRequested else { return }
+            self.finishWritingRequested = true
+            if self.writes.isEmpty { self.shutdownWriteOnQueue() }
+        }
+    }
+
     public func close() {
         queue.async { self.closeOnQueue() }
+    }
+
+    private func shutdownWriteOnQueue() {
+        shutdown(fd, SHUT_WR)
     }
 
     // MARK: Leitura
@@ -171,6 +186,7 @@ public final class UDSConnection: @unchecked Sendable {
             writeRunning = false
             writeSource.suspend()
         }
+        if finishWritingRequested, writes.isEmpty, writeFailure == nil { shutdownWriteOnQueue() }
     }
 
     // MARK: Fechamento

@@ -839,11 +839,11 @@ Fechadas nesta revisão: Q2 (pai colando com Enter em filho que criou) por **P12
 | # | Spike | Quando |
 |---|---|---|
 | S1 | `mcpServers` inline por subagente e `agent_id` nos hooks na 2.1.302 (identidade por filho; define o modelo do modo leve) | **Concluído em 2026-10-17** (09 S-08): funciona, com `mcpServers` em array; evidência em `docs/evidence/spikes/S-08/`. Pendente barato (Fatia 3): filho chamando a ferramenta do irmão, `--resume` com `--agents` regenerado, agentes vindos de plugin/arquivo |
-| S2 | Publicação de porta só pelo egress e DNS em rede `internal` no Docker Desktop, OrbStack e Colima | Primeira semana da Fatia 3 |
+| S2 | Publicação de porta só pelo egress e DNS em rede `internal` no Docker Desktop, OrbStack e Colima | **Concluído no Docker Desktop em 2026-10-17** (T3-01): DNS por alias, sem rota para fora, só o egress publica em `127.0.0.1`, reverse proxy até o runtime pela rede internal; evidência em `docs/evidence/spikes/S2/`. Pendente barato: OrbStack e Colima (não instalados na máquina do spike) |
 | S3 | noVNC em `WKWebView` atingindo ≥ 20 fps e p95 < 100 ms | Fatia 3 |
 | S4 | `deny` de `Skill(agentbox)` por `--settings`, inclusive com `--dangerously-skip-permissions` | Fatia 3 (ou junto do V3 de 06) |
 | S5 | 15 Claude com setup-token + 3 Codex com volume compartilhado por 8 h (CA-502) | Abertura da v1.1 |
 | S6 | Uso reportado pelo provedor no preset Zyte (existe API de uso por chave?) e diferença para a contagem do egress | Fatia 3 |
 | S7 | `codex exec-server` como terceiro modo de filho Codex (audit/08 §1.4D) | Abertura da v1.1 |
 | S8 | Bind só leitura de arquivo 0400 do usuário do Mac lido pelos uids 10001–10004 no virtiofs (Docker Desktop, OrbStack, Colima); fallback de CS-602 | Primeira semana da Fatia 3 |
-| S9 | Exec com stdin pela Engine API (upgrade/hijack sobre UDS com Network.framework) e cancelamento com SIGTERM/SIGKILL no grupo | Primeira semana da Fatia 3 |
+| S9 | Exec com stdin pela Engine API (upgrade/hijack sobre UDS com Network.framework) e cancelamento com SIGTERM/SIGKILL no grupo | **Concluído no Docker Desktop em 2026-10-17** (T3-01): upgrade 101, half-close do stdin, stdout/stderr multiplexados, SIGTERM (143) e SIGKILL (137) no grupo, prazo e cancelamento; transporte é o `UDSConnection` da Platform (DispatchSource), não Network.framework; evidência em `docs/evidence/spikes/S9/` |

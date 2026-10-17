@@ -81,7 +81,7 @@ let package = Package(
             exclude: ["Launch/Fixtures", "Launch/Golden"], // lidos por caminho (#filePath); golden gravado com AB_UPDATE_GOLDEN=1
             swiftSettings: nonisolatedSettings
         ),
-        tests("DockerTests", ["AgentBoxDocker"]),
+        tests("DockerTests", ["AgentBoxDocker", "AgentBoxPlatform"], resources: [.copy("Fixtures")]),
         tests("TerminalCoreTests", ["AgentBoxTerminalCore", swiftTerm]),
         tests("DesignSystemTests", ["AgentBoxDesignSystem"]),
         tests("DaemonTests", ["AgentBoxProtocol", "AgentBoxPlatform", "AgentBoxTerminalCore", "AgentBoxCore", "agentboxd", "peerprobe", swiftTerm]),

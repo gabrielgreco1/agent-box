@@ -1,0 +1,7 @@
+{
+  "capacity" : "budget=5.749492645263672 GiB; headless=4 desktop=2; warning=Docker VM has 8 GB. 15 headless and 2 desktop computers need about 26 GB.",
+  "docker_context_inspect" : "unix:\/\/\/Users\/gabriel\/.docker\/run\/docker.sock",
+  "engine" : "29.6.2 api 1.55 Docker Desktop aarch64",
+  "runtime" : "desktop \/Users\/gabriel\/.docker\/run\/docker.sock via activeContext(name: \"desktop-linux\")",
+  "vm" : "MemTotal=8320954368 NCPU=14"
+}
