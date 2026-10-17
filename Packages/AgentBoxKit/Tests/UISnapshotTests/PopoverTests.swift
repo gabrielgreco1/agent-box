@@ -28,8 +28,11 @@ extension OverlayHostTests {
     }
 
     func rig() async -> Rig {
-        MotionPolicy.shared.mode = .instant
         let env = AppEnvironment(environment: [:])
+        let motion = MotionPolicy()
+        motion.mode = .instant
+        env.overlays.motion = motion
+        env.toasts.motion = motion
         let recorder = Recorder()
         try? env.registry.register(.composerSetAgent) { arg in
             recorder.calls.append("setAgent:\(arg.value ?? "-")")
@@ -50,7 +53,6 @@ extension OverlayHostTests {
 
     func teardown(_ r: Rig) {
         r.window.close()
-        MotionPolicy.shared.mode = .normal
     }
 
     static let agents: [DSMenuEntry] = [
