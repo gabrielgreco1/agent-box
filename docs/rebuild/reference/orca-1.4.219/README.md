@@ -40,3 +40,7 @@ Divergências entre estes tokens e `docs/rebuild/spec/02-design-system.md` estã
 - **Para destravar:** o dono deixa a janela do Orca em tela normal, com tema escuro, em 1440x900 e depois em 760x480 (pode ser com o Stage Manager desligado). Com ela visível, uma sessão recaptura com `screencapture -x -o -l <windowID>` (PNG @2x), gera os recortes com PIL e grava as medidas em pontos (pixels / 2).
 - **Fixtures:** os estados que exigem projetos, sessões e panes de exemplo (05 §0.3) também ficam para essa sessão, porque exigem manipular o Orca.
 - **Já feito e válido:** tokens em `tokens/` (extraídos do `app.asar`, sem captura).
+
+## Captura fornecida pelo dono (2026-10-16)
+
+`screens/owner/main-session-topleft@2x.png` — screenshot do Orca 1.4.219 feita pelo dono (2000×795 px, @2x ⇒ 1000×397.5 pt), recorte superior-esquerdo da janela principal: titlebar com semáforos, nome "Orca", toggle da sidebar e voltar/avançar; Search, Tasks, Automations, Orca Mobile; seção Projects com ações; cards de worktree (bolinha de status, nome, branch, badge `primary`, badge de erro `rename failed`, linha de atividade do agente com tempo); tab row (tab ativa com status + logo do Claude + nome + fechar, botão +), "▷ Command" e toggle do painel direito; ícones do canto do pane. É a referência visual primária até a sessão de captura com o dono (Stage Manager impediu a captura passiva).
