@@ -61,6 +61,10 @@ final class TerminalRuntime {
         var build = "1.0 (dev)"
         /// Env do shell de login. Padrão: captura única com cache.
         var loginEnvironment: @Sendable () async -> [String: String]
+        /// Fatia ligada: a partir da 2 o Claude leva hooks de atividade por lançamento (06 §2.8). Nada é escrito em `~/.claude`.
+        var slice: LaunchSlice = .slice1
+        /// `agentbox` embutido (`Contents/MacOS/agentbox`): o helper que os hooks chamam. Sem ele não há injeção.
+        var helperPath: String?
     }
 
     enum Connection: Equatable { case idle, connecting, connected, unavailable }
@@ -240,7 +244,13 @@ final class TerminalRuntime {
             daemon: gateway,
             configuration: .init(
                 launchRoot: configuration.daemonHome.appendingPathComponent("run/launch", isDirectory: true),
-                appSocketPath: configuration.appSocketPath, appVersion: configuration.appVersion, loginEnvironment: login))
+                appSocketPath: configuration.appSocketPath, appVersion: configuration.appVersion, loginEnvironment: login,
+                slice: configuration.slice,
+                injection: { [helper = configuration.helperPath] provider in
+                    // Codex entra com os hashes de trust sondados (P18); até lá fica sem hooks e o estado é `Status unavailable`.
+                    guard provider == .claude, let helper else { return nil }
+                    return LaunchInjection(helperPath: helper)
+                }))
     }()
 
     /// Lança o terminal pelo `LaunchCoordinator`: resolve o CLI, gera o plano, cria a sessão no daemon e anexa a view.

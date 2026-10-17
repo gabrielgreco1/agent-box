@@ -1698,6 +1698,9 @@ Toda interação da UI é uma ação do registro (`ActionRegistry`: `ActionID` �
 | Inbox | `page.inbox` | ⇧⌘I | Feed §9.1 | — | v1 (Fatia 2) | `testAction_page_inbox` |
 | Close page | `page.close` | Esc | Volta à sessão | — | v1 | `testAction_page_close` |
 | Mark as Read / Mark All as Read | `inbox.markRead` / `inbox.markAllRead` | — | Marca lido | Nada não lido: `Nothing unread` | v1 | `testAction_inbox_markRead` · `testAction_inbox_markAllRead` |
+| Inbox: filtro | `inbox.filter` | — | `select(all/needsYou/unread)`: filtra o feed (§9.1) | — | v1 (Fatia 2) | `testAction_inbox_filter` |
+| Allow Notifications | `notifications.request` | — | Pede a permissão de notificações ao sistema (só por este clique; Settings › Notifications e onboarding) | Já concedida: `Notifications are on.` | v1 (Fatia 2) | `testAction_notifications_request` |
+| Open System Settings | `app.openSystemSettings` | — | `select(notifications)`: abre System Settings › Notifications | — | v1 (Fatia 2) | `testAction_app_openSystemSettings` |
 | Open (notificação) | `notification.open` | — | Ativa o app e seleciona sessão/pane/viewer com rim flash | — | v1 | `testAction_notification_open` |
 | Send Test Notification | `settings.testNotification` | — | Envia uma notificação de exemplo | Permissão negada: `Notifications are off for Agent Box.` | v1 | `testAction_settings_testNotification` |
 | Pause / Resume Notifications for 1 Hour | `notifications.pause` | — | Silencia notificações do sistema por 1 h | — | v1.1 | `testAction_notifications_pause` |
@@ -1762,6 +1765,13 @@ Chaves da Fatia 1 (T1-26). Todas gravam pela regra de §14.1 (switch, segmented,
 | Size | `settings.terminal.size` | — | `select(inc/dec)` ou `set(<8…32>)` | Limite (`Minimum size is 8.` / `Maximum size is 32.`) | v1 | `testAction_settings_terminal_size` |
 | Theme | `settings.terminal.theme` | — | `select(<tema>)`; a v1 traz só a paleta do dono (DS §3) | — | v1 | `testAction_settings_terminal_theme` |
 | Cursor | `settings.terminal.cursor` / `settings.terminal.cursorBlink` | — | `select(block/bar/underline)` / `set(on/off)` | — | v1 | `testAction_settings_terminal_cursor` · `testAction_settings_terminal_cursorBlink` |
+| Agent needs input | `settings.notifications.needsInput` | — | `set(on/off)`: Notificação quando um agente entra em `needsInput` | — | v1 (Fatia 2) | `testAction_settings_notifications_needsInput` |
+| Agent finished | `settings.notifications.finished` | — | `set(on/off)`: Notificação quando um turno termina | — | v1 (Fatia 2) | `testAction_settings_notifications_finished` |
+| Agent failed | `settings.notifications.failed` | — | `set(on/off)`: Notificação quando um agente falha | — | v1 (Fatia 2) | `testAction_settings_notifications_failed` |
+| Terminal bell | `settings.notifications.terminalBell` | — | `set(on/off)`: Notificação para BEL em terminal fora de vista (desligado por padrão) | — | v1 (Fatia 2) | `testAction_settings_notifications_terminalBell` |
+| Suppress when the session is visible | `settings.notifications.suppressWhenVisible` | — | `set(on/off)`: Sem notificação com a janela key e o pane visível | — | v1 (Fatia 2) | `testAction_settings_notifications_suppressWhenVisible` |
+| Dock badge | `settings.notifications.dockBadge` | — | `set(on/off)`: Número de itens de atenção (prioridade 1–2) no ícone do Dock | — | v1 (Fatia 2) | `testAction_settings_notifications_dockBadge` |
+| Notification sound | `settings.notifications.sound` | — | `select(system/none)` | — | v1 (Fatia 2) | `testAction_settings_notifications_sound` |
 | Detect Again / Check Again | `agent.detect` | — | Refaz a detecção de instalação, versão e login (somente leitura, nunca roda `login`); `select(<provider>)` ou todos | — | v1 | `testAction_agent_detect` |
 | Install… | `agent.installHelp` | — | `select(<provider>)`: abre a página de instalação no navegador | — | v1 | `testAction_agent_installHelp` |
 | Keep Setting Up / Skip (confirmação do onboarding) | `onboarding.keepSettingUp` / `onboarding.confirmSkip` | — | Fecha a confirmação inline / fecha o onboarding sem perder o já feito | — | v1 | `testAction_onboarding_keepSettingUp` · `testAction_onboarding_confirmSkip` |

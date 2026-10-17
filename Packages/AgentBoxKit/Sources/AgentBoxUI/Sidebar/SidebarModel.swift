@@ -42,6 +42,12 @@ final class SidebarModel {
     /// Avisa a cada snapshot novo do Store (o workspace carrega a sessão selecionada quando ela chega).
     @ObservationIgnored var onSnapshot: ((StoreSnapshot) -> Void)?
     private(set) var pending: [PendingLaunch] = []
+    /// Atenção (Fatia 2): estado de atividade, não lido e fila. `nil` na Fatia 1 (sem hooks, o agente vivo é `Status unavailable`).
+    @ObservationIgnored var attention: AttentionCoordinator?
+    /// Inbox (⇧⌘I) no lugar do corpo da sidebar (03 §9.1). Só em memória: reabrir o app volta à lista de sessões.
+    private(set) var inboxOpen = false
+    var inboxFilter: InboxFilter = .all
+    var inboxFilterMenuOpen = false
     /// Sessão em edição inline (03 §2.11): no máximo uma.
     private(set) var renamingSession: UUID?
     /// Projeto em edição inline (T1-19): no máximo um, e nunca junto com uma sessão em edição.
@@ -76,7 +82,22 @@ final class SidebarModel {
         SidebarInput(
             snapshot: snapshot, query: query, sort: sort, filters: filters, collapsedProjects: collapsedProjects,
             showMoreOpen: showMoreOpen, hiddenProjects: hiddenProjects, collapsedSessions: collapsedSessions,
-            expandedSummaries: expandedSummaries, selectedSession: selectedSession, pending: pending, now: clock())
+            expandedSummaries: expandedSummaries, selectedSession: selectedSession, pending: pending, now: clock(),
+            attention: attention?.center ?? AttentionCenter())
+    }
+
+    /// Quem é cada terminal de agente (sessão, projeto, agente) para títulos de notificação e linhas do Inbox.
+    func attentionContexts() -> [UUID: AttentionContext] { AttentionContext.contexts(in: snapshot) }
+
+    // MARK: Inbox
+
+    func setInbox(open: Bool) {
+        guard inboxOpen != open else { return }
+        inboxOpen = open
+    }
+
+    var inboxFeed: InboxFeed {
+        (attention?.center ?? AttentionCenter()).inbox(contexts: attentionContexts(), filter: inboxFilter, now: clock())
     }
 
     var projection: SidebarProjection { SidebarProjector.build(input) }
@@ -139,9 +160,10 @@ final class SidebarModel {
 
     /// Seleciona a sessão e a marca como vista. Devolve `false` se ela não existe.
     @discardableResult
-    func select(_ id: UUID) -> Bool {
+    func select(_ id: UUID, closingInbox: Bool = true) -> Bool {
         guard let session = session(id) else { return false }
         selectedSession = id
+        if closingInbox { inboxOpen = false }
         keyboardFocus = nil
         focusListRequest += 1
         if session.unread, let store {

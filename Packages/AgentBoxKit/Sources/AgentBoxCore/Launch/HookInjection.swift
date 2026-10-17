@@ -5,6 +5,15 @@ import Foundation
 // escrito aqui e nada entra no argv ainda (a injeção em `--settings`/`-c` é a T2-02/T2-03). Nunca toca em `~/.claude`
 // nem em `~/.codex`.
 
+/// Onde está o `agentbox` que os hooks chamam: `AGENTBOX_HELPER` (dev e testes) ou `Contents/MacOS/agentbox` do app.
+public enum HookHelperLocator {
+    public static func path(environment: [String: String], bundleURL: URL) -> String? {
+        if let path = environment["AGENTBOX_HELPER"], !path.isEmpty { return path }
+        let bundled = bundleURL.appendingPathComponent("Contents/MacOS/agentbox").path
+        return FileManager.default.isExecutableFile(atPath: bundled) ? bundled : nil
+    }
+}
+
 /// Comando canônico do hook (08 §0.2). Sem run id nem pane no comando: a correlação é só por env (06 §3.3.1), então o
 /// hash de trust do Codex não muda entre execuções.
 public enum HookCommandLine {

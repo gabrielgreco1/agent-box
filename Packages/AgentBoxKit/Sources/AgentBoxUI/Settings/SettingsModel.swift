@@ -18,6 +18,8 @@ public final class SettingsModel {
     /// Perfis gravados (os prontos entram por `catalog`).
     public private(set) var profiles: [LaunchProfile] = []
     public private(set) var editingProfileID: UUID?
+    /// Permissão de notificações do sistema (Settings › Notifications). Só lida; quem a pede é o botão `Allow`.
+    public private(set) var notificationAuthorization: NotificationAuthorization = .notDetermined
     /// Mensagem de validação por campo (`general.worktreeFolder`, `agents.profileArgs`...): o valor salvo continua valendo.
     public private(set) var fieldErrors: [String: String] = [:]
 
@@ -28,6 +30,8 @@ public final class SettingsModel {
     @ObservationIgnored var probe: AgentProbe
     @ObservationIgnored var system: SettingsSystemActions
     @ObservationIgnored var clock: () -> Date = { Date() }
+    /// Notificações do sistema (Fatia 2): ligado pelo `AppEnvironment`. Sem ele a seção mostra a permissão como não pedida.
+    @ObservationIgnored public var attention: AttentionCoordinator?
 
     @ObservationIgnored private var store: AgentBoxStore?
     @ObservationIgnored private var persisted = AppSettings()
@@ -71,6 +75,7 @@ public final class SettingsModel {
         isOpen = true
         onPresentationChange(true)
         Task { await refreshAgents(force: false) }
+        if section == "notifications" { Task { await refreshNotificationAuthorization() } }
     }
 
     public func close() {
@@ -88,7 +93,21 @@ public final class SettingsModel {
         section = id
         fieldErrors = [:]
         persistSection()
+        if id == "notifications" { Task { await refreshNotificationAuthorization() } }
         return true
+    }
+
+    /// Lê a permissão atual (nunca abre o diálogo do sistema).
+    public func refreshNotificationAuthorization() async {
+        notificationAuthorization = await attention?.notificationCenter.authorization() ?? .notDetermined
+    }
+
+    /// `notifications.request`: o único caminho que pede a permissão ao sistema, sempre por clique do usuário.
+    @discardableResult
+    func requestNotificationAuthorization() async -> NotificationAuthorization {
+        guard let center = attention?.notificationCenter else { return notificationAuthorization }
+        notificationAuthorization = await center.requestAuthorization()
+        return notificationAuthorization
     }
 
     // MARK: Store

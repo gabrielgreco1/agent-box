@@ -282,6 +282,12 @@ public actor AgentBoxStore {
         try await write { try $0.execute(sql: "UPDATE session SET unread = 0, last_viewed_at = ? WHERE id = ?", arguments: [ms, key]) }
     }
 
+    /// `Mark as Unread` (03 §2.6) e o não lido que nasce de `done`, `failed` e BEL (06 §3.6).
+    public func setSessionUnread(id: UUID, unread: Bool) async throws {
+        let key = id.uuidString
+        try await write { try $0.execute(sql: "UPDATE session SET unread = ? WHERE id = ?", arguments: [unread ? 1 : 0, key]) }
+    }
+
     /// Apaga o registro (e tabs/terminais em cascata). Arquivos em disco nunca são tocados aqui.
     public func deleteSession(id: UUID) async throws {
         let key = id.uuidString

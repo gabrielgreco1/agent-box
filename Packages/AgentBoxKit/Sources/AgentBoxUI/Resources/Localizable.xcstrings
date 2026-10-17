@@ -100,6 +100,50 @@
         }
       }
     },
+    "A question or a permission request.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A question or a permission request."
+          }
+        }
+      }
+    },
+    "A terminal you aren't looking at rang the bell.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A terminal you aren't looking at rang the bell."
+          }
+        }
+      }
+    },
+    "A turn ended and the agent is waiting for you.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A turn ended and the agent is waiting for you."
+          }
+        }
+      }
+    },
+    "A turn failed or the agent exited with an error.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A turn failed or the agent exited with an error."
+          }
+        }
+      }
+    },
     "About Agent Box": {
       "extractionState": "manual",
       "localizations": {
@@ -254,6 +298,39 @@
         }
       }
     },
+    "Agent failed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agent failed"
+          }
+        }
+      }
+    },
+    "Agent finished": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agent finished"
+          }
+        }
+      }
+    },
+    "Agent needs input": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agent needs input"
+          }
+        }
+      }
+    },
     "Agents": {
       "extractionState": "manual",
       "localizations": {
@@ -261,6 +338,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Agents"
+          }
+        }
+      }
+    },
+    "Alerts": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alerts"
+          }
+        }
+      }
+    },
+    "All": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All"
+          }
+        }
+      }
+    },
+    "Allow Notifications": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow Notifications"
           }
         }
       }
@@ -408,6 +518,17 @@
         }
       }
     },
+    "Behavior": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Behavior"
+          }
+        }
+      }
+    },
     "Blank Terminal": {
       "extractionState": "manual",
       "localizations": {
@@ -437,6 +558,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Block"
+          }
+        }
+      }
+    },
+    "Blocked": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blocked"
           }
         }
       }
@@ -525,6 +657,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Check for Problems"
+          }
+        }
+      }
+    },
+    "Check that alerts reach you.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check that alerts reach you."
           }
         }
       }
@@ -1178,6 +1321,17 @@
         }
       }
     },
+    "Dock badge": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dock badge"
+          }
+        }
+      }
+    },
     "Docker": {
       "extractionState": "manual",
       "localizations": {
@@ -1332,6 +1486,17 @@
         }
       }
     },
+    "Failed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed"
+          }
+        }
+      }
+    },
     "Fetching origin…": {
       "extractionState": "manual",
       "localizations": {
@@ -1339,6 +1504,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fetching origin…"
+          }
+        }
+      }
+    },
+    "Filter": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filter"
           }
         }
       }
@@ -1515,6 +1691,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "How much the agent can do without asking."
+          }
+        }
+      }
+    },
+    "Idle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Idle"
           }
         }
       }
@@ -1717,6 +1904,17 @@
         }
       }
     },
+    "Mark All as Read": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mark All as Read"
+          }
+        }
+      }
+    },
     "Mark as Read": {
       "extractionState": "manual",
       "localizations": {
@@ -1823,6 +2021,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Name"
+          }
+        }
+      }
+    },
+    "Needs You": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs You"
+          }
+        }
+      }
+    },
+    "Needs input": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs input"
           }
         }
       }
@@ -1981,6 +2201,17 @@
         }
       }
     },
+    "No alert while Agent Box is in front and the pane is on screen.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No alert while Agent Box is in front and the pane is on screen."
+          }
+        }
+      }
+    },
     "No projects yet.": {
       "extractionState": "manual",
       "localizations": {
@@ -2102,6 +2333,17 @@
         }
       }
     },
+    "Nothing needs you.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing needs you."
+          }
+        }
+      }
+    },
     "Notifications": {
       "extractionState": "manual",
       "localizations": {
@@ -2109,6 +2351,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Notifications"
+          }
+        }
+      }
+    },
+    "Notifications are off for Agent Box.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notifications are off for Agent Box."
+          }
+        }
+      }
+    },
+    "Open System Settings": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open System Settings"
           }
         }
       }
@@ -2186,6 +2450,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pick the folder the session works in. Agent Box won't create or delete anything in it."
+          }
+        }
+      }
+    },
+    "Played for alerts that need you.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Played for alerts that need you."
           }
         }
       }
@@ -2586,6 +2861,17 @@
         }
       }
     },
+    "Send Test Notification": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send Test Notification"
+          }
+        }
+      }
+    },
     "Session archived.": {
       "extractionState": "manual",
       "localizations": {
@@ -2718,6 +3004,17 @@
         }
       }
     },
+    "Shows how many agents need you on the Dock icon.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shows how many agents need you on the Dock icon."
+          }
+        }
+      }
+    },
     "Size": {
       "extractionState": "manual",
       "localizations": {
@@ -2813,6 +3110,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sort by"
+          }
+        }
+      }
+    },
+    "Sound": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sound"
           }
         }
       }
@@ -2949,6 +3257,17 @@
         }
       }
     },
+    "Suppress when the session is visible": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suppress when the session is visible"
+          }
+        }
+      }
+    },
     "System": {
       "extractionState": "manual",
       "localizations": {
@@ -2967,6 +3286,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Terminal"
+          }
+        }
+      }
+    },
+    "Terminal bell": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminal bell"
           }
         }
       }
@@ -3224,6 +3554,28 @@
         }
       }
     },
+    "Waiting on %lld subagents": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting on %lld subagents"
+          }
+        }
+      }
+    },
+    "Waiting on 1 subagent": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting on 1 subagent"
+          }
+        }
+      }
+    },
     "Where": {
       "extractionState": "manual",
       "localizations": {
@@ -3253,6 +3605,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Where sessions without a project live."
+          }
+        }
+      }
+    },
+    "Working": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Working"
           }
         }
       }

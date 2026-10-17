@@ -61,7 +61,9 @@ struct SidebarView: View {
             if let registry, registry.isRendered(.sidebarSearch) {
                 SidebarSearchField(model: model)
             }
-            NavItemRow(action: .pageInbox, id: .sidebarNavInbox, title: String(localized: "Inbox", bundle: .module), symbol: "tray", hideKey: "inbox")
+            NavItemRow(
+                action: .pageInbox, id: .sidebarNavInbox, title: String(localized: "Inbox", bundle: .module), symbol: "tray", hideKey: "inbox",
+                badge: model.attention?.center.badgeCount ?? 0, selected: model.inboxOpen)
             NavItemRow(action: .pageComputers, id: .sidebarNavComputers, title: String(localized: "Computers", bundle: .module), symbol: "display", hideKey: "computers")
             NavItemRow(action: .pageLibrary, id: .sidebarNavLibrary, title: String(localized: "Library", bundle: .module), symbol: "books.vertical", hideKey: "library")
         }
@@ -73,6 +75,14 @@ struct SidebarView: View {
     // MARK: Corpo
 
     @ViewBuilder private func content(_ projection: SidebarProjection) -> some View {
+        if model.inboxOpen {
+            InboxView(model: model)
+        } else {
+            sessionsContent(projection)
+        }
+    }
+
+    @ViewBuilder private func sessionsContent(_ projection: SidebarProjection) -> some View {
         switch projection.empty {
         case .workspace:
             emptyWorkspace
@@ -301,7 +311,9 @@ struct SidebarView: View {
             activate(item, registry)
             return .handled
         case .escape:
-            if let registry, !model.query.isEmpty, registry.isRendered(.sidebarSearch) {
+            if model.inboxOpen {
+                model.setInbox(open: false)
+            } else if let registry, !model.query.isEmpty, registry.isRendered(.sidebarSearch) {
                 model.query = ""
             } else {
                 model.keyboardFocus = nil
@@ -375,6 +387,9 @@ struct NavItemRow: View {
     let title: String
     let symbol: String
     let hideKey: String
+    /// Contagem de atenção (prioridade 1–2): `sidebar.nav.inbox.badge`, laranja (M-701).
+    var badge = 0
+    var selected = false
     @Environment(\.actionRegistry) private var registry
     @State private var hovering = false
 
@@ -386,13 +401,14 @@ struct NavItemRow: View {
                         .font(.system(size: SidebarMetrics.navIcon, weight: .regular))
                         .foregroundStyle(DS.Color.navIcon)
                         .frame(width: SidebarMetrics.navIcon, height: SidebarMetrics.navIcon)
-                    Text(verbatim: title).dsFont(DS.Font.nav).foregroundStyle(DS.Color.navText)
+                    Text(verbatim: title).dsFont(DS.Font.nav).foregroundStyle(selected ? DS.Color.textPrimary : DS.Color.navText)
                     Spacer(minLength: .zero)
+                    if badge > 0 { NavBadge(count: badge).a11y(.sidebarNavInboxBadge, kind: "badge", label: "\(badge)") }
                 }
                 .padding(.horizontal, SidebarMetrics.navPaddingH)
                 .frame(height: SidebarMetrics.navHeight)
                 .frame(maxWidth: .infinity)
-                .background(RoundedRectangle(cornerRadius: SidebarMetrics.navRadius).fill(hovering ? DS.Color.fg8 : Color.clear))
+                .background(RoundedRectangle(cornerRadius: SidebarMetrics.navRadius).fill(hovering || selected ? DS.Color.fg8 : Color.clear))
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -403,6 +419,36 @@ struct NavItemRow: View {
             }
         }
     }
+}
+
+/// Pílula de contagem do item `Inbox`: `orange-500`, número tabular; ao aumentar dá um bump e o número troca com
+/// `numericText` (M-701, M-810). Reduce Motion: troca seca.
+struct NavBadge: View {
+    let count: Int
+    @State private var bump = false
+
+    var body: some View {
+        Text(verbatim: String(count))
+            .dsFont(DS.Font.microNumeric)
+            .fontWeight(.semibold)
+            .foregroundStyle(DS.ColorSpec.textOnPrimary.color)
+            .contentTransition(.numericText())
+            .padding(.horizontal, DS.Space.s1_5)
+            .frame(minWidth: NavBadge.height, minHeight: NavBadge.height)
+            .background(Capsule().fill(DS.Color.agentNeedsInput))
+            .scaleEffect(bump ? MotionTokens.Scale.bump : 1)
+            .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.medium), value: count)
+            .onChange(of: count) { old, new in
+                guard new > old, !MotionPolicy.shared.reduceMotion else { return }
+                withAnimation(Motion.spring(MotionTokens.Springs.lively)) { bump = true }
+                Task {
+                    try? await Task.sleep(for: .seconds(0.18))
+                    withAnimation(Motion.spring(MotionTokens.Springs.lively)) { bump = false }
+                }
+            }
+    }
+
+    static let height: CGFloat = 16
 }
 
 // MARK: Search (DS §12.10 `sidebarSearch`)

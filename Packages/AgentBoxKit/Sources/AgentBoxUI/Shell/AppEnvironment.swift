@@ -40,12 +40,20 @@ public final class AppEnvironment {
     public let onboarding: OnboardingModel
     let projects: ProjectsController
     public let keyBindings: KeyBindingRegistry
+    /// Atenção, Inbox e notificações (Fatia 2). `nil` na Fatia 1: sem hooks o agente vivo é `Status unavailable`.
+    public let attention: AttentionCoordinator?
+    /// `AGENTBOX_NOTIFICATIONS=fake`: o que seria entregue ao sistema fica em memória e em `run/fake-notifications.jsonl`.
+    public let fakeNotifier: RecordingNotificationCenter?
+    /// Troca o `NSApp.dockTile.badgeLabel` (testes).
+    let dockBadgeOverride: (@MainActor (String?) -> Void)?
     /// Pane de terminal focado: destino das ações de zoom, busca, copiar/colar e limpar (T1-09).
     public let terminalRouter = TerminalActionRouter()
     public let automationEnabled: Bool
     public let fixture: String?
     public let socketPath: String
     private var ctl: CtlServer?
+    private var hub: AppSockHub?
+    var activity: ActivityService?
     private var store: AgentBoxStore?
     /// `session.launch`: sessão com o agente já rodando (P9, M-501).
     private var launcher: SessionLauncher?
@@ -57,7 +65,8 @@ public final class AppEnvironment {
 
     /// `AGENTBOX_AUTOMATION=1` liga o canal `ctl` (o toggle em Settings > Advanced chega com T1-26).
     /// `AGENTBOX_SLICE=<n>` e `AGENTBOX_SCREEN=<tela>` valem só para dev e testes.
-    public init(environment: [String: String] = ProcessInfo.processInfo.environment) {
+    public init(environment: [String: String] = ProcessInfo.processInfo.environment, dockBadge: (@MainActor (String?) -> Void)? = nil) {
+        dockBadgeOverride = dockBadge
         let flags = SliceFlags.fromEnvironment(environment)
         self.flags = flags
         self.automationEnabled = environment["AGENTBOX_AUTOMATION"] == "1"
@@ -78,13 +87,31 @@ public final class AppEnvironment {
         self.projects = ProjectsController(sidebar: sidebar, overlays: overlays, toasts: toasts, automationEnabled: automationEnabled)
         elements.enablement = { [registry] id in registry.availability(of: id) }
         let storeRoot = StorePaths.default(environment: environment).root
+        let slice2 = flags.isEnabled(.slice2)
+        if slice2 {
+            let center: any NotificationCentering
+            if environment["AGENTBOX_NOTIFICATIONS"] == "fake" {
+                let recorder = RecordingNotificationCenter(
+                    authorization: .notDetermined, logURL: storeRoot.appendingPathComponent("run/fake-notifications.jsonl"))
+                fakeNotifier = recorder
+                center = recorder
+            } else {
+                fakeNotifier = nil
+                center = SystemNotificationCenter()
+            }
+            attention = AttentionCoordinator(notifier: center)
+        } else {
+            fakeNotifier = nil
+            attention = nil
+        }
         let loginProvider = LoginShellEnvProvider(
             config: LoginShellEnvConfig(runDirectory: storeRoot.appendingPathComponent("run", isDirectory: true)))
         let runtime = TerminalRuntime(
             configuration: TerminalRuntime.Configuration(
                 daemonHome: storeRoot, daemonExecutable: environment["AGENTBOX_DAEMON"].map { URL(fileURLWithPath: $0) },
                 stopDaemonOnQuit: automationEnabled || environment["AGENTBOX_STOP_DAEMON_ON_QUIT"] == "1",
-                appSocketPath: socketPath, loginEnvironment: { await loginProvider.environment().variables }),
+                appSocketPath: socketPath, loginEnvironment: { await loginProvider.environment().variables },
+                slice: slice2 ? .slice2 : .slice1, helperPath: slice2 ? Self.helperPath(environment) : nil),
             registry: registry, elements: elements)
         workspace = WorkspaceModel(runtime: runtime)
         registerShellActions()
@@ -96,6 +123,7 @@ public final class AppEnvironment {
         if fixture == SidebarFixtures.screenID { registerSidebarDemo() }
         do { try terminalRouter.register(in: registry) } catch { log.publicError("duplicate terminal action registration") }
         wireSettings()
+        wireAttention(environment: environment)
     }
 
     /// `AGENTBOX_SCREEN=setup-demo`: onboarding e Settings com CLIs de mentira (Claude logado, Codex deslogado, OpenCode ausente),
@@ -312,7 +340,7 @@ public final class AppEnvironment {
     /// Fixture `AGENTBOX_SCREEN=sidebar-demo`: controles cujo fluxo é de outra tarefa (composer, adicionar projeto, Settings,
     /// páginas) ganham handlers de exemplo para a evidência visual mostrar a sidebar completa. Nada disso roda em uso normal.
     private func registerSidebarDemo() {
-        for id in [ActionID.appSettings, .projectNewSession, .pageInbox, .pageComputers, .pageLibrary] {
+        for id in [ActionID.appSettings, .projectNewSession, .pageInbox, .pageComputers, .pageLibrary] where attention == nil || id != .pageInbox {
             try? registry.register(id) { _ in "demo" }
         }
     }
@@ -337,9 +365,14 @@ public final class AppEnvironment {
             launcher?.attach(store: opened)
             cleanSessions?.attach(store: opened)
             await restoreSessions(store: opened)
+            // A evidência de atenção semeia depois do restore: os terminais "running" de mentira não viram `interrupted`.
+            if fixture == AttentionFixtures.screenID, attention != nil {
+                try await AttentionFixtures.seed(into: opened, home: NSHomeDirectory())
+            }
             await workspace.attach(store: opened)
             await sidebar.attach(store: opened)
             await settings.attach(store: opened)
+            await startActivity(store: opened)
             if autoOnboarding { await onboarding.attach(store: opened, forceVisible: fixture == Self.setupDemoFixture) }
             projects.attach(store: opened)
         } catch {
@@ -399,7 +432,22 @@ public final class AppEnvironment {
     /// Sobe o servidor `ctl` se a automação estiver ligada. Chamado uma vez, no primeiro `.task` da janela.
     public func start() async {
         await startStore()
-        guard automationEnabled, ctl == nil else { return }
+        // Fatia 2: `app.sock` é de um hub só (ctl + hook); os hooks chegam mesmo com a automação desligada.
+        if let activity, hub == nil {
+            let enabled = automationEnabled
+            let providers: [any AppSockServiceProvider] = [
+                CtlServiceProvider(dispatcher: registry, isEnabled: { enabled }), HookServiceProvider(activity: activity),
+            ]
+            let server = AppSockHub(socketPath: socketPath, providers: providers)
+            do {
+                try await server.start()
+                hub = server
+            } catch {
+                log.error("app.sock hub failed to start: \(error)")
+            }
+            return
+        }
+        guard automationEnabled, ctl == nil, hub == nil else { return }
         let server = CtlServer(socketPath: socketPath, dispatcher: registry)
         do {
             try await server.start()
@@ -424,5 +472,10 @@ public final class AppEnvironment {
         projects.detach()
         await ctl?.stop()
         ctl = nil
+        await hub?.stop()
+        hub = nil
+        attention?.stop()
+        await activity?.stop()
+        activity = nil
     }
 }
