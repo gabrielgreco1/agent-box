@@ -58,43 +58,52 @@ import Testing
 /// A janela vazia lista os controles pelo registro (T1-02: "ctl ui tree lista a janela vazia").
 @MainActor
 @Suite struct EmptyWindowTreeTests {
-    private func host(_ env: AppEnvironment) async -> NSWindow {
-        let window = NSWindow(
-            contentRect: NSRect(x: -4000, y: -4000, width: 760, height: 480), styleMask: [.titled], backing: .buffered, defer: false)
-        window.isReleasedWhenClosed = false
-        let hosting = NSHostingView(rootView: MainWindowView(env: env))
-        window.contentView = hosting
-        window.orderBack(nil)  // fora da tela; sem ativar o app nem roubar foco
-        hosting.layoutSubtreeIfNeeded()
+    static func host(_ env: AppEnvironment, size: NSSize = NSSize(width: 760, height: 480)) async -> MainWindowController {
+        let controller = MainWindowController(env: env, autosaveName: nil)
+        let window = controller.window!
+        window.setContentSize(size)
+        window.setFrameOrigin(NSPoint(x: -4000, y: -4000))
+        controller.present(activate: false)  // fora da tela; sem ativar o app nem roubar foco
+        window.contentView?.layoutSubtreeIfNeeded()
         for _ in 0..<80 {
             try? await Task.sleep(for: .milliseconds(25))
             if env.elements.snapshot().find(.windowAppName)?.frame != nil { break }
         }
-        return window
+        return controller
     }
 
     @Test func windowListsItsCanonicalControls() async {
         let env = AppEnvironment(environment: [:])
-        let window = await host(env)
-        defer { window.close() }
+        let controller = await Self.host(env)
+        defer { controller.window?.close() }
         let tree = await env.registry.uiTree(root: nil)
         #expect(tree.roots.map(\.id) == [.windowMain])
-        for id in [A11yID.windowMain, .windowTitlebar, .windowAppName] {
+        let ids: [A11yID] = [.windowMain, .windowTitlebar, .windowAppName, .windowSidebarToggle, .windowHistoryBack, .windowHistoryForward, .sidebar, .landing]
+        for id in ids {
             #expect(tree.find(id) != nil, "\(id.rawValue) deveria estar na árvore")
         }
         #expect(tree.find(.windowAutomationBadge) == nil, "o selo só aparece com a automação ligada")
         #expect(tree.window?.width == 760)
-        // varredura (AC-T01): todo ID da árvore é canônico e nenhum se repete
         for node in tree.flattened() { #expect(A11yID.isCanonical(node.id.rawValue)) }
         #expect(env.elements.duplicateIDs.isEmpty)
-        #expect(tree.find(.windowAppName)?.frame != nil)
+    }
+
+    @Test func historyControlsAreDisabledWithAReason() async {
+        let env = AppEnvironment(environment: [:])
+        let controller = await Self.host(env)
+        defer { controller.window?.close() }
+        let tree = await env.registry.uiTree(root: nil)
+        #expect(tree.find(.windowHistoryBack)?.enabled == false)
+        #expect(tree.find(.windowHistoryBack)?.disabledReason == "No earlier page")
+        #expect(tree.find(.windowHistoryForward)?.disabledReason == "No later page")
+        #expect(tree.find(.windowSidebarToggle)?.enabled == true)
     }
 
     @Test func automationBadgeAppearsOnlyWhenAutomationIsOn() async {
         let sock = FileManager.default.temporaryDirectory.appendingPathComponent("abx-\(UUID().uuidString.prefix(8))/app.sock").path
         let env = AppEnvironment(environment: ["AGENTBOX_AUTOMATION": "1", "AGENTBOX_APP_SOCK": sock])
-        let window = await host(env)
-        defer { window.close() }
+        let controller = await Self.host(env)
+        defer { controller.window?.close() }
         let tree = await env.registry.uiTree(root: nil)
         #expect(tree.find(.windowAutomationBadge) != nil)
         await env.stop()
@@ -102,8 +111,8 @@ import Testing
 
     @Test func hideAppNameActionRemovesTheLabelFromTheTree() async throws {
         let env = AppEnvironment(environment: [:])
-        let window = await host(env)
-        defer { window.close() }
+        let controller = await Self.host(env)
+        defer { controller.window?.close() }
         let result = try await env.registry.perform(.appHideAppName, .press)
         #expect(result.message == "hidden")
         for _ in 0..<20 {

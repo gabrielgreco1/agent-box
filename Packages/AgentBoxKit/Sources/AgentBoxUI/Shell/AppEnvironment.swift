@@ -10,6 +10,13 @@ import Observation
 @Observable
 public final class ShellModel {
     public var appNameHidden = false
+    /// Sidebar recolhida (⌘B): a faixa da titlebar vira flutuante (03 §1.3).
+    public var sidebarCollapsed = false
+    /// Tela cheia: semáforos somem e o pad de 80 vira 0 (03 §1.2).
+    public var isFullScreen = false
+    /// Histórico de navegação (⌥⌘←/→). Sem páginas ainda: os dois lados ficam desabilitados com motivo.
+    public var canGoBack = false
+    public var canGoForward = false
     public init() {}
 }
 
@@ -53,6 +60,14 @@ public final class AppEnvironment {
                 shell.appNameHidden.toggle()
                 return shell.appNameHidden ? "hidden" : "shown"
             }
+            try registry.register(
+                .navBack,
+                enablement: { [shell] in shell.canGoBack ? .enabled : .disabled(reason: "No earlier page") },
+                handler: { _ in nil })
+            try registry.register(
+                .navForward,
+                enablement: { [shell] in shell.canGoForward ? .enabled : .disabled(reason: "No later page") },
+                handler: { _ in nil })
             try registry.register(.appQuit) { _ in
                 NSApp.terminate(nil)
                 return nil

@@ -1,0 +1,120 @@
+import AgentBoxDesignSystem
+import AgentBoxProtocol
+import AppKit
+import SwiftUI
+
+/// Divisor com a cor de borda do DS (1 pt), no lugar do divisor padrão do sistema.
+final class ChromeSplitView: NSSplitView {
+    override var dividerColor: NSColor { DS.ColorSpec.border.nsColor }
+    override var dividerThickness: CGFloat { 1 }
+}
+
+/// Hosting view sem safe area: a faixa e o conteúdo desenham sob a titlebar (`fullSizeContentView`).
+final class ChromeHostingView: NSHostingView<AnyView> {
+    init(content: some View) {
+        super.init(rootView: AnyView(content))
+        safeAreaRegions = []
+    }
+
+    @MainActor @preconcurrency required init(rootView: AnyView) { super.init(rootView: rootView) }
+
+    @MainActor @preconcurrency required dynamic init?(coder: NSCoder) { fatalError("init(coder:) is not used") }  // required init?(coder:) não usado
+
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+}
+
+/// Sidebar (vazia até a T1-13) e centro (landing mínima). Sidebar 280 (220–500), recolhível (⌘B). Painel direito oculto.
+@MainActor
+final class MainSplitViewController: NSSplitViewController {
+    private let env: AppEnvironment
+    let sidebarItem: NSSplitViewItem
+    let contentItem: NSSplitViewItem
+    private var didSetInitialWidth = false
+
+    init(env: AppEnvironment) {
+        self.env = env
+        let sidebarVC = NSViewController()
+        sidebarVC.view = ChromeHostingView(content: SidebarView().environment(\.elementStore, env.elements).environment(\.a11yParent, .windowMain))
+        let contentVC = NSViewController()
+        contentVC.view = ChromeHostingView(
+            content: LandingView(automationOn: env.automationEnabled).environment(\.elementStore, env.elements).environment(\.actionRegistry, env.registry)
+                .environment(\.a11yParent, .windowMain))
+        sidebarItem = NSSplitViewItem(viewController: sidebarVC)
+        contentItem = NSSplitViewItem(viewController: contentVC)
+        super.init(nibName: nil, bundle: nil)
+        let split = ChromeSplitView()
+        split.isVertical = true
+        split.dividerStyle = .thin
+        splitView = split
+        sidebarItem.minimumThickness = DS.Layout.sidebarMinWidth
+        sidebarItem.maximumThickness = DS.Layout.sidebarMaxWidth
+        sidebarItem.canCollapse = true
+        sidebarItem.holdingPriority = NSLayoutConstraint.Priority(rawValue: NSLayoutConstraint.Priority.defaultLow.rawValue + 1)
+        contentItem.minimumThickness = DS.Layout.windowMinWidth - DS.Layout.sidebarMaxWidth
+        addSplitViewItem(sidebarItem)
+        addSplitViewItem(contentItem)
+        split.autosaveName = nil
+    }
+
+    @available(*, unavailable) required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
+
+    var sidebarWidth: CGFloat { sidebarItem.isCollapsed ? 0 : sidebarItem.viewController.view.frame.width }
+
+    override func viewDidLayout() {
+        super.viewDidLayout()
+        if !didSetInitialWidth, splitView.bounds.width > 0 {
+            didSetInitialWidth = true
+            splitView.setPosition(DS.Layout.sidebarWidth, ofDividerAt: 0)
+        }
+    }
+
+    func setSidebarCollapsed(_ collapsed: Bool) {
+        guard sidebarItem.isCollapsed != collapsed else { return }
+        if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
+            sidebarItem.isCollapsed = collapsed
+        } else {
+            sidebarItem.animator().isCollapsed = collapsed
+        }
+    }
+}
+
+/// Sidebar sem conteúdo (a estrutura é a T1-13): só o fundo `sidebar`.
+struct SidebarView: View {
+    var body: some View {
+        DS.Color.sidebar
+            .ignoresSafeArea()
+            .a11y(.sidebar, kind: "container")
+    }
+}
+
+/// Centro vazio: landing mínima (03 §19), sem botões enquanto as ações de projeto/sessão não existem.
+struct LandingView: View {
+    let automationOn: Bool
+
+    var body: some View {
+        VStack(spacing: DS.Space.s2) {
+            Text("Agent Box", bundle: .module)
+                .font(DS.Font.display.font)
+                .foregroundStyle(DS.Color.textPrimary)
+            Text("Run Claude Code, Codex and OpenCode side by side, each in its own folder.", bundle: .module)
+                .font(DS.Font.dialogBody.font)
+                .foregroundStyle(DS.Color.textSecondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal, DS.Space.s4)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(DS.Color.canvas)
+        .ignoresSafeArea()
+        .overlay(alignment: .topTrailing) {
+            // Selo do canal de automação (AR-806): fora da faixa de 280 pt, que não comporta o texto ao lado dos controles.
+            if automationOn {
+                Text("Automation on", bundle: .module)
+                    .font(DS.Font.micro.font)
+                    .foregroundStyle(DS.Color.warning)
+                    .padding(DS.Space.s2)
+                    .a11y(.windowAutomationBadge, kind: "text", label: "Automation on")
+            }
+        }
+        .a11y(.landing, kind: "container")
+    }
+}
