@@ -153,22 +153,44 @@ public enum AgentActivity: Hashable, Codable, Sendable {
     case done, failed, blocked, interrupted, unknown
 }
 
-public enum AgentRunKind: String, Codable, Sendable { case main, nativeSubagent = "native_subagent" }
+public enum AgentRunKind: String, Codable, Sendable {
+    case main
+    case nativeSubagent = "native_subagent"
+    case teammate
+    case appWorkerLight = "app_worker_light"
+    case appWorkerIsolated = "app_worker_isolated"
+}
 
-/// AgentRun mínimo da Fatia 1 (01 §5.9). A tabela `agent_run` chega em `v2_activity`; aqui só o tipo.
+/// Execução de agente (01 §5.9; tabela `agent_run`, migração `v2_activity`).
+/// `activity` e `statusKind` (em `AgentActivity.needsInput`) mapeiam para `status`/`status_kind` (08 §0.4).
 public struct AgentRun: Codable, Hashable, Sendable, Identifiable {
     public var id: UUID
     public var terminalID: UUID?
     public var parentRunID: UUID?
+    public var rootRunID: UUID
     public var kind: AgentRunKind
     public var harness: TerminalProvider
+    public var agentType: String?
+    public var providerSessionID: String?
+    public var providerAgentID: String?
     public var activity: AgentActivity
+    public var estimated: Bool
+    public var statusReason: String?
+    /// Última nota ou ferramenta em uso ("Running Bash").
+    public var subtitle: String?
     public var startedAt: Date
+    public var lastEventAt: Date?
     public var endedAt: Date?
 
-    public init(id: UUID = .v7(), terminalID: UUID? = nil, parentRunID: UUID? = nil, kind: AgentRunKind = .main,
-                harness: TerminalProvider, activity: AgentActivity = .unknown, startedAt: Date = Date(), endedAt: Date? = nil) {
-        self.id = id; self.terminalID = terminalID; self.parentRunID = parentRunID; self.kind = kind
-        self.harness = harness; self.activity = activity; self.startedAt = startedAt; self.endedAt = endedAt
+    public init(id: UUID = .v7(), terminalID: UUID? = nil, parentRunID: UUID? = nil, rootRunID: UUID? = nil,
+                kind: AgentRunKind = .main, harness: TerminalProvider, agentType: String? = nil,
+                providerSessionID: String? = nil, providerAgentID: String? = nil, activity: AgentActivity = .unknown,
+                estimated: Bool = false, statusReason: String? = nil, subtitle: String? = nil,
+                startedAt: Date = Date(), lastEventAt: Date? = nil, endedAt: Date? = nil) {
+        self.id = id; self.terminalID = terminalID; self.parentRunID = parentRunID; self.rootRunID = rootRunID ?? id
+        self.kind = kind; self.harness = harness; self.agentType = agentType; self.providerSessionID = providerSessionID
+        self.providerAgentID = providerAgentID; self.activity = activity; self.estimated = estimated
+        self.statusReason = statusReason; self.subtitle = subtitle; self.startedAt = startedAt
+        self.lastEventAt = lastEventAt; self.endedAt = endedAt
     }
 }

@@ -1,3 +1,4 @@
+import AgentBoxCore
 import AgentBoxPlatform
 import AgentBoxProtocol
 import AgentBoxStore
@@ -37,6 +38,10 @@ final class SidebarModel {
     private(set) var pending: [PendingLaunch] = []
     /// Sessão em edição inline (03 §2.11): no máximo uma.
     private(set) var renamingSession: UUID?
+    /// Projeto em edição inline (T1-19): no máximo um, e nunca junto com uma sessão em edição.
+    private(set) var renamingProject: UUID?
+    /// Último status Git visto por worktree (caminho canônico), alimentado pelo refresh em segundo plano (T1-19).
+    private(set) var gitStatus: [String: GitStatus] = [:]
     /// Item com o anel do teclado (`nil` = a lista não tem foco de teclado).
     var keyboardFocus: SidebarItemID?
     /// `true` enquanto o popover Sort and Filter está aberto.
@@ -98,6 +103,7 @@ final class SidebarModel {
         snapshot = snap
         if let s = selectedSession, !snap.sessions.contains(where: { $0.id == s }) { selectedSession = nil }
         if let r = renamingSession, !snap.sessions.contains(where: { $0.id == r }) { renamingSession = nil }
+        if let r = renamingProject, !snap.projects.contains(where: { $0.id == r }) { renamingProject = nil }
     }
 
     private func apply(_ saved: SidebarPersistedState) {
@@ -228,6 +234,7 @@ final class SidebarModel {
 
     func beginRename(_ id: UUID) -> Bool {
         guard session(id) != nil else { return false }
+        renamingProject = nil
         renamingSession = id
         return true
     }
@@ -251,6 +258,33 @@ final class SidebarModel {
         if let wt = worktree(of: s), !wt.branch.isEmpty { return wt.branch }
         return URL(fileURLWithPath: s.folderPath).lastPathComponent
     }
+
+    // MARK: Renomear projeto (T1-19)
+
+    func beginRenameProject(_ id: UUID) -> Bool {
+        guard project(id) != nil else { return false }
+        renamingSession = nil
+        renamingProject = id
+        return true
+    }
+
+    func cancelRenameProject() { renamingProject = nil }
+
+    /// Fecha a edição e devolve o que gravar; reflete o nome já na tela (o snapshot do Store confirma em seguida).
+    /// Vazio devolve nome vazio: o `ProjectService` o troca pelo nome da pasta.
+    func finishRenameProject(_ text: String) -> (id: UUID, name: String)? {
+        guard let id = renamingProject, let p = project(id) else {
+            renamingProject = nil
+            return nil
+        }
+        renamingProject = nil
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let shown = trimmed.isEmpty ? URL(fileURLWithPath: p.rootPath).lastPathComponent : trimmed
+        snapshot.projects = snapshot.projects.map { $0.id == id ? { var c = $0; c.name = shown; return c }($0) : $0 }
+        return (id, trimmed)
+    }
+
+    func setGitStatus(_ status: GitStatus, at path: String) { gitStatus[path] = status }
 
     // MARK: Linhas pendentes (03 §2.9)
 

@@ -156,6 +156,19 @@ public enum GitNaming {
         return trimmed
     }
 
+    /// Remove `user:password@` de URLs com esquema (`https://`, `ssh://`); formas scp (`git@host:x/y`) ficam como estão.
+    public static func stripCredentials(_ url: String) -> String {
+        guard let schemeEnd = url.range(of: "://") else { return url }
+        let rest = url[schemeEnd.upperBound...]
+        let authorityEnd = rest.firstIndex(of: "/") ?? rest.endIndex
+        let authority = rest[..<authorityEnd]
+        guard let at = authority.lastIndex(of: "@") else { return url }
+        // `ssh://git@host/x` não tem segredo (sem senha): só tira o que tem ":" antes do "@".
+        let userInfo = authority[..<at]
+        guard userInfo.contains(":") || !url.hasPrefix("ssh://") else { return url }
+        return String(url[..<schemeEnd.upperBound]) + String(rest[authority.index(after: at)...])
+    }
+
     /// `slug` na primeira tentativa; `slug-2`, `slug-3`… depois.
     public static func candidate(_ slug: String, attempt: Int) -> String {
         attempt <= 1 ? slug : "\(slug)-\(attempt)"

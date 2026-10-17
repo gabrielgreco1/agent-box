@@ -53,7 +53,7 @@ public struct DSButton: View {
         HStack(spacing: DS.Space.s1_5) {
             if let symbol { Image(systemName: symbol).font(.system(size: size.icon)) }
             Text(title, bundle: .module)
-            if let keycap { Keycaps(keycap).opacity(variant == .primary ? 0.8 : 1) }
+            if let keycap { KeyHint(keycap) }
         }
     }
 }
@@ -109,14 +109,22 @@ public struct DSSegmented: View {
     private let selection: String
     private let action: ActionID
     private let id: A11yID
+    private let fillWidth: Bool
+    private let height: CGFloat
     @Namespace private var namespace
     @Environment(\.actionRegistry) private var registry
 
-    public init(_ options: [Option], selection: String, action: ActionID, id: A11yID) {
+    /// `fillWidth`: os segmentos dividem a largura toda em partes iguais (composer, protótipo M-101).
+    public init(
+        _ options: [Option], selection: String, action: ActionID, id: A11yID, fillWidth: Bool = false,
+        height: CGFloat = DSMetrics.segmentedHeight
+    ) {
         self.options = options
         self.selection = selection
         self.action = action
         self.id = id
+        self.fillWidth = fillWidth
+        self.height = height
     }
 
     public var body: some View {
@@ -126,7 +134,7 @@ public struct DSSegmented: View {
                 ActionButton(action, argument: .select(option.id)) {
                     Text(option.title, bundle: .module)
                 }
-                .buttonStyle(DSSegmentStyle(active: active))
+                .buttonStyle(DSSegmentStyle(active: active, fillWidth: fillWidth))
                 .background {
                     if active {
                         RoundedRectangle(cornerRadius: DS.Radius.sm)
@@ -138,10 +146,10 @@ public struct DSSegmented: View {
             }
         }
         .padding(DSMetrics.segmentedPadding)
-        .frame(height: DSMetrics.segmentedHeight)
-        .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(DS.Color.secondary))
+        .frame(height: height)
+        .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(fillWidth ? DS.Color.fg6 : DS.Color.secondary))
         .animation(MotionPolicy.shared.animation(MotionTokens.Springs.snappy), value: selection)
-        .fixedSize()
+        .fixedSize(horizontal: !fillWidth, vertical: true)
         .focusable()
         .onKeyPress(.leftArrow) { move(-1) }
         .onKeyPress(.rightArrow) { move(1) }
@@ -164,21 +172,23 @@ public struct DSSwitch: View {
     private let action: ActionID
     private let id: A11yID
     private let title: LocalizedStringKey
+    private let compact: Bool
 
-    public init(isOn: Bool, action: ActionID, id: A11yID, _ title: LocalizedStringKey) {
+    public init(isOn: Bool, action: ActionID, id: A11yID, _ title: LocalizedStringKey, compact: Bool = false) {
         self.isOn = isOn
         self.action = action
         self.id = id
         self.title = title
+        self.compact = compact
     }
 
     public var body: some View {
         ActionButton(action, id: id, argument: .set(isOn ? "off" : "on")) {
             HStack(spacing: DS.Space.s2) {
-                DSSwitchVisual(isOn: isOn)
+                DSSwitchVisual(isOn: isOn, compact: compact)
                 Text(title, bundle: .module)
-                    .dsFont(DS.Font.body)
-                    .foregroundStyle(DS.Color.textPrimary)
+                    .dsFont(compact ? DS.Font.tab : DS.Font.body)
+                    .foregroundStyle(compact ? DS.Color.textSecondary : DS.Color.textPrimary)
             }
         }
         .buttonStyle(.plain)
@@ -252,13 +262,14 @@ public struct DSTextField: View {
     private let error: String?
     private let multiline: Bool
     private let autofocus: Bool
+    private let compact: Bool
     @FocusState private var focused: Bool
     @Environment(\.actionRegistry) private var registry
     @Environment(\.isEnabled) private var isEnabled
 
     public init(
         _ placeholder: LocalizedStringKey, text: Binding<String>, id: A11yID, action: ActionID? = nil, error: String? = nil,
-        multiline: Bool = false, autofocus: Bool = false
+        multiline: Bool = false, autofocus: Bool = false, compact: Bool = false
     ) {
         self.placeholder = placeholder
         self._text = text
@@ -267,18 +278,19 @@ public struct DSTextField: View {
         self.error = error
         self.multiline = multiline
         self.autofocus = autofocus
+        self.compact = compact
     }
 
     public var body: some View {
         VStack(alignment: .leading, spacing: DS.Space.s1) {
             field
                 .textFieldStyle(.plain)
-                .dsFont(DS.Font.input)
+                .dsFont(compact ? DS.Font.inputCompact : DS.Font.input)
                 .foregroundStyle(DS.Color.textPrimary)
                 .focused($focused)
                 .padding(.vertical, multiline ? DS.Space.s2 : .zero)
                 .frame(minHeight: multiline ? DSMetrics.textareaMinHeight : nil, alignment: .topLeading)
-                .dsFieldChrome(focused: focused, invalid: error != nil, disabled: !isEnabled, height: multiline ? nil : DSMetrics.fieldHeight)
+                .dsFieldChrome(focused: focused, invalid: error != nil, disabled: !isEnabled, height: multiline ? nil : (compact ? DSMetrics.fieldHeightComposer : DSMetrics.fieldHeight))
                 .onChange(of: text) { _, new in
                     guard let action, let registry else { return }
                     Task { _ = try? await registry.perform(action, .set(new)) }

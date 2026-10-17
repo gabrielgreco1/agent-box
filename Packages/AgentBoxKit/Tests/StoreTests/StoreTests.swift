@@ -5,21 +5,24 @@ import Testing
 @testable import AgentBoxStore
 
 @Suite struct MigrationTests {
-    @Test func emptyDatabaseGetsOnlySlice1Tables() async throws {
+    @Test func emptyDatabaseGetsAllTablesFromTheFullMigrationChain() async throws {
         let home = try TempHome(); defer { home.remove() }
         let store = try await home.openStore()
         #expect(store.openNotices.isEmpty)
         #expect(await store.mode == .readWrite)
         try await store.close()
         let tables = try tableNames(at: home.paths.databaseFile)
-        #expect(tables == ["grdb_migrations", "launch_profile", "project", "session", "setting", "tab", "terminal", "ui_state", "worktree"])
-        #expect(!tables.contains("agent_run"), "agent_run só entra em v2_activity")
+        #expect(tables == [
+            "agent_event", "agent_run", "attention", "browser_profile", "catalog_item", "computer", "computer_queue", "grdb_migrations",
+            "help_request", "import_run", "inbox_event", "launch_profile", "metric", "project", "proxy", "proxy_usage", "secret",
+            "secret_binding", "session", "setting", "tab", "terminal", "ui_state", "worktree",
+        ])
         let ids = try { () throws -> [String] in
             var c = Configuration(); c.readonly = true
             let q = try DatabaseQueue(path: home.paths.databaseFile.path, configuration: c)
             return try q.read { try String.fetchAll($0, sql: "SELECT identifier FROM grdb_migrations") }
         }()
-        #expect(ids == ["v1_initial"])
+        #expect(ids == ["v1_initial", "v2_activity", "v3_computers"])
     }
 
     @Test func schemaIsStrictAndRejectsInconsistentSessions() async throws {
@@ -454,5 +457,25 @@ import Testing
         while let s = seen, s.sessions.isEmpty { seen = try await iterator.next() }
         #expect(seen?.sessions == [session])
         try await store.close()
+    }
+}
+
+@Suite struct FullMigrationChainTests {
+    @Test func v1DatabaseUpgradesThroughEveryMigrationToCurrent() async throws {
+        #expect(StoreMigrations.all.map(\.id) == ["v1_initial", "v2_activity", "v3_computers"])
+        let home = try TempHome(); defer { home.remove() }
+        let v1 = try await home.openStore(day: 0, migrations: [StoreMigrations.v1Initial])
+        let project = Fixture.project()
+        try await v1.save(project)
+        try await v1.close()
+
+        let current = try await home.openStore(day: 1)
+        #expect(current.openNotices.isEmpty)
+        #expect(await current.mode == .readWrite)
+        #expect(try await current.project(id: project.id)?.name == project.name)
+        try await current.close()
+        let tables = try tableNames(at: home.paths.databaseFile)
+        for table in ["agent_run", "secret", "computer", "proxy_usage"] { #expect(tables.contains(table), "\(table) ausente após a cadeia") }
+        #expect(home.backups.contains { $0.hasPrefix("pre-migration-v2_activity-") })
     }
 }

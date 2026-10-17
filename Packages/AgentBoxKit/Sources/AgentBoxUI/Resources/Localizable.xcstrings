@@ -1,6 +1,17 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@ is already in your projects.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is already in your projects."
+          }
+        }
+      }
+    },
     "%@, %lld sessions": {
       "extractionState": "manual",
       "localizations": {
@@ -34,6 +45,39 @@
         }
       }
     },
+    "A Git repository or any folder on this Mac.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A Git repository or any folder on this Mac."
+          }
+        }
+      }
+    },
+    "About Agent Box": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About Agent Box"
+          }
+        }
+      }
+    },
+    "Add": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add"
+          }
+        }
+      }
+    },
     "Add Project…": {
       "extractionState": "manual",
       "localizations": {
@@ -45,6 +89,28 @@
         }
       }
     },
+    "Add a New Project…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a New Project…"
+          }
+        }
+      }
+    },
+    "Add a Project": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a Project"
+          }
+        }
+      }
+    },
     "Add retry logic": {
       "extractionState": "manual",
       "localizations": {
@@ -52,6 +118,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Add retry logic"
+          }
+        }
+      }
+    },
+    "Added %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added %@."
           }
         }
       }
@@ -122,6 +199,17 @@
         }
       }
     },
+    "Blank Terminal": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blank Terminal"
+          }
+        }
+      }
+    },
     "Branch name, #123 or a PR / issue URL": {
       "extractionState": "manual",
       "localizations": {
@@ -140,6 +228,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cancel"
+          }
+        }
+      }
+    },
+    "Check for Problems": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check for Problems"
           }
         }
       }
@@ -298,6 +397,28 @@
         }
       }
     },
+    "Couldn't add the project.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't add the project."
+          }
+        }
+      }
+    },
+    "Couldn't remove the project.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't remove the project."
+          }
+        }
+      }
+    },
     "Couldn't save setting.": {
       "extractionState": "manual",
       "localizations": {
@@ -430,6 +551,17 @@
         }
       }
     },
+    "Edit Profiles…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit Profiles…"
+          }
+        }
+      }
+    },
     "Existing Worktree": {
       "extractionState": "manual",
       "localizations": {
@@ -474,6 +606,17 @@
         }
       }
     },
+    "Find in terminal…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find in terminal…"
+          }
+        }
+      }
+    },
     "Folder not found": {
       "extractionState": "manual",
       "localizations": {
@@ -481,6 +624,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Folder not found"
+          }
+        }
+      }
+    },
+    "Git isn't installed.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Git isn't installed."
+          }
+        }
+      }
+    },
+    "Git took too long to answer.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Git took too long to answer."
           }
         }
       }
@@ -551,6 +716,17 @@
         }
       }
     },
+    "Its %lld sessions are archived. No files, worktrees or branches are deleted.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Its %lld sessions are archived. No files, worktrees or branches are deleted."
+          }
+        }
+      }
+    },
     "Library": {
       "extractionState": "manual",
       "localizations": {
@@ -591,6 +767,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Main Checkouts"
+          }
+        }
+      }
+    },
+    "Manage Agents…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Manage Agents…"
           }
         }
       }
@@ -705,6 +892,17 @@
         }
       }
     },
+    "No Project (Clean Session)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Project (Clean Session)"
+          }
+        }
+      }
+    },
     "No projects yet.": {
       "extractionState": "manual",
       "localizations": {
@@ -712,6 +910,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "No projects yet."
+          }
+        }
+      }
+    },
+    "No results": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No results"
           }
         }
       }
@@ -745,6 +954,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "No sessions match these filters."
+          }
+        }
+      }
+    },
+    "Not available yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not available yet"
+          }
+        }
+      }
+    },
+    "Not installed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not installed"
           }
         }
       }
@@ -870,6 +1101,28 @@
         }
       }
     },
+    "Remove": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove"
+          }
+        }
+      }
+    },
+    "Remove \"%@\" from Agent Box?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove \"%@\" from Agent Box?"
+          }
+        }
+      }
+    },
     "Remove Project…": {
       "extractionState": "manual",
       "localizations": {
@@ -980,6 +1233,39 @@
         }
       }
     },
+    "Search agents…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search agents…"
+          }
+        }
+      }
+    },
+    "Search profiles…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search profiles…"
+          }
+        }
+      }
+    },
+    "Search projects…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search projects…"
+          }
+        }
+      }
+    },
     "Session archived.": {
       "extractionState": "manual",
       "localizations": {
@@ -1035,6 +1321,17 @@
         }
       }
     },
+    "settings.menu": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings…"
+          }
+        }
+      }
+    },
     "Show": {
       "extractionState": "manual",
       "localizations": {
@@ -1064,6 +1361,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Show less"
+          }
+        }
+      }
+    },
+    "Something went wrong.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something went wrong."
           }
         }
       }
@@ -1119,6 +1427,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Stopped"
+          }
+        }
+      }
+    },
+    "That isn't a folder.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That isn't a folder."
           }
         }
       }

@@ -44,12 +44,18 @@ final class MainSplitViewController: NSSplitViewController {
                 .environment(\.a11yParent, .windowMain))
         sidebarView.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
         sidebarVC.view = sidebarView
-        let contentVC = NSViewController()
-        let contentView = ChromeHostingView(
-            content: LandingView(automationOn: env.automationEnabled).environment(\.elementStore, env.elements).environment(\.actionRegistry, env.registry)
-                .environment(\.a11yParent, .windowMain))
-        contentView.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
-        contentVC.view = contentView
+        let contentVC: NSViewController
+        if env.fixture == "terminal-demo" {
+            // Tela de dev da T1-09 (um pane de terminal real); o pane do produto chega com a T1-15.
+            contentVC = TerminalDemoViewController(env: env)
+        } else {
+            contentVC = NSViewController()
+            let contentView = ChromeHostingView(
+                content: LandingView(automationOn: env.automationEnabled).environment(\.elementStore, env.elements).environment(\.actionRegistry, env.registry)
+                    .environment(\.a11yParent, .windowMain))
+            contentView.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
+            contentVC.view = contentView
+        }
         sidebarItem = NSSplitViewItem(viewController: sidebarVC)
         contentItem = NSSplitViewItem(viewController: contentVC)
         super.init(nibName: nil, bundle: nil)
@@ -89,9 +95,11 @@ final class MainSplitViewController: NSSplitViewController {
     }
 }
 
-/// Centro vazio: landing mínima (03 §19), sem botões enquanto as ações de projeto/sessão não existem.
+/// Centro vazio: landing mínima (03 §19). Só `Add Project…` por enquanto (T1-19); os demais botões entram com as
+/// tarefas dos fluxos que eles abrem (`isOffered`: sem handler registrado, o botão não aparece).
 struct LandingView: View {
     let automationOn: Bool
+    @Environment(\.actionRegistry) private var registry
 
     var body: some View {
         VStack(spacing: DS.Space.s2) {
@@ -102,6 +110,10 @@ struct LandingView: View {
                 .font(DS.Font.dialogBody.font)
                 .foregroundStyle(DS.Color.textSecondary)
                 .multilineTextAlignment(.center)
+            if let registry, registry.isOffered(.projectAdd) {
+                DSButton(.projectAdd, id: .landingAddProject, "Add Project…", variant: .primary)
+                    .padding(.top, DS.Space.s4)
+            }
         }
         .padding(.horizontal, DS.Space.s4)
         .frame(maxWidth: .infinity, maxHeight: .infinity)

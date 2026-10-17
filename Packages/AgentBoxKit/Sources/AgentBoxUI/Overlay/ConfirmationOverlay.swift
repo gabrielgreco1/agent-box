@@ -68,6 +68,16 @@ public struct ConfirmationModel {
             confirmID: .overlayConfirmCloseConfirm, cancelAction: .dialogCloseTerminalCancel, cancelID: .overlayConfirmCloseCancel,
             dontAsk: DontAsk(action: .dialogCloseTerminalDontAsk, id: .overlayConfirmCloseDontAsk), symbol: "xmark.octagon")
     }
+
+    /// "Remove "<project>" from Agent Box?" (03 §16.6): arquiva as sessões; nenhum arquivo é apagado.
+    public static func removeProject(name: String, sessionCount: Int) -> ConfirmationModel {
+        ConfirmationModel(
+            name: "confirmRemoveProject", rootID: .overlayConfirmRemoveProject,
+            title: String(localized: "Remove \"\(name)\" from Agent Box?", bundle: .module),
+            message: String(localized: "Its \(sessionCount) sessions are archived. No files, worktrees or branches are deleted.", bundle: .module),
+            confirmTitle: "Remove", confirmAction: .dialogRemoveProjectConfirm, confirmID: .overlayConfirmRemoveProjectConfirm,
+            cancelAction: .dialogRemoveProjectCancel, cancelID: .overlayConfirmRemoveProjectCancel, symbol: "trash")
+    }
 }
 
 /// Conteúdo do overlay de confirmação: cartão de 448 pt, destrutivo entra já focado, sem stagger (M-103).

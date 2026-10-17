@@ -12,7 +12,7 @@ XCODEGEN_URL=https://github.com/yonaskolb/XcodeGen/releases/download/2.46.0/xcod
 XCODEGEN_SHA256=4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806
 
 # Dependências SPM (versão exata; Package.resolved é versionado e conferido pelo bootstrap quando existir)
-SWIFTTERM_VERSION=1.20.0          # até o spike S-02 decidir (1.20.0 x 1.99.0)
+SWIFTTERM_VERSION=1.99.0          # rev 2dad6a1 (S-02, P20; pré-release da v2, fixada por Package.resolved)
 GRDB_VERSION=7.11.1
 SWIFT_SNAPSHOT_TESTING_VERSION=1.19.6
 SWIFT_ARGUMENT_PARSER_VERSION=1.8.2

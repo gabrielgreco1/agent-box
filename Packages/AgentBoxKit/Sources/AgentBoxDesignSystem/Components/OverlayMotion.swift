@@ -42,6 +42,9 @@ public enum OverlayMotion {
     public static var exitDuration: Double { MotionTokens.Duration.fast }
     public static var scrimDuration: Double { MotionTokens.Duration.fast }
     public static var offset: Double { MotionTokens.Distance.medium }
+    /// M-105 (menus e popovers): entrada 0,15 `standard`, saída 0,12 só com fade.
+    public static var popoverEnterDuration: Double { MotionTokens.Duration.fast }
+    public static var popoverExitDuration: Double { MotionTokens.Duration.hover }
     public static var stagger: Double { MotionTokens.Stagger.list }
     public static let groupCount = 3
     /// `M-101 end` (04 §7.1.1, f16 = 267 ms): todos os grupos assentados.

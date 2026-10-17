@@ -1,0 +1,16 @@
+✔ Suite ContainerSpecTests passed
+✔ Suite HTTPCodecTests passed
+✔ Suite ModelDecodingTests passed
+✔ Suite CapacityPlannerTests passed
+✔ Suite DockerTestsSmoke passed
+✔ Suite ErrorMappingTests passed
+✔ Suite MigrationTests passed
+✔ Suite GarbageCollectorTests passed
+✔ Suite RuntimeDetectorTests passed
+✔ Suite HalfCloseTests passed
+✔ Suite ComputersMigrationTests passed
+✔ Suite BuildContextTests passed
+✔ Suite ClientAgainstFakeDaemonTests passed
+✔ Suite "Spike S2 - rede internal e publicação pelo egress" passed
+✔ Suite "Docker real (AGENTBOX_TEST_DOCKER=1)" passed
+✔ Test run with 572 tests in 88 suites passed

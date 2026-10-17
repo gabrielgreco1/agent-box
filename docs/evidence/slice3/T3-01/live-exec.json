@@ -1,0 +1,9 @@
+{
+  "big_output" : "16777216 bytes",
+  "binary_roundtrip" : "2097152 bytes identical",
+  "s9_sigkill_escalation" : "exit 137 in 1.086501458 seconds",
+  "s9_sigterm_group" : "exit 143 in 0.042193 seconds",
+  "split_streams_exit7" : "ok",
+  "stdin_echo" : "ok (17 bytes)",
+  "twenty_parallel_max_gap_ms" : "2"
+}

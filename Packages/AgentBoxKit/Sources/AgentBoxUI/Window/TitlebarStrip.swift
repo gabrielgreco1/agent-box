@@ -63,19 +63,62 @@ struct TitlebarStrip: View {
     }
 
     private var appName: some View {
-        Text("Agent Box", bundle: .module)
-            .font(DS.Font.sectionLabel.font)
-            .foregroundStyle(DS.Color.textSecondary)
-            .padding(.horizontal, StripMetrics.namePaddingH)
-            .lineLimit(1)
-            .fixedSize()
-            .frame(height: StripMetrics.nameHeight)
-            .padding(.leading, StripMetrics.nameMarginLeading)
-            .padding(.trailing, StripMetrics.nameMarginTrailing)
-            .a11y(.windowAppName, kind: "text", label: "Agent Box")
-            .contextMenu {
-                ActionButton(.appHideAppName, id: .menuPanel("hideAppName")) { Text("Hide App Name", bundle: .module) }
-            }
+        AppNameButton(env: env)
+    }
+}
+
+/// Nome do app (03 §1.3 #2): clique abre o `DSMenuPanel` (About · Settings… · Check for Problems · Hide App Name);
+/// clique direito oferece só `Hide App Name`.
+private struct AppNameButton: View {
+    let env: AppEnvironment
+    @State private var anchor: CGRect = .zero
+    @State private var hovering = false
+
+    private var isOpen: Bool { env.overlays.popover?.spec.id == .menuPanel("appMenu") && env.overlays.popoverIsOpen }
+
+    var body: some View {
+        // lint-ui: allow buttons abre o DSMenuPanel (apresentação); os itens disparam ações do registro
+        Button { open() } label: {
+            Text("Agent Box", bundle: .module)
+                .font(DS.Font.sectionLabel.font)
+                .foregroundStyle(DS.Color.textSecondary)
+                .padding(.horizontal, StripMetrics.namePaddingH)
+                .lineLimit(1)
+                .fixedSize()
+                .frame(height: StripMetrics.nameHeight)
+                .background(
+                    RoundedRectangle(cornerRadius: StripMetrics.buttonRadius)
+                        .fill(hovering || isOpen ? DS.Color.accent : Color.clear))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { anchor = $0 }
+        .padding(.leading, StripMetrics.nameMarginLeading)
+        .padding(.trailing, StripMetrics.nameMarginTrailing)
+        .a11y(.windowAppName, kind: "button", label: "Agent Box")
+        .contextMenu {
+            ActionButton(.appHideAppName, id: .menuPanel("hideAppName")) { Text("Hide App Name", bundle: .module) }
+        }
+    }
+
+    private func open() {
+        guard !isOpen else { return }
+        DSMenuPanel.present(
+            router: env.overlays, registry: env.registry, name: "appMenu", anchor: anchor, entries: AppMenuEntries.entries)
+    }
+}
+
+/// Itens do menu do nome do app (03 §1.3 #2, ações de §24).
+enum AppMenuEntries {
+    static var entries: [DSMenuEntry] {
+        [
+            .item(DSMenuItem("about", String(localized: "About Agent Box", bundle: .module), action: .appAbout)),
+            .item(DSMenuItem("settings", String(localized: "settings.menu", defaultValue: "Settings…", bundle: .module), shortcut: ActionID.appSettings.spec.shortcut, action: .appSettings)),
+            .separator("checks"),
+            .item(DSMenuItem("checkProblems", String(localized: "Check for Problems", bundle: .module), action: .appCheckProblems)),
+            .item(DSMenuItem("hideAppName", String(localized: "Hide App Name", bundle: .module), action: .appHideAppName)),
+        ]
     }
 }
 

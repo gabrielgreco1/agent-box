@@ -70,89 +70,15 @@ public struct DSAgentIndicator: View {
     }
 }
 
-/// Logos oficiais de agente (02 §2.10). Arquivos em `Resources/AgentLogos/` vindos de `legacy/design/assets/brands/`
-/// (proveniência em `sources.json`, copiada junto). Claude é monocromático: template em `#D97757`.
-/// OpenCode é monocromático após remover o fundo opaco do arquivo: template em `textPrimary`.
-/// Codex é o ícone de app colorido e fica com as cores originais (template o achataria numa silhueta).
-/// Shell usa o SF Symbol `terminal`; `custom` mantém `gearshape` (fora da lista da spec).
-@MainActor
-enum DSAgentLogoImages {
-    /// Carrega o `@3x` (60 px, cobre até 20 pt). Retorna nil só se o recurso faltar no bundle.
-    static func image(for provider: TerminalProvider) -> NSImage? {
-        guard let name = name(for: provider), let url = fileURL(name, scale: 3) else { return nil }
-        return NSImage(contentsOf: url)
-    }
-
-    static func fileURL(_ name: String, scale: Int) -> URL? {
-        Bundle.module.url(forResource: "\(name)@\(scale)x", withExtension: "png", subdirectory: "AgentLogos")
-    }
-
-    /// `sources.json` (proveniência dos logos, copiada junto).
-    static var provenanceURL: URL? {
-        Bundle.module.url(forResource: "sources", withExtension: "json", subdirectory: "AgentLogos")
-    }
-
-    static func name(for provider: TerminalProvider) -> String? {
-        switch provider {
-        case .claude: "claude"
-        case .codex: "codex"
-        case .opencode: "opencode"
-        case .shell, .custom: nil
-        }
-    }
-}
-
-public struct DSAgentLogo: View {
-    private let provider: TerminalProvider
-    private let size: CGFloat
-    private let dimmed: Bool
-
+extension DSAgentLogo {
+    /// Conveniência para o domínio (sidebar): mapeia `TerminalProvider` para `DSAgentKind`.
     public init(_ provider: TerminalProvider, size: CGFloat = 13, dimmed: Bool = false) {
-        self.provider = provider
-        self.size = size
-        self.dimmed = dimmed
-    }
-
-    private var tint: DSRGBA {
-        switch provider {
-        case .claude: DSRGBA(hex: 0xD97757)
-        case .opencode: DS.ColorSpec.textPrimary
-        case .codex, .shell, .custom: DS.ColorSpec.textSecondary
+        let kind: DSAgentKind = switch provider {
+        case .claude: .claude
+        case .codex: .codex
+        case .opencode: .opencode
+        case .shell, .custom: .shell
         }
-    }
-
-    public var body: some View {
-        logo
-            .opacity(dimmed ? 0.7 : 1)
-            .frame(width: size, height: size)
-            .accessibilityHidden(true)
-    }
-
-    @ViewBuilder private var logo: some View {
-        switch provider {
-        case .shell:
-            Image(systemName: "terminal")
-                .font(.system(size: size - 1))
-                .foregroundStyle(tint.color)
-        case .custom:
-            Image(systemName: "gearshape")
-                .font(.system(size: size - 1))
-                .foregroundStyle(tint.color)
-        case .claude, .codex, .opencode:
-            if let nsImage = DSAgentLogoImages.image(for: provider) {
-                let template = provider != .codex
-                Image(nsImage: nsImage)
-                    .renderingMode(template ? .template : .original)
-                    .resizable()
-                    .interpolation(.high)
-                    .aspectRatio(contentMode: .fit)
-                    .foregroundStyle(tint.color)
-            } else {
-                // Recurso ausente no bundle: teste `AgentLogoTests` falha antes disso chegar à UI.
-                Image(systemName: "questionmark.square.dashed")
-                    .font(.system(size: size - 1))
-                    .foregroundStyle(tint.color)
-            }
-        }
+        self.init(kind, size: size, dimmed: dimmed)
     }
 }
