@@ -53,6 +53,7 @@ struct ProjectMenuItems: View {
                 ] + (hasGitHub ? [MenuEntry(action: .itemOpenOnGitHub, title: String(localized: "Open on GitHub", bundle: .module), argument: arg)] : [])
                     + [MenuEntry(action: .itemCopyPath, title: String(localized: "Copy Path", bundle: .module), argument: arg)],
                 [
+                    MenuEntry(action: .projectRename, title: String(localized: "Rename…", bundle: .module), argument: arg),
                     MenuEntry(action: .projectCollapseAll, title: String(localized: "Collapse All Sessions", bundle: .module), argument: arg),
                     MenuEntry(action: .projectHide, title: String(localized: "Hide Project", bundle: .module), argument: arg),
                 ],

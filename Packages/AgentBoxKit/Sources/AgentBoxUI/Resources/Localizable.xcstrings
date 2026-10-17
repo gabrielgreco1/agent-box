@@ -1,6 +1,17 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@ is already in your projects.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is already in your projects."
+          }
+        }
+      }
+    },
     "%@, %lld sessions": {
       "extractionState": "manual",
       "localizations": {
@@ -34,6 +45,28 @@
         }
       }
     },
+    "A Git repository or any folder on this Mac.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A Git repository or any folder on this Mac."
+          }
+        }
+      }
+    },
+    "Add": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add"
+          }
+        }
+      }
+    },
     "Add Project…": {
       "extractionState": "manual",
       "localizations": {
@@ -45,6 +78,17 @@
         }
       }
     },
+    "Add a Project": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a Project"
+          }
+        }
+      }
+    },
     "Add retry logic": {
       "extractionState": "manual",
       "localizations": {
@@ -52,6 +96,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Add retry logic"
+          }
+        }
+      }
+    },
+    "Added %@.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added %@."
           }
         }
       }
@@ -298,6 +353,28 @@
         }
       }
     },
+    "Couldn't add the project.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't add the project."
+          }
+        }
+      }
+    },
+    "Couldn't remove the project.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't remove the project."
+          }
+        }
+      }
+    },
     "Couldn't save setting.": {
       "extractionState": "manual",
       "localizations": {
@@ -485,6 +562,28 @@
         }
       }
     },
+    "Git isn't installed.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Git isn't installed."
+          }
+        }
+      }
+    },
+    "Git took too long to answer.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Git took too long to answer."
+          }
+        }
+      }
+    },
     "Hidden Projects": {
       "extractionState": "manual",
       "localizations": {
@@ -547,6 +646,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Interrupted"
+          }
+        }
+      }
+    },
+    "Its %lld sessions are archived. No files, worktrees or branches are deleted.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Its %lld sessions are archived. No files, worktrees or branches are deleted."
           }
         }
       }
@@ -870,6 +980,28 @@
         }
       }
     },
+    "Remove": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove"
+          }
+        }
+      }
+    },
+    "Remove \"%@\" from Agent Box?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove \"%@\" from Agent Box?"
+          }
+        }
+      }
+    },
     "Remove Project…": {
       "extractionState": "manual",
       "localizations": {
@@ -1068,6 +1200,17 @@
         }
       }
     },
+    "Something went wrong.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something went wrong."
+          }
+        }
+      }
+    },
     "Sort and Filter": {
       "extractionState": "manual",
       "localizations": {
@@ -1119,6 +1262,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Stopped"
+          }
+        }
+      }
+    },
+    "That isn't a folder.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That isn't a folder."
           }
         }
       }
