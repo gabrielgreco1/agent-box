@@ -1574,17 +1574,6 @@
         }
       }
     },
-    "AGENTS": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AGENTS"
-          }
-        }
-      }
-    },
     "Appearance": {
       "extractionState": "manual",
       "localizations": {
@@ -1735,17 +1724,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Clean session folder"
-          }
-        }
-      }
-    },
-    "COMPUTERS": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "COMPUTERS"
           }
         }
       }
@@ -2069,17 +2047,6 @@
         }
       }
     },
-    "INTERFACE": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "INTERFACE"
-          }
-        }
-      }
-    },
     "Keep agents running when you quit": {
       "extractionState": "manual",
       "localizations": {
@@ -2388,17 +2355,6 @@
         }
       }
     },
-    "SYSTEM": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SYSTEM"
-          }
-        }
-      }
-    },
     "Terminal": {
       "extractionState": "manual",
       "localizations": {
@@ -2520,17 +2476,6 @@
         }
       }
     },
-    "WORKSPACE": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "WORKSPACE"
-          }
-        }
-      }
-    },
     "Worktree folder": {
       "extractionState": "manual",
       "localizations": {
@@ -2560,6 +2505,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Checklist"
+          }
+        }
+      }
+    },
+    "Workspace": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workspace"
+          }
+        }
+      }
+    },
+    "Interface": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Interface"
+          }
+        }
+      }
+    },
+    "System": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System"
           }
         }
       }

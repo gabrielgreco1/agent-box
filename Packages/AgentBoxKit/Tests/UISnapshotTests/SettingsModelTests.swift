@@ -79,7 +79,7 @@ import Testing
 
     @Test func groupsFollowTheSpecOrder() {
         let groups = SettingsCatalog.visible(flags: SliceFlags(current: .slice1)).map(\.group)
-        #expect(groups == ["AGENTS", "WORKSPACE", "INTERFACE"])
+        #expect(groups == ["Agents", "Workspace", "Interface"])
     }
 
     // MARK: Salvamento automático

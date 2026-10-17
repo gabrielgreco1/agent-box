@@ -76,6 +76,7 @@ private struct SettingsNav: View {
                 ForEach(groups, id: \.name) { group in
                     VStack(alignment: .leading, spacing: DS.Space.s0_5) {
                         Text(LocalizedStringKey(group.name), bundle: .module)
+                            .textCase(.uppercase)
                             .dsFont(DS.Font.micro)
                             .tracking(DS.Font.micro.size * 0.18)
                             .foregroundStyle(DS.Color.textTertiary)

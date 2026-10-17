@@ -23,20 +23,20 @@ public enum SettingsCatalog {
     /// Todas as seções de 03 §14.2 na ordem da nav. As das fatias 2 em diante existem aqui só para a flag as esconder;
     /// nenhuma tem conteúdo ainda (`implemented`).
     public static let all: [SettingsSectionSpec] = [
-        .init("agents", "Agents", symbol: "sparkles", group: "AGENTS", slice: .slice1),
-        .init("accounts", "Accounts", symbol: "person.crop.circle", group: "AGENTS", slice: .slice2),
-        .init("credentials", "Credentials", symbol: "key", group: "AGENTS", slice: .slice2),
-        .init("general", "General", symbol: "gearshape", group: "WORKSPACE", slice: .slice1),
-        .init("github", "GitHub", symbol: "arrow.triangle.branch", group: "WORKSPACE", slice: .slice2),
-        .init("import", "Import", symbol: "square.and.arrow.down", group: "WORKSPACE", slice: .slice2),
-        .init("docker", "Docker", symbol: "shippingbox", group: "COMPUTERS", slice: .slice3),
-        .init("computers", "Computers", symbol: "desktopcomputer", group: "COMPUTERS", slice: .slice3),
-        .init("appearance", "Appearance", symbol: "paintbrush", group: "INTERFACE", slice: .slice2),
-        .init("terminal", "Terminal", symbol: "terminal", group: "INTERFACE", slice: .slice1),
-        .init("notifications", "Notifications", symbol: "bell", group: "INTERFACE", slice: .slice2),
-        .init("shortcuts", "Shortcuts", symbol: "command", group: "INTERFACE", slice: .slice2),
-        .init("diagnostics", "Diagnostics", symbol: "stethoscope", group: "SYSTEM", slice: .slice2),
-        .init("advanced", "Advanced", symbol: "slider.horizontal.3", group: "SYSTEM", slice: .slice2),
+        .init("agents", "Agents", symbol: "sparkles", group: "Agents", slice: .slice1),
+        .init("accounts", "Accounts", symbol: "person.crop.circle", group: "Agents", slice: .slice2),
+        .init("credentials", "Credentials", symbol: "key", group: "Agents", slice: .slice2),
+        .init("general", "General", symbol: "gearshape", group: "Workspace", slice: .slice1),
+        .init("github", "GitHub", symbol: "arrow.triangle.branch", group: "Workspace", slice: .slice2),
+        .init("import", "Import", symbol: "square.and.arrow.down", group: "Workspace", slice: .slice2),
+        .init("docker", "Docker", symbol: "shippingbox", group: "Computers", slice: .slice3),
+        .init("computers", "Computers", symbol: "desktopcomputer", group: "Computers", slice: .slice3),
+        .init("appearance", "Appearance", symbol: "paintbrush", group: "Interface", slice: .slice2),
+        .init("terminal", "Terminal", symbol: "terminal", group: "Interface", slice: .slice1),
+        .init("notifications", "Notifications", symbol: "bell", group: "Interface", slice: .slice2),
+        .init("shortcuts", "Shortcuts", symbol: "command", group: "Interface", slice: .slice2),
+        .init("diagnostics", "Diagnostics", symbol: "stethoscope", group: "System", slice: .slice2),
+        .init("advanced", "Advanced", symbol: "slider.horizontal.3", group: "System", slice: .slice2),
     ]
 
     /// Seções com conteúdo construído (T1-26: General, Agents, Terminal).
