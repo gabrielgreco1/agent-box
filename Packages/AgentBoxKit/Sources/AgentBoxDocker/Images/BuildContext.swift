@@ -11,7 +11,7 @@ struct ContextFile: Sendable, Equatable {
 /// Leitura determinística do diretório de contexto e geração do tar e do hash do conteúdo (07 CS-120).
 ///
 /// Hash do contexto: `sha256` da concatenação, em ordem bytewise dos caminhos, de linhas
-/// `"<caminho>\0<755|644>\0<sha256 do arquivo>\n"`. Só arquivos regulares; `.DS_Store` e symlinks ficam de fora
+/// `"<caminho>\0<755|644>\0<sha256 do arquivo>\n"`. Só arquivos regulares; `.DS_Store`, `__pycache__`/`*.pyc` e symlinks ficam de fora
 /// (symlink é erro: o contexto precisa ser autocontido). `scripts/build-runtime-image.sh` calcula o mesmo valor.
 public enum BuildContext {
     static func files(in directory: URL) throws -> [ContextFile] {
@@ -32,6 +32,8 @@ public enum BuildContext {
             let full = url.standardizedFileURL.resolvingSymlinksInPath().path
             guard full.hasPrefix(base + "/") else { throw DockerError.invalidBuildContext("arquivo fora do contexto: \(full)") }
             let relative = String(full.dropFirst(base.count + 1))
+            // Lixo de execução local (testes Python do contexto) não entra no hash nem no tar.
+            if relative.split(separator: "/").contains("__pycache__") || relative.hasSuffix(".pyc") { continue }
             let permissions = (try fm.attributesOfItem(atPath: url.path)[.posixPermissions] as? Int) ?? 0o644
             result.append(ContextFile(path: relative, data: try Data(contentsOf: url), executable: permissions & 0o100 != 0))
         }

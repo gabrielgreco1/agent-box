@@ -389,7 +389,26 @@ enum StoreMigrations {
         """)
     }
 
-    static let all: [StoreMigration] = [v1Initial, v2Activity, v3Computers, v4VaultCatalog]
+
+    /// `v5_proxy_ext` (T3-02, 07 §2.6): campos do `ProxyProfile` que `v3_computers` não tem (encadeada após `v4_vault_catalog`). Tabela 1:1 em vez de ALTER, para não
+    /// tocar nas tabelas publicadas. Continua sem teto de orçamento (P13): preço é informativo.
+    /// `secret_storage`: `vault` = item do Vault (T2-10).
+    static let v5ProxyExt = StoreMigration(id: "v5_proxy_ext") { db in
+        try db.execute(sql: """
+        CREATE TABLE proxy_ext (
+            proxy_id TEXT PRIMARY KEY NOT NULL REFERENCES proxy(id) ON DELETE CASCADE,
+            secret_storage TEXT NOT NULL DEFAULT 'vault' CHECK (secret_storage IN ('vault','file')),
+            geo_json TEXT CHECK (geo_json IS NULL OR json_valid(geo_json)),
+            render_endpoint TEXT,
+            ca_pem TEXT,
+            price_per_request_micros INTEGER CHECK (price_per_request_micros IS NULL OR price_per_request_micros >= 0),
+            price_per_render_micros INTEGER CHECK (price_per_render_micros IS NULL OR price_per_render_micros >= 0)
+        ) STRICT;
+        """)
+    }
+
+
+    static let all: [StoreMigration] = [v1Initial, v2Activity, v3Computers, v4VaultCatalog, v5ProxyExt]
 
     static func migrator(_ migrations: [StoreMigration]) -> DatabaseMigrator {
         var m = DatabaseMigrator()
