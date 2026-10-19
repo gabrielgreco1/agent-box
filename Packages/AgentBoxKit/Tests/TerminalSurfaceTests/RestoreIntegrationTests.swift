@@ -314,6 +314,10 @@ import Testing
         let report = try #require(run2.report)
         #expect(Set(report.interrupted.keys) == [a, s, sh])
         #expect(report.stoppedByUser == [s])
+        // F32: a mesma conversa viva em outro processo (outra build com os mesmos dados) nunca é relançada.
+        run2.model.liveConversations = { [native] }
+        #expect(await run2.model.autoResume(report: report, stagger: .milliseconds(50)) == 0)
+        run2.model.liveConversations = { [] }
         let count = await run2.model.autoResume(report: report, stagger: .milliseconds(50))
         #expect(count == 1, "só o agente com ID que ninguém parou de propósito")
         try await eventually("agent resumed", timeout: .seconds(40)) { run2.model.paneState(a) == .running && run2.screen(a).contains("ARGV:--resume") }
