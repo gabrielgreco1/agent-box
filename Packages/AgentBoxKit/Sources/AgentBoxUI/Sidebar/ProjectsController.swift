@@ -160,12 +160,13 @@ final class ProjectsController {
 
     /// Adiciona a pasta como projeto; avisa por toast se já existia ou se falhou. Devolve o projeto.
     @discardableResult
-    func addProject(folder: URL) async throws -> Project {
+    func addProject(folder: URL, announce: Bool = true) async throws -> Project {
         guard let service else { throw ActionError.failed(.projectAdd, message: "Store not ready") }
         do {
             let result = try await service.addProject(folder: folder)
             if sidebar.collapsedProjects.contains(result.project.id) { sidebar.setProject(result.project.id, collapsed: false) }
             switch result.outcome {
+            case _ where !announce: break
             case .added, .restored:
                 toasts.show(kind: .success, title: String(localized: "Added \(result.project.name).", bundle: .module))
             case .alreadyAdded:

@@ -322,6 +322,7 @@ extension ComposerModel {
         entries.append(.item(DSMenuItem("none", String(localized: "No Project (Clean Session)", bundle: .module), icon: .symbol("sparkles"))))
         entries.append(.separator("pinned"))
         entries.append(.item(DSMenuItem("add", String(localized: "Add a New Project…", bundle: .module), icon: .symbol("plus"), pinned: true, action: .composerSetProject)))
+        entries.append(.item(DSMenuItem("clone", String(localized: "Clone from GitHub…", bundle: .module), icon: .symbol("arrow.down.circle"), pinned: true, action: .projectCloneFromGitHub)))
         return entries
     }
 

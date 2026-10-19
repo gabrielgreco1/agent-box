@@ -24,7 +24,28 @@ struct PendingSessionView: View {
 
     // MARK: Progresso
 
-    private func progress(_ pending: PendingLaunch) -> some View {
+    private func progress(_ pending: PendingLaunch) -> AnyView {
+        if pending.isClone { return AnyView(cloneProgress(pending)) }
+        return AnyView(sessionProgress(pending))
+    }
+
+    private func cloneProgress(_ pending: PendingLaunch) -> some View {
+        VStack(spacing: DS.Space.s4) {
+            HStack(spacing: DS.Space.s2) {
+                DSSpinner(size: PaneMetrics.phaseGlyph, delayed: false)
+                Text(verbatim: pending.name)
+                    .dsFont(DS.Font.dialogTitle)
+                    .foregroundStyle(DS.Color.textPrimary)
+                    .lineLimit(1)
+            }
+            Text(verbatim: pending.phaseText)
+                .dsFont(DS.Font.body)
+                .foregroundStyle(DS.Color.textSecondary)
+            DSButton(.sessionCancelLaunch, "Cancel", variant: .ghost, size: .sm, argument: .select(pending.id.uuidString))
+        }
+    }
+
+    private func sessionProgress(_ pending: PendingLaunch) -> some View {
         let reduce = MotionPolicy.shared.reduceMotion
         let rows: [(PendingLaunch.Phase, Bool)] = pending.history.map { ($0, true) } + [(pending.phase, false)]
         return VStack(spacing: DS.Space.s6) {

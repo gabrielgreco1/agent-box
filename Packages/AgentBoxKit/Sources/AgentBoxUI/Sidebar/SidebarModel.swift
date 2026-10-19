@@ -89,6 +89,8 @@ final class SidebarModel {
     @ObservationIgnored var cancelLaunchFallback: (UUID) -> Bool = { _ in false }
     /// `Discard` de uma linha pendente com erro: o orquestrador solta o pedido guardado.
     @ObservationIgnored var onDiscardPending: (UUID) -> Void = { _ in }
+    /// Cancelamento específico de uma linha pendente que não é de sessão (o clone de `Clone from GitHub…`).
+    @ObservationIgnored var pendingCancelHooks: [UUID: () -> Void] = [:]
 
     init() {}
 
@@ -402,6 +404,13 @@ final class SidebarModel {
         pending[i].recoveries = []
     }
 
+    /// Atualiza o texto de andamento de um clone sem acumular fases no histórico.
+    func setCloneProgress(pending id: UUID, text: String) {
+        guard let i = pending.firstIndex(where: { $0.id == id }) else { return }
+        pending[i].phase = .cloning(text)
+        pending[i].failure = nil
+    }
+
     /// Volta a linha ao começo para uma nova tentativa (Try Again): sem histórico nem erro.
     func restart(pending id: UUID) {
         guard let i = pending.firstIndex(where: { $0.id == id }) else { return }
@@ -446,6 +455,7 @@ final class SidebarModel {
         pending.removeAll { $0.id == id }
         if focusedPending == id { focusedPending = nil }
         onCancelPending(id)
+        pendingCancelHooks.removeValue(forKey: id)?()
         return true
     }
 

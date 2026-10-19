@@ -45,6 +45,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         /// Padrão de transição (P15, R3.2).
         public var worktreeFolder = "~/AgentBox/worktrees"
         public var cleanSessionFolder = "~/AgentBox/sessions"
+        /// Onde `Clone from GitHub…` cria `<pasta>/<repo>` (F24).
+        public var projectsFolder = "~/AgentBox/projects"
         public var branchPrefix = BranchPrefixMode.gitUser
         public var branchPrefixCustom = ""
 
@@ -58,6 +60,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
             confirmDeleteSession = try c.decodeIfPresent(Bool.self, forKey: .confirmDeleteSession) ?? true
             worktreeFolder = try c.decodeIfPresent(String.self, forKey: .worktreeFolder) ?? "~/AgentBox/worktrees"
             cleanSessionFolder = try c.decodeIfPresent(String.self, forKey: .cleanSessionFolder) ?? "~/AgentBox/sessions"
+            projectsFolder = try c.decodeIfPresent(String.self, forKey: .projectsFolder) ?? "~/AgentBox/projects"
             branchPrefix = try c.decodeIfPresent(BranchPrefixMode.self, forKey: .branchPrefix) ?? .gitUser
             branchPrefixCustom = try c.decodeIfPresent(String.self, forKey: .branchPrefixCustom) ?? ""
         }
