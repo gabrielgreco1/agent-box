@@ -51,8 +51,11 @@ actor AdoptingProvisioning: ComputerProvisioning {
             _ = await life.rig.parentCall("boxes_reserve", ["names": ["a", "b", "c"], "batch": "permits-oct"])
             for name in ["a", "b", "c"] { #expect(await life.rig.wait(name, .ready)) }
             let slot1 = try #require(await life.rig.scheduler.childID(for: "a"))
-            _ = try await life.rig.hub.claim(name: "a", child: slot1)
-            try await store.updateOrchestrationChild(id: slot1, state: .claimed)
+            // `box_claim` pelo serviço de ferramentas, como o filho faz: o claim tem de chegar ao store sozinho.
+            let claim = await life.rig.parentCall("box_claim", ["name": "a", "wait_s": 0], as: slot1)
+            #expect(!claim.isError, "box_claim failed: \(claim.json)")
+            let persisted = try await store.orchestrationChildren(parentID: life.parent).first { $0.id == slot1 }
+            #expect(persisted?.state == .claimed, "o claim do filho fica no store (adoção devolve o dono e o computador volta in_use)")
             return life
         }
 

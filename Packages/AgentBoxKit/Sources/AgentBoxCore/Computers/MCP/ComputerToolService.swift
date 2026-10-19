@@ -184,6 +184,7 @@ public actor ComputerToolService {
     func claim(_ args: Args, child: String) async throws -> ToolResult {
         let name = args.string("name") ?? ""
         let computer = try await hub.claim(name: name, child: child)
+        await orchestrator?.childClaimed(child, computer: computer.name)
         let wait = min(max(args.double("wait_s") ?? 45, 0), 45)
         let state = await computer.waitUntilReady(timeout: .seconds(wait))
         var out: [String: JSON] = [

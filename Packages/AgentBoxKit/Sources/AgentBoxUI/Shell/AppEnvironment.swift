@@ -449,6 +449,13 @@ public final class AppEnvironment {
 
     /// LaunchAgent do daemon (T1-24). Só dentro do `.app` com o plist embutido, e nunca em fixtures, automação ou com
     /// `AGENTBOX_HOME` próprio (testes usam o daemon filho), salvo `AGENTBOX_LAUNCHD=1` (label de teste, 08 §0.1).
+    /// `/tmp`, `/private/tmp`, `/var/folders` (o `TMPDIR` do usuário): builds descartáveis.
+    static func isTemporaryBundle(_ url: URL) -> Bool {
+        let path = url.resolvingSymlinksInPath().path
+        let temp = URL(fileURLWithPath: NSTemporaryDirectory()).resolvingSymlinksInPath().path
+        return ["/tmp/", "/private/tmp/", "/var/folders/", "/private/var/folders/"].contains { path.hasPrefix($0) } || path.hasPrefix(temp)
+    }
+
     static func makeBackgroundAgent(environment: [String: String], storeRoot: URL) -> BackgroundAgentHost? {
         let explicit = environment["AGENTBOX_LAUNCHD"] == "1"
         if environment["AGENTBOX_LAUNCHD"] == "0" { return nil }
@@ -459,6 +466,8 @@ public final class AppEnvironment {
         }
         let bundleURL = Bundle.main.bundleURL
         guard bundleURL.pathExtension == "app" else { return nil }
+        // F33: build em pasta temporária (worktree de agente, teste) nunca vira o daemon oficial do launchd do dono.
+        guard explicit || !Self.isTemporaryBundle(bundleURL) else { return nil }
         let identity = BackgroundAgentIdentity.resolve(environment: environment)
         return BackgroundAgentHost(
             identity: identity, service: SMBackgroundAgentService(plistName: identity.plistName), bundleURL: bundleURL,

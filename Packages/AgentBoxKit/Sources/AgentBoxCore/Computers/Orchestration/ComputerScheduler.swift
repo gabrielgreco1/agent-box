@@ -110,6 +110,12 @@ public protocol ParentOrchestrating: Sendable {
     func message(parent: String, to child: String, text: String) async throws -> JSON
     /// Mensagens do pai ainda não entregues a este filho (saem em `box_status` como `parent_messages`).
     func drainParentMessages(for child: String) async -> [JSON]
+    /// `box_claim` deu certo: o filho fica `claimed` no store (a adoção depois de reiniciar o app devolve o dono ao computador).
+    func childClaimed(_ child: String, computer: String) async
+}
+
+extension ParentOrchestrating {
+    public func childClaimed(_ child: String, computer: String) async {}
 }
 
 public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
@@ -148,6 +154,12 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
     private var tracker: EstimateTracker
 
     private var entries: [String: Entry] = [:]
+
+    public func childClaimed(_ child: String, computer: String) async {
+        guard entries[computer]?.childID == child else { return }
+        try? await store?.updateOrchestrationChild(id: child, state: .claimed, computerName: .some(computer), at: now())
+        await persist(computer)
+    }
     private var queue: [String] = []
     private var creating = 0
     private var permits: Int
