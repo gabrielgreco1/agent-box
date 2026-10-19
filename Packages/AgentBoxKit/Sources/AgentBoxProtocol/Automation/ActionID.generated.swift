@@ -260,6 +260,13 @@ extension ActionID {
     public static let proxyAdd = ActionID(unchecked: "proxy.add")
     public static let proxyTest = ActionID(unchecked: "proxy.test")
     public static let proxyDelete = ActionID(unchecked: "proxy.delete")
+    public static let proxyEdit = ActionID(unchecked: "proxy.edit")
+    public static let proxySave = ActionID(unchecked: "proxy.save")
+    public static let proxyCancel = ActionID(unchecked: "proxy.cancel")
+    public static let proxyPreset = ActionID(unchecked: "proxy.preset")
+    public static let proxyScheme = ActionID(unchecked: "proxy.scheme")
+    public static let proxySetDefault = ActionID(unchecked: "proxy.setDefault")
+    public static let proxyImportFromCLI = ActionID(unchecked: "proxy.importFromCLI")
     public static let settingsOpenSection = ActionID(unchecked: "settings.openSection")
     public static let settingsBack = ActionID(unchecked: "settings.back")
     public static let settingsGeneralKeepAgentsRunning = ActionID(unchecked: "settings.general.keepAgentsRunning")
@@ -661,6 +668,13 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "proxy.add"), label: "Add Proxy", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "proxy.test"), label: "Test Proxy", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "proxy.delete"), label: "Delete…", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "proxy.edit"), label: "Edit Proxy", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "proxy.save"), label: "Save Proxy", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "proxy.cancel"), label: "Cancel (proxy)", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "proxy.preset"), label: "Preset", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "proxy.scheme"), label: "Type", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "proxy.setDefault"), label: "Default proxy (proxy)", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "proxy.importFromCLI"), label: "Import from agentbox CLI…", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "settings.openSection"), label: "Seção do Settings (nav)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.back"), label: "Back to App", shortcut: "Esc", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.general.keepAgentsRunning"), label: "Keep agents running when you quit", shortcut: "", slice: .slice1),

@@ -1783,6 +1783,9 @@ Toda interação da UI é uma ação do registro (`ActionRegistry`: `ActionID` �
 | New Batch… | `batch.new` | — | Overlay §16.15 | Sem terminal Claude disponível: `Install Claude Code first.` | v1 (Fatia 3) | `testAction_batch_new` |
 | Collect All / Archive Batch | `batch.collectAll` / `batch.archive` | — | `batch_collect` de todos / arquiva o lote e para os computadores | Filhos rodando (Archive): confirmação `Stop <n> running subagents?` | v1 (Fatia 3) | `testAction_batch_collectAll` · `testAction_batch_archive` |
 | Add Proxy / Test Proxy / Delete… | `proxy.add` / `proxy.test` / `proxy.delete` | — | §14.2 Computers › Proxies | Proxy em uso (Delete): `Used by <n> computers.` | v1 (Fatia 3) | `testAction_proxy_add` · `testAction_proxy_test` · `testAction_proxy_delete` |
+| Edit Proxy / Save Proxy / Cancel (proxy) | `proxy.edit` / `proxy.save` / `proxy.cancel` | — | Abre o formulário do proxy (`select(<proxyId>)`) / grava o formulário (valida nome, host e porta; a senha vai para o Vault) / descarta | Save: `Enter a name.` · `Enter a host.` · `Port must be 1–65535.` · nome já usado | v1 (Fatia 3) | `testAction_proxy_edit` · `testAction_proxy_save` · `testAction_proxy_cancel` |
+| Preset / Type / Default proxy (proxy) | `proxy.preset` / `proxy.scheme` / `proxy.setDefault` | — | `select(custom\|zyte)` (preenche host e porta do preset) / `select(http\|https\|socks5)` / `select(<proxyId>\|none)` (padrão global, CS-161) | — | v1 (Fatia 3) | `testAction_proxy_preset` · `testAction_proxy_scheme` · `testAction_proxy_setDefault` |
+| Import from agentbox CLI… | `proxy.importFromCLI` | — | Sem argumento arma a confirmação inline; `select(confirm)` lê SÓ `ZYTE_API_KEY` do `.env` do CLI antigo (somente leitura) e cria/atualiza o proxy `zyte` | `No Zyte key found in the agentbox CLI settings.` | v1 (Fatia 3) | `testAction_proxy_importFromCLI` |
 
 ### 24.6 Settings e onboarding
 

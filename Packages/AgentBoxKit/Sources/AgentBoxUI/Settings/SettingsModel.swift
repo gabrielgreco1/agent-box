@@ -29,6 +29,22 @@ public final class SettingsModel {
     /// Estado do Docker e das imagens do computador (Settings › Computers).
     var dockerStatus = DockerStatusInfo()
 
+    /// Proxies de Settings › Computers › Proxies (P13): lista, padrão global, formulário aberto e teste em andamento.
+    public internal(set) var proxies: [ProxyProfile] = []
+    public internal(set) var defaultProxyID: UUID?
+    var proxyDraft: ProxyDraft?
+    var proxyTest: ProxyTestState = .idle
+    /// Linha com "Delete this proxy?" aberta (confirmação inline).
+    var proxyDeleteArmed: UUID?
+    /// `.env` do CLI antigo tem chave Zyte e o botão `Import from agentbox CLI…` aparece (03 §14.2).
+    var zyteImportAvailable = false
+    var zyteImportArmed = false
+    @ObservationIgnored var proxyService: ProxyService?
+    @ObservationIgnored var proxyTester: @Sendable (ProxyProfile, String?) async -> ProxyTestResult = { profile, secret in
+        await ProxyTester.test(profile: profile, secret: secret)
+    }
+    @ObservationIgnored var cliEnvFile: URL = ProxyService.defaultCLIEnvFile()
+
     public let flags: SliceFlags
     @ObservationIgnored let sections: [SettingsSectionSpec]
     @ObservationIgnored public var onPresentationChange: @MainActor (Bool) -> Void = { _ in }
@@ -41,11 +57,11 @@ public final class SettingsModel {
     /// Notificações do sistema (Fatia 2): ligado pelo `AppEnvironment`. Sem ele a seção mostra a permissão como não pedida.
     @ObservationIgnored public var attention: AttentionCoordinator?
 
-    @ObservationIgnored private var store: AgentBoxStore?
+    @ObservationIgnored var store: AgentBoxStore?
     @ObservationIgnored private var persisted = AppSettings()
     @ObservationIgnored private var pending: [Task<Void, Never>] = []
     @ObservationIgnored private var detecting: [TerminalProvider: Task<Void, Never>] = [:]
-    @ObservationIgnored private let log = LogFacade(.app, category: "settings")
+    @ObservationIgnored let log = LogFacade(.app, category: "settings")
 
     public init(
         flags: SliceFlags, probe: @escaping AgentProbe, system: SettingsSystemActions = SettingsSystemActions(),
@@ -128,6 +144,10 @@ public final class SettingsModel {
         }
         if let id = try? await store.uiState(Self.sectionStateKey, as: String.self), sections.contains(where: { $0.id == id }) { section = id }
         await reloadProfiles()
+        if proxyService == nil {
+            proxyService = ProxyService(store: store, vault: SecretVault(store: store, keyring: VaultKeyring(backend: SystemKeychainBackend())))
+        }
+        await reloadProxies()
     }
 
     func reloadProfiles() async {

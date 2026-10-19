@@ -751,6 +751,13 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `proxy.add` | Add Proxy | — | slice3 |
 | `proxy.test` | Test Proxy | — | slice3 |
 | `proxy.delete` | Delete… | — | slice3 |
+| `proxy.edit` | Edit Proxy | — | slice3 |
+| `proxy.save` | Save Proxy | — | slice3 |
+| `proxy.cancel` | Cancel (proxy) | — | slice3 |
+| `proxy.preset` | Preset | — | slice3 |
+| `proxy.scheme` | Type | — | slice3 |
+| `proxy.setDefault` | Default proxy (proxy) | — | slice3 |
+| `proxy.importFromCLI` | Import from agentbox CLI… | — | slice3 |
 | `settings.openSection` | Seção do Settings (nav) | — | slice1 |
 | `settings.back` | Back to App | Esc | slice1 |
 | `settings.general.keepAgentsRunning` | Keep agents running when you quit | — | slice1 |

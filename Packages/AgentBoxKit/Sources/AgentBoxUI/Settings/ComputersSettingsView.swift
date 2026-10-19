@@ -24,6 +24,7 @@ struct ComputersSettingsView: View {
                     .transition(.opacity)
                     .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.base), value: mode)
             }
+            ProxiesSettingsBlock(model: model)
             SettingsBlock(title: "Docker") {
                 SettingsRow(title: "Status", help: "Computers run in containers. The first one builds its images in the background.") {
                     HStack(spacing: DS.Space.s2) {

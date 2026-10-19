@@ -1629,6 +1629,17 @@
         }
       }
     },
+    "Control returned to %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Control returned to %@"
+          }
+        }
+      }
+    },
     "Convert to Project (use this folder as the project root)": {
       "extractionState": "manual",
       "localizations": {
@@ -2120,6 +2131,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Diagnostics"
+          }
+        }
+      }
+    },
+    "Direct": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Direct"
           }
         }
       }
@@ -2751,6 +2773,17 @@
         }
       }
     },
+    "Hand back to %@?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hand back to %@?"
+          }
+        }
+      }
+    },
     "Hidden Projects": {
       "extractionState": "manual",
       "localizations": {
@@ -3000,6 +3033,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Keep agents running when you quit"
+          }
+        }
+      }
+    },
+    "Keep control": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep control"
           }
         }
       }
@@ -3737,6 +3781,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "No proxies yet. Add one in Settings to see its usage here."
+          }
+        }
+      }
+    },
+    "No proxies. Computers connect directly.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No proxies. Computers connect directly."
           }
         }
       }
@@ -6370,6 +6425,28 @@
         }
       }
     },
+    "You have control": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You have control"
+          }
+        }
+      }
+    },
+    "You have control of %@. %@ is waiting and can't continue until you hand it back. It returns on its own after 3 minutes without input.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You have control of %@. %@ is waiting and can't continue until you hand it back. It returns on its own after 3 minutes without input."
+          }
+        }
+      }
+    },
     "You're in control": {
       "extractionState": "manual",
       "localizations": {
@@ -6520,72 +6597,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "↵ Open · ⌘↵ Start with prompt · ⇧↵ Split · Esc Close"
-          }
-        }
-      }
-    },
-    "You have control": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "You have control"
-          }
-        }
-      }
-    },
-    "Keep control": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Keep control"
-          }
-        }
-      }
-    },
-    "Hand back to %@?": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hand back to %@?"
-          }
-        }
-      }
-    },
-    "You have control of %@. %@ is waiting and can't continue until you hand it back. It returns on its own after 3 minutes without input.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "You have control of %@. %@ is waiting and can't continue until you hand it back. It returns on its own after 3 minutes without input."
-          }
-        }
-      }
-    },
-    "Control returned to %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Control returned to %@"
-          }
-        }
-      }
-    },
-    "Direct": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Direct"
           }
         }
       }
