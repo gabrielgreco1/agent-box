@@ -239,7 +239,10 @@ public actor InsightsService {
 
     public func tickMachine() async {
         let now = clock()
-        snapshot.machine = await sampler.sample(now: now)
+        let sample = await sampler.sample(now: now)
+        // Amostra que terminou depois do painel sumir (tarefa cancelada no meio) não entra: fora de vista nada muda.
+        guard !Task.isCancelled else { return }
+        snapshot.machine = sample
         machineTicks += 1
         if let computers, machineTicks % 3 == 1 {
             if let samples = await computers.computerSamples() {

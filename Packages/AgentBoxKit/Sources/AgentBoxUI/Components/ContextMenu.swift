@@ -28,6 +28,10 @@ enum ContextMenuStyle {
     ]
     static let destructive: Set<ActionID> = [.sessionDelete, .projectRemove, .terminalForceQuit]
 
+    /// Alvo do clique direito enquanto o menu está aberto.
+    static let targetRing: CGFloat = 1.5
+    static let targetFill: Double = 0.6
+
     static func symbol(_ action: ActionID) -> String { symbols[action] ?? "circle.dashed" }
 
     static func item(_ action: ActionID, title: String, argument: ActionArgument = .press, shortcut: String? = nil) -> DSMenuItem {
@@ -111,12 +115,31 @@ private struct DSContextMenuModifier: ViewModifier {
     @Environment(\.overlayRouter) private var router
     @Environment(\.actionRegistry) private var registry
 
+    /// Painel aberto por este clique direito: enquanto ele vive, o alvo fica marcado (anel de foco + fundo), como no Finder.
+    @State private var menuID: UUID?
+
+    private var targeted: Bool {
+        guard let menuID, let popover = router?.popover else { return false }
+        return popover.id == menuID && !popover.isClosing
+    }
+
     func body(content: Content) -> some View {
-        content.overlay {
-            RightClickCatcher { point in
-                DSMenuPanel.presentContext(router: router, registry: registry, name: name, at: point, entries: entries())
+        content
+            .overlay {
+                RoundedRectangle(cornerRadius: DS.Radius.control)
+                    .fill(DS.Color.fg10.opacity(ContextMenuStyle.targetFill))
+                    .overlay(RoundedRectangle(cornerRadius: DS.Radius.control).strokeBorder(DS.Color.aiAccent, lineWidth: ContextMenuStyle.targetRing))
+                    .opacity(targeted ? 1 : 0)
+                    .animation(.easeOut(duration: MotionTokens.Duration.fast), value: targeted)
+                    .allowsHitTesting(false)
             }
-        }
+            .overlay {
+                RightClickCatcher { point in
+                    if DSMenuPanel.presentContext(router: router, registry: registry, name: name, at: point, entries: entries()) {
+                        menuID = router?.popover?.id
+                    }
+                }
+            }
     }
 }
 
