@@ -202,3 +202,25 @@ public struct NoClaudeCredentials: ClaudeCredentialSource {
 extension ClaudeLimitsClient {
     public static let offline = ClaudeLimitsClient(credentials: NoClaudeCredentials())
 }
+
+/// Último resultado bom dos limites exatos (só percentuais e horários de reset; nada da credencial).
+public struct ExactLimitsCache: Sendable {
+    public let url: URL
+    public init(url: URL) { self.url = url }
+
+    private struct Window: Codable { var used: Double; var resetsAt: Date? }
+    private struct Record: Codable { var fetchedAt: Date; var fiveHour: Window?; var sevenDay: Window? }
+
+    public func load() -> ClaudeExactLimits? {
+        guard let data = try? Data(contentsOf: url), let r = try? JSONDecoder().decode(Record.self, from: data) else { return nil }
+        func w(_ x: Window?) -> ClaudeExactWindow? { x.map { ClaudeExactWindow(usedFraction: $0.used, resetsAt: $0.resetsAt) } }
+        return ClaudeExactLimits(fetchedAt: r.fetchedAt, fiveHour: w(r.fiveHour), sevenDay: w(r.sevenDay))
+    }
+
+    public func save(_ limits: ClaudeExactLimits) {
+        func w(_ x: ClaudeExactWindow?) -> Window? { x.map { Window(used: $0.usedFraction, resetsAt: $0.resetsAt) } }
+        let record = Record(fetchedAt: limits.fetchedAt, fiveHour: w(limits.fiveHour), sevenDay: w(limits.sevenDay))
+        try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try? JSONEncoder().encode(record).write(to: url, options: .atomic)
+    }
+}

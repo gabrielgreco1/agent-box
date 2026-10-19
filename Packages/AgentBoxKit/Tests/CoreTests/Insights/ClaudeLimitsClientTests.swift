@@ -202,7 +202,8 @@ private enum ClaudeLimitsFixtures {
         let again = InsightsService(config: cfg, runner: Runner(),
                                     limitsClient: ClaudeLimitsClient(credentials: cred, transport: FakeTransport(status: 200, body: body)))
         await again.start()
-        #expect(await again.current.claudeLimits == .loading)
+        // O último valor bom vem do cache em disco: aparece na hora, sem ler o Keychain.
+        if case .live = await again.current.claudeLimits {} else { Issue.record("expected cached live limits on relaunch") }
         #expect(cred.reads == 1)  // start não lê o Keychain; só o módulo visível lê
         await again.stop()
     }
@@ -234,5 +235,20 @@ private enum ClaudeLimitsFixtures {
         #expect(snap.claudeLimits == .unavailable)
         #expect(snap.claude.fiveHour?.usedFraction == 0.55)
         await service.stop()
+    }
+}
+
+struct ExactLimitsCacheTests {
+    @Test func lastGoodLimitsSurviveARestartWithoutTheCredential() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("abx-limits-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let cache = ExactLimitsCache(url: dir.appendingPathComponent("c.json"))
+        #expect(cache.load() == nil)
+        let at = Date(timeIntervalSince1970: 1_800_000_000)
+        let limits = ClaudeExactLimits(fetchedAt: at, fiveHour: ClaudeExactWindow(usedFraction: 0.34, resetsAt: at.addingTimeInterval(3600)), sevenDay: nil)
+        cache.save(limits)
+        #expect(cache.load() == limits)
+        let raw = try String(contentsOf: dir.appendingPathComponent("c.json"), encoding: .utf8)
+        #expect(!raw.contains("token") && !raw.contains("Bearer"))
     }
 }

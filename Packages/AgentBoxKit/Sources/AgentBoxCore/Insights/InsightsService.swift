@@ -17,7 +17,7 @@ public struct InsightsConfig: Sendable {
 
     public init(claudeProjects: URL, codexSessions: URL, ledgerURL: URL, claudeRateLimitsURL: URL, priceTableURL: URL? = nil,
                 retentionDays: Int = 35, machineInterval: TimeInterval = 1.5, usageRefreshInterval: TimeInterval = 60,
-                exactLimitsInterval: TimeInterval = 60, exactLimitsConsentURL: URL? = nil) {
+                exactLimitsInterval: TimeInterval = 300, exactLimitsConsentURL: URL? = nil) {
         self.exactLimitsInterval = exactLimitsInterval
         self.exactLimitsConsentURL = exactLimitsConsentURL ?? ledgerURL.deletingLastPathComponent().appendingPathComponent("exact-limits-consent.json")
         self.claudeProjects = claudeProjects; self.codexSessions = codexSessions; self.ledgerURL = ledgerURL
@@ -122,6 +122,11 @@ public actor InsightsService {
         ledger = UsageLedgerStore.load(from: config.ledgerURL)
         exactEnabled = ExactLimitsConsentStore(url: config.exactLimitsConsentURL).load()
         snapshot.claudeLimits = exactEnabled ? .loading : .notEnabled
+        // Último valor bom do disco: aparece na hora ao abrir (janelas que já viraram somem em `reported(now:)`).
+        if exactEnabled, let cached = ExactLimitsCache(url: exactLimitsCacheURL).load() {
+            exactLimits = cached
+            snapshot.claudeLimits = .live(fetchedAt: cached.fetchedAt)
+        }
         if let url = config.priceTableURL { prices = PriceTable.load(from: url) }
         recompute()
         publish()
@@ -170,9 +175,9 @@ public actor InsightsService {
             limitsTask = Task { [weak self] in
                 while !Task.isCancelled {
                     guard let self else { return }
-                    await self.refreshExactLimits()
-                    let failed = await self.exactLimitsMissing
-                    let interval = failed ? min(30, self.config.exactLimitsInterval) : self.config.exactLimitsInterval
+                    // O endpoint limita a frequência (429): no máximo uma leitura a cada `exactLimitsInterval`; em falha, recuo
+                    // de 60 s dobrando até 15 min (o último valor bom continua na tela).
+                    let interval = await self.refreshExactLimitsReturningDelay()
                     try? await Task.sleep(for: .seconds(interval))
                 }
             }
@@ -194,14 +199,26 @@ public actor InsightsService {
         await refreshExactLimits()
     }
 
-    private var exactLimitsMissing: Bool { exactEnabled && exactLimits == nil }
+    private var exactLimitsFailures = 0
+    private var exactLimitsCacheURL: URL { config.exactLimitsConsentURL.deletingLastPathComponent().appendingPathComponent("exact-limits-cache.json") }
+
+    private func refreshExactLimitsReturningDelay() async -> TimeInterval {
+        let ok = await refreshExactLimits()
+        exactLimitsFailures = ok ? 0 : exactLimitsFailures + 1
+        if ok || exactLimitsFailures == 0 { return config.exactLimitsInterval }
+        return min(60 * pow(2, Double(exactLimitsFailures - 1)), 900)
+    }
 
     /// Uma leitura do endpoint de uso. Sem consentimento não faz nada (o Keychain nunca é tocado).
-    public func refreshExactLimits() async {
-        guard exactEnabled else { return }
+    @discardableResult
+    public func refreshExactLimits() async -> Bool {
+        guard exactEnabled else { return true }
+        var ok = false
         switch await limitsClient.fetch() {
         case .success(let limits):
+            ok = true
             exactLimits = limits
+            ExactLimitsCache(url: exactLimitsCacheURL).save(limits)
             snapshot.claudeLimits = .live(fetchedAt: limits.fetchedAt)
         case .needsClaudeRefresh: snapshot.claudeLimits = .needsClaudeRefresh
         case .unavailable:
@@ -210,6 +227,7 @@ public actor InsightsService {
         }
         recompute()
         publish()
+        return ok
     }
 
     private func usageChanged() async {
