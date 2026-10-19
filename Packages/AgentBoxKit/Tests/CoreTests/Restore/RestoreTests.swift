@@ -193,6 +193,19 @@ import Testing
         #expect(reasons[terminals[2].id] == .appClosed)
     }
 
+    @Test func interruptedByMistakeButAliveInTheDaemonComesBackRunning() async throws {
+        let (store, root) = try await openStore()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let now = Date()
+        // Uma abertura que não alcançou o daemon (fallback para daemon filho) marcou tudo `interrupted`; o daemon do launchd seguiu vivo.
+        let terminals = try await seed(store, states: [.interrupted, .interrupted], startedAt: now.addingTimeInterval(-60))
+        let report = try await SessionReconciler.reconcile(store: store, daemonSessions: [summary(terminals[0], state: .running)], now: now)
+        #expect(report.alive == [terminals[0].id])
+        let stored = try await store.snapshot().terminals
+        #expect(stored.first { $0.id == terminals[0].id }?.state == .running, "vivo no daemon: religado, nunca retomado em duplicata")
+        #expect(stored.first { $0.id == terminals[1].id }?.state == .interrupted, "sem sessão viva continua interrompido")
+    }
+
     @Test func reconcileWithoutADaemonInterruptsEverythingAndSeparatesRebootFromCrash() async throws {
         let (store, root) = try await openStore()
         defer { try? FileManager.default.removeItem(at: root) }

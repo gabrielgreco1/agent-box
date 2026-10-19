@@ -223,7 +223,12 @@ import Testing
         let sampler = MachineSampler()
         let first = await sampler.sample()
         try await Task.sleep(for: .milliseconds(400))
-        let second = await sampler.sample()
+        var second = await sampler.sample()
+        // Com a máquina carregada o delta de CPU pode sair vazio num intervalo curto: mais duas leituras antes de reprovar.
+        for _ in 0..<2 where second.cpu == nil {
+            try await Task.sleep(for: .milliseconds(500))
+            second = await sampler.sample()
+        }
         let memory = try #require(second.memory)
         #expect(memory.totalBytes > 1_000_000_000)
         #expect(memory.usedBytes > 0 && memory.usedBytes <= memory.totalBytes)

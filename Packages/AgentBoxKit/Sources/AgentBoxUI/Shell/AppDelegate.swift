@@ -13,6 +13,13 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
         log.publicInfo("launch")
+        // Uma instância por pasta de dados: duas janelas no mesmo PTY brigam pelo tamanho e o Claude redesenha para a largura da
+        // outra (texto sobreposto e duplicado). A segunda ativa a primeira e sai antes de tocar no daemon ou no store.
+        if let other = Self.runningInstanceToYieldTo(environment: ProcessInfo.processInfo.environment) {
+            other.activate()
+            log.publicInfo("another instance is running: yielding to it")
+            exit(0)
+        }
         if env.headless { MainWindowController.invisibleForTests = true }
         NSApp.appearance = NSAppearance(named: .darkAqua)
         // Telas de fixture (dev e evidência) não leem nem gravam o frame salvo do usuário.
@@ -30,6 +37,14 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         signals.install()
         termination = signals
+    }
+
+    /// Outra instância do app com os mesmos dados (sem `AGENTBOX_HOME`/fixture próprios, que isolam testes e evidências).
+    static func runningInstanceToYieldTo(environment: [String: String]) -> NSRunningApplication? {
+        guard environment["AGENTBOX_HOME"] == nil, environment["AGENTBOX_SCREEN"] == nil,
+              Bundle.main.bundleURL.pathExtension == "app", let id = Bundle.main.bundleIdentifier else { return nil }
+        let me = ProcessInfo.processInfo.processIdentifier
+        return NSRunningApplication.runningApplications(withBundleIdentifier: id).first { $0.processIdentifier != me && !$0.isTerminated }
     }
 
     /// ⌘Q (T1-24): a política decide entre sair, manter os agentes em segundo plano ou perguntar no overlay da janela.

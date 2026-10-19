@@ -127,5 +127,9 @@ done
 codesign -dv "$APP" 2>&1 | grep -E 'flags=|Identifier=' || true
 # O Dock guarda o ícone por caminho: sem re-registrar, um bundle reconstruído no mesmo lugar aparece com o ícone genérico.
 touch "$APP"
-/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$APP" >/dev/null 2>&1 || true
+LSREG=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+"$LSREG" -f "$APP" >/dev/null 2>&1 || true
+# A cópia intermediária do xcodebuild tem o mesmo bundle id: sem tirá-la do LaunchServices, o Dock pode abrir ela (fora do lugar,
+# sem achar o daemon: "The background service isn't running").
+"$LSREG" -u "$DD/Build/Products/Release/Agent Box.app" >/dev/null 2>&1 || true
 echo "build: OK -> $APP"

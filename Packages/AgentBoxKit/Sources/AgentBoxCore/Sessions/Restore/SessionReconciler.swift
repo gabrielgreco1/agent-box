@@ -27,6 +27,16 @@ public enum SessionReconciler {
         var candidates = try await store.terminals(in: .running)
         candidates += try await store.terminals(in: .launching)
         let byID = Dictionary((daemonSessions ?? []).map { ($0.sessionID.description, $0) }, uniquingKeysWith: { first, _ in first })
+        // Marcado `interrupted` por engano (uma abertura que não alcançou o daemon, um daemon filho de fallback) mas a sessão
+        // continua viva no daemon: volta a `running` e é religada. Senão o agente vivo some da UI e a retomada criaria um segundo.
+        for var terminal in try await store.terminals(in: .interrupted) {
+            guard let raw = terminal.ptySessionID, let summary = byID[raw], summary.state == .running else { continue }
+            terminal.state = .running
+            terminal.endedAt = nil
+            try await store.save(terminal)
+            report.alive.append(terminal.id)
+            state.interruptions[terminal.id.uuidString] = nil
+        }
         for var terminal in candidates {
             let summary = terminal.ptySessionID.flatMap { byID[$0] }
             if let summary, summary.state == .running {
