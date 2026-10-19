@@ -255,11 +255,15 @@ public actor ParentDirectory {
     /// F29: escolhe o proxy padrão da sessão do pai (e das próximas reservas dele); `nil` volta ao padrão global.
     public func setProxy(_ proxy: String?, for parentID: String) {
         parents[parentID]?.proxy = proxy
+        if parents[parentID] != nil { onProxyChange?(parentID, proxy) }
         if let session = parents[parentID]?.sessionID { sessionProxies[session] = proxy }
     }
     /// O proxy escolhido para a sessão (o Claude relançado ganha identidade nova, a sessão não muda).
     public func proxy(forSession id: UUID) -> String? { sessionProxies[id] }
     private var sessionProxies: [UUID: String] = [:]
+    /// O app persiste a escolha para o pai que sobreviver a um reinício.
+    private var onProxyChange: (@Sendable (_ parentID: String, _ proxy: String?) -> Void)?
+    public func observeProxyChanges(_ hook: (@Sendable (_ parentID: String, _ proxy: String?) -> Void)?) { onProxyChange = hook }
     public func info(_ parentID: String) -> ParentInfo? { parents[parentID] }
     public var all: [ParentInfo] { Array(parents.values) }
 }

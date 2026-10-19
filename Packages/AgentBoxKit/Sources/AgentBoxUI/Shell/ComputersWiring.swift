@@ -47,6 +47,8 @@ extension AppEnvironment {
         let orchestrator = ComputerOrchestrator(
             helperPath: helper, store: store, provisioning: provisioning, runsRoot: root.appendingPathComponent("computers/runs", isDirectory: true),
             waitSeconds: wait, proxies: StoreProxyDirectory(store: store))
+        // Reinício do app com Claude e subagentes vivos: as identidades MCP voltam antes de qualquer chamada (só lê o Store).
+        await orchestrator.restoreIdentities()
         orchestratorHolder.set(orchestrator)
         let toasts = toasts
         let settings = settings
@@ -78,6 +80,8 @@ extension AppEnvironment {
         computers.proxyNames = { await StoreProxyDirectory(store: store).names() }
         await computers.useOrchestrator(orchestrator)
         computers.startRefreshing()
+        // Computadores que seguiram vivos no Docker voltam para o hub (a UI já observa); sem Docker de pé não faz nada.
+        Task { await orchestrator.adoptRunning() }
         computerSweeper?.cancel()
         computerSweeper = Task {
             while !Task.isCancelled {

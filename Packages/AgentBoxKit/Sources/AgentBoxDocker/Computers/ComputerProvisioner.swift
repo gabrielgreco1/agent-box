@@ -66,6 +66,12 @@ public struct ProvisionedComputer: Sendable {
     public var workDirectory: URL
     public var logsDirectory: URL
     public var admin: EgressAdminClient
+
+    public init(labels: ComputerLabels, display: ComputerDisplay, containerID: String, containerName: String, adminPort: Int, profileVolume: String?,
+                workDirectory: URL, logsDirectory: URL, admin: EgressAdminClient) {
+        self.labels = labels; self.display = display; self.containerID = containerID; self.containerName = containerName; self.adminPort = adminPort
+        self.profileVolume = profileVolume; self.workDirectory = workDirectory; self.logsDirectory = logsDirectory; self.admin = admin
+    }
 }
 
 /// Cria e destrói computadores. Só usa recursos com os labels do computador (GC por label, nunca varredura geral).

@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 
 /// Ciclo de vida que o app injeta (T3-04): o que fazer quando o filho libera o computador (coletar, remover containers).
@@ -14,7 +15,7 @@ public actor ComputerHub {
     private var computers: [String: ManagedComputer] = [:]
     private var claims: [String: String] = [:]  // filho -> nome do computador
     private var released: Set<String> = []
-    private var identities: [String: String] = [:]  // filho -> capability de lançamento
+    private var identities: [String: String] = [:]  // filho -> SHA-256 (hex) da capability de lançamento
     private var roles: [String: ChildRole] = [:]
     private var parents: [String: String] = [:]  // filho -> pai que o criou (slot de worker, T3-04)
     private var childOrder: [String: [String]] = [:]  // pai -> filhos por ordem de slot
@@ -33,7 +34,17 @@ public actor ComputerHub {
     /// Registra um filho (o app faz isso no lançamento, ao montar o `mcpServers` inline do subagente). Com `parent`, o filho é um
     /// slot de worker do pai (T3-04): só esse pai pode reservar computador para ele e lhe mandar `agent_message`.
     public func registerChild(id: String, capability: String, parent: String? = nil) {
-        identities[id] = capability
+        registerChild(id: id, capabilityHash: Self.fingerprint(capability), parent: parent)
+    }
+
+    /// SHA-256 em hex da capability: é o que o hub guarda e o que o app persiste (a capability pura nunca vai para disco).
+    public static func fingerprint(_ capability: String) -> String {
+        SHA256.hash(data: Data(capability.utf8)).map { String(format: "%02x", $0) }.joined()
+    }
+
+    /// Mesmo registro, já com o hash (adoção depois de reiniciar o app: só o hash foi persistido).
+    public func registerChild(id: String, capabilityHash: String, parent: String? = nil) {
+        identities[id] = capabilityHash
         roles[id] = .worker
         released.remove(id)
         if let parent {
@@ -45,8 +56,10 @@ public actor ComputerHub {
     }
 
     /// Registra o terminal pai (identidade do `--mcp-config` do lançamento do pai). Ele só enxerga as ferramentas de orquestração.
-    public func registerParent(id: String, capability: String) {
-        identities[id] = capability
+    public func registerParent(id: String, capability: String) { registerParent(id: id, capabilityHash: Self.fingerprint(capability)) }
+
+    public func registerParent(id: String, capabilityHash: String) {
+        identities[id] = capabilityHash
         roles[id] = .parent
     }
 
@@ -66,6 +79,7 @@ public actor ComputerHub {
     /// `child` + `capability` precisam bater com o registrado no lançamento. A capability não aparece em schema nenhum.
     public func authorize(child: String, capability: String) -> Bool {
         guard let expected = identities[child] else { return false }
+        let capability = Self.fingerprint(capability)
         return expected.utf8.count == capability.utf8.count && zip(expected.utf8, capability.utf8).reduce(0) { $0 | ($1.0 ^ $1.1) } == 0
     }
 

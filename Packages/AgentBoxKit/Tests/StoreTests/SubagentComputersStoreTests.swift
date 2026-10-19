@@ -9,7 +9,7 @@ import Testing
 @Suite struct SubagentComputersStoreTests {
     @Test func migrationIsChainedAfterV6() {
         let ids = StoreMigrations.all.map(\.id)
-        #expect(ids.suffix(2) == ["v6_agent_tree", "v7_subagent_computers"])
+        #expect(ids.suffix(2) == ["v7_subagent_computers", "v8_orchestration_identity"])
     }
 
     @Test func modeDefaultsToOffAndPersistsAcrossReopen() async throws {
