@@ -88,6 +88,7 @@ func allSampleMessages() -> [ControlMessage] {
         .textSnapshot(TextSnapshotRequest(sessionID: sid1, lines: 50)),
         .forget(SessionTarget(sessionID: sid1)),
         .drainWhenIdle,
+        .shutdown,
         .ping,
     ]
     var messages: [ControlMessage] = requests.enumerated().map { .request(DaemonRequest(id: RequestID(rawValue: UInt64($0.offset + 1)), command: $0.element)) }

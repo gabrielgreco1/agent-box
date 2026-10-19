@@ -263,6 +263,13 @@ actor DaemonServer {
         case .drainWhenIdle:
             drainWhenIdle = true
             return .ok(id: id, .empty)
+        case .shutdown:
+            log.publicInfo("shutdown requested by the protocol")
+            Task.detached {  // DETACHED: sai do processo depois de responder; não pertence a nenhuma conexão
+                try? await Task.sleep(for: .milliseconds(150))
+                Darwin.exit(0)
+            }
+            return .ok(id: id, .empty)
         case .ping:
             var active = 0
             for session in sessions.values where await session.isRunning { active += 1 }

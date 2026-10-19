@@ -256,6 +256,73 @@ import Testing
         run2.runtime.daemonKill()
         await world.finish(run2)
     }
+
+    // MARK: F30: Resume Conversation depois de um exit 143 e retomada automática (P25)
+
+    /// Claude de mentira: a primeira vida morre com SIGTERM (exit 143); com `--resume` fica vivo.
+    private static let dyingClaude = "echo \"ARGV:$@\"; case \"$*\" in *--resume*) exec cat;; *) kill -TERM $$;; esac"
+
+    @Test func exitedAgentWithConversationIDResumesWithTheSameIDAndKeepsRunning() async throws {
+        let world = try await World()
+        try world.installFakeCLI("claude", script: Self.dyingClaude)
+        let seeded = try await world.seed(spec: LaunchSpec(provider: .claude, permissionMode: "bypassPermissions"), provider: .claude)
+        let id = seeded.terminal.id
+        let run = AppRun(harness: world.harness, session: world.session, binDirectory: world.binDirectory)
+        try await run.open(store: world.store, session: world.session)
+        try await eventually("claude died with SIGTERM", timeout: .seconds(30)) {
+            if case .exited(_, let signal) = run.model.paneState(id) { signal == 15 || run.model.terminal(id)?.exitCode == 143 } else { false }
+        }
+        let native = try #require(run.model.terminal(id)?.nativeConversationID)
+        let terminal = try #require(run.model.terminal(id))
+        #expect(RestorePlanner.hasExactResume(terminal), "o card 'Terminal exited' mostra Resume Conversation como botão principal")
+        run.model.resume(id)
+        try await eventually("resumed", timeout: .seconds(40)) { run.model.paneState(id) == .running && run.screen(id).contains("ARGV:--resume") }
+        #expect(run.screen(id).contains("ARGV:--resume \(native) --dangerously-skip-permissions"), "mesmo ID e mesmas flags regeneradas")
+        try await Task.sleep(for: .seconds(1))
+        #expect(run.model.paneState(id) == .running, "o processo retomado segue rodando")
+        await world.finish(run)
+    }
+
+    @Test func autoResumeRelaunchesDeadAgentsWithResumeButNeverShellsOrUserStoppedOnes() async throws {
+        let world = try await World()
+        try world.installFakeCLI("claude", script: "echo \"ARGV:$@\"; exec cat")
+        let agent = try await world.seed(spec: LaunchSpec(provider: .claude, permissionMode: "bypassPermissions"), provider: .claude)
+        let stopped = try await world.seed(spec: LaunchSpec(provider: .claude, permissionMode: "bypassPermissions"), provider: .claude)
+        let shell = try await world.seed(spec: LaunchSpec(provider: .custom, customArgv: Self.echoer))
+        let run1 = AppRun(harness: world.harness, session: world.session, binDirectory: world.binDirectory)
+        try await run1.open(store: world.store, session: world.session)
+        let (a, s, sh) = (agent.terminal.id, stopped.terminal.id, shell.terminal.id)
+        // Só a tab ativa lança: visita cada uma (cada seed é uma tab).
+        for tab in [agent.tab, stopped.tab, shell.tab] {
+            run1.model.selectTab(tab.id)
+            run1.area.layoutSubtreeIfNeeded()
+            try await eventually("tab launched", timeout: .seconds(30)) { run1.model.terminal(tab.focusedTerminalID ?? UUID())?.state == .running }
+        }
+        try await eventually("all running", timeout: .seconds(40)) {
+            [a, s, sh].allSatisfy { run1.model.terminal($0)?.state == .running } && run1.screen(a).contains("ARGV:") && run1.screen(s).contains("ARGV:")
+        }
+        let native = try #require(run1.model.terminal(a)?.nativeConversationID)
+        await run1.model.settlePersistence()
+        try await Task.sleep(for: .milliseconds(400))
+        await run1.die()
+        await SessionReconciler.recordExplicitStop(store: world.store, terminalIDs: [s])  // "Stop All and Quit" neste
+        await SessionReconciler.markCleanExit(store: world.store)
+        await world.harness.killDaemon()  // reinício do Mac / daemon morto com o app fechado
+
+        let run2 = AppRun(harness: world.harness, session: world.session, binDirectory: world.binDirectory)
+        try await run2.open(store: world.store, session: world.session)
+        let report = try #require(run2.report)
+        #expect(Set(report.interrupted.keys) == [a, s, sh])
+        #expect(report.stoppedByUser == [s])
+        let count = await run2.model.autoResume(report: report, stagger: .milliseconds(50))
+        #expect(count == 1, "só o agente com ID que ninguém parou de propósito")
+        try await eventually("agent resumed", timeout: .seconds(40)) { run2.model.paneState(a) == .running && run2.screen(a).contains("ARGV:--resume") }
+        #expect(run2.screen(a).contains("ARGV:--resume \(native)"))
+        #expect(run2.model.terminal(s)?.state == .interrupted, "parado pelo usuário: continua parado")
+        #expect(run2.model.terminal(sh)?.state == .interrupted, "shell nunca é retomado sozinho")
+        run2.runtime.daemonKill()
+        await world.finish(run2)
+    }
 }
 
 extension TerminalRuntime {

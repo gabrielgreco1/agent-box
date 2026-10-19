@@ -89,7 +89,7 @@ private struct StubLaunchd: LaunchdQuerying {
         #expect(sessions.contains { $0.sessionID == create.sessionID && $0.state == .running })
         try await reopened.client.kill(sessionID: create.sessionID, mode: .force)
         await reopened.client.stop()
-        kill(pid, SIGTERM)
+        kill(pid, SIGKILL)
     }
 
     @Test func approvedAgentUsesTheLaunchdSocketAndSpawnsNoChild() async throws {
@@ -125,7 +125,7 @@ private struct StubLaunchd: LaunchdQuerying {
         let pid = runtime.daemonPID
         #expect(alive(pid))
         await runtime.client.stop()
-        kill(pid, SIGTERM)
+        kill(pid, SIGKILL)
     }
 
     @Test func noBackgroundAgentConfiguredKeepsTheChildDaemon() async throws {
@@ -137,6 +137,6 @@ private struct StubLaunchd: LaunchdQuerying {
         let pid = runtime.daemonPID
         #expect(alive(pid))
         await runtime.client.stop()
-        kill(pid, SIGTERM)
+        kill(pid, SIGKILL)
     }
 }

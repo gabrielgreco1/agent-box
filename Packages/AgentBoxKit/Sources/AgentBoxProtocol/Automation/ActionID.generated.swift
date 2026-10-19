@@ -102,6 +102,7 @@ extension ActionID {
     public static let sidebarProjectToggle = ActionID(unchecked: "sidebar.project.toggle")
     public static let sessionCancelLaunch = ActionID(unchecked: "session.cancelLaunch")
     public static let sessionRetryLaunch = ActionID(unchecked: "session.retryLaunch")
+    public static let sessionResumeStopped = ActionID(unchecked: "session.resumeStopped")
     public static let sessionUseExistingBranch = ActionID(unchecked: "session.useExistingBranch")
     public static let sessionCreateWithoutFetch = ActionID(unchecked: "session.createWithoutFetch")
     public static let sessionDiscardPending = ActionID(unchecked: "session.discardPending")
@@ -264,6 +265,7 @@ extension ActionID {
     public static let settingsGeneralKeepAgentsRunning = ActionID(unchecked: "settings.general.keepAgentsRunning")
     public static let settingsGeneralAllowLoginItems = ActionID(unchecked: "settings.general.allowLoginItems")
     public static let settingsGeneralAskBeforeQuit = ActionID(unchecked: "settings.general.askBeforeQuit")
+    public static let settingsGeneralResumeAgentsOnOpen = ActionID(unchecked: "settings.general.resumeAgentsOnOpen")
     public static let settingsGeneralConfirmCloseTerminal = ActionID(unchecked: "settings.general.confirmCloseTerminal")
     public static let settingsGeneralConfirmDeleteSession = ActionID(unchecked: "settings.general.confirmDeleteSession")
     public static let settingsGeneralBranchPrefix = ActionID(unchecked: "settings.general.branchPrefix")
@@ -501,6 +503,7 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "sidebar.project.toggle"), label: "Expand / Collapse Project (clique na linha)", shortcut: "→ / ←", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "session.cancelLaunch"), label: "Cancel (linha pendente, PhaseList e ignição)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "session.retryLaunch"), label: "Try Again (criação da sessão)", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "session.resumeStopped"), label: "Resume All (agentes parados com o app fechado)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "session.useExistingBranch"), label: "Use Existing Branch", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "session.createWithoutFetch"), label: "Create Without Fetching", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "session.discardPending"), label: "Discard (sessão que falhou ao criar)", shortcut: "", slice: .slice1),
@@ -663,6 +666,7 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "settings.general.keepAgentsRunning"), label: "Keep agents running when you quit", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.general.allowLoginItems"), label: "Allow in Login Items", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.general.askBeforeQuit"), label: "Ask before quitting with running agents", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "settings.general.resumeAgentsOnOpen"), label: "Resume agents automatically when Agent Box opens", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.general.confirmCloseTerminal"), label: "Confirm before closing a running terminal", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.general.confirmDeleteSession"), label: "Confirm before deleting a session", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.general.branchPrefix"), label: "Branch prefix", shortcut: "", slice: .slice1),

@@ -43,7 +43,7 @@ public final class ChildDaemon: Sendable {
 
     public func terminate() {
         process.withLock { child in
-            if let child, child.isRunning { child.terminate() }
+            if let child, child.isRunning { kill(child.processIdentifier, SIGKILL) }  // o daemon ignora SIGTERM (F30)
             child = nil
         }
     }

@@ -18,6 +18,9 @@ final class WorkspaceRootView: NSView {
     /// Cards de aprovação do modo Ask (F12): sobre o topo do pane da sessão, sem modal. Só ocupa a faixa dos cards.
     let approvals: NSView
     private var approvalCount = 0
+    /// P25: "N agents stopped while Agent Box was closed · Resume All", no topo da sessão (só com a retomada automática desligada).
+    var stoppedBanner: NSView?
+    private var stoppedBannerVisible = false
 
     override var isFlipped: Bool { true }
 
@@ -30,6 +33,13 @@ final class WorkspaceRootView: NSView {
         super.init(frame: .zero)
         approvals.isHidden = true
         setWorkspaceVisible(false)
+    }
+
+    func setStoppedBannerVisible(_ visible: Bool) {
+        guard visible != stoppedBannerVisible, let stoppedBanner else { return }
+        stoppedBannerVisible = visible
+        if visible { addSubview(stoppedBanner) } else { stoppedBanner.removeFromSuperview() }
+        needsLayout = true
     }
 
     /// Quantos cards a sessão selecionada tem esperando. Com 0 a faixa some depois da animação de saída.
@@ -129,6 +139,10 @@ final class WorkspaceRootView: NSView {
         pending.frame = bounds
         tabRow.frame = NSRect(x: 0, y: 0, width: bounds.width, height: TabMetrics.chromeHeight)
         area.frame = NSRect(x: 0, y: TabMetrics.chromeHeight, width: bounds.width, height: max(0, bounds.height - TabMetrics.chromeHeight))
+        if stoppedBannerVisible, let stoppedBanner {
+            stoppedBanner.frame = NSRect(x: 0, y: TabMetrics.chromeHeight, width: bounds.width, height: PaneMetrics.banner)
+            addSubview(stoppedBanner, positioned: .above, relativeTo: nil)
+        }
         let strip = SubagentMetrics.cardWidth + DS.Space.s3 * 2
         let height = CGFloat(min(max(approvalCount, 1), 3)) * SubagentMetrics.cardHeight + SubagentMetrics.cardTop * 2
         let width = min(strip, bounds.width)
@@ -186,6 +200,11 @@ final class WorkspaceViewController: NSViewController {
         let root = WorkspaceRootView(landing: landing, tabRow: tabRow, area: area, pending: pending, approvals: approvals)
         view = root
         self.root = root
+        let stopped = ChromeHostingView(
+            content: StoppedAgentsBanner(model: env.workspace).environment(\.elementStore, env.elements)
+                .environment(\.actionRegistry, env.registry).environment(\.a11yParent, .windowMain))
+        stopped.inputBlocked = blocked
+        root.stoppedBanner = stopped
         trackApprovals()
         env.workspace.dragController.tabRowRect = { [weak tabRow] in
             guard let tabRow, tabRow.window != nil, tabRow.superview != nil else { return nil }
@@ -195,6 +214,7 @@ final class WorkspaceViewController: NSViewController {
         env.workspace.addListener { [weak root, weak env] in
             guard let root, let env else { return }
             root.setWorkspaceVisible(env.workspace.currentSessionID != nil)
+            root.setStoppedBannerVisible(env.workspace.showsStoppedAgentsBanner)
         }
         env.sidebar.onPendingFocusChange = { [weak root, weak env] in
             guard let root, let env else { return }

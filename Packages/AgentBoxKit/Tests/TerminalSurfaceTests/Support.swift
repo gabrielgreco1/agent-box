@@ -76,7 +76,7 @@ final class DaemonHarness: @unchecked Sendable {  // SAFETY: `process` só muda 
 
     func stop() async {
         if let process, process.isRunning {
-            process.terminate()
+            kill(process.processIdentifier, SIGKILL)
             let deadline = ContinuousClock.now + .seconds(5)
             while process.isRunning, ContinuousClock.now < deadline { try? await Task.sleep(for: .milliseconds(50)) }
         }

@@ -593,6 +593,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `sidebar.project.toggle` | Expand / Collapse Project (clique na linha) | → / ← | slice1 |
 | `session.cancelLaunch` | Cancel (linha pendente, PhaseList e ignição) | — | slice1 |
 | `session.retryLaunch` | Try Again (criação da sessão) | — | slice1 |
+| `session.resumeStopped` | Resume All (agentes parados com o app fechado) | — | slice1 |
 | `session.useExistingBranch` | Use Existing Branch | — | slice1 |
 | `session.createWithoutFetch` | Create Without Fetching | — | slice1 |
 | `session.discardPending` | Discard (sessão que falhou ao criar) | — | slice1 |
@@ -755,6 +756,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `settings.general.keepAgentsRunning` | Keep agents running when you quit | — | slice1 |
 | `settings.general.allowLoginItems` | Allow in Login Items | — | slice1 |
 | `settings.general.askBeforeQuit` | Ask before quitting with running agents | — | slice1 |
+| `settings.general.resumeAgentsOnOpen` | Resume agents automatically when Agent Box opens | — | slice1 |
 | `settings.general.confirmCloseTerminal` | Confirm before closing a running terminal | — | slice1 |
 | `settings.general.confirmDeleteSession` | Confirm before deleting a session | — | slice1 |
 | `settings.general.branchPrefix` | Branch prefix | — | slice1 |

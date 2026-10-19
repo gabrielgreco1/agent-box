@@ -59,6 +59,7 @@ public actor BackgroundAgentHost {
     private let bundleURL: URL
     private let daemonExecutable: URL?
     private let stateFile: URL
+    private let pointer: PointerConfiguration?
     private let pause: @Sendable (Duration) async -> Void
     private let log = LogFacade(.app, category: "background-agent")
 
@@ -66,12 +67,24 @@ public actor BackgroundAgentHost {
     public private(set) var pendingReRegistration = false
     public private(set) var lastMode: DaemonHostMode?
 
+    /// Onde publicar o ponteiro do launcher estável (F30): o `agentboxd` deste app e o build dele.
+    public struct PointerConfiguration: Sendable {
+        public var home: URL
+        public var daemonBinary: URL
+        public var build: String
+        public init(home: URL, daemonBinary: URL, build: String) {
+            self.home = home
+            self.daemonBinary = daemonBinary
+            self.build = build
+        }
+    }
+
     /// - Parameters:
     ///   - bundleURL: `Agent Box.app` (procura o plist em `Contents/Library/LaunchAgents/`).
     ///   - stateFile: onde guardar o registro (`AB/run/ptyd-registration.json`).
     public init(
         identity: BackgroundAgentIdentity, service: any BackgroundAgentService, launchd: any LaunchdQuerying = SystemLaunchd(),
-        bundleURL: URL, daemonExecutable: URL?, stateFile: URL,
+        bundleURL: URL, daemonExecutable: URL?, stateFile: URL, pointer: PointerConfiguration? = nil,
         pause: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) }
     ) {
         self.identity = identity
@@ -80,6 +93,7 @@ public actor BackgroundAgentHost {
         self.bundleURL = bundleURL
         self.daemonExecutable = daemonExecutable
         self.stateFile = stateFile
+        self.pointer = pointer
         self.pause = pause
     }
 
@@ -103,7 +117,17 @@ public actor BackgroundAgentHost {
 
     private func resolve() async -> DaemonHostMode {
         guard FileManager.default.fileExists(atPath: plistURL.path) else { return .childProcess(reason: .notInBundle) }
+        if let pointer { DaemonPointer.update(home: pointer.home, executable: pointer.daemonBinary, build: pointer.build) }
         var status = service.status
+        // F30: um daemon vivo (registrado por este ou por outro app, de outra pasta) é adotado como está. Registrar de novo
+        // trocaria o job do launchd e derrubaria o daemon com as sessões vivas. Job só carregado (ocioso) não tem sessões: pode re-registrar.
+        if status != .enabled, status != .requiresApproval {
+            let existing = await launchd.jobState(label: identity.label)
+            if existing == .running, let socket = await launchd.socketPath(forKey: identity.socketKey), !socket.isEmpty {
+                log.publicInfo("adopting the launch agent registered by another build; not re-registering")
+                return .launchAgent(socketPath: socket)
+            }
+        }
         if status == .notRegistered || status == .notFound {
             if let failure = performRegister() {
                 let after = service.status

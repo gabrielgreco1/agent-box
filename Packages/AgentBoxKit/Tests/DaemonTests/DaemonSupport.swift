@@ -109,7 +109,7 @@ final class DaemonHarness: @unchecked Sendable {  // SAFETY: `process` só muda 
     deinit { terminateNow() }
 
     func stop() async {
-        if let process, process.isRunning { process.terminate() }
+        if let process, process.isRunning { Darwin.kill(process.processIdentifier, SIGKILL) }
         await waitForExit()
         if let process { SpawnedDaemons.remove(process.processIdentifier) }
         process = nil

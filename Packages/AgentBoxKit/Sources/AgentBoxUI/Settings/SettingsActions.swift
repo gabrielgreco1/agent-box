@@ -68,6 +68,7 @@ extension SettingsModel {
             return nil
         }
         try bool(.settingsGeneralKeepAgentsRunning, \.keepAgentsRunning, name: "Keep agents running")
+        try bool(.settingsGeneralResumeAgentsOnOpen, \.resumeAgentsOnOpen, name: "Resume agents on open")
         try bool(.settingsGeneralAskBeforeQuit, \.askBeforeQuit, name: "Ask before quitting")
         try bool(.settingsGeneralConfirmCloseTerminal, \.confirmCloseTerminal, name: "Confirm before closing a terminal")
         try bool(.settingsGeneralConfirmDeleteSession, \.confirmDeleteSession, name: "Confirm before deleting a session")

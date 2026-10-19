@@ -335,6 +335,11 @@ public actor PTYClient {
         _ = try await okResult(.drainWhenIdle)
     }
 
+    /// F30: encerra o daemon e todas as sessões. Só para "Stop and Quit" e testes.
+    public func shutdownDaemon() async throws {
+        _ = try await okResult(.shutdown)
+    }
+
     public func detach(sessionID: SessionID) async throws {
         routes[sessionID]?.continuation.finish()
         routes[sessionID] = nil

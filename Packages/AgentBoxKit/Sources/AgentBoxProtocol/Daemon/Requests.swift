@@ -254,12 +254,14 @@ public enum DaemonCommand: Sendable, Hashable {
     case textSnapshot(TextSnapshotRequest)
     case forget(SessionTarget)
     case drainWhenIdle
+    /// F30: encerra o daemon (e as sessões) por comando explícito ("Stop and Quit"); SIGTERM nunca encerra.
+    case shutdown
     case ping
 
     /// Todos os `op` de requisição, na ordem de 06 §1.3.
     public static let allOps: [String] = [
         "hello", "create", "list", "attach", "detach", "resize", "signal", "kill", "subscribe", "textSnapshot", "forget",
-        "drainWhenIdle", "ping",
+        "drainWhenIdle", "shutdown", "ping",
     ]
 
     public var op: String {
@@ -276,6 +278,7 @@ public enum DaemonCommand: Sendable, Hashable {
         case .textSnapshot: "textSnapshot"
         case .forget: "forget"
         case .drainWhenIdle: "drainWhenIdle"
+        case .shutdown: "shutdown"
         case .ping: "ping"
         }
     }
@@ -310,7 +313,7 @@ public enum DaemonCommand: Sendable, Hashable {
             guard !r.events.isEmpty else { throw bad("subscribe: events must not be empty") }
         case .textSnapshot(let r):
             guard (1 ... TextSnapshotRequest.maxLines).contains(r.lines) else { throw bad("textSnapshot: lines out of range") }
-        case .hello, .list, .detach, .kill, .forget, .drainWhenIdle, .ping:
+        case .hello, .list, .detach, .kill, .forget, .drainWhenIdle, .shutdown, .ping:
             break
         }
     }
@@ -352,6 +355,7 @@ extension DaemonRequest: Codable {
         case "textSnapshot": command = .textSnapshot(try TextSnapshotRequest(from: decoder))
         case "forget": command = .forget(try SessionTarget(from: decoder))
         case "drainWhenIdle": command = .drainWhenIdle
+        case "shutdown": command = .shutdown
         case "ping": command = .ping
         default:
             throw DecodingError.dataCorruptedError(forKey: .op, in: c, debugDescription: "unknown op '\(op)'")
@@ -373,7 +377,7 @@ extension DaemonRequest: Codable {
         case .subscribe(let v): try v.encode(to: encoder)
         case .textSnapshot(let v): try v.encode(to: encoder)
         case .forget(let v): try v.encode(to: encoder)
-        case .list, .drainWhenIdle, .ping: break
+        case .list, .drainWhenIdle, .shutdown, .ping: break
         }
     }
 }

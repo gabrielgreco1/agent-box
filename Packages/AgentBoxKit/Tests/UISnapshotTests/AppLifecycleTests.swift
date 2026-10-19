@@ -49,6 +49,33 @@ import Testing
         await lifecycle.carryOut(decision, reply: reply)
     }
 
+    // MARK: F30: sinais externos = Keep Running
+
+    @Test func externalTerminationQuitsWithoutStoppingAgentsOrAsking() async throws {
+        let (_, lifecycle, probe) = make()
+        // O mock do `terminate` do AppKit chama `shouldTerminate`, como o `NSApp.terminate` real.
+        lifecycle.dependencies.terminate = { probe.terminated += 1 }
+        lifecycle.externalTerminationRequested()
+        #expect(probe.terminated == 1)
+        let reply: (Bool) -> Void = { probe.replies.append($0) }
+        lifecycle.shouldTerminate(reply: reply)
+        try await Task.sleep(for: .milliseconds(200))
+        #expect(probe.replies == [true], "sai sem overlay")
+        #expect(probe.stopAllCalls == 0, "SIGTERM no app nunca para os agentes")
+        #expect(probe.cleanExits == 1)
+        #expect(!lifecycle.hasPendingPrompt)
+    }
+
+    @Test func sigtermSigintAndSighupReachTheHandlerAndDoNotKillTheProcess() async throws {
+        var received: [Int32] = []
+        let signals = ExternalTerminationSignals { received.append($0) }
+        signals.install()
+        defer { signals.uninstall() }
+        for number in ExternalTerminationSignals.signals { kill(getpid(), number) }
+        try await Task.sleep(for: .milliseconds(500))
+        #expect(Set(received) == Set(ExternalTerminationSignals.signals), "o processo sobreviveu e o app tratou como Keep Running")
+    }
+
     // MARK: Overlay
 
     @Test func firstQuitShowsTheOverlayWithDontAskPreCheckedAndNeverAnAlert() async throws {

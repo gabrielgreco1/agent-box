@@ -7,6 +7,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     private let env = AppEnvironment()
     private var windowController: MainWindowController?
     private let log = LogFacade(.app, category: "lifecycle")
+    private var termination: ExternalTerminationSignals?
 
     public override init() { super.init() }
 
@@ -23,6 +24,12 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         // Com a automação ligada o app abre sem tirar o foco de quem o lançou (`open -g`).
         controller.present(activate: !env.automationEnabled && !env.headless)
         Task { await env.start() }
+        let signals = ExternalTerminationSignals { [weak self] number in
+            self?.log.info("received signal \(number): leaving the agents running")
+            self?.env.lifecycle.externalTerminationRequested()
+        }
+        signals.install()
+        termination = signals
     }
 
     /// ⌘Q (T1-24): a política decide entre sair, manter os agentes em segundo plano ou perguntar no overlay da janela.

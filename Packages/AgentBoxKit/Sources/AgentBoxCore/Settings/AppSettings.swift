@@ -40,6 +40,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
     public struct General: Codable, Equatable, Sendable {
         public var keepAgentsRunning = true
         public var askBeforeQuit = true
+        /// P25: relança sozinho, com `--resume`, os agentes que morreram com o app fechado ou no reinício do Mac.
+        public var resumeAgentsOnOpen = true
         public var confirmCloseTerminal = true
         public var confirmDeleteSession = true
         /// Padrão de transição (P15, R3.2).
@@ -56,6 +58,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
             let c = try decoder.container(keyedBy: CodingKeys.self)
             keepAgentsRunning = try c.decodeIfPresent(Bool.self, forKey: .keepAgentsRunning) ?? true
             askBeforeQuit = try c.decodeIfPresent(Bool.self, forKey: .askBeforeQuit) ?? true
+            resumeAgentsOnOpen = try c.decodeIfPresent(Bool.self, forKey: .resumeAgentsOnOpen) ?? true
             confirmCloseTerminal = try c.decodeIfPresent(Bool.self, forKey: .confirmCloseTerminal) ?? true
             confirmDeleteSession = try c.decodeIfPresent(Bool.self, forKey: .confirmDeleteSession) ?? true
             worktreeFolder = try c.decodeIfPresent(String.self, forKey: .worktreeFolder) ?? "~/AgentBox/worktrees"

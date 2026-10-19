@@ -28,9 +28,21 @@ public struct RestoreUIState: Codable, Equatable, Sendable {
     /// `true` enquanto uma execução do app está viva; `false` depois de uma saída limpa (⌘Q ou fechar a janela).
     public var appRunning: Bool = false
     public var interruptions: [String: InterruptionReason] = [:]
-    public init(appRunning: Bool = false, interruptions: [String: InterruptionReason] = [:]) {
+    /// P25: terminais que o usuário parou de propósito ("Stop All and Quit"); a retomada automática nunca os revive.
+    public var explicitlyStopped: [String] = []
+    public init(appRunning: Bool = false, interruptions: [String: InterruptionReason] = [:], explicitlyStopped: [String] = []) {
         self.appRunning = appRunning
         self.interruptions = interruptions
+        self.explicitlyStopped = explicitlyStopped
+    }
+
+    private enum CodingKeys: String, CodingKey { case appRunning, interruptions, explicitlyStopped }
+
+    public init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        appRunning = try c.decodeIfPresent(Bool.self, forKey: .appRunning) ?? false
+        interruptions = try c.decodeIfPresent([String: InterruptionReason].self, forKey: .interruptions) ?? [:]
+        explicitlyStopped = try c.decodeIfPresent([String].self, forKey: .explicitlyStopped) ?? []
     }
 }
 

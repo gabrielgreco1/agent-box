@@ -200,7 +200,12 @@ final class WorkspaceModel {
     }
 
     private func ensureLoaded() {
-        guard let sid = currentSessionID, states[sid] == nil, snapshot.sessions.contains(where: { $0.id == sid }) else { return }
+        guard let sid = currentSessionID else { return }
+        load(session: sid)
+    }
+
+    private func load(session sid: UUID) {
+        guard states[sid] == nil, snapshot.sessions.contains(where: { $0.id == sid }) else { return }
         let tabs = snapshot.tabs.filter { $0.sessionID == sid && $0.closedAt == nil }
             .sorted { ($0.sortIndex, $0.createdAt) < ($1.sortIndex, $1.createdAt) }
         let tabIDs = Set(tabs.map(\.id))
@@ -1085,6 +1090,45 @@ final class WorkspaceModel {
         guard let t = terminal(terminalID), t.provider.isAgent, !launching.contains(terminalID) else { return }
         let plan = RestorePlanner.resume(t)
         relaunch(terminalID, spec: plan.spec, mode: plan.mode, freshConversation: false)
+    }
+
+    // MARK: Retomada de agentes parados (P25)
+
+    /// Agentes `interrupted` com ID de conversa na sessão atual: o banner "N agents stopped… · Resume All".
+    var stoppedAgentsInCurrentSession: [Terminal] {
+        terminalsInCurrentSession.filter { $0.state == .interrupted && $0.provider.isAgent && RestorePlanner.hasExactResume($0) }
+    }
+
+    /// Banner só com a retomada automática desligada (com ela ligada os agentes voltam sozinhos).
+    @ObservationIgnored var autoResumeEnabled: () -> Bool = { true }
+    var showsStoppedAgentsBanner: Bool { !autoResumeEnabled() && !stoppedAgentsInCurrentSession.isEmpty }
+
+    /// `Resume All` do banner: todos os agentes parados da sessão atual voltam com `--resume`, escalonados.
+    @discardableResult
+    func resumeStoppedAgentsInCurrentSession(stagger: Duration = .milliseconds(300)) async -> Int {
+        await resume(all: stoppedAgentsInCurrentSession.map(\.id), stagger: stagger)
+    }
+
+    /// Retomada automática ao abrir (P25): só agentes com ID nativo que morreram sem o usuário pedir (nunca shells, nunca os
+    /// parados de propósito). Carrega as sessões donas e relança cada um com `--resume`, 300 ms entre eles.
+    @discardableResult
+    func autoResume(report: ReconcileReport, stagger: Duration = .milliseconds(300)) async -> Int {
+        let ids = report.interrupted.keys.filter { !report.stoppedByUser.contains($0) }
+        let eligible = snapshot.terminals.filter { ids.contains($0.id) && $0.provider.isAgent && RestorePlanner.hasExactResume($0) }
+            .sorted { $0.createdAt < $1.createdAt }
+        for t in eligible { if let sid = sessionID(of: t) { load(session: sid) } }
+        return await resume(all: eligible.map(\.id), stagger: stagger)
+    }
+
+    private func resume(all ids: [UUID], stagger: Duration) async -> Int {
+        var resumed = 0
+        for id in ids {
+            guard let t = terminal(id), t.state == .interrupted, !launching.contains(id) else { continue }
+            if resumed > 0 { try? await Task.sleep(for: stagger) }
+            resume(id)
+            resumed += 1
+        }
+        return resumed
     }
 
     /// Start Fresh: mesma configuração, conversa nova.

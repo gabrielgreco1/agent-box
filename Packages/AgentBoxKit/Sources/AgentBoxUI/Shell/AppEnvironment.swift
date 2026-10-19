@@ -77,6 +77,8 @@ public final class AppEnvironment {
     private var hub: AppSockHub?
     var activity: ActivityService?
     private var store: AgentBoxStore?
+    /// Resultado da reconciliação ao abrir; consumido pela retomada automática (P25) depois que o workspace e as settings carregam.
+    private var restoreReport: ReconcileReport?
     /// `session.launch`: sessão com o agente já rodando (P9, M-501).
     private var launcher: SessionLauncher?
     /// Sessões limpas (⇧⌘N, ⌥⇧⌘N, arquivar, apagar, mover) e Quick Launch (⌥⌘N, "+" da tab row) — T1-17 e T1-21.
@@ -459,7 +461,12 @@ public final class AppEnvironment {
         return BackgroundAgentHost(
             identity: identity, service: SMBackgroundAgentService(plistName: identity.plistName), bundleURL: bundleURL,
             daemonExecutable: ChildDaemon.launcherExecutable(),
-            stateFile: storeRoot.appendingPathComponent("run/ptyd-registration.json"))
+            stateFile: storeRoot.appendingPathComponent("run/ptyd-registration.json"),
+            pointer: ChildDaemon.defaultExecutable().map {
+                .init(
+                    home: storeRoot, daemonBinary: $0,
+                    build: Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "0")
+            })
     }
 
     /// ⌘Q, accessory, barra de menus e o aviso de aprovação do LaunchAgent.
@@ -503,6 +510,10 @@ public final class AppEnvironment {
 
     /// `Stop All and Quit`: `kill graceful` em todos, espera até 5 s e só então força o que sobrou (o usuário já confirmou duas vezes).
     func stopAllProcesses() async {
+        if let store {
+            let live = ((try? await store.terminals(in: .running)) ?? []) + ((try? await store.terminals(in: .launching)) ?? [])
+            await SessionReconciler.recordExplicitStop(store: store, terminalIDs: live.map(\.id))
+        }
         let client = workspace.runtime.client
         func running() async -> [SessionSummary] { ((try? await client.list()) ?? []).filter { $0.state == .running } }
         for summary in await running() { try? await client.kill(sessionID: summary.sessionID, mode: .graceful) }
@@ -600,6 +611,8 @@ public final class AppEnvironment {
             await workspace.attach(store: opened)
             await sidebar.attach(store: opened)
             await settings.attach(store: opened)
+            workspace.autoResumeEnabled = { [weak self] in self?.settings.settings.general.resumeAgentsOnOpen ?? true }
+            Task { await resumeAfterRestore() }
             await startActivity(store: opened)
             if autoOnboarding { await onboarding.attach(store: opened, forceVisible: fixture == Self.setupDemoFixture) }
             projects.attach(store: opened)
@@ -608,9 +621,23 @@ public final class AppEnvironment {
         }
     }
 
+    /// P25: com "Resume agents automatically when Agent Box opens" ligado (padrão), relança em silêncio os agentes que morreram
+    /// com o app fechado ou no reinício do Mac, e avisa com um toast. Desligado: o banner da sessão oferece "Resume All".
+    private func resumeAfterRestore() async {
+        guard let report = restoreReport else { return }
+        restoreReport = nil
+        guard settings.settings.general.resumeAgentsOnOpen else { return }
+        let count = await workspace.autoResume(report: report)
+        if count > 0 {
+            toasts.show(
+                kind: .info, title: count == 1 ? String(localized: "Resumed 1 agent", bundle: .module) : String(localized: "Resumed \(count) agents", bundle: .module))
+        }
+    }
+
     /// Reabertura (T1-23): ver `WorkspaceModel.restoreSessions`. Avisa uma vez quantos terminais voltaram vivos.
     private func restoreSessions(store: AgentBoxStore) async {
         guard let report = await workspace.restoreSessions(store: store) else { return }
+        restoreReport = report
         log.info("restore: \(report.alive.count) alive, \(report.exited.count) exited, \(report.interrupted.count) interrupted")
         if !report.alive.isEmpty {
             toasts.show(kind: .info, title: String(localized: "Reconnected to \(report.alive.count) running terminals.", bundle: .module))

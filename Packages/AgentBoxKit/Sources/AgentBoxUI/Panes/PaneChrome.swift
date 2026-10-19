@@ -247,8 +247,15 @@ struct PaneCardView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: DS.Space.s2) {
                     Spacer(minLength: 0)
-                    DSButton(.paneClose, id: .paneExitOverlayClose(model.id), "Close", variant: .outline, size: .sm, argument: arg)
-                    DSButton(.terminalRestart, id: .paneExitOverlayRestart(model.id), "Restart", variant: .primary, size: .sm, argument: arg)
+                    if model.provider.isAgent, model.exactResume {
+                        // F30: o botão que o dono quer é continuar a conversa; "Restart" confundia.
+                        DSButton(.paneClose, id: .paneExitOverlayClose(model.id), "Close", variant: .ghost, size: .sm, argument: arg)
+                        DSButton(.terminalStartFresh, "Start Fresh", variant: .outline, size: .sm, argument: arg)
+                        DSButton(.terminalResume, id: .paneExitOverlayResume(model.id), "Resume Conversation", variant: .primary, size: .sm, argument: arg)
+                    } else {
+                        DSButton(.paneClose, id: .paneExitOverlayClose(model.id), "Close", variant: .outline, size: .sm, argument: arg)
+                        DSButton(.terminalRestart, id: .paneExitOverlayRestart(model.id), "Restart", variant: .primary, size: .sm, argument: arg)
+                    }
                 }
             default:
                 EmptyView()
@@ -299,4 +306,27 @@ struct PaneEmptyView: View {
 extension ProviderAdapters {
     /// Nome do agente na UI ("Claude Code").
     static func name(_ provider: TerminalProvider) -> String { adapter(for: provider).displayName }
+}
+
+/// P25: faixa no topo da sessão quando a retomada automática está desligada e há agentes que pararam com o app fechado.
+struct StoppedAgentsBanner: View {
+    let model: WorkspaceModel
+
+    var body: some View {
+        let count = model.stoppedAgentsInCurrentSession.count
+        HStack(spacing: DS.Space.s2) {
+            Text(verbatim: count == 1
+                ? String(localized: "1 agent stopped while Agent Box was closed", bundle: .module)
+                : String(localized: "\(count) agents stopped while Agent Box was closed", bundle: .module))
+                .dsFont(DS.Font.small)
+                .foregroundStyle(DS.Color.textSecondary)
+                .lineLimit(1)
+            Spacer(minLength: DS.Space.s2)
+            DSButton(.sessionResumeStopped, "Resume All", variant: .primary, size: .xs)
+        }
+        .padding(.horizontal, DS.Space.s3)
+        .frame(height: PaneMetrics.banner)
+        .background(DS.Color.chrome)
+        .overlay(alignment: .bottom) { DS.Color.border.frame(height: PaneMetrics.separator) }
+    }
 }

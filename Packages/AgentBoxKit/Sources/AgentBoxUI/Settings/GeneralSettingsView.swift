@@ -24,6 +24,9 @@ struct GeneralSettingsView: View {
                 }
                 switchRow("Ask before quitting with running agents", help: nil,
                           key: "askBeforeQuit", isOn: general.askBeforeQuit, action: .settingsGeneralAskBeforeQuit)
+                switchRow("Resume agents automatically when Agent Box opens",
+                          help: "Agents that stopped while Agent Box was closed or your Mac restarted continue their conversation.",
+                          key: "resumeAgentsOnOpen", isOn: general.resumeAgentsOnOpen, action: .settingsGeneralResumeAgentsOnOpen)
             }
             SettingsBlock(title: "Folders") {
                 folderRow("Worktree folder", help: "Where new worktrees are created.", key: "worktreeFolder",

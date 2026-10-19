@@ -109,9 +109,38 @@ final class FakeBundle {
         defer { bundle.remove() }
         let service = FakeBackgroundAgentService(initial: .notFound)  // `notFound` antes do primeiro register (S-01)
         let launchd = FakeLaunchd(socketPaths: ["/var/run/com.apple.launchd.AAA/Listeners"])
+        launchd.setState(.notLoaded)  // o launchd ainda não conhece o job
         let mode = await host(bundle, service: service, launchd: launchd).prepare()
         #expect(mode == .launchAgent(socketPath: "/var/run/com.apple.launchd.AAA/Listeners"))
         #expect(service.calls == ["register"])
+    }
+
+    /// F30: outro build (outra pasta) já registrou e o daemon está vivo: este app adota, não registra de novo (isso derrubaria o daemon).
+    @Test func aDaemonRegisteredByAnotherBuildIsAdoptedWithoutRegistering() async throws {
+        let bundle = try FakeBundle()
+        defer { bundle.remove() }
+        for state in [LaunchdJobState.running] {
+            for status in [BackgroundAgentStatus.notRegistered, .notFound] {
+                let service = FakeBackgroundAgentService(initial: status)
+                let launchd = FakeLaunchd(socketPaths: ["/var/run/other/Listeners"])
+                launchd.setState(state)
+                let mode = await host(bundle, service: service, launchd: launchd).prepare()
+                #expect(mode == .launchAgent(socketPath: "/var/run/other/Listeners"))
+                #expect(service.calls.isEmpty, "nem register nem unregister: \(state) \(status)")
+            }
+        }
+    }
+
+    @Test func pointerIsPublishedForTheStableLauncher() async throws {
+        let bundle = try FakeBundle()
+        defer { bundle.remove() }
+        let home = bundle.root.deletingLastPathComponent()
+        let host = BackgroundAgentHost(
+            identity: .production(), service: FakeBackgroundAgentService(initial: .enabled),
+            launchd: FakeLaunchd(socketPaths: ["/var/run/x/Listeners"]), bundleURL: bundle.root, daemonExecutable: bundle.daemon,
+            stateFile: bundle.state, pointer: .init(home: home, daemonBinary: bundle.daemon, build: "1.0 (12)"), pause: { _ in })
+        _ = await host.prepare()
+        #expect(DaemonPointer.read(home: home) == DaemonPointer(path: bundle.daemon.path, build: 12))
     }
 
     @Test func alreadyEnabledDoesNotRegisterAgain() async throws {

@@ -20,6 +20,15 @@ import Foundation
 struct AgentBoxD {
     static func main() async {
         signal(SIGPIPE, SIG_IGN)
+        // F30: o daemon só encerra por `shutdown` (protocolo) ou ocioso sem sessões. SIGTERM/SIGHUP/SIGINT do app, do shell ou de
+        // um `kill` por engano são ignorados. Um handler (e não `SIG_IGN`) para que os filhos PTY voltem ao padrão no `exec`.
+        for ignored in [SIGTERM, SIGHUP, SIGINT] {
+            var action = sigaction()
+            action.__sigaction_u.__sa_handler = { _ in }
+            sigemptyset(&action.sa_mask)
+            action.sa_flags = SA_RESTART
+            sigaction(ignored, &action, nil)
+        }
         var socket: String?
         var home: String?
         var idleExit = 60

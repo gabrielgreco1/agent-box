@@ -8,6 +8,8 @@ public struct ReconcileReport: Sendable, Equatable {
     public var alive: [UUID] = []
     public var exited: [UUID] = []
     public var interrupted: [UUID: InterruptionReason] = [:]
+    /// Interrompidos que o usuário parou de propósito: nunca são retomados sozinhos (P25).
+    public var stoppedByUser: Set<UUID> = []
     public init() {}
 }
 
@@ -44,11 +46,20 @@ public enum SessionReconciler {
                 try await store.save(terminal)
                 report.interrupted[terminal.id] = reason
                 state.interruptions[terminal.id.uuidString] = reason
+                if state.explicitlyStopped.contains(terminal.id.uuidString) { report.stoppedByUser.insert(terminal.id) }
             }
         }
         state.appRunning = true
+        state.explicitlyStopped = []
         try await store.setUIState(RestoreUIState.key, state)
         return report
+    }
+
+    /// "Stop All and Quit": guarda quais terminais o usuário parou de propósito, para a próxima abertura não os retomar.
+    public static func recordExplicitStop(store: AgentBoxStore, terminalIDs: [UUID]) async {
+        var state = (try? await store.uiState(RestoreUIState.key, as: RestoreUIState.self)) ?? RestoreUIState()
+        state.explicitlyStopped = Array(Set(state.explicitlyStopped + terminalIDs.map(\.uuidString)))
+        try? await store.setUIState(RestoreUIState.key, state)
     }
 
     /// Saída limpa do app (⌘Q, fechar a janela): a próxima abertura sabe que o que morreu depois morreu "com o app fechado".

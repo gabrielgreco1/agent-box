@@ -237,6 +237,12 @@ extension WorkspaceModel {
             resume(id)
             return id.uuidString
         }
+        try reg(.sessionResumeStopped, enablement: { [unowned self] in
+            stoppedAgentsInCurrentSession.isEmpty ? .disabled(reason: "No stopped agents") : .enabled
+        }) { [unowned self] _ in
+            let count = await resumeStoppedAgentsInCurrentSession()
+            return String(count)
+        }
         try reg(.terminalStartFresh, enablement: hasTab) { [unowned self] arg in
             guard let id = uuid(arg) ?? focusedTerminalID, terminal(id) != nil else { throw ActionError.failed(.terminalStartFresh, message: "Terminal not found") }
             startFresh(id)

@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 # install.sh - instala o app em /Applications com rollback (08 AR-902).
 #
+# CAMINHO RECOMENDADO (F30): use sempre este script para trocar de build. O app fica em /Applications/Agent Box.app (local fixo,
+# com backup em previous/ e --rollback). Abrir o app direto de build/ ou de /private/tmp/... funciona (ele se conecta ao daemon
+# que já está vivo e não re-registra o LaunchAgent), mas o launchd prende o job ao bundle que o registrou: só o app em
+# /Applications dá um registro estável. Trocar de build nunca mata o daemon nem os agentes: o novo app se conecta ao daemon vivo
+# e, se ele for mais antigo, pede drainWhenIdle (sessões antigas ficam nele até acabarem; o ponteiro bin/agentboxd-current
+# faz o launcher subir o agentboxd novo na próxima conexão).
+#
 # Contrato
 #   Padrão   : roda build.sh; se o app estiver aberto, pede encerramento (osascript quit) e espera; NUNCA mata
 #              o daemon; guarda a versão instalada em ~/Library/Application Support/AgentBox/previous/;

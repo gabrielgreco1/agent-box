@@ -123,6 +123,14 @@ public final class AppLifecycleCoordinator {
         dependencies.terminate()
     }
 
+    /// SIGTERM/SIGINT/SIGHUP ou logout por fora (F30): sai sem perguntar e sem parar nada; daemon e agentes continuam.
+    public func externalTerminationRequested() {
+        pendingReason = .system
+        quittingCompletely = true
+        refreshMenuBar()
+        dependencies.terminate()
+    }
+
     /// `Stop All Agents…` da barra de menus: abre a janela com a segunda confirmação.
     public func requestStopAll() async -> Bool {
         let counts = await dependencies.countLive()
