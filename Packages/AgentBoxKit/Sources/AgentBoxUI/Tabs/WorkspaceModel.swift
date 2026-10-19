@@ -1102,7 +1102,7 @@ final class WorkspaceModel {
     /// Banner só com a retomada automática desligada (com ela ligada os agentes voltam sozinhos).
     @ObservationIgnored var autoResumeEnabled: () -> Bool = { true }
     /// Conversas vivas na máquina (F32). Os testes trocam por uma lista fixa.
-    @ObservationIgnored var liveConversations: () -> Set<String> = { LiveConversations.current() }
+    @ObservationIgnored var liveConversations: @Sendable () async -> Set<String> = { await LiveConversations.current() }
     var showsStoppedAgentsBanner: Bool { !autoResumeEnabled() && !stoppedAgentsInCurrentSession.isEmpty }
 
     /// `Resume All` do banner: todos os agentes parados da sessão atual voltam com `--resume`, escalonados.
@@ -1117,7 +1117,7 @@ final class WorkspaceModel {
     func autoResume(report: ReconcileReport, stagger: Duration = .milliseconds(300)) async -> Int {
         let ids = report.interrupted.keys.filter { !report.stoppedByUser.contains($0) }
         // F32: uma conversa que já roda em outro processo (outra build, outro terminal) nunca é relançada.
-        let live = liveConversations()
+        let live = await liveConversations()
         let eligible = snapshot.terminals.filter { ids.contains($0.id) && $0.provider.isAgent && RestorePlanner.hasExactResume($0) }
             .filter { RestorePlanner.nativeID(of: $0).map { !live.contains($0) } ?? true }
             .sorted { $0.createdAt < $1.createdAt }

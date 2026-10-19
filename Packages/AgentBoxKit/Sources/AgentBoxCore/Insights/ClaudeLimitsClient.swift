@@ -1,3 +1,4 @@
+import AgentBoxPlatform
 import Foundation
 
 // MARK: - Fonte exata dos limites do Claude
@@ -59,7 +60,7 @@ public enum ClaudeCredentialError: Error, Sendable, Equatable {
 
 public protocol ClaudeCredentialSource: Sendable {
     /// Lê a credencial agora (a cada chamada; o chamador não guarda o resultado).
-    func read() throws -> ClaudeOAuthCredential
+    func read() async throws -> ClaudeOAuthCredential
 }
 
 /// Item "Claude Code-credentials" do Keychain do usuário (JSON `{"claudeAiOauth": {"accessToken", "expiresAt" (ms), ...}}`).
@@ -71,18 +72,12 @@ public struct KeychainClaudeCredentialSource: ClaudeCredentialSource {
 
     public init() {}
 
-    public func read() throws -> ClaudeOAuthCredential {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
-        process.arguments = ["find-generic-password", "-s", Self.service, "-w"]
-        let out = Pipe()
-        process.standardOutput = out
-        process.standardError = FileHandle.nullDevice
-        do { try process.run() } catch { throw ClaudeCredentialError.denied }
-        let data = out.fileHandleForReading.readDataToEndOfFile()
-        process.waitUntilExit()
-        switch process.terminationStatus {
-        case 0: return try Self.parse(data)
+    public func read() async throws -> ClaudeOAuthCredential {
+        let request = ProcessRequest(executable: URL(fileURLWithPath: "/usr/bin/security"),
+                                     arguments: ["find-generic-password", "-s", Self.service, "-w"], timeout: .seconds(10))
+        guard let out = try? await ProcessRunner.run(request) else { throw ClaudeCredentialError.denied }
+        switch out.exitCode {
+        case 0: return try Self.parse(out.stdout)
         case 44: throw ClaudeCredentialError.notFound  // errSecItemNotFound
         default: throw ClaudeCredentialError.denied
         }
@@ -141,7 +136,7 @@ public struct ClaudeLimitsClient: Sendable {
     public func fetch() async -> ClaudeLimitsResult {
         let now = clock()
         let credential: ClaudeOAuthCredential
-        do { credential = try credentials.read() } catch { return .unavailable }
+        do { credential = try await credentials.read() } catch { return .unavailable }
         if let expires = credential.expiresAt, expires <= now { return .needsClaudeRefresh }
         let headers = [
             "Authorization": "Bearer \(credential.accessToken)",
@@ -201,7 +196,7 @@ public struct ExactLimitsConsentStore: Sendable {
 /// Sem credencial: para testes e ambientes que não devem tocar o Keychain nem a rede.
 public struct NoClaudeCredentials: ClaudeCredentialSource {
     public init() {}
-    public func read() throws -> ClaudeOAuthCredential { throw ClaudeCredentialError.notFound }
+    public func read() async throws -> ClaudeOAuthCredential { throw ClaudeCredentialError.notFound }
 }
 
 extension ClaudeLimitsClient {

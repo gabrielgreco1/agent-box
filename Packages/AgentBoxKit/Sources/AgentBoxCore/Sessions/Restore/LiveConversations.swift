@@ -1,3 +1,4 @@
+import AgentBoxPlatform
 import Foundation
 
 /// F32: conversas de agente que já têm um processo vivo nesta máquina (`--resume <id>` ou `--session-id <id>` na linha de
@@ -18,16 +19,9 @@ public enum LiveConversations {
     }
 
     /// Linhas de comando de todos os processos do usuário (`ps`). Vazio se `ps` falhar: aí nada é tratado como vivo.
-    public static func current() -> Set<String> {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/bin/ps")
-        process.arguments = ["-x", "-ww", "-o", "args="]
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = FileHandle.nullDevice
-        do { try process.run() } catch { return [] }
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        process.waitUntilExit()
-        return ids(inCommandLines: String(decoding: data, as: UTF8.self).split(separator: "\n").map(String.init))
+    public static func current() async -> Set<String> {
+        let request = ProcessRequest(executable: URL(fileURLWithPath: "/bin/ps"), arguments: ["-x", "-ww", "-o", "args="], timeout: .seconds(5))
+        guard let out = try? await ProcessRunner.run(request), out.exitCode == 0 else { return [] }
+        return ids(inCommandLines: out.stdoutString.split(separator: "\n").map(String.init))
     }
 }
