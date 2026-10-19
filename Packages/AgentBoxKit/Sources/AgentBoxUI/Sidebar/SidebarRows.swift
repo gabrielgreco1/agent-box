@@ -361,6 +361,9 @@ struct SessionCardView: View {
                 .frame(height: SidebarMetrics.line1Height)
                 line2
                     .frame(height: SidebarMetrics.line2Height)
+                if data.note != nil || data.editingNote {
+                    noteLine
+                }
                 if data.restartToApply, !renaming, let registry, registry.isOffered(.sessionRestartToApply) {
                     RestartToApplyPill(sessionID: data.id, id: .sidebarSessionRestartToApply(sid))
                 }
@@ -413,6 +416,18 @@ struct SessionCardView: View {
                     .foregroundStyle(DS.Color.destructive)
                 Text("Folder not found", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.destructive)
             }
+            if data.dirty {
+                Circle().fill(DS.Color.gitModified)
+                    .frame(width: GitHubMetrics.dot, height: GitHubMetrics.dot)
+                    .accessibilityLabel(Text("Uncommitted changes", bundle: .module))
+            }
+            if data.ahead > 0 {
+                Text(verbatim: "↑\(data.ahead)")
+                    .dsFont(DS.Font.microNumeric)
+                    .foregroundStyle(DS.Color.textTertiary)
+                    .fixedSize()
+                    .accessibilityLabel(Text("\(data.ahead) commits not pushed", bundle: .module))
+            }
             if data.notStarted {
                 Text("Not started", bundle: .module)
                     .dsFont(DS.Font.small)
@@ -421,8 +436,47 @@ struct SessionCardView: View {
                     .fixedSize()
             }
             Spacer(minLength: .zero)
+            if let pr = data.pr {
+                PullRequestChipView(pr: pr, sessionID: data.id)
+                    .fixedSize()
+            }
         }
         .foregroundStyle(DS.Color.textSecondary)
+    }
+
+    /// Linha 3, nota da sessão (03 §2.6, AC-208): `small` `fg/60`, uma linha; duplo clique edita; o hover mostra autor e tempo.
+    @ViewBuilder private var noteLine: some View {
+        let sid = data.id.uuidString
+        if data.editingNote {
+            InlineRenameField(
+                initialText: data.note ?? "", font: DS.Font.small.nsFont,
+                onCommit: { text in
+                    guard let registry else { return }
+                    Task { _ = try? await registry.perform(.sessionEditNote, .set(text)) }
+                },
+                onCancel: { model.cancelEditNote() }
+            )
+            .padding(.horizontal, DS.Space.s1)
+            .frame(height: SidebarMetrics.line2Height + DS.Space.s1)
+            .background(RoundedRectangle(cornerRadius: DS.Radius.xs * 2).fill(DS.ColorSpec.paneTitleInputBackground.color))
+            .overlay(RoundedRectangle(cornerRadius: DS.Radius.xs * 2).strokeBorder(DS.ColorSpec.ring.scaled(0.5).color, lineWidth: DSMetrics.hairline))
+            .a11y(.sidebarSessionNote(sid), kind: "textfield", value: data.note ?? "")
+        } else if let note = data.note {
+            Text(verbatim: note)
+                .dsFont(DS.Font.small)
+                .foregroundStyle(DS.ColorSpec.textSecondary.scaled(0.6).color)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(maxWidth: .infinity, minHeight: SidebarMetrics.line2Height, alignment: .leading)
+                .contentShape(Rectangle())
+                .dsTooltip(data.noteDetail ?? "", enabled: data.noteDetail != nil)
+                .simultaneousGesture(
+                    TapGesture(count: 2).onEnded {
+                        guard let registry else { return }
+                        Task { _ = try? await registry.perform(.sessionEditNote, .select(sid)) }
+                    })
+                .a11y(.sidebarSessionNote(sid), kind: "text", label: note)
+        }
     }
 
     // MARK: Linhas de agente (03 §2.7) e pílula-resumo (03 §2.6)

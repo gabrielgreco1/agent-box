@@ -68,6 +68,12 @@ final class SidebarModel {
     private(set) var renamingProject: UUID?
     /// Último status Git visto por worktree (caminho canônico), alimentado pelo refresh em segundo plano (T1-19).
     private(set) var gitStatus: [String: GitStatus] = [:]
+    /// PR de cada sessão (chip do card, T2-05); alimentado pelo `GitHubController`, nunca consultado aqui.
+    private(set) var pullRequests: [UUID: PullRequestChipModel] = [:]
+    /// Sessão com a nota em edição inline (03 §2.6 linha 3, AC-208): no máximo uma.
+    private(set) var editingNote: UUID?
+    /// Avisa quem acompanha o Git (o `GitHubController` detecta push e refaz a lista de mudanças).
+    var onGitStatus: (@MainActor (GitStatus, String) -> Void)?
     /// Item com o anel do teclado (`nil` = a lista não tem foco de teclado).
     var keyboardFocus: SidebarItemID?
     /// `true` enquanto o popover Sort and Filter está aberto.
@@ -102,7 +108,8 @@ final class SidebarModel {
             showMoreOpen: showMoreOpen, hiddenProjects: hiddenProjects, collapsedSessions: collapsedSessions,
             expandedSummaries: expandedSummaries, selectedSession: selectedSession, pending: pending, now: clock(),
             attention: attention?.center ?? AttentionCenter(), computers: computerRows, restartPending: restartPendingSessions,
-            offersSubagentToggle: toggleSessions, collapsedChildren: collapsedChildren, agentComputers: helpInbox?.agentComputers ?? [:])
+            offersSubagentToggle: toggleSessions, collapsedChildren: collapsedChildren, agentComputers: helpInbox?.agentComputers ?? [:],
+            gitStatus: gitStatus, pullRequests: pullRequests, editingNote: editingNote)
     }
 
     /// Linhas filhas por sessão (nome, estado, miniatura) a partir do diretório de computadores.
@@ -387,7 +394,38 @@ final class SidebarModel {
         return (id, trimmed)
     }
 
-    func setGitStatus(_ status: GitStatus, at path: String) { gitStatus[path] = status }
+    func setGitStatus(_ status: GitStatus, at path: String) {
+        gitStatus[path] = status
+        onGitStatus?(status, path)
+    }
+
+    func setPullRequests(_ chips: [UUID: PullRequestChipModel]) {
+        if chips != pullRequests { pullRequests = chips }
+    }
+
+    // MARK: Nota da sessão (03 §2.6 linha 3, AC-208)
+
+    func beginEditNote(_ id: UUID) -> Bool {
+        guard session(id) != nil else { return false }
+        renamingSession = nil
+        renamingProject = nil
+        editingNote = id
+        return true
+    }
+
+    func cancelEditNote() { editingNote = nil }
+
+    /// Grava a nota do usuário; texto vazio remove a nota. Reflete já; o snapshot do Store confirma em seguida.
+    func commitNote(_ text: String, to id: UUID? = nil) async throws {
+        guard let id = id ?? editingNote, var s = session(id) else { return }
+        editingNote = nil
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let note = trimmed.isEmpty ? nil : StatusNote(text: trimmed, author: "user", at: clock())
+        guard note?.text != s.statusNote?.text else { return }
+        s.statusNote = note
+        snapshot.sessions = snapshot.sessions.map { $0.id == id ? s : $0 }
+        try await store?.save(s)
+    }
 
     // MARK: Linhas pendentes (03 §2.9)
 

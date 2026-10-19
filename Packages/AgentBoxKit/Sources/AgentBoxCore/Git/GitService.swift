@@ -299,6 +299,18 @@ public struct GitService: Sendable {
         return result.stdout
     }
 
+    /// Saída de uma leitura; nil se o git terminou com erro (ex.: sem merge-base). Só leituras.
+    func readOutput(_ args: [String], in dir: URL) async throws -> String? {
+        let result = try await runner.run(args, in: dir, kind: .read, timeout: timeouts.read)
+        return result.succeeded ? result.stdout : nil
+    }
+
+    /// Assunto do último commit (para pré-preencher o título do PR); nil sem commits.
+    public func lastCommitSubject(at checkoutURL: URL) async throws -> String? {
+        let out = try await readOutput(["log", "-1", "--format=%s"], in: checkoutURL)?.trimmed
+        return (out ?? "").isEmpty ? nil : out
+    }
+
     private func refExists(_ ref: String, in repo: URL) async throws -> Bool {
         let result = try await runner.run(["show-ref", "--verify", "--quiet", ref], in: repo, kind: .read,
                                           timeout: timeouts.read)

@@ -140,6 +140,19 @@ extension SidebarModel {
                 return "renaming"
             }
         }
+        // Nota da sessão (AC-208): `select(<id>)` abre a edição inline; `set(<texto>)` grava (vazio remove).
+        try registry.register(.sessionEditNote) { [unowned self] arg in
+            switch arg.kind {
+            case .set:
+                guard let target = editingNote ?? selectedSession else { throw ActionError.failed(.sessionEditNote, message: "No session selected") }
+                try await commitNote(arg.value ?? "", to: target)
+                return session(target)?.statusNote?.text ?? ""
+            default:
+                let id = try selectedOrArgument(arg, .sessionEditNote)
+                guard beginEditNote(id) else { throw ActionError.failed(.sessionEditNote, message: "Session not found") }
+                return "editing"
+            }
+        }
         try registry.register(.sidebarRevealCurrent, enablement: { [unowned self] in
             selectedSession == nil ? .disabled(reason: "No session selected") : .enabled
         }) { [unowned self] _ in revealCurrent() ? "revealed" : nil }

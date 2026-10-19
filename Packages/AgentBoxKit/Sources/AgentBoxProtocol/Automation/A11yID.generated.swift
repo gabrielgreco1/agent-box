@@ -212,8 +212,20 @@ extension A11yID {
     public static let rightPanelSourceControlPr = A11yID(unchecked: "rightPanel.sourceControl.pr")
     /// `rightPanel.sourceControl.createPR`
     public static let rightPanelSourceControlCreatePR = A11yID(unchecked: "rightPanel.sourceControl.createPR")
+    /// `rightPanel.sourceControl.openPR`
+    public static let rightPanelSourceControlOpenPR = A11yID(unchecked: "rightPanel.sourceControl.openPR")
+    /// `rightPanel.sourceControl.copyURL`
+    public static let rightPanelSourceControlCopyURL = A11yID(unchecked: "rightPanel.sourceControl.copyURL")
+    /// `rightPanel.sourceControl.openInEditor`
+    public static let rightPanelSourceControlOpenInEditor = A11yID(unchecked: "rightPanel.sourceControl.openInEditor")
+    /// `rightPanel.sourceControl.revealInFinder`
+    public static let rightPanelSourceControlRevealInFinder = A11yID(unchecked: "rightPanel.sourceControl.revealInFinder")
+    /// `rightPanel.sourceControl.retry`
+    public static let rightPanelSourceControlRetry = A11yID(unchecked: "rightPanel.sourceControl.retry")
     /// `rightPanel.checks.refresh`
     public static let rightPanelChecksRefresh = A11yID(unchecked: "rightPanel.checks.refresh")
+    /// `rightPanel.checks.retry`
+    public static let rightPanelChecksRetry = A11yID(unchecked: "rightPanel.checks.retry")
     /// `rightPanel.checks.sendFailures`
     public static let rightPanelChecksSendFailures = A11yID(unchecked: "rightPanel.checks.sendFailures")
     /// `rightPanel.computers.new`
@@ -414,6 +426,28 @@ extension A11yID {
     public static let overlayCloneRepoCancel = A11yID(unchecked: "overlay.cloneRepo.cancel")
     /// `overlay.cloneRepo.submit`
     public static let overlayCloneRepoSubmit = A11yID(unchecked: "overlay.cloneRepo.submit")
+    /// `overlay.createPR`
+    public static let overlayCreatePR = A11yID(unchecked: "overlay.createPR")
+    /// `overlay.createPR.title`
+    public static let overlayCreatePRTitle = A11yID(unchecked: "overlay.createPR.title")
+    /// `overlay.createPR.base`
+    public static let overlayCreatePRBase = A11yID(unchecked: "overlay.createPR.base")
+    /// `overlay.createPR.body`
+    public static let overlayCreatePRBody = A11yID(unchecked: "overlay.createPR.body")
+    /// `overlay.createPR.draft`
+    public static let overlayCreatePRDraft = A11yID(unchecked: "overlay.createPR.draft")
+    /// `overlay.createPR.preview`
+    public static let overlayCreatePRPreview = A11yID(unchecked: "overlay.createPR.preview")
+    /// `overlay.createPR.error`
+    public static let overlayCreatePRError = A11yID(unchecked: "overlay.createPR.error")
+    /// `overlay.createPR.retry`
+    public static let overlayCreatePRRetry = A11yID(unchecked: "overlay.createPR.retry")
+    /// `overlay.createPR.compare`
+    public static let overlayCreatePRCompare = A11yID(unchecked: "overlay.createPR.compare")
+    /// `overlay.createPR.cancel`
+    public static let overlayCreatePRCancel = A11yID(unchecked: "overlay.createPR.cancel")
+    /// `overlay.createPR.submit`
+    public static let overlayCreatePRSubmit = A11yID(unchecked: "overlay.createPR.submit")
     /// `overlay.confirmQuit`
     public static let overlayConfirmQuit = A11yID(unchecked: "overlay.confirmQuit")
     /// `overlay.confirmQuit.keepRunning`
@@ -1550,9 +1584,15 @@ extension A11yID {
         A11yIDSpec(pattern: "rightPanel.sourceControl.refresh", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.sourceControl.pr", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.sourceControl.createPR", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.sourceControl.openPR", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.sourceControl.copyURL", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.sourceControl.openInEditor", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.sourceControl.revealInFinder", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.sourceControl.retry", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.sourceControl.change.<path>", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.checks.row.<name>", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.checks.refresh", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.checks.retry", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.checks.sendFailures", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.computers.new", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.computers.empty", surface: "Painel direito"),
@@ -1706,6 +1746,17 @@ extension A11yID {
         A11yIDSpec(pattern: "overlay.cloneRepo.retry", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.cloneRepo.cancel", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.cloneRepo.submit", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.createPR", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.createPR.title", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.createPR.base", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.createPR.body", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.createPR.draft", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.createPR.preview", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.createPR.error", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.createPR.retry", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.createPR.compare", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.createPR.cancel", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.createPR.submit", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmQuit", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmQuit.keepRunning", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmQuit.stopAll", surface: "Dialogs"),

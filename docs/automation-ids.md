@@ -270,9 +270,15 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `rightPanel.sourceControl.refresh`
 - `rightPanel.sourceControl.pr`
 - `rightPanel.sourceControl.createPR`
+- `rightPanel.sourceControl.openPR`
+- `rightPanel.sourceControl.copyURL`
+- `rightPanel.sourceControl.openInEditor`
+- `rightPanel.sourceControl.revealInFinder`
+- `rightPanel.sourceControl.retry`
 - `rightPanel.sourceControl.change.<path>`
 - `rightPanel.checks.row.<name>`
 - `rightPanel.checks.refresh`
+- `rightPanel.checks.retry`
 - `rightPanel.checks.sendFailures`
 - `rightPanel.computers.new`
 - `rightPanel.computers.empty`
@@ -447,6 +453,17 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `overlay.cloneRepo.retry`
 - `overlay.cloneRepo.cancel`
 - `overlay.cloneRepo.submit`
+- `overlay.createPR`
+- `overlay.createPR.title`
+- `overlay.createPR.base`
+- `overlay.createPR.body`
+- `overlay.createPR.draft`
+- `overlay.createPR.preview`
+- `overlay.createPR.error`
+- `overlay.createPR.retry`
+- `overlay.createPR.compare`
+- `overlay.createPR.cancel`
+- `overlay.createPR.submit`
 - `overlay.confirmQuit`
 - `overlay.confirmQuit.keepRunning`
 - `overlay.confirmQuit.stopAll`
@@ -684,6 +701,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `git.createPR` | Create Pull Request… | — | slice2 |
 | `git.openPR` | Open on GitHub | — | slice2 |
 | `git.copyPRURL` | Copy URL (PR) | — | slice2 |
+| `git.openChange` | Abrir arquivo alterado (Source Control, §10.2) | — | slice2 |
+| `git.openCheck` | Abrir check (Checks, §10.3) | — | slice2 |
 | `account.logIn` | Log In (gh, Claude, Codex) | — | slice1 |
 | `checks.sendFailures` | Send Failures to Claude Code | — | v11 |
 | `conversation.resume` | Resume in New Tab / in Split, Show Transcript | — | slice2 |
@@ -864,6 +883,14 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `dialog.cloneRepo.cancel` | Cancel (§16.9b) | Esc | slice1 |
 | `dialog.cloneRepo.logIn` | Log in to GitHub (§16.9b) | — | slice1 |
 | `dialog.cloneRepo.retry` | Try Again (§16.9b) | — | slice1 |
+| `dialog.createPR.setTitle` | Título (§16.9c) | — | slice2 |
+| `dialog.createPR.setBase` | Base (§16.9c) | — | slice2 |
+| `dialog.createPR.setBody` | Descrição (§16.9c) | — | slice2 |
+| `dialog.createPR.setDraft` | Draft (§16.9c) | — | slice2 |
+| `dialog.createPR.submit` | Create (§16.9c) | — | slice2 |
+| `dialog.createPR.cancel` | Cancel (§16.9c) | Esc | slice2 |
+| `dialog.createPR.retry` | Try Again (§16.9c) | — | slice2 |
+| `dialog.createPR.openCompare` | Open Compare on GitHub (§16.9c) | — | slice2 |
 | `dialog.quit.keepRunning` | Keep Running (§16.10) | ↵ | slice1 |
 | `dialog.quit.stopAll` | Stop All and Quit… (§16.10) | — | slice1 |
 | `dialog.quit.stopAllConfirm` | Stop All and Quit (segunda confirmação, §16.10) | — | slice1 |

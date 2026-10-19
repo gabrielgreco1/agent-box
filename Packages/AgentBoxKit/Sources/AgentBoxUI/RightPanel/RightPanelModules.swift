@@ -10,6 +10,10 @@ enum RightPanelModules {
         controller.register(FilesModule(controller: env.files))
         controller.register(makeInsightsModule(env: env))
         controller.register(ComputersModule(controller: env.computers))
+        if env.flags.isEnabled(.slice2) {
+            controller.register(SourceControlModule(controller: env.github))
+            controller.register(ChecksModule(controller: env.github))
+        }
     }
 
     static func makeInsightsModule(env: AppEnvironment) -> any RightPanelModule {

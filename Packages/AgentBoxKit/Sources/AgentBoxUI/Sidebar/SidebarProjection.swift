@@ -185,6 +185,13 @@ struct SessionCardData: Identifiable, Equatable {
     var unread: Bool
     var selected: Bool
     var note: String?
+    /// Autor e tempo da nota, para o hover (AC-208), e se ela está em edição inline.
+    var noteDetail: String?
+    var editingNote = false
+    /// Linha 2 (03 §2.6): commits não enviados (só > 0), ponto de alterações e chip de PR.
+    var ahead = 0
+    var dirty = false
+    var pr: PullRequestChipModel?
     var agentRows: [AgentRowData]
     /// Terminais agrupados em `+N terminals` (shells ociosos com agentes na sessão).
     var groupedTerminals: Int
@@ -267,6 +274,10 @@ struct SidebarInput {
     /// Agentes com as linhas de subagentes recolhidas e o computador de cada subagente (`agent_id` -> nome).
     var collapsedChildren: Set<UUID> = []
     var agentComputers: [String: String] = [:]
+    /// Status Git por pasta de worktree, PR por sessão (T2-05) e a sessão com a nota em edição.
+    var gitStatus: [String: GitStatus] = [:]
+    var pullRequests: [UUID: PullRequestChipModel] = [:]
+    var editingNote: UUID?
 }
 
 enum SidebarProjector {
@@ -418,6 +429,8 @@ enum SidebarProjector {
             let all = terminals(of: s)
             let note = s.statusNote?.text
             let branch = wt?.branch
+            let git = input.gitStatus[s.folderPath] ?? wt.flatMap { input.gitStatus[$0.path] }
+            let showsGit = s.kind != .folder && s.kind != .clean && !(branch ?? "").isEmpty
 
             var rows = all
             if searching {
@@ -478,7 +491,7 @@ enum SidebarProjector {
             else { line2 = .folder(abbreviate(path: s.folderPath, home: input.home)) }
 
             let notStarted = all.allSatisfy { $0.state == .notStarted }
-            let label = a11yLabel(title: s.title, line2: line2, badges: badges, notStarted: notStarted, state: agg.label, unread: anyUnread, rows: agentRows.count)
+            let label = a11yLabel(title: s.title, line2: line2, badges: badges, pr: showsGit ? input.pullRequests[s.id] : nil, notStarted: notStarted, state: agg.label, unread: anyUnread, rows: agentRows.count)
 
             let expandedSummary = input.expandedSummaries.contains(s.id)
             var summary: [SummaryGroup]?
@@ -499,7 +512,10 @@ enum SidebarProjector {
                 id: s.id, title: s.title, projectID: s.projectID, kind: s.kind, badges: Array(badges.prefix(2)),
                 timeText: relativeTime(since: s.lastActiveAt ?? s.createdAt, now: input.now), line2: line2,
                 notStarted: notStarted, glyph: cardGlyph(agg.glyph), stateLabel: agg.label, unread: anyUnread,
-                selected: s.id == input.selectedSession, note: note, agentRows: agentRows, groupedTerminals: grouped,
+                selected: s.id == input.selectedSession, note: note,
+                noteDetail: s.statusNote.map { noteDetail($0, now: input.now) }, editingNote: input.editingNote == s.id,
+                ahead: showsGit ? max(0, git?.ahead ?? 0) : 0, dirty: showsGit && (git?.isDirty ?? false),
+                pr: showsGit ? input.pullRequests[s.id] : nil, agentRows: agentRows, groupedTerminals: grouped,
                 summary: summary, summaryExpanded: expandedSummary, agentsCollapsed: input.collapsedSessions.contains(s.id),
                 branch: branch, folderPath: s.folderPath, a11yLabel: label, subagent: s.subagentComputers,
                 offersSubagentToggle: input.offersSubagentToggle.contains(s.id), restartToApply: input.restartPending.contains(s.id),
@@ -588,7 +604,13 @@ enum SidebarProjector {
         for r in c.agentRows { out.items.append(.agent(session: c.id, terminal: r.id)) }
     }
 
-    private static func a11yLabel(title: String, line2: SidebarLine2, badges: [SidebarBadge], notStarted: Bool, state: String, unread: Bool, rows: Int) -> String {
+    /// "user · 3h" / "Claude · now" no hover da nota (AC-208).
+    static func noteDetail(_ note: StatusNote, now: Date) -> String {
+        let author = note.author == "user" ? String(localized: "You", bundle: .module) : note.author
+        return "\(author) · \(relativeTime(since: note.at, now: now))"
+    }
+
+    private static func a11yLabel(title: String, line2: SidebarLine2, badges: [SidebarBadge], pr: PullRequestChipModel?, notStarted: Bool, state: String, unread: Bool, rows: Int) -> String {
         var parts = [title]
         switch line2 {
         case .branch(let b): parts.append(String(localized: "branch \(b)", bundle: .module))
@@ -596,6 +618,7 @@ enum SidebarProjector {
         case .missingFolder: parts.append(String(localized: "Folder not found", bundle: .module))
         }
         parts.append(contentsOf: badges.map(\.title))
+        if let pr { parts.append(PullRequestText.summary(pr)) }
         if notStarted { parts.append(String(localized: "Not started", bundle: .module)) } else if !state.isEmpty { parts.append(state) }
         if unread { parts.append(String(localized: "Unread", bundle: .module)) }
         if rows > 0 { parts.append(String(localized: "with \(rows) terminals", bundle: .module)) }

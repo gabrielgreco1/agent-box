@@ -56,6 +56,17 @@
         }
       }
     },
+    "%@ failed.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ failed."
+          }
+        }
+      }
+    },
     "%@ is already in your projects.": {
       "extractionState": "manual",
       "localizations": {
@@ -63,6 +74,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ is already in your projects."
+          }
+        }
+      }
+    },
+    "%@ isn't a valid branch name.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ isn't a valid branch name."
           }
         }
       }
@@ -144,6 +166,61 @@
         }
       }
     },
+    "%lld checks failing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld checks failing"
+          }
+        }
+      }
+    },
+    "%lld checks passing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld checks passing"
+          }
+        }
+      }
+    },
+    "%lld checks pending": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld checks pending"
+          }
+        }
+      }
+    },
+    "%lld commits not pushed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld commits not pushed"
+          }
+        }
+      }
+    },
+    "%lld failing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld failing"
+          }
+        }
+      }
+    },
     "%lld of %lld": {
       "extractionState": "manual",
       "localizations": {
@@ -151,6 +228,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld of %lld"
+          }
+        }
+      }
+    },
+    "%lld passing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld passing"
+          }
+        }
+      }
+    },
+    "%lld pending": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld pending"
           }
         }
       }
@@ -239,6 +338,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "1 agent is still running."
+          }
+        }
+      }
+    },
+    "1 check failing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 check failing"
+          }
+        }
+      }
+    },
+    "1 check passing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 check passing"
+          }
+        }
+      }
+    },
+    "1 check pending": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 check pending"
           }
         }
       }
@@ -437,6 +569,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Add a Project"
+          }
+        }
+      }
+    },
+    "Add a title.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a title."
           }
         }
       }
@@ -738,6 +881,17 @@
         }
       }
     },
+    "Approved": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Approved"
+          }
+        }
+      }
+    },
     "Archive": {
       "extractionState": "manual",
       "localizations": {
@@ -881,6 +1035,17 @@
         }
       }
     },
+    "Base": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Base"
+          }
+        }
+      }
+    },
     "Base branch": {
       "extractionState": "manual",
       "localizations": {
@@ -888,6 +1053,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Base branch"
+          }
+        }
+      }
+    },
+    "Based on %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Based on %@"
           }
         }
       }
@@ -1057,6 +1233,28 @@
         }
       }
     },
+    "Changes": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changes"
+          }
+        }
+      }
+    },
+    "Changes requested": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changes requested"
+          }
+        }
+      }
+    },
     "Change…": {
       "extractionState": "manual",
       "localizations": {
@@ -1108,6 +1306,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Checklist"
+          }
+        }
+      }
+    },
+    "Checks": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checks"
           }
         }
       }
@@ -1464,6 +1673,17 @@
         }
       }
     },
+    "Close the open dialog first.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close the open dialog first."
+          }
+        }
+      }
+    },
     "Close this terminal?": {
       "extractionState": "manual",
       "localizations": {
@@ -1471,6 +1691,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Close this terminal?"
+          }
+        }
+      }
+    },
+    "Closed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Closed"
           }
         }
       }
@@ -1728,6 +1959,17 @@
         }
       }
     },
+    "Copy URL": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy URL"
+          }
+        }
+      }
+    },
     "Cost": {
       "extractionState": "manual",
       "localizations": {
@@ -1761,6 +2003,17 @@
         }
       }
     },
+    "Couldn't create the pull request.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't create the pull request."
+          }
+        }
+      }
+    },
     "Couldn't load your repositories.": {
       "extractionState": "manual",
       "localizations": {
@@ -1783,6 +2036,17 @@
         }
       }
     },
+    "Couldn't open GitHub.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't open GitHub."
+          }
+        }
+      }
+    },
     "Couldn't open in %@.": {
       "extractionState": "manual",
       "localizations": {
@@ -1801,6 +2065,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Couldn't open the file."
+          }
+        }
+      }
+    },
+    "Couldn't open the pull request.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't open the pull request."
+          }
+        }
+      }
+    },
+    "Couldn't read Git status.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't read Git status."
           }
         }
       }
@@ -1860,6 +2146,17 @@
         }
       }
     },
+    "Create": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create"
+          }
+        }
+      }
+    },
     "Create More": {
       "extractionState": "manual",
       "localizations": {
@@ -1867,6 +2164,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Create More"
+          }
+        }
+      }
+    },
+    "Create Pull Request": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create Pull Request"
+          }
+        }
+      }
+    },
+    "Create Pull Request…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create Pull Request…"
           }
         }
       }
@@ -1922,6 +2241,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Creating worktree…"
+          }
+        }
+      }
+    },
+    "Creating…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Creating…"
           }
         }
       }
@@ -2102,6 +2432,17 @@
         }
       }
     },
+    "Describe the change (optional)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Describe the change (optional)"
+          }
+        }
+      }
+    },
     "Describe the task": {
       "extractionState": "manual",
       "localizations": {
@@ -2109,6 +2450,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Describe the task"
+          }
+        }
+      }
+    },
+    "Description": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Description"
           }
         }
       }
@@ -2252,6 +2604,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Down"
+          }
+        }
+      }
+    },
+    "Draft": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Draft"
           }
         }
       }
@@ -2461,6 +2824,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Failed"
+          }
+        }
+      }
+    },
+    "Failing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failing"
           }
         }
       }
@@ -2938,6 +3312,39 @@
         }
       }
     },
+    "Install the GitHub CLI first: brew install gh": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install the GitHub CLI first: brew install gh"
+          }
+        }
+      }
+    },
+    "Install the GitHub CLI to see checks.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install the GitHub CLI to see checks."
+          }
+        }
+      }
+    },
+    "Install the GitHub CLI to see pull requests.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install the GitHub CLI to see pull requests."
+          }
+        }
+      }
+    },
     "Install the GitHub CLI to see your repositories.": {
       "extractionState": "manual",
       "localizations": {
@@ -3169,6 +3576,39 @@
         }
       }
     },
+    "Log in to GitHub CLI first: gh auth login": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Log in to GitHub CLI first: gh auth login"
+          }
+        }
+      }
+    },
+    "Log in to GitHub CLI to see checks.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Log in to GitHub CLI to see checks."
+          }
+        }
+      }
+    },
+    "Log in to GitHub CLI to see pull requests.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Log in to GitHub CLI to see pull requests."
+          }
+        }
+      }
+    },
     "Log in to GitHub to see your repositories.": {
       "extractionState": "manual",
       "localizations": {
@@ -3275,6 +3715,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Memory"
+          }
+        }
+      }
+    },
+    "Merged": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Merged"
           }
         }
       }
@@ -3664,6 +4115,28 @@
         }
       }
     },
+    "No changes.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No changes."
+          }
+        }
+      }
+    },
+    "No checks reported.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No checks reported."
+          }
+        }
+      }
+    },
     "No computer request is waiting.": {
       "extractionState": "manual",
       "localizations": {
@@ -3792,6 +4265,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "No proxies. Computers connect directly."
+          }
+        }
+      }
+    },
+    "No pull request for this branch.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No pull request for this branch."
           }
         }
       }
@@ -4060,6 +4544,17 @@
         }
       }
     },
+    "Open Compare on GitHub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Compare on GitHub"
+          }
+        }
+      }
+    },
     "Open Docker": {
       "extractionState": "manual",
       "localizations": {
@@ -4067,6 +4562,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Open Docker"
+          }
+        }
+      }
+    },
+    "Open Pull Request": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Pull Request"
           }
         }
       }
@@ -4148,6 +4654,39 @@
         }
       }
     },
+    "Opened PR #%lld.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opened PR #%lld."
+          }
+        }
+      }
+    },
+    "Opened the pull request.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opened the pull request."
+          }
+        }
+      }
+    },
+    "Opens a pull request on GitHub.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens a pull request on GitHub."
+          }
+        }
+      }
+    },
     "Optional": {
       "extractionState": "manual",
       "localizations": {
@@ -4192,6 +4731,17 @@
         }
       }
     },
+    "Passing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Passing"
+          }
+        }
+      }
+    },
     "Path copied.": {
       "extractionState": "manual",
       "localizations": {
@@ -4199,6 +4749,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Path copied."
+          }
+        }
+      }
+    },
+    "Paused · rate limit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paused · rate limit"
+          }
+        }
+      }
+    },
+    "Pending": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pending"
           }
         }
       }
@@ -4441,6 +5013,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "Public"
+          }
+        }
+      }
+    },
+    "Pull request #%lld, %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pull request #%lld, %@"
+          }
+        }
+      }
+    },
+    "Pull request title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pull request title"
+          }
+        }
+      }
+    },
+    "Pushes %@ and opens a pull request on GitHub.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pushes %@ and opens a pull request on GitHub."
           }
         }
       }
@@ -4863,6 +5468,17 @@
         }
       }
     },
+    "Review required": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Review required"
+          }
+        }
+      }
+    },
     "Run Claude Code, Codex and OpenCode side by side, each in its own folder.": {
       "extractionState": "manual",
       "localizations": {
@@ -5024,6 +5640,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Select a session to browse its files."
+          }
+        }
+      }
+    },
+    "Select a session to see its changes.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select a session to see its changes."
+          }
+        }
+      }
+    },
+    "Select a session to see its checks.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select a session to see its checks."
           }
         }
       }
@@ -5259,6 +5897,28 @@
         }
       }
     },
+    "Showing the first %lld checks.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Showing the first %lld checks."
+          }
+        }
+      }
+    },
+    "Showing the last known state": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Showing the last known state"
+          }
+        }
+      }
+    },
     "Shows how many agents need you on the Dock icon.": {
       "extractionState": "manual",
       "localizations": {
@@ -5387,6 +6047,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sound"
+          }
+        }
+      }
+    },
+    "Source Control": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Source Control"
           }
         }
       }
@@ -5765,6 +6436,17 @@
         }
       }
     },
+    "That file isn't in the changes list.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That file isn't in the changes list."
+          }
+        }
+      }
+    },
     "That isn't a folder.": {
       "extractionState": "manual",
       "localizations": {
@@ -5941,6 +6623,39 @@
         }
       }
     },
+    "This branch already has a pull request.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This branch already has a pull request."
+          }
+        }
+      }
+    },
+    "This branch has no pull request.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This branch has no pull request."
+          }
+        }
+      }
+    },
+    "This check has no page.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This check has no page."
+          }
+        }
+      }
+    },
     "This computer is stopped.": {
       "extractionState": "manual",
       "localizations": {
@@ -5963,6 +6678,17 @@
         }
       }
     },
+    "This file was deleted.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This file was deleted."
+          }
+        }
+      }
+    },
     "This folder is empty.": {
       "extractionState": "manual",
       "localizations": {
@@ -5970,6 +6696,39 @@
           "stringUnit": {
             "state": "translated",
             "value": "This folder is empty."
+          }
+        }
+      }
+    },
+    "This repository isn't on GitHub.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This repository isn't on GitHub."
+          }
+        }
+      }
+    },
+    "This session has no branch.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This session has no branch."
+          }
+        }
+      }
+    },
+    "This session isn't a Git repository.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This session isn't a Git repository."
           }
         }
       }
@@ -6003,6 +6762,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "This terminal stopped while Agent Box was closed."
+          }
+        }
+      }
+    },
+    "Title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Title"
           }
         }
       }
@@ -6069,6 +6839,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Turns every confirmation back on."
+          }
+        }
+      }
+    },
+    "Uncommitted changes": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uncommitted changes"
           }
         }
       }
@@ -6414,6 +7195,17 @@
         }
       }
     },
+    "You": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You"
+          }
+        }
+      }
+    },
     "You can still paste a public repository URL.": {
       "extractionState": "manual",
       "localizations": {
@@ -6509,6 +7301,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "folder %@"
+          }
+        }
+      }
+    },
+    "main": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "main"
           }
         }
       }

@@ -25,6 +25,18 @@ public struct GitStatus: Sendable, Equatable {
     public let untrackedFiles: Int
     public let conflictedFiles: Int
 
+    public init(branch: String?, headOID: String?, upstream: String?, ahead: Int?, behind: Int?, changedFiles: Int, untrackedFiles: Int,
+                conflictedFiles: Int) {
+        self.branch = branch
+        self.headOID = headOID
+        self.upstream = upstream
+        self.ahead = ahead
+        self.behind = behind
+        self.changedFiles = changedFiles
+        self.untrackedFiles = untrackedFiles
+        self.conflictedFiles = conflictedFiles
+    }
+
     public var isDetached: Bool { branch == nil }
     public var hasConflicts: Bool { conflictedFiles > 0 }
     /// Sujo: qualquer alteração rastreada, conflito ou arquivo não rastreado (ignorados não contam).

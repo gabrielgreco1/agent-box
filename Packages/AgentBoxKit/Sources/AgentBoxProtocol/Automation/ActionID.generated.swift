@@ -190,6 +190,8 @@ extension ActionID {
     public static let gitCreatePR = ActionID(unchecked: "git.createPR")
     public static let gitOpenPR = ActionID(unchecked: "git.openPR")
     public static let gitCopyPRURL = ActionID(unchecked: "git.copyPRURL")
+    public static let gitOpenChange = ActionID(unchecked: "git.openChange")
+    public static let gitOpenCheck = ActionID(unchecked: "git.openCheck")
     public static let accountLogIn = ActionID(unchecked: "account.logIn")
     public static let checksSendFailures = ActionID(unchecked: "checks.sendFailures")
     public static let conversationResume = ActionID(unchecked: "conversation.resume")
@@ -370,6 +372,14 @@ extension ActionID {
     public static let dialogCloneRepoCancel = ActionID(unchecked: "dialog.cloneRepo.cancel")
     public static let dialogCloneRepoLogIn = ActionID(unchecked: "dialog.cloneRepo.logIn")
     public static let dialogCloneRepoRetry = ActionID(unchecked: "dialog.cloneRepo.retry")
+    public static let dialogCreatePRSetTitle = ActionID(unchecked: "dialog.createPR.setTitle")
+    public static let dialogCreatePRSetBase = ActionID(unchecked: "dialog.createPR.setBase")
+    public static let dialogCreatePRSetBody = ActionID(unchecked: "dialog.createPR.setBody")
+    public static let dialogCreatePRSetDraft = ActionID(unchecked: "dialog.createPR.setDraft")
+    public static let dialogCreatePRSubmit = ActionID(unchecked: "dialog.createPR.submit")
+    public static let dialogCreatePRCancel = ActionID(unchecked: "dialog.createPR.cancel")
+    public static let dialogCreatePRRetry = ActionID(unchecked: "dialog.createPR.retry")
+    public static let dialogCreatePROpenCompare = ActionID(unchecked: "dialog.createPR.openCompare")
     public static let dialogQuitKeepRunning = ActionID(unchecked: "dialog.quit.keepRunning")
     public static let dialogQuitStopAll = ActionID(unchecked: "dialog.quit.stopAll")
     public static let dialogQuitStopAllConfirm = ActionID(unchecked: "dialog.quit.stopAllConfirm")
@@ -598,6 +608,8 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "git.createPR"), label: "Create Pull Request…", shortcut: "", slice: .slice2),
         ActionSpec(id: ActionID(unchecked: "git.openPR"), label: "Open on GitHub", shortcut: "", slice: .slice2),
         ActionSpec(id: ActionID(unchecked: "git.copyPRURL"), label: "Copy URL (PR)", shortcut: "", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "git.openChange"), label: "Abrir arquivo alterado (Source Control, §10.2)", shortcut: "", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "git.openCheck"), label: "Abrir check (Checks, §10.3)", shortcut: "", slice: .slice2),
         ActionSpec(id: ActionID(unchecked: "account.logIn"), label: "Log In (gh, Claude, Codex)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "checks.sendFailures"), label: "Send Failures to Claude Code", shortcut: "", slice: .v11),
         ActionSpec(id: ActionID(unchecked: "conversation.resume"), label: "Resume in New Tab / in Split, Show Transcript", shortcut: "", slice: .slice2),
@@ -778,6 +790,14 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "dialog.cloneRepo.cancel"), label: "Cancel (§16.9b)", shortcut: "Esc", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.cloneRepo.logIn"), label: "Log in to GitHub (§16.9b)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.cloneRepo.retry"), label: "Try Again (§16.9b)", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "dialog.createPR.setTitle"), label: "Título (§16.9c)", shortcut: "", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "dialog.createPR.setBase"), label: "Base (§16.9c)", shortcut: "", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "dialog.createPR.setBody"), label: "Descrição (§16.9c)", shortcut: "", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "dialog.createPR.setDraft"), label: "Draft (§16.9c)", shortcut: "", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "dialog.createPR.submit"), label: "Create (§16.9c)", shortcut: "", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "dialog.createPR.cancel"), label: "Cancel (§16.9c)", shortcut: "Esc", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "dialog.createPR.retry"), label: "Try Again (§16.9c)", shortcut: "", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "dialog.createPR.openCompare"), label: "Open Compare on GitHub (§16.9c)", shortcut: "", slice: .slice2),
         ActionSpec(id: ActionID(unchecked: "dialog.quit.keepRunning"), label: "Keep Running (§16.10)", shortcut: "↵", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.quit.stopAll"), label: "Stop All and Quit… (§16.10)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.quit.stopAllConfirm"), label: "Stop All and Quit (segunda confirmação, §16.10)", shortcut: "", slice: .slice1),

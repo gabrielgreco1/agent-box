@@ -75,7 +75,13 @@ struct SessionMenuItems {
                     MenuEntry(action: .itemOpenInEditor, title: String(localized: "Open in Editor", bundle: .module), argument: arg),
                     MenuEntry(action: .itemRevealInFinder, title: String(localized: "Reveal in Finder", bundle: .module), argument: arg),
                     MenuEntry(action: .itemCopyPath, title: String(localized: "Copy Path", bundle: .module), argument: arg),
-                ] + ((branch ?? "").isEmpty ? [] : [MenuEntry(action: .sessionCopyBranch, title: String(localized: "Copy Branch Name", bundle: .module), argument: arg)]),
+                ] + ((branch ?? "").isEmpty ? [] : [MenuEntry(action: .sessionCopyBranch, title: String(localized: "Copy Branch Name", bundle: .module), argument: arg)])
+                    + (hasGit && !(branch ?? "").isEmpty
+                        ? [
+                            model.pullRequests[session] != nil
+                                ? MenuEntry(action: .gitOpenPR, title: String(localized: "Open Pull Request", bundle: .module), argument: arg)
+                                : MenuEntry(action: .gitCreatePR, title: String(localized: "Create Pull Request…", bundle: .module), argument: arg)
+                        ] : []),
                 [
                     s.unread
                         ? MenuEntry(action: .sessionMarkRead, title: String(localized: "Mark as Read", bundle: .module), argument: arg)

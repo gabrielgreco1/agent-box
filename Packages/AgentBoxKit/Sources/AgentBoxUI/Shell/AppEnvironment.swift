@@ -57,6 +57,8 @@ public final class AppEnvironment {
     public let rightPanel = RightPanelController()
     /// Módulo Files: árvore do diretório da sessão que acompanha o cwd do terminal focado.
     let files: FilesController
+    /// GitHub (T2-05): chips de PR da sidebar, Source Control, Checks e "Create Pull Request…". Só consulta o `gh` na Fatia 2.
+    let github: GitHubController
     /// Módulo Insights: uso de IA (transcripts do Claude/Codex) e máquina; só amostra enquanto a view está em cena.
     let insights: InsightsModel
     /// "Subagent computers" por sessão (F12): ícone, menu, `Restart to apply`.
@@ -157,6 +159,12 @@ public final class AppEnvironment {
             registry: registry, elements: elements)
         workspace = WorkspaceModel(runtime: runtime)
         files = Self.makeFilesController(workspace: workspace)
+        // 45 s com a janela ativa (03/06 §5.5: 30–60 s), 5 min em segundo plano; o serviço só vai à rede quando o cache vence.
+        var githubPolicy = GitHubPollingPolicy()
+        githubPolicy.activeInterval = 45
+        github = GitHubController(
+            service: GitHubService(policy: githubPolicy), source: Self.makeGitHubSource(sidebar: sidebar), overlays: overlays,
+            toasts: toasts, openURL: { NSWorkspace.shared.open($0) })
         // Limites exatos (Keychain + rede) só no produto; testes e execuções fora do bundle ficam offline.
         let limits: ClaudeLimitsClient = Bundle.main.bundleURL.pathExtension == "app" ? ClaudeLimitsClient() : .offline
         insights = InsightsModel(service: InsightsService(config: .standard(supportDirectory: storeRoot), limitsClient: limits))
@@ -179,6 +187,39 @@ public final class AppEnvironment {
         wireAttention(environment: environment)
         wireComputers()
         wireRightPanel()
+        wireGitHub(slice2: slice2, environment: environment)
+    }
+
+    /// Sessões da sidebar como o `GitHubController` as lê: pasta, branch do worktree e o último status Git.
+    private static func makeGitHubSource(sidebar: SidebarModel) -> GitHubSource {
+        func ref(_ s: Session) -> GitHubSessionRef {
+            let branch = sidebar.worktree(of: s)?.branch
+            let usable = s.kind == .worktree || s.kind == .checkout
+            return GitHubSessionRef(
+                id: s.id, title: s.title, folderPath: s.folderPath,
+                branch: usable && !(branch ?? "").isEmpty && branch != "HEAD" ? branch : nil,
+                status: usable ? sidebar.gitStatus[s.folderPath] : nil)
+        }
+        return GitHubSource(
+            selected: { sidebar.selectedSession.flatMap { sidebar.session($0) }.map(ref) },
+            sessions: { sidebar.snapshot.sessions.filter { $0.archivedAt == nil && $0.lifecycle != .archived }.map(ref) })
+    }
+
+    /// Liga o GitHub: ações `git.*`/`panel.*`, chips na sidebar, push detectado pelo status Git e o ciclo de consulta (só app
+    /// de verdade: instância headless e telas de fixture nunca chamam o `gh`).
+    private func wireGitHub(slice2: Bool, environment: [String: String]) {
+        guard slice2 else { return }
+        github.copyText = { text in
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(text, forType: .string)
+        }
+        github.isAppActive = { NSApp?.isActive ?? true }
+        github.showModule = { [rightPanel] id in rightPanel.show(id) }
+        github.onChips = { [sidebar] chips in sidebar.setPullRequests(chips) }
+        github.openFile = { [weak self] url in _ = try await self?.openIn?.openFile(url, target: nil) }
+        sidebar.onGitStatus = { [github] status, path in github.gitStatusChanged(status, at: path) }
+        do { try github.register(in: registry) } catch { log.publicError("duplicate github registration") }
+        if !headless, fixture == nil, environment["AGENTBOX_GITHUB"] != "off" { github.startPolling() }
     }
 
     /// Fonte do módulo Files: sessão selecionada, pasta dela e terminal focado (nome curto do agente e último cwd conhecido).

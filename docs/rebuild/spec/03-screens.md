@@ -1227,6 +1227,16 @@ Overlay 512 (sub-overlay quando aberto pelo composer; o composer mantém o que f
 - Ao concluir: o painel fecha, o projeto é registrado e fica selecionado no composer (quando aberto por ele) ou aparece expandido na sidebar. Toast `Cloned <repo>.`
 - IDs: `overlay.cloneRepo`, `.input`, `.list`, `.row.<id>`, `.progress`, `.logIn`, `.error`, `.retry`, `.cancel`, `.submit`.
 
+### 16.9c Create Pull Request (overlay, T2-05)
+
+Largura 480. Abre por `Create Pull Request…` (Source Control, menu da sessão, `ctl ui action git.createPR`). Nada é enviado até `[Create]` (AC-503).
+
+- Título `Create Pull Request`. Campos: `Title` (input; pré-preenchido com o assunto do último commit, senão o nome da sessão), `Base` (input mono; `baseRefName` da origem ou branch padrão), `Description` (textarea, vazio), checkbox `Draft`.
+- Prévia dos comandos, em mono `small` `textTertiary`: `git push -u origin <branch>` (só se não há upstream ou há commits à frente) e `gh pr create --base … --head … --title … --body-file … [--draft]`. Texto abaixo: `Pushes <branch> and opens a pull request on GitHub.` (ou `Opens a pull request on GitHub.` sem push).
+- `[Create]` (primary) roda os passos na ordem com o botão em `loading` (`Creating…`); erro mantém o overlay com o texto do `git`/`gh` (token nunca aparece) e `[Try Again]`. Sucesso fecha o overlay, toast `Opened PR #<n>.` e o chip aparece na hora.
+- `[Open Compare on GitHub]` (`ghost sm`) roda `gh pr create --web` (sem push, sem criar nada pelo app). `[Cancel]` (Esc). Título vazio: `Create` desabilitado, `Add a title.`.
+- IDs: `overlay.createPR`, `.title`, `.base`, `.body`, `.draft`, `.preview`, `.error`, `.retry`, `.compare`, `.cancel`, `.submit`.
+
 ### 16.10 Quit with running agents (⌘Q)
 
 Overlay de confirmação na janela (T5, P15, K-90). **Nunca `NSAlert`.** Se nenhuma janela está aberta (quit pelo Dock ou pela barra de menus), o app abre a janela principal e mostra o overlay nela. Só aparece se há processos de agente vivos e `Ask before quitting with running agents` está ligado.
@@ -1515,14 +1525,14 @@ Atalhos reservados para o terminal (nunca capturados pelo app): ⌃ + letra, ⌥
 | Quick launch | `overlay.quickLaunch`, `overlay.quickLaunch.input`, `overlay.quickLaunch.item.<agent>`, `overlay.quickLaunch.profile.<id>`, `overlay.quickLaunch.resume`, `overlay.quickLaunch.openComputer`, `overlay.quickLaunch.agentSettings` |
 | Palette | `overlay.palette`, `overlay.palette.input`, `overlay.palette.row.<kind>.<id>`, `overlay.palette.filter`, `overlay.palette.insertMode` |
 | Inbox | `inbox`, `inbox.filter`, `inbox.markAllRead`, `inbox.empty`, `inbox.item.<eventId>[.markRead/.takeOver/.allow/.deny]` |
-| Painel direito | `rightPanel`, `rightPanel.tab.<name>`, `rightPanel.tabs.indicator`, `rightPanel.sourceControl.{branch,refresh,pr,createPR,change.<path>}`, `rightPanel.checks.{row.<name>,refresh,sendFailures}`, `rightPanel.computers.{new,empty,thumb.<computerId>,thumb.<computerId>.takeOver}`, `rightPanel.conversations.{search,scope,row.<id>,row.<id>.resume}`, `rightPanel.context.item.<kind>.<id>[.toggle/.insert]`, `rightPanel.computer.<id>.tab.<name>` |
+| Painel direito | `rightPanel`, `rightPanel.tab.<name>`, `rightPanel.tabs.indicator`, `rightPanel.sourceControl.{branch,refresh,pr,createPR,openPR,copyURL,openInEditor,revealInFinder,retry,change.<path>}`, `rightPanel.checks.{row.<name>,refresh,retry,sendFailures}`, `rightPanel.computers.{new,empty,thumb.<computerId>,thumb.<computerId>.takeOver}`, `rightPanel.conversations.{search,scope,row.<id>,row.<id>.resume}`, `rightPanel.context.item.<kind>.<id>[.toggle/.insert]`, `rightPanel.computer.<id>.tab.<name>` |
 | Painel direito (contêiner e módulos, 10-right-panel) | `rightPanel.module.<id>[.header/.minimize]`, `rightPanel.divider`, `rightPanel.insights.empty`, `rightPanel.insights.showExactLimits`, `tabs.filesToggle`, `tabs.insightsToggle` |
 | Painel direito (Files, 10-right-panel §2) | `rightPanel.files`, `rightPanel.files.chip`, `rightPanel.files.root`, `rightPanel.files.sessionFolder`, `rightPanel.files.showIgnored`, `rightPanel.files.refresh`, `rightPanel.files.tree`, `rightPanel.files.empty`, `rightPanel.files.row.<path>`, `rightPanel.files.viewer[.back/.name/.find/.findField/.findCount/.findNext/.findPrevious/.findClose/.openIn/.copyPath/.code/.empty]` |
 | Viewer | `viewer.<computerId>`, `.back`, `.name`, `.mode`, `.url`, `.controlPill`, `.controlFrame`, `.ghostCursor`, `.clickRipple`, `.takeOver`, `.handBack[.note/.confirm]`, `.forceTakeOver`, `.helpBanner[.decline]`, `.connecting`, `.status`, `.disconnected`, `.popOut`, `.more`, `.strip[.thumb.<otherId>]`, `.keyboardBadge`, `.exit[.handBack/.keep]` |
 | Páginas | `computers.page`, `computers.cleanUp` (v1.1), `computers.dockerBanner`, `computers.empty`, `computers.row.<id>`, `computers.queue.row.<id>.cancel`; `batch.<batchId>.page`, `batch.<batchId>.row.<childId>`, `batch.<batchId>.collectAll`, `batch.<batchId>.archive`; `library.page`, `library.section`, `library.search`, `library.source`, `library.new`, `library.empty`, `library.row.<kind>.<id>`, `library.detail.{newSession,enable,insert,openInEditor,reveal}`, `library.profile.{name,agent,model,permissions,args,env,default}` |
 | Settings | `settings.page`, `settings.back`, `settings.search`, `settings.nav.<section>`, `settings.<section>.<key>`, `settings.computers.proxies.row.<proxyId>`, `settings.computers.proxies.add`, `settings.computers.proxies.test` |
 | Onboarding | `onboarding`, `onboarding.step.<name>`, `onboarding.item.<key>`, `onboarding.done`, `onboarding.skip` |
-| Dialogs | `overlay.confirmClose[.dontAsk/.cancel/.confirm]`, `overlay.confirmArchive[.cancel/.confirm]`, `overlay.confirmStopComputer.confirm`, `overlay.confirmDeleteComputer.confirm`, `overlay.confirmDelete[.keepBranch/.trashFolder/.deleteRuns/.dontAsk/.changes/.cancel/.confirm]`, `overlay.confirmRemoveProject[.cancel/.confirm]`, `overlay.resume[.row.<id>/.confirm]`, `overlay.moveToProject[.project/.cancel/.confirm]`, `overlay.addProject.{choose,clone,clone.url,clone.submit}`, `overlay.cloneRepo[.input/.list/.row.<id>/.progress/.logIn/.error/.retry/.cancel/.submit]`, `overlay.confirmQuit[.keepRunning/.stopAll/.stopAllConfirm/.cancel/.dontAsk]`, `overlay.confirmSkipPermissions.confirm`, `overlay.renameBranch[.name/.submit]`, `overlay.about[.licenses/.copy]`, `overlay.newBatch.*`, `popover.paste[.text/.confirm]` |
+| Dialogs | `overlay.confirmClose[.dontAsk/.cancel/.confirm]`, `overlay.confirmArchive[.cancel/.confirm]`, `overlay.confirmStopComputer.confirm`, `overlay.confirmDeleteComputer.confirm`, `overlay.confirmDelete[.keepBranch/.trashFolder/.deleteRuns/.dontAsk/.changes/.cancel/.confirm]`, `overlay.confirmRemoveProject[.cancel/.confirm]`, `overlay.resume[.row.<id>/.confirm]`, `overlay.moveToProject[.project/.cancel/.confirm]`, `overlay.addProject.{choose,clone,clone.url,clone.submit}`, `overlay.cloneRepo[.input/.list/.row.<id>/.progress/.logIn/.error/.retry/.cancel/.submit]`, `overlay.createPR[.title/.base/.body/.draft/.preview/.error/.retry/.compare/.cancel/.submit]`, `overlay.confirmQuit[.keepRunning/.stopAll/.stopAllConfirm/.cancel/.dontAsk]`, `overlay.confirmSkipPermissions.confirm`, `overlay.renameBranch[.name/.submit]`, `overlay.about[.licenses/.copy]`, `overlay.newBatch.*`, `popover.paste[.text/.confirm]` |
 | Landing | `landing`, `landing.addProject`, `landing.cloneProject`, `landing.newCleanSession`, `landing.newSession` |
 | Menu bar | `menuBar.icon`, `menuBar.item.<sessionId>`, `menuBar.open`, `menuBar.newSession`, `menuBar.newCleanSession`, `menuBar.stopAll`, `menuBar.quitCompletely` |
 | Menus do app | `menu.<group>.<actionId>` (actionId de §24) |
@@ -1733,6 +1743,8 @@ Toda interação da UI é uma ação do registro (`ActionRegistry`: `ActionID` �
 | Refresh (Source Control, Checks) | `panel.refresh` | — | Refaz a consulta Git/`gh` | Rodando: `Refreshing…` | v1 | `testAction_panel_refresh` |
 | Create Pull Request… | `git.createPR` | — | Overlay pequeno de §10.2 e `gh pr create` | Sem push: `Push the branch first.` | v1 (Fatia 2) | `testAction_git_createPR` |
 | Open on GitHub / Copy URL (PR) | `git.openPR` / `git.copyPRURL` | — | Navegador / copia | — | v1 | `testAction_git_openPR` · `testAction_git_copyPRURL` |
+| Abrir arquivo alterado (Source Control, §10.2) | `git.openChange` | — | `select(<caminho>)`: abre o arquivo no editor configurado | Arquivo removido: `This file was deleted.` | v1 (Fatia 2) | `testAction_git_openChange` |
+| Abrir check (Checks, §10.3) | `git.openCheck` | — | `select(<nome>)`: abre a página do check no navegador | Sem link: `This check has no page.` | v1 (Fatia 2) | `testAction_git_openCheck` |
 | Log In (gh, Claude, Codex) | `account.logIn` | — | Tab com o comando de login do CLI | — | v1 | `testAction_account_logIn` |
 | Send Failures to Claude Code | `checks.sendFailures` | — | Popover §16.12 | — | v1.1 | `testAction_checks_sendFailures` |
 | Resume in New Tab / in Split, Show Transcript | `conversation.resume` / `.resumeSplit` / `.showTranscript` | — | §10.5 | Ativa noutro terminal: aviso `Open in another terminal` antes | v1 | `testAction_conversation_resume` · `testAction_conversation_resumeSplit` · `testAction_conversation_showTranscript` |
@@ -1901,6 +1913,14 @@ Cada botão e checkbox dos diálogos de §16 é uma ação. `Cancel` (Esc) exist
 | Cancel (§16.9b) | `dialog.cloneRepo.cancel` | Esc | Cancela o clone em andamento (remove a pasta parcial) e fecha o overlay | — | v1 | `testAction_dialog_cloneRepo_cancel` |
 | Log in to GitHub (§16.9b) | `dialog.cloneRepo.logIn` | — | Abre uma tab com `gh auth login` | `Select a session first.` | v1 | `testAction_dialog_cloneRepo_logIn` |
 | Try Again (§16.9b) | `dialog.cloneRepo.retry` | — | Repete o clone que falhou | — | v1 | `testAction_dialog_cloneRepo_retry` |
+| Título (§16.9c) | `dialog.createPR.setTitle` | — | `set(<texto>)` | — | v1 (Fatia 2) | `testAction_dialog_createPR_setTitle` |
+| Base (§16.9c) | `dialog.createPR.setBase` | — | `set(<branch>)` | — | v1 (Fatia 2) | `testAction_dialog_createPR_setBase` |
+| Descrição (§16.9c) | `dialog.createPR.setBody` | — | `set(<texto>)` | — | v1 (Fatia 2) | `testAction_dialog_createPR_setBody` |
+| Draft (§16.9c) | `dialog.createPR.setDraft` | — | `set(on|off)` | — | v1 (Fatia 2) | `testAction_dialog_createPR_setDraft` |
+| Create (§16.9c) | `dialog.createPR.submit` | — | Faz push (se preciso) e roda `gh pr create`; o resultado vira o chip | Sem título: `Add a title.` | v1 (Fatia 2) | `testAction_dialog_createPR_submit` |
+| Cancel (§16.9c) | `dialog.createPR.cancel` | Esc | Fecha sem enviar nada | — | v1 (Fatia 2) | `testAction_dialog_createPR_cancel` |
+| Try Again (§16.9c) | `dialog.createPR.retry` | — | Repete os passos que falharam | — | v1 (Fatia 2) | `testAction_dialog_createPR_retry` |
+| Open Compare on GitHub (§16.9c) | `dialog.createPR.openCompare` | — | `gh pr create --web` | — | v1 (Fatia 2) | `testAction_dialog_createPR_openCompare` |
 | Keep Running (§16.10) | `dialog.quit.keepRunning` | ↵ | Fecha a janela e deixa o app em modo accessory; agentes seguem vivos | — | v1 | `testAction_dialog_quit_keepRunning` |
 | Stop All and Quit… (§16.10) | `dialog.quit.stopAll` | — | Abre a segunda confirmação `Stop <n> agents and <m> computers?` | — | v1 | `testAction_dialog_quit_stopAll` |
 | Stop All and Quit (segunda confirmação, §16.10) | `dialog.quit.stopAllConfirm` | — | Encerra os agentes e computadores e o app | — | v1 | `testAction_dialog_quit_stopAllConfirm` |
