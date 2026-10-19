@@ -13,7 +13,7 @@ extension KeyBindingRegistry {
         try add("⌘,", .global, .appSettings, "Settings")
         try add("⌘/", .global, .helpShortcuts, "Keyboard Shortcuts")
         try add("⌘Q", .global, .appQuit, "Quit")
-        try add("⌘H", .global, nil, "Hide")
+        try add("⌘H", .global, .appHideAppName, "Hide")
         try add("⌥⌘H", .global, nil, "Hide Others")
 
         // Sessions
@@ -120,6 +120,11 @@ extension KeyBindingRegistry {
         try add("←", .sidebar, .sidebarProjectToggle, "Collapse")
         try add("↵", .sidebar, nil, "Focus terminal of item")
         try add("space", .sidebar, nil, "Show details")
+
+        // Edição padrão do sistema (menu Edit, 03 §18): cadeia de respondedores, o app não os trata
+        try add("⌘Z", .app, nil, "Undo")
+        try add("⇧⌘Z", .app, nil, "Redo")
+        try add("⌘X", .app, nil, "Cut")
 
         // Window e Debug
         try add("⌘M", .global, nil, "Minimize")

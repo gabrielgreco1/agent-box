@@ -7,16 +7,27 @@ nonisolated final class ActionMenuItem: NSMenuItem {
     let argument: ActionArgument
     private weak var registry: ActionRegistry?
 
+    /// Atalho da tabela canônica (03 §21) que este item mostra; `nil` = sem atalho.
+    let binding: KeyBinding?
+
     nonisolated init(
         _ id: ActionID, title: String, key: String, modifiers: NSEvent.ModifierFlags = [.command], argument: ActionArgument = .press,
-        registry: ActionRegistry
+        binding: KeyBinding? = nil, registry: ActionRegistry
     ) {
         actionID = id
         self.argument = argument
         self.registry = registry
+        self.binding = binding
         super.init(title: title, action: #selector(fire(_:)), keyEquivalent: key)
         keyEquivalentModifierMask = modifiers
         target = self
+    }
+
+    /// Liga ou remove o key equivalent (escopo inativo = a tecla segue para o terminal, 03 §21).
+    nonisolated func setShortcut(active: Bool) {
+        guard let pair = binding?.chord.menuKeyEquivalent else { return }
+        keyEquivalent = active ? pair.key : ""
+        keyEquivalentModifierMask = active ? pair.modifiers : []
     }
 
     @available(*, unavailable) required nonisolated init(coder: NSCoder) { fatalError("init(coder:) is not used") }  // required init?(coder:) não usado
@@ -36,119 +47,155 @@ nonisolated final class ActionMenuItem: NSMenuItem {
     }
 }
 
-/// Menu principal mínimo da T1-10: Agent Box (Hide App Name, Quit), View (Toggle Sidebar, Back, Forward), Window.
+/// Valida os key equivalents quando o menu abre ou é consultado por uma tecla: item cujo escopo não está ativo
+/// (ou que perde para um atalho mais específico, ex.: ⇧⌘G com a find bar aberta) fica sem tecla e o evento segue o fluxo normal.
+@MainActor
+final class MenuKeyValidator: NSObject, NSMenuDelegate {
+    let keys: KeyBindingRegistry
+    let registry: ActionRegistry
+    let activeScopes: @MainActor () -> Set<KeyScope>
+
+    init(keys: KeyBindingRegistry, registry: ActionRegistry, activeScopes: @escaping @MainActor () -> Set<KeyScope>) {
+        self.keys = keys
+        self.registry = registry
+        self.activeScopes = activeScopes
+    }
+
+    func menuNeedsUpdate(_ menu: NSMenu) { validate(menu) }
+
+    func validate(_ menu: NSMenu, scopes: Set<KeyScope>? = nil) {
+        let scopes = scopes ?? activeScopes()
+        for case let item as ActionMenuItem in menu.items {
+            if let binding = item.binding {
+                item.setShortcut(active: keys.resolve(binding.chord, activeScopes: scopes) == binding)
+            }
+            if case .disabled(let reason) = registry.availability(of: item.actionID) { item.toolTip = reason } else { item.toolTip = nil }
+        }
+        for sub in menu.items.compactMap(\.submenu) { validate(sub, scopes: scopes) }
+    }
+}
+
+/// Escopos ativos agora, só lendo a cadeia de respondedores (nunca vira first responder, F27).
+@MainActor
+enum MenuScopeProbe {
+    static func current() -> Set<KeyScope> {
+        var scopes: Set<KeyScope> = [.global, .app]
+        var responder = NSApp.keyWindow?.firstResponder
+        while let r = responder {
+            if let terminal = r as? TerminalHostView {
+                scopes.insert(.terminal)
+                if terminal.findModel.isOpen { scopes.insert(.find) }
+                break
+            }
+            responder = r.nextResponder
+        }
+        return scopes
+    }
+}
+
+/// Menus do app (03 §18), gerados de `MenuLayout` + `KeyBindingRegistry` + `ActionRegistry`.
+/// Só entram ações da fatia entregue; sem handler ou sem pré-condição o item fica desabilitado (nunca escondido).
 @MainActor
 enum MainMenu {
-    static func build(registry: ActionRegistry) -> NSMenu {
+    private static var validator: MenuKeyValidator?
+
+    static func build(
+        registry: ActionRegistry, keys: KeyBindingRegistry? = nil,
+        activeScopes: @escaping @MainActor () -> Set<KeyScope> = MenuScopeProbe.current
+    ) -> NSMenu {
+        let keys = keys ?? ((try? KeyBindingRegistry.canonical()) ?? KeyBindingRegistry())
+        let validator = MenuKeyValidator(keys: keys, registry: registry, activeScopes: activeScopes)
+        Self.validator = validator
         let main = NSMenu()
-        main.addItem(
-            submenu(title: "Agent Box") { m in
-                m.addItem(ActionMenuItem(.appSetup, title: "Set Up Agent Box…", key: "", registry: registry))
-                m.addItem(ActionMenuItem(.appSettings, title: "Settings…", key: ",", registry: registry))
-                m.addItem(.separator())
-                m.addItem(ActionMenuItem(.appHideAppName, title: "Hide App Name", key: "", registry: registry))
-                m.addItem(.separator())
-                m.addItem(ActionMenuItem(.appQuit, title: "Quit Agent Box", key: "q", registry: registry))
-            })
-        main.addItem(
-            submenu(title: "File") { m in
-                m.addItem(ActionMenuItem(.sessionNewClean, title: "New Clean Session", key: "n", modifiers: [.shift, .command], registry: registry))
-                m.addItem(
-                    ActionMenuItem(
-                        .sessionNewCleanInFolder, title: "New Clean Session in Folder…", key: "n", modifiers: [.option, .shift, .command],
-                        registry: registry))
-                m.addItem(.separator())
-                m.addItem(ActionMenuItem(.tabQuickLaunch, title: "New Tab…", key: "n", modifiers: [.option, .command], registry: registry))
-                m.addItem(ActionMenuItem(.tabNewAgent, title: "New Agent Tab", key: "t", modifiers: [.option, .command], registry: registry))
-                m.addItem(ActionMenuItem(.tabNewTerminal, title: "New Terminal", key: "t", registry: registry))
-                m.addItem(.separator())
-                m.addItem(ActionMenuItem(.paneClose, title: "Close Pane", key: "w", registry: registry))
-                m.addItem(ActionMenuItem(.tabClose, title: "Close Tab", key: "", registry: registry))
-                m.addItem(ActionMenuItem(.tabReopen, title: "Reopen Closed Tab", key: "t", modifiers: [.shift, .command], registry: registry))
-            })
-        let left = String(UnicodeScalar(NSLeftArrowFunctionKey)!)
-        let right = String(UnicodeScalar(NSRightArrowFunctionKey)!)
-        main.addItem(
-            submenu(title: "View") { m in
-                m.addItem(ActionMenuItem(.viewToggleSidebar, title: "Toggle Sidebar", key: "b", registry: registry))
-                m.addItem(ActionMenuItem(.rightPanelToggleFiles, title: "Files", key: "1", modifiers: [.option, .command], registry: registry))
-                m.addItem(ActionMenuItem(.rightPanelToggleInsights, title: "Insights", key: "2", modifiers: [.option, .command], registry: registry))
-                m.addItem(ActionMenuItem(.rightPanelToggle, title: "Toggle Right Panel", key: "0", modifiers: [.option, .command], registry: registry))
-                m.addItem(ActionMenuItem(.rightPanelSwap, title: "Swap Right Panel Modules", key: "", registry: registry))
-                m.addItem(ActionMenuItem(.panelComputers, title: "Computers Panel", key: "c", modifiers: [.shift, .command], registry: registry))
-                m.addItem(ActionMenuItem(.pageInbox, title: "Inbox", key: "i", modifiers: [.shift, .command], registry: registry))
-                m.addItem(ActionMenuItem(.navBack, title: "Back", key: left, modifiers: [.option, .command], registry: registry))
-                m.addItem(ActionMenuItem(.navForward, title: "Forward", key: right, modifiers: [.option, .command], registry: registry))
-            })
-        main.addItem(
-            submenu(title: "Computer") { m in
-                m.addItem(ActionMenuItem(.pageComputers, title: "Computers", key: "", registry: registry))
-                m.addItem(.separator())
-                m.addItem(ActionMenuItem(.computerTakeOver, title: "Take Over / Hand Back", key: "r", modifiers: [.shift, .command], registry: registry))
-                m.addItem(ActionMenuItem(.computerReleaseKeyboard, title: "Release Keyboard", key: "", registry: registry))
-                m.addItem(.separator())
-                m.addItem(ActionMenuItem(.computerPaste, title: "Paste to Computer", key: "", registry: registry))
-                m.addItem(ActionMenuItem(.computerCopySelection, title: "Copy Selection from Computer", key: "", registry: registry))
-                m.addItem(ActionMenuItem(.computerPopOut, title: "Open in New Window", key: "", registry: registry))
-            })
-        let up = String(UnicodeScalar(NSUpArrowFunctionKey)!)
-        let down = String(UnicodeScalar(NSDownArrowFunctionKey)!)
-        let selects: [ActionID] = [
-            .sessionSelect1, .sessionSelect2, .sessionSelect3, .sessionSelect4, .sessionSelect5,
-            .sessionSelect6, .sessionSelect7, .sessionSelect8, .sessionSelect9,
-        ]
-        main.addItem(
-            submenu(title: "Session") { m in
-                m.addItem(ActionMenuItem(.sessionRename, title: "Rename Session…", key: "r", modifiers: [.option, .command], registry: registry))
-                m.addItem(.separator())
-                m.addItem(ActionMenuItem(.sessionPrevious, title: "Previous Session", key: up, modifiers: [.shift, .command], registry: registry))
-                m.addItem(ActionMenuItem(.sessionNext, title: "Next Session", key: down, modifiers: [.shift, .command], registry: registry))
-                for (i, action) in selects.enumerated() {
-                    m.addItem(ActionMenuItem(action, title: "Select Session \(i + 1)", key: "\(i + 1)", registry: registry))
-                }
-                m.addItem(.separator())
-                m.addItem(ActionMenuItem(.sidebarFocus, title: "Focus Session List", key: "0", modifiers: [.shift, .command], registry: registry))
-            })
-        let selectTabs: [ActionID] = [
-            .tabSelect1, .tabSelect2, .tabSelect3, .tabSelect4, .tabSelect5, .tabSelect6, .tabSelect7, .tabSelect8, .tabSelect9,
-        ]
-        main.addItem(
-            submenu(title: "Terminal") { m in
-                m.addItem(ActionMenuItem(.paneSplitRight, title: "Split Right", key: "d", registry: registry))
-                m.addItem(ActionMenuItem(.paneSplitDown, title: "Split Down", key: "d", modifiers: [.shift, .command], registry: registry))
-                m.addItem(.separator())
-                m.addItem(ActionMenuItem(.paneNext, title: "Next Pane", key: "]", registry: registry))
-                m.addItem(ActionMenuItem(.panePrevious, title: "Previous Pane", key: "[", registry: registry))
-                m.addItem(ActionMenuItem(.paneToggleExpand, title: "Expand Pane", key: "\r", modifiers: [.shift, .command], registry: registry))
-                m.addItem(ActionMenuItem(.paneEqualize, title: "Equalize Pane Sizes", key: "", registry: registry))
-                m.addItem(.separator())
-                m.addItem(ActionMenuItem(.tabNext, title: "Next Tab", key: "}", modifiers: [.shift, .command], registry: registry))
-                m.addItem(ActionMenuItem(.tabPrevious, title: "Previous Tab", key: "{", modifiers: [.shift, .command], registry: registry))
-                m.addItem(ActionMenuItem(.tabRecent, title: "Recent Tab", key: "\t", modifiers: [.control], registry: registry))
-                m.addItem(
-                    ActionMenuItem(.tabRecent, title: "Recent Tab (Reverse)", key: "\t", modifiers: [.control, .shift], argument: .select("reverse"), registry: registry))
-                for (i, action) in selectTabs.enumerated() {
-                    m.addItem(ActionMenuItem(action, title: "Select Tab \(i + 1)", key: "\(i + 1)", modifiers: [.control], registry: registry))
-                }
-                m.addItem(ActionMenuItem(.tabRename, title: "Rename Tab…", key: "r", registry: registry))
-            })
-        let window = submenu(title: "Window") { m in
-            // lint-ui: allow buttons seletor padrão do sistema (sem ação de produto)
-            m.addItem(NSMenuItem(title: "Minimize", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m"))
-            // lint-ui: allow buttons seletor padrão do sistema (sem ação de produto)
-            m.addItem(NSMenuItem(title: "Zoom", action: #selector(NSWindow.performZoom(_:)), keyEquivalent: ""))
+        var ids = Set<String>()
+        for spec in MenuLayout.menus() {
+            let menu = NSMenu(title: spec.title)
+            fill(menu, spec.entries, group: spec.title, registry: registry, keys: keys, ids: &ids)
+            menu.delegate = validator
+            // lint-ui: allow buttons contêiner de submenu (não é gatilho)
+            let item = NSMenuItem(title: spec.title, action: nil, keyEquivalent: "")
+            item.submenu = menu
+            main.addItem(item)
+            switch spec.title {
+            case "Window": NSApp.windowsMenu = menu
+            case "Help": NSApp.helpMenu = menu
+            default: break
+            }
         }
-        main.addItem(window)
-        NSApp.windowsMenu = window.submenu
+        validator.validate(main, scopes: [.global, .app])
         return main
     }
 
-    private static func submenu(title: String, _ fill: (NSMenu) -> Void) -> NSMenuItem {
-        let menu = NSMenu(title: title)
-        fill(menu)
-        // lint-ui: allow buttons contêiner de submenu (não é gatilho)
-        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
-        item.submenu = menu
-        return item
+    private static func fill(
+        _ menu: NSMenu, _ entries: [AppMenuEntry], group: String, registry: ActionRegistry, keys: KeyBindingRegistry, ids: inout Set<String>
+    ) {
+        for entry in entries {
+            switch entry {
+            case .separator:
+                menu.addItem(.separator())
+            case .submenu(let title, let inner):
+                let sub = NSMenu(title: title)
+                fill(sub, inner, group: group, registry: registry, keys: keys, ids: &ids)
+                sub.delegate = validator
+                // lint-ui: allow buttons contêiner de submenu (não é gatilho)
+                let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+                item.submenu = sub
+                if !sub.items.isEmpty { menu.addItem(item) }
+            case .system(let title, let selector, let chord):
+                if selector == "services" {
+                    let services = NSMenu(title: title)
+                    // lint-ui: allow buttons contêiner de submenu (não é gatilho)
+                    let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+                    item.submenu = services
+                    NSApp.servicesMenu = services
+                    menu.addItem(item)
+                    continue
+                }
+                // lint-ui: allow buttons seletor padrão do sistema (sem ação de produto)
+                let item = NSMenuItem(title: title, action: Selector(selector), keyEquivalent: "")
+                if let pair = chord.flatMap(KeyChord.init)?.menuKeyEquivalent {
+                    item.keyEquivalent = pair.key
+                    item.keyEquivalentModifierMask = pair.modifiers
+                }
+                menu.addItem(item)
+            case .action(let id, let title, let chord, let argument):
+                guard registry.flags.isEnabled(id.spec.slice) else { continue }  // versão futura não aparece (03 §18)
+                let binding = binding(for: id, chord: chord, keys: keys)
+                let item = ActionMenuItem(id, title: title, key: "", modifiers: [], argument: argument, binding: binding, registry: registry)
+                item.setShortcut(active: binding.map { MenuLayout.menuScopes.contains($0.scope) } ?? false)
+                var name = id.rawValue.split(separator: ".").last.map(String.init) ?? id.rawValue
+                if argument.kind == .select, let v = argument.value { name += v.prefix(1).uppercased() + v.dropFirst() }
+                let groupID = group.replacingOccurrences(of: " ", with: "")
+                let groupName = groupID.prefix(1).lowercased() + groupID.dropFirst()
+                var identifier = A11yID.menu(groupName, name).rawValue
+                // `pane.close` e `tab.close` dariam o mesmo sufixo: o ActionID inteiro desempata.
+                if !ids.insert(identifier).inserted {
+                    identifier = A11yID.menu(groupName, id.rawValue + (argument.kind == .select ? "-" + (argument.value ?? "") : "")).rawValue
+                    ids.insert(identifier)
+                }
+                item.setAccessibilityIdentifier(identifier)
+                menu.addItem(item)
+            }
+        }
+    }
+
+    /// Atalho do item na tabela canônica: o chord pedido, ou o primeiro de escopo de menu.
+    static func binding(for id: ActionID, chord: String?, keys: KeyBindingRegistry) -> KeyBinding? {
+        let candidates = keys.bindings(for: id).filter { MenuLayout.menuScopes.contains($0.scope) && ($0.chord.menuKeyEquivalent != nil || $0.chord.isReservedForTerminal) }
+        if let chord, let wanted = KeyChord(chord) { return candidates.first { $0.chord == wanted } }
+        return MenuLayout.menuScopes.lazy.compactMap { scope in candidates.first { $0.scope == scope } }.first
+    }
+
+    /// Caminho de menu por `ActionID` (`Edit ▸ Find ▸ Find…`), só de itens com ação.
+    static func actionPaths(_ menu: NSMenu) -> [ActionID: [String]] {
+        var out: [ActionID: [String]] = [:]
+        func walk(_ m: NSMenu, _ path: [String]) {
+            for item in m.items {
+                if let a = item as? ActionMenuItem { out[a.actionID, default: []].append((path + [item.title]).joined(separator: " ▸ ")) }
+                if let sub = item.submenu { walk(sub, path + [item.title]) }
+            }
+        }
+        for top in menu.items { if let sub = top.submenu { walk(sub, [top.title]) } }
+        return out
     }
 }

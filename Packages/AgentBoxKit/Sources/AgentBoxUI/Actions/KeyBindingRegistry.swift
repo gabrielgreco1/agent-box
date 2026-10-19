@@ -51,7 +51,7 @@ public struct KeyChord: Hashable, Sendable, CustomStringConvertible {
     }
 
     /// Chord reservado ao terminal: ⌃ + letra, ⌥ + letra, ⌘←, ⌘→, ⌘⌫, ⇧↵, ⌥←, ⌥→ (03 §21).
-    public var isReservedForTerminal: Bool {
+    public nonisolated var isReservedForTerminal: Bool {
         let isLetter = key.count == 1 && key.first?.isLetter == true
         if modifiers == [.control] && isLetter { return true }
         if modifiers == [.option] && isLetter { return true }
