@@ -83,6 +83,15 @@ public final class TerminalSurfaceView: TerminalView {
         return nil
     }
 
+    /// Recalcula cols/rows a partir do frame atual (F31). O AppKit nem sempre chama `setFrameSize` por um caminho que o SwiftTerm
+    /// observa (colapso animado do split, painel que recolhe no último quadro): o frame cresce e o emulador fica com as colunas
+    /// antigas, então o PTY nunca recebe o tamanho novo. `setFrameSize` com o mesmo tamanho refaz a medição e dispara
+    /// `onResize` só se cols/rows mudaram.
+    public func syncTerminalSizeToFrame() {
+        guard window != nil || frame.width > 0 else { return }
+        setFrameSize(frame.size)
+    }
+
     // MARK: Saída para o PTY
 
     /// Quem recebe o que a view quer escrever no PTY. Pode ser chamado de qualquer thread; ordem preservada pelo sink.

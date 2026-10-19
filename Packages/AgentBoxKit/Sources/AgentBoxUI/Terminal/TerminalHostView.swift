@@ -54,6 +54,11 @@ public final class TerminalHostView: NSView {
 
     @available(*, unavailable) required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }  // required init?(coder:) não usado
 
+    public override func layout() {
+        super.layout()
+        surface.syncTerminalSizeToFrame()
+    }
+
     private func applyInset() {
         NSLayoutConstraint.deactivate(insetConstraints)
         let p = terminalAppearance.padding

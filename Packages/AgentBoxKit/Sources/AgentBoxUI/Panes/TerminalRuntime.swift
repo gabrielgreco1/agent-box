@@ -298,9 +298,29 @@ final class TerminalRuntime {
     /// Arrasto de divisor ou animação de painel em andamento: nenhum PTY recebe resize até acabar, e então cada um recebe um só
     /// (04 R2/MA6, 06 §1.8). O emulador da UI continua acompanhando o layout quadro a quadro.
     func setLayoutTransition(_ active: Bool) {
+        if active { transitionDepth += 1 } else { transitionDepth = max(0, transitionDepth - 1) }
+        let ending = !active && transitionDepth == 0
         for entry in entries.values {
             guard let coordinator = entry.binding?.resizeCoordinator else { continue }
-            if active { coordinator.beginTransition() } else { coordinator.endTransition() }
+            if active {
+                if transitionDepth == 1 { coordinator.beginTransition() }
+            } else if ending {
+                // F31: antes de fechar a transição, remede pelo frame final (o emulador pode ter ficado com as colunas antigas).
+                entry.host.layoutSubtreeIfNeeded()
+                entry.host.surface.syncTerminalSizeToFrame()
+                coordinator.endTransition()
+            }
+        }
+    }
+
+    /// Transições abertas (arrasto de divisor, animação de painel/sidebar); só a última a fechar libera o resize.
+    private var transitionDepth = 0
+
+    /// Remede todos os terminais pelo frame atual (layout mudou fora de um arrasto: abrir/fechar painel, esconder a sidebar).
+    func syncSizesToLayout() {
+        for entry in entries.values where entry.binding != nil {
+            entry.host.layoutSubtreeIfNeeded()
+            entry.host.surface.syncTerminalSizeToFrame()
         }
     }
 

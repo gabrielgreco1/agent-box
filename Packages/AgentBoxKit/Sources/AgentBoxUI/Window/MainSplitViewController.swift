@@ -181,6 +181,7 @@ final class MainSplitViewController: NSSplitViewController {
         defer { applyingPanelWidth = false }
         rightItem.isCollapsed = collapsed
         splitView.layoutSubtreeIfNeeded()
+        env.workspace.runtime.syncSizesToLayout()
     }
 
     private func setRightWidth(_ width: CGFloat) {
@@ -189,14 +190,28 @@ final class MainSplitViewController: NSSplitViewController {
         defer { applyingPanelWidth = false }
         splitView.setPosition(max(0, splitView.bounds.width - width), ofDividerAt: 1)
         splitView.layoutSubtreeIfNeeded()
+        env.workspace.runtime.syncSizesToLayout()
     }
 
     func setSidebarCollapsed(_ collapsed: Bool) {
         guard sidebarItem.isCollapsed != collapsed else { return }
+        let runtime = env.workspace.runtime
         if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
             sidebarItem.isCollapsed = collapsed
+            splitView.layoutSubtreeIfNeeded()
+            runtime.syncSizesToLayout()
         } else {
-            sidebarItem.animator().isCollapsed = collapsed
+            // F31: o colapso animado é uma transição de layout: nenhum resize de PTY durante os quadros e um só no fim,
+            // medido pelo frame final (o completion roda depois do último quadro).
+            runtime.setLayoutTransition(true)
+            NSAnimationContext.runAnimationGroup(
+                { _ in sidebarItem.animator().isCollapsed = collapsed },
+                completionHandler: { [weak self] in
+                    MainActor.assumeIsolated {
+                        self?.splitView.layoutSubtreeIfNeeded()
+                        runtime.setLayoutTransition(false)
+                    }
+                })
         }
     }
 }

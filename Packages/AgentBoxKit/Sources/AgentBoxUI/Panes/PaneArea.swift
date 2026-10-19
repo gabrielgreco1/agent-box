@@ -467,6 +467,8 @@ final class PaneDividerView: NSView {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
     override func mouseDown(with event: NSEvent) {
+        // Arrasto de divisor (F31): os PTYs seguram o resize até soltar; `mouseUp` fecha a transição e cada pane recebe um só.
+        model.runtime.setLayoutTransition(true)
         if event.clickCount == 2 { model.equalizeDivider(at: geometry.path) }
     }
 
@@ -485,6 +487,7 @@ final class PaneDividerView: NSView {
     }
 
     override func mouseUp(with event: NSEvent) {
+        defer { model.runtime.setLayoutTransition(false) }
         guard event.clickCount < 2 else { return }
         model.setRatio(at: geometry.path, ratio: lastRatio, final: true)
     }

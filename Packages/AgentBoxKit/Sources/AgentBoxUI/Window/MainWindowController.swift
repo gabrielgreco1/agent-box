@@ -73,6 +73,8 @@ final class AgentBoxWindow: NSWindow {
 public final class MainWindowController: NSWindowController, NSWindowDelegate {
     private let env: AppEnvironment
     private let split: MainSplitViewController
+    /// O split principal (sidebar, centro, painel direito); testes arrastam os divisores por ele.
+    var splitView: NSSplitView { split.splitView }
     private let container: ChromeContainerView
     private let strip: ChromeHostingView
     private let panelButtons: ChromeHostingView
