@@ -840,6 +840,11 @@ extension A11yID {
         A11yID(unchecked: "pane.\(A11yID.segment(id)).approval.deny")
     }
 
+    /// `pane.<id>.approval.proxy`
+    public static func paneApprovalProxy(_ id: String) -> A11yID {
+        A11yID(unchecked: "pane.\(A11yID.segment(id)).approval.proxy")
+    }
+
     /// `pane.<id>.ignition`
     public static func paneIgnition(_ id: String) -> A11yID {
         A11yID(unchecked: "pane.\(A11yID.segment(id)).ignition")
@@ -1430,6 +1435,7 @@ extension A11yID {
         A11yIDSpec(pattern: "pane.<id>.approval.allow", surface: "Panes"),
         A11yIDSpec(pattern: "pane.<id>.approval.allowSession", surface: "Panes"),
         A11yIDSpec(pattern: "pane.<id>.approval.deny", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.<id>.approval.proxy", surface: "Panes"),
         A11yIDSpec(pattern: "pane.<id>.ignition", surface: "Panes"),
         A11yIDSpec(pattern: "pane.<id>.ignition.cancel", surface: "Panes"),
         A11yIDSpec(pattern: "pane.<id>.ignition.step.<stepKey>", surface: "Panes"),

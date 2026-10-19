@@ -201,7 +201,7 @@ final class SubagentComputersController {
 
 enum SubagentMetrics {
     static let menuWidth: CGFloat = 260
-    static let cardWidth: CGFloat = 560
+    static let cardWidth: CGFloat = 620
     static let cardHeight: CGFloat = 72
     static let cardTop = DS.Space.s3
     static let iconBox = DS.Space.s8
@@ -399,6 +399,11 @@ struct ComputerApprovalCard: View {
             }
             Spacer(minLength: DS.Space.s2)
             HStack(spacing: DS.Space.s1_5) {
+                if !spawn {
+                    DSButton(
+                        .computerRequestProxy, id: .paneApprovalProxy(id), LocalizedStringKey(request.proxyLabel), variant: .ghost, size: .xs, symbol: "network",
+                        argument: .select(id))
+                }
                 DSButton(.computerDenyRequest, id: .paneApprovalDeny(id), "Deny", variant: .ghost, size: .xs, argument: .select(id))
                 DSButton(.computerAllowRequestSession, id: .paneApprovalAllowSession(id), "Allow for this session", variant: .outline, size: .xs, argument: .select(id))
                 DSButton(.computerAllowRequest, id: .paneApprovalAllow(id), "Allow", variant: .primary, size: .xs, argument: .select(id))
@@ -428,7 +433,7 @@ struct ComputerApprovalCard: View {
         if spawn {
             return [request.subject, String(localized: "A computer gives it a browser, a shell and a request log.", bundle: .module)].compactMap { $0 }.joined(separator: " · ")
         }
-        return "\(request.computerName) · \(request.displayLabel) · \(request.proxyLabel)"
+        return "\(request.computerName) · \(request.displayLabel)"  // o proxy fica no botão ao lado (F29)
     }
 }
 

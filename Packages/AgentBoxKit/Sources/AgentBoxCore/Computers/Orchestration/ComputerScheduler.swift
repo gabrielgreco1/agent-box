@@ -58,6 +58,21 @@ extension ComputerProvisioning {
     public func preflight() async throws {}
 }
 
+/// F29: de onde o scheduler sabe quais proxies existem e qual é o padrão global (Settings). `nil` no scheduler = sem proxies (tudo `direct`).
+public protocol ProxyDirectory: Sendable {
+    /// Nomes dos `ProxyProfile` salvos.
+    func names() async -> [String]
+    /// Nome do proxy padrão global (`nil` = `direct`).
+    func globalDefault() async -> String?
+}
+
+public struct StoreProxyDirectory: ProxyDirectory {
+    public let store: AgentBoxStore
+    public init(store: AgentBoxStore) { self.store = store }
+    public func names() async -> [String] { ((try? await store.proxies()) ?? []).map(\.name) }
+    public func globalDefault() async -> String? { try? await store.defaultProxy()?.name }
+}
+
 /// Ferramentas do pai (`boxes_reserve`, `boxes_status`, `boxes_release`, `agent_message`). `parent` é a identidade MCP autenticada.
 public protocol ParentOrchestrating: Sendable {
     func reserve(parent: String, _ request: ReserveRequest) async -> JSON
@@ -96,6 +111,9 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
     private let capacity: @Sendable () async -> VMCapacity
     private let runDirectory: @Sendable (_ parent: String, _ name: String) -> URL
     private let store: AgentBoxStore?
+    private let proxies: (any ProxyDirectory)?
+    /// Proxy padrão da sessão do pai (escolhido no card de aprovação); `nil` = usar o padrão global.
+    private let sessionProxy: @Sendable (_ parent: String) async -> String?
     private let now: @Sendable () -> Date
     private let log = LogFacade(.app, category: "scheduler")
     private var tracker: EstimateTracker
@@ -113,8 +131,10 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
         hub: ComputerHub, provisioning: any ComputerProvisioning, capacity: @escaping @Sendable () async -> VMCapacity,
         runDirectory: @escaping @Sendable (_ parent: String, _ name: String) -> URL, store: AgentBoxStore? = nil,
         maxParallelCreations: Int = ComputerScheduler.defaultMaxParallelCreations, fixedEstimates: Bool? = nil,
+        proxies: (any ProxyDirectory)? = nil, sessionProxy: @escaping @Sendable (_ parent: String) async -> String? = { _ in nil },
         now: @escaping @Sendable () -> Date = { Date() }
     ) {
+        self.proxies = proxies; self.sessionProxy = sessionProxy
         self.hub = hub; self.provisioning = provisioning; self.capacity = capacity; self.runDirectory = runDirectory; self.store = store
         self.permits = max(1, maxParallelCreations); self.now = now
         // Nos testes (`AGENTBOX_CAPACITY_ESTIMATES=fixed`) a tabela inicial fica fixa para os aceites serem determinísticos (CS-130).
@@ -164,6 +184,29 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
         return .object(out)
     }
 
+    struct ProxyChoiceError: Error { var message: String }
+
+    /// F29: `proxy` do `boxes_reserve` (nome de um ProxyProfile) > padrão da sessão (card de aprovação) > padrão global (Settings) > `direct`.
+    func resolveProxy(parent: String, requested: String?) async -> Result<String, ProxyChoiceError> {
+        func isDirect(_ n: String) -> Bool { n.isEmpty || n.lowercased() == "direct" || n.lowercased() == "none" }
+        let known = await proxies?.names() ?? []
+        if let requested, !requested.isEmpty {
+            if isDirect(requested) { return .success("direct") }
+            if let match = known.first(where: { $0 == requested }) ?? known.first(where: { $0.lowercased() == requested.lowercased() }) { return .success(match) }
+            let list = known.isEmpty ? "none are configured (Settings > Computers > Proxies)" : known.sorted().joined(separator: ", ")
+            return .failure(ProxyChoiceError(message: "unknown proxy \(requested); available: \(list). Omit `proxy` to use the user's default."))
+        }
+        if let chosen = await sessionProxy(parent), !isDirect(chosen) { return .success(chosen) }
+        if let global = await proxies?.globalDefault(), !isDirect(global) { return .success(global) }
+        return .success("direct")
+    }
+
+    /// O proxy que uma reserva sem `proxy` receberia (o card de aprovação mostra isto).
+    public func effectiveProxy(parent: String, requested: String?) async -> String {
+        if case .success(let name) = await resolveProxy(parent: parent, requested: requested) { return name }
+        return requested ?? "direct"
+    }
+
     private func unavailable(_ name: String, _ reason: String, _ message: String) -> JSON {
         ["name": .string(name), "state": "unavailable", "reason": .string(reason), "message": .string(message)]
     }
@@ -179,9 +222,14 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
         if let profile = request.profile, entries.values.contains(where: { $0.spec.profile == profile && $0.phase != .failed }) {
             return unavailable(name, "profile_busy", "browser profile \(profile) is in use by another computer")
         }
+        let proxy: String
+        switch await resolveProxy(parent: parent, requested: request.proxy) {
+        case .success(let name): proxy = name
+        case .failure(let failure): return unavailable(name, "unknown_proxy", failure.message)
+        }
         let children = await hub.children(of: parent)
         let spec0 = ComputerSpec(
-            name: name, parent: parent, display: request.display, profile: request.profile, proxy: request.proxy ?? "direct",
+            name: name, parent: parent, display: request.display, profile: request.profile, proxy: proxy,
             proxiesAllowed: request.proxiesAllowed, allowHosts: request.allowHosts, batch: request.batch,
             run: RunFolder(root: runDirectory(parent, name)))
         let lazy = LazyComputerBackend()

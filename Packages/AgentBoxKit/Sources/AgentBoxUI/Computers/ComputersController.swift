@@ -37,6 +37,9 @@ public final class ComputersController {
     /// F28: o viewer só fecha depois da resposta do overlay `Hand back to <Agent>?`.
     public private(set) var pendingExit: PendingViewerExit?
     /// F28: um lease humano ocioso voltou sozinho ao agente (o app mostra o toast `Control returned to <Agent>`).
+    /// F29: nomes dos proxies salvos (Settings › Computers › Proxies) e o menu do card de aprovação; ligados pelo app.
+    @ObservationIgnored public var proxyNames: () async -> [String] = { [] }
+    @ObservationIgnored public var presentProxyMenu: (_ request: ComputerApprovalRequest, _ names: [String]) -> Void = { _, _ in }
     @ObservationIgnored public var onControlReturned: (_ computer: String, _ agent: String) -> Void = { _, _ in }
     @ObservationIgnored public var onPageChange: () -> Void = {}
     /// Histórico de navegação: a página do centro mudou (independe do `onPageChange`, que a janela já usa).
@@ -89,6 +92,7 @@ public final class ComputersController {
             onRemove: { name in Task { @MainActor in model.detach(name: name) } })
         await orchestrator.approvals.setObserver { requests in Task { @MainActor in model.setApprovals(requests) } }
         model.decide = { id, decision in Task { await orchestrator.approvals.decide(id: id, decision) } }
+        model.chooseProxy = { id, proxy in Task { await orchestrator.approvals.setProxy(id: id, proxy: proxy) } }
     }
 
     public func add(_ computer: ManagedComputer) async {
@@ -349,6 +353,20 @@ public final class ComputersController {
         try decision(.computerAllowRequest, .allow)
         try decision(.computerAllowRequestSession, .allowForSession)
         try decision(.computerDenyRequest, .deny)
+        // F29: o card de aprovação escolhe o proxy (o menu lista `Direct` + os proxies salvos).
+        try registry.register(.computerRequestProxy, enablement: waiting) { [unowned self] arg in
+            let parts = (arg.value ?? "").split(separator: "|", maxSplits: 1).map(String.init)
+            guard let request = parts.first.flatMap({ value in model.approvals.first { $0.id == value } }) ?? model.approvals.first else {
+                throw ActionError.failed(.computerRequestProxy, message: "No computer request is waiting.")
+            }
+            guard parts.count == 2 else {
+                presentProxyMenu(request, await proxyNames())
+                return "menu"
+            }
+            let proxy = parts[1] == "direct" ? nil : parts[1]
+            model.chooseProxy(request.id, proxy)
+            return proxy ?? "direct"
+        }
         try registry.register(.computerShowPreview, enablement: hasComputer) { [unowned self] arg in
             guard arg.kind == .select, let name = arg.value else {
                 hoverCards?.hide()

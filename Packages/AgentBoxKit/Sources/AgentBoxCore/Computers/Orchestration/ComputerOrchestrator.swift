@@ -21,22 +21,28 @@ public final class ComputerOrchestrator: Sendable {
     /// `waitSeconds`: quanto uma chamada de `boxes_reserve` espera a decisão do Ask antes de devolver `pending` (45 s no app).
     public init(
         helperPath: String, store: AgentBoxStore?, provisioning: AppComputerProvisioning, runsRoot: URL, waitSeconds: TimeInterval = 45,
-        fixedEstimates: Bool? = nil, maxParallelCreations: Int = ComputerScheduler.defaultMaxParallelCreations
+        fixedEstimates: Bool? = nil, maxParallelCreations: Int = ComputerScheduler.defaultMaxParallelCreations,
+        proxies: (any ProxyDirectory)? = nil
     ) {
         self.helperPath = helperPath
         self.provisioning = provisioning
         let hub = ComputerHub()
         self.hub = hub
+        let parents = ParentDirectory()
+        self.parents = parents
         scheduler = ComputerScheduler(
             hub: hub, provisioning: provisioning, capacity: { await provisioning.vmCapacity() },
             runDirectory: { parent, name in runsRoot.appendingPathComponent("\(parent.prefix(8))/\(name)", isDirectory: true) },
-            store: store, maxParallelCreations: maxParallelCreations, fixedEstimates: fixedEstimates)
+            store: store, maxParallelCreations: maxParallelCreations, fixedEstimates: fixedEstimates, proxies: proxies,
+            sessionProxy: { parent in await parents.info(parent)?.proxy })
         let approvals = ComputerApprovalCenter()
         self.approvals = approvals
-        let parents = ParentDirectory()
-        self.parents = parents
+        let scheduler = scheduler
         tools = ComputerToolService(
-            hub: hub, orchestrator: scheduler, gate: SubagentComputersGate(parents: parents, approvals: approvals, waitSeconds: waitSeconds))
+            hub: hub, orchestrator: scheduler,
+            gate: SubagentComputersGate(
+                parents: parents, approvals: approvals, waitSeconds: waitSeconds,
+                effectiveProxy: { parent, requested in await scheduler.effectiveProxy(parent: parent, requested: requested) }))
         server = ComputerMCPServer(tools: tools)
     }
 
@@ -59,6 +65,8 @@ public final class ComputerOrchestrator: Sendable {
     /// Por lançamento do Claude pai (Ask ou Full): peças de injeção já registradas. Chamar de novo (Resume) gera identidades novas.
     public func prepareParent(_ info: ParentInfo, options: OrchestrationInjectionBuilder.Options = .init()) async throws -> OrchestrationBundle {
         precondition(info.mode.isOn, "prepareParent só vale com Subagent computers ligado")
+        var info = info
+        if info.proxy == nil, let session = info.sessionID { info.proxy = await parents.proxy(forSession: session) }
         var bundle = try OrchestrationInjectionBuilder.make(parentID: info.parentID, helperPath: helperPath, options: options)
         bundle.spawnGuardMode = info.mode
         await parents.register(info)

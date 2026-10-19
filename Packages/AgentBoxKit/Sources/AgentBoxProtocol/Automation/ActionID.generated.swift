@@ -239,6 +239,7 @@ extension ActionID {
     public static let computerAllowRequest = ActionID(unchecked: "computer.allowRequest")
     public static let computerAllowRequestSession = ActionID(unchecked: "computer.allowRequestSession")
     public static let computerDenyRequest = ActionID(unchecked: "computer.denyRequest")
+    public static let computerRequestProxy = ActionID(unchecked: "computer.requestProxy")
     public static let computerStart = ActionID(unchecked: "computer.start")
     public static let computerStop = ActionID(unchecked: "computer.stop")
     public static let computerDelete = ActionID(unchecked: "computer.delete")
@@ -637,6 +638,7 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "computer.allowRequest"), label: "Allow", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "computer.allowRequestSession"), label: "Allow for this session", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "computer.denyRequest"), label: "Deny (pedido de computador)", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "computer.requestProxy"), label: "Escolher o proxy do pedido de computador", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "computer.start"), label: "Start Computer", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "computer.stop"), label: "Stop Computer…", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "computer.delete"), label: "Delete Computer…", shortcut: "", slice: .slice3),

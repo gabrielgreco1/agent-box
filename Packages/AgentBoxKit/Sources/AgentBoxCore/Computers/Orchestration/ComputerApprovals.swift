@@ -81,6 +81,7 @@ public actor ComputerApprovalCenter {
     private var entries: [String: Entry] = [:]
     private var order: [String] = []
     private var allowedSessions: Set<String> = []
+    private var chosenProxies: [String: String] = [:]
     /// "Allow" do gatilho de spawn vale para a próxima reserva do mesmo pai (sem um segundo card).
     private var grants: [String: Int] = [:]
     private var observer: (@Sendable ([ComputerApprovalRequest]) -> Void)?
@@ -162,6 +163,19 @@ public actor ComputerApprovalCenter {
         continuation.resume()
     }
 
+    /// F29: o usuário escolheu o proxy no card. Vale para este pedido e vira o padrão da sessão. `nil` = Direct.
+    @discardableResult
+    public func setProxy(id: String, proxy: String?) -> Bool {
+        guard entries[id] != nil, entries[id]?.decision == nil else { return false }
+        entries[id]?.request.proxy = proxy ?? "direct"
+        if let parent = entries[id]?.request.parentID { chosenProxies[parent] = proxy ?? "direct" }
+        notify()
+        return true
+    }
+
+    /// Proxy que o usuário escolheu no card de um pedido do pai (consumido na autorização).
+    func takeChosenProxy(parent: String) -> String? { chosenProxies.removeValue(forKey: parent) }
+
     /// A decisão do usuário. `false` se o pedido já não existe (outro clique, pai encerrado).
     @discardableResult
     public func decide(id: String, _ decision: ComputerApprovalDecision) -> Bool {
@@ -198,6 +212,8 @@ public actor ComputerApprovalCenter {
 /// O que o `ComputerToolService` pergunta antes de reservar para o pai.
 public enum ReserveAuthorization: Sendable, Equatable {
     case proceed
+    /// F29: o usuário escolheu este proxy no card de aprovação; vale no lugar do que o agente pediu.
+    case proceedWith(proxy: String)
     /// Sem decisão ainda: devolve isto ao pai (não é erro) e ele repete a chamada.
     case pending(JSON)
 }
@@ -224,8 +240,10 @@ public struct ParentInfo: Sendable, Equatable {
     public var sessionID: UUID?
     public var sessionTitle: String
     public var mode: SubagentComputersMode
-    public init(parentID: String, sessionID: UUID?, sessionTitle: String, mode: SubagentComputersMode) {
-        self.parentID = parentID; self.sessionID = sessionID; self.sessionTitle = sessionTitle; self.mode = mode
+    /// F29: proxy padrão da sessão (card de aprovação, composer); `nil` = padrão global de Settings.
+    public var proxy: String?
+    public init(parentID: String, sessionID: UUID?, sessionTitle: String, mode: SubagentComputersMode, proxy: String? = nil) {
+        self.parentID = parentID; self.sessionID = sessionID; self.sessionTitle = sessionTitle; self.mode = mode; self.proxy = proxy
     }
 }
 
@@ -234,6 +252,14 @@ public actor ParentDirectory {
     public init() {}
     public func register(_ info: ParentInfo) { parents[info.parentID] = info }
     public func remove(_ parentID: String) { parents[parentID] = nil }
+    /// F29: escolhe o proxy padrão da sessão do pai (e das próximas reservas dele); `nil` volta ao padrão global.
+    public func setProxy(_ proxy: String?, for parentID: String) {
+        parents[parentID]?.proxy = proxy
+        if let session = parents[parentID]?.sessionID { sessionProxies[session] = proxy }
+    }
+    /// O proxy escolhido para a sessão (o Claude relançado ganha identidade nova, a sessão não muda).
+    public func proxy(forSession id: UUID) -> String? { sessionProxies[id] }
+    private var sessionProxies: [UUID: String] = [:]
     public func info(_ parentID: String) -> ParentInfo? { parents[parentID] }
     public var all: [ParentInfo] { Array(parents.values) }
 }
@@ -246,11 +272,15 @@ public struct SubagentComputersGate: ReserveGating {
     public var waitSeconds: TimeInterval
     /// Quanto o gatilho de spawn espera o card antes de deixar o subagente comum seguir (menos que o prazo do hook).
     public var spawnWaitSeconds: TimeInterval
+    /// F29: o proxy que o scheduler aplicaria (para o card mostrar o efetivo).
+    public var effectiveProxy: (@Sendable (_ parent: String, _ requested: String?) async -> String)?
 
     public init(
         parents: ParentDirectory, approvals: ComputerApprovalCenter, waitSeconds: TimeInterval = 45,
-        spawnWaitSeconds: TimeInterval = TimeInterval(SubagentSpawnGuard.appBudgetSeconds)
+        spawnWaitSeconds: TimeInterval = TimeInterval(SubagentSpawnGuard.appBudgetSeconds),
+        effectiveProxy: (@Sendable (_ parent: String, _ requested: String?) async -> String)? = nil
     ) {
+        self.effectiveProxy = effectiveProxy
         self.parents = parents; self.approvals = approvals; self.waitSeconds = waitSeconds; self.spawnWaitSeconds = spawnWaitSeconds
     }
 
@@ -281,11 +311,18 @@ public struct SubagentComputersGate: ReserveGating {
             throw ToolError(.blockedByPolicy, "Subagent computers is off for this session; use normal subagents. The user can turn it on in the session settings.")
         }
         if info.mode == .full { return .proceed }
+        // F29: o card mostra o proxy que a reserva receberia (pedido do agente > padrão da sessão > padrão global).
+        let shown = await effectiveProxy?(parent, request.proxy) ?? request.proxy ?? "direct"
         let asked = ComputerApprovalRequest(
             parentID: parent, sessionID: info.sessionID, sessionTitle: info.sessionTitle, names: request.names, display: request.display,
-            proxy: request.proxy ?? "direct")
+            proxy: shown)
         switch await approvals.authorize(asked, waitS: waitSeconds) {
-        case .allowed: return .proceed
+        case .allowed:
+            if let chosen = await approvals.takeChosenProxy(parent: parent) {
+                await parents.setProxy(chosen == "direct" ? nil : chosen, for: parent)
+                return .proceedWith(proxy: chosen)
+            }
+            return .proceed
         case .denied:
             throw ToolError(
                 .blockedByPolicy,

@@ -134,6 +134,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `pane.<id>.approval.allow`
 - `pane.<id>.approval.allowSession`
 - `pane.<id>.approval.deny`
+- `pane.<id>.approval.proxy`
 - `pane.<id>.ignition`
 - `pane.<id>.ignition.cancel`
 - `pane.<id>.ignition.step.<stepKey>`
@@ -729,6 +730,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `computer.allowRequest` | Allow | — | slice3 |
 | `computer.allowRequestSession` | Allow for this session | — | slice3 |
 | `computer.denyRequest` | Deny (pedido de computador) | — | slice3 |
+| `computer.requestProxy` | Escolher o proxy do pedido de computador | — | slice3 |
 | `computer.start` | Start Computer | — | slice3 |
 | `computer.stop` | Stop Computer… | — | slice3 |
 | `computer.delete` | Delete Computer… | — | slice3 |

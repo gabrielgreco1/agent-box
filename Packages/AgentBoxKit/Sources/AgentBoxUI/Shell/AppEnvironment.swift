@@ -222,6 +222,19 @@ public final class AppEnvironment {
         do { try subagentComputers.register(in: registry) } catch { log.publicError("duplicate subagent computers registration") }
         subagentHoverCards = SubagentHoverCardController(computers: computers, registry: registry, elements: elements)
         computers.hoverCards = subagentHoverCards
+        // F29: menu `Direct` + proxies salvos no card de aprovação.
+        computers.presentProxyMenu = { [weak self] request, names in
+            guard let self else { return }
+            let id = request.id
+            let entries: [DSMenuEntry] = (["direct"] + names.sorted()).map { name in
+                .item(DSMenuItem(
+                    name, name == "direct" ? String(localized: "Direct", bundle: .module) : name, icon: .symbol("network"),
+                    checked: request.proxy == name || (name == "direct" && request.proxy == "direct"),
+                    action: .computerRequestProxy, argument: .select("\(id)|\(name)")))
+            }
+            let anchor = self.elements.frame(of: .paneApprovalProxy(id)) ?? .zero
+            _ = DSMenuPanel.present(router: self.overlays, registry: self.registry, name: "approvalProxy", anchor: anchor, width: 220, entries: entries, alignment: .trailing)
+        }
         computers.model.sessionTitle = { [computers, sidebar] name in computers.model.sessionIDs[name].flatMap { sidebar.session($0)?.title } }
         wireNavigation()
         workspace.pageCloser = { [computers] in

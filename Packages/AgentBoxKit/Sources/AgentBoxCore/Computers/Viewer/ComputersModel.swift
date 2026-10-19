@@ -60,6 +60,8 @@ public final class ComputersModel {
     public var sessionTitle: (String) -> String? = { _ in nil }
     /// Decisão do usuário sobre um pedido (o app liga ao `ComputerApprovalCenter`).
     @ObservationIgnored public var decide: (String, ComputerApprovalDecision) -> Void = { _, _ in }
+    /// F29: o proxy escolhido no card do pedido (`nil` = Direct).
+    @ObservationIgnored public var chooseProxy: (String, String?) -> Void = { _, _ in }
     @ObservationIgnored public var onApprovalRequested: (ComputerApprovalRequest) -> Void = { _ in }
     private var announcedApprovals: Set<String> = []
     @ObservationIgnored public var onHelpRequested: (InboxItem, HelpNotificationContent) -> Void = { _, _ in }

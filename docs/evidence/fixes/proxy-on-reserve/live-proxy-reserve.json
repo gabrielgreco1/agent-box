@@ -1,0 +1,11 @@
+{
+  "cleanup" : {
+    "leftover_images" : 0,
+    "leftover_resources" : 0
+  },
+  "upstream_connects" : 2,
+  "via_explicit" : "test-up",
+  "via_forced_direct" : "direct",
+  "via_global_default" : "test-up",
+  "via_none" : "direct"
+}

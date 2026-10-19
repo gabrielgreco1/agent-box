@@ -12,6 +12,7 @@ import Testing
 /// Provisionador falso: cada `provision` pode esperar um portão, falhar ou demorar, e registra o pico de criações simultâneas.
 actor FakeProvisioning: ComputerProvisioning {
     private(set) var provisioned: [String] = []
+    private(set) var specs: [String: ComputerSpec] = [:]
     private(set) var tornDown: [String] = []
     private(set) var inFlight = 0
     private(set) var peak = 0
@@ -39,6 +40,7 @@ actor FakeProvisioning: ComputerProvisioning {
         if delay > .zero { try? await Task.sleep(for: delay) }
         if failing.contains(spec.name) { throw ToolError(.boxRestarted, "boom") }
         provisioned.append(spec.name)
+        specs[spec.name] = spec
         let name = spec.name
         return ProvisionedHandle(backend: backend) { await self.recordTeardown(name) }
     }
@@ -65,6 +67,7 @@ struct SchedulerRig {
     static let twentyEightGB = VMCapacity(memTotalBytes: Int64(27.7 * Double(1 << 30)), cpuCount: 14)
 
     static func make(vm: VMCapacity = eightGB, workers: Int = 8, maxParallel: Int = 4, parent: String = "parent-aaaaaaaa", store: AgentBoxStore? = nil,
+                     proxies: (any ProxyDirectory)? = nil, sessionProxy: @escaping @Sendable (String) async -> String? = { _ in nil },
                      now: @escaping @Sendable () -> Date = { Date() }) async throws -> SchedulerRig {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("abx-sched-\(UUID().uuidString.lowercased())", isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
@@ -72,7 +75,7 @@ struct SchedulerRig {
         let provisioning = FakeProvisioning()
         let scheduler = ComputerScheduler(
             hub: hub, provisioning: provisioning, capacity: { vm }, runDirectory: { p, n in root.appendingPathComponent("\(p)/\(n)", isDirectory: true) },
-            store: store, maxParallelCreations: maxParallel, fixedEstimates: true, now: now)
+            store: store, maxParallelCreations: maxParallel, fixedEstimates: true, proxies: proxies, sessionProxy: sessionProxy, now: now)
         await scheduler.attach()
         let service = ComputerToolService(hub: hub, orchestrator: scheduler)
         let bundle = try OrchestrationInjectionBuilder.make(

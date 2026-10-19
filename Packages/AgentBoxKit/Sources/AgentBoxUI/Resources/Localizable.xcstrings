@@ -6578,6 +6578,17 @@
           }
         }
       }
+    },
+    "Direct": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Direct"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

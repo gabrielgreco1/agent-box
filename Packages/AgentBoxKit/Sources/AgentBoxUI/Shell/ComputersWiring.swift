@@ -34,11 +34,19 @@ extension AppEnvironment {
             if let bridge = environmentVariables["AGENTBOX_COMPUTER_BRIDGE"], !bridge.isEmpty { config.network = bridge }
             config.allowCIDRs = (environmentVariables["AGENTBOX_ALLOW_CIDRS"] ?? "").split(separator: ",").map { String($0) }
         }
+        // F29: `boxes_reserve(proxy:)` e `proxy_set` resolvem o nome para o ProxyProfile salvo (segredo no Vault, só para o egress).
+        let proxyService = ProxyService(store: store, vault: SecretVault(store: store, keyring: VaultKeyring(backend: SystemKeychainBackend())))
+        config.resolver = { name, country in
+            guard let profile = try await store.proxy(named: name) else { throw ProxyServiceError.unknownProxy(name) }
+            var resolved = try await proxyService.egressConfig(for: profile.id)
+            if let country, var upstream = resolved.config.upstream { upstream.geoCountry = country; resolved.config.upstream = upstream }
+            return resolved
+        }
         let provisioning = AppComputerProvisioning(config: config)
         let wait = environmentVariables["AGENTBOX_ASK_WAIT_S"].flatMap(TimeInterval.init) ?? 45
         let orchestrator = ComputerOrchestrator(
             helperPath: helper, store: store, provisioning: provisioning, runsRoot: root.appendingPathComponent("computers/runs", isDirectory: true),
-            waitSeconds: wait)
+            waitSeconds: wait, proxies: StoreProxyDirectory(store: store))
         orchestratorHolder.set(orchestrator)
         let toasts = toasts
         let settings = settings
@@ -67,6 +75,7 @@ extension AppEnvironment {
                         action: ToastAction(.dockerStart, title: String(localized: "Open Docker", bundle: .module)))
                 }
             })
+        computers.proxyNames = { await StoreProxyDirectory(store: store).names() }
         await computers.useOrchestrator(orchestrator)
         computers.startRefreshing()
         computerSweeper?.cancel()

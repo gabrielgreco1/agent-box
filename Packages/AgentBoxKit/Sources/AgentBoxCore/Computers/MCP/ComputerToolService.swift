@@ -224,11 +224,17 @@ public actor ComputerToolService {
         switch name {
         case "boxes_reserve":
             let display = args.string("display").flatMap(ComputerDisplay.init(rawValue:)) ?? .headless
-            let request = ReserveRequest(
+            var request = ReserveRequest(
                 names: args.strings("names") ?? [], display: display, profile: args.string("profile"), proxy: args.string("proxy"),
                 proxiesAllowed: args.strings("proxies_allowed") ?? [], batch: args.string("batch"), keep24h: args.string("keep") == "24h",
                 allowHosts: (args.strings("allow_hosts") ?? []).compactMap(Self.normalizedHost))
-            if let gate, case .pending(let waiting) = try await gate.authorize(parent: parent, request) { return ToolResult(waiting) }
+            if let gate {
+                switch try await gate.authorize(parent: parent, request) {
+                case .pending(let waiting): return ToolResult(waiting)
+                case .proceedWith(let proxy): request.proxy = proxy
+                case .proceed: break
+                }
+            }
             return ToolResult(await orchestrator.reserve(parent: parent, request))
         case "boxes_status": return ToolResult(await orchestrator.status(parent: parent, names: args.strings("names"), batch: args.string("batch")))
         case "boxes_release": return ToolResult(await orchestrator.release(parent: parent, names: args.strings("names") ?? [], keep24h: args.string("keep") == "24h"))

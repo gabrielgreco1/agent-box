@@ -9,6 +9,7 @@ public enum ProxyServiceError: Error, Sendable, Equatable {
     case importNotConfirmed
     case cliEnvNotFound(String)
     case cliKeyNotFound
+    case unknownProxy(String)
 }
 
 /// Resultado de `importZyteFromCLI`. Nunca carrega o valor da chave.
