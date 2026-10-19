@@ -141,16 +141,23 @@ import Testing
             }
 
             let motion = cast.projects[0], otter = cast.projects[1]
+            // A rolagem da lista usa overlay (DS §12.24), mas o `NSScrollView` só troca de estilo depois do primeiro quadro e,
+            // com mouse ligado ou "Always show scroll bars", o sistema reserva ~15 pt. O teste mede a largura da coluna de
+            // conteúdo (280 menos a rolagem que o sistema reservou) e, assim, não depende do estilo de scroller da máquina.
+            let projectFrame: UIFrame? = tree.find(.sidebarProject(motion.id.uuidString))?.frame
+            let reserved: Double = 264 - (projectFrame?.width ?? 264)
+            #expect(reserved == 0 || (reserved > 0 && reserved <= 20), "rolagem reservada \(reserved) \(note)")
             if size.height >= 900 {
             let row = try #require(tree.find(.sidebarProject(motion.id.uuidString))?.frame, "project row \(note)")
-            #expect(row.height == 28 && row.x == 8 && row.width == 264, "project row \(note): \(row)")
+            #expect(row.height == 28 && row.x == 8 && row.width == 264 - reserved, "project row \(note): \(row)")
 
             // O primeiro card do projeto começa 6 pt (padding vertical) abaixo da linha do projeto.
             let main = try #require(tree.find(.sidebarSession(cast.selectedSessionID!.uuidString))?.frame, "card header \(note)")
             #expect(main.y == row.y + row.height + 6, "padding vertical do card \(note): \(main.y) vs \(row.y + row.height)")
             #expect(main.height == 40, "linha 1 (20) + gap 6 + linha 2 (14) \(note)")
             #expect(main.x == 8 + 4 + 8, "margem 4 + padding \(note)")
-            #expect(main.width == 280 - 16 - 4 - 6 - 16, "margem direita 6 \(note)")
+            let expectedWidth: Double = 280 - 16 - 4 - 6 - 16 - reserved
+            #expect(main.width == expectedWidth, "margem direita 6 \(note)")
 
             let agent = cast.terminals.first { t in cast.tabs.first { $0.id == t.tabID }?.sessionID == cast.selectedSessionID }!
             let agentRow = try #require(tree.find(.sidebarSessionAgent(cast.selectedSessionID!.uuidString, agent.id.uuidString))?.frame, "agent row \(note)")

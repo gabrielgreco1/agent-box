@@ -309,9 +309,12 @@ import Testing
         #expect(env.sidebar.inboxFeed.rows.count == 1 && env.sidebar.inboxFeed.rows[0].id == done.terminalID, "needs input ainda não é 'não lido'")
         _ = try await env.registry.perform(.inboxFilter, .select("all"))
 
-        // Clicar numa linha mantém o Inbox aberto e marca lido.
+        // Clicar numa linha vai até a sessão (03 §9.1: "Clique: vai até a sessão, pane ou viewer certo ... e marca lido"): a sidebar
+        // volta à lista de sessões e a linha fica lida. Reabrir o Inbox mostra o feed de novo.
         _ = try await env.registry.perform(.notificationOpen, .select(done.terminalID.uuidString))
-        #expect(env.sidebar.inboxOpen && !attention.center.unread.contains(done.terminalID))
+        #expect(!env.sidebar.inboxOpen && !attention.center.unread.contains(done.terminalID))
+        _ = try await env.registry.perform(.pageInbox, nil)
+        #expect(env.sidebar.inboxOpen)
         _ = try await env.registry.perform(.inboxMarkRead, .select(asking.terminalID.uuidString))
         #expect(attention.center.badgeCount == 0)
         #expect(env.registry.availability(of: .inboxMarkAllRead) == .disabled(reason: "Nothing unread"))
