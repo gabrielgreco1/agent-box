@@ -80,8 +80,13 @@ class Lease:
         self._set(REVOKING)
         self.revoked |= {t for t in self.inflight if not t.done()}
         if force:
+            # Take Over do app: o humano assume na hora. A escrita em curso é cancelada (o agente recebe `human_in_control`)
+            # e nenhuma nova passa do `gate()`; não espera o lock.
             for task in list(self.inflight):
                 task.cancel()
+            self._set(HUMAN)
+            self.note = None
+            return {**self.snapshot(), "ack": True}
         try:
             await asyncio.wait_for(self.write_lock.acquire(), max(0.0, wait_s))
         except asyncio.TimeoutError:

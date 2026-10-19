@@ -204,18 +204,13 @@ struct ViewerModelTests {
         #expect(model.connection == .reconnecting(attempt: 1))
     }
 
-    @Test func takeOverShowsRevokingThenForceAfterTenSecondsWithoutAck() async {
+    @Test func takeOverIsImmediateAlwaysForcing() async {
         let fake = FakeViewerComputer()
-        await fake.setResults([.success(false), .success(true)])
         let model = ComputerViewerModel(computer: fake)
         model.streamState("live", now: t0)
-        let first = await model.takeOver(now: t0)
-        #expect(!first && model.control == .revoking && model.forceAvailable)  // o runtime esperou 10 s e devolveu ack=false
-        model.tick(now: t0.addingTimeInterval(11))
-        #expect(model.forceAvailable)
-        #expect(await model.takeOver(force: true, now: t0.addingTimeInterval(12)))
-        #expect(model.control == .human && !model.forceAvailable)
-        #expect(await fake.calls == ["take", "force"])
+        #expect(await model.takeOver(now: t0))
+        #expect(model.control == .human && model.inputEnabled && !model.forceAvailable)
+        #expect(await fake.calls == ["force"], "Take Over não pede: assume na hora (cancela a ação em curso do agente)")
     }
 
     @Test func revokingIsVisibleWhileWaitingForTheAck() async throws {

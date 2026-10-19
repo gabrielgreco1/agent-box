@@ -96,21 +96,7 @@ struct ComputersControllerTests {
         #expect(back.message == "agent")
         #expect(await f.computer.lease == .agent)
         let calls = await f.backend.calls
-        #expect(calls.filter { $0.hasPrefix("lease") } == ["lease:take", "lease:give"])
-    }
-
-    @Test func withoutAckTheForceActionTakesOver() async throws {
-        let f = try await make()
-        defer { try? FileManager.default.removeItem(at: f.folder) }
-        await f.backend.setAck(false)
-        await f.controller.add(f.computer)
-        let first = try await f.registry.perform(.computerTakeOver, .select("phoenix-az"))
-        #expect(first.message == "revoking" && f.controller.activeViewer?.model.forceAvailable == true)
-        await f.backend.setAck(true)
-        let forced = try await f.registry.perform(.computerForceTakeOver, nil)
-        #expect(forced.message == "human")
-        let calls = await f.backend.calls
-        #expect(calls.filter { $0.hasPrefix("lease") } == ["lease:take", "lease:force_take"])
+        #expect(calls.filter { $0.hasPrefix("lease") } == ["lease:force_take", "lease:give"])
     }
 
     @Test func helpRequestReachesInboxBadgeAndNotificationOnceAndOpeningMarksItRead() async throws {
@@ -192,7 +178,7 @@ struct ComputersControllerTests {
         #expect(done.message == "left" && f.controller.page == .computers)
         #expect(await f.computer.lease == .agent)
         let calls = await f.backend.calls
-        #expect(calls.filter { $0.hasPrefix("lease") } == ["lease:take", "lease:give"])
+        #expect(calls.filter { $0.hasPrefix("lease") } == ["lease:force_take", "lease:give"])
     }
 
     @Test func leavingWithTheAgentInControlNeverAsks() async throws {

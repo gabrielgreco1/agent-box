@@ -226,7 +226,8 @@ public final class ComputerViewerModel {
         revokeToken = id
         takeOverInFlight = true  // enquanto pede, o snapshot não sobrescreve o estado local
         do {
-            let acked = try await computer.requestTakeOver(force: force, wait: Self.revokeTimeout)
+            // O humano assume na hora (dono): sempre `force_take`, que cancela a ação em curso do agente sem esperar o ACK.
+            let acked = try await computer.requestTakeOver(force: true, wait: 2)
             guard revokeToken == id else { return acked }
             takeOverInFlight = false
             if acked {
