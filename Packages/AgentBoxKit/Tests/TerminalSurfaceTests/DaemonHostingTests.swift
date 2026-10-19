@@ -61,7 +61,7 @@ private struct StubLaunchd: LaunchdQuerying {
 
     @Test func approvalPendingFallsBackToTheChildDaemonAndStillWorks() async throws {
         let home = try temporaryHome()
-        defer { try? FileManager.default.removeItem(at: home) }
+        defer { DaemonReaper.reap(home: home); try? FileManager.default.removeItem(at: home) }  // F34: o filho ignora SIGTERM
         let (host, service) = try makeHost(home: home, after: .requiresApproval, socket: nil)
         let runtime = makeRuntime(home: home, host: host)
         var changes: [DaemonHostMode] = []
@@ -96,9 +96,7 @@ private struct StubLaunchd: LaunchdQuerying {
         let harness = try DaemonHarness()  // faz o papel do daemon que o launchd subiu
         try await harness.start()
         let home = try temporaryHome()
-        defer {
-            try? FileManager.default.removeItem(at: home)
-        }
+        defer { DaemonReaper.reap(home: home); try? FileManager.default.removeItem(at: home) }
         let (host, _) = try makeHost(home: home, after: .enabled, socket: harness.socketPath)
         let runtime = makeRuntime(home: home, host: host)
         #expect(await runtime.connect())
@@ -116,7 +114,7 @@ private struct StubLaunchd: LaunchdQuerying {
 
     @Test func silentLaunchdSocketFallsBackToTheChildDaemon() async throws {
         let home = try temporaryHome()
-        defer { try? FileManager.default.removeItem(at: home) }
+        defer { DaemonReaper.reap(home: home); try? FileManager.default.removeItem(at: home) }  // F34: o filho ignora SIGTERM
         let (host, _) = try makeHost(home: home, after: .enabled, socket: "/tmp/abr-nobody-listens-here.sock")
         let runtime = makeRuntime(home: home, host: host)
         #expect(await runtime.connect())
@@ -130,7 +128,7 @@ private struct StubLaunchd: LaunchdQuerying {
 
     @Test func noBackgroundAgentConfiguredKeepsTheChildDaemon() async throws {
         let home = try temporaryHome()
-        defer { try? FileManager.default.removeItem(at: home) }
+        defer { DaemonReaper.reap(home: home); try? FileManager.default.removeItem(at: home) }  // F34: o filho ignora SIGTERM
         let runtime = makeRuntime(home: home, host: nil)
         #expect(await runtime.connect())
         #expect(runtime.hostMode == .childProcess(reason: nil))

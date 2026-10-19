@@ -100,6 +100,7 @@ import Testing
                 "AGENTBOX_SLICE": "2", "AGENTBOX_NOTIFICATIONS": "fake", "AGENTBOX_HOME": home.path, "AGENTBOX_APP_SOCK": socket,
                 "AGENTBOX_SCREEN": AttentionFixtures.screenID, "AGENTBOX_SKIP_ONBOARDING": "1",
             ], dockBadge: { box.values.append($0) })
+        DaemonReaper.installExitSweep()
         await env.start()
         return Rig(env: env, home: home, socket: socket, box: box)
     }
@@ -129,7 +130,7 @@ import Testing
 
     static func stop(_ rig: Rig) async {
         await rig.env.stop()
-        try? FileManager.default.removeItem(at: rig.home)
+        await DaemonReaper.shutdown(home: rig.home)  // o daemon filho do runtime ignora SIGTERM e fica vivo com sessões (F34)
     }
 
     // MARK: Cenários
