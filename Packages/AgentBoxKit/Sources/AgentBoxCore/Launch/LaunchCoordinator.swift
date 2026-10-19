@@ -368,7 +368,10 @@ public actor LaunchCoordinator {
 
     /// Fim do ciclo de vida de uma execução (exit, restart, fechar): solta sinks e a captura de ID.
     public func finish(runID: UUID) {
-        if orchestrated.remove(runID) != nil, let end = configuration.endOrchestration {
+        // Também sem registro em memória: o pai pode ter sido adotado depois de reiniciar o app (o conjunto `orchestrated` se
+        // perdeu). `endOrchestration` é idempotente (sem computadores nem identidade persistida não faz nada).
+        orchestrated.remove(runID)
+        if let end = configuration.endOrchestration {
             let parent = runID.uuidString.lowercased()
             Task { await end(parent) }
         }

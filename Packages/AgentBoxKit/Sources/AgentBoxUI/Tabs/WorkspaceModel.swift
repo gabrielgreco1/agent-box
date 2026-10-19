@@ -1238,7 +1238,9 @@ final class WorkspaceModel {
     private func retire(run terminalID: UUID) {
         ignitionTimers[terminalID]?.cancel()
         if let dir = launchDirectories.removeValue(forKey: terminalID) { LaunchFileWriter.cleanup(launchDirectory: dir) }
-        if let run = currentRuns.removeValue(forKey: terminalID) {
+        // Terminal reconectado depois de reiniciar o app: o run deste processo não existe, vale o persistido (o pai adotado
+        // também precisa do `endOrchestration`).
+        if let run = currentRuns.removeValue(forKey: terminalID) ?? terminal(terminalID)?.currentRunID {
             let coordinator = runtime.coordinator
             Task { await coordinator.finish(runID: run) }
         }
