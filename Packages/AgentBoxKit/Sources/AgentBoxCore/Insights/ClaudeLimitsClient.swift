@@ -1,5 +1,4 @@
 import Foundation
-import Security
 
 // MARK: - Fonte exata dos limites do Claude
 //
@@ -64,26 +63,27 @@ public protocol ClaudeCredentialSource: Sendable {
 }
 
 /// Item "Claude Code-credentials" do Keychain do usuário (JSON `{"claudeAiOauth": {"accessToken", "expiresAt" (ms), ...}}`).
-/// Só deve ser instanciado/chamado depois do clique explícito do usuário (P23).
+/// Lido por `/usr/bin/security`, o mesmo programa com que o Claude Code grava o item: ele já está na lista de acesso do item,
+/// então o macOS não pede senha (ler pelo Security framework do app abria o diálogo do Keychain a cada build). O dono pediu
+/// que funcione sem nenhum pedido, como no Orca (P26).
 public struct KeychainClaudeCredentialSource: ClaudeCredentialSource {
     public static let service = "Claude Code-credentials"
 
     public init() {}
 
     public func read() throws -> ClaudeOAuthCredential {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: Self.service,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-        ]
-        var item: CFTypeRef?
-        let status = SecItemCopyMatching(query as CFDictionary, &item)
-        switch status {
-        case errSecSuccess:
-            guard let data = item as? Data else { throw ClaudeCredentialError.malformed }
-            return try Self.parse(data)
-        case errSecItemNotFound: throw ClaudeCredentialError.notFound
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
+        process.arguments = ["find-generic-password", "-s", Self.service, "-w"]
+        let out = Pipe()
+        process.standardOutput = out
+        process.standardError = FileHandle.nullDevice
+        do { try process.run() } catch { throw ClaudeCredentialError.denied }
+        let data = out.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        switch process.terminationStatus {
+        case 0: return try Self.parse(data)
+        case 44: throw ClaudeCredentialError.notFound  // errSecItemNotFound
         default: throw ClaudeCredentialError.denied
         }
     }
@@ -186,9 +186,10 @@ public struct ExactLimitsConsentStore: Sendable {
 
     private struct Record: Codable { var enabled: Bool }
 
+    /// Ligado por padrão (P26): só um `false` gravado desliga.
     public func load() -> Bool {
-        guard let data = try? Data(contentsOf: url) else { return false }
-        return (try? JSONDecoder().decode(Record.self, from: data))?.enabled ?? false
+        guard let data = try? Data(contentsOf: url) else { return true }
+        return (try? JSONDecoder().decode(Record.self, from: data))?.enabled ?? true
     }
 
     public func save(_ enabled: Bool) {

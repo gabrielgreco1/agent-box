@@ -126,10 +126,10 @@ private enum ClaudeLimitsFixtures {
         let dir = try InsightsFixtures.tempDirectory("consent")
         defer { try? FileManager.default.removeItem(at: dir) }
         let store = ExactLimitsConsentStore(url: dir.appendingPathComponent("c.json"))
+        #expect(store.load(), "P26: ligado por padrão, sem clique")
+        store.save(false)
         #expect(!store.load())
-        store.save(true)
-        #expect(store.load())
-        #expect(try String(contentsOf: dir.appendingPathComponent("c.json"), encoding: .utf8) == "{\"enabled\":true}")
+        #expect(try String(contentsOf: dir.appendingPathComponent("c.json"), encoding: .utf8) == "{\"enabled\":false}")
     }
 
     @Test func realEndpointWhenExplicitlyRequested() async {
@@ -162,7 +162,7 @@ private enum ClaudeLimitsFixtures {
                                    to: cfg.claudeProjects.appendingPathComponent("p/s.jsonl"))
     }
 
-    @Test func withoutTheClickNothingTouchesTheCredentialSource() async throws {
+    @Test func exactLimitsAreReadWithoutAnyClick() async throws {
         let (cfg, root) = try config()
         defer { try? FileManager.default.removeItem(at: root) }
         let cred = FakeCredentials(.success(ClaudeOAuthCredential(accessToken: "t", expiresAt: nil)))
@@ -172,9 +172,9 @@ private enum ClaudeLimitsFixtures {
         await service.setVisible(true)
         await service.refreshExactLimits()
         await service.setVisible(false)
-        #expect(cred.reads == 0)
-        #expect(transport.requests.isEmpty)
-        #expect(await service.current.claudeLimits == .notEnabled)
+        #expect(cred.reads >= 1, "P26: os limites exatos aparecem sem clique e sem diálogo do Keychain")
+        #expect(!transport.requests.isEmpty)
+        #expect(await service.current.claudeLimits != .notEnabled)
         await service.stop()
     }
 
