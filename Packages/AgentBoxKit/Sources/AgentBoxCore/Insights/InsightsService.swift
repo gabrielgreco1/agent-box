@@ -81,7 +81,7 @@ public actor InsightsService {
 
     public init(config: InsightsConfig, agents: (any InsightsAgentSource)? = nil, proxies: (any InsightsProxySource)? = nil,
                 computers: (any InsightsComputerSource)? = nil, runner: any InsightsCommandRunner = SystemInsightsCommandRunner(),
-                limitsClient: ClaudeLimitsClient = ClaudeLimitsClient(),
+                limitsClient: ClaudeLimitsClient = .offline,
                 calendar: Calendar = .current, clock: @escaping @Sendable () -> Date = { Date() }) {
         self.config = config; self.agents = agents; self.proxies = proxies; self.computers = computers
         self.runner = runner; self.calendar = calendar; self.clock = clock
@@ -171,7 +171,8 @@ public actor InsightsService {
                 while !Task.isCancelled {
                     guard let self else { return }
                     await self.refreshExactLimits()
-                    let interval = self.config.exactLimitsInterval
+                    let failed = await self.exactLimitsMissing
+                    let interval = failed ? min(30, self.config.exactLimitsInterval) : self.config.exactLimitsInterval
                     try? await Task.sleep(for: .seconds(interval))
                 }
             }
@@ -193,6 +194,8 @@ public actor InsightsService {
         await refreshExactLimits()
     }
 
+    private var exactLimitsMissing: Bool { exactEnabled && exactLimits == nil }
+
     /// Uma leitura do endpoint de uso. Sem consentimento não faz nada (o Keychain nunca é tocado).
     public func refreshExactLimits() async {
         guard exactEnabled else { return }
@@ -201,7 +204,9 @@ public actor InsightsService {
             exactLimits = limits
             snapshot.claudeLimits = .live(fetchedAt: limits.fetchedAt)
         case .needsClaudeRefresh: snapshot.claudeLimits = .needsClaudeRefresh
-        case .unavailable: snapshot.claudeLimits = .unavailable
+        case .unavailable:
+            // Falha passageira (rede, 429): mantém o último valor bom na tela e tenta de novo em 30 s.
+            if exactLimits == nil { snapshot.claudeLimits = .unavailable }
         }
         recompute()
         publish()

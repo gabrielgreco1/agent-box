@@ -21,6 +21,18 @@ final class WorkspaceRootView: NSView {
     /// P25: "N agents stopped while Agent Box was closed · Resume All", no topo da sessão (só com a retomada automática desligada).
     var stoppedBanner: NSView?
     private var stoppedBannerVisible = false
+    /// Sub-tabs da sessão (terminal + computadores dos subagentes), logo abaixo da tab row. Só com computadores na sessão.
+    var subTabs: NSView?
+    private(set) var subTabsVisible = false
+    private var subTabsHeight: CGFloat { subTabsVisible && (workspaceVisible || pageKeepsTabs) ? SubTabMetrics.height : 0 }
+    private var contentTop: CGFloat { TabMetrics.chromeHeight + subTabsHeight }
+
+    func setSubTabsVisible(_ visible: Bool) {
+        guard visible != subTabsVisible, let subTabs else { return }
+        subTabsVisible = visible
+        if visible { addSubview(subTabs) } else { subTabs.removeFromSuperview() }
+        needsLayout = true
+    }
 
     override var isFlipped: Bool { true }
 
@@ -133,20 +145,22 @@ final class WorkspaceRootView: NSView {
     override func layout() {
         super.layout()
         page?.frame = pageKeepsTabs
-            ? NSRect(x: 0, y: TabMetrics.chromeHeight, width: bounds.width, height: max(0, bounds.height - TabMetrics.chromeHeight))
+            ? NSRect(x: 0, y: contentTop, width: bounds.width, height: max(0, bounds.height - contentTop))
             : bounds
+        subTabs?.frame = NSRect(x: 0, y: TabMetrics.chromeHeight, width: bounds.width, height: subTabsHeight)
         landing.frame = bounds
         pending.frame = bounds
         tabRow.frame = NSRect(x: 0, y: 0, width: bounds.width, height: TabMetrics.chromeHeight)
-        area.frame = NSRect(x: 0, y: TabMetrics.chromeHeight, width: bounds.width, height: max(0, bounds.height - TabMetrics.chromeHeight))
+        area.frame = NSRect(x: 0, y: contentTop, width: bounds.width, height: max(0, bounds.height - contentTop))
+        if let subTabs, subTabsVisible { addSubview(subTabs, positioned: .above, relativeTo: nil) }
         if stoppedBannerVisible, let stoppedBanner {
-            stoppedBanner.frame = NSRect(x: 0, y: TabMetrics.chromeHeight, width: bounds.width, height: PaneMetrics.banner)
+            stoppedBanner.frame = NSRect(x: 0, y: contentTop, width: bounds.width, height: PaneMetrics.banner)
             addSubview(stoppedBanner, positioned: .above, relativeTo: nil)
         }
         let strip = SubagentMetrics.cardWidth + DS.Space.s3 * 2
         let height = CGFloat(min(max(approvalCount, 1), 3)) * SubagentMetrics.cardHeight + SubagentMetrics.cardTop * 2
         let width = min(strip, bounds.width)
-        approvals.frame = NSRect(x: (bounds.width - width) / 2, y: TabMetrics.chromeHeight, width: width, height: height)
+        approvals.frame = NSRect(x: (bounds.width - width) / 2, y: contentTop, width: width, height: height)
         if approvals.superview != nil { addSubview(approvals, positioned: .above, relativeTo: nil) }
     }
 }
@@ -169,6 +183,16 @@ final class WorkspaceViewController: NSViewController {
             }
         }
         refreshApprovals()
+    }
+
+    /// A faixa de sub-tabs aparece quando a sessão selecionada tem algum computador de subagente.
+    private func trackSubTabs() {
+        let visible = withObservationTracking {
+            !SessionSubTabs.computerNames(workspace: env.workspace, computers: env.computers).isEmpty
+        } onChange: { [weak self] in
+            Task { @MainActor in self?.trackSubTabs() }
+        }
+        root?.setSubTabsVisible(visible)
     }
 
     private func refreshApprovals() {
@@ -205,7 +229,13 @@ final class WorkspaceViewController: NSViewController {
                 .environment(\.actionRegistry, env.registry).environment(\.a11yParent, .windowMain))
         stopped.inputBlocked = blocked
         root.stoppedBanner = stopped
+        let subTabs = ChromeHostingView(
+            content: SessionSubTabs(workspace: env.workspace, computers: env.computers).environment(\.elementStore, env.elements)
+                .environment(\.actionRegistry, env.registry).environment(\.a11yParent, .windowMain))
+        subTabs.inputBlocked = blocked
+        root.subTabs = subTabs
         trackApprovals()
+        trackSubTabs()
         env.workspace.dragController.tabRowRect = { [weak tabRow] in
             guard let tabRow, tabRow.window != nil, tabRow.superview != nil else { return nil }
             return tabRow.convert(tabRow.bounds, to: nil)
@@ -244,7 +274,11 @@ final class WorkspaceViewController: NSViewController {
         case .viewer(let name):
             guard let viewer = controller.ensureViewer(name) else { return nil }
             let origin = env.sidebar.selectedSession.flatMap { env.sidebar.session($0)?.title }
-            content = AnyView(ComputerViewerView(controller: viewer, computers: controller, backTitle: origin ?? String(localized: "workspace", bundle: .module)))
+            // Com as sub-tabs da sessão (o computador é dela), elas fazem a navegação: sem "Back to…" nem a faixa de miniaturas.
+            let inSubTabs = controller.model.sessionIDs[name] != nil && controller.model.sessionIDs[name] == env.workspace.currentSessionID
+            content = AnyView(ComputerViewerView(
+                controller: viewer, computers: controller, backTitle: inSubTabs ? nil : origin ?? String(localized: "workspace", bundle: .module),
+                showsStrip: !inSubTabs, showsHeader: !inSubTabs))
         }
         let host = ChromeHostingView(
             content: content.environment(\.elementStore, env.elements).environment(\.actionRegistry, env.registry).environment(\.a11yParent, .windowMain))

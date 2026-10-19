@@ -164,6 +164,9 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 ### Tabs
 
 - `tabs.dropIndicator`
+- `subtabs`
+- `subtabs.terminal`
+- `subtabs.computer.<computerId>`
 
 ### Panes
 

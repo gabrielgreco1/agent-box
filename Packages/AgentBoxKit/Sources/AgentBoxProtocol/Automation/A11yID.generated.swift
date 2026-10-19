@@ -88,6 +88,10 @@ extension A11yID {
     public static let paneEmptyResume = A11yID(unchecked: "pane.empty.resume")
     /// `tabs.dropIndicator`
     public static let tabsDropIndicator = A11yID(unchecked: "tabs.dropIndicator")
+    /// `subtabs`
+    public static let subtabs = A11yID(unchecked: "subtabs")
+    /// `subtabs.terminal`
+    public static let subtabsTerminal = A11yID(unchecked: "subtabs.terminal")
     /// `pane.dropOverlay`
     public static let paneDropOverlay = A11yID(unchecked: "pane.dropOverlay")
     /// `pane.dragGhost`
@@ -940,6 +944,11 @@ extension A11yID {
         A11yID(unchecked: "pane.divider.\(A11yID.segment(id))")
     }
 
+    /// `subtabs.computer.<computerId>`
+    public static func subtabsComputer(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "subtabs.computer.\(A11yID.segment(computerId))")
+    }
+
     /// `pane.dropZone.<zone>`
     public static func paneDropZone(_ zone: String) -> A11yID {
         A11yID(unchecked: "pane.dropZone.\(A11yID.segment(zone))")
@@ -1462,6 +1471,9 @@ extension A11yID {
         A11yIDSpec(pattern: "pane.empty.start", surface: "Panes"),
         A11yIDSpec(pattern: "pane.empty.resume", surface: "Panes"),
         A11yIDSpec(pattern: "tabs.dropIndicator", surface: "Tabs"),
+        A11yIDSpec(pattern: "subtabs", surface: "Tabs"),
+        A11yIDSpec(pattern: "subtabs.terminal", surface: "Tabs"),
+        A11yIDSpec(pattern: "subtabs.computer.<computerId>", surface: "Tabs"),
         A11yIDSpec(pattern: "pane.dropOverlay", surface: "Panes"),
         A11yIDSpec(pattern: "pane.dropZone.<zone>", surface: "Panes"),
         A11yIDSpec(pattern: "pane.dragGhost", surface: "Panes"),

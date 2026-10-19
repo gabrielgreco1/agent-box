@@ -157,7 +157,9 @@ public final class AppEnvironment {
             registry: registry, elements: elements)
         workspace = WorkspaceModel(runtime: runtime)
         files = Self.makeFilesController(workspace: workspace)
-        insights = InsightsModel(service: InsightsService(config: .standard(supportDirectory: storeRoot)))
+        // Limites exatos (Keychain + rede) só no produto; testes e execuções fora do bundle ficam offline.
+        let limits: ClaudeLimitsClient = Bundle.main.bundleURL.pathExtension == "app" ? ClaudeLimitsClient() : .offline
+        insights = InsightsModel(service: InsightsService(config: .standard(supportDirectory: storeRoot), limitsClient: limits))
         // Ícone real na barra de menus só no produto (`.app`): testes e execuções fora do bundle usam o item de mentira.
         let statusBar: any StatusBarProviding = Bundle.main.bundleURL.pathExtension == "app" ? SystemStatusBar() : InMemoryStatusBar()
         subagentComputers = SubagentComputersController(sidebar: sidebar, workspace: workspace, overlays: overlays, elements: elements)

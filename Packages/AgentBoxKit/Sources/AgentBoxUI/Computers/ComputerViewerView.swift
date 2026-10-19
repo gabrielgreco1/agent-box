@@ -19,6 +19,17 @@ enum ViewerMetrics {
     static let separator: CGFloat = 1
     static let strip: CGFloat = 72
     static let stripThumbWidth: CGFloat = 104
+    static let addressMaxWidth: CGFloat = 420
+    static let addressMinWidth: CGFloat = 160
+    static let addressIcon: CGFloat = 9
+    static let startWidth: CGFloat = 300
+    static let monitorWidth: CGFloat = 132
+    static let monitorHeight: CGFloat = 84
+    static let monitorStand: CGFloat = 28
+    static let progressHeight: CGFloat = 3
+    static let progressWidth: CGFloat = 240
+    static let sweepFraction: CGFloat = 0.6
+    static let indeterminateFraction: CGFloat = 0.3
 }
 
 /// Embrulha a view AppKit do WebView (a mesma instância durante toda a vida do viewer).
@@ -34,6 +45,10 @@ struct ComputerViewerView: View {
     let computers: ComputersController
     /// Nome da sessão de origem para o botão `Back to <sessão>`; `nil` na janela própria (sem página para voltar).
     var backTitle: String?
+    /// Faixa de miniaturas dos outros computadores; desligada quando as sub-tabs da sessão já navegam.
+    var showsStrip = true
+    /// Sem header próprio: as sub-tabs da sessão mostram os controles (uma barra só).
+    var showsHeader = true
     @State private var badgeVisible = false
     @State private var breathing = false
 
@@ -42,8 +57,8 @@ struct ComputerViewerView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ViewerHeader(controller: controller, backTitle: backTitle)
-            ViewerStrip(computers: computers, current: id)
+            if showsHeader { ViewerHeader(controller: controller, backTitle: backTitle) }
+            if showsStrip { ViewerStrip(computers: computers, current: id) }
             if let help = model.help { helpBanner(help) }
             ZStack {
                 ViewerCanvas(web: controller.web)
@@ -117,21 +132,10 @@ struct ComputerViewerView: View {
         }
     }
 
-    /// Primeira conexão: diz o que está acontecendo (computador subindo, com o progresso, ou conectando à tela) em vez de uma
-    /// tela preta com "Reconnecting…".
+    /// Primeira conexão: tela inteira dizendo o que acontece (computador subindo, com o progresso, ou conectando à tela).
     private var startingCard: some View {
-        let title = model.isStarting ? String(localized: "Starting computer…", bundle: .module) : String(localized: "Connecting to the screen…", bundle: .module)
-        let detail = model.isStarting ? (model.snapshot?.detail ?? model.snapshot?.queuePosition.map { String(localized: "Waiting in line · position \($0)", bundle: .module) }) : nil
-        return card {
-            HStack(alignment: .center, spacing: DS.Space.s3) {
-                DSSpinner(kind: .neutral, size: DS.Space.s4)
-                VStack(alignment: .leading, spacing: DS.Space.s1) {
-                    Text(verbatim: title).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary)
-                    Text(verbatim: detail ?? id).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary).lineLimit(1)
-                }
-            }
-        }
-        .a11y(.viewerConnecting(id), kind: "status", label: title)
+        ViewerStartingView(model: model, name: id)
+            .a11y(.viewerConnecting(id), kind: "status", label: model.isStarting ? "Starting \(id)" : "Connecting to \(id)")
     }
 
     private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
@@ -325,25 +329,56 @@ struct ViewerStrip: View {
 struct ViewerHeader: View {
     let controller: ComputerViewerController
     var backTitle: String?
+    /// Dentro das sub-tabs da sessão: sem fundo nem altura próprios e sem nome/tipo (a sub-tab já diz qual computador é).
+    var embedded = false
     private var model: ComputerViewerModel { controller.model }
     private var id: String { controller.name }
 
     var body: some View {
-        HStack(spacing: DS.Space.s2) {
-            if let backTitle {
-                DSButton(.pageClose, id: .viewerBack(id), "Back to \(backTitle)", variant: .ghost, size: .xs, symbol: "arrow.left")
+        if embedded {
+            HStack(spacing: DS.Space.s2) { trailing }
+        } else {
+            HStack(spacing: DS.Space.s2) {
+                if let backTitle {
+                    DSButton(.pageClose, id: .viewerBack(id), "Back to \(backTitle)", variant: .ghost, size: .xs, symbol: "arrow.left")
+                }
+                Image(systemName: "display").foregroundStyle(DS.Color.textSecondary)
+                Text(verbatim: controller.name).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
+                    .a11y(.viewerName(id), kind: "text", label: controller.name)
+                Text(verbatim: modeLabel).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                    .a11y(.viewerMode(id), kind: "text", label: modeLabel)
+                Spacer(minLength: DS.Space.s2)
+                trailing
             }
-            Image(systemName: "display").foregroundStyle(DS.Color.textSecondary)
-            Text(verbatim: controller.name).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
-                .a11y(.viewerName(id), kind: "text", label: controller.name)
-            Text(verbatim: modeLabel).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
-                .a11y(.viewerMode(id), kind: "text", label: modeLabel)
-            Text(verbatim: model.snapshot?.url ?? "")
-                .dsFont(DS.Font.monoMicro)
-                .foregroundStyle(DS.Color.textSecondary)
-                .lineLimit(1)
-                .truncationMode(.middle)
-                .a11y(.viewerUrl(id), kind: "text", value: model.snapshot?.url)
+            .padding(.horizontal, DS.Space.s3)
+            .frame(height: ViewerMetrics.header)
+            .background(DS.Color.chrome)
+            .overlay(alignment: .bottom) { DS.Color.border.frame(height: ViewerMetrics.separator) }
+        }
+    }
+
+    /// Barra de endereço do navegador do computador (só leitura): cadeado/globo + host e caminho, truncado no meio.
+    @ViewBuilder private var addressBar: some View {
+        if let url = model.snapshot?.url, !url.isEmpty {
+            let secure = url.hasPrefix("https://")
+            let shown = url.replacingOccurrences(of: "https://", with: "").replacingOccurrences(of: "http://", with: "")
+            HStack(spacing: DS.Space.s1_5) {
+                Image(systemName: secure ? "lock.fill" : "globe").font(.system(size: ViewerMetrics.addressIcon)).foregroundStyle(DS.Color.textTertiary)
+                Text(verbatim: shown).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary).lineLimit(1).truncationMode(.middle)
+            }
+            .padding(.horizontal, DS.Space.s2_5)
+            .frame(minWidth: ViewerMetrics.addressMinWidth, idealWidth: ViewerMetrics.addressMaxWidth, maxWidth: ViewerMetrics.addressMaxWidth,
+                   minHeight: ViewerMetrics.pill, maxHeight: ViewerMetrics.pill, alignment: .leading)
+            .layoutPriority(1)
+            .background(Capsule().fill(DS.Color.canvas))
+            .overlay(Capsule().strokeBorder(DS.Color.border))
+            .help(url)
+            .a11y(.viewerUrl(id), kind: "text", value: url)
+        }
+    }
+
+    @ViewBuilder private var trailing: some View {
+            addressBar
             Spacer(minLength: DS.Space.s2)
             ControlPill(model: model, id: id)
             controls
@@ -355,11 +390,6 @@ struct ViewerHeader: View {
                 Image(systemName: "arrow.up.right.square")
             }
             .buttonStyle(DSIconButtonStyle(.header))
-        }
-        .padding(.horizontal, DS.Space.s3)
-        .frame(height: ViewerMetrics.header)
-        .background(DS.Color.chrome)
-        .overlay(alignment: .bottom) { DS.Color.border.frame(height: ViewerMetrics.separator) }
     }
 
     private var modeLabel: String {
@@ -421,5 +451,96 @@ struct ControlPill: View {
         if model.control == .human { return DS.Color.fg10 }
         if model.help != nil { return DS.Color.agentNeedsInput.opacity(0.15) }
         return DS.Color.aiAccent.opacity(0.15)
+    }
+}
+
+/// Computador subindo ou conectando: monitor com varredura de luz, título, passo atual com barra de progresso e a tarefa do
+/// subagente. Substitui a tela preta com um card pequeno.
+struct ViewerStartingView: View {
+    let model: ComputerViewerModel
+    let name: String
+    @State private var sweep = false
+
+    private var reduceMotion: Bool { MotionPolicy.shared.reduceMotion }
+
+    /// `Building computer image… 5 of 17` -> 5/17.
+    private var fraction: Double? {
+        guard model.isStarting, let detail = model.snapshot?.detail,
+              let match = detail.firstMatch(of: /(\d+) of (\d+)/), let n = Double(match.1), let total = Double(match.2), total > 0 else { return nil }
+        return min(max(n / total, 0), 1)
+    }
+
+    private var title: String {
+        model.isStarting ? String(localized: "Starting \(name)", bundle: .module) : String(localized: "Connecting to \(name)", bundle: .module)
+    }
+
+    private var step: String {
+        if model.isStarting {
+            if let q = model.snapshot?.queuePosition { return String(localized: "Waiting in line · position \(q)", bundle: .module) }
+            return model.snapshot?.detail ?? String(localized: "Booting the browser…", bundle: .module)
+        }
+        return String(localized: "Opening the live screen…", bundle: .module)
+    }
+
+    var body: some View {
+        VStack(spacing: DS.Space.s4) {
+            monitor
+            VStack(spacing: DS.Space.s1_5) {
+                Text(verbatim: title).dsFont(DS.Font.dialogTitle).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
+                Text(verbatim: step).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary).lineLimit(1)
+            }
+            progress
+            if let doing = model.snapshot?.lastDoing, !doing.isEmpty {
+                HStack(spacing: DS.Space.s1_5) {
+                    DSAgentLogo(DSAgentKind.claude, size: DS.Space.s3)
+                    Text(verbatim: doing).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(1).truncationMode(.tail)
+                }
+                .frame(maxWidth: ViewerMetrics.startWidth)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(
+            RadialGradient(colors: [DS.Color.aiAccent.opacity(0.08), Color.clear], center: .center, startRadius: 0, endRadius: ViewerMetrics.startWidth * 1.4)
+        )
+        .onAppear { sweep = true }
+    }
+
+    private var monitor: some View {
+        VStack(spacing: 0) {
+            RoundedRectangle(cornerRadius: DS.Radius.card)
+                .fill(DS.Color.chrome)
+                .overlay(
+                    GeometryReader { geo in
+                        LinearGradient(colors: [Color.clear, DS.Color.aiAccent.opacity(0.35), Color.clear], startPoint: .leading, endPoint: .trailing)
+                            .frame(width: geo.size.width * ViewerMetrics.sweepFraction)
+                            .offset(x: sweep && !reduceMotion ? geo.size.width : -geo.size.width * ViewerMetrics.sweepFraction)
+                            .animation(reduceMotion ? nil : .easeInOut(duration: 1.6).repeatForever(autoreverses: false), value: sweep)
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: DS.Radius.card))
+                )
+                .overlay(Image(systemName: "globe").font(.system(size: DS.Space.s6)).foregroundStyle(DS.Color.textTertiary))
+                .overlay(RoundedRectangle(cornerRadius: DS.Radius.card).strokeBorder(DS.Color.aiAccent.opacity(0.5)))
+                .frame(width: ViewerMetrics.monitorWidth, height: ViewerMetrics.monitorHeight)
+            Rectangle().fill(DS.Color.border).frame(width: DS.Space.s1, height: DS.Space.s2)
+            Capsule().fill(DS.Color.border).frame(width: ViewerMetrics.monitorStand, height: DS.Space.s1)
+        }
+    }
+
+    private var progress: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(DS.Color.fg10)
+                if let fraction {
+                    Capsule().fill(DS.Color.aiAccent).frame(width: max(geo.size.width * fraction, ViewerMetrics.progressHeight))
+                        .animation(.easeOut(duration: 0.4), value: fraction)
+                } else {
+                    Capsule().fill(DS.Color.aiAccent)
+                        .frame(width: geo.size.width * ViewerMetrics.indeterminateFraction)
+                        .offset(x: sweep && !reduceMotion ? geo.size.width * (1 - ViewerMetrics.indeterminateFraction) : 0)
+                        .animation(reduceMotion ? nil : .easeInOut(duration: 1.1).repeatForever(autoreverses: true), value: sweep)
+                }
+            }
+        }
+        .frame(width: ViewerMetrics.progressWidth, height: ViewerMetrics.progressHeight)
     }
 }

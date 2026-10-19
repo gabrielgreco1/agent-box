@@ -197,3 +197,13 @@ public struct ExactLimitsConsentStore: Sendable {
         try? JSONEncoder().encode(Record(enabled: enabled)).write(to: url, options: .atomic)
     }
 }
+
+/// Sem credencial: para testes e ambientes que não devem tocar o Keychain nem a rede.
+public struct NoClaudeCredentials: ClaudeCredentialSource {
+    public init() {}
+    public func read() throws -> ClaudeOAuthCredential { throw ClaudeCredentialError.notFound }
+}
+
+extension ClaudeLimitsClient {
+    public static let offline = ClaudeLimitsClient(credentials: NoClaudeCredentials())
+}
