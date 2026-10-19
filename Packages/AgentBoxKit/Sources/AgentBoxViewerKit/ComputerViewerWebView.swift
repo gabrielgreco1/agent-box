@@ -160,6 +160,9 @@ public final class ComputerViewerWebView: NSView, WKNavigationDelegate, WKUIDele
 
     public func disconnect() { command("window.agentboxViewer.disconnect()") }
 
+    /// Só para testes: derruba o WebSocket do noVNC de forma abrupta (queda de rede).
+    public func dropConnectionForTesting() { command("window.agentboxViewer.dropForTesting()") }
+
     /// Humano no controle: mouse e teclado vão ao computador. Sem isso o viewer é só leitura (CS-402).
     public func setInputEnabled(_ enabled: Bool) {
         command("window.agentboxViewer.setInputEnabled(\(enabled))")

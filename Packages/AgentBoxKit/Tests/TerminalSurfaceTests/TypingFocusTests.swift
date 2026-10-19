@@ -11,7 +11,7 @@ import Testing
 /// contados pelo daemon (`inputBytesByOrigin[.key]`). Cobre o congelamento do terminal depois do onboarding/overlay, de
 /// foco roubado pela chrome (tab row, sidebar) e de um arrasto de tab cancelado.
 @MainActor
-@Suite(.serialized) struct TypingFocusTests {
+@Suite(.serialized, .tags(.integration), .timeLimit(.minutes(1))) struct TypingFocusTests {
     private struct Rig {
         let client: PTYClient
         let host: TerminalHostView

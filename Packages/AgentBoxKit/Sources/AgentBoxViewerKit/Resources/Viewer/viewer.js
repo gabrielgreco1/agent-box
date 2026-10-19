@@ -54,7 +54,8 @@ function connect(url) {
   disconnect();
   state('connecting');
   const screen = document.getElementById('screen');
-  rfb = new RFB(screen, url, { wsProtocols: ['binary'] });
+  const mine = new RFB(screen, url, { wsProtocols: ['binary'] });
+  rfb = mine;
   rfb.scaleViewport = true;       // letterbox: o canvas escala sem distorcer (CS-424)
   rfb.resizeSession = false;
   rfb.clipViewport = false;
@@ -63,9 +64,11 @@ function connect(url) {
   setTimeout(countSocket, 0);
   rfb.viewOnly = !inputEnabled;
   rfb.background = '#0a0a0a';
-  rfb.addEventListener('connect', () => { frames = 0; lastServerAt = performance.now(); state('live'); startTimers(); });
-  rfb.addEventListener('disconnect', (e) => { stopTimers(); state('disconnected', e.detail && e.detail.clean ? 'clean' : 'dirty'); rfb = null; });
-  rfb.addEventListener('securityfailure', (e) => post({ type: 'error', detail: (e.detail && e.detail.reason) || 'security failure' }));
+  // Eventos de uma conexão antiga (a página reconectou por cima dela) nunca mexem na atual: sem isso o `disconnect` tardio do
+  // RFB velho zerava `rfb` e avisava "disconnected" com a conexão nova viva (a tela mostrava "Disconnected from <computer>").
+  mine.addEventListener('connect', () => { if (rfb !== mine) { return; } frames = 0; lastServerAt = performance.now(); state('live'); startTimers(); });
+  mine.addEventListener('disconnect', (e) => { if (rfb !== mine) { return; } stopTimers(); state('disconnected', e.detail && e.detail.clean ? 'clean' : 'dirty'); rfb = null; });
+  mine.addEventListener('securityfailure', (e) => post({ type: 'error', detail: (e.detail && e.detail.reason) || 'security failure' }));
   rfb.addEventListener('desktopname', (e) => post({ type: 'desktopname', name: e.detail.name }));
   // Contagem de quadros: um `flip()` fora da fila por FramebufferUpdate (rfb.js, `_framebufferUpdate`).
   const display = rfb._display;
@@ -189,6 +192,8 @@ window.agentboxViewer = {
              flushing: rfb ? rfb._flushing : null, state: rfb ? rfb._rfbConnectionState : null, hidden: document.hidden, vis: document.visibilityState,
              fbu: rfb ? rfb._FBU.rects : null, encodings: Array.from(wsEncodings), msgs: wsMessages, bytes: wsBytes };
   },
+  // Só para testes: derruba o WebSocket de forma abrupta, como uma queda de rede ou o x11vnc reiniciando.
+  dropForTesting() { const ws = rfb && rfb._sock && rfb._sock._websocket; if (ws) { ws.close(); return true; } return false; },
   stats() { return { frames, lastFrameAt, silentMs: Math.round(performance.now() - lastServerAt) }; },
 };
 post({ type: 'ready' });

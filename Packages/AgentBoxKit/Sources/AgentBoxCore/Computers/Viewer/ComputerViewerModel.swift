@@ -155,6 +155,14 @@ public final class ComputerViewerModel {
 
     public func streamError(_ message: String) { connection = .error(message) }
 
+    /// Não saiu o ticket (computador subindo, reiniciando, runtime fora): conta como queda de stream. Reconecta com backoff e,
+    /// passado o limite, mostra o erro; nunca fica parado em "Disconnected" sem tentar de novo.
+    public func ticketFailed(_ message: String) {
+        guard connection != .stopped else { return }
+        reconnectAttempts += 1
+        connection = reconnectAttempts > Self.maxReconnects ? .error(message) : .reconnecting(attempt: reconnectAttempts)
+    }
+
     public func streamStats(fps: Double, frames: Int, silentMs: Int, now: Date = Date()) {
         stats = ViewerStatsSample(fps: fps, frames: frames, silentMs: silentMs)
         guard connection == .live || isDelayed else { return }
