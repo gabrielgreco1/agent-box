@@ -14,7 +14,7 @@ import Testing
         let tables = try tableNames(at: home.paths.databaseFile)
         #expect(tables == [
             "agent_event", "agent_message", "agent_run", "attention", "browser_profile", "catalog_item", "computer", "computer_queue", "grdb_migrations",
-            "help_request", "import_run", "inbox_event", "launch_profile", "metric", "orchestration_child", "project", "proxy", "proxy_ext", "proxy_usage", "secret",
+            "help_request", "import_run", "inbox_event", "launch_profile", "metric", "orchestration_child", "orchestration_parent", "project", "proxy", "proxy_ext", "proxy_usage", "secret",
             "secret_binding", "session", "setting", "tab", "terminal", "ui_state", "worktree",
         ])
         let ids = try { () throws -> [String] in
@@ -22,7 +22,7 @@ import Testing
             let q = try DatabaseQueue(path: home.paths.databaseFile.path, configuration: c)
             return try q.read { try String.fetchAll($0, sql: "SELECT identifier FROM grdb_migrations") }
         }()
-        #expect(ids == ["v1_initial", "v2_activity", "v3_computers", "v4_vault_catalog", "v5_proxy_ext", "v6_agent_tree", "v7_subagent_computers"])
+        #expect(ids == ["v1_initial", "v2_activity", "v3_computers", "v4_vault_catalog", "v5_proxy_ext", "v6_agent_tree", "v7_subagent_computers", "v8_orchestration_identity"])
     }
 
     @Test func schemaIsStrictAndRejectsInconsistentSessions() async throws {
@@ -462,7 +462,7 @@ import Testing
 
 @Suite struct FullMigrationChainTests {
     @Test func v1DatabaseUpgradesThroughEveryMigrationToCurrent() async throws {
-        #expect(StoreMigrations.all.map(\.id) == ["v1_initial", "v2_activity", "v3_computers", "v4_vault_catalog", "v5_proxy_ext", "v6_agent_tree", "v7_subagent_computers"])
+        #expect(StoreMigrations.all.map(\.id) == ["v1_initial", "v2_activity", "v3_computers", "v4_vault_catalog", "v5_proxy_ext", "v6_agent_tree", "v7_subagent_computers", "v8_orchestration_identity"])
         let home = try TempHome(); defer { home.remove() }
         let v1 = try await home.openStore(day: 0, migrations: [StoreMigrations.v1Initial])
         let project = Fixture.project()

@@ -38,6 +38,29 @@ public struct ComputerSpec: Sendable {
     public var allowHosts: [String]
     public var batch: String?
     public var run: RunFolder
+    /// Id do computador: o mesmo do label `agentbox.computer` e da linha persistida (a adoção casa os dois).
+    public var computerID = UUID()
+}
+
+/// Computador vivo achado no Docker pelos labels do app (`agentbox.owner`), antes de casar com o que o app persistiu.
+public struct LiveComputer: Sendable, Equatable {
+    public var computerID: String
+    public var name: String
+    public var containerID: String
+    public var running: Bool
+    public var created: Int64
+    public var batch: String?
+    public init(computerID: String, name: String, containerID: String, running: Bool, created: Int64 = 0, batch: String? = nil) {
+        self.computerID = computerID; self.name = name; self.containerID = containerID; self.running = running; self.created = created; self.batch = batch
+    }
+}
+
+/// Um computador readotado: o backend/desmonte e o que só o container sabe (proxy em uso e política de hosts).
+public struct AdoptedComputer: Sendable {
+    public var handle: ProvisionedHandle
+    public var proxy: String
+    public var allowHosts: [String]
+    public init(handle: ProvisionedHandle, proxy: String = "direct", allowHosts: [String] = []) { self.handle = handle; self.proxy = proxy; self.allowHosts = allowHosts }
 }
 
 /// Computador com containers de pé: o backend das ferramentas e o desmonte (`keep24h` não chega aqui: o scheduler decide quando).
@@ -52,10 +75,16 @@ public protocol ComputerProvisioning: Sendable {
     /// Falha rápido (sem Docker) para o pai receber `unavailable` + `docker_unavailable` em vez de um computador que nunca sobe.
     func preflight() async throws
     func provision(_ spec: ComputerSpec) async throws -> ProvisionedHandle
+    /// Computadores deste app (owner) que o Docker mostra agora. `nil` = Docker inalcançável (a adoção não faz nada e não incomoda o usuário).
+    func liveComputers() async -> [LiveComputer]?
+    /// Reconstrói o backend de um container que seguiu vivo (token relido do container, porta publicada via inspect).
+    func adopt(_ live: LiveComputer, spec: ComputerSpec) async throws -> AdoptedComputer
 }
 
 extension ComputerProvisioning {
     public func preflight() async throws {}
+    public func liveComputers() async -> [LiveComputer]? { nil }
+    public func adopt(_ live: LiveComputer, spec: ComputerSpec) async throws -> AdoptedComputer { throw ToolError(.notSupported, "adoption is not supported") }
 }
 
 /// F29: de onde o scheduler sabe quais proxies existem e qual é o padrão global (Settings). `nil` no scheduler = sem proxies (tudo `direct`).
@@ -153,7 +182,8 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
         for worker in workers {
             await hub.registerChild(id: worker.childID, capability: worker.capability, parent: parent)
             try? await store?.registerOrchestrationChild(OrchestrationChild(
-                id: worker.childID, parentID: parent, parentRunID: parentRunID, slot: worker.slot, agentType: worker.agentType))
+                id: worker.childID, parentID: parent, parentRunID: parentRunID, slot: worker.slot, agentType: worker.agentType,
+                capabilityHash: ComputerHub.fingerprint(worker.capability)))
         }
     }
 
@@ -254,7 +284,7 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
         guard let childID = children.first(where: { !used.contains($0) }) else {
             return unavailable(name, "no_free_worker", "all \(children.count) worker slots of this session hold a computer; release one first")
         }
-        var entry = Entry(spec: spec0, id: UUID(), computer: computer, lazy: lazy, childID: childID, phase: .queued, requestedAt: now())
+        var entry = Entry(spec: spec0, id: spec0.computerID, computer: computer, lazy: lazy, childID: childID, phase: .queued, requestedAt: now())
         if request.keep24h { entry.keepUntil = .distantFuture }  // marcado; a data real nasce no release
         entries[name] = entry
         queue.append(name)
@@ -406,6 +436,63 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
         }
         if !released.isEmpty { await drain() }
         return (warned, released)
+    }
+
+    // MARK: Adoção (app reiniciado)
+
+    private static let adoptableStates: Set<String> = ["provisioning", "ready", "in_use"]
+
+    /// O app reiniciou com os computadores ainda de pé (o daemon manteve os agentes, o Docker os containers). Casa as linhas persistidas
+    /// (`computer` + `orchestration_child`, a fonte da verdade do vínculo com pai e slot) com os containers vivos do owner, relê o token do
+    /// próprio container, refaz o `ManagedComputer` e o registra no hub. Container sem linha persistida (ou sem filho) é órfão: não é tocado.
+    /// Devolve os nomes adotados.
+    @discardableResult
+    public func adoptRunning() async -> [String] {
+        guard let store, let live = await provisioning.liveComputers() else { return [] }
+        let rows = ((try? await store.computerStates()) ?? []).filter { Self.adoptableStates.contains($0.state) && $0.ownerParentID != nil }
+        var adopted: [String] = []
+        for row in rows {
+            guard let parent = row.ownerParentID, entries[row.name] == nil else { continue }
+            let candidates = live.filter { $0.name == row.name }
+            guard let container = candidates.first(where: { $0.computerID == row.id.uuidString.lowercased() }) ?? candidates.max(by: { $0.created < $1.created }) else {
+                // O container sumiu (removido fora do app): a linha deixa de prometer um computador e o filho perde a reserva.
+                var gone = row
+                gone.state = "removed"
+                try? await store.saveComputerState(gone)
+                if let child = try? await store.orchestrationChild(parentID: parent, anyStateComputerName: row.name) {
+                    try? await store.updateOrchestrationChild(id: child.id, state: .released, at: now())
+                }
+                continue
+            }
+            guard container.running, let child = try? await store.orchestrationChild(parentID: parent, anyStateComputerName: row.name) else { continue }
+            let display = ComputerDisplay(rawValue: row.display) ?? .headless
+            var spec = ComputerSpec(
+                name: row.name, parent: parent, display: display, profile: nil, proxy: "direct", proxiesAllowed: [], allowHosts: [],
+                batch: child.batchID ?? container.batch, run: RunFolder(root: runDirectory(parent, row.name)), computerID: row.id)
+            let recovered: AdoptedComputer
+            do { recovered = try await provisioning.adopt(container, spec: spec) } catch {
+                log.error("computer \(row.name) could not be adopted: \(error)")
+                continue
+            }
+            spec.proxy = recovered.proxy
+            spec.allowHosts = recovered.allowHosts
+            let lazy = LazyComputerBackend()
+            lazy.attach(recovered.handle.backend)
+            guard entries[row.name] == nil, let computer = try? ManagedComputer(
+                name: row.name, display: display, run: spec.run, backend: lazy, state: .ready, proxy: recovered.proxy, proxiesAllowed: [], profile: nil)
+            else { await recovered.handle.teardown(); continue }
+            var entry = Entry(spec: spec, id: row.id, computer: computer, lazy: lazy, childID: child.id, phase: .active, requestedAt: row.createdAt, handle: recovered.handle)
+            entry.startedAt = row.createdAt
+            // Mantido por 24 h (`released` sem `ended`): a data exata não foi persistida, conta a partir de agora.
+            if child.state == .released { entry.keepUntil = now().addingTimeInterval(Self.keepDuration) }
+            entries[row.name] = entry
+            await hub.register(computer)
+            if child.state == .claimed { _ = try? await hub.claim(name: row.name, child: child.id) }
+            await persist(row.name)
+            adopted.append(row.name)
+        }
+        if !adopted.isEmpty { log.info("adopted \(adopted.count) running computer(s) after restart") }
+        return adopted
     }
 
     // MARK: Persistência

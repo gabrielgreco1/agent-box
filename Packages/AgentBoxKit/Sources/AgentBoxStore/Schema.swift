@@ -456,7 +456,26 @@ enum StoreMigrations {
         """)
     }
 
-    static let all: [StoreMigration] = [v1Initial, v2Activity, v3Computers, v4VaultCatalog, v5ProxyExt, v6AgentTree, v7SubagentComputers]
+    /// `v8_orchestration_identity`: o que um app reiniciado precisa para reconhecer pais e filhos que seguiram vivos (adoção de computadores).
+    /// Guarda só o SHA-256 das capabilities de lançamento (o valor puro vive nos argumentos do Claude e do helper, nunca aqui) e o que o
+    /// pai sabia da sessão (título, modo, proxy). Colunas novas e tabela nova: linhas antigas ficam sem hash e simplesmente não são adotadas.
+    static let v8OrchestrationIdentity = StoreMigration(id: "v8_orchestration_identity") { db in
+        try db.execute(sql: """
+        ALTER TABLE orchestration_child ADD COLUMN capability_hash TEXT;
+        CREATE TABLE orchestration_parent (
+            id TEXT PRIMARY KEY NOT NULL,
+            parent_run_id TEXT,
+            session_id TEXT,
+            session_title TEXT NOT NULL DEFAULT '',
+            mode TEXT NOT NULL CHECK (mode IN ('off','ask','full')),
+            proxy TEXT,
+            capability_hash TEXT NOT NULL,
+            created_at INTEGER NOT NULL
+        ) STRICT;
+        """)
+    }
+
+    static let all: [StoreMigration] = [v1Initial, v2Activity, v3Computers, v4VaultCatalog, v5ProxyExt, v6AgentTree, v7SubagentComputers, v8OrchestrationIdentity]
 
     static func migrator(_ migrations: [StoreMigration]) -> DatabaseMigrator {
         var m = DatabaseMigrator()

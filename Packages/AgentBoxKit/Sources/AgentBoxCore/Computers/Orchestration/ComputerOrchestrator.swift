@@ -17,6 +17,7 @@ public final class ComputerOrchestrator: Sendable {
     public let provisioning: AppComputerProvisioning
     public let helperPath: String
     public let server: ComputerMCPServer
+    private let store: AgentBoxStore?
 
     /// `waitSeconds`: quanto uma chamada de `boxes_reserve` espera a decisão do Ask antes de devolver `pending` (45 s no app).
     public init(
@@ -25,6 +26,7 @@ public final class ComputerOrchestrator: Sendable {
         proxies: (any ProxyDirectory)? = nil
     ) {
         self.helperPath = helperPath
+        self.store = store
         self.provisioning = provisioning
         let hub = ComputerHub()
         self.hub = hub
@@ -44,6 +46,9 @@ public final class ComputerOrchestrator: Sendable {
                 parents: parents, approvals: approvals, waitSeconds: waitSeconds,
                 effectiveProxy: { parent, requested in await scheduler.effectiveProxy(parent: parent, requested: requested) }))
         server = ComputerMCPServer(tools: tools)
+        if let store {
+            Task { await parents.observeProxyChanges { id, proxy in Task { try? await store.updateOrchestrationParentProxy(id: id, proxy: proxy) } } }
+        }
     }
 
     /// Serviço `mcp` do `app.sock` (o helper `agentbox mcp` do Claude fala com ele).
@@ -70,6 +75,10 @@ public final class ComputerOrchestrator: Sendable {
         var bundle = try OrchestrationInjectionBuilder.make(parentID: info.parentID, helperPath: helperPath, options: options)
         bundle.spawnGuardMode = info.mode
         await parents.register(info)
+        // A identidade (só o hash da capability) e o que o pai sabe da sessão sobrevivem a um reinício do app (adoção).
+        try? await store?.saveOrchestrationParent(OrchestrationParentRecord(
+            id: info.parentID, parentRunID: UUID(uuidString: info.parentID), sessionID: info.sessionID, sessionTitle: info.sessionTitle,
+            mode: info.mode.rawValue, proxy: info.proxy, capabilityHash: ComputerHub.fingerprint(bundle.parentCapability)))
         await OrchestrationInjectionBuilder.register(bundle, hub: hub, scheduler: scheduler, parentRunID: UUID(uuidString: info.parentID))
         return bundle
     }
@@ -80,8 +89,42 @@ public final class ComputerOrchestrator: Sendable {
         let names = await scheduler.computerNames(of: parentID)
         if !names.isEmpty { _ = await scheduler.release(parent: parentID, names: names, keep24h: false) }
         await parents.remove(parentID)
+        try? await store?.deleteOrchestrationParent(id: parentID)
         await hub.unregisterChild(id: parentID)
         for child in await hub.children(of: parentID) { await hub.unregisterChild(id: child) }
+    }
+
+    /// Pais com identidade persistida mais velhos que isto não voltam (o terminal deles já terminou há muito).
+    static let parentRetention: TimeInterval = 14 * 24 * 3600
+
+    /// App reiniciado: o Claude pai e os subagentes seguiram vivos (o daemon os manteve) com as capabilities do lançamento antigo nos
+    /// argumentos. Devolve ao hub e ao diretório de pais o que foi persistido, para o `agentbox mcp` deles voltar a ser aceito. Só lê o
+    /// Store (rápido); chamar antes de aceitar conexões MCP.
+    public func restoreIdentities() async { await Self.restoreIdentities(store: store, hub: hub, parents: parents) }
+
+    static func restoreIdentities(store: AgentBoxStore?, hub: ComputerHub, parents: ParentDirectory) async {
+        guard let store else { return }
+        try? await store.pruneOrchestrationParents(olderThan: Date().addingTimeInterval(-parentRetention))
+        for record in (try? await store.orchestrationParents()) ?? [] {
+            guard await hub.role(of: record.id) == nil else { continue }  // já registrado neste processo
+            await hub.registerParent(id: record.id, capabilityHash: record.capabilityHash)
+            await parents.register(ParentInfo(
+                parentID: record.id, sessionID: record.sessionID, sessionTitle: record.sessionTitle, mode: SubagentComputersMode(rawValue: record.mode) ?? .ask,
+                proxy: record.proxy))
+            if record.proxy != nil { await parents.setProxy(record.proxy, for: record.id) }
+            for child in (try? await store.orchestrationChildren(parentID: record.id)) ?? [] {
+                guard let hash = child.capabilityHash, await hub.role(of: child.id) == nil else { continue }
+                await hub.registerChild(id: child.id, capabilityHash: hash, parent: record.id)
+            }
+        }
+    }
+
+    /// Identidades + computadores: depois de `restoreIdentities`, adota os containers que seguiram vivos (precisa do Docker de pé; sem ele
+    /// não faz nada). Devolve os nomes adotados.
+    @discardableResult
+    public func adoptRunning() async -> [String] {
+        await restoreIdentities()
+        return await scheduler.adoptRunning()
     }
 
     /// Qual sessão do app é dona do computador (linha filha, título do Inbox).

@@ -177,4 +177,20 @@ public actor AppComputerProvisioning: ComputerProvisioning {
             resolver: config.resolver)
         return try await inner.provision(spec)
     }
+
+    /// Adoção ao abrir o app: só olha o Docker se ele já estiver de pé (nada de aviso "Docker isn't running" nem de abrir o Docker).
+    public func liveComputers() async -> [LiveComputer]? {
+        guard let client = try? await client() else { return nil }
+        return await dockerProvisioning(client: client, image: "").liveComputers()
+    }
+
+    public func adopt(_ live: LiveComputer, spec: ComputerSpec) async throws -> AdoptedComputer {
+        try await dockerProvisioning(client: try await client(), image: "").adopt(live, spec: spec)
+    }
+
+    private func dockerProvisioning(client: DockerClient, image: String) -> DockerComputerProvisioning {
+        DockerComputerProvisioning(
+            client: client, image: image, secrets: BoxSecretFiles(root: config.secretsRoot), owner: config.owner, network: config.network,
+            allowCIDRs: config.allowCIDRs, extraLabels: config.extraLabels, isTest: config.isTest, resolver: config.resolver)
+    }
 }

@@ -34,6 +34,8 @@ public struct OrchestrationChild: Sendable, Equatable, Identifiable {
     /// `agent_run` do filho nativo, preenchido quando o hook revela o `agent_id` (correlação por `mcp_server.name`, S-08).
     public var runID: UUID?
     public var providerAgentID: String?
+    /// SHA-256 (hex) da capability do lançamento; permite a um app reiniciado voltar a aceitar o filho que seguiu vivo.
+    public var capabilityHash: String?
     public var state: OrchestrationChildState
     public var createdAt: Date
     public var reservedAt: Date?
@@ -44,12 +46,30 @@ public struct OrchestrationChild: Sendable, Equatable, Identifiable {
     public init(
         id: String, parentID: String, parentRunID: UUID? = nil, slot: Int, agentType: String, computerName: String? = nil, batchID: String? = nil,
         runID: UUID? = nil, providerAgentID: String? = nil, state: OrchestrationChildState = .idle, createdAt: Date = Date(),
-        reservedAt: Date? = nil, claimedAt: Date? = nil, releasedAt: Date? = nil, endedAt: Date? = nil
+        reservedAt: Date? = nil, claimedAt: Date? = nil, releasedAt: Date? = nil, endedAt: Date? = nil, capabilityHash: String? = nil
     ) {
         self.id = id; self.parentID = parentID; self.parentRunID = parentRunID; self.slot = slot; self.agentType = agentType
         self.computerName = computerName; self.batchID = batchID; self.runID = runID; self.providerAgentID = providerAgentID
         self.state = state; self.createdAt = createdAt; self.reservedAt = reservedAt; self.claimedAt = claimedAt
-        self.releasedAt = releasedAt; self.endedAt = endedAt
+        self.releasedAt = releasedAt; self.endedAt = endedAt; self.capabilityHash = capabilityHash
+    }
+}
+
+/// O que o app sabia de um pai (terminal Claude com Subagent computers ligado), para voltar a reconhecê-lo depois de reiniciar.
+public struct OrchestrationParentRecord: Sendable, Equatable {
+    public var id: String
+    public var parentRunID: UUID?
+    public var sessionID: UUID?
+    public var sessionTitle: String
+    /// `off`/`ask`/`full`.
+    public var mode: String
+    public var proxy: String?
+    public var capabilityHash: String
+    public var createdAt: Date
+
+    public init(id: String, parentRunID: UUID? = nil, sessionID: UUID? = nil, sessionTitle: String = "", mode: String, proxy: String? = nil, capabilityHash: String, createdAt: Date = Date()) {
+        self.id = id; self.parentRunID = parentRunID; self.sessionID = sessionID; self.sessionTitle = sessionTitle; self.mode = mode
+        self.proxy = proxy; self.capabilityHash = capabilityHash; self.createdAt = createdAt
     }
 }
 
@@ -110,7 +130,7 @@ extension OrchestrationChild {
             runID: (row["run_id"] as String?).flatMap(UUID.init(uuidString:)), providerAgentID: row["provider_agent_id"], state: parsed,
             createdAt: RowCodec.date(row["created_at"] as Int64), reservedAt: RowCodec.date(row["reserved_at"] as Int64?),
             claimedAt: RowCodec.date(row["claimed_at"] as Int64?), releasedAt: RowCodec.date(row["released_at"] as Int64?),
-            endedAt: RowCodec.date(row["ended_at"] as Int64?))
+            endedAt: RowCodec.date(row["ended_at"] as Int64?), capabilityHash: row["capability_hash"])
     }
 }
 
@@ -132,11 +152,12 @@ extension AgentBoxStore {
         try await write { db in
             try db.execute(
                 sql: """
-                INSERT INTO orchestration_child (id, parent_id, parent_run_id, slot, agent_type, state, created_at)
-                VALUES (?, ?, ?, ?, ?, 'idle', ?)
-                ON CONFLICT(id) DO UPDATE SET parent_run_id = COALESCE(excluded.parent_run_id, parent_run_id), agent_type = excluded.agent_type
+                INSERT INTO orchestration_child (id, parent_id, parent_run_id, slot, agent_type, state, created_at, capability_hash)
+                VALUES (?, ?, ?, ?, ?, 'idle', ?, ?)
+                ON CONFLICT(id) DO UPDATE SET parent_run_id = COALESCE(excluded.parent_run_id, parent_run_id), agent_type = excluded.agent_type,
+                    capability_hash = COALESCE(excluded.capability_hash, capability_hash)
                 """,
-                arguments: [child.id, child.parentID, child.parentRunID?.uuidString, child.slot, child.agentType, RowCodec.ms(child.createdAt) as Int64])
+                arguments: [child.id, child.parentID, child.parentRunID?.uuidString, child.slot, child.agentType, RowCodec.ms(child.createdAt) as Int64, child.capabilityHash])
         }
     }
 
@@ -156,6 +177,65 @@ extension AgentBoxStore {
             try Row.fetchOne(
                 db, sql: "SELECT * FROM orchestration_child WHERE parent_id = ? AND computer_name = ? AND state IN ('reserved','claimed') ORDER BY slot LIMIT 1",
                 arguments: [parentID, computerName]).map { try OrchestrationChild(row: $0) }
+        }
+    }
+
+    /// O filho que segura (ou segurou) o computador, em qualquer estado: a adoção precisa do vínculo mesmo após `released` (keep 24 h).
+    public func orchestrationChild(parentID: String, anyStateComputerName computerName: String) async throws -> OrchestrationChild? {
+        try await read { db in
+            try Row.fetchOne(
+                db, sql: "SELECT * FROM orchestration_child WHERE parent_id = ? AND computer_name = ? AND state != 'idle' ORDER BY slot LIMIT 1",
+                arguments: [parentID, computerName]).map { try OrchestrationChild(row: $0) }
+        }
+    }
+
+    // MARK: Pais (identidade que sobrevive ao app)
+
+    public func saveOrchestrationParent(_ parent: OrchestrationParentRecord) async throws {
+        try await write { db in
+            try db.execute(
+                sql: """
+                INSERT INTO orchestration_parent (id, parent_run_id, session_id, session_title, mode, proxy, capability_hash, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET parent_run_id = excluded.parent_run_id, session_id = excluded.session_id, session_title = excluded.session_title,
+                    mode = excluded.mode, proxy = excluded.proxy, capability_hash = excluded.capability_hash
+                """,
+                arguments: [
+                    parent.id, parent.parentRunID?.uuidString, parent.sessionID?.uuidString, parent.sessionTitle, parent.mode, parent.proxy,
+                    parent.capabilityHash, RowCodec.ms(parent.createdAt) as Int64,
+                ])
+        }
+    }
+
+    public func updateOrchestrationParentProxy(id: String, proxy: String?) async throws {
+        try await write { db in try db.execute(sql: "UPDATE orchestration_parent SET proxy = ? WHERE id = ?", arguments: [proxy, id]) }
+    }
+
+    public func orchestrationParents() async throws -> [OrchestrationParentRecord] {
+        try await read { db in
+            try Row.fetchAll(db, sql: "SELECT * FROM orchestration_parent ORDER BY created_at").map { row in
+                OrchestrationParentRecord(
+                    id: row["id"], parentRunID: (row["parent_run_id"] as String?).flatMap(UUID.init(uuidString:)),
+                    sessionID: (row["session_id"] as String?).flatMap(UUID.init(uuidString:)), sessionTitle: row["session_title"], mode: row["mode"],
+                    proxy: row["proxy"], capabilityHash: row["capability_hash"], createdAt: RowCodec.date(row["created_at"] as Int64))
+            }
+        }
+    }
+
+    /// O terminal pai terminou: some a identidade dele e a dos filhos (a árvore e as mensagens ficam; só a credencial sai).
+    public func deleteOrchestrationParent(id: String) async throws {
+        try await write { db in
+            try db.execute(sql: "DELETE FROM orchestration_parent WHERE id = ?", arguments: [id])
+            try db.execute(sql: "UPDATE orchestration_child SET capability_hash = NULL WHERE parent_id = ?", arguments: [id])
+        }
+    }
+
+    /// Pais mais antigos que `date` (identidades que ninguém mais usa) saem na abertura do app.
+    public func pruneOrchestrationParents(olderThan date: Date) async throws {
+        let ms = RowCodec.ms(date) as Int64
+        try await write { db in
+            try db.execute(sql: "UPDATE orchestration_child SET capability_hash = NULL WHERE parent_id IN (SELECT id FROM orchestration_parent WHERE created_at < ?)", arguments: [ms])
+            try db.execute(sql: "DELETE FROM orchestration_parent WHERE created_at < ?", arguments: [ms])
         }
     }
 
