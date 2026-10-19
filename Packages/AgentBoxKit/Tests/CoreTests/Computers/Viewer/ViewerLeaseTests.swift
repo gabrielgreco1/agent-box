@@ -175,6 +175,20 @@ struct ViewerModelTests {
         #expect(model.inputEnabled)
     }
 
+    @Test func ticketFailuresReconnectWithBackoffThenShowTheErrorAndALiveStreamResetsTheCount() {
+        let model = ComputerViewerModel(computer: FakeViewerComputer())
+        for attempt in 1 ... ComputerViewerModel.maxReconnects {
+            model.ticketFailed("runtime down")
+            #expect(model.connection == .reconnecting(attempt: attempt), "o ticket que falhou vira tentativa de reconexão, não 'Disconnected'")
+        }
+        model.ticketFailed("runtime down")
+        #expect(model.connection == .error("runtime down"))
+        model.reconnectRequested()
+        model.streamState("live", now: t0)
+        model.ticketFailed("blip")
+        #expect(model.connection == .reconnecting(attempt: 1))
+    }
+
     @Test func takeOverShowsRevokingThenForceAfterTenSecondsWithoutAck() async {
         let fake = FakeViewerComputer()
         await fake.setResults([.success(false), .success(true)])

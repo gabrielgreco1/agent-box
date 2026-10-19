@@ -318,6 +318,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 ### Viewer
 
 - `viewer.<computerId>`
+- `viewer.<computerId>.back`
 - `viewer.<computerId>.name`
 - `viewer.<computerId>.mode`
 - `viewer.<computerId>.url`

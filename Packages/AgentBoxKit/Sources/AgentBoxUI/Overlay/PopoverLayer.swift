@@ -100,6 +100,7 @@ private struct PopoverEntryView: View {
         let hiddenScale = (reduced || entry.isClosing) ? 1 : MotionTokens.Scale.menuFrom
         let hiddenOffset = entry.isClosing ? 0 : (placement.below ? -slide : slide)
         entry.spec.content { router.dismissPopover() }
+            .environment(\.dsMenuKeysActive, !entry.isClosing)
             .fixedSize()
             .onGeometryChange(for: CGSize.self) { $0.size } action: { newSize in
                 size = newSize

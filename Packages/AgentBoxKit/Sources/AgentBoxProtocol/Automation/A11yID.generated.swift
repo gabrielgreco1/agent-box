@@ -1070,6 +1070,11 @@ extension A11yID {
         A11yID(unchecked: "viewer.\(A11yID.segment(computerId))")
     }
 
+    /// `viewer.<computerId>.back`
+    public static func viewerBack(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).back")
+    }
+
     /// `viewer.<computerId>.name`
     public static func viewerName(_ computerId: String) -> A11yID {
         A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).name")
@@ -1535,6 +1540,7 @@ extension A11yID {
         A11yIDSpec(pattern: "rightPanel.files.viewer.code", surface: "Painel direito (Files, 10-right-panel §2)"),
         A11yIDSpec(pattern: "rightPanel.files.viewer.empty", surface: "Painel direito (Files, 10-right-panel §2)"),
         A11yIDSpec(pattern: "viewer.<computerId>", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.back", surface: "Viewer"),
         A11yIDSpec(pattern: "viewer.<computerId>.name", surface: "Viewer"),
         A11yIDSpec(pattern: "viewer.<computerId>.mode", surface: "Viewer"),
         A11yIDSpec(pattern: "viewer.<computerId>.url", surface: "Viewer"),

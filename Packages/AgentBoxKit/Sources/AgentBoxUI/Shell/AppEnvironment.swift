@@ -28,6 +28,9 @@ public final class ShellModel {
 public final class AppEnvironment {
     public let flags: SliceFlags
     public let shell = ShellModel()
+    /// Histórico ←/→ (sessão, terminal, viewer, Inbox, Computers) e a trava enquanto o próprio histórico navega.
+    var navigation = NavigationHistory()
+    var navigating = false
     public let elements = UIElementStore()
     public let registry: ActionRegistry
     public let overlays = OverlayRouter()
@@ -220,6 +223,7 @@ public final class AppEnvironment {
         subagentHoverCards = SubagentHoverCardController(computers: computers, registry: registry, elements: elements)
         computers.hoverCards = subagentHoverCards
         computers.model.sessionTitle = { [computers, sidebar] name in computers.model.sessionIDs[name].flatMap { sidebar.session($0)?.title } }
+        wireNavigation()
         workspace.pageCloser = { [computers] in
             guard computers.page != .workspace else { return false }
             computers.closePage()
@@ -299,6 +303,9 @@ public final class AppEnvironment {
     /// (`overlay-demo`) as ações de fechar do demo continuam suas.
     private func wireWorkspace() {
         workspace.overlays = overlays
+        workspace.autoFocusAllowed = { [overlays, settings, computers] in
+            !overlays.blocksTerminalInput && !settings.isOpen && computers.page == .workspace
+        }
         workspace.toasts = toasts
         workspace.sessionLookup = { [sidebar] id in sidebar.session(id) }
         sidebar.onSelectionChange = { [workspace] id in workspace.setSession(id) }
@@ -371,11 +378,11 @@ public final class AppEnvironment {
             try registry.register(
                 .navBack,
                 enablement: { [shell] in shell.canGoBack ? .enabled : .disabled(reason: "No earlier page") },
-                handler: { _ in nil })
+                handler: { [unowned self] _ in navigate(-1) ? "back" : nil })
             try registry.register(
                 .navForward,
                 enablement: { [shell] in shell.canGoForward ? .enabled : .disabled(reason: "No later page") },
-                handler: { _ in nil })
+                handler: { [unowned self] _ in navigate(1) ? "forward" : nil })
             try registry.register(.appQuit) { _ in
                 AppLifecycleCoordinator.requestTermination()
                 return nil

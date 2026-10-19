@@ -40,6 +40,10 @@ final class SidebarModel {
     }
     /// Avisa quem mostra o conteúdo da sessão (tabs e panes, T1-14) quando a seleção muda.
     @ObservationIgnored var onSelectionChange: ((UUID?) -> Void)?
+    /// Toda seleção de sessão (mesmo repetida): quem estava numa página do centro (viewer, Computers) volta ao terminal.
+    @ObservationIgnored var onSelected: ((UUID) -> Void)?
+    /// Histórico de navegação: seleção ou Inbox mudou.
+    @ObservationIgnored var onNavigate: (() -> Void)?
     /// Avisa a cada snapshot novo do Store (o workspace carrega a sessão selecionada quando ela chega).
     @ObservationIgnored var onSnapshot: ((StoreSnapshot) -> Void)?
     private(set) var pending: [PendingLaunch] = []
@@ -131,6 +135,7 @@ final class SidebarModel {
     func setInbox(open: Bool) {
         guard inboxOpen != open else { return }
         inboxOpen = open
+        onNavigate?()
     }
 
     /// Pedidos de ajuda de computador abertos (T3-05): entram em `Needs You` do mesmo Inbox, antes dos agentes (prioridade 1).
@@ -206,17 +211,19 @@ final class SidebarModel {
 
     /// Seleciona a sessão e a marca como vista. Devolve `false` se ela não existe.
     @discardableResult
-    func select(_ id: UUID, closingInbox: Bool = true) -> Bool {
+    func select(_ id: UUID, closingInbox: Bool = true, requestingListFocus: Bool = true) -> Bool {
         guard let session = session(id) else { return false }
         focusedPending = nil
         selectedSession = id
         if closingInbox { inboxOpen = false }
         keyboardFocus = nil
-        focusListRequest += 1
+        if requestingListFocus { focusListRequest += 1 }
         if session.unread, let store {
             Task { try? await store.markSessionViewed(id: id, at: clock()) }
         }
         persist()
+        onSelected?(id)
+        onNavigate?()
         return true
     }
 

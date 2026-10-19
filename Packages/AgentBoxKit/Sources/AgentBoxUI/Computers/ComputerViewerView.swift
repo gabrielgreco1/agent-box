@@ -32,6 +32,8 @@ struct ViewerCanvas: NSViewRepresentable {
 struct ComputerViewerView: View {
     let controller: ComputerViewerController
     let computers: ComputersController
+    /// Nome da sessão de origem para o botão `Back to <sessão>`; `nil` na janela própria (sem página para voltar).
+    var backTitle: String?
     @State private var badgeVisible = false
     @State private var breathing = false
 
@@ -40,7 +42,7 @@ struct ComputerViewerView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ViewerHeader(controller: controller)
+            ViewerHeader(controller: controller, backTitle: backTitle)
             ViewerStrip(computers: computers, current: id)
             if let help = model.help { helpBanner(help) }
             ZStack {
@@ -276,11 +278,15 @@ struct ViewerStrip: View {
 /// Header de 32 (03 §11.2): nome, tipo, URL, pill de controle, Take Over / Hand Back, janela própria.
 struct ViewerHeader: View {
     let controller: ComputerViewerController
+    var backTitle: String?
     private var model: ComputerViewerModel { controller.model }
     private var id: String { controller.name }
 
     var body: some View {
         HStack(spacing: DS.Space.s2) {
+            if let backTitle {
+                DSButton(.pageClose, id: .viewerBack(id), "Back to \(backTitle)", variant: .ghost, size: .xs, symbol: "arrow.left")
+            }
             Image(systemName: "display").foregroundStyle(DS.Color.textSecondary)
             Text(verbatim: controller.name).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
                 .a11y(.viewerName(id), kind: "text", label: controller.name)

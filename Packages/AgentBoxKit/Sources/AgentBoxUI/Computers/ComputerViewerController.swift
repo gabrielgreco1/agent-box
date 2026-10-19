@@ -36,6 +36,12 @@ public final class ComputerViewerController {
     @ObservationIgnored private var ticker: Task<Void, Never>?
     @ObservationIgnored private var reconnect: Task<Void, Never>?
     @ObservationIgnored private var started = false
+    /// Cada `connect()` pede o próprio ticket; só a tentativa mais nova conecta (a velha, que voltou tarde, é descartada).
+    @ObservationIgnored private var attempt = 0
+    @ObservationIgnored private var lastAttemptAt = Date.distantPast
+    @ObservationIgnored private var pageReady = false
+    /// Quedas seguidas sem nenhum quadro: o ticket de uso único (60 s) já foi gasto, então toda tentativa pede um novo.
+    @ObservationIgnored public private(set) var ticketsRequested = 0
     @ObservationIgnored private var fpsHistory: [Double] = []
     @ObservationIgnored public var onClose: () -> Void = {}
     @ObservationIgnored public var onRequestPopOut: () -> Void = {}
@@ -63,6 +69,7 @@ public final class ComputerViewerController {
                 self.model.tick()
                 await self.model.refresh()
                 self.syncInput()
+                self.watchdog()
             }
         }
     }
@@ -70,6 +77,8 @@ public final class ComputerViewerController {
     public func stop() {
         ticker?.cancel()
         reconnect?.cancel()
+        reconnect = nil
+        attempt += 1  // uma resposta de ticket que chegar depois de fechar o viewer não conecta
         web.disconnect()
         started = false
     }
@@ -77,18 +86,40 @@ public final class ComputerViewerController {
     /// Pede um ticket novo (uso único, 60 s) e conecta. O ticket nunca é reaproveitado numa reconexão.
     public func connect() async {
         guard model.connection != .stopped else { return }
+        attempt += 1
+        let mine = attempt
+        lastAttemptAt = Date()
         do {
+            ticketsRequested += 1
             let url = try await model.computer.vncEndpoint()
+            guard mine == attempt, model.connection != .stopped else { return }
             web.connect(to: url)
             lastError = nil
         } catch {
+            guard mine == attempt else { return }
             lastError = "\(error)"
-            model.streamError("\(error)")
+            log.error("viewer ticket failed: \(error)")
+            model.ticketFailed("\(error)")
+            if case .reconnecting(let n) = model.connection { scheduleReconnect(attempt: n) }
+        }
+    }
+
+    /// Roda a cada segundo: nunca deixa o viewer parado sem tentar de novo enquanto o computador está de pé. Cobre o computador
+    /// que voltou de `stopped` (o modelo vira `connecting`, mas ninguém reconectava), o "connecting" que não andou e o
+    /// "Disconnected" depois do limite de tentativas (uma tentativa lenta a cada 15 s; o botão Reconnect continua valendo).
+    private func watchdog() {
+        guard pageReady, model.connection != .stopped, reconnect == nil else { return }
+        let idle = Date().timeIntervalSince(lastAttemptAt)
+        switch model.connection {
+        case .connecting where idle > 12, .reconnecting where idle > 12, .error where idle > 15, .disconnected where idle > 15:
+            Task { await connect() }
+        default: break
         }
     }
 
     public func reconnectNow() {
         reconnect?.cancel()
+        reconnect = nil
         model.reconnectRequested()
         Task { await connect() }
     }
@@ -98,6 +129,7 @@ public final class ComputerViewerController {
     func handle(_ event: ViewerEvent) {
         switch event {
         case .ready:
+            pageReady = true
             Task { await connect() }
         case .state(let value, let detail):
             model.streamState(value, detail: detail)
@@ -125,7 +157,9 @@ public final class ComputerViewerController {
         reconnect?.cancel()
         reconnect = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .seconds(min(Double(1 << min(attempt, 3)), 8)))
-            guard !Task.isCancelled, let self, case .reconnecting = self.model.connection else { return }
+            guard !Task.isCancelled, let self else { return }
+            self.reconnect = nil
+            guard case .reconnecting = self.model.connection else { return }
             await self.connect()
         }
     }

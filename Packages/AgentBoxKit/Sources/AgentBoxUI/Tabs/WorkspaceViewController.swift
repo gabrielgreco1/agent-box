@@ -81,17 +81,40 @@ final class WorkspaceRootView: NSView {
         needsLayout = true
     }
 
+    /// A página aberta mantém a tab row da sessão visível em cima (viewer de computador): o usuário sempre vê as tabs e
+    /// clicar numa delas volta para o terminal.
+    private(set) var pageKeepsTabs = false
+    /// Clique na tab row enquanto uma página está aberta: o controlador fecha a página e mostra o terminal.
+    var onTabRowClickWhilePage: () -> Void = {}
+    private lazy var tabRowClick: NSClickGestureRecognizer = {
+        let g = NSClickGestureRecognizer(target: self, action: #selector(tabRowClicked))
+        g.delaysPrimaryMouseButtonEvents = false
+        return g
+    }()
+
+    @objc private func tabRowClicked() {
+        if page != nil { onTabRowClickWhilePage() }
+    }
+
     /// Troca a página do centro. `nil` volta ao landing ou ao workspace, conforme havia sessão.
-    func setPage(_ view: NSView?) {
+    /// `keepTabs`: a página ocupa só a área dos panes e a tab row continua (viewer).
+    func setPage(_ view: NSView?, keepTabs: Bool = false) {
         page?.removeFromSuperview()
         page = view
+        pageKeepsTabs = view != nil && keepTabs && workspaceVisible
         if let view {
             landing.removeFromSuperview()
             pending.removeFromSuperview()
             area.removeFromSuperview()
-            tabRow.removeFromSuperview()
+            if pageKeepsTabs {
+                if tabRow.superview == nil { addSubview(tabRow) }
+                if !(tabRow.gestureRecognizers.contains { $0 === tabRowClick }) { tabRow.addGestureRecognizer(tabRowClick) }
+            } else {
+                tabRow.removeFromSuperview()
+            }
             addSubview(view)
         } else {
+            tabRow.removeGestureRecognizer(tabRowClick)
             applyMode()
         }
         needsLayout = true
@@ -99,7 +122,9 @@ final class WorkspaceRootView: NSView {
 
     override func layout() {
         super.layout()
-        page?.frame = bounds
+        page?.frame = pageKeepsTabs
+            ? NSRect(x: 0, y: TabMetrics.chromeHeight, width: bounds.width, height: max(0, bounds.height - TabMetrics.chromeHeight))
+            : bounds
         landing.frame = bounds
         pending.frame = bounds
         tabRow.frame = NSRect(x: 0, y: 0, width: bounds.width, height: TabMetrics.chromeHeight)
@@ -175,10 +200,17 @@ final class WorkspaceViewController: NSViewController {
             guard let root, let env else { return }
             root.setPendingVisible(env.sidebar.focusedPending != nil)
         }
+        root.onTabRowClickWhilePage = { [weak env] in env?.computers.closePage() }
         env.computers.onPageChange = { [weak self, weak root, weak env] in
             guard let self, let root, let env else { return }
-            root.setPage(self.pageView(for: env.computers.page, env: env))
-            if env.computers.page != .workspace { root.window?.makeFirstResponder(root.page) }
+            root.setPage(self.pageView(for: env.computers.page, env: env), keepTabs: env.computers.page.isViewer)
+            if env.computers.page != .workspace {
+                root.window?.makeFirstResponder(root.page)
+            } else {
+                // Voltou ao workspace: o terminal da tab ativa recupera o teclado (a página que tinha o foco saiu da janela).
+                env.workspace.focusTerminalOfActiveTab()
+                DispatchQueue.main.async { [weak env] in env?.workspace.focusTerminalOfActiveTab() }
+            }
         }
     }
 
@@ -191,7 +223,8 @@ final class WorkspaceViewController: NSViewController {
         case .computers: content = AnyView(ComputersPageView(controller: controller))
         case .viewer(let name):
             guard let viewer = controller.ensureViewer(name) else { return nil }
-            content = AnyView(ComputerViewerView(controller: viewer, computers: controller))
+            let origin = env.sidebar.selectedSession.flatMap { env.sidebar.session($0)?.title }
+            content = AnyView(ComputerViewerView(controller: viewer, computers: controller, backTitle: origin ?? String(localized: "workspace", bundle: .module)))
         }
         let host = ChromeHostingView(
             content: content.environment(\.elementStore, env.elements).environment(\.actionRegistry, env.registry).environment(\.a11yParent, .windowMain))

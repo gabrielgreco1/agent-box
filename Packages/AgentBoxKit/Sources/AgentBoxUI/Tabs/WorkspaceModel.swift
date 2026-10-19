@@ -73,6 +73,8 @@ final class WorkspaceModel {
     @ObservationIgnored let confirmationState = ConfirmationState()
     /// ⌘W com uma página ou o viewer de computador no centro fecha a página (03 §11.6), não um terminal. Devolve `true` se tratou.
     @ObservationIgnored var pageCloser: () -> Bool = { false }
+    /// Pedido explícito para mostrar um terminal (sidebar, tab, atalho): fecha a página do centro que o esconde.
+    @ObservationIgnored var onShowTerminal: () -> Void = {}
     /// "Subagent computers" (F12): o modo com que cada Claude é lançado e o `Restart to apply`.
     @ObservationIgnored weak var subagent: SubagentComputersController?
 
@@ -521,6 +523,7 @@ final class WorkspaceModel {
     /// Foco por atalho ou ação: seleciona a tab, foca o pane e o terminal da AppKit (rim flash, M-309).
     func show(terminalID: UUID, flash: Bool = false) {
         guard let tab = tabContaining(terminalID: terminalID) else { return }
+        onShowTerminal()
         if activeTabID != tab.id { selectTab(tab.id) }
         focus(terminalID: terminalID)
         pulse(terminalID)
@@ -551,6 +554,15 @@ final class WorkspaceModel {
     func focusedHost() -> TerminalHostView? {
         guard let id = focusedTerminalID else { return nil }
         return runtime.existingEntry(for: id)?.host
+    }
+
+    /// Quem pode receber foco automático (evento de lançamento, troca de tab): sem overlay, popover, Settings, página do centro
+    /// nem campo de texto com o teclado. Ligado pelo `AppEnvironment`. Foco pedido pelo usuário (clique, fechar overlay) não passa por aqui.
+    var autoFocusAllowed: () -> Bool = { true }
+
+    func autoFocus(_ host: TerminalHostView?) {
+        guard let host, autoFocusAllowed(), !(host.window?.firstResponder is NSText) else { return }
+        host.focusTerminal()
     }
 
     func focusTerminalOfActiveTab() {
@@ -988,7 +1000,7 @@ final class WorkspaceModel {
         case .firstOutput:
             ignitionTimers[id]?.cancel()
             if case .starting = paneState(id) { runStates[id] = .running }
-            if id == focusedTerminalID { runtime.existingEntry(for: id)?.host.focusTerminal() }
+            if id == focusedTerminalID { autoFocus(runtime.existingEntry(for: id)?.host) }
         case .nativeID(_, let nativeID):
             update(terminal: id) { $0.nativeConversationID = nativeID }
             save(terminal: id)
@@ -1024,7 +1036,7 @@ final class WorkspaceModel {
             case .attached:
                 update(terminal: id) { $0.state = .running }
                 runStates[id] = .running
-                if id == focusedTerminalID { runtime.existingEntry(for: id)?.host.focusTerminal() }
+                if id == focusedTerminalID { autoFocus(runtime.existingEntry(for: id)?.host) }
             case .exited(let summary):
                 markExited(id, info: summary.exit)
             case .gone:
