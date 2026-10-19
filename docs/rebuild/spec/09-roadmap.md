@@ -412,6 +412,38 @@ Saída: J4 com lote real de pelo menos 10 subagentes terminando com resultado e 
 
 "Later" (01 §4.3) e "Fora" (01 §4.4) não entram em nenhuma fatia sem decisão do dono.
 
+### 4.4b Backlog do dono (2026-10-19) · anotado, NÃO começar sem o dono
+
+Pedidos do dono depois do primeiro uso real. Só tarefas anotadas; a ordem e o início são decisão dele.
+
+**Computador mais capaz para o agente (dentro do container)**
+
+| Épico | Conteúdo | Depende de |
+|---|---|---|
+| BK-1 Página como texto estruturado | Snapshot da árvore de acessibilidade com refs estáveis por elemento (como o Playwright MCP); ferramentas clicam/preenchem por ref; menos tokens que screenshot, menos clique errado | T3-03 |
+| BK-2 Descoberta automática da API | Do reqlog: XHR/fetch candidato → chamada `http_request` pronta para repetir, com paginação detectada (página, offset, cursor) e esquema da resposta; o agente sai do navegador para HTTP direto | T3-02, T3-03 |
+| BK-3 Aprender uma vez, rodar muitas | O caminho que funcionou vira script determinístico (requisições, seletores, paginação) gravado na Library; o lote seguinte roda sem modelo e chama o agente só quando quebra (com o diff do que mudou) | BK-1, BK-2, T3-07 |
+| BK-4 Navegador mais humano | Chrome real em vez de Chromium; fuso, idioma, geolocalização e fingerprint coerentes com o país do proxy; perfil persistente; meta: passar Cloudflare/anti-bot sem humano na maioria dos casos | T3-02 |
+| BK-5 Logins que persistem | Perfil de navegador por site no Vault: o humano faz login/MFA uma vez pelo viewer e os próximos computadores já entram logados; expiração e "Log in again" | T3-05, T2-10 |
+| BK-6 Documentos | PDF para texto, OCR (tesseract) e extração de tabelas no container | T3-03 |
+| BK-7 Espaço de dados | DuckDB e pandas no `/work` para deduplicar, validar e exportar CSV/Parquet antes do `result_submit` | T3-06 |
+
+**Agentes e skills**
+
+| Épico | Conteúdo | Depende de |
+|---|---|---|
+| BK-8 Biblioteca amigável | Library de agentes e skills dentro do app, bonita e navegável (busca, categorias, prévia, de onde vem cada item), além da Library só leitura da T4-02 | T4-02 |
+| BK-9 Arrastar e usar | Arrastar um agente ou uma skill da Library para uma sessão, um pane ou o composer e usar na hora (ativa por sessão ou insere no prompt) | BK-8, T4-03 |
+| BK-10 Gestão interativa | Criar, editar, ativar e desativar agentes e skills pela UI, com backup e histórico (junta com V11-E) | BK-8 |
+
+**Modelos e onde roda**
+
+| Épico | Conteúdo | Depende de |
+|---|---|---|
+| BK-11 Outro modelo para o subagente | Escolher o modelo/CLI de cada subagente: por exemplo um subagente no Codex, ou com uma API de terceiros (DeepSeek e afins via endpoint compatível). Precisa de desenho: como o pai Claude delega para um worker que não é Claude (worker leve da V11-B? CLI diferente por slot?), credenciais no Vault, custo por modelo | V11-B, V11-C |
+| BK-12 Computadores na nuvem | Rodar os computadores fora do Mac: conta AWS, Cloudflare e outros provedores ligados por uma UI simples (login, região, limite como "no máximo 5 na AWS"); o mesmo container/compose sobe lá em vez do Docker local; viewer, egress e ferramentas iguais; custo visível | T3-01, T3-09 |
+
+
 ### 4.5 Verificações, evidências e spikes de 07
 
 #### 4.5.1 Verificações de contrato dos CLIs
