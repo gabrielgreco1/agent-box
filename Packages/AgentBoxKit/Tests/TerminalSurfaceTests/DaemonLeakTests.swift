@@ -9,7 +9,7 @@ import Testing
 /// F34: daemon de teste com sessão viva (`exec cat`) não pode sobreviver à limpeza do teste. O `agentboxd` ignora SIGTERM e
 /// não sai ocioso com sessões, então só `shutdown` (protocolo) ou SIGKILL o encerram.
 @MainActor
-@Suite(.serialized, .timeLimit(.minutes(1))) struct DaemonLeakTests {
+@Suite(.serialized, .timeLimit(.minutes(1)), .tags(.integration)) struct DaemonLeakTests {
     private func gone(_ pid: Int32, within seconds: Int = 5) async -> Bool {
         let deadline = ContinuousClock.now + .seconds(seconds)
         while ContinuousClock.now < deadline {

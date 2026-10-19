@@ -98,8 +98,9 @@ private struct FakeComputers: InsightsComputerSource {
         try await Task.sleep(for: .milliseconds(1100))  // mtime com resolução de 1 s em alguns volumes
         try InsightsFixtures.write([InsightsFixtures.claudeLine(id: "b", at: now.addingTimeInterval(-30), input: 50)], to: file, append: true)
         let second = await service.refreshUsage()
-        #expect(second.filesRead == 1)
-        #expect(second.messagesAdded == 1)
+        // O watcher do serviço pode ler o append antes desta chamada (máquina carregada): aí ela não lê nada. O que importa é
+        // o total (150, nunca 250 = reler o arquivo inteiro).
+        #expect(second.filesRead <= 1 && second.messagesAdded <= 1)
         let snap = await service.current
         #expect(snap.claude.week.input == 150)
         await service.stop()

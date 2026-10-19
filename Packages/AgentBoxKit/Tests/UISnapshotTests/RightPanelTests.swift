@@ -162,12 +162,16 @@ import Testing
         _ = try await first.registry.perform(.rightPanelSetSplit, .set("0.4"))
         _ = try await first.registry.perform(.rightPanelMove, .select("insights:top"))
         _ = try await first.registry.perform(.rightPanelMinimize, .select("files"))
-        try await Task.sleep(for: .milliseconds(150))
-        try await store.flush()
-
-        let second = AppEnvironment(environment: [:])
-        await second.rightPanel.attach(store: store)
-        let layout = second.rightPanel.layout
+        // O salvamento é debounced: espera ele chegar ao store (sob carga 150 ms não bastavam).
+        var layout = RightPanelLayout()
+        for _ in 0..<40 {
+            try await Task.sleep(for: .milliseconds(100))
+            try await store.flush()
+            let second = AppEnvironment(environment: [:])
+            await second.rightPanel.attach(store: store)
+            layout = second.rightPanel.layout
+            if layout.width == 512, layout.visible == [.insights] { break }
+        }
         #expect(layout.width == 512)
         #expect(abs(layout.topFraction - 0.4) < 0.001)
         #expect(layout.order.prefix(2) == [.insights, .files])
