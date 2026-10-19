@@ -1,3 +1,4 @@
+import AgentBoxPlatform
 import AgentBoxProtocol
 import AgentBoxStore
 import Foundation
@@ -19,7 +20,8 @@ public struct ReconcileReport: Sendable, Equatable {
 public enum SessionReconciler {
     /// - Parameter daemonSessions: `nil` = daemon inalcançável (todas as sessões estão perdidas).
     public static func reconcile(
-        store: AgentBoxStore, daemonSessions: [SessionSummary]?, now: Date = Date(), bootTime: Date = InterruptionClassifier.bootTime()
+        store: AgentBoxStore, daemonSessions: [SessionSummary]?, now: Date = Date(), bootTime: Date = InterruptionClassifier.bootTime(),
+        runIDOfProcess: @Sendable (Int32) async -> UUID? = SessionReconciler.launchRunID(ofProcess:)
     ) async throws -> ReconcileReport {
         var report = ReconcileReport()
         var state = (try await store.uiState(RestoreUIState.key, as: RestoreUIState.self)) ?? RestoreUIState()
@@ -29,8 +31,21 @@ public enum SessionReconciler {
         let byID = Dictionary((daemonSessions ?? []).map { ($0.sessionID.description, $0) }, uniquingKeysWith: { first, _ in first })
         // Marcado `interrupted` por engano (uma abertura que não alcançou o daemon, um daemon filho de fallback) mas a sessão
         // continua viva no daemon: volta a `running` e é religada. Senão o agente vivo some da UI e a retomada criaria um segundo.
-        for var terminal in try await store.terminals(in: .interrupted) {
-            guard let raw = terminal.ptySessionID, let summary = byID[raw], summary.state == .running else { continue }
+        var lost = try await store.terminals(in: .interrupted)
+        lost += try await store.terminals(in: .failedToStart)
+        let known = Set((try await store.terminals(in: .running) + store.terminals(in: .launching)).compactMap(\.ptySessionID))
+        // Sessão viva sem nenhum terminal apontando para ela: o ID salvo foi sobrescrito por uma retomada que falhou. O processo
+        // carrega `run/launch/<runID>` na linha de comando; casa com o `currentRunID` do terminal.
+        var orphanByRun: [UUID: SessionSummary] = [:]
+        let claimed = Set(lost.compactMap(\.ptySessionID)).union(known)
+        for summary in daemonSessions ?? [] where summary.state == .running && !claimed.contains(summary.sessionID.description) {
+            if let pid = summary.pid, let run = await runIDOfProcess(pid) { orphanByRun[run] = summary }
+        }
+        for var terminal in lost {
+            let summary = terminal.ptySessionID.flatMap { byID[$0] }.flatMap { $0.state == .running ? $0 : nil }
+                ?? terminal.currentRunID.flatMap { orphanByRun[$0] }
+            guard let summary else { continue }
+            terminal.ptySessionID = summary.sessionID.description
             terminal.state = .running
             terminal.endedAt = nil
             try await store.save(terminal)
@@ -63,6 +78,14 @@ public enum SessionReconciler {
         state.explicitlyStopped = []
         try await store.setUIState(RestoreUIState.key, state)
         return report
+    }
+
+    /// `run/launch/<uuid>` nos argumentos do processo (`--settings` do lançamento), lido com `ps`.
+    public static func launchRunID(ofProcess pid: Int32) async -> UUID? {
+        let request = ProcessRequest(executable: URL(fileURLWithPath: "/bin/ps"), arguments: ["-ww", "-o", "args=", "-p", "\(pid)"], timeout: .seconds(3))
+        guard let out = try? await ProcessRunner.run(request), out.exitCode == 0,
+              let range = out.stdoutString.range(of: #"run/launch/[0-9a-fA-F-]{36}"#, options: .regularExpression) else { return nil }
+        return UUID(uuidString: String(out.stdoutString[range].dropFirst("run/launch/".count)))
     }
 
     /// "Stop All and Quit": guarda quais terminais o usuário parou de propósito, para a próxima abertura não os retomar.

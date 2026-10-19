@@ -206,6 +206,23 @@ import Testing
         #expect(stored.first { $0.id == terminals[1].id }?.state == .interrupted, "sem sessão viva continua interrompido")
     }
 
+    @Test func aLiveSessionWhoseIDWasOverwrittenIsMatchedByTheLaunchRunID() async throws {
+        let (store, root) = try await openStore()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let now = Date()
+        var terminals = try await seed(store, states: [.interrupted], startedAt: now.addingTimeInterval(-60))
+        let run = UUID()
+        terminals[0].currentRunID = run
+        try await store.save(terminals[0])
+        // A sessão viva no daemon tem outro ID (o salvo era de uma retomada que falhou num daemon que já morreu).
+        let live = SessionSummary(sessionID: SessionID(), pid: 4242, argv0: "claude", cwd: "/tmp", state: .running, startedAt: now, endSeq: 0)
+        let report = try await SessionReconciler.reconcile(
+            store: store, daemonSessions: [live], now: now, runIDOfProcess: { pid in pid == 4242 ? run : nil })
+        #expect(report.alive == [terminals[0].id])
+        let stored = try await store.snapshot().terminals.first { $0.id == terminals[0].id }
+        #expect(stored?.state == .running && stored?.ptySessionID == live.sessionID.description)
+    }
+
     @Test func reconcileWithoutADaemonInterruptsEverythingAndSeparatesRebootFromCrash() async throws {
         let (store, root) = try await openStore()
         defer { try? FileManager.default.removeItem(at: root) }
