@@ -44,9 +44,11 @@ import Testing
         #expect(waiting.subagentInfos[0].displayTitle == "Explore", "no spawn description: the subagent type is the title")
     }
 
-    @Test func aSubagentWithoutDescriptionStillGetsARow() {
+    @Test func internalUntypedSubagentsAreHidden() {
+        // Subagentes internos do Claude Code (sem spawn pela ferramenta, sem tipo) não viram linha na sidebar.
         var s = ActivityState()
         s = ActivityReducer.reduce(s, event("SubagentStart", agent: "z", at: 1))
-        #expect(s.subagentInfos.count == 1 && s.subagentInfos[0].displayTitle == "Subagent")
+        s = ActivityReducer.reduce(s, event("SubagentStop", agent: "z", at: 1))
+        #expect(s.subagentInfos.isEmpty)
     }
 }

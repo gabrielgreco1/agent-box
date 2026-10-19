@@ -87,7 +87,10 @@ public struct ActivityState: Sendable, Equatable {
     /// Subagentes para a sidebar (os implícitos, vistos só por eventos de ferramenta, entram também), na ordem de início.
     public var subagentInfos: [SubagentInfo] {
         func date(_ ns: Int64) -> Date { Date(timeIntervalSince1970: Double(ns) / 1_000_000_000) }
-        return children.values.sorted { ($0.startedAtNs, $0.agentID) < ($1.startedAtNs, $1.agentID) }.map { c in
+        // Subagentes internos do Claude Code (sem spawn pela ferramenta Agent/Task, sem tipo e sem título — ex. resumos e
+        // títulos que o CLI dispara sozinho) não são do usuário: não viram linha na sidebar.
+        let visible = children.values.filter { $0.title != nil || $0.agentType != nil }
+        return visible.sorted { ($0.startedAtNs, $0.agentID) < ($1.startedAtNs, $1.agentID) }.map { c in
             let phase: SubagentInfo.Phase
             if c.phase == .done { phase = .done } else if pending[c.agentID] != nil { phase = .needsInput } else { phase = .running }
             return SubagentInfo(
