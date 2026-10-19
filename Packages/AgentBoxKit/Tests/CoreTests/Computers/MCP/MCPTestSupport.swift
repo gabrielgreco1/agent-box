@@ -69,6 +69,12 @@ actor FakeBackend: ComputerBackend {
     func proxyInfo() async throws -> JSON { proxyInfoJSON }
     func usage() async throws -> JSON { ["requests": 4, "tunnels": 2, "bytes": 1000, "renders": 1] }
     func render(_ payload: JSON) async throws -> JSON { try renderResult.get() }
+    var vncURL: URL?
+    func setVNCURL(_ url: URL?) { vncURL = url }
+    func vncEndpoint() async throws -> URL {
+        guard let vncURL else { throw ToolError(.notSupported, "this computer has no screen") }
+        return vncURL
+    }
 }
 
 /// Uma pasta de run temporária por teste.

@@ -125,4 +125,7 @@ for pair in "$APP/Contents/MacOS/agentbox:app.agentbox.cli" "$APP/Contents/MacOS
   fi
 done
 codesign -dv "$APP" 2>&1 | grep -E 'flags=|Identifier=' || true
+# O Dock guarda o ícone por caminho: sem re-registrar, um bundle reconstruído no mesmo lugar aparece com o ícone genérico.
+touch "$APP"
+/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$APP" >/dev/null 2>&1 || true
 echo "build: OK -> $APP"

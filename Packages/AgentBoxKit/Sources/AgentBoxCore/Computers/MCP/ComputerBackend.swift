@@ -53,10 +53,6 @@ public protocol ComputerBackend: Sendable {
 }
 
 extension ComputerBackend {
-    public func vncEndpoint() async throws -> URL { throw ToolError(.notSupported, "this computer has no screen") }
-}
-
-extension ComputerBackend {
     /// `http_request`: roda `abx-http` (curl_cffi) no `work`, saindo pelo egress. Devolve o JSON do script.
     func httpRun(_ spec: JSON, timeout: Duration) async throws -> JSON {
         let outcome = try await execRun(BackendExec(argv: ["abx-http"], cwd: "/work", stdin: spec.data()), timeout: timeout)

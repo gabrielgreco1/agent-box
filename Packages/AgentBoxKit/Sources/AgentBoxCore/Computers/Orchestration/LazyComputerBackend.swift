@@ -27,4 +27,6 @@ public final class LazyComputerBackend: ComputerBackend, Sendable {
     public func proxyInfo() async throws -> JSON { try await current().proxyInfo() }
     public func usage() async throws -> JSON { try await current().usage() }
     public func render(_ payload: JSON) async throws -> JSON { try await current().render(payload) }
+    /// Sem isto o viewer caía no padrão do protocolo ("this computer has no screen") e nunca conectava.
+    public func vncEndpoint() async throws -> URL { try await current().vncEndpoint() }
 }

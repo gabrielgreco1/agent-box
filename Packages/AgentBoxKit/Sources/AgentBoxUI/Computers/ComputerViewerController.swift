@@ -100,7 +100,7 @@ public final class ComputerViewerController {
             lastError = "\(error)"
             log.error("viewer ticket failed: \(error)")
             model.ticketFailed("\(error)")
-            if case .reconnecting(let n) = model.connection { scheduleReconnect(attempt: n) }
+            retryIfNeeded()
         }
     }
 
@@ -133,7 +133,7 @@ public final class ComputerViewerController {
             Task { await connect() }
         case .state(let value, let detail):
             model.streamState(value, detail: detail)
-            if value == "disconnected", case .reconnecting(let attempt) = model.connection { scheduleReconnect(attempt: attempt) }
+            if value == "disconnected" { retryIfNeeded() }
             if value == "live" { syncInput() }
         case .stats(let fps, let frames, let silentMs, _):
             model.streamStats(fps: fps, frames: frames, silentMs: silentMs)
@@ -156,14 +156,26 @@ public final class ComputerViewerController {
         }
     }
 
-    private func scheduleReconnect(attempt: Int) {
+    /// Queda ou ticket negado: antes da primeira conexão tenta de novo a cada 2 s (o computador está subindo); depois, recuo
+    /// exponencial até 8 s.
+    private func retryIfNeeded() {
+        switch model.connection {
+        case .connecting where !model.hasBeenLive: scheduleReconnect(after: 2)
+        case .reconnecting(let n): scheduleReconnect(after: min(Double(1 << min(n, 3)), 8))
+        default: break
+        }
+    }
+
+    private func scheduleReconnect(after seconds: Double) {
         reconnect?.cancel()
         reconnect = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .seconds(min(Double(1 << min(attempt, 3)), 8)))
+            try? await Task.sleep(for: .seconds(seconds))
             guard !Task.isCancelled, let self else { return }
             self.reconnect = nil
-            guard case .reconnecting = self.model.connection else { return }
-            await self.connect()
+            switch self.model.connection {
+            case .reconnecting, .connecting: await self.connect()
+            default: break
+            }
         }
     }
 

@@ -86,6 +86,9 @@ public final class ComputerViewerModel {
     public static let revokeTimeout: TimeInterval = 10
     public static let delayedAfter: TimeInterval = 2
     public static let maxReconnects = 5
+    /// Primeira conexão: o computador pode estar subindo (fila, imagem, Xvfb). Até ~2 min de tentativas a tela diz
+    /// "Starting computer…"/"Connecting…", nunca "Reconnecting…" (não houve conexão para reconectar).
+    public static let maxFirstConnectAttempts = 60
 
     public let computer: any ViewerComputer
     public var name: String { computer.computerName }
@@ -108,6 +111,12 @@ public final class ComputerViewerModel {
     public private(set) var blockedClickAt: Date?
     public private(set) var lastFrameAt: Date?
     private var reconnectAttempts = 0
+    /// O stream já ficou vivo alguma vez nesta abertura do viewer. Antes disso, queda e ticket negado são "ainda conectando".
+    public private(set) var hasBeenLive = false
+    private var firstConnectAttempts = 0
+
+    /// O computador ainda está na fila ou subindo (a tela mostra "Starting computer…" e o progresso).
+    public var isStarting: Bool { snapshot?.state == .queued || snapshot?.state == .provisioning }
     private var takeOverInFlight = false
 
     public init(computer: any ViewerComputer) { self.computer = computer }
@@ -142,11 +151,13 @@ public final class ComputerViewerModel {
             connection = .connecting
         case "live":
             connection = .live
+            hasBeenLive = true
             reconnectAttempts = 0
             lastFrameAt = now
         case "disconnected":
             // Reconectar não resolve o pedido nem devolve o controle: só o stream muda.
             guard connection != .stopped else { return }
+            if !hasBeenLive { return firstConnectFailed(nil) }
             reconnectAttempts += 1
             connection = reconnectAttempts > Self.maxReconnects ? .disconnected : .reconnecting(attempt: reconnectAttempts)
         default: break
@@ -159,8 +170,15 @@ public final class ComputerViewerModel {
     /// passado o limite, mostra o erro; nunca fica parado em "Disconnected" sem tentar de novo.
     public func ticketFailed(_ message: String) {
         guard connection != .stopped else { return }
+        if !hasBeenLive { return firstConnectFailed(message) }
         reconnectAttempts += 1
         connection = reconnectAttempts > Self.maxReconnects ? .error(message) : .reconnecting(attempt: reconnectAttempts)
+    }
+
+    private func firstConnectFailed(_ message: String?) {
+        firstConnectAttempts += 1
+        lastError = message
+        connection = firstConnectAttempts > Self.maxFirstConnectAttempts ? (message.map { .error($0) } ?? .disconnected) : .connecting
     }
 
     public func streamStats(fps: Double, frames: Int, silentMs: Int, now: Date = Date()) {
@@ -183,6 +201,7 @@ public final class ComputerViewerModel {
 
     public func reconnectRequested() {
         reconnectAttempts = 0
+        firstConnectAttempts = 0
         if connection != .stopped { connection = .connecting }
     }
 

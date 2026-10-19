@@ -96,8 +96,7 @@ struct ComputerViewerView: View {
     private var stateOverlay: some View {
         switch model.connection {
         case .connecting:
-            card { Text("Connecting…", bundle: .module).dsFont(DS.Font.label).foregroundStyle(DS.Color.textSecondary) }
-                .a11y(.viewerConnecting(id), kind: "status", label: "Connecting…")
+            startingCard
         case .reconnecting:
             statusPill(String(localized: "Reconnecting…", bundle: .module), reconnect: false)
         case .delayed(let since):
@@ -116,6 +115,23 @@ struct ComputerViewerView: View {
         case .live:
             EmptyView()
         }
+    }
+
+    /// Primeira conexão: diz o que está acontecendo (computador subindo, com o progresso, ou conectando à tela) em vez de uma
+    /// tela preta com "Reconnecting…".
+    private var startingCard: some View {
+        let title = model.isStarting ? String(localized: "Starting computer…", bundle: .module) : String(localized: "Connecting to the screen…", bundle: .module)
+        let detail = model.isStarting ? (model.snapshot?.detail ?? model.snapshot?.queuePosition.map { String(localized: "Waiting in line · position \($0)", bundle: .module) }) : nil
+        return card {
+            HStack(alignment: .center, spacing: DS.Space.s3) {
+                DSSpinner(kind: .neutral, size: DS.Space.s4)
+                VStack(alignment: .leading, spacing: DS.Space.s1) {
+                    Text(verbatim: title).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary)
+                    Text(verbatim: detail ?? id).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary).lineLimit(1)
+                }
+            }
+        }
+        .a11y(.viewerConnecting(id), kind: "status", label: title)
     }
 
     private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {

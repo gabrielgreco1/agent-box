@@ -13,7 +13,7 @@ import Testing
 struct LiveViewerWebViewTests {
     static var repoRoot: URL {
         var root = URL(fileURLWithPath: #filePath)
-        while root.path != "/", !FileManager.default.fileExists(atPath: root.appendingPathComponent("runtime/box/Dockerfile").path) {
+        while root.path != "/", !FileManager.default.fileExists(atPath: root.appendingPathComponent("runtime/computer/Dockerfile").path) {
             root.deleteLastPathComponent()
         }
         return root

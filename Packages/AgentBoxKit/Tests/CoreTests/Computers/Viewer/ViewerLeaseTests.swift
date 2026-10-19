@@ -175,8 +175,23 @@ struct ViewerModelTests {
         #expect(model.inputEnabled)
     }
 
+    @Test func beforeTheFirstFrameFailuresStayConnectingNeverReconnecting() {
+        let model = ComputerViewerModel(computer: FakeViewerComputer())
+        for _ in 0..<(ComputerViewerModel.maxFirstConnectAttempts / 2) {
+            model.ticketFailed("the computer has no containers yet")
+            #expect(model.connection == .connecting, "não houve conexão: a tela diz Starting/Connecting, nunca Reconnecting")
+            model.streamState("disconnected")
+            #expect(model.connection == .connecting)
+        }
+        model.ticketFailed("still nothing")
+        #expect(model.connection == .error("still nothing"))
+        model.reconnectRequested()
+        #expect(model.connection == .connecting)
+    }
+
     @Test func ticketFailuresReconnectWithBackoffThenShowTheErrorAndALiveStreamResetsTheCount() {
         let model = ComputerViewerModel(computer: FakeViewerComputer())
+        model.streamState("live", now: t0)
         for attempt in 1 ... ComputerViewerModel.maxReconnects {
             model.ticketFailed("runtime down")
             #expect(model.connection == .reconnecting(attempt: attempt), "o ticket que falhou vira tentativa de reconexão, não 'Disconnected'")
