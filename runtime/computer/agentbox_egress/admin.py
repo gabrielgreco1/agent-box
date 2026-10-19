@@ -25,7 +25,7 @@ from .config import load_config
 from .proxy import EgressProxy, header_value, parse_head
 from .ssrf import Blocked
 
-RUNTIME_ADDRESS = ("runtime", 8765)
+RUNTIME_ADDRESS = ("127.0.0.1", 8765)  # P24: mesmo container
 MAX_BODY = 48 * 1024 * 1024
 
 

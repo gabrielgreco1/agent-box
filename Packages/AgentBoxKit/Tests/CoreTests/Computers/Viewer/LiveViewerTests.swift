@@ -198,8 +198,7 @@ struct LiveViewerTests {
     func scenario(runID: String, detected: DetectedRuntime, client: DockerClient, testLabels: [String: String], home: URL, e: LiveEvidenceC) async throws {
         await e.record("runtime", .string("\(detected.runtime.kind.rawValue): Engine \(detected.version.version), \(detected.info.architecture)"))
         let images = ImageManager(client: client)
-        let box = try await images.ensure(ImageSource(repository: "agentbox-box-test-\(runID)", contextDirectory: LiveC.repoRoot.appendingPathComponent("runtime/box"), extraLabels: testLabels))
-        let egress = try await images.ensure(ImageSource(repository: "agentbox-egress-test-\(runID)", contextDirectory: LiveC.repoRoot.appendingPathComponent("runtime/egress"), extraLabels: testLabels))
+        let computerImage = try await images.ensure(ImageSource(repository: "agentbox-computer-test-\(runID)", contextDirectory: LiveC.repoRoot.appendingPathComponent("runtime/computer"), extraLabels: testLabels))
         let bridge = "abx-t-\(runID)-bridge"
         _ = try await client.createNetwork(name: bridge, isInternal: false, labels: testLabels)
         let labels = ComputerLabels(owner: "test-\(runID)", computerID: UUID().uuidString.lowercased(), computerName: "viewer-a", ephemeral: true, isTest: true)
@@ -208,8 +207,8 @@ struct LiveViewerTests {
         let config = EgressConfigFile.make(profile: nil, secret: nil)
         let runDirectory = home.appendingPathComponent("runs/live/viewer-a", isDirectory: true)
         let provisioned = try await ComputerProvisioner(client: client).provision(ComputerProvisionRequest(
-            labels: labels, boxImage: box.tag, egressImage: egress.tag, display: .headless, token: token, config: config, secrets: secrets,
-            runDirectory: runDirectory, bridgeNetwork: bridge, extraLabels: ["agentbox.test_run": runID]))
+            labels: labels, image: computerImage.tag, display: .headless, token: token, config: config, secrets: secrets,
+            runDirectory: runDirectory, network: bridge, extraLabels: ["agentbox.test_run": runID]))
         let backend = DockerComputerBackend(client: client, computer: provisioned, secrets: secrets, baseConfig: config)
         let computer = try ManagedComputer(name: "viewer-a", display: .headless, run: RunFolder(root: runDirectory), backend: backend)
         let hub = ComputerHub()
@@ -238,7 +237,7 @@ struct LiveViewerTests {
         #expect(size == (1440, 900))
         let reused = RFBConnection(url: url)
         await #expect(throws: (any Error).self) { try await reused.handshake() }  // ticket já consumido (CS-401)
-        let plain = try await rawGet(port: provisioned.egress.adminPort, path: "/vnc?ticket=nope")
+        let plain = try await rawGet(port: provisioned.adminPort, path: "/vnc?ticket=nope")
         #expect(plain.hasPrefix("HTTP/1.1 400"))  // sem upgrade: recusado no egress
         await e.record("ticket", ["single_use": true, "server_init": "1440x900", "no_upgrade": "400"])
 

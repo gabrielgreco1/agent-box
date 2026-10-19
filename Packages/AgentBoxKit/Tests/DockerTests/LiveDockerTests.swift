@@ -91,21 +91,21 @@ struct LiveDockerTests {
         }
     }
 
-    /// Build do contexto REAL `runtime/box` pela Engine API (tar + builder clássico). Lento (apt + pip, ~minutos):
+    /// Build do contexto REAL `runtime/computer` pela Engine API (tar + builder clássico). Lento (apt + pip, ~minutos):
     /// só com `AGENTBOX_TEST_BUILD_RUNTIME_IMAGE=1`.
     @Test(.enabled(if: ProcessInfo.processInfo.environment["AGENTBOX_TEST_BUILD_RUNTIME_IMAGE"] == "1"))
     func buildsTheRealRuntimeBoxImageThroughEngineAPI() async throws {
         try await Live.with { env in
             var root = URL(fileURLWithPath: #filePath)
-            while root.path != "/", !FileManager.default.fileExists(atPath: root.appendingPathComponent("runtime/box/Dockerfile").path) { root.deleteLastPathComponent() }
+            while root.path != "/", !FileManager.default.fileExists(atPath: root.appendingPathComponent("runtime/computer/Dockerfile").path) { root.deleteLastPathComponent() }
             let source = ImageSource(
-                repository: "agentbox-box-test-\(env.runID)", contextDirectory: root.appendingPathComponent("runtime/box"),
+                repository: "agentbox-computer-test-\(env.runID)", contextDirectory: root.appendingPathComponent("runtime/computer"),
                 extraLabels: [AgentBoxLabel.test: "1", "agentbox.test_run": env.runID])
             let recorder = ProgressRecorder()
             let started = ContinuousClock.now
             let image = try await ImageManager(client: env.client).ensure(source) { recorder.add($0) }
             let elapsed = ContinuousClock.now - started
-            #expect(image.acquisition == .built && image.tag.hasPrefix("agentbox-box-test-\(env.runID):ctx-"))
+            #expect(image.acquisition == .built && image.tag.hasPrefix("agentbox-computer-test-\(env.runID):ctx-"))
             let steps = recorder.steps
             #expect(steps.last?.step == steps.last?.total, "passos: \(steps)")
 

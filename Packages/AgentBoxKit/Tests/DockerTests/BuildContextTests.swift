@@ -49,7 +49,7 @@ private let repoRoot: URL = {
         let first = try BuildContext.contentHash(of: dir)
         let again = try BuildContext.contentHash(of: dir)
         #expect(first.count == 64 && first == again)
-        #expect(BuildContext.tag(repository: "agentbox-box", hash: first) == "agentbox-box:ctx-\(first.prefix(12))")
+        #expect(BuildContext.tag(repository: "agentbox-computer", hash: first) == "agentbox-computer:ctx-\(first.prefix(12))")
 
         // Mudar o conteúdo, o bit de execução ou o nome muda o hash; `.DS_Store` não.
         try Data("b".utf8).write(to: dir.appendingPathComponent("pkg/data/a.txt"))
@@ -70,11 +70,11 @@ private let repoRoot: URL = {
         #expect(result.status == 0)
         #expect(result.out.trimmingCharacters(in: .whitespacesAndNewlines) == (try BuildContext.contentHash(of: dir)))
         let tag = try run(script, ["--context", dir.path, "--print-tag"])
-        #expect(tag.out.trimmingCharacters(in: .whitespacesAndNewlines) == BuildContext.tag(repository: "agentbox-box", hash: try BuildContext.contentHash(of: dir)))
+        #expect(tag.out.trimmingCharacters(in: .whitespacesAndNewlines) == BuildContext.tag(repository: "agentbox-computer", hash: try BuildContext.contentHash(of: dir)))
     }
 
     @Test func realRuntimeContextHashMatchesScript() throws {
-        let context = repoRoot.appendingPathComponent("runtime/box")
+        let context = repoRoot.appendingPathComponent("runtime/computer")
         let swift = try BuildContext.contentHash(of: context)
         let script = try run(repoRoot.appendingPathComponent("scripts/build-runtime-image.sh").path, ["--print-hash"])
         #expect(script.out.trimmingCharacters(in: .whitespacesAndNewlines) == swift)

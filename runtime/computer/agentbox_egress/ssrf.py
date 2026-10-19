@@ -167,6 +167,11 @@ class SSRFPolicy:
 
     def check(self, host: str, port: int) -> str:
         """Devolve o IP a conectar (fixado) ou lança `Blocked`. Bloqueia se QUALQUER resposta do DNS for proibida."""
+        return self.check_all(host, port)[0]
+
+    def check_all(self, host: str, port: int) -> list[str]:
+        """Todos os IPs permitidos, IPv4 primeiro (F29: o container não tem rota IPv6; um AAAA na frente fazia o CONNECT
+        estourar o tempo). Quem conecta tenta em ordem. Bloqueia se QUALQUER resposta do DNS for proibida."""
         if not self.host_allowed(host):
             raise Blocked("not-in-allowlist", host)
         literal = parse_ip_literal(host)
@@ -189,7 +194,8 @@ class SSRFPolicy:
             if reason and not self._allowed_exception(ip):
                 raise Blocked(reason, f"{host} -> {ip}")
             pinned.append(str(ip))
-        return pinned[0]
+        pinned.sort(key=lambda a: ":" in a)  # estável: IPv4 antes de IPv6
+        return pinned
 
     def check_name_only(self, host: str, port: int) -> str:
         """Para o caminho com proxy upstream: o upstream resolve o nome, mas o egress confere o que ele mesmo resolve."""

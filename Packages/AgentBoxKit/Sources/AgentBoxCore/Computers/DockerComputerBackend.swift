@@ -5,7 +5,8 @@ import Foundation
 /// O app monta a partir do `ProxyService` (T3-02); o egress é o único que recebe as credenciais, por arquivo 0400.
 public typealias ProxyConfigResolver = @Sendable (_ proxy: String, _ country: String?) async throws -> (config: EgressConfigFile, caPEM: String?)
 
-/// Backend real: Engine API para o `work`, reverse proxy do egress para o runtime, ingest e render no egress.
+/// Backend real (P24, um container por computador): Engine API para o exec (usuário `agent`), reverse proxy da admin API para o
+/// navegador, ingest e render no proxy do mesmo container.
 public struct DockerComputerBackend: ComputerBackend {
     public let client: DockerClient
     public let computer: ProvisionedComputer
@@ -43,33 +44,33 @@ public struct DockerComputerBackend: ComputerBackend {
     public func vncEndpoint() async throws -> URL {
         guard computer.display != .http else { throw ToolError(.notSupported, "this computer is in HTTP mode and has no screen") }
         let out = try await runtime("vnc_ticket", [:], timeout: 10)
-        guard let ticket = out["ticket"]?.string, let url = URL(string: "ws://127.0.0.1:\(computer.egress.adminPort)/vnc?ticket=\(ticket)") else {
+        guard let ticket = out["ticket"]?.string, let url = URL(string: "ws://127.0.0.1:\(computer.adminPort)/vnc?ticket=\(ticket)") else {
             throw ToolError(.boxRestarted, "the runtime did not issue a viewer ticket", retryAfterS: 5)
         }
         return url
     }
 
-    // MARK: Exec no `work`
+    // MARK: Exec como `agent` no container do computador
 
     static func command(for request: BackendExec) -> [String] {
         let base: [String] = request.shell.map { ["bash", "-lc", $0] } ?? request.argv ?? []
         guard !request.secretEnv.isEmpty else { return base }
-        // O valor do segredo vem de arquivo montado só leitura dentro do `work` e só existe neste processo (§3.3).
-        let script = "names=\"$1\"; shift; for n in $names; do f=\"/run/agentbox/secrets/$n\"; "
+        // O valor do segredo vem de arquivo montado só leitura (`/run/abx-secrets`, legível pelo `agent`) e só existe neste processo (§3.3).
+        let script = "names=\"$1\"; shift; for n in $names; do f=\"/run/abx-secrets/$n\"; "
             + "[ -r \"$f\" ] || { echo \"secret $n is not available\" >&2; exit 126; }; export \"$n=$(cat \"$f\")\"; done; exec \"$@\""
         return ["/bin/sh", "-c", script, "sh", request.secretEnv.joined(separator: " ")] + base
     }
 
     func spec(_ request: BackendExec) -> ExecSpec {
         var spec = ExecSpec(command: Self.command(for: request), attachStdin: request.stdin != nil, killableGroup: true)
-        spec.user = "10002"
+        spec.user = ComputerProvisioner.agentUser
         spec.workingDirectory = request.cwd
         spec.environment = request.env.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value)" }
         return spec
     }
 
     private func start(_ request: BackendExec) async throws -> String {
-        let session = try await client.startExec(in: computer.workContainerID, spec: spec(request))
+        let session = try await client.startExec(in: computer.containerID, spec: spec(request))
         if let stdin = request.stdin {
             try await session.writeStdin(stdin)
             session.closeStdin()
@@ -113,12 +114,11 @@ public struct DockerComputerBackend: ComputerBackend {
         guard let resolver else { throw ToolError(.notSupported, "this app build has no proxy resolver") }
         let resolved = try await resolver(proxy, country)
         var config = resolved.config
-        config.internalSubnet = computer.egress.internalSubnet
         config.proxyPort = baseConfig.proxyPort
         config.adminPort = baseConfig.adminPort
         config.allowCIDRs = baseConfig.allowCIDRs
         config.allowHosts = baseConfig.allowHosts
-        try EgressOrchestrator(client: client).rewriteConfig(config, proxyCA: resolved.caPEM, secrets: secrets, computerID: computer.labels.computerID)
+        try await ComputerProvisioner(client: client).rewriteConfig(config, proxyCA: resolved.caPEM, computer: computer)
         do { return try await computer.admin.reloadProxy() } catch {
             throw ToolError(.proxyError, "the egress did not confirm the proxy switch: \(error)")
         }

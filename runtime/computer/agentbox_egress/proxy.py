@@ -220,8 +220,23 @@ class EgressProxy:
 
     async def _check_destination(self, host: str, port: int) -> str:
         """Devolve o IP fixado. Lança `Blocked` com o motivo. O DNS bloqueia a thread: roda fora do loop."""
+        return (await self._check_destinations(host, port))[0]
+
+    async def _check_destinations(self, host: str, port: int) -> list[str]:
         loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(None, self.policy.check, host, port)
+        return await loop.run_in_executor(None, self.policy.check_all, host, port)
+
+    @staticmethod
+    async def _open_direct(ips: list[str], port: int):
+        """Conexão direta tentando cada IP aprovado em ordem (IPv4 primeiro); com mais de um candidato, 8 s por tentativa."""
+        last: BaseException = OSError("no address")
+        per_try = 20 if len(ips) == 1 else 8
+        for ip in ips:
+            try:
+                return await asyncio.wait_for(asyncio.open_connection(ip, port), per_try)
+            except (OSError, asyncio.TimeoutError) as exc:
+                last = exc
+        raise last
 
     # ----- CONNECT ------------------------------------------------------------------------------------------------------
     async def _connect(self, cr, cw, target: str, headers, peer: str) -> None:
@@ -242,7 +257,8 @@ class EgressProxy:
             await self._reply(cw, 403, "blocked by agentbox: background/analytics host", {"X-AgentBox-Blocked": "noise"})
             return
         try:
-            ip = await self._check_destination(host, port)
+            ips = await self._check_destinations(host, port)
+            ip = ips[0]
         except Blocked as exc:
             self._block(True, base, exc.reason, exc.detail, "connect")
             await self._reply(cw, 403, f"blocked by agentbox: {exc.reason}", {"X-AgentBox-Blocked": exc.reason})
@@ -252,7 +268,7 @@ class EgressProxy:
         try:
             t0 = self.clock()
             if up is None:
-                ur, uw = await asyncio.wait_for(asyncio.open_connection(ip, port), 20)
+                ur, uw = await self._open_direct(ips, port)
             else:
                 ur, uw = await open_tunnel(up, host, port)
             base["connect_ms"] = round((self.clock() - t0) * 1000)
@@ -348,7 +364,8 @@ class EgressProxy:
             await self._reply(cw, 403, "blocked by agentbox: background/analytics host", {"X-AgentBox-Blocked": "noise"})
             return
         try:
-            ip = await self._check_destination(host, port)
+            ips = await self._check_destinations(host, port)
+            ip = ips[0]
         except Blocked as exc:
             self._block(True, base, exc.reason, exc.detail, "http")
             await self._reply(cw, 403, f"blocked by agentbox: {exc.reason}", {"X-AgentBox-Blocked": exc.reason})
@@ -363,7 +380,7 @@ class EgressProxy:
             t0 = self.clock()
             if up is None or up.scheme == "socks5":
                 if up is None:
-                    ur, uw = await asyncio.wait_for(asyncio.open_connection(ip, port), 20)
+                    ur, uw = await self._open_direct(ips, port)
                 else:
                     ur, uw = await open_tunnel(up, host, port)
                 request_target = path

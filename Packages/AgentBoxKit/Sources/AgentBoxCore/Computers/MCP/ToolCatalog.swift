@@ -110,13 +110,13 @@ public enum ToolCatalog {
             ObjectSpec([("selector", .string()), ("file", .string("Path under /work"))], required: ["selector", "file"])),
 
         // D. Shell e arquivos
-        def("exec", "Run a command in the work container (uid 10002, cwd /work). argv (no shell) XOR shell (bash -lc). The work container has no "
-            + "route out: anything ignoring the proxy fails. Output is also kept in the command log.", .neutral,
+        def("exec", "Run a command in the computer as the unprivileged user agent (cwd /work). argv (no shell) XOR shell (bash -lc). The computer "
+            + "forces all agent traffic through its proxy: anything ignoring the proxy fails. Output is also kept in the command log.", .neutral,
             ObjectSpec([("argv", .array(.string(), minItems: 1)), ("shell", .string(minLength: 1)), ("cwd", .string(def: "/work")),
                         ("timeout_s", .number(min: 1, max: 50, def: 45)), ("stdin", .string()), ("env", stringMap),
                         ("secret_env", .array(.string("Name of a project secret exported only into this process")))],
                        exactlyOne: [["argv"], ["shell"]])),
-        def("exec_start", "Start a long command in the work container and return a job_id (use exec_poll / exec_cancel).", .neutral,
+        def("exec_start", "Start a long command in the computer and return a job_id (use exec_poll / exec_cancel).", .neutral,
             ObjectSpec([("argv", .array(.string(), minItems: 1)), ("shell", .string(minLength: 1)), ("cwd", .string(def: "/work")), ("env", stringMap),
                         ("secret_env", .array(.string()))], exactlyOne: [["argv"], ["shell"]])),
         def("exec_poll", "Wait up to wait_s (max 50) for a job; returns running or the exit code with output tails.", .neutral,
@@ -124,7 +124,7 @@ public enum ToolCatalog {
         def("exec_cancel", "Cancel a job: SIGTERM, then SIGKILL after 5 s.", .neutral, ObjectSpec([("job_id", .string(minLength: 1))], required: ["job_id"])),
 
         // E. HTTP
-        def("http_request", "Any HTTP request from the work container with curl_cffi (impersonate chrome/safari/firefox), through the egress, "
+        def("http_request", "Any HTTP request from the computer with curl_cffi (impersonate chrome/safari/firefox), through the egress, "
             + "logged as observed. body XOR json XOR form.", .neutral,
             ObjectSpec([("method", .string(minLength: 1)), ("url", .string()), ("headers", stringMap), ("query", stringMap), ("body", .string()),
                         ("json", .any()), ("form", stringMap), ("cookies_from_browser", .boolean(def: false)),

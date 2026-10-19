@@ -7,7 +7,7 @@ import json
 import os
 from pathlib import Path
 
-EGRESS_ADMIN = (os.environ.get("AGENTBOX_EGRESS_HOST", "egress"), int(os.environ.get("AGENTBOX_EGRESS_ADMIN_PORT", "8790")))
+EGRESS_ADMIN = (os.environ.get("AGENTBOX_EGRESS_HOST", "127.0.0.1"), int(os.environ.get("AGENTBOX_EGRESS_ADMIN_PORT", "8790")))
 SECRETS_DIR = Path(os.environ.get("AGENTBOX_RUNTIME_DIR", "/run/agentbox"))
 
 

@@ -16,7 +16,7 @@ enum LiveC {
 
     static var repoRoot: URL {
         var root = URL(fileURLWithPath: #filePath)
-        while root.path != "/", !FileManager.default.fileExists(atPath: root.appendingPathComponent("runtime/box/Dockerfile").path) {
+        while root.path != "/", !FileManager.default.fileExists(atPath: root.appendingPathComponent("runtime/computer/Dockerfile").path) {
             root.deleteLastPathComponent()
         }
         return root
@@ -172,18 +172,17 @@ struct LiveComputerTests {
     func runScenario(runID: String, detected: DetectedRuntime, client: DockerClient, testLabels: [String: String], home: URL, e: LiveEvidenceC) async throws {
         await e.record("runtime", .string("\(detected.runtime.kind.rawValue): Engine \(detected.version.version), \(detected.info.architecture)"))
 
-        // ---- imagens: contexto REAL de runtime/box e runtime/egress, rótulos de teste
+        // ---- imagens: contexto REAL de runtime/computer, rótulos de teste
         let images = ImageManager(client: client)
         let t0 = ContinuousClock.now
-        let box = try await images.ensure(ImageSource(repository: "agentbox-box-test-\(runID)", contextDirectory: LiveC.repoRoot.appendingPathComponent("runtime/box"), extraLabels: testLabels))
-        let egress = try await images.ensure(ImageSource(repository: "agentbox-egress-test-\(runID)", contextDirectory: LiveC.repoRoot.appendingPathComponent("runtime/egress"), extraLabels: testLabels))
-        await e.record("images", ["box": .string(box.tag), "egress": .string(egress.tag), "build_seconds": .int(Int(t0.duration(to: .now).components.seconds))])
+        let computerImage = try await images.ensure(ImageSource(repository: "agentbox-computer-test-\(runID)", contextDirectory: LiveC.repoRoot.appendingPathComponent("runtime/computer"), extraLabels: testLabels))
+        await e.record("images", ["image": .string(computerImage.tag), "build_seconds": .int(Int(t0.duration(to: .now).components.seconds))])
 
         // ---- cena: bridge de saída de teste + "site" (origin), servido pelo próprio teste
         let bridge = "abx-t-\(runID)-bridge"
         let bridgeID = try await client.createNetwork(name: bridge, isInternal: false, labels: testLabels)
         let subnet = try #require(try await client.inspectNetwork(bridgeID).subnets.first)
-        var origin = ContainerSpec(name: "abx-t-\(runID)-origin", image: egress.tag)
+        var origin = ContainerSpec(name: "abx-t-\(runID)-origin", image: computerImage.tag)
         origin.entrypoint = ["python"]
         origin.command = ["-c", liveOriginScript]
         origin.labels = testLabels.merging([AgentBoxLabel.owner: "test-\(runID)", AgentBoxLabel.computer: "c-origin-\(runID)", AgentBoxLabel.ephemeral: "true"]) { $1 }
@@ -203,8 +202,8 @@ struct LiveComputerTests {
         let provisioner = ComputerProvisioner(client: client)
         let t1 = ContinuousClock.now
         let provisioned = try await provisioner.provision(ComputerProvisionRequest(
-            labels: labels, boxImage: box.tag, egressImage: egress.tag, display: .headless, token: token, config: config, secrets: secrets,
-            runDirectory: runDirectory, bridgeNetwork: bridge, extraLabels: ["agentbox.test_run": runID]))
+            labels: labels, image: computerImage.tag, display: .headless, token: token, config: config, secrets: secrets,
+            runDirectory: runDirectory, network: bridge, extraLabels: ["agentbox.test_run": runID]))
         await e.record("provision_seconds", .int(Int(t1.duration(to: .now).components.seconds)))
         // o origin precisa estar de pé antes da primeira navegação
         try await Task.sleep(for: .milliseconds(1500))
@@ -373,7 +372,7 @@ struct LiveComputerTests {
         let cat = await rig.ok("exec", ["argv": ["cat"], "stdin": "hello from stdin\nsecond line\n"])
         #expect(cat["exit_code"] == 0 && cat["stdout_tail"] == "hello from stdin\nsecond line\n")
         let ident = await rig.sh("id -u; pwd; echo to-stderr >&2; exit 3")
-        #expect(ident["exit_code"] == 3 && ident["stdout_tail"] == "10002\n/work\n" && ident["stderr_tail"] == "to-stderr\n")
+        #expect(ident["exit_code"] == 3 && ident["stdout_tail"] == "10001\n/work\n" && ident["stderr_tail"] == "to-stderr\n")
         _ = await rig.sh("echo from-work > /work/out.txt; mkdir -p /work/sub && echo nested > /work/sub/n.txt")
         #expect(try String(contentsOf: rig.work.appendingPathComponent("out.txt"), encoding: .utf8) == "from-work\n")  // /work é o bind do host
         #expect((await rig.ok("exec", ["argv": ["cat", "n.txt"], "cwd": "/work/sub"]))["stdout_tail"] == "nested\n")
@@ -395,9 +394,9 @@ struct LiveComputerTests {
         let environment = await rig.sh("env")
         #expect(environment["stdout_tail"]?.string?.contains(rig.token) == false)
         #expect((await rig.sh("ls /run/agentbox/token /run/agentbox/egress.json 2>&1; echo rc=$?"))["stdout_tail"]?.string?.contains("rc=0") == false)
-        #expect((await rig.sh("curl -s -m 4 --noproxy '*' -o /dev/null -w '%{http_code}' -X POST -d '{}' http://runtime:8765/v1/open"))["stdout_tail"] == "401")  // API do runtime exige o token
-        #expect((await rig.sh("curl -s -m 4 --noproxy '*' -o /dev/null -w '%{http_code}' http://egress:8790/v1/usage"))["stdout_tail"] == "401")
-        #expect((await rig.sh("curl -s -m 3 --noproxy '*' http://runtime:9222/json/version >/dev/null 2>&1; echo rc=$?"))["stdout_tail"] != "rc=0\n")  // CDP não é alcançável
+        #expect((await rig.sh("curl -s -m 4 --noproxy '*' -o /dev/null -w '%{http_code}' -X POST -d '{}' http://127.0.0.1:8765/v1/open"))["stdout_tail"] == "000")  // firewall por uid: o agente nem alcança a API de controle
+        #expect((await rig.sh("curl -s -m 4 --noproxy '*' -o /dev/null -w '%{http_code}' http://127.0.0.1:8790/v1/usage"))["stdout_tail"] == "000")
+        #expect((await rig.sh("curl -s -m 3 --noproxy '*' http://127.0.0.1:9222/json/version >/dev/null 2>&1; echo rc=$?"))["stdout_tail"] != "rc=0\n")  // CDP não é alcançável
         // ferramentas do work
         #expect((await rig.sh("python3 -c 'import curl_cffi, requests, httpx, lxml, bs4, openpyxl, playwright; print(curl_cffi.__version__)'"))["exit_code"] == 0)
         #expect((await rig.sh("which abx-http curl jq python3"))["exit_code"] == 0)
@@ -428,7 +427,7 @@ struct LiveComputerTests {
         #expect(commands.contains { $0["tool"] == "exec_start" && [143, 137].contains($0["exit"]?.int ?? -1) })
         #expect(try ReqlogIntegrity.verify(file: rig.computer.commands.file) == .ok(lines: commands.count))
         #expect(FileManager.default.fileExists(atPath: rig.computer.run.commandsDirectory.appendingPathComponent("0001.log").path))
-        await e.record("exec", ["uid": 10002, "stdin_roundtrip": true, "cancel_seconds": .double(cancelSeconds), "commands_logged": .int(commands.count)])
+        await e.record("exec", ["uid": 10001, "stdin_roundtrip": true, "cancel_seconds": .double(cancelSeconds), "commands_logged": .int(commands.count)])
 
         // =========================================================== CA-207: symlinks criados pelo agente dentro de /work
         _ = await rig.sh("ln -s /etc/passwd /work/a; ln -s ../../../../.ssh/id_rsa /work/b; ln -s /etc /work/dir")
@@ -510,23 +509,25 @@ struct LiveComputerTests {
 
         // =========================================================== segurança: nada de token/chave em env, argv ou inspect
         let secretValues = [token, "fake-render-key-123456", "s3cret-value-777"]
-        for (role, id) in [("egress", provisioned.egress.egressContainerID), ("runtime", provisioned.runtimeContainerID ?? ""), ("work", provisioned.workContainerID)] {
-            let inspect = try await client.inspectContainer(id)
-            let dump = String(describing: inspect)
-            for secret in secretValues { #expect(!dump.contains(secret), "\(role) inspect leaks a secret") }
-            #expect(inspect.env.allSatisfy { e in secretValues.allSatisfy { !e.contains($0) } })
-            #expect(inspect.readonlyRootfs && inspect.capDrop == ["ALL"], "\(role) hardening")
-            if role != "egress" { #expect(inspect.ports.isEmpty, "\(role) must not publish ports") }
-            #expect(inspect.user == (role == "egress" ? "10003" : role == "runtime" ? "10001" : "10002"))
-        }
-        let work = try await client.inspectContainer(provisioned.workContainerID)
-        #expect(work.networks.keys.sorted() == [labels.networkName])  // work só na rede interna
-        let runtime = try await client.inspectContainer(try #require(provisioned.runtimeContainerID))
-        #expect(runtime.networks.keys.sorted() == [labels.networkName])
+        let computerInspect = try await client.inspectContainer(provisioned.containerID)
+        let dump = String(describing: computerInspect)
+        for secret in secretValues { #expect(!dump.contains(secret), "computer inspect leaks a secret") }
+        #expect(computerInspect.env.allSatisfy { e in secretValues.allSatisfy { !e.contains($0) } })
+        #expect(computerInspect.readonlyRootfs && computerInspect.capDrop == ["ALL"], "computer hardening")
+        #expect(computerInspect.capAdd.sorted() == ["KILL", "NET_ADMIN", "SETGID", "SETPCAP", "SETUID"])
+        #expect(computerInspect.securityOpt.contains("no-new-privileges"))
+        #expect(computerInspect.ports.keys.sorted() == ["8790/tcp"], "only the control port is published")
+        #expect(computerInspect.ports["8790/tcp"]?.allSatisfy { $0.hostIP == "127.0.0.1" } == true)
+        #expect(computerInspect.networks.keys.sorted() == [bridge], "one container on one network")
+        let own = try await GarbageCollector(client: client).inventory(labels: ["\(AgentBoxLabel.computer)=\(labels.computerID)"])
+        #expect(own.filter { $0.kind == .container }.count == 1, "exactly one container per computer: \(own.map(\.name))")
         #expect(try secrets.permissionViolations(computerID: labels.computerID).isEmpty)
         // a pasta de logs não é montada no work nem no runtime
-        let mounts = try await client.run(in: provisioned.workContainerID, command: ["sh", "-c", "cat /proc/mounts"]).stdoutString
-        #expect(!mounts.contains("/logs") && mounts.contains(" /work "))
+        let mounts = try await client.run(in: provisioned.containerID, command: ["sh", "-c", "cat /proc/mounts"], user: "agent").stdoutString
+        #expect(mounts.contains(" /work "))
+        // o agente não alcança a pasta dos segredos, do token nem dos logs
+        let probe = try await client.run(in: provisioned.containerID, command: ["sh", "-c", "ls /run/agentbox /run/agentbox/logs 2>&1; cat /run/agentbox/token 2>&1"], user: "agent").stdoutString
+        #expect(probe.contains("Permission denied") && !probe.contains(token), "agent must not reach /run/agentbox: \(probe)")
         // cadeia de hash íntegra mesmo com registros do egress, do browser e do app (ingest)
         let integrity = try ReqlogIntegrity.verify(file: rig.computer.run.requestsFile)
         #expect(integrity.message == "Log integrity: OK", "\(integrity)")

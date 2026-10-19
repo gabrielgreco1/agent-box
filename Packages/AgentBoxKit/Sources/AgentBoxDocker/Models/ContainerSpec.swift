@@ -115,6 +115,8 @@ public struct ContainerSpec: Sendable, Equatable {
     public var publishedPorts: [PublishedPort] = []
     public var extraHosts: [String] = []
     public var healthcheck: ContainerHealthcheck?
+    /// Capacidades acrescentadas depois do `CapDrop ALL` (P24: só o necessário ao supervisor do computador).
+    public var capAdd: [String] = []
 
     public init(name: String, image: String, command: [String]? = nil) {
         self.name = name
@@ -156,6 +158,7 @@ public struct ContainerSpec: Sendable, Equatable {
         if let pids = resources.pidsLimit { host["PidsLimit"] = .int(pids) }
         if hardening.readOnlyRootfs { host["ReadonlyRootfs"] = .bool(true) }
         if hardening.dropAllCapabilities { host["CapDrop"] = .strings(["ALL"]) }
+        if !capAdd.isEmpty { host["CapAdd"] = .strings(capAdd) }
         if hardening.noNewPrivileges { host["SecurityOpt"] = .strings(["no-new-privileges"]) }
         if hardening.useInit { host["Init"] = .bool(true) }
         if !tmpfs.isEmpty { host["Tmpfs"] = .map(tmpfs) }
@@ -192,7 +195,8 @@ public struct ExecSpec: Sendable, Equatable {
     /// no grupo de processos (S9). O wrapper exige `/bin/sh` e um `/tmp` gravável na imagem.
     public var killableGroup: Bool
 
-    public init(command: [String], attachStdin: Bool = false, killableGroup: Bool = false) {
+    public init(command: [String], attachStdin: Bool = false, killableGroup: Bool = false, user: String? = nil) {
+        self.user = user
         self.command = command
         self.attachStdin = attachStdin
         self.killableGroup = killableGroup

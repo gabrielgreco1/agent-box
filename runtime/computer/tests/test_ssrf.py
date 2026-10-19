@@ -142,5 +142,18 @@ class Parsing(unittest.TestCase):
         self.assertFalse(host_block_reason("example.com"))
 
 
+class DualStackOrdering(unittest.TestCase):
+    """F29: AAAA na frente sem rota IPv6 fazia o CONNECT estourar o tempo; IPv4 vem primeiro."""
+
+    def test_ipv4_first(self):
+        p = policy({"www.houstontx.gov": ["2606:2800:220:1::1", "93.184.216.34", "2606:2800:220:1::2", "93.184.216.35"]})
+        self.assertEqual(p.check_all("www.houstontx.gov", 443), ["93.184.216.34", "93.184.216.35", "2606:2800:220:1::1", "2606:2800:220:1::2"])
+        self.assertEqual(p.check("www.houstontx.gov", 443), "93.184.216.34")
+
+    def test_any_private_answer_still_blocks(self):
+        with self.assertRaises(Blocked):
+            policy({"x.example": ["93.184.216.34", "10.0.0.5"]}).check_all("x.example", 443)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -31,7 +31,7 @@ extension AppEnvironment {
             config.owner = "test-\(run)"
             config.repositorySuffix = "-test-\(run)"
             config.extraLabels = [AgentBoxLabel.test: "1", "agentbox.test_run": run]
-            if let bridge = environmentVariables["AGENTBOX_COMPUTER_BRIDGE"], !bridge.isEmpty { config.bridgeNetwork = bridge }
+            if let bridge = environmentVariables["AGENTBOX_COMPUTER_BRIDGE"], !bridge.isEmpty { config.network = bridge }
             config.allowCIDRs = (environmentVariables["AGENTBOX_ALLOW_CIDRS"] ?? "").split(separator: ",").map { String($0) }
         }
         let provisioning = AppComputerProvisioning(config: config)

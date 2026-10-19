@@ -1,15 +1,15 @@
 import AgentBoxDocker
 import Foundation
 
-/// Fábrica real de computadores para o `ComputerScheduler`: rede interna + egress + runtime + work (T3-03 `ComputerProvisioner`) e o
+/// Fábrica real de computadores para o `ComputerScheduler`: um container por computador (P24, `ComputerProvisioner`) e o
 /// `DockerComputerBackend` que as ferramentas MCP usam. Só toca recursos com os labels do computador.
 public struct DockerComputerProvisioning: ComputerProvisioning {
     public let client: DockerClient
-    public let boxImage: String
-    public let egressImage: String
+    /// Tag de `agentbox-computer`.
+    public let image: String
     public let secrets: BoxSecretFiles
     public let owner: String
-    public var bridgeNetwork: String
+    public var network: String
     /// Exceção explícita ao filtro SSRF (rede de teste); vazio em produção.
     public var allowCIDRs: [String]
     public var extraLabels: [String: String]
@@ -17,12 +17,12 @@ public struct DockerComputerProvisioning: ComputerProvisioning {
     public var resolver: ProxyConfigResolver?
 
     public init(
-        client: DockerClient, boxImage: String, egressImage: String, secrets: BoxSecretFiles, owner: String,
-        bridgeNetwork: String = EgressOrchestrator.sharedBridgeName, allowCIDRs: [String] = [], extraLabels: [String: String] = [:],
+        client: DockerClient, image: String, secrets: BoxSecretFiles, owner: String,
+        network: String = ComputerProvisioner.defaultNetwork, allowCIDRs: [String] = [], extraLabels: [String: String] = [:],
         isTest: Bool = false, resolver: ProxyConfigResolver? = nil
     ) {
-        self.client = client; self.boxImage = boxImage; self.egressImage = egressImage; self.secrets = secrets; self.owner = owner
-        self.bridgeNetwork = bridgeNetwork; self.allowCIDRs = allowCIDRs; self.extraLabels = extraLabels; self.isTest = isTest; self.resolver = resolver
+        self.client = client; self.image = image; self.secrets = secrets; self.owner = owner
+        self.network = network; self.allowCIDRs = allowCIDRs; self.extraLabels = extraLabels; self.isTest = isTest; self.resolver = resolver
     }
 
     public func preflight() async throws { try await client.ping() }
@@ -49,8 +49,8 @@ public struct DockerComputerProvisioning: ComputerProvisioning {
         }
         let provisioner = ComputerProvisioner(client: client)
         let provisioned = try await provisioner.provision(ComputerProvisionRequest(
-            labels: labels, boxImage: boxImage, egressImage: egressImage, display: spec.display, token: token, config: config, proxyCA: proxyCA,
-            secrets: secrets, runDirectory: spec.run.root, bridgeNetwork: bridgeNetwork, extraLabels: extraLabels))
+            labels: labels, image: image, display: spec.display, token: token, config: config, proxyCA: proxyCA,
+            secrets: secrets, runDirectory: spec.run.root, network: network, extraLabels: extraLabels))
         let backend = DockerComputerBackend(client: client, computer: provisioned, secrets: secrets, baseConfig: config, resolver: resolver)
         let secrets = secrets
         return ProvisionedHandle(backend: backend) { _ = try? await provisioner.teardown(provisioned, secrets: secrets) }

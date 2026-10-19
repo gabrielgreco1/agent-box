@@ -87,10 +87,10 @@ mkdir -p "$APP/Contents/Library/LaunchAgents"
 sed "s/__BUILD__/$BUILD_NUMBER/g" "$ROOT/App/LaunchAgents/app.agentbox.ptyd.v1.plist" > "$APP/Contents/Library/LaunchAgents/app.agentbox.ptyd.v1.plist"
 plutil -lint "$APP/Contents/Library/LaunchAgents/app.agentbox.ptyd.v1.plist" >/dev/null || fail "plist do LaunchAgent inválido"
 
-# Contextos de build das imagens do computador e do egress (F12): a primeira reserva de um computador constrói as imagens a partir daqui
+# Contexto de build da imagem única do computador (F12, P24): a primeira reserva de um computador constrói as imagens a partir daqui
 # (`RuntimeContextLocator`). Dados dentro de Contents/Resources: selados pela assinatura do app.
 mkdir -p "$APP/Contents/Resources/runtime"
-for ctx in box egress; do
+for ctx in computer; do
   rm -rf "$APP/Contents/Resources/runtime/$ctx"
   ditto "$ROOT/runtime/$ctx" "$APP/Contents/Resources/runtime/$ctx"
 done

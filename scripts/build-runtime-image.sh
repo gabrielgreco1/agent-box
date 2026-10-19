@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# build-runtime-image.sh - build local da imagem `agentbox-box` com tag por hash de conteúdo (T3-01, 07 CS-120/121).
+# build-runtime-image.sh - build local da imagem `agentbox-computer` com tag por hash de conteúdo (T3-01, 07 CS-120/121).
 #
 # Contrato
-#   Entrada : contexto em runtime/box (Dockerfile, entrypoint.sh, requirements.txt).
-#   Tag     : agentbox-box:ctx-<sha12 do hash do contexto>. O hash é o mesmo de `BuildContext.contentHash` (Swift):
+#   Entrada : contexto em runtime/computer (Dockerfile, requirements.txt, agentbox_*).
+#   Tag     : agentbox-computer:ctx-<sha12 do hash do contexto>. O hash é o mesmo de `BuildContext.contentHash` (Swift):
 #             sha256 das linhas "<caminho>\0<755|644>\0<sha256 do arquivo>\n" em ordem bytewise; sem .DS_Store.
 #   Saída   : imprime a tag na última linha. Com --print-hash/--print-tag só calcula, sem chamar o Docker.
 #   Rótulos : agentbox.context_hash=<hash completo>; --label k=v adiciona outros (testes: --label agentbox.test=1).
@@ -11,8 +11,8 @@
 # Uso: scripts/build-runtime-image.sh [--context DIR] [--repository NOME] [--label k=v]... [--no-cache] [--print-hash|--print-tag]
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-CONTEXT="$ROOT/runtime/box"
-REPOSITORY="agentbox-box"
+CONTEXT="$ROOT/runtime/computer"
+REPOSITORY="agentbox-computer"
 LABELS=()
 NO_CACHE=()
 MODE=build

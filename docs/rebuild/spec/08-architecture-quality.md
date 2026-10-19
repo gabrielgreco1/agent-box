@@ -82,11 +82,11 @@ Tabela única para tudo que vira código, teste ou caminho em disco. Os outros c
 | Estado do processo/terminal (Swift / banco) | `notStarted` / `not_started` (sessão importada sem processo, P15) · `launching` · `running` · `exited` · `killed` · `failedToStart` / `failed_to_start` · `interrupted` · `containerStopped` / `container_stopped` (v1.1). `daemonUnavailable` é só estado de UI |
 | Estado do computador | `queued` · `provisioning` · `ready` · `inUse` / `in_use` · `stopped` · `failed` · `removing` · `removed` · `orphan` |
 | Tipo do computador (`display`) | `http` · `headless` · `desktop` |
-| Papéis de container | `runtime`, `work` (v1, `exec`), `egress` (sidecar; nunca `gate`), `agent` (v1.1, CLI isolado) |
-| Rótulos Docker | `agentbox.owner=<installId>`, `agentbox.computer=<computerId>`, `agentbox.computer_name`, `agentbox.role=runtime\|work\|egress\|agent` |
+| Container do computador | **Um container por computador** (P24): `ab-<computerId8>`, papel `computer`, com browser, `exec` (usuário `agent`) e proxy/egress (usuário `egress`); `agent` (v1.1, CLI isolado) é outro papel |
+| Rótulos Docker | `agentbox.owner=<installId>`, `agentbox.computer=<computerId>`, `agentbox.computer_name`, `agentbox.role=computer\|agent` (legado: `runtime\|work\|egress`) |
 | Rede por computador | `agentbox-<computerId>` (`internal`) |
-| Endpoints do egress | proxy `egress:3128`; API `egress:8790` (`/mcp`, `/hooks/<provider>`, `/git`, `/llm`); admin publicado em `127.0.0.1` |
-| Imagens | `ghcr.io/gabrielgreco1/agentbox-box`, `-egress`, `-agent` (v1.1), por digest |
+| Endpoints do egress | proxy `127.0.0.1:3128` (só dentro do container); API `127.0.0.1:8790` no container (`/mcp`, `/hooks/<provider>`, `/git`, `/llm`); admin publicado em `127.0.0.1` |
+| Imagens | `ghcr.io/gabrielgreco1/agentbox-computer`, `-agent` (v1.1), por digest |
 | Proxy | Genérico e configurado pelo usuário (P13): tabela `proxy`; Zyte é só preset. Sem tabela nem coluna de orçamento/teto |
 | Nomes de ferramentas MCP | Dono: 07 §3.2/§4.2 (`boxes_reserve`, `box_claim`, `help_request`, `help_wait`, `exec`, `http_request`, `browser_type`, `agent_wait`…) |
 
@@ -118,9 +118,9 @@ Tabela única para tudo que vira código, teste ou caminho em disco. Os outros c
 | **agentbox mcp** | Mac, filho do CLI do agente (stdio) | Vida do CLI | Ponte stdio MCP → UDS do app | Não tem lógica de ferramenta |
 | **agentbox hook** | Mac, filho efêmero do CLI do agente | Um evento por execução (≤ 30 ms) | Lê o JSON do hook no stdin, anexa a identidade do pane, entrega ao app por UDS ou grava no spool | Não decide nada; nunca bloqueia o agente por falha do app |
 | **agentbox ctl** | Mac, chamado por humano, teste ou agente | Uma chamada | Automação do app (abrir sessão, digitar, ler tela, screenshot, estado) via `app.sock` | Não fala com o daemon (AR-503) |
-| **box-runtime** (container) | Docker | Vida do computador | Chromium/Playwright, Xvfb, VNC + websockify, API HTTP de controle, lease agente/humano | Não tem saída direta para a internet |
-| **egress** (container sidecar) | Docker | Vida do computador | Proxy de saída (direto ou o proxy que o usuário configurou, P13), listener de requests com bodies, contagem de uso do proxy (sem teto), bloqueio de SSRF, relay de hooks/MCP do modo isolado | Não executa código do agente |
-| **work** (container, v1) | Docker | Vida do computador | Shell e HTTP do agente (`exec`, `http_request`, Playwright próprio), `/work` do run, saída só pelo egress | Sem acesso ao CDP nem ao lease do runtime |
+| **computer** (container único, P24) | Docker | Vida do computador | Três funções no mesmo container, separadas por usuário e iptables por uid: navegador, terminal de trabalho (`agent`) e proxy/egress (`egress`). Navegador: Chromium/Playwright, Xvfb, VNC + websockify, API HTTP de controle, lease agente/humano | O agente só sai pelo proxy local (iptables por uid) |
+| ~~egress (sidecar)~~ (P24: absorvido pelo container único) | Docker | Vida do computador | Proxy de saída (direto ou o proxy que o usuário configurou, P13), listener de requests com bodies, contagem de uso do proxy (sem teto), bloqueio de SSRF, relay de hooks/MCP do modo isolado | Não executa código do agente |
+| ~~work (container, v1)~~ (P24: é o usuário `agent` do container único) | Docker | Vida do computador | Shell e HTTP do agente (`exec`, `http_request`, Playwright próprio), `/work` do run, saída só pelo egress | Sem acesso ao CDP nem ao lease do runtime |
 | **agent** (container, v1.1) | Docker | Vida do subagente isolado | CLI do agente (claude/codex) sob `dtach`, worktree montado (substitui `work`) | Sem socket Docker, sem `$HOME` do Mac |
 
 ### 1.2 Diagrama
@@ -271,7 +271,7 @@ Vereditos: **MANTER** (copiar quase igual), **REFATORAR** (copiar e mudar a form
 
 **AR-201 [P0 · v1]** Nenhum arquivo é copiado sem passar pelo modo Swift 6 estrito e pelo lint (AR-131). Código copiado recebe testes no novo alvo antes do merge.
 
-**AR-202 [P0 · v1] Onde o código antigo vive durante o rebuild (F0-6).** Na Fatia 0, antes da T-01, um único commit move com `git mv` o `Package.swift`, `Package.resolved`, `Sources/`, `Tests/`, `runtime/`, `scripts/` e `design/` atuais para `legacy/` (`legacy/design/` inclusive: os `screens/01-16` em PT-BR com Manrope **não** são referência visual). O build novo (`project.yml`, `Packages/AgentBoxKit`, `scripts/`, `runtime/box`, `runtime/egress`) nunca referencia `legacy/`; os vereditos MANTER/REFATORAR abaixo copiam de `legacy/` para o destino novo. `legacy/` sai do repositório depois da release 1.0. Proposta dos revisores (R3 F0-6), adotada por P16; o dono pode trocar o destino, não a regra de "fora do caminho do build".
+**AR-202 [P0 · v1] Onde o código antigo vive durante o rebuild (F0-6).** Na Fatia 0, antes da T-01, um único commit move com `git mv` o `Package.swift`, `Package.resolved`, `Sources/`, `Tests/`, `runtime/`, `scripts/` e `design/` atuais para `legacy/` (`legacy/design/` inclusive: os `screens/01-16` em PT-BR com Manrope **não** são referência visual). O build novo (`project.yml`, `Packages/AgentBoxKit`, `scripts/`, `runtime/computer`) nunca referencia `legacy/`; os vereditos MANTER/REFATORAR abaixo copiam de `legacy/` para o destino novo. `legacy/` sai do repositório depois da release 1.0. Proposta dos revisores (R3 F0-6), adotada por P16; o dono pode trocar o destino, não a regra de "fora do caminho do build".
 
 ### 2.1 `Sources/AgentBoxCore`
 
@@ -341,13 +341,13 @@ Vereditos: **MANTER** (copiar quase igual), **REFATORAR** (copiar e mudar a form
 
 | Item | Veredito | Destino |
 |---|---|---|
-| `runtime/boxes/server.py`, `engine.py`, `desktop_browser.py` | REFATORAR | `runtime/box/`. Sem lock global nas leituras (`audit/02 #20`); escuta só na rede interna; VNC + websockify; ações ampliadas (capítulo de computadores); token lido de `/run/agentbox/token` |
+| `runtime/boxes/server.py`, `engine.py`, `desktop_browser.py` | REFATORAR | `runtime/computer/`. Sem lock global nas leituras (`audit/02 #20`); escuta só na rede interna; VNC + websockify; ações ampliadas (capítulo de computadores); token lido de `/run/agentbox/token` |
 | `runtime/boxes/public_http.py` | REFATORAR | A lógica de bloqueio de IP privado e pinning de DNS vai para o `egress` (vale para tudo, não só para a ferramenta HTTP; `audit/09 N8`) |
 | `runtime/boxes/capture.py` | DESCARTAR | Substituído pelo listener do egress |
 | `runtime/boxes/Dockerfile` | REFATORAR | Sem pins de pacote apt; base fixada por digest; tag por hash de contexto; publicada no GHCR (`audit/09 N11`, `00 T7`) |
 | `runtime/boxes/test_*.py`, `smoke_docker.py` | REFATORAR | Testes do runtime no CI Linux; smoke sem contexto fixo (`AGENTBOX_DOCKER_CONTEXT`) |
 | `runtime/hooks/claude_event.py` (+ teste) | DESCARTAR | Substituído por `agentbox hook` (`audit/09 N15`) |
-| — | NOVO | `runtime/egress/` (proxy configurável, listener, uso do proxy, SSRF, relay) e, na v1.1, `runtime/agent/` (imagem `agentbox-agent`) |
+| — | NOVO | `runtime/computer/agentbox_egress` (proxy configurável, listener, uso do proxy, SSRF, relay) e, na v1.1, `runtime/agent/` (imagem `agentbox-agent`) |
 | `scripts/build_app.sh` | REESCREVER | `scripts/build.sh` + `install.sh` (§9) |
 | `scripts/build_spec.py` | DESCARTAR | Gerava a spec antiga |
 | `Tests/AgentBoxCoreTests/GitWorkspaceTests`, `ProcessesResolverTests`, `ProcessesProbeTests`, `CLIConversationCatalogTests`, `ComputerMCPProtocolTests`, `ComputerMCPToolArgumentsTests`, `BrowserRuntimeTests`, `WorkspaceStoreTests` (parte do layout), `LibraryTests` (parte das mutações), `SecretsTests` (parser) | REFATORAR | Portar para Swift Testing junto com o código que testam |
@@ -417,6 +417,8 @@ Scrollback, logs e transcripts dos CLIs ficam **fora** do banco. Transcripts nun
 | Tabela | Colunas |
 |---|---|
 | `computer` | `id` PK, `owner_run_id` FK NULL, `session_id` FK NULL, `name`, `mode` (`light`/`isolated`), `display` (`http`/`headless`/`desktop`), `persistent`, `proxy_id` FK NULL, `browser_profile_id` FK NULL, `image_ref`, `image_digest`, `network_name`, `runtime_container_id`, `egress_container_id`, `work_container_id` (`work` na v1, `agent` na v1.1, conforme `mode`), `api_port`, `vnc_port`, `egress_admin_port`, `generation`, `state` (`queued`/`provisioning`/`ready`/`in_use`/`stopped`/`failed`/`removing`/`removed`/`orphan`), `created_at`, `last_used_at`, `expires_at`, `removed_at` |
+
+> **P24:** o computador é um único container. As colunas `runtime_container_id`, `egress_container_id`, `work_container_id` e `network_name` seguem no schema (migrações antigas não mudam e nada as grava); o id do container único é `runtime_container_id` e as demais ficam `NULL`. Nenhuma migração nova foi necessária.
 | `computer_queue` | `id` PK, `computer_id` FK, `position`, `requested_at`, `reason` (fila persistente de 07 CS-131) |
 | `browser_profile` | `id` PK, `name`, `volume`, `sites_json`, `locked_by_computer_id` FK NULL, `created_at`, `last_used_at` |
 | `help_request` | campos de 01 §5.10: `id` PK, `computer_id` FK, `run_id` FK NULL, `kind` (`captcha`/`login`/`mfa`/`download`/`choice`/`permission`/`other`), `reason`, `state` (`open`/`taken_over`/`resolved`/`declined`/`cancelled`/`expired`), `created_at`, `resolved_at` |

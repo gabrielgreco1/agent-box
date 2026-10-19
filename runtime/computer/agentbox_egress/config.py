@@ -72,7 +72,7 @@ class Config:
     noise: list[str] = field(default_factory=lambda: list(DEFAULT_NOISE))
     extra_redact_headers: list[str] = field(default_factory=list)
     body_quota_bytes: int = 500 * 1024 * 1024
-    logs_dir: str = "/logs"
+    logs_dir: str = "/run/agentbox/logs"
 
     @staticmethod
     def parse(data: dict[str, Any]) -> "Config":
@@ -100,7 +100,7 @@ class Config:
             internal_subnet=data.get("internal_subnet"), bind=data.get("bind"),
             allow_cidrs=list(data.get("allow_cidrs", [])), allow_hosts=list(data.get("allow_hosts", [])),
             extra_redact_headers=list(data.get("extra_redact_headers", [])),
-            body_quota_bytes=int(data.get("body_quota_bytes", 500 * 1024 * 1024)), logs_dir=data.get("logs_dir", "/logs"),
+            body_quota_bytes=int(data.get("body_quota_bytes", 500 * 1024 * 1024)), logs_dir=data.get("logs_dir", "/run/agentbox/logs"),
         )
         if "noise" in data:
             cfg.noise = list(data["noise"])

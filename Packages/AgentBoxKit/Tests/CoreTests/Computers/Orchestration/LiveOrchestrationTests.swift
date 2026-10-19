@@ -90,13 +90,12 @@ struct LiveOrchestrationTests {
         // ---- imagens e cena (como no teste da T3-03)
         let images = ImageManager(client: client)
         let t0 = ContinuousClock.now
-        let box = try await images.ensure(ImageSource(repository: "agentbox-box-test-\(runID)", contextDirectory: LiveC.repoRoot.appendingPathComponent("runtime/box"), extraLabels: testLabels))
-        let egress = try await images.ensure(ImageSource(repository: "agentbox-egress-test-\(runID)", contextDirectory: LiveC.repoRoot.appendingPathComponent("runtime/egress"), extraLabels: testLabels))
+        let computerImage = try await images.ensure(ImageSource(repository: "agentbox-computer-test-\(runID)", contextDirectory: LiveC.repoRoot.appendingPathComponent("runtime/computer"), extraLabels: testLabels))
         await e.record("image_build_seconds", .int(Int(t0.duration(to: .now).components.seconds)))
         let bridge = "abx-t-\(runID)-bridge"
         let bridgeID = try await client.createNetwork(name: bridge, isInternal: false, labels: testLabels)
         let subnet = try #require(try await client.inspectNetwork(bridgeID).subnets.first)
-        var origin = ContainerSpec(name: "abx-t-\(runID)-origin", image: egress.tag)
+        var origin = ContainerSpec(name: "abx-t-\(runID)-origin", image: computerImage.tag)
         origin.entrypoint = ["python"]
         origin.command = ["-c", liveOriginScript]
         origin.labels = testLabels.merging([AgentBoxLabel.owner: "test-\(runID)", AgentBoxLabel.computer: "c-origin-\(runID)", AgentBoxLabel.ephemeral: "true"]) { $1 }
@@ -111,7 +110,7 @@ struct LiveOrchestrationTests {
         let store = try await AgentBoxStore.open(paths: StorePaths(root: home.appendingPathComponent("store", isDirectory: true)))
         let capacityBox = LockedValue(detected.capacity)
         let provisioning = DockerComputerProvisioning(
-            client: client, boxImage: box.tag, egressImage: egress.tag, secrets: BoxSecretFiles(root: home), owner: "test-\(runID)", bridgeNetwork: bridge,
+            client: client, image: computerImage.tag, secrets: BoxSecretFiles(root: home), owner: "test-\(runID)", network: bridge,
             allowCIDRs: [subnet], extraLabels: ["agentbox.test_run": runID], isTest: true)
         let hub = ComputerHub()
         let scheduler = ComputerScheduler(

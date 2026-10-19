@@ -315,9 +315,9 @@ public struct DockerClient: Sendable {
     }
 
     /// Executa um comando curto até o fim e devolve stdout, stderr e o código de saída.
-    public func run(in container: String, command: [String], stdin: Data? = nil, timeout: Duration = .seconds(60),
+    public func run(in container: String, command: [String], stdin: Data? = nil, user: String? = nil, timeout: Duration = .seconds(60),
                     killableGroup: Bool = true) async throws -> ExecResult {
-        let session = try await startExec(in: container, spec: ExecSpec(command: command, attachStdin: stdin != nil, killableGroup: killableGroup))
+        let session = try await startExec(in: container, spec: ExecSpec(command: command, attachStdin: stdin != nil, killableGroup: killableGroup, user: user))
         if let stdin {
             try await session.writeStdin(stdin)
             session.closeStdin()

@@ -16,8 +16,10 @@ public enum AgentBoxLabel {
     public static let contextHash = "agentbox.context_hash"
 }
 
+/// P24: um computador é UM container (`computer`). Os demais valores existem só para ler labels de computadores criados antes
+/// da P24 (runtime/work/egress) e para o diretório de segredos de tarefa (`work`); nenhum container novo os usa.
 public enum ComputerRole: String, Sendable, CaseIterable {
-    case runtime, work, egress, agent
+    case computer, runtime, work, egress, agent
 }
 
 /// Montagem dos labels e dos nomes determinísticos de um computador (07 CS-115/CS-116).
@@ -59,8 +61,10 @@ public struct ComputerLabels: Sendable, Equatable {
         return result
     }
 
-    /// `ab-<computerId8>-<role>`.
+    /// `ab-<computerId8>`.
     public var shortID: String { String(computerID.replacingOccurrences(of: "-", with: "").prefix(8)).lowercased() }
-    public func containerName(_ role: ComputerRole) -> String { "ab-\(shortID)-\(role.rawValue)" }
-    public var networkName: String { "agentbox-net-\(computerID)" }
+    /// Nome do container único do computador (P24).
+    public var containerName: String { "ab-\(shortID)" }
+    /// Nome da rede criada por computadores anteriores à P24 (só para o GC por label reconhecer o legado).
+    public var legacyNetworkName: String { "agentbox-net-\(computerID)" }
 }

@@ -320,7 +320,7 @@ final class EventBox: @unchecked Sendable {  // SAFETY: teste; NSLock protege o 
     @Test func secretCommandWrapperReadsFilesAndNeverPutsValuesInArgv() {
         let command = DockerComputerBackend.command(for: BackendExec(argv: ["curl", "-s", "x"], secretEnv: ["TOKEN_A", "TOKEN_B"]))
         #expect(command[0] == "/bin/sh" && command[1] == "-c")
-        #expect(command[2].contains("/run/agentbox/secrets/") && command[2].contains("exec \"$@\""))
+        #expect(command[2].contains("/run/abx-secrets/") && command[2].contains("exec \"$@\""))
         #expect(command[4] == "TOKEN_A TOKEN_B" && Array(command.suffix(3)) == ["curl", "-s", "x"])
         #expect(DockerComputerBackend.command(for: BackendExec(shell: "echo hi")) == ["bash", "-lc", "echo hi"])
         #expect(DockerComputerBackend.command(for: BackendExec(argv: ["ls", "-l"])) == ["ls", "-l"])

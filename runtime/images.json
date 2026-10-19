@@ -1,20 +1,11 @@
 {
-  "comment": "Manifesto das imagens do runtime (07 §2.3). `digest` e `ghcr` ficam nulos até a primeira publicação (decisão 12 de 09 §7: GHCR público); enquanto isso o app só faz o build local do contexto embutido (CS-121).",
+  "comment": "Manifesto da imagem do runtime (07 §2.3, P24: UMA imagem, um container por computador). `digest` e `ghcr` ficam nulos até a primeira publicação (decisão 12 de 09 §7: GHCR público); enquanto isso o app só faz o build local do contexto embutido (CS-121).",
   "images": [
     {
-      "name": "agentbox-box",
-      "context": "runtime/box",
+      "name": "agentbox-computer",
+      "context": "runtime/computer",
       "dockerfile": "Dockerfile",
       "base": "mcr.microsoft.com/playwright/python:v1.63.0-noble@sha256:72bd171a9ffc2b4b59532aaa6210e21014d07093120dc25528870c0b840da1f0",
-      "ghcr": null,
-      "digest": null,
-      "platform": "linux/arm64"
-    },
-    {
-      "name": "agentbox-egress",
-      "context": "runtime/egress",
-      "dockerfile": "Dockerfile",
-      "base": "python:3.13-alpine@sha256:2d9aefe2fef018a7eb2c13064c89c71929800fd2e5dccdbf52ea5da5bb8d929a",
       "ghcr": null,
       "digest": null,
       "platform": "linux/arm64"

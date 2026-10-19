@@ -230,6 +230,7 @@ public struct ContainerInspect: Sendable, Equatable, Decodable {
     public var pidsLimit: Int64?
     public var readonlyRootfs: Bool
     public var capDrop: [String]
+    public var capAdd: [String]
     public var securityOpt: [String]
     public var usesInit: Bool
     public var networkMode: String?
@@ -243,7 +244,7 @@ public struct ContainerInspect: Sendable, Equatable, Decodable {
     enum ConfigKeys: String, CodingKey { case image = "Image", labels = "Labels", env = "Env", user = "User" }
     enum HostKeys: String, CodingKey {
         case memory = "Memory", nanoCPUs = "NanoCpus", pidsLimit = "PidsLimit", readonlyRootfs = "ReadonlyRootfs"
-        case capDrop = "CapDrop", securityOpt = "SecurityOpt", initFlag = "Init", networkMode = "NetworkMode"
+        case capDrop = "CapDrop", capAdd = "CapAdd", securityOpt = "SecurityOpt", initFlag = "Init", networkMode = "NetworkMode"
     }
     enum NetworkKeys: String, CodingKey { case ports = "Ports", networks = "Networks" }
 
@@ -269,6 +270,7 @@ public struct ContainerInspect: Sendable, Equatable, Decodable {
         pidsLimit = try host.decodeIfPresent(Int64.self, forKey: .pidsLimit)
         readonlyRootfs = try host.decodeIfPresent(Bool.self, forKey: .readonlyRootfs) ?? false
         capDrop = try host.decodeIfPresent([String].self, forKey: .capDrop) ?? []
+        capAdd = try host.decodeIfPresent([String].self, forKey: .capAdd) ?? []
         securityOpt = try host.decodeIfPresent([String].self, forKey: .securityOpt) ?? []
         usesInit = try host.decodeIfPresent(Bool.self, forKey: .initFlag) ?? false
         networkMode = try host.decodeIfPresent(String.self, forKey: .networkMode)

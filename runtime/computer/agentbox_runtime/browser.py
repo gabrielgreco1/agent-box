@@ -27,7 +27,9 @@ REQUEST_BODY_LIMIT = 64 * 1024
 RESPONSE_BODY_LIMIT = 2 * 1024 * 1024
 TEXTUAL = ("text/", "json", "xml", "javascript", "x-www-form-urlencoded", "graphql", "csv")
 PROFILE_DIR = Path(os.environ.get("AGENTBOX_PROFILE_DIR", "/profile"))
-PROXY_SERVER = os.environ.get("AGENTBOX_PROXY_URL", "http://egress:3128")
+PROXY_SERVER = os.environ.get("AGENTBOX_PROXY_URL", "http://127.0.0.1:3128")
+# P24: o Chromium roda como `agent` (sem privilégio) por este wrapper (setpriv); o servidor de controle roda como `egress`.
+CHROMIUM_WRAPPER = os.environ.get("AGENTBOX_CHROMIUM_WRAPPER", "/opt/agentbox/bin/abx-chromium")
 MAX_DOWNLOAD_BYTES = 24 * 1024 * 1024
 
 
@@ -58,7 +60,7 @@ class BrowserSession:
         self.request_ids: dict[int, str] = {}
         self.started: dict[int, float] = {}
         self.last_main_request_id: str | None = None
-        self.downloads_dir = Path("/tmp/downloads")
+        self.downloads_dir = Path("/tmp/abx-downloads")
         self.display = "headless"
 
     # ----- ciclo de vida ------------------------------------------------------------------------------------------------
@@ -67,6 +69,10 @@ class BrowserSession:
 
         self.profile.mkdir(parents=True, exist_ok=True)
         self.downloads_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            os.chmod(self.downloads_dir, 0o1777)  # o Chromium (uid agent) grava aqui; o servidor (uid egress) lê
+        except OSError:
+            pass
         self.pw = await async_playwright().start()
         args = ["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--no-first-run", "--no-default-browser-check",
                 "--disable-background-networking", "--disable-component-update", "--disable-sync", "--disable-default-apps",
@@ -76,6 +82,8 @@ class BrowserSession:
             accept_downloads=True, downloads_path=str(self.downloads_dir), env={**os.environ, "DISPLAY": os.environ.get("DISPLAY", ":99")})
         if self.proxy_server:
             options["proxy"] = {"server": self.proxy_server}
+        if CHROMIUM_WRAPPER and Path(CHROMIUM_WRAPPER).exists():
+            options["executable_path"] = CHROMIUM_WRAPPER
         self.ctx = await self.pw.chromium.launch_persistent_context(**options)
         self.ctx.on("request", self._on_request)
         self.ctx.on("requestfinished", lambda r: self._spawn(self._on_finished(r)))
@@ -460,8 +468,10 @@ class BrowserSession:
             raise OpError("invalid_argument", "name and data_b64 are required")
         folder = Path("/tmp/uploads") / uuid.uuid4().hex
         folder.mkdir(parents=True, exist_ok=True)
+        os.chmod(folder, 0o755)  # o Chromium (uid agent) precisa ler o arquivo
         path = folder / name
         path.write_bytes(base64.b64decode(data_b64))
+        os.chmod(path, 0o644)
         await self._locator(a.get("selector")).set_input_files(str(path), timeout=15000)
         return {"uploaded": True}
 

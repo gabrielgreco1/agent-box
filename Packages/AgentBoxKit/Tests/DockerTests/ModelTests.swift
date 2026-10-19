@@ -108,8 +108,8 @@ import Testing
     @Test func labelsAndDeterministicNames() {
         let labels = ComputerLabels(owner: "install-1", computerID: "ABCDEF12-3456-7890-ABCD-EF1234567890", computerName: "phoenix-az",
                                     session: "s", run: "r", batch: "b", ephemeral: false, imageDigest: "sha256:x")
-        #expect(labels.containerName(.runtime) == "ab-abcdef12-runtime")
-        #expect(labels.networkName == "agentbox-net-ABCDEF12-3456-7890-ABCD-EF1234567890")
+        #expect(labels.containerName == "ab-abcdef12")
+        #expect(labels.legacyNetworkName == "agentbox-net-ABCDEF12-3456-7890-ABCD-EF1234567890")
         let map = labels.labels(role: .work)
         #expect(map[AgentBoxLabel.owner] == "install-1" && map[AgentBoxLabel.role] == "work" && map[AgentBoxLabel.ephemeral] == "false")
         #expect(map[AgentBoxLabel.session] == "s" && map[AgentBoxLabel.batch] == "b" && map[AgentBoxLabel.imageDigest] == "sha256:x")

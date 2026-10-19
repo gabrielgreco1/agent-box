@@ -43,11 +43,28 @@ struct EgressUnitTests {
         #expect(up["username"] as? String == "ZYTEKEY123" && up["password"] as? String == "")
     }
 
-    @Test func workEnvironmentPointsAtTheEgressAndHoldsNoSecrets() {
-        let env = EgressOrchestrator.workEnvironment()
-        #expect(env.contains("HTTP_PROXY=http://egress:3128") && env.contains("HTTPS_PROXY=http://egress:3128") && env.contains("ALL_PROXY=http://egress:3128"))
-        #expect(env.contains { $0.hasPrefix("NO_PROXY=") && $0.contains("egress") })
+    @Test func agentEnvironmentPointsAtTheLocalProxyAndHoldsNoSecrets() {
+        let env = ComputerProvisioner.agentEnvironment()
+        #expect(env.contains("HTTP_PROXY=http://127.0.0.1:3128") && env.contains("HTTPS_PROXY=http://127.0.0.1:3128") && env.contains("ALL_PROXY=http://127.0.0.1:3128"))
+        #expect(env.contains { $0.hasPrefix("NO_PROXY=") && $0.contains("localhost") })
         #expect(env.allSatisfy { !$0.lowercased().contains("token") && !$0.lowercased().contains("pass") })
+    }
+
+    @Test func singleContainerSpecIsHardenedAndPublishesOnlyTheControlPort() throws {
+        let labels = ComputerLabels(owner: "o", computerID: "abcdef12-3456-7890-abcd-ef1234567890", computerName: "n", isTest: true)
+        let request = ComputerProvisionRequest(
+            labels: labels, image: "agentbox-computer:ctx-x", display: .headless, token: "T0KEN", config: EgressConfigFile(internalSubnet: ""),
+            secrets: BoxSecretFiles(root: URL(fileURLWithPath: "/tmp/x")), runDirectory: URL(fileURLWithPath: "/tmp/run"))
+        let spec = ComputerProvisioner.containerSpec(request, work: URL(fileURLWithPath: "/tmp/run/work"), logs: URL(fileURLWithPath: "/tmp/run/logs"),
+                                                     taskSecrets: URL(fileURLWithPath: "/tmp/s"), volume: "ab-prof-x")
+        #expect(spec.name == "ab-abcdef12" && spec.labels[AgentBoxLabel.role] == "computer" && spec.network?.network == "bridge")
+        #expect(spec.hardening == .standard && spec.user == nil)
+        #expect(spec.capAdd.sorted() == ["KILL", "NET_ADMIN", "SETGID", "SETPCAP", "SETUID"])
+        #expect(spec.publishedPorts == [PublishedPort(containerPort: "8790/tcp", hostIP: "127.0.0.1", hostPort: "")])
+        #expect(spec.tmpfs["/run/agentbox"]?.contains("uid=10003") == true && spec.tmpfs["/run/agentbox"]?.contains("mode=0700") == true)
+        #expect(spec.binds.contains("/tmp/run/logs:/run/agentbox/logs") && spec.binds.contains("/tmp/s:/run/abx-secrets:ro"))
+        #expect(!String(describing: spec.body()).contains("T0KEN") && spec.environment.allSatisfy { !$0.contains("T0KEN") })
+        #expect(request.display.computerMemory < (3 << 30) + (1 << 30) + (128 << 20), "menos que a soma antiga dos três containers")
     }
 
     // MARK: segredos em arquivo
@@ -125,15 +142,16 @@ struct EgressUnitTests {
         #expect(try BuildContext.contentHash(of: root) == before)
     }
 
-    @Test func shippedEgressContextIsPinnedByDigestAndHasNoPackageManagerPins() throws {
+    @Test func shippedComputerContextIsPinnedByDigestAndHasNoPackageManagerPins() throws {
         var root = URL(fileURLWithPath: #filePath)
-        while root.path != "/", !FileManager.default.fileExists(atPath: root.appendingPathComponent("runtime/egress/Dockerfile").path) { root.deleteLastPathComponent() }
-        let dockerfile = try String(contentsOf: root.appendingPathComponent("runtime/egress/Dockerfile"), encoding: .utf8)
+        while root.path != "/", !FileManager.default.fileExists(atPath: root.appendingPathComponent("runtime/computer/Dockerfile").path) { root.deleteLastPathComponent() }
+        let dockerfile = try String(contentsOf: root.appendingPathComponent("runtime/computer/Dockerfile"), encoding: .utf8)
         let from = try #require(dockerfile.split(separator: "\n").first { $0.hasPrefix("FROM ") })
         #expect(from.contains("@sha256:") && from.split(separator: ":").last?.count == 64, "base fixada por digest: \(from)")
-        #expect(dockerfile.contains("USER 10003") && dockerfile.contains("HEALTHCHECK"))
+        #expect(dockerfile.contains("useradd --uid 10001") && dockerfile.contains("--uid 10003") && dockerfile.contains("HEALTHCHECK") && dockerfile.contains("iptables"))
+        #expect(!dockerfile.contains("apt-get install -y --no-install-recommends xvfb=") && !dockerfile.contains("=1."), "sem pins de versão de apt")
         let manifest = try String(contentsOf: root.appendingPathComponent("runtime/images.json"), encoding: .utf8)
-        #expect(manifest.contains("\"agentbox-egress\"") && manifest.contains(String(from.dropFirst(5))))
+        #expect(manifest.contains("\"agentbox-computer\"") && !manifest.contains("agentbox-egress") && !manifest.contains("agentbox-box") && manifest.contains(String(from.dropFirst(5))))
     }
 
     // MARK: testes unitários do egress (Python) rodam junto da suíte Swift
@@ -143,11 +161,11 @@ struct EgressUnitTests {
             .first { FileManager.default.isExecutableFile(atPath: $0) }
         guard let python else { return }  // sem Python no Mac: a suíte roda no CI Linux (08 §8)
         var root = URL(fileURLWithPath: #filePath)
-        while root.path != "/", !FileManager.default.fileExists(atPath: root.appendingPathComponent("runtime/egress/tests").path) { root.deleteLastPathComponent() }
+        while root.path != "/", !FileManager.default.fileExists(atPath: root.appendingPathComponent("runtime/computer/tests").path) { root.deleteLastPathComponent() }
         let process = Process()
         process.executableURL = URL(fileURLWithPath: python)
         process.arguments = ["-B", "-m", "unittest", "discover", "-s", "tests"]
-        process.currentDirectoryURL = root.appendingPathComponent("runtime/egress")
+        process.currentDirectoryURL = root.appendingPathComponent("runtime/computer")
         var env = ProcessInfo.processInfo.environment
         env["PYTHONDONTWRITEBYTECODE"] = "1"
         process.environment = env

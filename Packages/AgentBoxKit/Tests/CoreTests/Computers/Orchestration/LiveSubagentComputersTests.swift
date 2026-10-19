@@ -74,7 +74,7 @@ struct LiveSubagentComputersTests {
         // ---- origem de teste numa bridge de teste (a imagem do egress já serve para o Python)
         let runtimeRoot = LiveC.repoRoot.appendingPathComponent("runtime", isDirectory: true)
         let egressImage = try await ImageManager(client: client).ensure(ImageSource(
-            repository: "agentbox-egress-origin-\(runID)", contextDirectory: runtimeRoot.appendingPathComponent("egress"), extraLabels: testLabels))
+            repository: "agentbox-computer-origin-\(runID)", contextDirectory: runtimeRoot.appendingPathComponent("computer"), extraLabels: testLabels))
         let bridge = "abx-t-\(runID)-bridge"
         let bridgeID = try await client.createNetwork(name: bridge, isInternal: false, labels: testLabels)
         let subnet = try #require(try await client.inspectNetwork(bridgeID).subnets.first)
@@ -94,7 +94,7 @@ struct LiveSubagentComputersTests {
         config.isTest = true
         config.repositorySuffix = "-test-\(runID)"
         config.extraLabels = testLabels
-        config.bridgeNetwork = bridge
+        config.network = bridge
         config.allowCIDRs = [subnet]
         let provisioning = AppComputerProvisioning(config: config)
         let orchestrator = ComputerOrchestrator(

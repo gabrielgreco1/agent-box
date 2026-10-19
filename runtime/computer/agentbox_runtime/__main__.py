@@ -13,6 +13,22 @@ from .ingest import Ingestor, load_token
 from .server import RuntimeServer
 
 DISPLAY = os.environ.get("DISPLAY", ":99")
+# P24: tela, VNC e gerenciador de janelas pertencem ao usuário `agent` (o mesmo do Chromium e dos comandos do agente).
+AGENT_USER = os.environ.get("AGENTBOX_AGENT_USER", "agent")
+
+
+def as_agent() -> dict:
+    """Argumentos de `Popen` para largar o privilégio de `egress` e virar `agent` (precisa de CAP_SETUID/SETGID ambiente).
+    Fora do container (testes) o usuário não existe e nada muda."""
+    import pwd
+
+    try:
+        pw = pwd.getpwnam(AGENT_USER)
+    except KeyError:
+        return {}
+    if os.getuid() == pw.pw_uid:
+        return {}
+    return {"user": pw.pw_uid, "group": pw.pw_gid, "extra_groups": []}
 PORT = int(os.environ.get("AGENTBOX_RUNTIME_PORT", "8765"))
 
 
@@ -28,7 +44,7 @@ class Display:
 
     async def start_xvfb(self) -> None:
         self.xvfb = subprocess.Popen(["Xvfb", DISPLAY, "-screen", "0", "1440x900x24", "-nolisten", "tcp", "-ac"],
-                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **as_agent())
         socket = Path(f"/tmp/.X11-unix/X{DISPLAY.lstrip(':')}")
         for _ in range(100):
             if socket.exists():
@@ -46,13 +62,13 @@ class Display:
         self.vnc = subprocess.Popen(
             ["x11vnc", "-display", DISPLAY, "-localhost", "-rfbport", "5900", "-nopw", "-forever", "-shared", "-nosel", "-noipv6",
              "-nobell", "-noxrecord", "-wait", "10", "-defer", "10", "-ncache", "0", "-quiet"],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **as_agent())
 
     async def set_mode(self, display) -> dict:
         if display not in ("headless", "desktop"):
             raise OpError("invalid_argument", "display must be headless or desktop")
         if display == "desktop" and self.openbox is None:
-            self.openbox = subprocess.Popen(["openbox"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            self.openbox = subprocess.Popen(["openbox"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **as_agent())
         if display == "headless" and self.openbox is not None:
             self.openbox.terminate()
             self.openbox = None
@@ -66,15 +82,16 @@ class Display:
 
 
 async def main() -> int:
+    # P24: o token chega por `docker exec` (abx-provision) depois do start; sem ele o runtime não sobe (fail closed).
     token = load_token()
-    if not token:
-        print("runtime: sem token em /run/agentbox/token; recusando subir (fail closed)", file=sys.stderr)
-        return 2
+    while not token:
+        await asyncio.sleep(0.2)
+        token = load_token()
     display = Display()
     await display.start_xvfb()
     browser = BrowserSession(Ingestor(token))
     server = RuntimeServer(browser, token, display)
-    listener = await asyncio.start_server(server.handle, "0.0.0.0", PORT, limit=1 << 20)
+    listener = await asyncio.start_server(server.handle, "127.0.0.1", PORT, limit=1 << 20)  # P24: só loopback do container
     await browser.start()
     print(f"runtime: API em :{PORT}, display {DISPLAY}, browser headed pronto", flush=True)
 

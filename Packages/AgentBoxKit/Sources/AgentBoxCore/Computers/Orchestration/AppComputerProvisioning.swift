@@ -2,7 +2,7 @@ import AgentBoxDocker
 import AgentBoxPlatform
 import Foundation
 
-// F12 item 4: a primeira vez sem imagens Docker o app constrói (ou baixa) a imagem do computador e a do egress em segundo plano,
+// F12 item 4: a primeira vez sem imagens Docker o app constrói (ou baixa) a imagem única do computador em segundo plano,
 // mostrando o progresso na linha do computador; Docker parado vira um erro claro com "Open Docker". 07 §2.3 (CS-120, CS-121).
 
 public enum ComputerSetupError: Error, LocalizedError, Equatable, Sendable {
@@ -20,7 +20,7 @@ public enum ComputerSetupError: Error, LocalizedError, Equatable, Sendable {
     }
 }
 
-/// Onde estão os contextos de build (`box/`, `egress/`): `AGENTBOX_RUNTIME_ROOT`, o checkout (`AGENTBOX_REPO_ROOT`, dev) ou o bundle.
+/// Onde estão os contextos de build (`computer/`): `AGENTBOX_RUNTIME_ROOT`, o checkout (`AGENTBOX_REPO_ROOT`, dev) ou o bundle.
 public enum RuntimeContextLocator {
     public static func root(environment: [String: String], bundleURL: URL) -> URL? {
         var candidates: [URL] = []
@@ -29,7 +29,7 @@ public enum RuntimeContextLocator {
             candidates.append(URL(fileURLWithPath: value, isDirectory: true).appendingPathComponent("runtime", isDirectory: true))
         }
         candidates.append(bundleURL.appendingPathComponent("Contents/Resources/runtime", isDirectory: true))
-        return candidates.first { FileManager.default.fileExists(atPath: $0.appendingPathComponent("box/Dockerfile").path) }
+        return candidates.first { FileManager.default.fileExists(atPath: $0.appendingPathComponent("computer/Dockerfile").path) }
     }
 }
 
@@ -60,7 +60,7 @@ public actor AppComputerProvisioning: ComputerProvisioning {
         public var repositorySuffix = ""
         public var extraLabels: [String: String] = [:]
         public var isTest = false
-        public var bridgeNetwork = EgressOrchestrator.sharedBridgeName
+        public var network = ComputerProvisioner.defaultNetwork
         public var allowCIDRs: [String] = []
         public var resolver: ProxyConfigResolver?
         /// Troca a detecção do runtime (testes que já têm o cliente).
@@ -73,7 +73,7 @@ public actor AppComputerProvisioning: ComputerProvisioning {
 
     private var config: Config
     private var cachedClient: DockerClient?
-    private var imageTask: Task<(box: String, egress: String), Error>?
+    private var imageTask: Task<String, Error>?
     public private(set) var state: ComputerSetupState = .idle
     private var observer: (@Sendable (ComputerSetupState) -> Void)?
     private var problem: (@Sendable (ComputerSetupError) -> Void)?
@@ -127,41 +127,36 @@ public actor AppComputerProvisioning: ComputerProvisioning {
 
     // MARK: Imagens
 
-    /// Garante as duas imagens uma vez para todos os computadores que estão subindo (a primeira vez constrói; as seguintes só conferem).
-    public func ensureImages() async throws -> (box: String, egress: String) {
+    /// Garante a imagem uma vez para todos os computadores que estão subindo (a primeira vez constrói; as seguintes só conferem).
+    public func ensureImages() async throws -> String {
         if let imageTask { return try await imageTask.value }
         guard let root = config.runtimeRoot else {
-            let error = ComputerSetupError.runtimeFilesMissing("runtime/box")
+            let error = ComputerSetupError.runtimeFilesMissing("runtime/computer")
             set(.failed(error.localizedDescription))
             throw error
         }
         let client = try await client()
         let config = config
         let owner = self
-        let task = Task<(box: String, egress: String), Error> {
+        let task = Task<String, Error> {
             let manager = ImageManager(client: client)
-            func ensure(_ name: String, label: String) async throws -> String {
-                let source = ImageSource(
-                    repository: "agentbox-\(name)\(config.repositorySuffix)", contextDirectory: root.appendingPathComponent(name, isDirectory: true),
-                    extraLabels: config.extraLabels)
-                let ensured = try await manager.ensure(source) { progress in
-                    switch progress {
-                    case .building(let step, let total): Task { await owner.set(.building(image: label, step: step, of: total)) }
-                    case .pulling(let done, let total, _): Task { await owner.set(.pulling(image: label, done: done, of: total)) }
-                    case .log: break
-                    }
+            let source = ImageSource(
+                repository: "agentbox-computer\(config.repositorySuffix)", contextDirectory: root.appendingPathComponent("computer", isDirectory: true),
+                extraLabels: config.extraLabels)
+            let ensured = try await manager.ensure(source) { progress in
+                switch progress {
+                case .building(let step, let total): Task { await owner.set(.building(image: "computer", step: step, of: total)) }
+                case .pulling(let done, let total, _): Task { await owner.set(.pulling(image: "computer", done: done, of: total)) }
+                case .log: break
                 }
-                return ensured.tag
             }
-            let box = try await ensure("box", label: "computer")
-            let egress = try await ensure("egress", label: "egress")
-            return (box, egress)
+            return ensured.tag
         }
         imageTask = task
         do {
-            let tags = try await task.value
+            let tag = try await task.value
             set(.ready)
-            return tags
+            return tag
         } catch {
             imageTask = nil
             let text = (error as? LocalizedError)?.errorDescription ?? "\(error)"
@@ -174,11 +169,11 @@ public actor AppComputerProvisioning: ComputerProvisioning {
 
     public func provision(_ spec: ComputerSpec) async throws -> ProvisionedHandle {
         observer?(state)
-        let tags = try await ensureImages()
+        let tag = try await ensureImages()
         let client = try await client()
         let inner = DockerComputerProvisioning(
-            client: client, boxImage: tags.box, egressImage: tags.egress, secrets: BoxSecretFiles(root: config.secretsRoot), owner: config.owner,
-            bridgeNetwork: config.bridgeNetwork, allowCIDRs: config.allowCIDRs, extraLabels: config.extraLabels, isTest: config.isTest,
+            client: client, image: tag, secrets: BoxSecretFiles(root: config.secretsRoot), owner: config.owner,
+            network: config.network, allowCIDRs: config.allowCIDRs, extraLabels: config.extraLabels, isTest: config.isTest,
             resolver: config.resolver)
         return try await inner.provision(spec)
     }

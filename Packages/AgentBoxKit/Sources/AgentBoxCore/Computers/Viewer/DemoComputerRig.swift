@@ -48,10 +48,7 @@ public struct DemoComputerRig: Sendable {
         let rig = DemoComputerRigPieces(runID: runID, client: client, home: home)
         try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
         let images = ImageManager(client: client)
-        let box = try await images.ensure(ImageSource(repository: "agentbox-box-test-\(runID)", contextDirectory: repoRoot.appendingPathComponent("runtime/box"), extraLabels: testLabels))
-        let egress = try await images.ensure(ImageSource(repository: "agentbox-egress-test-\(runID)", contextDirectory: repoRoot.appendingPathComponent("runtime/egress"), extraLabels: testLabels))
-        let bridge = "abx-t-\(runID)-bridge"
-        _ = try await client.createNetwork(name: bridge, isInternal: false, labels: testLabels)
+        let image = try await images.ensure(ImageSource(repository: "agentbox-computer-test-\(runID)", contextDirectory: repoRoot.appendingPathComponent("runtime/computer"), extraLabels: testLabels))
         let labels = ComputerLabels(owner: "test-\(runID)", computerID: UUID().uuidString.lowercased(), computerName: name, ephemeral: true, isTest: true)
         let token = (UUID().uuidString + UUID().uuidString).replacingOccurrences(of: "-", with: "").lowercased()
         let secrets = BoxSecretFiles(root: home)
@@ -59,8 +56,8 @@ public struct DemoComputerRig: Sendable {
         let runDirectory = home.appendingPathComponent("runs/demo/\(name)", isDirectory: true)
         do {
             let provisioned = try await ComputerProvisioner(client: client).provision(ComputerProvisionRequest(
-                labels: labels, boxImage: box.tag, egressImage: egress.tag, display: .headless, token: token, config: config, secrets: secrets,
-                runDirectory: runDirectory, bridgeNetwork: bridge, extraLabels: testLabels))
+                labels: labels, image: image.tag, display: .headless, token: token, config: config, secrets: secrets,
+                runDirectory: runDirectory, extraLabels: testLabels))
             let backend = DockerComputerBackend(client: client, computer: provisioned, secrets: secrets, baseConfig: config)
             let computer = try ManagedComputer(name: name, display: .headless, run: RunFolder(root: runDirectory), backend: backend)
             return DemoComputerRig(computer: computer, runID: runID, labelFilter: rig.labelFilter, client: client, home: home)
