@@ -24,6 +24,7 @@ enum SpawnedDaemons {
         installed.withLock { done in
             guard !done else { return }
             done = true
+            DaemonReaper.installExitSweep()
             atexit { SpawnedDaemons.killAll() }
         }
         pids.withLock { _ = $0.insert(pid) }
@@ -33,6 +34,7 @@ enum SpawnedDaemons {
 
     static func killAll() {
         for pid in pids.withLock({ $0 }) { Darwin.kill(pid, SIGKILL) }
+        DaemonReaper.reap()  // daemons de TerminalRuntime/AppEnvironment que nenhum teste registrou (F34)
     }
 }
 
@@ -103,12 +105,14 @@ final class DaemonHarness: @unchecked Sendable {  // SAFETY: `process` só muda 
             SpawnedDaemons.remove(process.processIdentifier)
         }
         process = nil
+        DaemonReaper.reap(home: home)
         if removeHome { try? FileManager.default.removeItem(at: home) }
     }
 
     deinit { terminateNow() }
 
     func stop() async {
+        await DaemonReaper.shutdown(home: home)  // `shutdown` do protocolo; SIGKILL de reserva; pega também o filho de um TerminalRuntime no mesmo home
         if let process, process.isRunning { Darwin.kill(process.processIdentifier, SIGKILL) }
         await waitForExit()
         if let process { SpawnedDaemons.remove(process.processIdentifier) }

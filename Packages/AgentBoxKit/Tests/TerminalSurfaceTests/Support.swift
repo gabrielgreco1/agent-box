@@ -25,6 +25,7 @@ nonisolated enum SpawnedDaemons {
         installed.withLock { done in
             guard !done else { return }
             done = true
+            DaemonReaper.installExitSweep()
             atexit { SpawnedDaemons.killAll() }
         }
         pids.withLock { _ = $0.insert(pid) }
@@ -34,6 +35,7 @@ nonisolated enum SpawnedDaemons {
 
     static func killAll() {
         for pid in pids.withLock({ $0 }) { Darwin.kill(pid, SIGKILL) }
+        DaemonReaper.reap()  // daemons de TerminalRuntime/AppEnvironment que nenhum teste registrou (F34)
     }
 }
 
@@ -50,6 +52,8 @@ final class DaemonHarness: @unchecked Sendable {  // SAFETY: `process` só muda 
         try FileManager.default.createDirectory(at: home, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
         socketPath = home.appendingPathComponent("run/ptyd-v1.sock").path
     }
+
+    nonisolated var pid: Int32? { process?.processIdentifier }
 
     func start() async throws {
         let process = Process()
@@ -75,6 +79,7 @@ final class DaemonHarness: @unchecked Sendable {  // SAFETY: `process` só muda 
     }
 
     func stop() async {
+        await DaemonReaper.shutdown(home: home)  // `shutdown` do protocolo; SIGKILL de reserva; pega também o filho de um TerminalRuntime no mesmo home
         if let process, process.isRunning {
             kill(process.processIdentifier, SIGKILL)
             let deadline = ContinuousClock.now + .seconds(5)
@@ -106,6 +111,7 @@ final class DaemonHarness: @unchecked Sendable {  // SAFETY: `process` só muda 
             SpawnedDaemons.remove(process.processIdentifier)
         }
         process = nil
+        DaemonReaper.reap(home: home)
         if removeHome { try? FileManager.default.removeItem(at: home) }
     }
 
