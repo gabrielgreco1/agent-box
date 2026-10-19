@@ -120,7 +120,9 @@ struct McpHelper: Sendable {
             let hello = try CtlCodec.decoder().decode(AppSockHelloReply.self, from: try await connection.receive())
             guard hello.ok else { throw McpHelperError.refused(hello.error?.message ?? "handshake refused") }
             guard expectsReply else { return nil }
-            do { return try await connection.receive() } catch AppSockError.closed { return nil }
+            // App fechado ou reiniciado no meio da chamada: sem resposta o Claude Code espera o id para sempre. Vira erro de
+            // ferramenta com `retry_after_s` (o filho repete; a ferramenta pode ou não ter rodado).
+            do { return try await connection.receive() } catch AppSockError.closed { throw McpHelperError.interrupted }
         }
     }
 
@@ -166,12 +168,14 @@ enum McpHelperError: Error, Equatable {
     case appNotListening
     case refused(String)
     case timeout
+    case interrupted
 
     var message: String {
         switch self {
         case .appNotListening: "Agent Box is not running; retrying"
         case .refused(let m): "Agent Box refused the connection: \(m)"
         case .timeout: "Agent Box did not answer in time"
+        case .interrupted: "Agent Box restarted during this call; check the computer's state (box_status) and retry"
         }
     }
 }

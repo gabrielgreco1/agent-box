@@ -247,6 +247,34 @@ private func rpc(_ method: String, id: JSON? = 1, params: JSON? = nil) -> Data {
         #expect(reply["error"]?["message"]?.string?.contains("unauthorized") == true)
     }
 
+    /// O app aceita a chamada e morre antes de responder (reinício no meio de um `browser_wait`).
+    struct DyingProvider: AppSockServiceProvider {
+        let service = AppSockService.mcp
+        func admit() -> CtlError? { nil }
+        func makeHandler() -> AppSockServer.Handler {
+            let frames = Counter()
+            return { _ in await frames.next() >= 2 ? AppSockReply(close: true) : AppSockReply() }
+        }
+        actor Counter { var n = 0; func next() -> Int { n += 1; return n } }
+    }
+
+    @Test func aCallCutByAnAppRestartAnswersWithARetryableErrorInsteadOfHangingForever() async throws {
+        let home = try McpSocketTests.Home()
+        defer { try? FileManager.default.removeItem(at: home.root) }
+        let hub = AppSockHub(socketPath: home.socket, providers: [DyingProvider()])
+        try await hub.start()
+        defer { Task { await hub.stop() } }
+        let started = ContinuousClock.now
+        let result = await Self.run(socket: home.socket, lines: [
+            String(decoding: rpc("tools/call", id: 9, params: ["name": "browser_wait", "arguments": ["ms": 15000]]), as: UTF8.self)])
+        #expect(started.duration(to: .now) < .seconds(10))
+        let reply = try JSON.parse(try #require(result.lines.first, "sem resposta o Claude Code espera o id para sempre"))
+        #expect(reply["id"] == 9 && reply["result"]?["isError"] == true)
+        let text = try #require(reply["result"]?["content"]?.array?.first?["text"]?.string)
+        let body = try JSON.parse(text)
+        #expect(text.contains("restarted during this call") && body["retry_after_s"]?.int == 5)
+    }
+
     @Test func withoutTheAppToolCallsGetAReadableAppUnavailableNotACrash() async throws {
         let socket = "/tmp/abm-none-\(UInt32.random(in: 0 ... 0xFFFFFF)).sock"
         let started = ContinuousClock.now
