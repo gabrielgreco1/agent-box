@@ -241,7 +241,7 @@ struct CreatePRView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: DSMetrics.overlayGap) {
-            Text("Create Pull Request", bundle: .module)
+            Text(String(localized: "pr.create.title", defaultValue: "Create Pull Request", bundle: .module))
                 .dsFont(DS.Font.composerTitle)
                 .foregroundStyle(DS.Color.textPrimary)
                 .accessibilityAddTraits(.isHeader)

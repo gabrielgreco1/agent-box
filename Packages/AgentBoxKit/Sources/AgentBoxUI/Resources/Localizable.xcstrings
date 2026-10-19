@@ -2168,17 +2168,6 @@
         }
       }
     },
-    "Create Pull Request": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Create Pull Request"
-          }
-        }
-      }
-    },
     "Create Pull Request…": {
       "extractionState": "manual",
       "localizations": {
@@ -7305,17 +7294,6 @@
         }
       }
     },
-    "main": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "main"
-          }
-        }
-      }
-    },
     "now": {
       "extractionState": "manual",
       "localizations": {
@@ -7345,6 +7323,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Force Quit Process…"
+          }
+        }
+      }
+    },
+    "pr.create.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create Pull Request"
           }
         }
       }

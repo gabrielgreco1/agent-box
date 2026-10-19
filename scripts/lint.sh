@@ -189,4 +189,20 @@ if [ "$VIOLATIONS" -gt 0 ]; then
   echo "lint: FALHOU ($VIOLATIONS violação(ões))" >&2
   exit 1
 fi
+# String Catalog: o xcodebuild gera um símbolo por chave e falha quando duas viram o mesmo nome ("main"/"Main",
+# "Create Pull Request"/"Create Pull Request…"). O `swift build` não pega; este lint pega antes.
+python3 -I - "$ROOT/Packages/AgentBoxKit/Sources/AgentBoxUI/Resources/Localizable.xcstrings" <<'PY' || { echo "lint: FALHOU (String Catalog)" >&2; exit 1; }
+import json, re, sys
+keys = json.load(open(sys.argv[1], encoding="utf-8"))["strings"].keys()
+seen, bad = {}, []
+for k in keys:
+    sym = re.sub(r"(…|\.\.\.)$", "", k.strip()).lower()
+    if sym and sym in seen and seen[sym] != k:
+        bad.append(f"  {seen[sym]!r} x {k!r}")
+    seen.setdefault(sym, k)
+if bad:
+    print("lint: chaves do String Catalog que colidem no símbolo gerado:", *bad, sep="\n", file=sys.stderr)
+    sys.exit(1)
+PY
+
 echo "lint: OK"
