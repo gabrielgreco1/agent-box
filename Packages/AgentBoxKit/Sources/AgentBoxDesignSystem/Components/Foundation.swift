@@ -71,6 +71,8 @@ public enum DSMetrics {
     // Menu e combobox (02 §12.11, §12.15).
     public static let menuPadding: CGFloat = 4
     public static let menuItemHeight: CGFloat = 24
+    /// Largura do menu de contexto (F17): título 13 pt, ícone, atalho à direita.
+    public static let contextMenuWidth: CGFloat = 232
     public static let menuItemPaddingH: CGFloat = 8
     public static let menuItemIcon: CGFloat = 14
     public static let menuSeparatorHeight: CGFloat = 7

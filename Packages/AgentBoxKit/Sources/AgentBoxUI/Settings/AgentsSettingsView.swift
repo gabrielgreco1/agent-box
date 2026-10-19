@@ -10,7 +10,7 @@ struct AgentsSettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: SettingsMetrics.sectionGap) {
-            SettingsBlock(title: "Default agent") {
+            SettingsBlock(title: nil) {
                 SettingsRow(title: "Default agent", help: "Used by the + button and clean sessions.") {
                     DSCombobox(
                         id: .settings("agents", "defaultAgent"), selection: model.settings.agents.defaultAgent.rawValue,

@@ -172,7 +172,7 @@ final class WorkspaceViewController: NSViewController {
         landing.inputBlocked = blocked
         let tabRow = ChromeHostingView(
             content: TabRowView(model: env.workspace, rightPanel: env.rightPanel).environment(\.elementStore, env.elements)
-                .environment(\.actionRegistry, env.registry).environment(\.a11yParent, .windowMain))
+                .environment(\.actionRegistry, env.registry).environment(\.overlayRouter, env.overlays).environment(\.a11yParent, .windowMain))
         tabRow.inputBlocked = blocked
         let area = PaneAreaView(model: env.workspace, registry: env.registry, elements: env.elements, router: env.terminalRouter)
         let pending = ChromeHostingView(

@@ -8,6 +8,8 @@
 	<string>Agent Box</string>
 	<key>CFBundleExecutable</key>
 	<string>Agent Box</string>
+	<key>CFBundleIconFile</key>
+	<string>AgentBox</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>

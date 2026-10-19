@@ -7,6 +7,7 @@
 #   Falha em : .sheet( / NSAlert (T5: modais são overlays); List( ; Form( ; Color(hex: fora de AgentBoxDesignSystem/Tokens;
 #              literais numéricos em .padding( / .frame( (use DS.Space); LocalProcessTerminalView; emojis;
 #              Button( / .onTapGesture / NSButton( / NSMenuItem( cujo gatilho não chame ...perform( do ActionRegistry
+#              NSMenu / .contextMenu / Menu { } fora de MenuBar/ e Shell/MainMenu.swift (menus de contexto usam DSMenuPanel, F17);
 #              (use ActionButton); accessibilityIdentifier("literal") (use .a11y(A11yID)); strings de Text( / Label( / TextField(
 #              ausentes do String Catalog (AgentBoxUI/Resources/Localizable.xcstrings); A11yID/ActionID defasados da spec
 #              (scripts/gen-automation-ids.py --check).
@@ -109,6 +110,7 @@ run_rules() {
   rule literals "literal numérico em .padding( / .frame( (use DS.Space)" '\.(?:padding|frame)\([^)\n]*(?<![\w.])\d+(?:\.\d+)?(?![\w.])' "$TOK"
   rule terminal-view "LocalProcessTerminalView (T6)" '\bLocalProcessTerminalView\b'
   rule emoji "emoji em código de UI (use SF Symbols/ícones do DS)" '[\x{1F000}-\x{1FAFF}\x{2600}-\x{26FF}\x{2700}-\x{27BF}\x{FE0F}]'
+  rule native-menus "NSMenu / .contextMenu / Menu { } nativo fora da barra de menus do app (F17: use DSMenuPanel / dsContextMenu)" '\bNSMenu\b|\.contextMenu\b|(?<![\w.])Menu\s*[({]|\.menuStyle\(' '!**/MenuBar/**' '!**/Shell/MainMenu.swift'
   rule a11y-literal "accessibilityIdentifier com string literal (use .a11y(A11yID))" 'accessibilityIdentifier\(\s*"'
   button_rule
   catalog_rule
@@ -165,6 +167,11 @@ if [ "$SELF_TEST" = 1 ]; then
   expect tap-gesture-bad $U 'Text("Hello").onTapGesture { x() }' fail
   expect nsbutton-bad $U 'let b = NSButton(title: "x", target: nil, action: nil)' fail
   expect nsmenuitem-bad $U 'let m = NSMenuItem(title: "x", action: nil, keyEquivalent: "")' fail
+  expect nsmenu-bad $U 'let m = NSMenu()' fail
+  expect context-menu-bad $U 'Text("Hello").contextMenu { Text("Hello") }' fail
+  expect swiftui-menu-bad $U 'Menu { Text("Hello") } label: { Text("Hello") }' fail
+  expect menubar-nsmenu-ok Packages/AgentBoxKit/Sources/AgentBoxUI/MenuBar/M.swift 'let m = NSMenu()' pass
+  expect dscontext-ok $U 'Text("Hello").dsContextMenu(name: "x", groups: { [] })' pass
   expect string-missing-bad $U 'Text("Not in catalog")' fail
   expect string-in-catalog-ok $U 'Text("Hello", bundle: .module)' pass
   expect string-verbatim-ok $U 'Text(verbatim: "Not in catalog")' pass

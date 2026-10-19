@@ -42,7 +42,7 @@ public enum DSMenuPanel {
     @MainActor
     public static func spec(
         name: String, anchor: CGRect, width: CGFloat, entries: [DSMenuEntry], selectedID: String? = nil, searchable: Bool = false,
-        searchPlaceholder: String = "", alignment: PopoverAlignment = .leading, registry: ActionRegistry?,
+        searchPlaceholder: String = "", alignment: PopoverAlignment = .leading, itemFont: DSTextStyle = DS.Font.menuItem, registry: ActionRegistry?,
         onActivate: (@MainActor (DSMenuItem) -> Void)? = nil
     ) -> PopoverSpec {
         let resolved = resolve(entries, registry: registry)
@@ -50,7 +50,7 @@ public enum DSMenuPanel {
             AnyView(
                 DSMenuPanelContent(
                     entries: resolved, selectedID: selectedID, searchable: searchable, searchPlaceholder: searchPlaceholder,
-                    width: width, registry: registry, onActivate: onActivate, dismiss: dismiss))
+                    width: width, itemFont: itemFont, registry: registry, onActivate: onActivate, dismiss: dismiss))
         }
     }
 
@@ -58,16 +58,17 @@ public enum DSMenuPanel {
     @MainActor @discardableResult
     public static func present(
         router: OverlayRouter?, registry: ActionRegistry?, name: String, anchor: CGRect, width: CGFloat = DS.Layout.menuMinWidth,
-        entries: [DSMenuEntry], alignment: PopoverAlignment = .leading
+        entries: [DSMenuEntry], alignment: PopoverAlignment = .leading, itemFont: DSTextStyle = DS.Font.menuItem
     ) -> Bool {
         guard let router else { return false }
         return router.presentPopover(
-            spec(name: name, anchor: anchor, width: width, entries: entries, alignment: alignment, registry: registry))
+            spec(name: name, anchor: anchor, width: width, entries: entries, alignment: alignment, itemFont: itemFont, registry: registry))
     }
 }
 
 private struct DSMenuPanelContent: View {
     let width: CGFloat
+    let itemFont: DSTextStyle
     let registry: ActionRegistry?
     let onActivate: (@MainActor (DSMenuItem) -> Void)?
     let dismiss: @MainActor () -> Void
@@ -75,10 +76,11 @@ private struct DSMenuPanelContent: View {
     @State private var navigator: DSMenuNavigator
 
     init(
-        entries: [DSMenuEntry], selectedID: String?, searchable: Bool, searchPlaceholder: String, width: CGFloat,
+        entries: [DSMenuEntry], selectedID: String?, searchable: Bool, searchPlaceholder: String, width: CGFloat, itemFont: DSTextStyle,
         registry: ActionRegistry?, onActivate: (@MainActor (DSMenuItem) -> Void)?, dismiss: @escaping @MainActor () -> Void
     ) {
         self.width = width
+        self.itemFont = itemFont
         self.registry = registry
         self.onActivate = onActivate
         self.dismiss = dismiss
@@ -87,7 +89,7 @@ private struct DSMenuPanelContent: View {
     }
 
     var body: some View {
-        DSMenuPanelView(navigator: navigator, width: width, searchPlaceholder: searchPlaceholder) { outcome in
+        DSMenuPanelView(navigator: navigator, width: width, searchPlaceholder: searchPlaceholder, itemFont: itemFont) { outcome in
             switch outcome {
             case .none: break
             case .dismiss: dismiss()

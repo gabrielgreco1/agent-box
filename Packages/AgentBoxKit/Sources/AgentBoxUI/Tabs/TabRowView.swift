@@ -186,27 +186,16 @@ struct TabRowView: View {
 
     /// `⋯` com 2+ panes: Split Right, Split Down, Equalize, Expand, Close Other Panes (03 §3.3).
     private var paneActions: some View {
-        Menu {
-            GroupedMenu(groups: [[
-                MenuEntry(action: .paneSplitRight, title: String(localized: "Split Right", bundle: .module)),
-                MenuEntry(action: .paneSplitDown, title: String(localized: "Split Down", bundle: .module)),
-                MenuEntry(action: .paneEqualize, title: String(localized: "Equalize Pane Sizes", bundle: .module)),
-                MenuEntry(action: .paneToggleExpand, title: String(localized: "Expand Pane", bundle: .module)),
-                MenuEntry(action: .paneCloseOthers, title: String(localized: "Close Other Panes", bundle: .module)),
-            ]])
-        } label: {
+        ActionButton(.tabsPaneActions, id: .tabsPaneActions) {
             Image(systemName: "ellipsis")
                 .font(.system(size: DSIconButtonVariant.toolbar.icon))
                 .foregroundStyle(DS.Color.textSecondary)
                 .frame(width: DSIconButtonVariant.toolbar.box.width, height: DSIconButtonVariant.toolbar.box.height)
                 .contentShape(Rectangle())
         }
-        .menuStyle(.button)
         .buttonStyle(.plain)
-        .menuIndicator(.hidden)
         .fixedSize()
         .dsTooltip(String(localized: "Pane Actions", bundle: .module))
-        .a11y(.tabsPaneActions, kind: "menu", label: "Pane Actions", action: .tabsPaneActions)
     }
 }
 
@@ -264,7 +253,7 @@ struct TabItemView: View {
         .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.fast), value: draggedOut)
         .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { model.dragController.tabFrames[tab.id] = $0 }
         .onHover { hovering = $0 }
-        .contextMenu { TabMenuItems(model: model, tab: tab) }
+        .dsContextMenu(name: "tabContext", groups: { TabMenuItems(model: model, tab: tab).groups() })
         .transition(
             MotionPolicy.shared.reduceMotion
                 ? .opacity : .asymmetric(insertion: .opacity.combined(with: .scale(scale: MotionTokens.Scale.tabFromX, anchor: .leading)), removal: .opacity))
@@ -366,13 +355,13 @@ struct TabItemView: View {
 }
 
 /// Menu de contexto da tab (03 §3.5): só entram as ações que têm dono.
-struct TabMenuItems: View {
+struct TabMenuItems {
     let model: WorkspaceModel
     let tab: AgentBoxProtocol.Tab
 
-    var body: some View {
+    @MainActor func groups() -> [[MenuEntry]] {
         let arg = ActionArgument.select(tab.id.uuidString)
-        GroupedMenu(groups: [
+        return [
             [
                 MenuEntry(action: .tabRename, title: String(localized: "Rename…", bundle: .module), argument: arg),
                 MenuEntry(action: .tabResetTitle, title: String(localized: "Reset Title", bundle: .module), argument: arg),
@@ -388,7 +377,7 @@ struct TabMenuItems: View {
             ],
             NSEvent.modifierFlags.contains(.option)
                 ? [MenuEntry(action: .terminalCopyId, title: String(localized: "Copy Terminal ID", bundle: .module), argument: terminalArgument)] : [],
-        ])
+        ]
     }
 
     private var terminalArgument: ActionArgument { .select((model.primaryTerminal(of: tab)?.id ?? tab.id).uuidString) }

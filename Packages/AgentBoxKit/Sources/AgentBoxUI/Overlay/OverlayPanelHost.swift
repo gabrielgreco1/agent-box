@@ -115,7 +115,7 @@ private struct OverlayEntryView: View {
             .frame(width: min(entry.spec.width, max(container.width - DSMetrics.overlayWindowMarginH, .zero)))
             .frame(maxHeight: max(container.height - DSMetrics.overlayWindowMarginV, .zero))
             .fixedSize(horizontal: false, vertical: true)
-            .background(RoundedRectangle(cornerRadius: entry.spec.cornerRadius).fill(DS.Color.overlayCard))
+            .background(RoundedRectangle(cornerRadius: entry.spec.cornerRadius).fill(DS.Color.overlaySolid))
             .overlay(RoundedRectangle(cornerRadius: entry.spec.cornerRadius).strokeBorder(DS.Color.borderStrong, lineWidth: DSMetrics.hairline))
             .dsShadow(DS.Shadow.dialog)
             .accessibilityElement(children: .contain)

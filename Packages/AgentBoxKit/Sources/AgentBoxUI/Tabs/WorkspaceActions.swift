@@ -306,37 +306,26 @@ extension WorkspaceModel {
         }
     }
 
-    /// Menu de contexto do pane (03 §4.5): construído na hora, com as ações que têm dono. O pane já recebeu o foco.
-    func paneContextMenu(registry: ActionRegistry, terminalID: UUID) -> NSMenu {
-        let menu = NSMenu()
+    /// Menu de contexto do pane (03 §4.5, F17): `DSMenuPanel` na posição do clique, com as ações que têm dono. O pane já recebeu o foco.
+    func presentPaneContextMenu(registry: ActionRegistry, terminalID: UUID, at point: CGPoint) {
         let option = NSEvent.modifierFlags.contains(.option)
         let arg = ActionArgument.select(terminalID.uuidString)
-        var groups: [[(ActionID, String, String, NSEvent.ModifierFlags, ActionArgument)]] = [
-            [(.editCopy, "Copy", "c", [.command], .press), (.editPaste, "Paste", "v", [.command], .press), (.editSelectAll, "Select All", "a", [.command], .press)],
-            [(.findOpen, "Find…", "f", [.command], .press), (.terminalClear, "Clear", "k", [.command], .press)],
-            [
-                (.paneSplitRight, "Split Right", "d", [.command], arg), (.paneSplitDown, "Split Down", "d", [.command, .shift], arg),
-                (.paneEqualize, "Equalize Pane Sizes", "", [], arg), (.paneToggleExpand, "Expand Pane", "\r", [.command, .shift], arg),
-            ],
-            [(.tabRename, "Rename…", "", [], .press), (.tabResetTitle, "Reset Title", "", [], .press)],
-            [(.terminalRestart, "Restart", "", [], arg), (.paneClose, "Close Pane", "w", [.command], arg)],
+        func e(_ action: ActionID, _ title: String, _ argument: ActionArgument = .press) -> MenuEntry { MenuEntry(action: action, title: title, argument: argument) }
+        var groups: [[MenuEntry]] = [
+            [e(.editCopy, "Copy"), e(.editPaste, "Paste"), e(.editSelectAll, "Select All")],
+            [e(.findOpen, "Find…"), e(.terminalClear, "Clear")],
+            [e(.paneSplitRight, "Split Right", arg), e(.paneSplitDown, "Split Down", arg), e(.paneEqualize, "Equalize Pane Sizes", arg), e(.paneToggleExpand, "Expand Pane", arg)],
+            [e(.tabRename, "Rename…"), e(.tabResetTitle, "Reset Title")],
+            [e(.terminalRestart, "Restart", arg), e(.paneClose, "Close Pane", arg)],
         ]
         if option {
             groups.append([
-                (.terminalCopyId, "Copy Terminal ID", "", [], arg), (.paneCopyId, "Copy Pane ID", "", [], arg),
-                (.terminalSendInterrupt, "Send Interrupt (⌃C)", "", [], arg), (.terminalForceQuit, String(localized: "pane.menu.forceQuit", bundle: .module), "", [], arg),
+                e(.terminalCopyId, "Copy Terminal ID", arg), e(.paneCopyId, "Copy Pane ID", arg),
+                e(.terminalSendInterrupt, "Send Interrupt (⌃C)", arg), e(.terminalForceQuit, String(localized: "pane.menu.forceQuit", bundle: .module), arg),
             ])
         }
-        var first = true
-        for group in groups {
-            let items = group.filter { registry.isOffered($0.0) }
-            guard !items.isEmpty else { continue }
-            if !first { menu.addItem(.separator()) }
-            first = false
-            for (action, title, key, mods, argument) in items {
-                menu.addItem(ActionMenuItem(action, title: title, key: key, modifiers: mods, argument: argument, registry: registry))
-            }
-        }
-        return menu
+        DSMenuPanel.presentContext(
+            router: overlays, registry: registry, name: "paneContext", at: point,
+            entries: ContextMenuStyle.entries(groups: groups, registry: registry))
     }
 }

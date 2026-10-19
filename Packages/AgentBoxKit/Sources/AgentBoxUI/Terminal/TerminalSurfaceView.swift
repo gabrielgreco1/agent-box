@@ -72,11 +72,15 @@ public final class TerminalSurfaceView: TerminalView {
         return window.makeFirstResponder(self)
     }
 
-    /// Menu de contexto do terminal (03 §4.5): construído por quem hospeda o pane (o menu depende do estado do pane).
-    public var contextMenuProvider: (() -> NSMenu?)?
+    /// Menu de contexto do terminal (03 §4.5, F17): desenhado pelo `DSMenuPanel` de quem hospeda o pane; recebe o ponto em
+    /// coordenadas globais da janela (origem no topo). A view nunca devolve `NSMenu` nativo.
+    public var onContextMenu: ((CGPoint) -> Void)?
 
-    public override func menu(for event: NSEvent) -> NSMenu? {
-        contextMenuProvider?() ?? super.menu(for: event)
+    public override func menu(for event: NSEvent) -> NSMenu? {  // lint-ui: allow override obrigatório: devolve nil e abre o DSMenuPanel
+        if let onContextMenu, let content = event.window?.contentView {
+            onContextMenu(CGPoint(x: event.locationInWindow.x, y: content.bounds.height - event.locationInWindow.y))
+        }
+        return nil
     }
 
     // MARK: Saída para o PTY

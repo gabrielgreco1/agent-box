@@ -3,7 +3,7 @@ import AgentBoxDesignSystem
 import AgentBoxProtocol
 import SwiftUI
 
-/// Onboarding mínimo da Fatia 1 (03 §15): overlay de 640 com a checklist de agentes, o agente padrão e o aviso de permissões.
+/// Onboarding mínimo da Fatia 1 (03 §15): overlay de 560 com a checklist de agentes, o agente padrão e o aviso de permissões.
 struct OnboardingView: View {
     let model: OnboardingModel
     private var settings: SettingsModel { model.settings }
@@ -13,14 +13,14 @@ struct OnboardingView: View {
             VStack(alignment: .leading, spacing: DS.Space.s1) {
                 HStack(alignment: .firstTextBaseline) {
                     Text("Set Up Agent Box", bundle: .module)
-                        .dsFont(DS.Font.dialogTitle)
+                        .dsFont(DS.Font.composerTitle)
                         .foregroundStyle(DS.Color.textPrimary)
                         .accessibilityAddTraits(.isHeader)
                     Spacer(minLength: DS.Space.s2)
                     DSButton(.agentDetect, id: .onboardingItem("check"), "Check Again", variant: .ghost, symbol: "arrow.clockwise")
                 }
                 Text("Agent Box checks what's on this Mac. Fix what you need now; the rest can wait.", bundle: .module)
-                    .dsFont(DS.Font.dialogBody)
+                    .dsFont(DS.Font.body)
                     .foregroundStyle(DS.Color.textSecondary)
             }
             .overlayGroup(0)
@@ -52,7 +52,7 @@ struct OnboardingView: View {
             DSCombobox(
                 id: .onboardingItem("defaultAgent"), selection: settings.settings.agents.defaultAgent.rawValue, entries: entries,
                 action: .settingsAgentsDefaultAgent, searchPlaceholder: String(localized: "Search agents…", bundle: .module))
-                .frame(width: SettingsMetrics.controlWidth)
+                .frame(width: OnboardingMetrics.agentControlWidth)
         }
     }
 
@@ -161,12 +161,13 @@ private struct OnboardingItemRow: View {
 }
 
 enum OnboardingMetrics {
-    static let width: CGFloat = 640
+    static let width: CGFloat = 560
     static let rowHeight: CGFloat = 56
+    static let agentControlWidth: CGFloat = 200
 }
 
 extension OnboardingModel {
-    /// Spec do overlay (03 §15): 640 de largura, raio 14, Esc pede `Skip setup?`. O clique no scrim não fecha: o onboarding
+    /// Spec do overlay (03 §15, F4): 560 de largura, raio 14, Esc pede `Skip setup?`. O clique no scrim não fecha: o onboarding
     /// só sai por `Done`, `Skip` ou ao abrir o Settings.
     func overlaySpec() -> OverlaySpec {
         OverlaySpec(

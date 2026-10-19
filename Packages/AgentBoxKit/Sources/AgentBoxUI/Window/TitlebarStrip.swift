@@ -16,6 +16,7 @@ enum StripMetrics {
     static let hairline: CGFloat = 1
     static let buttonRadius: CGFloat = 4
     static let disabledOpacity = 0.45
+    static let brandSize: CGFloat = 18
     static let toggleIcon: CGFloat = 16
     static let navIcon: CGFloat = 12
 }
@@ -26,9 +27,13 @@ struct TitlebarStrip: View {
 
     var body: some View {
         let shell = env.shell
+        let inSettings = env.settings.isOpen
         HStack(spacing: 0) {
             Color.clear.frame(width: WindowGeometry.trafficLightPad(fullScreen: shell.isFullScreen))
             if !shell.appNameHidden { appName }
+            if inSettings {
+                Spacer(minLength: 0)
+            } else {
             ActionButton(.viewToggleSidebar, id: .windowSidebarToggle) {
                 Image(systemName: "sidebar.left")
             }
@@ -48,17 +53,20 @@ struct TitlebarStrip: View {
                     .buttonStyle(StripButtonStyle(size: StripMetrics.navSize, icon: StripMetrics.navIcon, secondary: false))
             }
             .padding(.trailing, StripMetrics.navMarginTrailing)
+            }
         }
         .frame(height: DS.Layout.titlebarHeight)
-        .frame(maxWidth: shell.sidebarCollapsed ? nil : .infinity)
-        .fixedSize(horizontal: shell.sidebarCollapsed, vertical: false)
+        .frame(maxWidth: (shell.sidebarCollapsed && !inSettings) ? nil : .infinity)
+        .fixedSize(horizontal: shell.sidebarCollapsed && !inSettings, vertical: false)
         .background(TitlebarDragRegion())
-        .background(shell.sidebarCollapsed ? DS.Color.chrome : DS.Color.sidebar)
-        .overlay(alignment: .bottom) { DS.Color.border.frame(height: StripMetrics.hairline) }
+        // Em Settings a faixa tem a cor e a largura da nav de Settings (F5): sem degrau, sem emenda.
+        .background(inSettings ? DS.Color.panel : (shell.sidebarCollapsed ? DS.Color.chrome : DS.Color.sidebar))
+        .overlay(alignment: .bottom) { if !inSettings { DS.Color.border.frame(height: StripMetrics.hairline) } }
         .overlay(alignment: .trailing) {
-            if shell.sidebarCollapsed { DS.Color.border.frame(width: StripMetrics.hairline) }
+            if shell.sidebarCollapsed && !inSettings { DS.Color.border.frame(width: StripMetrics.hairline) }
         }
         .environment(\.actionRegistry, env.registry)
+        .environment(\.overlayRouter, env.overlays)
         .a11y(.windowTitlebar, kind: "container")
     }
 
@@ -79,9 +87,12 @@ private struct AppNameButton: View {
     var body: some View {
         // lint-ui: allow buttons abre o DSMenuPanel (apresentação); os itens disparam ações do registro
         Button { open() } label: {
-            Text("Agent Box", bundle: .module)
-                .font(DS.Font.sectionLabel.font)
-                .foregroundStyle(DS.Color.textSecondary)
+            HStack(spacing: DS.Space.s1_5) {
+                BrandMark(size: StripMetrics.brandSize)
+                Text("Agent Box", bundle: .module)
+                    .font(DS.Font.sectionLabel.font)
+                    .foregroundStyle(DS.Color.textSecondary)
+            }
                 .padding(.horizontal, StripMetrics.namePaddingH)
                 .lineLimit(1)
                 .fixedSize()
@@ -97,9 +108,9 @@ private struct AppNameButton: View {
         .padding(.leading, StripMetrics.nameMarginLeading)
         .padding(.trailing, StripMetrics.nameMarginTrailing)
         .a11y(.windowAppName, kind: "button", label: "Agent Box")
-        .contextMenu {
-            ActionButton(.appHideAppName, id: .menuPanel("hideAppName")) { Text("Hide App Name", bundle: .module) }
-        }
+        .dsContextMenu(name: "appNameContext", groups: {
+            [[MenuEntry(action: .appHideAppName, title: String(localized: "Hide App Name", bundle: .module))]]
+        })
     }
 
     private func open() {
@@ -170,4 +181,20 @@ struct TitlebarDragRegion: NSViewRepresentable {
 
     func makeNSView(context: Context) -> DragView { DragView() }
     func updateNSView(_ nsView: DragView, context: Context) {}
+}
+
+/// Marca do app (agentbox.png, F1): 18 pt à esquerda do nome, alinhada ao texto.
+struct BrandMark: View {
+    let size: CGFloat
+
+    var body: some View {
+        if let url = Bundle.module.url(forResource: "agentbox", withExtension: "png"), let image = NSImage(contentsOf: url) {
+            Image(nsImage: image)
+                .resizable()
+                .interpolation(.high)
+                .aspectRatio(contentMode: .fit)
+                .frame(width: size, height: size)
+                .accessibilityHidden(true)
+        }
+    }
 }

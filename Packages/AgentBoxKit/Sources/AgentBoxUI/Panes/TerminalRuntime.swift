@@ -90,7 +90,7 @@ final class TerminalRuntime {
     /// Pedido de foco vindo de um clique no terminal.
     var onFocusRequested: ((UUID) -> Void)?
     /// Menu de contexto de um pane (03 §4.5), montado por quem conhece as ações.
-    var contextMenu: ((UUID) -> NSMenu?)?
+    var onPaneContext: ((UUID, CGPoint) -> Void)?
     var onConnectionChange: ((Connection) -> Void)?
     /// Onde o daemon roda (LaunchAgent ou filho) e, no fallback, por quê (Settings › General mostra o aviso de aprovação).
     private(set) var hostMode: DaemonHostMode = .childProcess(reason: nil)
@@ -284,9 +284,9 @@ final class TerminalRuntime {
         if let existing = entries[terminalID] { return existing }
         let host = TerminalHostView(terminalID: terminalID.uuidString, registry: registry, elements: elements)
         host.onFocusRequested = { [weak self] in self?.onFocusRequested?(terminalID) }
-        host.surface.contextMenuProvider = { [weak self] in
+        host.surface.onContextMenu = { [weak self] point in
             self?.onFocusRequested?(terminalID)
-            return self?.contextMenu?(terminalID)
+            self?.onPaneContext?(terminalID, point)
         }
         let entry = TerminalEntry(terminalID: terminalID, host: host)
         entries[terminalID] = entry

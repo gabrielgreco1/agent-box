@@ -422,9 +422,9 @@ struct NavItemRow: View {
             .buttonStyle(.plain)
             .onHover { hovering = $0 }
             .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: hovering)
-            .contextMenu {
-                GroupedMenu(groups: [[MenuEntry(action: .sidebarHideNavItem, title: String(localized: "Hide from Sidebar", bundle: .module), argument: .select(hideKey))]])
-            }
+            .dsContextMenu(name: "navContext", groups: {
+                [[MenuEntry(action: .sidebarHideNavItem, title: String(localized: "Hide from Sidebar", bundle: .module), argument: .select(hideKey))]]
+            })
         }
     }
 }

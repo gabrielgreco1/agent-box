@@ -3,7 +3,7 @@ import AgentBoxProtocol
 import AppKit
 import SwiftUI
 
-// Menus de contexto (03 §2.5, §2.6): `.contextMenu` do SwiftUI gera `NSMenu` nativo (DS §12.15). Só entram itens cuja
+// Menus de contexto (03 §2.5, §2.6): `dsContextMenu` abre o `DSMenuPanel` (F17); nada de `NSMenu` nativo. Só entram itens cuja
 // ação já tem dono nesta fatia (registrada) e que fazem sentido para o item (sem Git, não há "Copy Branch Name").
 
 struct MenuEntry: Identifiable {
@@ -13,36 +13,18 @@ struct MenuEntry: Identifiable {
     var argument: ActionArgument = .press
 }
 
-/// Grupos separados por divisor; itens sem dono e grupos vazios somem.
-struct GroupedMenu: View {
-    let groups: [[MenuEntry]]
-    @Environment(\.actionRegistry) private var registry
-
-    var body: some View {
-        let visible = groups.map { g in g.filter { registry?.isOffered($0.action) ?? false } }.filter { !$0.isEmpty }
-        ForEach(Array(visible.enumerated()), id: \.offset) { index, group in
-            if index > 0 { Divider() }
-            ForEach(group) { entry in
-                ActionButton(entry.action, id: .menuPanel(entry.action.rawValue), argument: entry.argument) {
-                    Text(verbatim: entry.title)
-                }
-            }
-        }
-    }
-}
-
 private func optionHeld() -> Bool { NSEvent.modifierFlags.contains(.option) }
 
-struct ProjectMenuItems: View {
+struct ProjectMenuItems {
     let model: SidebarModel
     let project: UUID
 
-    var body: some View {
+    @MainActor func groups() -> [[MenuEntry]] {
         if let p = model.project(project) {
             let id = project.uuidString
             let arg = ActionArgument.select(id)
             let hasGitHub = p.gitRemoteURL?.contains("github.com") == true
-            GroupedMenu(groups: [
+            return [
                 [
                     MenuEntry(action: .projectNewSession, title: String(localized: "New Session in \(p.name)…", bundle: .module), argument: arg),
                     MenuEntry(action: .projectNewSessionFromRef, title: String(localized: "New Session from Branch or PR…", bundle: .module), argument: arg),
@@ -64,16 +46,17 @@ struct ProjectMenuItems: View {
                         MenuEntry(action: .itemRefreshGit, title: String(localized: "Refresh Git", bundle: .module), argument: arg),
                         MenuEntry(action: .itemCopyId, title: String(localized: "Copy Project ID", bundle: .module), argument: arg),
                     ] : [],
-            ])
+            ]
         }
+        return []
     }
 }
 
-struct SessionMenuItems: View {
+struct SessionMenuItems {
     let model: SidebarModel
     let session: UUID
 
-    var body: some View {
+    @MainActor func groups() -> [[MenuEntry]] {
         if let s = model.session(session) {
             let id = session.uuidString
             let arg = ActionArgument.select(id)
@@ -82,7 +65,7 @@ struct SessionMenuItems: View {
             let interrupted = model.snapshot.terminals.contains { t in
                 t.state == .interrupted && model.snapshot.tabs.contains { $0.id == t.tabID && $0.sessionID == s.id }
             }
-            GroupedMenu(groups: [
+            return [
                 [
                     MenuEntry(action: .sessionRename, title: String(localized: "Rename…", bundle: .module), argument: arg),
                     MenuEntry(action: .sessionEditNote, title: String(localized: "Edit Note…", bundle: .module), argument: arg),
@@ -114,19 +97,27 @@ struct SessionMenuItems: View {
                     ? (hasGit ? [MenuEntry(action: .itemRefreshGit, title: String(localized: "Refresh Git", bundle: .module), argument: arg)] : [])
                         + [MenuEntry(action: .itemCopyId, title: String(localized: "Copy Session ID", bundle: .module), argument: arg)]
                     : [],
-            ])
+            ]
         }
+        return []
     }
 }
 
-/// Botão `…` da linha de projeto: abre o mesmo conteúdo do context menu (03 §2.5).
+/// Botão `…` da linha de projeto: abre o mesmo conteúdo do context menu no `DSMenuPanel` (03 §2.5).
 struct ProjectMenuButton: View {
     let model: SidebarModel
     let project: UUID
+    @Environment(\.overlayRouter) private var router
+    @Environment(\.actionRegistry) private var registry
+    @State private var anchor: CGRect = .zero
 
     var body: some View {
-        Menu {
-            ProjectMenuItems(model: model, project: project)
+        // lint-ui: allow buttons abre o DSMenuPanel (apresentação); os itens disparam ações do registro
+        Button {
+            DSMenuPanel.present(
+                router: router, registry: registry, name: "projectMenu", anchor: anchor, width: DSMetrics.contextMenuWidth,
+                entries: ContextMenuStyle.entries(groups: ProjectMenuItems(model: model, project: project).groups(), registry: registry),
+                alignment: .trailing, itemFont: DS.Font.body)
         } label: {
             Image(systemName: "ellipsis")
                 .font(.system(size: DSIconButtonVariant.row.icon, weight: .regular))
@@ -134,11 +125,9 @@ struct ProjectMenuButton: View {
                 .frame(width: DSIconButtonVariant.row.box.width, height: DSIconButtonVariant.row.box.height)
                 .contentShape(Rectangle())
         }
-        .menuStyle(.button)
         .buttonStyle(.plain)
-        .menuIndicator(.hidden)
-        .fixedSize()
-        .help(Text("More", bundle: .module))
+        .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { anchor = $0 }
+        .dsTooltip(String(localized: "More", bundle: .module))
         .a11y(.sidebarProjectMenu(project.uuidString), kind: "menu", label: String(localized: "Project menu", bundle: .module))
     }
 }

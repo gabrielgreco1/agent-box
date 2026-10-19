@@ -58,10 +58,10 @@ import Testing
     @Test func f3OpenCodeLogo() {
         DSFonts.registerIfNeeded()
         let row = HStack(spacing: 16) {
-            DSAgentLogo(.claude, size: 48)
-            DSAgentLogo(.codex, size: 48)
-            DSAgentLogo(.opencode, size: 48)
-            DSAgentLogo(.opencode, size: 16)
+            DSAgentLogo(DSAgentKind.claude, size: 48)
+            DSAgentLogo(DSAgentKind.codex, size: 48)
+            DSAgentLogo(DSAgentKind.opencode, size: 48)
+            DSAgentLogo(DSAgentKind.opencode, size: 16)
         }
         .padding(20).background(DS.Color.overlaySolid).environment(\.colorScheme, .dark)
         let host = NSHostingView(rootView: row)
@@ -82,7 +82,7 @@ import Testing
     }
 
     @Test func f5f6Settings() async throws {
-        let env = Self.windowEnv()
+        let env = Self.windowEnv(screen: AppEnvironment.setupDemoFixture)
         let c = await EmptyWindowTreeTests.host(env, size: NSSize(width: 1100, height: 700))
         defer { c.window?.close() }
         await env.settings.refreshAgents(force: false)
@@ -92,5 +92,24 @@ import Testing
         let v = c.window!.contentView!
         Self.write(v, "F5-settings-window")
         Self.write(v, "F6-agents", crop: NSRect(x: 240, y: v.bounds.height - 420, width: 860, height: 420))
+    }
+
+    /// F17: o menu de contexto de sessão no `DSMenuPanel` (antes era o `NSMenu` nativo, que não renderiza offscreen).
+    @Test func f17SessionContextMenu() {
+        DSFonts.registerIfNeeded()
+        func e(_ a: ActionID, _ t: String) -> MenuEntry { MenuEntry(action: a, title: t) }
+        let entries = ContextMenuStyle.entries(
+            groups: [
+                [e(.sessionRename, "Rename…"), e(.sessionEditNote, "Edit Note…")],
+                [e(.itemOpenIn, "Open in…"), e(.itemRevealInFinder, "Reveal in Finder"), e(.itemCopyPath, "Copy Path")],
+                [e(.sessionArchive, "Archive Session…"), e(.sessionDelete, "Delete Session…")],
+            ], registry: nil)
+        let nav = DSMenuNavigator(entries: entries)
+        let panel = DSMenuPanelView(navigator: nav, width: DSMetrics.contextMenuWidth, solidSurface: true, itemFont: DS.Font.body) { _ in }
+            .padding(24).background(DS.Color.canvas).environment(\.colorScheme, .dark)
+        let host = NSHostingView(rootView: panel)
+        host.frame = NSRect(origin: .zero, size: host.fittingSize)
+        host.appearance = NSAppearance(named: .darkAqua)
+        Self.write(host, "F17-session-menu")
     }
 }

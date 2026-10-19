@@ -78,7 +78,7 @@ struct ProjectRowView: View {
         .frame(height: SidebarMetrics.projectRowHeight)
         .onHover { hovering = $0 }
         .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: hovering)
-        .contextMenu { ProjectMenuItems(model: model, project: data.id) }
+        .dsContextMenu(name: "projectContext", groups: { ProjectMenuItems(model: model, project: data.id).groups() })
         .overlay { focusRing(model.keyboardFocus == .project(data.id)) }
     }
 
@@ -282,7 +282,7 @@ struct SessionCardView: View {
         .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: hovering)
         // Sessão limpa: o caminho real da pasta aparece no hover, porque renomear a sessão não renomeia a pasta (AC-1103).
         .dsTooltip(data.folderPath, enabled: data.kind == .clean && !renaming)
-        .contextMenu { SessionMenuItems(model: model, session: data.id) }
+        .dsContextMenu(name: "sessionContext", groups: { SessionMenuItems(model: model, session: data.id).groups() })
     }
 
     private var verticalPadding: CGFloat {

@@ -107,6 +107,7 @@ public struct DSMenuPanelView: View {
     private let width: CGFloat
     private let searchPlaceholder: String
     private let solidSurface: Bool
+    private let itemFont: DSTextStyle
     private let footer: String?
     private let decorateRow: (DSMenuItem, AnyView) -> AnyView
     private let decorateSearch: (AnyView) -> AnyView
@@ -116,10 +117,11 @@ public struct DSMenuPanelView: View {
     /// lista (Quick Launch). `decorateRow` e `decorateSearch` deixam quem usa o painel ligar identificadores de automação.
     public init(
         navigator: DSMenuNavigator, width: CGFloat = DS.Layout.menuMinWidth, searchPlaceholder: String = "", solidSurface: Bool = false,
-        footer: String? = nil, decorateRow: @escaping (DSMenuItem, AnyView) -> AnyView = { _, view in view },
+        footer: String? = nil, itemFont: DSTextStyle = DS.Font.menuItem, decorateRow: @escaping (DSMenuItem, AnyView) -> AnyView = { _, view in view },
         decorateSearch: @escaping (AnyView) -> AnyView = { $0 }, onOutcome: @escaping (DSMenuOutcome) -> Void
     ) {
         self.footer = footer
+        self.itemFont = itemFont
         self.decorateRow = decorateRow
         self.decorateSearch = decorateSearch
         self.solidSurface = solidSurface
@@ -208,7 +210,7 @@ public struct DSMenuPanelView: View {
         return HStack(spacing: DS.Space.s2) {
             if let icon = item.icon { iconView(icon, destructive: item.destructive) }
             Text(verbatim: item.title)
-                .dsFont(DS.Font.menuItem)
+                .dsFont(itemFont)
                 .foregroundStyle(item.destructive ? DS.Color.destructive : DS.Color.textPrimary)
                 .lineLimit(1)
             if let detail = item.detail {
@@ -220,7 +222,7 @@ public struct DSMenuPanelView: View {
             }
             Spacer(minLength: DS.Space.s2)
             if let shortcut = item.shortcut {
-                Text(verbatim: shortcut).dsFont(DS.Font.menuItem).foregroundStyle(DS.Color.textTertiary)
+                Text(verbatim: shortcut).dsFont(itemFont).foregroundStyle(DS.Color.textTertiary)
             }
             if item.checked {
                 Image(systemName: "checkmark").font(.system(size: DSMetrics.menuItemIcon - DS.Space.s0_5, weight: .medium))
@@ -297,7 +299,7 @@ public struct DSMenuPanelView: View {
 
     @ViewBuilder private var submenuView: some View {
         if let sub = navigator.submenu, let id = navigator.openSubmenuID {
-            DSMenuPanelView(navigator: sub, width: width, solidSurface: solidSurface, decorateRow: decorateRow, onOutcome: onOutcome)
+            DSMenuPanelView(navigator: sub, width: width, solidSurface: solidSurface, itemFont: itemFont, decorateRow: decorateRow, onOutcome: onOutcome)
                 .offset(x: width + DSMetrics.menuSubmenuGap, y: navigator.rowOffset(of: id) + DSMetrics.menuPadding + (navigator.searchable ? DSMetrics.menuSearchHeight + DSMetrics.hairline : 0))
         }
     }

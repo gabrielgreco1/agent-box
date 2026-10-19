@@ -266,6 +266,7 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
             self.split.view.isHidden = open
             self.panelButtons.isHidden = open
             self.settingsHost.isHidden = !open
+            self.container.stripWidth = { [weak self] in self?.currentStripWidth() ?? 0 }
             self.container.needsLayout = true
             if open {
                 self.window?.makeFirstResponder(self.settingsHost)
@@ -276,7 +277,8 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
     }
 
     private func currentStripWidth() -> CGFloat {
-        env.shell.sidebarCollapsed ? strip.fittingSize.width : split.sidebarWidth
+        if env.settings.isOpen { return SettingsMetrics.navWidth }
+        return env.shell.sidebarCollapsed ? strip.fittingSize.width : split.sidebarWidth
     }
 
     private func registerActions() {

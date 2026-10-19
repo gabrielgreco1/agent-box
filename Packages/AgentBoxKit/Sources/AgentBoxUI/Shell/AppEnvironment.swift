@@ -313,7 +313,7 @@ public final class AppEnvironment {
             workspace.ingest(snapshot)
             lifecycle?.update(terminals: snapshot.terminals)
         }
-        workspace.runtime.contextMenu = { [workspace, registry] id in workspace.paneContextMenu(registry: registry, terminalID: id) }
+        workspace.runtime.onPaneContext = { [workspace, registry] id, point in workspace.presentPaneContextMenu(registry: registry, terminalID: id, at: point) }
         let demo = fixture == Self.overlayDemoFixture
         do {
             try workspace.registerActions(
