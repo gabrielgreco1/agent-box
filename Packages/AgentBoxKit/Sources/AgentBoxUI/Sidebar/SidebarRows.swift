@@ -479,6 +479,7 @@ struct AgentRowView: View {
     let row: AgentRowData
     let query: String
     @Environment(\.actionRegistry) private var registry
+    @Environment(\.computersController) private var computers
     @State private var hovering = false
 
     var body: some View {
@@ -532,6 +533,10 @@ struct AgentRowView: View {
             .overlay { focusRing(model.keyboardFocus == .agent(session: row.sessionID, terminal: row.id)) }
             .onHover { hovering = $0 }
             .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: hovering)
+            // F28: com os subagentes recolhidos o card ainda mostra que o humano tem o controle (e deixa devolver).
+            if row.childrenCollapsed, let held = row.children.compactMap(\.computer).first(where: { HumanControlLine.isHuman($0, computers) }) {
+                HumanControlLine(computer: held, controlID: .sidebarSessionAgentControl(sid, tid), handBackID: .sidebarSessionAgentHandBack(sid, tid))
+            }
             if !row.children.isEmpty, !row.childrenCollapsed {
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(row.children) { child in

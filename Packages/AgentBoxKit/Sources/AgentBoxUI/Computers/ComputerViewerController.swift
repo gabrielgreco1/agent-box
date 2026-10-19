@@ -144,6 +144,9 @@ public final class ComputerViewerController {
             reserved(action)
         case .blockedInput:
             model.blockedClick()
+        case .input:
+            let computer = computer
+            Task { await computer.noteHumanActivity() }
         case .error(let detail):
             model.streamError(detail)
         case .jsError(let detail):

@@ -94,6 +94,9 @@ public actor ManagedComputer {
     public private(set) var lease: Lease = .agent
     public private(set) var controlPhase: ControlPhase = .agent
     private var pendingHandBack: HandBack?
+    /// F28: último sinal de vida do humano com o lease (Take Over, mouse, teclado). Sem sinal por `humanIdleTimeout` o controle volta ao agente.
+    public private(set) var humanActivityAt: Date?
+    public static let humanIdleTimeout: TimeInterval = 180
     /// Estado do computador quando o humano assumiu (cookies e downloads), para reconciliar ao devolver.
     private var takeOverBaseline: (cookies: String, downloads: Set<String>)?
     public private(set) var proxy: String
@@ -184,10 +187,27 @@ public actor ManagedComputer {
     public func takeOver() {
         lease = .human
         controlPhase = .human
+        humanActivityAt = Date()
         for id in helps.keys where helps[id]?.status == .open { helps[id]?.status = .takenOver }
     }
 
-    public func handBack() { lease = .agent; controlPhase = .agent }
+    public func handBack() { lease = .agent; controlPhase = .agent; humanActivityAt = nil }
+
+    /// F28: o viewer avisa que o humano mexeu (mouse, teclado) para o prazo de ociosidade recomeçar.
+    public func noteHumanActivity(at date: Date = Date()) { if lease == .human { humanActivityAt = date } }
+
+    /// F28: lease humano sem input por `timeout` volta sozinho ao agente (com uma nota que ele recebe na próxima chamada).
+    /// Devolve `true` quando devolveu. Quem chama (o app, a cada segundo) mostra o aviso `Control returned to <Agent>`.
+    @discardableResult
+    public func returnIdleControl(now: Date = Date(), after timeout: TimeInterval = ManagedComputer.humanIdleTimeout) async -> Bool {
+        guard lease == .human else { return false }
+        let last = humanActivityAt ?? now
+        humanActivityAt = last
+        guard now.timeIntervalSince(last) >= timeout else { return false }
+        let minutes = max(1, Int((timeout / 60).rounded()))
+        do { try await handBack(note: "Control returned automatically after \(minutes) min without input.") } catch { return false }
+        return lease == .agent
+    }
 
     /// `"Take Over"`: pede ao runtime `revoke(agent)` e só devolve `true` com o ACK (a escrita em curso terminou). Sem ACK em
     /// `wait` o computador fica em `revoking` e a UI oferece `"Force Take Over"` (`force: true` cancela a escrita em curso).
@@ -241,7 +261,7 @@ public actor ManagedComputer {
         guard display != .http, let out = try? await backend.runtime("lease", ["action": "status"], timeout: 10),
               let value = out["lease"]?.string else { return }
         switch value {
-        case "human": lease = .human; controlPhase = .human
+        case "human": lease = .human; controlPhase = .human; humanActivityAt = humanActivityAt ?? Date()
         case "revoking": controlPhase = .revoking
         default: lease = .agent; controlPhase = .agent
         }
@@ -268,12 +288,22 @@ public actor ManagedComputer {
     /// Escritas do agente no computador ficam pausadas durante pedido de ajuda e controle humano (CS-272).
     func pauseReason() -> ToolError? {
         if lease == .human || helps.values.contains(where: { $0.status == .takenOver }) {
-            return ToolError(.humanInControl, "a human is controlling this computer; wait for Hand Back", retryAfterS: 5)
+            return ManagedComputer.humanInControlError()
         }
         if helps.values.contains(where: { $0.status == .open }) {
             return ToolError(.waitingHelp, "a help request is open; poll help_wait before acting", retryAfterS: 5)
         }
         return nil
+    }
+
+    /// F28: erro claro para o agente. Nada de ficar tentando em laço: avisar o usuário (help_request) ou esperar.
+    static func humanInControlError() -> ToolError {
+        ToolError(
+            .humanInControl,
+            "The user has taken control of this computer (Take Over). Do not keep retrying: ask the user via help_request (kind=other) "
+                + "what to do, or wait. Control returns to you at Hand Back, or automatically after 3 minutes without user input.",
+            retryAfterS: 5,
+            details: ["hint": "ask the user via help_request", "idle_return_s": .int(Int(humanIdleTimeout))])
     }
 
     func stateGate() -> ToolError? {

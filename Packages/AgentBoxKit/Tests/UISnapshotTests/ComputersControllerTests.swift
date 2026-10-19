@@ -157,4 +157,74 @@ struct ComputersControllerTests {
         _ = try await f.registry.perform(.panelComputers, nil)
         #expect(opened == [true, false])
     }
+
+    // MARK: F28 - sair do viewer com o controle na mão
+
+    @Test func leavingTheViewerWhileHoldingControlAsksBeforeClosingOnEveryPath() async throws {
+        let f = try await make()
+        defer { try? FileManager.default.removeItem(at: f.folder) }
+        await f.controller.add(f.computer)
+        _ = try await f.registry.perform(.computerTakeOver, .select("phoenix-az"))
+        #expect(await f.computer.lease == .human)
+        // tab, sidebar, Esc, ⌘W e ← chegam todos por show/closePage
+        for leave in [{ f.controller.closePage() }, { f.controller.show(.workspace) }, { f.controller.show(.computers) }] {
+            leave()
+            #expect(f.controller.page == .viewer("phoenix-az"))
+            #expect(f.controller.pendingExit?.computer == "phoenix-az")
+            _ = try await f.registry.perform(.computerHandBack, .select("exit-stay"))  // Esc no overlay
+            #expect(f.controller.pendingExit == nil && f.controller.page == .viewer("phoenix-az") && f.controller.activeViewer?.model.control == .human)
+        }
+        // Keep control: sai, o lease continua com o humano
+        f.controller.closePage()
+        let kept = try await f.registry.perform(.computerHandBack, .select("exit-keep"))
+        #expect(kept.message == "left" && f.controller.page == .workspace && f.controller.pendingExit == nil)
+        #expect(await f.computer.lease == .human)
+    }
+
+    @Test func handBackOnExitReturnsControlThenLeaves() async throws {
+        let f = try await make()
+        defer { try? FileManager.default.removeItem(at: f.folder) }
+        await f.controller.add(f.computer)
+        _ = try await f.registry.perform(.computerTakeOver, .select("phoenix-az"))
+        f.controller.show(.computers)
+        #expect(f.controller.pendingExit?.target == .computers)
+        let done = try await f.registry.perform(.computerHandBack, .select("exit-handback"))
+        #expect(done.message == "left" && f.controller.page == .computers)
+        #expect(await f.computer.lease == .agent)
+        let calls = await f.backend.calls
+        #expect(calls.filter { $0.hasPrefix("lease") } == ["lease:take", "lease:give"])
+    }
+
+    @Test func leavingWithTheAgentInControlNeverAsks() async throws {
+        let f = try await make()
+        defer { try? FileManager.default.removeItem(at: f.folder) }
+        await f.controller.add(f.computer)
+        f.controller.openViewer("phoenix-az")
+        f.controller.closePage()
+        #expect(f.controller.pendingExit == nil && f.controller.page == .workspace)
+    }
+
+    @Test func handBackNowWorksWithoutOpeningTheViewerAndIdleControlReturnsWithAToast() async throws {
+        let f = try await make()
+        defer { try? FileManager.default.removeItem(at: f.folder) }
+        await f.controller.add(f.computer)
+        _ = try await f.registry.perform(.computerTakeOver, .select("phoenix-az"))
+        f.controller.show(.workspace)  // pergunta
+        await f.controller.resolveExit(handBack: false)  // sai com o controle
+        #expect(f.controller.page == .workspace && f.controller.viewers["phoenix-az"] == nil)
+        await f.controller.model.refresh()
+        #expect(f.controller.model.rows.first?.snapshot.control == .human)  // a linha do subagente mostra "You have control"
+        // 3 min sem input: volta sozinho e avisa
+        let returned = await f.controller.model.returnIdleControl(now: Date().addingTimeInterval(181))
+        #expect(returned == ["phoenix-az"] && f.controller.agentName(forComputer: "phoenix-az") == "Claude")
+        #expect(await f.computer.lease == .agent)
+        // Hand Back direto (linha do subagente) quando o humano pegou de novo
+        _ = try await f.registry.perform(.computerTakeOver, .select("phoenix-az"))
+        f.controller.show(.workspace)
+        await f.controller.resolveExit(handBack: false)
+        await f.controller.model.refresh()
+        let back = try await f.registry.perform(.computerHandBack, .select("now:phoenix-az"))
+        #expect(back.message == "agent")
+        #expect(await f.computer.lease == .agent)
+    }
 }

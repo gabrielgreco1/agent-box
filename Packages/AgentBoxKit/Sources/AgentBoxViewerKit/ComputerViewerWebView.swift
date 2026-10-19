@@ -13,6 +13,8 @@ public enum ViewerEvent: Sendable, Equatable {
     case reserved(String)
     /// Clique com o agente no controle (input bloqueado).
     case blockedInput
+    /// F28: o humano mexeu no computador (mouse ou teclado, no máximo 1 por segundo).
+    case input
     case error(String)
     case desktopName(String)
     /// Navegação ou carga recusada pela política de isolamento (qualquer coisa fora do esquema local).
@@ -32,6 +34,7 @@ public enum ViewerEvent: Sendable, Equatable {
         case "reserved": return (dict["action"] as? String).map { .reserved($0) }
         case "jserror": return .jsError((dict["detail"] as? String) ?? "")
         case "blocked-input": return .blockedInput
+        case "input": return .input
         case "error": return .error((dict["detail"] as? String) ?? "error")
         case "desktopname": return .desktopName((dict["name"] as? String) ?? "")
         default: return nil

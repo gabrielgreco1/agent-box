@@ -16,6 +16,12 @@ extension CenterPage {
     var isViewer: Bool { if case .viewer = self { true } else { false } }
 }
 
+/// F28: saída do viewer pedida enquanto o humano tem o controle; a UI mostra `Hand back to <Agent>?` antes de sair.
+public struct PendingViewerExit: Equatable, Sendable {
+    public var computer: String
+    public var target: CenterPage
+}
+
 /// Controlador de computadores da UI (T3-05): registro dos computadores, viewer, página Computers, painel direito,
 /// pedido de ajuda (Inbox, Dock, notificação) e as ações `computer.*` (03 §24.5). O hub é o mesmo que o MCP usa.
 @MainActor
@@ -28,6 +34,10 @@ public final class ComputersController {
     public private(set) var page: CenterPage = .workspace
     public private(set) var panelOpen = false
     public private(set) var viewers: [String: ComputerViewerController] = [:]
+    /// F28: o viewer só fecha depois da resposta do overlay `Hand back to <Agent>?`.
+    public private(set) var pendingExit: PendingViewerExit?
+    /// F28: um lease humano ocioso voltou sozinho ao agente (o app mostra o toast `Control returned to <Agent>`).
+    @ObservationIgnored public var onControlReturned: (_ computer: String, _ agent: String) -> Void = { _, _ in }
     @ObservationIgnored public var onPageChange: () -> Void = {}
     /// Histórico de navegação: a página do centro mudou (independe do `onPageChange`, que a janela já usa).
     @ObservationIgnored var onNavigate: () -> Void = {}
@@ -94,6 +104,7 @@ public final class ComputersController {
                 // Miniaturas só quando alguém as vê (painel aberto ou página Computers) e ≤ 1 fps por computador (CS-403).
                 let visible = self.panelOpen || self.page == .computers || self.hoverPreviewOpen
                 await self.model.refresh(withThumbnails: visible)
+                for name in await self.model.returnIdleControl() { self.onControlReturned(name, self.agentName(forComputer: name)) }
                 try? await Task.sleep(for: .seconds(1))
             }
         }
@@ -103,14 +114,53 @@ public final class ComputersController {
 
     // MARK: Centro
 
+    /// Nome do agente dono do computador, para os textos `Hand back to <Agent>?` e `Control returned to <Agent>`.
+    public func agentName(forComputer name: String) -> String { "Claude" }
+
+    /// O humano tem o controle (ou o pediu) do computador do viewer aberto.
+    func humanHasControl(_ name: String) -> Bool {
+        guard let control = viewers[name]?.model.control else { return false }
+        return control == .human
+    }
+
     public func show(_ page: CenterPage) {
         guard self.page != page else { return }
+        // F28: qualquer saída do viewer (tab, sidebar, Esc, ⌘W, ←) com lease humano pergunta antes.
+        if case .viewer(let name) = self.page, humanHasControl(name) {
+            pendingExit = PendingViewerExit(computer: name, target: page)
+            return
+        }
+        forceShow(page)
+    }
+
+    private func forceShow(_ page: CenterPage) {
+        guard self.page != page else { return }
+        pendingExit = nil
         let old = self.page
         self.page = page
         if case .viewer(let name) = old, old != page { closeViewer(name) }
         if case .viewer(let name) = page { ensureViewer(name) }
         onPageChange()
         onNavigate()
+    }
+
+    /// Resposta do overlay: `Hand Back` (padrão) devolve o controle e sai; `Keep control` sai mantendo o lease (volta sozinho depois de
+    /// 3 min sem input); `nil` cancela e continua no viewer.
+    public func resolveExit(handBack: Bool?) async {
+        guard let pending = pendingExit else { return }
+        guard let handBack else { pendingExit = nil; return }
+        if handBack { await viewers[pending.computer]?.handBack() }
+        forceShow(pending.target)
+    }
+
+    /// F28: `Hand Back` sem abrir o viewer (linha do subagente, card da sessão).
+    public func handBackNow(_ name: String) async {
+        if let viewer = viewers[name] ?? popOuts[name]?.controller {
+            await viewer.handBack()
+        } else {
+            try? await model.computer(named: name)?.handBack(note: nil)
+            await model.refresh()
+        }
     }
 
     public func closePage() {
@@ -217,7 +267,23 @@ public final class ComputersController {
             await controller.toggleControl()
             return controller.model.control.rawValue
         }
-        try registry.register(.computerHandBack, enablement: viewerOpen) { [unowned self] arg in
+        let handBackEnabled: ActionRegistry.Enablement = { [unowned self] in
+            activeViewer != nil || model.rows.contains { $0.snapshot.control == .human }
+                ? .enabled : .disabled(reason: String(localized: "Open a computer first.", bundle: .module))
+        }
+        try registry.register(.computerHandBack, enablement: handBackEnabled) { [unowned self] arg in
+            // F28: `select("now:<computer>")` devolve já, sem viewer; `exit-handback`/`exit-keep`/`exit-stay` respondem ao overlay de saída.
+            if let value = arg.value, value.hasPrefix("now:") {
+                let name = String(value.dropFirst(4))
+                await handBackNow(name)
+                return model.computer(named: name) == nil ? nil : "agent"
+            }
+            switch arg.value {
+            case "exit-handback": await resolveExit(handBack: true); return page.isViewer ? "stayed" : "left"
+            case "exit-keep": await resolveExit(handBack: false); return page.isViewer ? "stayed" : "left"
+            case "exit-stay": await resolveExit(handBack: nil); return "stayed"
+            default: break
+            }
             guard let controller = viewer(for: arg) else { return nil }
             if arg.kind == .set, controller.model.control == .human {  // `ctl ui action computer.handBack set "<nota>"`
                 controller.model.handBackNote = arg.value ?? ""

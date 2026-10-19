@@ -56,6 +56,7 @@ struct ComputerViewerView: View {
             .background(DS.Color.canvas)
         }
         .background(DS.Color.canvas)
+        .overlay { if computers.pendingExit?.computer == id { exitOverlay } }
         .a11y(.viewer(id), kind: "container", label: id)
         .task { await controller.start() }
         .onChange(of: model.keyboardCaptured) { _, captured in
@@ -214,6 +215,35 @@ struct ComputerViewerView: View {
         }
         .padding(.horizontal, DS.Space.s3)
         .padding(.bottom, DS.Space.s2)
+    }
+
+    // MARK: Saída com o controle na mão (F28)
+
+    /// `Hand back to <Agent>?`: o humano tentou sair do viewer com o lease. Hand Back é o padrão (Return); Esc continua no viewer.
+    private var exitOverlay: some View {
+        let agent = computers.agentName(forComputer: id)
+        return ZStack {
+            Color.black.opacity(0.35)
+            VStack(alignment: .leading, spacing: DS.Space.s3) {
+                Text(verbatim: String(localized: "Hand back to \(agent)?", bundle: .module)).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary)
+                Text(verbatim: String(localized: "You have control of \(id). \(agent) is waiting and can't continue until you hand it back. It returns on its own after 3 minutes without input.", bundle: .module))
+                    .dsFont(DS.Font.small)
+                    .foregroundStyle(DS.Color.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: DS.Space.s2) {
+                    Spacer(minLength: 0)
+                    DSButton(.computerHandBack, id: .viewerExitKeep(id), "Keep control", variant: .outline, size: .sm, argument: .select("exit-keep"))
+                    DSButton(.computerHandBack, id: .viewerExitHandBack(id), "Hand Back", variant: .primary, size: .sm, argument: .select("exit-handback"))
+                        .keyboardShortcut(.defaultAction)
+                }
+            }
+            .padding(DS.Space.s4)
+            .frame(width: ViewerMetrics.cardWidth)
+            .background(RoundedRectangle(cornerRadius: DS.Radius.card).fill(DS.Color.overlayCard))
+            .overlay(RoundedRectangle(cornerRadius: DS.Radius.card).strokeBorder(DS.Color.border))
+            .a11y(.viewerExit(id), kind: "dialog", label: String(localized: "Hand back to \(agent)?", bundle: .module))
+        }
+        .onExitCommand { Task { await computers.resolveExit(handBack: nil) } }
     }
 
     // MARK: Hand Back (03 §11.5)

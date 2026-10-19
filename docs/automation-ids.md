@@ -78,6 +78,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `sidebar.session.<id>.agent.<terminalId>.status`
 - `sidebar.session.<id>.agent.<terminalId>.lastMessage`
 - `sidebar.session.<id>.agent.<terminalId>.children.toggle`
+- `sidebar.session.<id>.agent.<terminalId>.control`
+- `sidebar.session.<id>.agent.<terminalId>.handBack`
 - `sidebar.session.<id>.child.<childId>`
 - `sidebar.session.<id>.child.<childId>.status`
 - `sidebar.session.<id>.child.<childId>.glyph`
@@ -87,6 +89,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `sidebar.session.<id>.child.<childId>.hoverCard`
 - `sidebar.session.<id>.child.<childId>.preview`
 - `sidebar.session.<id>.child.<childId>.openViewer`
+- `sidebar.session.<id>.child.<childId>.control`
+- `sidebar.session.<id>.child.<childId>.handBack`
 - `sidebar.pending.<id>`
 - `sidebar.pending.<id>.cancel`
 - `sidebar.cleanSessions`
@@ -341,6 +345,9 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `viewer.<computerId>.strip`
 - `viewer.<computerId>.strip.thumb.<otherId>`
 - `viewer.<computerId>.keyboardBadge`
+- `viewer.<computerId>.exit`
+- `viewer.<computerId>.exit.handBack`
+- `viewer.<computerId>.exit.keep`
 
 ### Páginas
 

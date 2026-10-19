@@ -60,7 +60,7 @@ final class MainSplitViewController: NSSplitViewController {
         let sidebarVC = NSViewController()
         let sidebarView = ChromeHostingView(
             content: SidebarView(model: env.sidebar).environment(\.elementStore, env.elements).environment(\.actionRegistry, env.registry).environment(\.overlayRouter, env.overlays)
-                .environment(\.subagentHoverCards, env.subagentHoverCards).environment(\.a11yParent, .windowMain))
+                .environment(\.subagentHoverCards, env.subagentHoverCards).environment(\.computersController, env.computers).environment(\.a11yParent, .windowMain))
         sidebarView.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
         sidebarVC.view = sidebarView
         let contentVC: NSViewController

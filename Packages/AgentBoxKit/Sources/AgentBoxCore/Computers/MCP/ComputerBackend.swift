@@ -74,6 +74,12 @@ public enum RuntimeErrorMapper {
         let code = body["error"]?.string ?? ""
         let message = body["message"]?.string ?? "runtime error (\(status))"
         let details = body["details"]
+        if code == ToolErrorCode.humanInControl.rawValue {
+            var error = ManagedComputer.humanInControlError()
+            error.details = details ?? error.details
+            error.retryAfterS = details?["retry_after_s"]?.int ?? error.retryAfterS
+            return error
+        }
         if let known = ToolErrorCode(rawValue: code) {
             return ToolError(known, message, retryAfterS: details?["retry_after_s"]?.int, details: details)
         }

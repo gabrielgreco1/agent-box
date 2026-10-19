@@ -229,6 +229,9 @@ public final class AppEnvironment {
             computers.closePage()
             return true
         }
+        computers.onControlReturned = { [toasts] computer, agent in
+            toasts.show(kind: .info, title: String(localized: "Control returned to \(agent)", bundle: .module), detail: computer)
+        }
         if !automationEnabled && !headless {
             let system = SystemHelpNotifier(open: { [computers, registry] name, takeOver in
                 NSApp.activate()

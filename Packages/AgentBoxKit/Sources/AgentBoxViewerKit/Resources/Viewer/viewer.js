@@ -81,6 +81,10 @@ function connect(url) {
   canvas.addEventListener('focus', () => post({ type: 'keyboard', captured: inputEnabled }));
   canvas.addEventListener('blur', () => post({ type: 'keyboard', captured: false }));
   canvas.addEventListener('pointerdown', () => { if (!inputEnabled) { post({ type: 'blocked-input' }); } }, true);
+  // F28: sinal de vida do humano (no máximo 1 por segundo) para o app devolver o controle ao agente se ele ficar ocioso.
+  let lastInputAt = 0;
+  const alive = () => { const now = Date.now(); if (inputEnabled && now - lastInputAt > 1000) { lastInputAt = now; post({ type: 'input' }); } };
+  for (const name of ['pointerdown', 'pointermove', 'wheel', 'keydown']) { canvas.addEventListener(name, alive, true); }
 }
 
 function disconnect() {

@@ -11,6 +11,33 @@ import SwiftUI
 extension EnvironmentValues {
     /// Hover card do computador de um subagente; ligado pelo `AppEnvironment`.
     @Entry var subagentHoverCards: SubagentHoverCardController?
+    /// F28: a sidebar lê quem tem o controle de cada computador e devolve o controle sem abrir o viewer.
+    @Entry var computersController: ComputersController?
+}
+
+/// F28: `You have control` + `Hand Back` na linha do subagente e no card da sessão, sem abrir o viewer.
+struct HumanControlLine: View {
+    let computer: String
+    let controlID: A11yID
+    let handBackID: A11yID
+    @Environment(\.computersController) private var computers
+
+    static func isHuman(_ computer: String?, _ controller: ComputersController?) -> Bool {
+        guard let computer, let controller else { return false }
+        return controller.model.rows.first { $0.id == computer }?.snapshot.control == .human
+    }
+
+    var body: some View {
+        HStack(spacing: DS.Space.s1_5) {
+            Image(systemName: "hand.raised.fill").font(.system(size: SidebarMetrics.line2Icon)).foregroundStyle(DS.Color.aiAccent)
+            Text("You have control", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textPrimary.opacity(0.9)).lineLimit(1)
+                .a11y(controlID, kind: "text", label: String(localized: "You have control", bundle: .module), value: computer)
+            Spacer(minLength: DS.Space.s1)
+            DSButton(.computerHandBack, id: handBackID, "Hand Back", variant: .outline, size: .xs, argument: .select("now:\(computer)"))
+        }
+        .padding(.horizontal, SidebarMetrics.agentRowPaddingH)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
 }
 
 enum SubagentCardMetrics {
@@ -32,10 +59,22 @@ struct SubagentRowView: View {
     let child: SubagentRowData
     @Environment(\.actionRegistry) private var registry
     @Environment(\.subagentHoverCards) private var hoverCards
+    @Environment(\.computersController) private var computers
     @State private var hovering = false
 
     var body: some View {
         let sid = sessionID.uuidString, cid = child.id
+        VStack(alignment: .leading, spacing: 0) {
+            rowBody(sid: sid, cid: cid)
+            if HumanControlLine.isHuman(child.computer, computers), let computer = child.computer {
+                HumanControlLine(computer: computer, controlID: .sidebarSessionChildControl(sid, cid), handBackID: .sidebarSessionChildHandBack(sid, cid))
+                    .transition(.opacity)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func rowBody(sid: String, cid: String) -> some View {
         TimelineView(.periodic(from: .now, by: SubagentMetrics.elapsedTick)) { context in
             let line = HStack(spacing: SidebarMetrics.agentRowGap) {
                 DSAgentIndicator(child.glyph, size: .sm)

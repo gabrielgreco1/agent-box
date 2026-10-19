@@ -650,6 +650,16 @@ extension A11yID {
         A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).agent.\(A11yID.segment(terminalId)).children.toggle")
     }
 
+    /// `sidebar.session.<id>.agent.<terminalId>.control`
+    public static func sidebarSessionAgentControl(_ id: String, _ terminalId: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).agent.\(A11yID.segment(terminalId)).control")
+    }
+
+    /// `sidebar.session.<id>.agent.<terminalId>.handBack`
+    public static func sidebarSessionAgentHandBack(_ id: String, _ terminalId: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).agent.\(A11yID.segment(terminalId)).handBack")
+    }
+
     /// `sidebar.session.<id>.child.<childId>`
     public static func sidebarSessionChild(_ id: String, _ childId: String) -> A11yID {
         A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).child.\(A11yID.segment(childId))")
@@ -693,6 +703,16 @@ extension A11yID {
     /// `sidebar.session.<id>.child.<childId>.openViewer`
     public static func sidebarSessionChildOpenViewer(_ id: String, _ childId: String) -> A11yID {
         A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).child.\(A11yID.segment(childId)).openViewer")
+    }
+
+    /// `sidebar.session.<id>.child.<childId>.control`
+    public static func sidebarSessionChildControl(_ id: String, _ childId: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).child.\(A11yID.segment(childId)).control")
+    }
+
+    /// `sidebar.session.<id>.child.<childId>.handBack`
+    public static func sidebarSessionChildHandBack(_ id: String, _ childId: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).child.\(A11yID.segment(childId)).handBack")
     }
 
     /// `sidebar.pending.<id>`
@@ -1185,6 +1205,21 @@ extension A11yID {
         A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).keyboardBadge")
     }
 
+    /// `viewer.<computerId>.exit`
+    public static func viewerExit(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).exit")
+    }
+
+    /// `viewer.<computerId>.exit.handBack`
+    public static func viewerExitHandBack(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).exit.handBack")
+    }
+
+    /// `viewer.<computerId>.exit.keep`
+    public static func viewerExitKeep(_ computerId: String) -> A11yID {
+        A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).exit.keep")
+    }
+
     /// `computers.row.<id>`
     public static func computersRow(_ id: String) -> A11yID {
         A11yID(unchecked: "computers.row.\(A11yID.segment(id))")
@@ -1345,6 +1380,8 @@ extension A11yID {
         A11yIDSpec(pattern: "sidebar.session.<id>.agent.<terminalId>.status", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.session.<id>.agent.<terminalId>.lastMessage", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.session.<id>.agent.<terminalId>.children.toggle", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.agent.<terminalId>.control", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.agent.<terminalId>.handBack", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.session.<id>.child.<childId>", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.session.<id>.child.<childId>.status", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.session.<id>.child.<childId>.glyph", surface: "Sidebar"),
@@ -1354,6 +1391,8 @@ extension A11yID {
         A11yIDSpec(pattern: "sidebar.session.<id>.child.<childId>.hoverCard", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.session.<id>.child.<childId>.preview", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.session.<id>.child.<childId>.openViewer", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.child.<childId>.control", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.child.<childId>.handBack", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.pending.<id>", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.pending.<id>.cancel", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.cleanSessions", surface: "Sidebar"),
@@ -1563,6 +1602,9 @@ extension A11yID {
         A11yIDSpec(pattern: "viewer.<computerId>.strip", surface: "Viewer"),
         A11yIDSpec(pattern: "viewer.<computerId>.strip.thumb.<otherId>", surface: "Viewer"),
         A11yIDSpec(pattern: "viewer.<computerId>.keyboardBadge", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.exit", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.exit.handBack", surface: "Viewer"),
+        A11yIDSpec(pattern: "viewer.<computerId>.exit.keep", surface: "Viewer"),
         A11yIDSpec(pattern: "computers.page", surface: "Páginas"),
         A11yIDSpec(pattern: "computers.cleanUp", surface: "Páginas"),
         A11yIDSpec(pattern: "computers.dockerBanner", surface: "Páginas"),

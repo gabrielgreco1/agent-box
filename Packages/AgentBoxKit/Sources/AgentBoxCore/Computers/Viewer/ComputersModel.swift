@@ -133,6 +133,16 @@ public final class ComputersModel {
         await refresh()
     }
 
+    /// F28: devolve ao agente os computadores cujo humano ficou sem input pelo prazo; devolve os nomes (o app mostra o aviso).
+    public func returnIdleControl(now: Date = Date(), after timeout: TimeInterval = ManagedComputer.humanIdleTimeout) async -> [String] {
+        var returned: [String] = []
+        for (name, computer) in computers {
+            if await computer.returnIdleControl(now: now, after: timeout) { returned.append(name) }
+        }
+        if !returned.isEmpty { await refresh() }
+        return returned.sorted()
+    }
+
     public func markRead(_ id: String) { if let i = inbox.firstIndex(where: { $0.id == id }) { inbox[i].read = true } }
     public func markAllRead() { for i in inbox.indices { inbox[i].read = true } }
     public var unreadCount: Int { inbox.filter { !$0.read }.count }

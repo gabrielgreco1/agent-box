@@ -333,4 +333,46 @@ struct ViewerModelTests {
         #expect(HelpSummary(id: "2", kind: .mfa, reason: "", host: nil).headline == "Verification code")
         #expect(HelpSummary(id: "3", kind: .login, reason: "page text must never appear", host: "x.test").headline == "Sign-in on x.test")
     }
+
+    // MARK: F28 - lease humano esquecido
+
+    @Test func idleHumanLeaseReturnsToTheAgentAfterThreeMinutesWithTheNote() async throws {
+        let rig = try await Rig.make()
+        defer { rig.cleanup() }
+        await rig.claim()
+        await rig.backend.setRuntime("lease", ["lease": "human", "ack": true])
+        _ = try await rig.computer.requestTakeOver()
+        let start = Date()
+        await rig.computer.noteHumanActivity(at: start)
+        #expect(await rig.computer.returnIdleControl(now: start.addingTimeInterval(179)) == false)
+        #expect(await ctl(rig.computer).0 == .human)
+        // input recomeça o prazo
+        await rig.computer.noteHumanActivity(at: start.addingTimeInterval(170))
+        #expect(await rig.computer.returnIdleControl(now: start.addingTimeInterval(300)) == false)
+        #expect(await rig.computer.returnIdleControl(now: start.addingTimeInterval(170 + 180)) == true)
+        #expect(await ctl(rig.computer) == (.agent, .agent))
+        let give = await rig.backend.runtimeCalls.last { $0.op == "lease" }
+        #expect(give?.args["action"] == "give")
+        #expect(give?.args["note"]?.string?.contains("automatically") == true)
+        // o agente volta a escrever e recebe a nota na próxima chamada
+        #expect(await rig.call("box_status").json["human_handback"]?["note"]?.string?.contains("3 min") == true)
+        // com o agente no controle nada acontece
+        #expect(await rig.computer.returnIdleControl(now: start.addingTimeInterval(9999)) == false)
+    }
+
+    @Test func humanInControlErrorIsClearAndPointsToHelpRequest() async throws {
+        let rig = try await Rig.make()
+        defer { rig.cleanup() }
+        await rig.claim()
+        await rig.backend.setRuntime("lease", ["lease": "human", "ack": true])
+        _ = try await rig.computer.requestTakeOver()
+        let result = await rig.call("browser_click", ["x": 1, "y": 2])
+        #expect(errorCode(result) == "human_in_control")
+        #expect(result.json["message"]?.string?.contains("ask the user via help_request") == true)
+        #expect(result.json["details"]?["hint"] == "ask the user via help_request")
+        #expect(result.json["retry_after_s"]?.int == 5)
+        // o erro que nasce no runtime (corrida) ganha a mesma dica
+        let mapped = RuntimeErrorMapper.map(status: 409, body: ["error": "human_in_control", "message": "x", "details": ["retry_after_s": 5]])
+        #expect(mapped.code == .humanInControl && mapped.message.contains("help_request"))
+    }
 }

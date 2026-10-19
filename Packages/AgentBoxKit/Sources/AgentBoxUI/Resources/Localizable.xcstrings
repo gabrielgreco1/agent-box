@@ -6523,6 +6523,61 @@
           }
         }
       }
+    },
+    "You have control": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You have control"
+          }
+        }
+      }
+    },
+    "Keep control": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep control"
+          }
+        }
+      }
+    },
+    "Hand back to %@?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hand back to %@?"
+          }
+        }
+      }
+    },
+    "You have control of %@. %@ is waiting and can't continue until you hand it back. It returns on its own after 3 minutes without input.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You have control of %@. %@ is waiting and can't continue until you hand it back. It returns on its own after 3 minutes without input."
+          }
+        }
+      }
+    },
+    "Control returned to %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Control returned to %@"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
