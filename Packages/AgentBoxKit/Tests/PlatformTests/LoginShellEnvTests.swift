@@ -86,7 +86,8 @@ private func waitForFile(_ box: Sandbox, _ name: String, deadline: Duration = .s
     @Test func syntheticFastShellCapturesInteractiveFilteredEnv() async throws {
         let box = Sandbox()
         let shell = box.script("fast-shell", syntheticShell)
-        let provider = LoginShellEnvProvider(config: box.config(shell: shell))
+        // Folga para a suíte paralela carregada: com 5 s a captura interativa às vezes estoura e cai (corretamente) no fallback.
+        let provider = LoginShellEnvProvider(config: box.config(shell: shell, interactive: .seconds(20)))
         let result = await provider.environment()
 
         guard case .interactive(let captured) = result else { Issue.record("esperado interactive: \(result)"); return }
