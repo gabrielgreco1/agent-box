@@ -1,0 +1,33 @@
+Racky (temporary e2e copy, Release build before the fix): Thread stack size exceeded due to excessive recursion
+faulting thread frames (top first):
+  Racky closure #2 in TerminalRuntime.attach(_:session:mode:runID:) TerminalRuntime.swift:414
+  Racky thunk for @escaping @callee_guaranteed @Sendable (@guaranteed Data) -> () /<compiler-generated>
+  Racky thunk for @escaping @callee_guaranteed @Sendable (@in_guaranteed Data) -> (@out ()) /<compiler-generated>
+  Racky partial apply for thunk for @escaping @callee_guaranteed @Sendable (@in_guaranteed Data) -> (@out ()) /<compiler-generated>
+  Racky None 
+  Racky thunk for @escaping @callee_guaranteed @Sendable (@in_guaranteed Data) -> (@out ()) /<compiler-generated>
+  Racky partial apply for thunk for @escaping @callee_guaranteed @Sendable (@in_guaranteed Data) -> (@out ()) /<compiler-generated>
+  Racky None 
+  Racky thunk for @escaping @callee_guaranteed @Sendable (@in_guaranteed Data) -> (@out ()) /<compiler-generated>
+  Racky partial apply for thunk for @escaping @callee_guaranteed @Sendable (@in_guaranteed Data) -> (@out ()) /<compiler-generated>
+  Racky None 
+  Racky thunk for @escaping @callee_guaranteed @Sendable (@in_guaranteed Data) -> (@out ()) /<compiler-generated>
+  Racky partial apply for thunk for @escaping @callee_guaranteed @Sendable (@in_guaranteed Data) -> (@out ()) /<compiler-generated>
+  Racky None 
+  Racky thunk for @escaping @callee_guaranteed @Sendable (@in_guaranteed Data) -> (@out ()) /<compiler-generated>
+  Racky partial apply for thunk for @escaping @callee_guaranteed @Sendable (@in_guaranteed Data) -> (@out ()) /<compiler-generated>
+  Racky None 
+  Racky thunk for @escaping @callee_guaranteed @Sendable (@in_guaranteed Data) -> (@out ()) /<compiler-generated>
+  Racky partial apply for thunk for @escaping @callee_guaranteed @Sendable (@in_guaranteed Data) -> (@out ()) /<compiler-generated>
+  Racky thunk for @escaping @callee_guaranteed @Sendable (@guaranteed Data) -> () /<compiler-generated>
+  Racky partial apply for thunk for @escaping @callee_guaranteed @Sendable (@guaranteed Data) -> () /<compiler-generated>
+  Racky thunk for @escaping @callee_guaranteed @Sendable (@in_guaranteed Data) -> (@out ()) /<compiler-generated>
+  Racky TerminalFrameObserver.fed(_:) TerminalSessionBinding.swift:16
+  Racky specialized static TerminalSessionBinding.consume(_:feeder:surface:gauge:observer:onEvent:) TerminalSessionBinding.swift:141
+  Racky closure #4 in TerminalSessionBinding.start(mode:) TerminalSessionBinding.swift:97
+  Racky <deduplicated_symbol> 
+  Racky None 
+  Racky <deduplicated_symbol> 
+  libswift_Concurrency.dylib completeTaskWithClosure(swift::AsyncContext*, swift::SwiftError*) 
+
+Observed in 5 of ~12 runs before the fix (hang: main thread starved + deep thunk chain on the parse thread; crash: stack overflow). Cause: TerminalFrameObserver stored its closure in a generic Mutex<closure?>; Release builds produced reabstraction thunks that stacked up per frame. Fix: closure in a final class box (Handler). 0 hangs/crashes in the 8 runs after the fix.

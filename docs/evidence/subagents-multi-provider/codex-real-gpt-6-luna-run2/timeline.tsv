@@ -1,0 +1,8 @@
+0		
+4		
+7	example-com=ready 	01a157ea-w1:reserved:example-com 
+10	example-com=ready 	01a157ea-w1:reserved:example-com 
+13	example-com=in_use 	01a157ea-w1:claimed:example-com 
+16	example-com=in_use 	01a157ea-w1:claimed:example-com 
+19	example-com=in_use 	01a157ea-w1:claimed:example-com 
+23	example-com=removed 	01a157ea-w1:released:example-com 

@@ -1,0 +1,49 @@
+{
+  "fields" : [
+    {
+      "citations" : [
+
+      ],
+      "pointer" : "/evidence_request_ids",
+      "status" : "not_verified"
+    },
+    {
+      "citations" : [
+        {
+          "kind" : "request",
+          "ref" : "01M5BY1WJA9S1HADN2FWPFKDQV",
+          "trust" : "observed"
+        }
+      ],
+      "pointer" : "/title",
+      "status" : "verified"
+    },
+    {
+      "citations" : [
+        {
+          "kind" : "request",
+          "ref" : "01M5BY1WJA9S1HADN2FWPFKDQV",
+          "trust" : "observed"
+        }
+      ],
+      "pointer" : "/url",
+      "status" : "verified"
+    },
+    {
+      "citations" : [
+        {
+          "kind" : "request",
+          "ref" : "01M5BY1WJA9S1HADN2FWPFKDQV",
+          "trust" : "observed"
+        }
+      ],
+      "pointer" : "/evidence_request_ids/0",
+      "status" : "verified"
+    }
+  ],
+  "summary" : {
+    "cited_missing" : 0,
+    "not_verified" : 1,
+    "verified" : 3
+  }
+}

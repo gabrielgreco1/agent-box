@@ -8,6 +8,7 @@
 #   Passos  : projeto + perfil com o modelo pedido, sessão pelo composer (Subagent computers = full), prompt "um subagente com computador
 #             próprio abre https://example.com e envia o título com result_submit"; espera o computador ser reservado, reivindicado pelo
 #             worker, o resultado validado e o container removido.
+#   Codex   : roda com CODEX_HOME isolado (auth.json copiado, 0600) para nada ir parar em ~/.codex do dono.
 #   --mock  : (Codex) troca o modelo por um servidor local roteirizado (scripts/e2e/mock_codex.py) e isola CODEX_HOME: valida o caminho
 #             inteiro sem gastar uso do Codex.
 #   Saída   : exit 0 só se todas as checagens passaram. Evidência em docs/evidence/subagents-multi-provider/<provider>-<rótulo>/.
@@ -15,7 +16,7 @@
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PROVIDER="${1:-}"; shift || true
-MODEL=""; LABEL="run"; MOCK=0; TIMEOUT=420; EFFORT=""
+MODEL=""; LABEL="run"; MOCK=0; TIMEOUT=420; EFFORT=""; REPO_BASE=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --model) MODEL="$2"; shift 2 ;;
@@ -23,6 +24,7 @@ while [ $# -gt 0 ]; do
     --mock) MOCK=1; shift ;;
     --timeout) TIMEOUT="$2"; shift 2 ;;
     --effort) EFFORT="$2"; shift 2 ;;
+    --repo-base) REPO_BASE="$2"; shift 2 ;;   # pasta do repositório de teste (padrão: dentro do diretório temporário)
     *) sed -n '2,/^set -uo/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; exit 64 ;;
   esac
 done
@@ -35,6 +37,7 @@ EVIDENCE_DIR="${EVIDENCE_DIR:-$ROOT/docs/evidence/subagents-multi-provider/$PROV
 mkdir -p "$EVIDENCE_DIR"
 WORK="$(mktemp -d /tmp/abmp-XXXXXX)" || exit 2
 HOME_T="$WORK/h"; SOCK="$WORK/app.sock"; APP="$WORK/install/Racky.app"; MACOS="$APP/Contents/MacOS"; REPO="$WORK/repo"; DB="$HOME_T/db/agentbox.sqlite"
+[ -z "$REPO_BASE" ] || REPO="$REPO_BASE/$(basename "$WORK")/repo"
 mkdir -p "$HOME_T" "$WORK/install" "$REPO" "$WORK/chome"; chmod 700 "$HOME_T"
 REPORT="$EVIDENCE_DIR/report.txt"; : > "$REPORT"
 FAILS=0; MOCK_PID=""
@@ -82,8 +85,9 @@ cleanup() {
   if [ -f "$EVIDENCE_DIR/owner-before.txt" ]; then
     owner_snapshot > "$EVIDENCE_DIR/owner-after.txt" 2>&1
     if diff -q "$EVIDENCE_DIR/owner-before.txt" "$EVIDENCE_DIR/owner-after.txt" >/dev/null; then say "o que é do dono segue idêntico (app, launchd, containers, configs globais)"
-    else say "AVISO: o snapshot do dono mudou (o dono pode ter feito algo durante a execução):"; diff "$EVIDENCE_DIR/owner-before.txt" "$EVIDENCE_DIR/owner-after.txt" | tee -a "$REPORT"; fi
+    else say "FAIL  o snapshot do dono mudou (o dono pode ter feito algo durante a execução):"; diff "$EVIDENCE_DIR/owner-before.txt" "$EVIDENCE_DIR/owner-after.txt" | tee -a "$REPORT"; FAILS=$((FAILS + 1)); fi
   fi
+  [ -z "$REPO_BASE" ] || rm -rf "$REPO_BASE/$(basename "$WORK")"
   rm -rf "$WORK"
   say "RESULTADO: $([ "$FAILS" -eq 0 ] && [ "$rc" -eq 0 ] && echo OK || echo "$FAILS falha(s)") (evidência: $EVIDENCE_DIR)"
   [ "$FAILS" -eq 0 ] && [ "$rc" -eq 0 ]
@@ -113,13 +117,24 @@ PROFILE="$(act settings.agents.profileDuplicate select "$BASE_PROFILE" | jq -r '
 act_ok settings.agents.profileModel set "$MODEL" || { say "ERRO: modelo"; exit 2; }
 act_ok settings.agents.profileName set "$PROVIDER e2e $MODEL" || true
 if [ "$PROVIDER" = codex ] && [ -n "$EFFORT" ]; then db "UPDATE launch_profile SET effort='$EFFORT' WHERE id='$PROFILE';"; fi
+TRUST_ARGS="[]"
+if [ "$PROVIDER" = codex ]; then
+  # CODEX_HOME isolado por execução: o Codex grava a confiança da pasta nova, as sessões e o cache só aqui, nunca em ~/.codex do dono.
+  # Execução real: o auth.json é COPIADO (0600, sem symlink) e some com $WORK; o token de acesso vale por dias, então um run curto não o
+  # renova (renovar giraria o refresh token do dono). Confira `last_refresh`/validade antes de usar.
+  if [ "$MOCK" = 0 ]; then
+    cp "$HOME/.codex/auth.json" "$WORK/chome/auth.json" && chmod 600 "$WORK/chome/auth.json" || { say "ERRO: sem ~/.codex/auth.json"; exit 2; }
+  fi
+  chmod 700 "$WORK/chome"
+  db "UPDATE launch_profile SET env_json='{\"CODEX_HOME\":\"$WORK/chome\"}' WHERE id='$PROFILE';"
+fi
 if [ "$MOCK" = 1 ]; then
   [ "$PROVIDER" = codex ] || { say "ERRO: --mock só existe para codex"; exit 64; }
   MOCK_PORT=$((20000 + RANDOM % 20000))
   python3 "$ROOT/scripts/e2e/mock_codex.py" "$MOCK_PORT" "$EVIDENCE_DIR/mock-requests.log" > "$WORK/mock.out" 2>&1 & MOCK_PID=$!
   sleep 1
-  ARGS="$(jq -cn --arg p "http://127.0.0.1:$MOCK_PORT/v1" '["-c","model_provider=\"mock\"","-c",("model_providers.mock={name=\"mock\",base_url=\"" + $p + "\",wire_api=\"responses\",requires_openai_auth=false}")]')"
-  db "UPDATE launch_profile SET extra_args_json='$(echo "$ARGS" | sed "s/'/''/g")', env_json='{\"CODEX_HOME\":\"$WORK/chome\"}' WHERE id='$PROFILE';"
+  ARGS="$(jq -cn --arg p "http://127.0.0.1:$MOCK_PORT/v1" --argjson trust "$TRUST_ARGS" '$trust + ["-c","model_provider=\"mock\"","-c",("model_providers.mock={name=\"mock\",base_url=\"" + $p + "\",wire_api=\"responses\",requires_openai_auth=false}")]')"
+  db "UPDATE launch_profile SET extra_args_json='$(echo "$ARGS" | sed "s/'/''/g")' WHERE id='$PROFILE';"
   sleep 2
 fi
 db "SELECT id,name,provider,model,effort,permission_mode,extra_args_json,env_json FROM launch_profile WHERE id='$PROFILE';" > "$EVIDENCE_DIR/profile.txt"
@@ -150,7 +165,10 @@ while [ $((SECONDS - T0)) -lt "$TIMEOUT" ]; do
     sample "$(app_pid)" 3 -file "$EVIDENCE_DIR/hang-sample.txt" >/dev/null 2>&1
   fi
   # Codex pergunta uma vez se confia na pasta nova.
-  if echo "$screen" | grep -Eq "Trust and continue|trust the contents|Do you trust"; then term_send "$TID" $'\r'; fi
+  if echo "$screen" | grep -Eq "Trust and continue|trust the contents|Do you trust"; then
+    # a confiança é gravada no CODEX_HOME isolado do teste (nunca em ~/.codex)
+    term_send "$TID" $'\r'
+  fi
   states="$(db "SELECT name||'='||state FROM computer;" | tr '\n' ' ')"
   child="$(db "SELECT id||':'||state||':'||ifnull(computer_name,'') FROM orchestration_child WHERE state<>'idle' ORDER BY slot;" | tr '\n' ' ')"
   printf '%s\t%s\t%s\n' "$((SECONDS - T0))" "$states" "$child" >> "$EVIDENCE_DIR/timeline.tsv"
@@ -162,9 +180,12 @@ while [ $((SECONDS - T0)) -lt "$TIMEOUT" ]; do
   sleep 3
 done
 say "esperou $((SECONDS - T0)) s (computador visto: $SEEN_COMPUTER, tudo removido: $DONE)"
-# o pai ainda precisa responder: dá um tempo para o texto final
-sleep 20
-term_screen "$TID" > "$EVIDENCE_DIR/final-screen.txt"
+# o pai ainda precisa responder: espera o título aparecer na tela (até 120 s)
+for _ in $(seq 1 40); do
+  term_screen "$TID" > "$EVIDENCE_DIR/final-screen.txt"
+  grep -q "Example Domain" "$EVIDENCE_DIR/final-screen.txt" && break
+  sleep 3
+done
 ctl screenshot --window --out "$EVIDENCE_DIR/window-end.png" >/dev/null 2>&1 || true
 ctl state > "$EVIDENCE_DIR/state-end.json" 2>&1
 db "SELECT name,mode,display,state,created_at,removed_at,ownerParent FROM (SELECT name,mode,display,state,created_at,removed_at,'' AS ownerParent FROM computer);" > "$EVIDENCE_DIR/computers.txt"
@@ -182,7 +203,7 @@ fi
 
 check "um computador foi reservado pelo pai" test "$SEEN_COMPUTER" = 1
 check "um slot de worker reivindicou o computador (orchestration_child.claimed_at preenchido)" test -n "$(db "SELECT id FROM orchestration_child WHERE claimed_at IS NOT NULL LIMIT 1;")"
-check "result.json enviado com result_submit contém o título" jq -e '.title | type == "string" and test("Example Domain")' "$EVIDENCE_DIR/results/result.json"
+check "result.json enviado com result_submit contém o título (qualquer campo)" jq -e '[.. | strings] | any(test("Example Domain"))' "$EVIDENCE_DIR/results/result.json"
 check "resultado validado (verified >= 1, cited_missing = 0)" jq -e '.summary.verified >= 1 and .summary.cited_missing == 0' "$EVIDENCE_DIR/results/validation.json"
 check "computador liberado e removido" test "$DONE" = 1
 check "nenhum container do teste sobrou" wait_for 60 sh -c "[ -z \"\$(docker ps -a -q --filter label=agentbox.owner=$OWNER)\" ]"

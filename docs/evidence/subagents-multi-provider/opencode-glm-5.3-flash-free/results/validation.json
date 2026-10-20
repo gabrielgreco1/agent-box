@@ -1,0 +1,31 @@
+{
+  "fields" : [
+    {
+      "citations" : [
+        {
+          "kind" : "request",
+          "ref" : "01M5BYR40WV1NE56P6RYE7JSBF",
+          "trust" : "observed"
+        }
+      ],
+      "pointer" : "/page_title",
+      "status" : "verified"
+    },
+    {
+      "citations" : [
+        {
+          "kind" : "request",
+          "ref" : "01M5BYR40WV1NE56P6RYE7JSBF",
+          "trust" : "observed"
+        }
+      ],
+      "pointer" : "/url",
+      "status" : "verified"
+    }
+  ],
+  "summary" : {
+    "cited_missing" : 0,
+    "not_verified" : 0,
+    "verified" : 2
+  }
+}
