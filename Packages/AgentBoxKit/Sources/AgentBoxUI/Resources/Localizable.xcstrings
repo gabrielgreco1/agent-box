@@ -9263,17 +9263,6 @@
         }
       }
     },
-    "Work in a folder or repository you already have.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Work in a folder or repository you already have."
-          }
-        }
-      }
-    },
     "Pick one of your repositories or paste a URL.": {
       "extractionState": "manual",
       "localizations": {
@@ -9281,17 +9270,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Pick one of your repositories or paste a URL."
-          }
-        }
-      }
-    },
-    "An empty folder, ready for an agent in one click.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "An empty folder, ready for an agent in one click."
           }
         }
       }
@@ -9324,6 +9302,56 @@
           "stringUnit": {
             "state": "translated",
             "value": "Show %lld Archived"
+          }
+        }
+      }
+    },
+    "Start an agent": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start an agent"
+          }
+        }
+      }
+    },
+    "Work in a project": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Work in a project"
+          }
+        }
+      }
+    },
+    "Open a Folder…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open a Folder…"
+          }
+        }
+      }
+    },
+    "A folder or repository on this Mac.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A folder or repository on this Mac."
+          }
+        }
+      }
+    },
+    "New session in a clean folder": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New session in a clean folder"
           }
         }
       }

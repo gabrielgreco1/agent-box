@@ -55,6 +55,12 @@
       "source": "https://opencode.ai/opencode-brand-assets.zip",
       "member": "OpenCode Brand Assets/Logo/opencode-logo-dark.png",
       "sha256": "20c8b4794f4c988ab335a519980415ba94ea3442b5a794b920c5408be295bc53"
+    },
+    {
+      "file": "github.png",
+      "source": "https://cdn.jsdelivr.net/npm/@primer/octicons@19.15.0/build/svg/mark-github-24.svg",
+      "member": "Octicons mark-github (MIT, GitHub Inc.), rasterized to @2x/@3x by NSImage; sha256 is of the SVG",
+      "sha256": "0c5e839c440504f3b0d06e6d15421cb7c4aef55f60ccac43ed45a08efeb6809e"
     }
   ]
 }

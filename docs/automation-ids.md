@@ -547,6 +547,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `landing.cloneProject`
 - `landing.newCleanSession`
 - `landing.newSession`
+- `landing.agent.<provider>`
 - `landing.recent.<sessionId>`
 
 ### Menu bar

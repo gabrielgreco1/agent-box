@@ -12,7 +12,12 @@ enum StartMetrics {
     static let agentCardHeight: CGFloat = 88
     static let icon: CGFloat = 20
     static let column: CGFloat = 632
-    static let recentRow: CGFloat = 40
+    static let recentRow: CGFloat = 36
+    static let agentLogo: CGFloat = 28
+    static let agentTileHeight: CGFloat = 116
+    static let projectRowHeight: CGFloat = 60
+    static let rowIcon: CGFloat = 18
+    static let rowIconTile: CGFloat = 34
     static let maxRecent = 5
 }
 
@@ -59,11 +64,15 @@ struct StartCard<Icon: View>: View {
     }
 }
 
-/// Tela inicial (nenhuma sessão selecionada): o que o Racky faz, as três formas de começar e as sessões recentes.
+/// Tela inicial (nenhuma sessão selecionada): o que o Racky faz, um card por agente (abre uma sessão limpa com ele, F37),
+/// os dois caminhos de projeto (pasta ou GitHub) e as sessões recentes.
 struct LandingView: View {
     let automationOn: Bool
     let sidebar: SidebarModel
+    let settings: SettingsModel
     @Environment(\.actionRegistry) private var registry
+
+    private static let agents: [TerminalProvider] = [.claude, .codex, .opencode]
 
     private var recent: [Session] {
         sidebar.snapshot.sessions
@@ -73,34 +82,54 @@ struct LandingView: View {
     }
 
     var body: some View {
-        VStack(spacing: DS.Space.s6) {
+        VStack(spacing: DS.Space.s8) {
             VStack(spacing: DS.Space.s2) {
                 BrandMark(size: StartMetrics.logo)
-                Text("Racky", bundle: .module).dsFont(DS.Font.display).foregroundStyle(DS.Color.textPrimary)
+                Text("Racky", bundle: .module).dsFont(DS.Font.display).foregroundStyle(DS.Color.textPrimary).padding(.top, DS.Space.s2)
                 Text("Run coding agents side by side, and give each subagent its own computer.", bundle: .module)
                     .dsFont(DS.Font.dialogBody).foregroundStyle(DS.Color.textSecondary).multilineTextAlignment(.center)
             }
-            HStack(spacing: DS.Space.s3) {
-                if registry?.isOffered(.projectAdd) ?? true {
-                    StartCard(action: .projectAdd, id: .landingAddProject, title: String(localized: "Add Project…", bundle: .module),
-                              detail: String(localized: "Work in a folder or repository you already have.", bundle: .module)) {
-                        Image(systemName: "folder.badge.plus").font(.system(size: StartMetrics.icon - 4)).foregroundStyle(DS.Color.textPrimary)
-                    }
-                }
-                if registry?.isOffered(.projectCloneFromGitHub) ?? true {
-                    StartCard(action: .projectCloneFromGitHub, id: .landingCloneProject, title: String(localized: "Clone from GitHub…", bundle: .module),
-                              detail: String(localized: "Pick one of your repositories or paste a URL.", bundle: .module)) {
-                        Image(systemName: "arrow.down.circle").font(.system(size: StartMetrics.icon - 4)).foregroundStyle(DS.Color.textPrimary)
-                    }
-                }
+            VStack(alignment: .leading, spacing: DS.Space.s6) {
                 if registry?.isOffered(.sessionNewClean) ?? true {
-                    StartCard(action: .sessionNewClean, id: .landingNewCleanSession, title: String(localized: "New Clean Session", bundle: .module),
-                              detail: String(localized: "An empty folder, ready for an agent in one click.", bundle: .module)) {
-                        Image(systemName: "sparkles").font(.system(size: StartMetrics.icon - 4)).foregroundStyle(DS.Color.textPrimary)
+                    section(String(localized: "Start an agent", bundle: .module)) {
+                        HStack(spacing: DS.Space.s3) {
+                            ForEach(Self.agents, id: \.self) { provider in
+                                LandingAgentTile(
+                                    provider: provider, installed: settings.agent(provider)?.installedState != false,
+                                    isDefault: settings.settings.agents.defaultAgent == provider)
+                            }
+                        }
+                    }
+                }
+                section(String(localized: "Work in a project", bundle: .module)) {
+                    HStack(spacing: DS.Space.s3) {
+                        if registry?.isOffered(.projectAdd) ?? true {
+                            LandingProjectRow(
+                                action: .projectAdd, id: .landingAddProject, title: String(localized: "Open a Folder…", bundle: .module),
+                                detail: String(localized: "A folder or repository on this Mac.", bundle: .module)
+                            ) {
+                                Image(systemName: "folder").font(.system(size: StartMetrics.rowIcon - 2)).foregroundStyle(DS.Color.textPrimary)
+                            }
+                        }
+                        if registry?.isOffered(.projectCloneFromGitHub) ?? true {
+                            LandingProjectRow(
+                                action: .projectCloneFromGitHub, id: .landingCloneProject, title: String(localized: "Clone from GitHub…", bundle: .module),
+                                detail: String(localized: "Pick one of your repositories or paste a URL.", bundle: .module)
+                            ) {
+                                DSGitHubMark(size: StartMetrics.rowIcon).foregroundStyle(DS.Color.textPrimary)
+                            }
+                        }
+                    }
+                }
+                if !recent.isEmpty {
+                    section(String(localized: "Recent sessions", bundle: .module)) {
+                        VStack(spacing: .zero) {
+                            ForEach(recent) { session in RecentSessionRow(session: session) }
+                        }
                     }
                 }
             }
-            if !recent.isEmpty { recentList }
+            .frame(width: StartMetrics.column)
         }
         .padding(.horizontal, DS.Space.s4)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -119,15 +148,85 @@ struct LandingView: View {
         .a11y(.landing, kind: "container")
     }
 
-    private var recentList: some View {
-        VStack(alignment: .leading, spacing: DS.Space.s1) {
-            Text("Recent sessions", bundle: .module).dsFont(DS.Font.sectionLabel).foregroundStyle(DS.Color.textTertiary)
-                .padding(.horizontal, DS.Space.s3).padding(.bottom, DS.Space.s1)
-            ForEach(recent) { session in
-                RecentSessionRow(session: session)
-            }
+    private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: DS.Space.s2) {
+            Text(verbatim: title).dsFont(DS.Font.sectionLabel).foregroundStyle(DS.Color.textTertiary).padding(.leading, DS.Space.s1)
+            content()
         }
-        .frame(width: StartMetrics.column)
+    }
+}
+
+/// Card de agente da landing: clique = sessão limpa nova com esse agente já rodando (`session.newClean` com o provider).
+private struct LandingAgentTile: View {
+    let provider: TerminalProvider
+    let installed: Bool
+    let isDefault: Bool
+    @State private var hovering = false
+
+    private var request: String { #"{"provider":"\#(provider.rawValue)"}"# }
+
+    var body: some View {
+        ActionButton(.sessionNewClean, id: .landingAgent(provider.rawValue), argument: .set(request)) {
+            VStack(alignment: .leading, spacing: .zero) {
+                HStack(alignment: .top) {
+                    DSAgentLogo(QuickLaunchModel.kind(provider), size: StartMetrics.agentLogo)
+                    Spacer(minLength: .zero)
+                    if isDefault, installed {
+                        Text(verbatim: ActionID.sessionNewClean.spec.shortcut).dsFont(DS.Font.keycap).foregroundStyle(DS.Color.textTertiary)
+                    }
+                }
+                Spacer(minLength: .zero)
+                Text(verbatim: ProviderAdapters.name(provider)).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
+                Text(installed ? String(localized: "New session in a clean folder", bundle: .module) : String(localized: "Not installed", bundle: .module))
+                    .dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary).lineLimit(1)
+            }
+            .padding(DS.Space.s4)
+            .frame(maxWidth: .infinity, minHeight: StartMetrics.agentTileHeight, maxHeight: StartMetrics.agentTileHeight, alignment: .topLeading)
+            .background(RoundedRectangle(cornerRadius: DS.Radius.card).fill(hovering ? DS.Color.secondary : DS.Color.chrome))
+            .overlay(RoundedRectangle(cornerRadius: DS.Radius.card).strokeBorder(hovering ? DS.Color.borderStrong : DS.Color.border))
+            .contentShape(RoundedRectangle(cornerRadius: DS.Radius.card))
+            .offset(y: hovering ? -1 : 0)
+        }
+        .buttonStyle(.plain)
+        .disabled(!installed)
+        .opacity(installed ? 1 : 0.5)
+        .onHover { hovering = installed && $0 }
+        .animation(MotionPolicy.shared.animation(MotionTokens.Springs.snappy), value: hovering)
+    }
+}
+
+/// Linha larga de projeto da landing: ícone num quadrado, título e uma linha do que faz.
+private struct LandingProjectRow<Icon: View>: View {
+    let action: ActionID
+    let id: A11yID
+    let title: String
+    let detail: String
+    @ViewBuilder let icon: () -> Icon
+    @State private var hovering = false
+
+    var body: some View {
+        ActionButton(action, id: id) {
+            HStack(spacing: DS.Space.s3) {
+                icon()
+                    .frame(width: StartMetrics.rowIconTile, height: StartMetrics.rowIconTile)
+                    .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(DS.Color.secondary))
+                VStack(alignment: .leading, spacing: DS.Space.s0_5) {
+                    Text(verbatim: title).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
+                    Text(verbatim: detail).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary).lineLimit(1)
+                }
+                Spacer(minLength: .zero)
+                let key = action.spec.shortcut
+                if !key.isEmpty { Text(verbatim: key).dsFont(DS.Font.keycap).foregroundStyle(DS.Color.textTertiary) }
+            }
+            .padding(.horizontal, DS.Space.s3)
+            .frame(maxWidth: .infinity, minHeight: StartMetrics.projectRowHeight, maxHeight: StartMetrics.projectRowHeight)
+            .background(RoundedRectangle(cornerRadius: DS.Radius.card).fill(hovering ? DS.Color.secondary : DS.Color.chrome))
+            .overlay(RoundedRectangle(cornerRadius: DS.Radius.card).strokeBorder(hovering ? DS.Color.borderStrong : DS.Color.border))
+            .contentShape(RoundedRectangle(cornerRadius: DS.Radius.card))
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .animation(MotionPolicy.shared.animation(MotionTokens.Springs.snappy), value: hovering)
     }
 }
 

@@ -53,6 +53,25 @@ public struct DSAgentLogo: View {
     }
 }
 
+/// Marca do GitHub (Octicons `mark-github`, MIT) em template: segue a cor do texto.
+public struct DSGitHubMark: View {
+    private let size: CGFloat
+
+    public init(size: CGFloat = DSMetrics.menuItemIcon) { self.size = size }
+
+    public var body: some View {
+        Group {
+            if let nsImage = DSAgentLogoImages.image(named: "github") {
+                Image(nsImage: nsImage).renderingMode(.template).resizable().interpolation(.high).aspectRatio(contentMode: .fit)
+            } else {
+                Image(systemName: "arrow.down.circle").font(.system(size: size * 0.9))
+            }
+        }
+        .frame(width: size, height: size)
+        .accessibilityHidden(true)
+    }
+}
+
 /// Carrega os PNGs oficiais (`@3x`, 60 px, cobre até 20 pt) do bundle do módulo.
 @MainActor
 enum DSAgentLogoImages {

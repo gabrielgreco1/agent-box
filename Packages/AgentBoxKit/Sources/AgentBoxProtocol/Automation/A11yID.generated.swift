@@ -1522,6 +1522,11 @@ extension A11yID {
         A11yID(unchecked: "overlay.newBatch.allowedProxies.\(A11yID.segment(proxy))")
     }
 
+    /// `landing.agent.<provider>`
+    public static func landingAgent(_ provider: String) -> A11yID {
+        A11yID(unchecked: "landing.agent.\(A11yID.segment(provider))")
+    }
+
     /// `landing.recent.<sessionId>`
     public static func landingRecent(_ sessionId: String) -> A11yID {
         A11yID(unchecked: "landing.recent.\(A11yID.segment(sessionId))")
@@ -2021,6 +2026,7 @@ extension A11yID {
         A11yIDSpec(pattern: "landing.cloneProject", surface: "Landing"),
         A11yIDSpec(pattern: "landing.newCleanSession", surface: "Landing"),
         A11yIDSpec(pattern: "landing.newSession", surface: "Landing"),
+        A11yIDSpec(pattern: "landing.agent.<provider>", surface: "Landing"),
         A11yIDSpec(pattern: "landing.recent.<sessionId>", surface: "Landing"),
         A11yIDSpec(pattern: "menuBar.icon", surface: "Menu bar"),
         A11yIDSpec(pattern: "menuBar.item.<sessionId>", surface: "Menu bar"),
