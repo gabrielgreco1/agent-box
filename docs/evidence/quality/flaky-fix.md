@@ -1,4 +1,4 @@
-# Correção de testes de tempo flaky (suíte AgentBoxKit)
+# Correção de testes de tempo flaky (suíte RackyKit)
 
 ## Linha de base (execução 0, antes das correções, 883 testes, 190,1 s): 7 falhas sob carga
 - TooltipPolicyTests.showsAfterTheDelayAndNotBefore (3 issues, 11,0 s) e leavingBeforeTheDelayCancelsAndClickDismisses (1 issue, 12,4 s): `waitUntil` de 3 s estourava com a main thread disputada.
@@ -6,7 +6,7 @@
 - Conhecidos que não falharam nessa rodada mas tinham a mesma fragilidade: OverlayHostTests.focusReturnsAtTheStartOfTheExitNotAtTheEnd e ToastCenterTests.timerDismissesAndHoverPausesIt (sleeps reais + `MotionPolicy.shared` mutável), LoginShellEnvTests.cancelledCaptureKillsTheShellQuickly e hangingInteractiveRc... (tetos de tempo e polling fixo de 2 s), CtlServerTests.waitAppearsWhenElementShowsUp (setTree após sleep de 200 ms com prazo de 3 s).
 
 ## Correções (na raiz)
-- Novo `DSSleep`/`ManualScheduler` (AgentBoxDesignSystem/Scheduler.swift): espera injetável; tempo virtual avança só com `advance(by:)`.
+- Novo `DSSleep`/`ManualScheduler` (RackyDesignSystem/Scheduler.swift): espera injetável; tempo virtual avança só com `advance(by:)`.
 - `TooltipController`, `ToastCenter` e `OverlayRouter` recebem `sleep` e `motion` (MotionPolicy) injetáveis; padrão idêntico ao anterior (relógio real e `MotionPolicy.shared`), sem mudança de comportamento de produto.
 - Testes de Tooltip/Toast/Overlay/Popover usam `ManualScheduler` e `MotionPolicy` próprio por teste: ordem/estado em vez de sleep e limite inferior de tempo. Nenhum teste muta mais `MotionPolicy.shared.mode`.
 - LoginShellEnv: `processIsGone` e espera do pid com polling com prazo (15 s/20 s); cancelamento medido a partir do `invalidate` (< 4 s, spec: timeout 5 s); teto do fallback do rc travado 15 s (mantém o limite inferior exato de 5 s da spec).

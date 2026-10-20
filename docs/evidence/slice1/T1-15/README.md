@@ -1,6 +1,6 @@
 # T1-15: adapters de lançamento e captura do ID nativo
 
-Código: `Packages/AgentBoxKit/Sources/AgentBoxCore/Launch/`. Testes: `Packages/AgentBoxKit/Tests/CoreTests/Launch/`.
+Código: `Packages/RackyKit/Sources/RackyCore/Launch/`. Testes: `Packages/RackyKit/Tests/CoreTests/Launch/`.
 
 - Golden files de argv (32 casos, Fatia 1): `Tests/CoreTests/Launch/Golden/slice1/` (regravar com `AB_UPDATE_GOLDEN=1`, revisar o diff).
 - Fixtures reais (`--version`, `--help`, `codex resume --help`, status de login redigido, `opencode session list`, `session_meta` do rollout): `Tests/CoreTests/Launch/Fixtures/`, gravados em 2026-10-17 de Claude 2.1.302, Codex 0.163.0, OpenCode 1.18.34.

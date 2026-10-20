@@ -42,6 +42,6 @@ $ scripts/gen-automation-ids.py --check
 gen-automation-ids: OK (327 A11yID, 296 ActionID)
 $ LINT_ROOT=<tmp com Button solto> scripts/lint-ui.sh
 lint-ui: [buttons] controle fora do ActionRegistry: o gatilho deve chamar registry.perform(.<id>) (use ActionButton)
-    Packages/AgentBoxKit/Sources/AgentBoxUI/Loose.swift:4:        Button("x") { doSomething() }
+    Packages/RackyKit/Sources/RackyUI/Loose.swift:4:        Button("x") { doSomething() }
 lint-ui: FALHOU (1 violação(ões))
 rc=1

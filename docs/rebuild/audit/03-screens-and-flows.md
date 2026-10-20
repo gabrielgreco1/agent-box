@@ -1,11 +1,11 @@
 # 03 — Inventário de telas, sheets e fluxos (estado atual)
 
-Escopo: `Sources/AgentBox/**` (App, Workspace, Library, Settings, Docker, Computers, Capture, Terminal). Base: commit `c4418cc` (branch `gabrielgreco1/test-project-suite`). Os números de linha se referem a esse commit.
+Escopo: `Sources/Racky/**` (App, Workspace, Library, Settings, Docker, Computers, Capture, Terminal). Base: commit `c4418cc` (branch `gabrielgreco1/test-project-suite`). Os números de linha se referem a esse commit.
 
 ## Como foi feito / limitações
 
-- Li o código inteiro: `WorkspaceView.swift` (1682 linhas), `LibraryView`, `AgentLaunchView`, `AppSettingsView`, `SecretSettingsView`, `DockerViews`, `BrowserComputerPanel`, `HumanRequestsView`, `ConversationResumeView`, `CapturePanel`, e os trechos de UI de `TerminalRuntimeManager`, `RemoteDesktopView` e `AgentBoxApp`.
-- **Build:** `scripts/build_app.sh` recusou rodar porque já havia uma instância deste worktree aberta (pid 41259, build de 18:53 em `~/Library/Caches/AgentBox/Builds/d2d2f28c18e2bf66`). Não matei esse processo, porque pode ser do usuário ou de outro agente. Usei a instância que já estava aberta, trazida para frente com `open "build/Agent Box.app"`.
+- Li o código inteiro: `WorkspaceView.swift` (1682 linhas), `LibraryView`, `AgentLaunchView`, `AppSettingsView`, `SecretSettingsView`, `DockerViews`, `BrowserComputerPanel`, `HumanRequestsView`, `ConversationResumeView`, `CapturePanel`, e os trechos de UI de `TerminalRuntimeManager`, `RemoteDesktopView` e `RackyApp`.
+- **Build:** `scripts/build_app.sh` recusou rodar porque já havia uma instância deste worktree aberta (pid 41259, build de 18:53 em `~/Library/Caches/Racky/Builds/d2d2f28c18e2bf66`). Não matei esse processo, porque pode ser do usuário ou de outro agente. Usei a instância que já estava aberta, trazida para frente com `open "build/Racky.app"`.
 - **Screenshots:** `screencapture -l <windowid>` funciona (id obtido via `CGWindowListCopyWindowInfo`). **Não deu para clicar:** `osascript`/System Events retorna `-1743 Not authorized`, e `AXIsProcessTrusted() == false`. Por isso só capturei a tela principal. Sheets, popovers e menus foram descritos **pela leitura do código**.
   - `screens/01-main-window.png`: janela principal com a sessão "teste-arizona" e um terminal Shell rodando.
   - `screens/01b-main-window-with-shadow.png`: a mesma captura, com sombra.
@@ -17,9 +17,9 @@ Escopo: `Sources/AgentBox/**` (App, Workspace, Library, Settings, Docker, Comput
 ```
 App launch
 ├─ [1ª execução] Sheet "Configuração inicial" (AppRootView) ── embute AppSettingsView inteira ── "Concluir"
-└─ Janela "Agent Box" (Window id "workspace", COM barra de título nativa)
+└─ Janela "Racky" (Window id "workspace", COM barra de título nativa)
    ├─ SIDEBAR
-   │  ├─ Header: logo + "Agent Box" + [+] ──► Sheet Nova sessão
+   │  ├─ Header: logo + "Racky" + [+] ──► Sheet Nova sessão
    │  ├─ Campo "Buscar sessões" (⌘K via menu …)
    │  ├─ Árvore: Sessão ▸ Terminais ▸ Subagentes nativos
    │  │   ├─ clique sessão → seleciona (sem destaque visual)
@@ -58,9 +58,9 @@ Toda navegação secundária é feita por **`.sheet` modal empilhado** (`Workspa
 
 | # | Tela / superfície | Como chega | O que mostra / controles (o que fazem de fato) | Estados | Problemas |
 |---|---|---|---|---|---|
-| 1 | **Janela principal** (`AgentBoxApp.swift:57-59`, `WorkspaceView.body :168-331`) | Abrir o app | HStack com sidebar, divisor de 6pt e workspace. Tamanho mínimo 1000×650, padrão 1360×860. | Se o `workspace.json` não carrega, mostra um alert e **desabilita a UI inteira** (`.disabled(loadError != nil)` :182) | Barra de título nativa com o texto "Agent Box" ocupa cerca de 28pt acima de tudo (screenshot 01). Não usa `.windowStyle(.hiddenTitleBar)` nem `fullSizeContentView`. O nome "Agent Box" aparece duas vezes, no título e no header da sidebar. |
-| 2 | **Sheet Configuração inicial** (`AgentBoxApp.swift:64-79`) | 1ª execução (`@AppStorage initialSetupCompleted`) | Título, texto, AppSettingsView inteira (4 abas), "Concluir" | `interactiveDismissDisabled` | Joga ao usuário o formulário técnico inteiro de Docker, credenciais e concessões no primeiro uso. 760×620 fixo. |
-| 3 | **Sidebar: header** (:335-345) | sempre | Logo 17pt + "Agent Box" + `+`, que abre a sheet Nova sessão | — | O `+` é ícone plain sem hover. Sem botão de "novo terminal/agente" direto. |
+| 1 | **Janela principal** (`RackyApp.swift:57-59`, `WorkspaceView.body :168-331`) | Abrir o app | HStack com sidebar, divisor de 6pt e workspace. Tamanho mínimo 1000×650, padrão 1360×860. | Se o `workspace.json` não carrega, mostra um alert e **desabilita a UI inteira** (`.disabled(loadError != nil)` :182) | Barra de título nativa com o texto "Racky" ocupa cerca de 28pt acima de tudo (screenshot 01). Não usa `.windowStyle(.hiddenTitleBar)` nem `fullSizeContentView`. O nome "Racky" aparece duas vezes, no título e no header da sidebar. |
+| 2 | **Sheet Configuração inicial** (`RackyApp.swift:64-79`) | 1ª execução (`@AppStorage initialSetupCompleted`) | Título, texto, AppSettingsView inteira (4 abas), "Concluir" | `interactiveDismissDisabled` | Joga ao usuário o formulário técnico inteiro de Docker, credenciais e concessões no primeiro uso. 760×620 fixo. |
+| 3 | **Sidebar: header** (:335-345) | sempre | Logo 17pt + "Racky" + `+`, que abre a sheet Nova sessão | — | O `+` é ícone plain sem hover. Sem botão de "novo terminal/agente" direto. |
 | 4 | **Sidebar: busca** (:347-359) | sempre; ⌘K pelo menu … | Filtra pelo título da sessão, título do terminal e tipo/ID do subagente | sem estado "nenhum resultado" | Com busca sem resultado a lista fica vazia, sem mensagem: o texto "Nenhuma sessão" só aparece quando não há sessão nenhuma (:385). |
 | 5 | **Sidebar: linha de sessão** (:438-478) | — | Chevron (colapsa), título, resumo de branch ("Várias branches" ou o nome) e badge de pedidos. Menu contextual: Renomear, Novo terminal. | — | **A sessão selecionada não tem destaque** (`.background(Color.clear)` :475), só peso `.medium`. **Não há como excluir/arquivar sessão** em lugar nenhum. Sem hover, sem ícone do agente, sem status agregado. O resumo de branch só aparece quando *todos* os terminais terminaram a checagem de Git. |
 | 6 | **Sidebar: linha de terminal** (:480-554) | — | Chevron (se houver subagentes), logo do provider, título, badge, ícone de status (bolinha verde / spinner / ! / ✓). Embaixo: branch, "• Alterações" e remote. Menu contextual com 9 itens. | idle sem ícone | **Não há como excluir/remover terminal.** "Mostrar em pane" faz o mesmo que o clique simples. "Encerrar processo" aparece mesmo com o terminal parado. A altura muda de 30 para 42 quando o Git resolve, e a linha "pula". |
@@ -98,7 +98,7 @@ Toda navegação secundária é feita por **`.sheet` modal empilhado** (`Workspa
 | 38 | ↳ Sheet Restrição por escopo (`ComputerScopeEditor`) | acima | Escopo, ID/caminho, Criação, 3 toggles, steppers | erro | Exige colar UUID/caminho à mão. |
 | 39 | ↳ Credenciais (`SecretSettingsView`) | aba | Nome + valor + Salvar; "Selecionar arquivo .env…" com revisão; lista mascarada; Concessões: Credencial, Escopo, "ID do escopo (UUID)", Uso, Destino, delegável, prazo, "Criar concessão", lista com Revogar | "Nenhuma credencial salva." | **Não dá para excluir credencial.** Concessão exige UUID digitado. |
 | 40 | ↳ Recursos | aba | Toggle de notificação + 4 seções de texto estático | — | É praticamente só texto explicativo, uma aba quase morta. |
-| 41 | **Janela Settings nativa** (`AgentBoxApp.swift:60`) | menu do app › Settings… / ⌘, | AppSettingsView | — | Duplica a sheet do item 35. |
+| 41 | **Janela Settings nativa** (`RackyApp.swift:60`) | menu do app › Settings… / ⌘, | AppSettingsView | — | Duplica a sheet do item 35. |
 | 42 | **Sheet Computador** (`ComputerPanel`, `DockerViews.swift:126-231`) | 🖥 na toolbar | "Computador" + BrowserComputerPanel + **segunda seção legada "Container HTTP básico"** (UUID do terminal, status do Docker, criar/iniciar/parar o container HTTP, "Política: Global → …", texto "atribuição automática ainda está em implementação", "Atualizar estado") | Verificando Docker…, erros | **Sem botão Fechar.** São dois "computadores" diferentes na mesma tela (navegador e HTTP), cada um com seus botões, e o UUID cru do terminal aparece. |
 | 43 | ↳ BrowserComputerPanel (`BrowserComputerPanel.swift`) | dentro do 42/25 | Sem box: "Criar computador". Com box: Em execução/Parado, "Capturas e dados", "Autorizar acesso ao token", "Revisar e iniciar agente" / "Definir agente de scraping padrão", "Abrir desktop", "Parar"/"Iniciar", "Atualizar computador", menu "Modo" (HTTP/Headless/Desktop), "Recuperar atualização", "Atualizar" | busy → ProgressView; erro em vermelho | "Criar computador" **não fica desabilitado pela política** (ao contrário do HTTP), então o clique termina em erro com a política padrão. Muitos textos de aviso em `.caption`. |
 | 44 | ↳ Sheet Desktop remoto (`RemoteDesktopView`) | "Abrir desktop" | Barra "Computador" + Fechar; "Desktop completo", Assumir/Devolver, Reconectar, canvas com mouse/teclado | live/connecting… | Ok (tem Fechar). Mínimo 800×560, como sheet sobre sheet. |
@@ -120,7 +120,7 @@ Toda navegação secundária é feita por **`.sheet` modal empilhado** (`Workspa
 7. **Não dá para excluir sessão nem terminal.** Não há ação de remove/delete em `WorkspaceView` (grep). "Fechar pane" (:976-980, :786-788) não encerra o processo, que continua vivo e invisível.
 8. **Computador falha com a configuração padrão.** `ComputerPolicy()` vem com `creation: .disabled` e `memoryMiB: 768` (`ComputerPolicy.swift:13,71`), mas o runtime exige 2048 MiB (texto em `DockerViews.swift:38`). Em `BrowserComputerPanel.swift:150-160`, "Criar computador" não verifica a política e só falha depois do clique.
 9. **Texto aponta para uma aba que não existe:** "Criação desativada em Configurações › Docker." (`DockerViews.swift:172`). A aba se chama "Computadores" (`AppSettingsView.swift:10`).
-10. **Conflito de ⌘,.** O botão da sidebar usa `.keyboardShortcut(",")` (:418), e a cena `Settings {}` (`AgentBoxApp.swift:60`) registra ⌘, no menu do app. Resultado: são duas telas de configurações (sheet e janela) e o atalho abre provavelmente a janela, não a sheet.
+10. **Conflito de ⌘,.** O botão da sidebar usa `.keyboardShortcut(",")` (:418), e a cena `Settings {}` (`RackyApp.swift:60`) registra ⌘, no menu do app. Resultado: são duas telas de configurações (sheet e janela) e o atalho abre provavelmente a janela, não a sheet.
 11. **Atalhos que só existem em certos estados.** ⌘D/⌘⇧D (:760,764) só com terminal focado; ⌘T (:769) só com sessão selecionada (sem sessão, o `+` não tem atalho). ⌘N, ⌘K e ⌘⌥[/] estão em itens de um `Menu` da toolbar (:777-806). Esses atalhos dependem do SwiftUI registrar key equivalents de itens de um `Menu` fechado, o que não é confiável. Não há `.commands {}`, então nada aparece na barra de menus.
 12. **Retomar conversa é praticamente inutilizável.** Só lista conversas **ativas** do Claude (`ConversationResumeView.swift:93-125`), que são exatamente as bloqueadas (`isListedActive`). Para retomar é preciso digitar o UUID, e `canResume` exige o checkbox `externalWriterClosed` para qualquer provider (:47-50).
 13. **Lançar agente salvo:** "Iniciar agente" fica desabilitado até marcar "Usar este contexto" (`AgentLaunchView.swift:106,254-256`), e um clique em "Preparar revisão" vem antes. Parece um botão quebrado.
@@ -148,7 +148,7 @@ Toda navegação secundária é feita por **`.sheet` modal empilhado** (`Workspa
 
 ## 4. Problemas visuais
 
-- **Barra de título nativa** de cerca de 28pt com o texto "Agent Box". O conteúdo começa abaixo dos semáforos, e não na mesma linha como no Orca (screenshot 01). Nome repetido no header da sidebar.
+- **Barra de título nativa** de cerca de 28pt com o texto "Racky". O conteúdo começa abaixo dos semáforos, e não na mesma linha como no Orca (screenshot 01). Nome repetido no header da sidebar.
 - **Três faixas horizontais empilhadas** no topo: titlebar (cinza), toolbar 40pt (#191919) e strip de tabs 35pt (#191919). O título da sessão fica na toolbar, separado das tabs, o que dá o topo "desencaixado".
 - Tabs são de terminal, não de sessão. A tab ativa usa a cor do canvas (#272B33) e as inativas, a da tabbar. Não há borda, ✕, status nem `+`.
 - **Paleta incoerente:** sidebar #282828 (cinza neutro), canvas #272B33 (azulado), toolbar/tab #191919. A sidebar e o terminal têm temperaturas diferentes.

@@ -5,7 +5,7 @@ Estado em 2026-10-20 (branch `slice4-b`).
 
 ## 1. Aprovações (não dá para automatizar)
 
-- [ ] **Snapshots de referência (AC-T26, P14).** Os PNGs de `Packages/AgentBoxKit/Tests/UISnapshotTests/__Snapshots__` e a comparação lado a lado com o Orca
+- [ ] **Snapshots de referência (AC-T26, P14).** Os PNGs de `Packages/RackyKit/Tests/UISnapshotTests/__Snapshots__` e a comparação lado a lado com o Orca
       (`scripts/compare-ui.sh`) só valem com o OK explícito do dono **em toda tela da v1**. Registrar o OK por tela em `docs/evidence/ui/`. Nenhum snapshot foi
       regravado nem "aprovado" nesta tarefa.
 - [ ] **Settings › Diagnostics** (T4-04, tela nova): conferir o visual (evidência: `docs/evidence/observability/2026-10-20/diagnostics-page.png`,
@@ -35,4 +35,4 @@ Estado em 2026-10-20 (branch `slice4-b`).
 ## 3. Fora do que o agente pode decidir
 
 - Qualquer mudança de orçamento (AR-702/703/704/705/706): só o dono altera os números de `08`.
-- Remover o limite de uma sessão por pasta de dados ou ligar a automação (`AGENTBOX_AUTOMATION`) por padrão.
+- Remover o limite de uma sessão por pasta de dados ou ligar a automação (`RACKY_AUTOMATION`) por padrão.

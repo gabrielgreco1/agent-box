@@ -1,6 +1,6 @@
 # 02 · Auditoria técnica da camada de lógica (Core, MCP, runtime, testes)
 
-Data: 2026-10-16 · Worktree: `otter` (branch `gabrielgreco1/test-project-suite`, commit `c4418cc`) · Escopo: `Sources/AgentBoxCore`, `Sources/AgentBoxMCP`, `runtime/`, `scripts/`, `Package.swift`, `Tests/`, além da lógica que está dentro de `Sources/AgentBox` (Terminal, Computers, Docker stores, WorkspaceView).
+Data: 2026-10-16 · Worktree: `otter` (branch `gabrielgreco1/test-project-suite`, commit `c4418cc`) · Escopo: `Sources/RackyCore`, `Sources/RackyMCP`, `runtime/`, `scripts/`, `Package.swift`, `Tests/`, além da lógica que está dentro de `Sources/Racky` (Terminal, Computers, Docker stores, WorkspaceView).
 
 Todo o código citado foi lido. Referências no formato `arquivo:linha`.
 
@@ -10,7 +10,7 @@ Todo o código citado foi lido. Referências no formato `arquivo:linha`.
 
 - **Tamanho**: Core ≈ 7,9 mil linhas Swift (13 módulos), helper MCP 150 linhas, runtime Python ≈ 2,3 mil linhas, UI ≈ 6,9 mil linhas, testes ≈ 6,5 mil linhas Swift + 35 testes Python.
 - **Build e testes**: `swift test` compila sem warnings e passa **172 testes, 4 pulados, 0 falhas** (13,5 s). Os testes Python do runtime (30) e do hook (5) também passam.
-- **Docker**: o CLI existe (`/usr/local/bin/docker`, Docker Desktop instalado), mas **o daemon não estava rodando** (`docker info` falha: socket `~/.docker/run/docker.sock` ausente). Os 4 testes Docker **não foram executados**. E mesmo com o daemon ligado eles falhariam aqui: todos fixam o contexto `colima-agentbox-dev` (Colima não está instalado) e esperam a imagem `agentbox-browser:ab019-dev` já construída. Nenhum script do repositório constrói essa imagem.
+- **Docker**: o CLI existe (`/usr/local/bin/docker`, Docker Desktop instalado), mas **o daemon não estava rodando** (`docker info` falha: socket `~/.docker/run/docker.sock` ausente). Os 4 testes Docker **não foram executados**. E mesmo com o daemon ligado eles falhariam aqui: todos fixam o contexto `colima-racky-dev` (Colima não está instalado) e esperam a imagem `racky-browser:ab019-dev` já construída. Nenhum script do repositório constrói essa imagem.
 - **Swift 6**: o pacote declara `swiftLanguageModes: [.v5]` (`Package.swift:18`). Ele **não está em Swift 6**. Compilado com `-strict-concurrency=complete`, aparecem **121 avisos únicos que viram erro no modo Swift 6**: 38 no Core (`ComputerControlBridge` 20, `CLICommandProbe` 9, `BrowserComputerService` 5, runners 4) e 83 na UI.
 - **Diagnóstico geral**: o código é cuidadoso e defensivo, mas exagera na cerimônia. Uma parte grande é verificação de hash, `lstat`/permissões, "journals" e máquinas de estado distribuídas para um app pessoal de um usuário só. A lógica de produto está mal distribuída: a orquestração de lançamento, o ciclo de vida das boxes e o roteamento MCP moram em classes `@MainActor` da UI. Há acoplamento forte com um caso pessoal (a skill `webscraping-expert` aparece hardcoded no Core e na UI). Várias features são cascas: Secrets nunca é consumido, a delegação parent→child do broker só existe em testes e `DockerComputerService` é legado.
 - **O que vale reaproveitar**: `Workspaces` (modelo de layout), `Git` (inspector e worktree), `Processes` (resolver e catálogo de conversas), o núcleo de `Library` (modelos e mutações), o protocolo MCP stdio e o runtime Python do container (ideia e API). **Para reescrever**: lançamento de agentes, controle e lease, ciclo de vida de computadores, captura e Secrets.
@@ -27,7 +27,7 @@ Vereditos por módulo (detalhes abaixo):
 | HumanRequests | 152 | REFATORAR (fundir com notificações) |
 | AgentLaunch | 1035 | REESCREVER |
 | AgentRegistry | 381 | REFATORAR (simplificar) |
-| ComputerMCP + AgentBoxMCP | 954 | REFATORAR (protocolo fica, transporte e provenance simplificam) |
+| ComputerMCP + RackyMCP | 954 | REFATORAR (protocolo fica, transporte e provenance simplificam) |
 | BrowserRuntime | 395 | MANTER o cliente, REFATORAR para Sendable |
 | Control | 709 | REESCREVER (bem mais simples) |
 | Docker | 1478 | REESCREVER (ciclo de vida), MANTER o runner |
@@ -41,9 +41,9 @@ Vereditos por módulo (detalhes abaixo):
 ## 1. Build, dependências e infraestrutura
 
 ### Package.swift
-- Targets: `AgentBoxCore` (sem dependências), `AgentBox` (UI, depende de SwiftTerm), `AgentBoxMCP` (helper stdio) e dois test targets. O split Core/UI está correto na intenção.
+- Targets: `RackyCore` (sem dependências), `Racky` (UI, depende de SwiftTerm), `RackyMCP` (helper stdio) e dois test targets. O split Core/UI está correto na intenção.
 - `swiftLanguageModes: [.v5]` (`Package.swift:18`): a afirmação de "Swift 6" vale só para o toolchain. Concorrência estrita não é verificada. Ver §1.3.
-- `AgentBoxRuntimeTests` depende do executável `AgentBox` (UI). Testar a orquestração exige carregar a camada de UI, o que é sintoma direto da lógica estar no lugar errado.
+- `RackyRuntimeTests` depende do executável `Racky` (UI). Testar a orquestração exige carregar a camada de UI, o que é sintoma direto da lógica estar no lugar errado.
 
 ### Dependências externas
 | Dependência | Uso | Observação |
@@ -54,7 +54,7 @@ Vereditos por módulo (detalhes abaixo):
 | Claude Code CLI | Flags `--append-system-prompt-file`, `--plugin-dir`, `--mcp-config`, `--settings`, hooks `SessionStart/SubagentStart/SubagentStop/PreToolUse` com `updatedInput`, `claude agents --json` | Fortemente acoplado a recursos específicos de versão (2.1.301 citado nos comentários). |
 | Codex CLI | Só `resume <id>` e `login status` | Sem ativação de agente e sem MCP (ver §3). |
 | Python 3 no host | Hook `claude_event.py` | Depende do `python3` do sistema no PATH do Claude. |
-| Imagem Playwright `mcr.microsoft.com/playwright/python:v1.63.0-noble@sha256:…` | Runtime da box | Pinada por digest. A tag local `agentbox-browser:ab019-dev` precisa ser construída à mão. |
+| Imagem Playwright `mcr.microsoft.com/playwright/python:v1.63.0-noble@sha256:…` | Runtime da box | Pinada por digest. A tag local `racky-browser:ab019-dev` precisa ser construída à mão. |
 | Keychain (Security, LocalAuthentication, API legada `SecKeychain*`) | Tokens das boxes e Secrets | Usa API deprecada (`LegacyKeychainInteraction.swift:10-11`) para suprimir prompts. É complexidade desnecessária: um arquivo 0600 resolveria (ver Docker). |
 
 ### Concorrência estrita (Swift 6)
@@ -68,7 +68,7 @@ Build com `-Xswiftc -strict-concurrency=complete` em scratch separado: compila c
 Migrar para o modo 6 é viável: a maior parte é marcar structs como `Sendable` e trocar classes com lock por actors. Mesmo assim, migrar código que vai ser reescrito não compensa.
 
 ### scripts/
-- `build_app.sh`: build release, monta o `.app`, copia `AgentBoxMCP` e `claude_event.py`, faz assinatura ad-hoc e cria um symlink para o cache. Funciona, mas **não constrói a imagem Docker**, então o recurso de computador não funciona "out of the box". O `Info.plist` vem inline no script. MANTER a ideia e acrescentar `docker build` (ou build sob demanda no app).
+- `build_app.sh`: build release, monta o `.app`, copia `RackyMCP` e `claude_event.py`, faz assinatura ad-hoc e cria um symlink para o cache. Funciona, mas **não constrói a imagem Docker**, então o recurso de computador não funciona "out of the box". O `Info.plist` vem inline no script. MANTER a ideia e acrescentar `docker build` (ou build sob demanda no app).
 - `build_spec.py`: gera a especificação HTML (documentação). Não faz parte do produto.
 
 ---
@@ -148,10 +148,10 @@ Migrar para o modo 6 é viável: a maior parte é marcar structs como `Sendable`
 - `AgentIdentityCapability` (`AgentRegistry.swift:4-16`) é um valor estático que ninguém usa para decisão real.
 **Veredito: REFATORAR**. O registry de execuções e a árvore de subagentes via hooks é a abordagem certa. Simplificar: socket local ou FIFO em vez de arquivo + polling, e sem HMAC teatral (ou admitir que é só correlação).
 
-### 2.9 ComputerMCP (804 linhas) + AgentBoxMCP (150 linhas)
+### 2.9 ComputerMCP (804 linhas) + RackyMCP (150 linhas)
 **Faz**:
 - `ComputerMCPProtocol`: servidor JSON-RPC MCP (initialize, tools/list, tools/call) com 9 ferramentas (`computer_status/acquire/screenshot/page/http_request/mode/navigate/input/request_help`).
-- `AgentBoxMCP/main.swift`: helper stdio que o Claude lança. Encaminha cada linha JSON-RPC para um socket Unix do app com uma capability.
+- `RackyMCP/main.swift`: helper stdio que o Claude lança. Encaminha cada linha JSON-RPC para um socket Unix do app com uma capability.
 - `LocalMCPChannel`: servidor de socket Unix com uma conexão por requisição, até 8 em paralelo, e timeouts.
 - `ComputerCallProvenance`: valida o `route_token` HMAC que o hook `PreToolUse` injeta nos argumentos (via `updatedInput`) para saber se quem chama é o pai ou qual subagente.
 - `ComputerMCPAccessPolicy`: decide connect/start/create para `computer_acquire`.
@@ -185,7 +185,7 @@ Migrar para o modo 6 é viável: a maior parte é marcar structs como `Sendable`
 ### 2.12 Docker (1478 linhas)
 **Faz**:
 - `DockerProcessRunner`: argv + timeout + contexto Docker escolhido (`docker-connection.json`).
-- `BrowserComputerService`: cria, inicia e para containers da imagem `agentbox-browser:ab019-dev` (`BrowserComputerService.swift:259`), com volume `/data` persistente, porta publicada só em loopback, hardening (`--read-only`, `--cap-drop ALL`, `no-new-privileges`, limites) e token por computador no Keychain passado via env-file temporário. Atualiza a imagem de box parada com journal de recuperação (`:427-504,799-872`).
+- `BrowserComputerService`: cria, inicia e para containers da imagem `racky-browser:ab019-dev` (`BrowserComputerService.swift:259`), com volume `/data` persistente, porta publicada só em loopback, hardening (`--read-only`, `--cap-drop ALL`, `no-new-privileges`, limites) e token por computador no Keychain passado via env-file temporário. Atualiza a imagem de box parada com journal de recuperação (`:427-504,799-872`).
 - `ComputerPolicy`: política global com overrides por projeto/sessão/terminal/agente, que só podem restringir.
 - `DockerComputerService`: box **legada** `python:3.12.8-slim … sleep infinity` sem browser (`DockerComputerService.swift:41,115`), ainda exposta em `DockerViews.swift:190-220`.
 - `ScrapingBoxAssignmentStore`: amarra uma box ao agente "Web scraping".
@@ -273,7 +273,7 @@ Padrão recorrente: singletons `@MainActor` (`AgentComputerAccess.shared`, `Nati
   6. Ações headless de verdade via Playwright.
 
 ### 4.4 Controle do computador pelo agente via MCP
-- **Hoje**: Claude → `AgentBoxMCP` (stdio) → socket Unix → `AgentComputerAccess` (@MainActor) → `ComputerControlBridge` + `ControlBroker` → HTTP para a box. O roteamento pai/filho usa um token HMAC que o hook `PreToolUse` injeta via `updatedInput`. Isso só foi validado de ponta a ponta no teste gated que não rodou aqui.
+- **Hoje**: Claude → `RackyMCP` (stdio) → socket Unix → `AgentComputerAccess` (@MainActor) → `ComputerControlBridge` + `ControlBroker` → HTTP para a box. O roteamento pai/filho usa um token HMAC que o hook `PreToolUse` injeta via `updatedInput`. Isso só foi validado de ponta a ponta no teste gated que não rodou aqui.
 - **Falta**:
   1. Suporte a Codex (MCP via `-c mcp_servers`).
   2. Um conjunto de ferramentas utilizável (click/type com coordenadas ou seletor, wait, scroll, download, `computer_use` compatível com a ferramenta de computer use da Anthropic).
@@ -302,7 +302,7 @@ Padrão recorrente: singletons `@MainActor` (`AgentComputerAccess.shared`, `Nati
 |---|---|---|
 | **Reais (processo, disco, socket)** | `ProcessesPTYTests` (PTY real com scripts fixture), `LocalMCPChannelTests` (socket Unix + helper real), `GitWorkspaceTests` (git real), `AgentLaunchTests` (FS real + executável fixture), `NativeAgentMonitorTests`/`AgentRegistryTests` (hook Python real), `CaptureStoreTests`, `LibraryTests`, `WorkspaceStoreTests` | Bons e honestos. Cobrem a integridade dos arquivos e o fluxo hook → registry. |
 | **Mock de fronteira externa** | `BrowserComputerServiceTests`, `BrowserImageUpdateTests`, `DockerComputerTests` (runner Docker fake que devolve stdout programado), `BrowserRuntimeTests` (URLProtocol fake), `ComputerControlBridgeTests` (transport fake), `SecretsTests` (Keychain em memória), `AgentComputerAccessRoutingTests` (resources fakes) | Testam a lógica do Swift contra **o que o autor supôs** que o Docker e o runtime respondem. Não pegam divergência real de CLI ou API. O update de imagem tem 12 testes de mock contra 1 real (gated). |
-| **Gated, exigem Docker** | `BrowserChildControlDockerTests`, `BrowserImageUpdateDockerTests`, `CaptureDockerTests`, `NativeChildFlowDockerTests` (este chama o **Claude real**, `--model haiku`, até US$ 0,25) | **Não executados**: daemon parado. Além disso, fixam o contexto `colima-agentbox-dev` (inexistente nesta máquina) e a imagem `agentbox-browser:ab019-dev` (nenhum script a constrói). Não são portáveis. |
+| **Gated, exigem Docker** | `BrowserChildControlDockerTests`, `BrowserImageUpdateDockerTests`, `CaptureDockerTests`, `NativeChildFlowDockerTests` (este chama o **Claude real**, `--model haiku`, até US$ 0,25) | **Não executados**: daemon parado. Além disso, fixam o contexto `colima-racky-dev` (inexistente nesta máquina) e a imagem `racky-browser:ab019-dev` (nenhum script a constrói). Não são portáveis. |
 | **Unidade pura** | Policy, protocol, arguments, provenance, broker, human requests, scraping target | Corretos, mas parte testa código morto (delegação do broker). |
 
 Conclusão: a suíte valida bem a **mecânica interna** (integridade de arquivos, parsing, máquinas de estado) e a fronteira PTY/socket/git. Ela **não valida os fluxos de produto** com as dependências reais (Docker, runtime, Claude), que ficam atrás de flags e de um ambiente específico do autor. Nada testa a UI nem a orquestração em `WorkspaceView`.
@@ -311,7 +311,7 @@ Resultados executados nesta auditoria:
 - `swift test`: 172 executados, 4 pulados, 0 falhas, 0 warnings (13,5 s).
 - `swift build -strict-concurrency=complete`: OK, com 121 avisos únicos de Swift 6.
 - `python3 -m unittest` em `runtime/boxes`: 30 OK. Em `runtime/hooks`: 5 OK.
-- Testes Docker (`AGENTBOX_TEST_CAPTURE_DOCKER`, `AGENTBOX_TEST_DOCKER_UPDATE`, `AGENTBOX_TEST_CHILD_CONTROL`, `AGENTBOX_TEST_NATIVE_CHILD_FLOW`): **não executados** (Docker Desktop instalado mas daemon parado; contexto Colima exigido não existe).
+- Testes Docker (`RACKY_TEST_CAPTURE_DOCKER`, `RACKY_TEST_DOCKER_UPDATE`, `RACKY_TEST_CHILD_CONTROL`, `RACKY_TEST_NATIVE_CHILD_FLOW`): **não executados** (Docker Desktop instalado mas daemon parado; contexto Colima exigido não existe).
 
 ---
 

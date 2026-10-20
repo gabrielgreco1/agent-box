@@ -2,7 +2,7 @@
 
 Auditoria de 16/10/2026 sobre o checkout `gabrielgreco1/test-project-suite` (HEAD `c4418cc`). Objetivo: medir a distância entre o código atual e um app bom nas cinco funcionalidades que o dono considera centrais, para alimentar a spec da reconstrução. Nenhum código foi alterado.
 
-Fontes lidas: `Sources/AgentBoxCore`, `Sources/AgentBox`, `Sources/AgentBoxMCP`, `runtime/boxes`, `runtime/hooks`, `docs/STATUS.md`, `docs/EXECUTION-PLAN.md`, `docs/spec/index.html`, `docs/spec/acceptance.json` (68 casos, **todos ainda `planned`**), `docs/spec/backlog.json` (M0–M10, **todos `not_started`**), `docs/tasks/AB-*`, `git log`. Referências no formato `arquivo:linha`.
+Fontes lidas: `Sources/RackyCore`, `Sources/Racky`, `Sources/RackyMCP`, `runtime/boxes`, `runtime/hooks`, `docs/STATUS.md`, `docs/EXECUTION-PLAN.md`, `docs/spec/index.html`, `docs/spec/acceptance.json` (68 casos, **todos ainda `planned`**), `docs/spec/backlog.json` (M0–M10, **todos `not_started`**), `docs/tasks/AB-*`, `git log`. Referências no formato `arquivo:linha`.
 
 Legenda de estado:
 
@@ -19,20 +19,20 @@ Legenda de estado:
 | `codex` | `~/.local/bin/codex`, codex-cli 0.160.0 |
 | `opencode` | `~/.local/bin/opencode`, 1.18.34 (instalado; o código ainda diz que não estava, `CLIConversationCatalog.swift:95`) |
 | `gh` | `/opt/homebrew/bin/gh` 2.93.0, logado como `gabrielgreco1` via keyring, escopos `gist, read:org, repo, workflow` |
-| `docker` | CLI 29.6.2; contexto ativo `desktop-linux`, **daemon parado** (socket ausente). `colima` não está no PATH nem em `~/.colima`, embora `STATUS.md:17` diga que foi instalado. Imagem `agentbox-browser:*` não existe localmente |
+| `docker` | CLI 29.6.2; contexto ativo `desktop-linux`, **daemon parado** (socket ausente). `colima` não está no PATH nem em `~/.colima`, embora `STATUS.md:17` diga que foi instalado. Imagem `racky-browser:*` não existe localmente |
 | `~/.claude/agents` | 13 agentes `.md` (data-engineer, llm-engineer, ocr-engineer, qa-engineer, rti-analyst, rti-crawler-builder, security-diff-reviewer, swift-desktop-optimizer, swiftui-ux-designer, ui-mockup-designer, web-scraper, webscraper-engineer, webscraping-expert) |
-| `~/.claude/skills` | 133 entradas (pastas e alguns `.zip`), incluindo `agentbox`, `webscraping-expert`, família `hunt-*`, `rti-*`, `motion-designer` |
+| `~/.claude/skills` | 133 entradas (pastas e alguns `.zip`), incluindo `racky`, `webscraping-expert`, família `hunt-*`, `rti-*`, `motion-designer` |
 | `~/.agents/skills` | ~30 skills compartilhadas (padrão cross-harness) |
 | `~/.codex/agents` | 12 agentes `.toml`, espelho dos agentes Claude |
 | `~/.codex/skills` | `frontend-design`, `web-design-guidelines`, `webscraping-expert` (caminho antigo; o Codex atual lê `~/.agents/skills`) |
 | Sessões nativas | `~/.claude/projects` com 36 pastas de projeto; `~/.codex/sessions/2026/{09,10}`; OpenCode em SQLite |
 | Plugins Claude | `swift-lsp`, `vercel` (`~/.claude/plugins/installed_plugins.json`) |
 | OpenCode | `~/.config/opencode/opencode.jsonc` + `plugins/` |
-| CLI anterior | `~/orca/projects/agentbox` (`bin/agentbox`, `collect.py`, `timeline.py`, `image/Dockerfile`) com ~40 runs em `runs/`. É a ferramenta que o dono de fato usou para scraping |
+| CLI anterior | `~/orca/projects/racky` (`bin/racky`, `collect.py`, `timeline.py`, `image/Dockerfile`) com ~40 runs em `runs/`. É a ferramenta que o dono de fato usou para scraping |
 
 Duas conclusões do ambiente valem para tudo abaixo:
 
-1. O Docker não roda hoje e a imagem não existe. O app não constrói a imagem (nenhum `docker build` em `Sources/` ou `scripts/`; a tag fixa é `agentbox-browser:ab019-dev`, `BrowserComputerService.swift:259`). Um usuário novo não consegue criar um computador sem passos manuais fora do app.
+1. O Docker não roda hoje e a imagem não existe. O app não constrói a imagem (nenhum `docker build` em `Sources/` ou `scripts/`; a tag fixa é `racky-browser:ab019-dev`, `BrowserComputerService.swift:259`). Um usuário novo não consegue criar um computador sem passos manuais fora do app.
 2. O dono tem bibliotecas grandes e já organizadas nos formatos nativos (Claude, Codex, `~/.agents`). O app reimporta uma skill por vez, por seletor de arquivo.
 
 ## Resumo executivo
@@ -130,7 +130,7 @@ PTY real com SwiftTerm para os quatro clientes, foco, resize, Ctrl-C (`STATUS.md
 
 **Serviço Docker** (`BrowserComputerService.swift`): cria volume e container rotulados por computador/terminal/agent-run (`:353-364`, `:690-702`), start/stop, recuperação de metadados, atualização de imagem de box parada com journal (`:412-518`). Conexão por contexto Docker escolhido (`DockerConnection.swift`). Token por box no Keychain.
 
-**Ferramentas MCP** expostas ao Claude (`ComputerMCPProtocol.swift:90-105`, helper `Sources/AgentBoxMCP/main.swift`): `computer_status`, `computer_acquire`, `computer_screenshot`, `computer_page`, `computer_http_request` (GET/HEAD públicos, 1 MiB, sem redirect), `computer_mode`, `computer_navigate`, `computer_input` (X11, 1280×800), `computer_request_help`.
+**Ferramentas MCP** expostas ao Claude (`ComputerMCPProtocol.swift:90-105`, helper `Sources/RackyMCP/main.swift`): `computer_status`, `computer_acquire`, `computer_screenshot`, `computer_page`, `computer_http_request` (GET/HEAD públicos, 1 MiB, sem redirect), `computer_mode`, `computer_navigate`, `computer_input` (X11, 1280×800), `computer_request_help`.
 
 **Controle humano** (`ControlBroker.swift`, `ComputerControlBridge.swift`, `RemoteDesktopView.swift`): lease exclusivo com epoch; o viewer só aceita input após ACK de revogação do agente; pedido de ajuda pausa as escritas até "assumir/devolver". Stream é **MJPEG de `/v1/stream`, máximo 4 fps**, da tela Xvfb inteira (`server.py:96`, `RemoteDesktopView.swift:190`); se passar 4 s sem frame, desconecta (`:199-204`).
 
@@ -149,9 +149,9 @@ PTY real com SwiftTerm para os quatro clientes, foco, resize, Ctrl-C (`STATUS.md
 - Sem proxy (grep por `zyte`/`proxy` em `Sources` e `runtime` não acha implementação).
 - Docker: o app não instala nem inicia o daemon, nem constrói a imagem.
 
-### Comparação com o CLI anterior (`~/orca/projects/agentbox`)
+### Comparação com o CLI anterior (`~/orca/projects/racky`)
 
-O skill `agentbox` que o dono usou de verdade (dezenas de runs em `runs/`) oferecia por box: terminal (`agentbox exec <box> -- …`), `curl`/`python3` com `requests`, `curl_cffi`, `openpyxl`; browser persistente com `open/text/html/click/fill/press/eval/cookies/shot`; `reqlog` com **todas** as requisições do browser, curl e Python (método, URL, corpo, status, trecho de resposta); `proxy on/off` via Zyte com orçamento rígido (US$ 1, HTTP 402 ao estourar); `render` pela API Zyte para desafios anti-bot; `collect` do transcript do subagente e `timeline --md` para conferir cada afirmação do `result.json` contra IDs de request; `agentbox note` (PLAN/DOING/FOUND/BLOCKED).
+O skill `racky` que o dono usou de verdade (dezenas de runs em `runs/`) oferecia por box: terminal (`racky exec <box> -- …`), `curl`/`python3` com `requests`, `curl_cffi`, `openpyxl`; browser persistente com `open/text/html/click/fill/press/eval/cookies/shot`; `reqlog` com **todas** as requisições do browser, curl e Python (método, URL, corpo, status, trecho de resposta); `proxy on/off` via Zyte com orçamento rígido (US$ 1, HTTP 402 ao estourar); `render` pela API Zyte para desafios anti-bot; `collect` do transcript do subagente e `timeline --md` para conferir cada afirmação do `result.json` contra IDs de request; `racky note` (PLAN/DOING/FOUND/BLOCKED).
 
 O app Swift ganhou isolamento, controle humano e desktop, mas **regrediu** em capacidade de trabalho: sem shell, sem `curl_cffi`, sem proxy, sem render remoto, listener com cobertura bem menor, sem timeline por evidência e sem diário do agente. Para o caso de uso declarado (scraping/pesquisa), o CLI antigo é mais útil hoje.
 
@@ -232,12 +232,12 @@ O app Swift ganhou isolamento, controle humano e desktop, mas **regrediu** em ca
 
 ### Estado atual
 
-- **Layout**: árvore binária de splits por sessão (`WorkspaceStore.swift:7-81`), frações 0,2–0,8, **máximo 5 panes visíveis** (`:112`; também `WorkspaceView.swift:1199`, `:1417`, `:1445`). Foco persistido (`WorkspaceLayout.focusedTerminalID`). Snapshot JSON em `~/Library/Application Support/AgentBox/workspace.json` (`:180-201`), salvo a cada mudança (`WorkspaceView.swift:193-197`).
+- **Layout**: árvore binária de splits por sessão (`WorkspaceStore.swift:7-81`), frações 0,2–0,8, **máximo 5 panes visíveis** (`:112`; também `WorkspaceView.swift:1199`, `:1417`, `:1445`). Foco persistido (`WorkspaceLayout.focusedTerminalID`). Snapshot JSON em `~/Library/Application Support/Racky/workspace.json` (`:180-201`), salvo a cada mudança (`WorkspaceView.swift:193-197`).
 - **Tabs**: a barra lista **todos** os terminais da sessão (`WorkspaceView.swift:706-733`). Clicar troca o pane focado por aquele terminal (`WorkspaceLayout.show`, `WorkspaceStore.swift:101-109`). Não há tab como grupo de panes; tab = terminal.
 - **Atalhos**: `⌘T` novo terminal, `⌘D`/`⌘⇧D` split, `⌘B` sidebar, `⌘K` busca, `⌘N` sessão, `⌘⌥[`/`⌘⌥]` largura da sidebar (`WorkspaceView.swift:739-802`). Sem navegação entre panes por teclado (`⌘⌥←→`), sem `⌘1…9`, sem maximizar pane, sem fechar terminal por atalho.
 - **Fechar**: "Fechar pane" só remove do layout (`WorkspaceStore.swift:119-122`); o terminal continua na sessão. **Não existe apagar terminal nem apagar sessão** em nenhum lugar do código (grep por `terminals.remove`/`sessions.remove` vazio). A lista só cresce.
 - **Runtime**: `TerminalRuntimeManager` mantém PTY e emulador por ID durante a vida do processo do app (`TerminalRuntimeManager.swift:15-18`). Trocar tab/pane não reinicia o processo.
-- **Quit**: alerta "Sair encerra os processos deste app… os processos não continuam em segundo plano" e mata tudo com SIGTERM → 0,5 s → SIGKILL (`AgentBoxApp.swift:24-31`, `TerminalRuntimeManager.swift:262-282`). Ao relançar, os terminais aparecem parados e precisam de ▶; o conteúdo da tela se perde. Crash do app também mata todos os agentes (são filhos do processo).
+- **Quit**: alerta "Sair encerra os processos deste app… os processos não continuam em segundo plano" e mata tudo com SIGTERM → 0,5 s → SIGKILL (`RackyApp.swift:24-31`, `TerminalRuntimeManager.swift:262-282`). Ao relançar, os terminais aparecem parados e precisam de ▶; o conteúdo da tela se perde. Crash do app também mata todos os agentes (são filhos do processo).
 - **Renderer**: scrollback 5.000 linhas, fonte monoespaçada do sistema 12 pt fixa, cores fixas (`TerminalRuntimeManager.swift:311-316`). Título dinâmico (OSC 0/2) e cwd (OSC 7) são ignorados (`:36-38`).
 - **Estado do agente**: só `idle/starting/running/exited/failed` do processo (`:7-13`). Não há "trabalhando / esperando sua resposta / pedindo permissão / terminou".
 - **Notificações**: só pedidos de computador (`HumanRequestCenter`). Agente que terminou ou espera aprovação não notifica.
@@ -279,7 +279,7 @@ Vários PTYs reais com PIDs/TTYs distintos, splits horizontais e verticais, redi
 
 **Técnico**
 
-- Daemon `agentbox-ptyd` (LaunchAgent opt-in ou helper lançado pelo app e desacoplado com `setsid`) que dona os PTYs e expõe socket Unix com protocolo de attach/detach, resize, input, replay de buffer e eventos de saída. O app vira cliente. Alternativa mais curta: tmux com socket próprio (`tmux -L agentbox`) e `control mode` (`-CC`) — robusto e testado, mas exige tmux instalado e lida pior com algumas TUIs.
+- Daemon `racky-ptyd` (LaunchAgent opt-in ou helper lançado pelo app e desacoplado com `setsid`) que dona os PTYs e expõe socket Unix com protocolo de attach/detach, resize, input, replay de buffer e eventos de saída. O app vira cliente. Alternativa mais curta: tmux com socket próprio (`tmux -L racky`) e `control mode` (`-CC`) — robusto e testado, mas exige tmux instalado e lida pior com algumas TUIs.
 - Buffer: ring por terminal no daemon (ex.: 10–50 MB) com serialização do estado do emulador ou reprocessamento do stream bruto.
 - Estado do agente: hooks `Notification`/`Stop`/`SessionStart` do Claude e `notify` do Codex escrevendo no inbox do app; OpenCode por eventos do servidor. Fallback por heurística de inatividade de saída marcado como "estimado".
 - Persistência em SQLite (sessões, terminais, conversas, layouts), não JSON único reescrito a cada mudança.
@@ -429,7 +429,7 @@ CRUD de agentes e memórias com revisões; importar um SKILL.md; lançar agente 
 | Recursos avançados presos ao fluxo "Biblioteca → plano revisado → Claude" | `TerminalRuntimeManager.swift:100-104`, `AgentLaunchPlanner.swift:305-311`, `:349` | Terminal comum não tem computador, hooks, árvore de filhos nem estado | P0 |
 | Env do PTY em allowlist | `TerminalRuntimeManager.swift:353-368` | `ssh`, `gh` via env, chaves de API e toolchains falham dentro dos agentes | P0 |
 | Sem apagar terminal/sessão | grep vazio por `terminals.remove`/`sessions.remove` | Lista cresce para sempre | P0 |
-| Quit mata tudo | `AgentBoxApp.swift:24-31` | Fechar o app derruba agentes longos | P0 |
+| Quit mata tudo | `RackyApp.swift:24-31` | Fechar o app derruba agentes longos | P0 |
 | App não prepara Docker nem imagem | `BrowserComputerService.swift:259`; nenhum `docker build` | Computadores inutilizáveis sem passos manuais | P0 |
 | Nenhum estado "esperando você" | hooks só `SessionStart/SubagentStart/SubagentStop/PreToolUse` (`claude_event.py:14`) | Usuário precisa varrer panes para ver quem parou | P0 |
 | Python do host exigido pelos hooks | `runtime/hooks/claude_event.py` | Dependência frágil do `python3` do sistema | P1 |

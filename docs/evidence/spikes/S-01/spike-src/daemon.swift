@@ -9,7 +9,7 @@ func log(_ s: String) {
     else { FileManager.default.createFile(atPath: logPath, contents: Data(line.utf8)) }
 }
 typealias Activate = @convention(c) (UnsafePointer<CChar>, UnsafeMutablePointer<UnsafeMutablePointer<Int32>?>, UnsafeMutablePointer<Int>) -> Int32
-log("start v29072 argv=\(CommandLine.arguments) env AGENTBOX_PTYD_SOCK_V1=\(ProcessInfo.processInfo.environment["AGENTBOX_PTYD_SOCK_V1"] ?? "<unset>") S01_SOCK=\(ProcessInfo.processInfo.environment["S01_SOCK"] ?? "<unset>")")
+log("start v29072 argv=\(CommandLine.arguments) env RACKY_PTYD_SOCK_V1=\(ProcessInfo.processInfo.environment["RACKY_PTYD_SOCK_V1"] ?? "<unset>") S01_SOCK=\(ProcessInfo.processInfo.environment["S01_SOCK"] ?? "<unset>")")
 guard let sym = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "launch_activate_socket") else { log("dlsym failed"); exit(2) }
 let activate = unsafeBitCast(sym, to: Activate.self)
 var fds: UnsafeMutablePointer<Int32>? = nil

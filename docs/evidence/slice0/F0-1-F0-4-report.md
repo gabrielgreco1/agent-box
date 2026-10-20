@@ -21,10 +21,10 @@ Legenda: **OK** = conferido e bate · **FALHA** = viola o critério de F0-1 ou d
 | IDs antigos `A1…F6` / `E0…E4` fora da tabela de correspondência de 04 (linhas 10–62) | `04-motion.md:118`: `A1 (abrir o app)` na tabela de divergências (§2). ID de auditoria citado direto. | **FALHA** |
 | | `04-motion.md:820–828` (§11.1) usa `A1…A9` como critérios de aceite de motion. Mesma forma textual dos IDs antigos. `09-roadmap.md:143` e `:236` citam "04 A1" e "04 A6". | **DECISÃO**: renomear o prefixo dos critérios (ex.: `MA1…MA9`) |
 | | `06-terminals-and-agents.md:709`: `(F4)` sem prefixo `audit/`. | **FALHA** (ID de auditoria sem prefixo) |
-| Nomes canônicos de 08 §0 (bundle, labels, sockets, `AGENTBOX_*`, spool, dirs, Keychain, subsystems, comandos `agentbox ctl`/`hook`) | Valores batem em todos os capítulos. Números também batem: hook 200 ms e 5 s; backpressure 2 MiB; ring 4 MiB; cold log 2×8 MiB; prompt 16 KiB; frame 1 MiB; coalescência 16 ms/64 KiB. | OK |
-| Nomes presentes na spec mas ausentes de 08 §0 (sem conflito de valor) | `AGENTBOX_CAPACITY_ESTIMATES` (`07-computers-and-subagents.md:162`, env de teste). `~/Library/Application Support/AgentBox/boxes/<computerId>/` (`07:221`, `:752`). `…/AgentBox/previous/` (`08:812`). `/run/agentbox/pty.sock` (`07:675`, dentro do container). | **FALHA** (completar §0 ou marcar como fora da tabela). Não é divergência de valor |
-| `AGENTBOX_HOOK_TOKEN` e `AGENTBOX_TERMINAL_ID` | Só aparecem negados (`06:505`, `08:47`). | OK |
-| `AGENTBOX_PTYD_SOCK_V2`, `app.agentbox.ptyd.v2` | Major futuro (`06:239`, `08:832`). | OK |
+| Nomes canônicos de 08 §0 (bundle, labels, sockets, `RACKY_*`, spool, dirs, Keychain, subsystems, comandos `racky ctl`/`hook`) | Valores batem em todos os capítulos. Números também batem: hook 200 ms e 5 s; backpressure 2 MiB; ring 4 MiB; cold log 2×8 MiB; prompt 16 KiB; frame 1 MiB; coalescência 16 ms/64 KiB. | OK |
+| Nomes presentes na spec mas ausentes de 08 §0 (sem conflito de valor) | `RACKY_CAPACITY_ESTIMATES` (`07-computers-and-subagents.md:162`, env de teste). `~/Library/Application Support/Racky/boxes/<computerId>/` (`07:221`, `:752`). `…/Racky/previous/` (`08:812`). `/run/racky/pty.sock` (`07:675`, dentro do container). | **FALHA** (completar §0 ou marcar como fora da tabela). Não é divergência de valor |
+| `RACKY_HOOK_TOKEN` e `RACKY_TERMINAL_ID` | Só aparecem negados (`06:505`, `08:47`). | OK |
+| `RACKY_PTYD_SOCK_V2`, `app.racky.ptyd.v2` | Major futuro (`06:239`, `08:832`). | OK |
 | Atalhos: colisão **dentro** de 03 §21, escopo Overlay | `⌘↵` = Submit (Overlay) e New Session "<text>" (Overlay palette). `⇥` / `⇧⇥` = próximo/anterior campo (Overlay) e Cycle filter (Overlay palette). A palette é overlay, então o teste de colisão de 03 §21 falha. | **FALHA** |
 | Atalhos: Viewer × Global | `07-computers-and-subagents.md:§11.6` manda **todo** atalho ao computador com o canvas focado, exceto ⌘Q, ⇧⌘R, ⌘⎋ e ⌃⌥. `03 §21` declara ⌘W, ⌘N, ⌘T, ⌘1…9, ⌘J e ⌘, como Global. `08 A16` lista "⌘W indo para a box" como risco. `05` (linha 370) só fala de ⌘⎋/⌃⌥ e diz que ⌘Q chega ao app. A regra "escopo mais específico vence" daria prioridade ao Viewer. | **DECISÃO**: definir quais Global valem com o Viewer focado; criar linhas de escopo Viewer para ⌘W, ⌘C e ⌘V (`07 CS-422` usa ⌘V no viewer, e §21 não lista) |
 | Atalhos: notação | `06-terminals-and-agents.md:206`, `:208` e `:257` escrevem `⌘⇧D` e `⌘⇧↵`. 03 §0 manda a ordem `⌃ ⌥ ⇧ ⌘`, e §21 usa `⇧⌘D` e `⇧⌘↵`. Mesma ação. | **FALHA** (correção de texto em 06) |
@@ -173,7 +173,7 @@ Batem: `label` (12/16), `sectionLabel` (12/16), `control` (14/20), `input` (14/2
 8. "scratchpad": 7 negações. Sair da spec ou manter?
 9. Search da sidebar e painel direito (⌘L) na Fatia 1 ou não.
 10. `source/`: copiar trechos (MIT) ou manter só o índice.
-11. Completar 08 §0 com `AGENTBOX_CAPACITY_ESTIMATES`, diretórios `boxes/` e `previous/`.
+11. Completar 08 §0 com `RACKY_CAPACITY_ESTIMATES`, diretórios `boxes/` e `previous/`.
 
 ---
 

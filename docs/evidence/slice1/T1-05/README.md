@@ -1,6 +1,6 @@
 # T1-05 · Domínio e Store da Fatia 1 — evidência
 
-Comandos (DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer): `scripts/bootstrap.sh`, `scripts/gen.sh`, `scripts/lint.sh`, `scripts/lint.sh --self-test`, `swift test --package-path Packages/AgentBoxKit`.
+Comandos (DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer): `scripts/bootstrap.sh`, `scripts/gen.sh`, `scripts/lint.sh`, `scripts/lint.sh --self-test`, `swift test --package-path Packages/RackyKit`.
 
 - `swift-test.log`: 54 testes, 0 falhas (inclui migração, round-trip, corrupção, versão mais nova, debounce, observação e máquinas de estado).
 - `lint.log`, `lint-selftest.log`: Swift 6 estrito sem warnings; regras AR-131 verdes.
@@ -19,8 +19,8 @@ Comandos (DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer): `scripts/bo
 
 ## Decisões e divergências
 
-- Modelos de domínio (valores `Sendable`) ficam em `AgentBoxProtocol/Domain/`, não em `AgentBoxCore/Domain/`: `AgentBoxStore` não pode depender de `AgentBoxCore` (Core depende de Store, AR-121). As máquinas de estado (funções puras) ficam em `AgentBoxCore/Domain/`.
-- AC-T13 cita `corrupt-<ts>.sqlite`; implementado como AR-331 (`db/corrupt-<ts>/agentbox.sqlite*`). O arquivo é preservado e o aviso carrega o caminho para "Reveal Corrupt File".
+- Modelos de domínio (valores `Sendable`) ficam em `RackyProtocol/Domain/`, não em `RackyCore/Domain/`: `RackyStore` não pode depender de `RackyCore` (Core depende de Store, AR-121). As máquinas de estado (funções puras) ficam em `RackyCore/Domain/`.
+- AC-T13 cita `corrupt-<ts>.sqlite`; implementado como AR-331 (`db/corrupt-<ts>/racky.sqlite*`). O arquivo é preservado e o aviso carrega o caminho para "Reveal Corrupt File".
 - `SessionLifecycle` persiste só `active`/`archived` (schema); `creating`, `failedToCreate`, `missing` e `deleted` são estados em memória e `save` os rejeita. `sleeping` (v1.1) fora.
 - Banco novo não gera backup pré-migração (nada a preservar); só há backup quando já existe migração aplicada.
 - `scripts/lint.sh`: corrigido o motor de regras (`--glob '*.swift'` anulava os globs de escopo, fazendo `ui-system` varrer o projeto todo); agora usa `--type swift`. Caso novo no self-test.
@@ -30,5 +30,5 @@ Comandos (DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer): `scripts/bo
 
 - Corrupção em tempo de execução só é detectada e põe o store em somente leitura; sem teste automatizado (difícil de simular sem o app).
 - Agendamento de backup a cada 24 h com o app aberto (o store expõe `backupDailyIfNeeded()`; o app agenda).
-- XCUITest de AC-T13 com `AGENTBOX_TEST_CORRUPT_DB=1` (precisa do app, tarefas T1-10 em diante).
+- XCUITest de AC-T13 com `RACKY_TEST_CORRUPT_DB=1` (precisa do app, tarefas T1-10 em diante).
 - Tabela `agent_run` (`v2_activity`); `AgentRun` existe só como tipo.

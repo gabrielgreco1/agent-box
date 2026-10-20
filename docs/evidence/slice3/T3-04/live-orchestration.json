@@ -1,13 +1,13 @@
 {
   "claude_run": {
     "agent_subagent_types": [
-      "agentbox-worker-1",
-      "agentbox-worker-2"
+      "racky-worker-1",
+      "racky-worker-2"
     ],
-    "agentbox_mcp_server_present": true,
+    "racky_mcp_server_present": true,
     "app_skills_loaded": [
-      "agentbox",
-      "agentbox-app:agentbox-boxes"
+      "racky",
+      "racky-app:racky-boxes"
     ],
     "bash_commands": [],
     "cost_usd": 0.017838579999999996,
@@ -16,7 +16,7 @@
     "other_mcp_servers_count": 38,
     "parent_tool_uses": [
       "ToolSearch",
-      "mcp__agentbox__boxes_reserve",
+      "mcp__racky__boxes_reserve",
       "Agent",
       "Agent"
     ],
@@ -64,7 +64,7 @@
       "requests": 4,
       "tunnels": 2
     },
-    "worker": "agentbox-worker-1"
+    "worker": "racky-worker-1"
   },
   "queue_admission": "q-three admitted after q-one was released; worker ran exec on it",
   "queue_reserve": {
@@ -78,7 +78,7 @@
           "position": 1,
           "reason": "memory",
           "state": "provisioning",
-          "worker": "agentbox-worker-1"
+          "worker": "racky-worker-1"
         },
         {
           "child_id": "370f5450-w2",
@@ -87,7 +87,7 @@
           "position": 2,
           "reason": "memory",
           "state": "provisioning",
-          "worker": "agentbox-worker-2"
+          "worker": "racky-worker-2"
         },
         {
           "child_id": "370f5450-w3",
@@ -96,7 +96,7 @@
           "position": 1,
           "reason": "memory",
           "state": "queued",
-          "worker": "agentbox-worker-3"
+          "worker": "racky-worker-3"
         }
       ],
       "took_ms": 5
@@ -121,7 +121,7 @@
           "requests": 0,
           "tunnels": 0
         },
-        "worker": "agentbox-worker-1"
+        "worker": "racky-worker-1"
       },
       {
         "batch": "queue-demo",
@@ -139,7 +139,7 @@
           "requests": 0,
           "tunnels": 0
         },
-        "worker": "agentbox-worker-2"
+        "worker": "racky-worker-2"
       },
       {
         "batch": "queue-demo",
@@ -158,7 +158,7 @@
           "requests": 0,
           "tunnels": 0
         },
-        "worker": "agentbox-worker-3"
+        "worker": "racky-worker-3"
       }
     ],
     "queue": {

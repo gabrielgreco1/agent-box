@@ -2,7 +2,7 @@
 
 Data: 16/10/2026. Revisor da segunda rodada, com foco em completude funcional e subagentes. Nenhum código foi alterado.
 
-**Lido por completo:** `01-features-requested.md`, `02-core-audit.md`, `05-core-features-gaps.md`; `~/.claude/skills/agentbox/SKILL.md`; `~/orca/projects/agentbox/` (README, `bin/agentbox`, `collect.py`, `image/Dockerfile`, `image/tools/*`, `templates/subagent-prompt.md` e os artefatos de `runs/`, só leitura); `docs/spec/index.html` (convertido para texto); `docs/EXECUTION-PLAN.md`. Das tasks em `docs/tasks/` só li trechos, porque a 01 já as inventariou.
+**Lido por completo:** `01-features-requested.md`, `02-core-audit.md`, `05-core-features-gaps.md`; `~/.claude/skills/racky/SKILL.md`; `~/orca/projects/racky/` (README, `bin/racky`, `collect.py`, `image/Dockerfile`, `image/tools/*`, `templates/subagent-prompt.md` e os artefatos de `runs/`, só leitura); `docs/spec/index.html` (convertido para texto); `docs/EXECUTION-PLAN.md`. Das tasks em `docs/tasks/` só li trechos, porque a 01 já as inventariou.
 
 **Verificado na máquina** (só metadados, nenhum segredo foi impresso): `claude --help` 2.1.302, `codex --help` 0.160.0 (`login`, `exec`, `app-server`, `exec-server`, `features list`), Keychain (`security find-generic-password` sem `-w`), as chaves de `~/.codex/auth.json` sem os valores, `gh auth status`, `git config`, `ssh-add -l`, `docker context ls`, `sysctl` e `~/.claude/settings.json`.
 
@@ -72,7 +72,7 @@ Convenção: **(verificar)** marca o que veio de doc ou relato de terceiros e ai
 ### 1.4 Codex: opções
 
 O Codex não tem um equivalente ao `setup-token` para a assinatura ChatGPT.
-- **A. Identidade dedicada às boxes num volume Docker. Recomendado para o P0 (verificar com teste de carga).** No setup, o app roda uma vez `codex login --device-auth` dentro de um container auxiliar, com `CODEX_HOME` apontando para um volume nomeado `agentbox-codex-home`. Esse login abre uma **cadeia de refresh separada** da do Mac, então o Mac não é afetado. Todas as boxes Codex montam o **mesmo arquivo**: não é cópia, e o arquivo vive dentro da VM do Docker, onde o lock entre containers é coerente. É o mesmo cenário de vários terminais Codex no Mac compartilhando um `auth.json`, que é uso normal. Há sinal de que o Codex relê o disco antes de renovar (commit #11802) (verificar). O teste de aceite (§1.7) tem de provar isso.
+- **A. Identidade dedicada às boxes num volume Docker. Recomendado para o P0 (verificar com teste de carga).** No setup, o app roda uma vez `codex login --device-auth` dentro de um container auxiliar, com `CODEX_HOME` apontando para um volume nomeado `racky-codex-home`. Esse login abre uma **cadeia de refresh separada** da do Mac, então o Mac não é afetado. Todas as boxes Codex montam o **mesmo arquivo**: não é cópia, e o arquivo vive dentro da VM do Docker, onde o lock entre containers é coerente. É o mesmo cenário de vários terminais Codex no Mac compartilhando um `auth.json`, que é uso normal. Há sinal de que o Codex relê o disco antes de renovar (commit #11802) (verificar). O teste de aceite (§1.7) tem de provar isso.
 - **B.** API key (`codex login --with-api-key` lendo do Keychain do app, com `cli_auth_credentials_store=ephemeral` dentro da box). Cobrança por API, sem corrida.
 - **C.** `--with-access-token` vale só para workspaces enterprise. Não se aplica.
 - **D. Alternativa arquitetural (P2):** `codex --remote` / `app-server` / `exec-server` (experimentais na 0.160). O Codex roda no Mac, com o login do Mac, e só a execução de comandos vai para um `exec-server` no container. Isso daria um **terceiro modo**, "CLI no Mac com shell na box", sem credencial no container. Vale um spike antes de fechar a arquitetura.
@@ -81,7 +81,7 @@ O Codex não tem um equivalente ao `setup-token` para a assinatura ChatGPT.
 ### 1.5 GitHub e git dentro do container
 
 - **Não montar o token do `gh`** do Mac. Ele tem `repo` e `workflow` sobre **todos** os repositórios do dono, e um agente com shell poderia empurrar código ou alterar workflows de qualquer repo.
-- **P0, broker de credencial git no host.** Dentro da box, `git config credential.helper "!agentbox-git-credential"`. O helper pergunta ao app (por HTTP com o token da box) e o app só responde para o **remote da sessão** (host, owner e repo conferidos). Cada uso fica registrado, e um push pode exigir confirmação conforme a política. O token entregue vem do `gh auth token` do Mac, mas sai **apenas por operação** e nunca fica no container.
+- **P0, broker de credencial git no host.** Dentro da box, `git config credential.helper "!racky-git-credential"`. O helper pergunta ao app (por HTTP com o token da box) e o app só responde para o **remote da sessão** (host, owner e repo conferidos). Cada uso fica registrado, e um push pode exigir confirmação conforme a política. O token entregue vem do `gh auth token` do Mac, mas sai **apenas por operação** e nunca fica no container.
 - **P1, `gh` dentro da box.** `GH_TOKEN` com um **fine-grained PAT** limitado ao repo e às permissões mínimas (contents, pull requests), criado uma vez pelo usuário e guardado no Keychain do app. Na alternativa, o broker atende `gh api` também.
 - **SSH:** o dono não usa (remotes HTTPS, agent vazio). Se um dia usar, o Docker Desktop expõe `/run/host-services/ssh-auth.sock`. Repassar o agent dá ao container **todas** as chaves para qualquer host, então o melhor é uma deploy key por repo (P2).
 - **Identidade de commit:** `user.name`/`user.email` copiados do git do host. Assinatura de commit está desligada hoje (sem `gpgsign`). Registrar o subagente autor no trailer do commit (P2).
@@ -147,7 +147,7 @@ Severidade: **P0** bloqueia o uso principal, **P1** necessário para ser bom, **
 ### Capacidades na box (complementam 01 SC e 05 b)
 
 **N9 [P0]. Orçamento e logs não podem ficar ao alcance do agente.**
-- Evidência: no runtime antigo, `zyte_spend.json`, `requests.jsonl` e `bodies/` vivem em `/work`, que o agente escreve (`agentlog.py:8-12`). Apagar o arquivo zera o gasto, e logs editados forjam evidência. A `ZYTE_API_KEY` vai no env da box (`bin/agentbox`, `docker run -e ZYTE_API_KEY`), então o agente pode usar a chave fora do túnel e furar o orçamento.
+- Evidência: no runtime antigo, `zyte_spend.json`, `requests.jsonl` e `bodies/` vivem em `/work`, que o agente escreve (`agentlog.py:8-12`). Apagar o arquivo zera o gasto, e logs editados forjam evidência. A `ZYTE_API_KEY` vai no env da box (`bin/racky`, `docker run -e ZYTE_API_KEY`), então o agente pode usar a chave fora do túnel e furar o orçamento.
 - Recomendação:
   - O proxy, o orçamento e o listener rodam fora do alcance do agente: num sidecar de rede (`--network container:`) ou no host.
   - A chave Zyte fica só no sidecar.
@@ -204,7 +204,7 @@ Severidade: **P0** bloqueia o uso principal, **P1** necessário para ser bom, **
 
 **N18 [P1]. Usar `mcpServers` por subagente e `agent_id` dos hooks no lugar do roteamento com token HMAC.**
 - Evidência: a definição de subagente aceita `mcpServers` inline, que conecta quando o filho começa e desconecta quando termina. `agent_id` e `agent_type` são campos comuns da entrada dos hooks. O app atual injeta um `route_token` via `PreToolUse.updatedInput` (02 §2.9).
-- Recomendação: no lançamento, gerar o subagente "com computador" com `mcpServers: {agentbox: {command, args:["--child", <id>]}}`. Cada filho fala com o próprio processo MCP, e a identidade vem do processo. Validar na 2.1.302. Ressalvas: subagentes de plugin ignoram `mcpServers`, e teammates in-process também.
+- Recomendação: no lançamento, gerar o subagente "com computador" com `mcpServers: {racky: {command, args:["--child", <id>]}}`. Cada filho fala com o próprio processo MCP, e a identidade vem do processo. Validar na 2.1.302. Ressalvas: subagentes de plugin ignoram `mcpServers`, e teammates in-process também.
 
 **N19 [P1]. Ferramentas de computador para shell no modo leve.**
 - Evidência: o skill original dava `exec` na box mesmo com o CLI no Mac. A 05 b lista "shell no box" como P0, mas sem dizer como ele chega ao CLI do Mac.
@@ -349,4 +349,4 @@ Modo: **I** = isolado (CLI no container), **L** = leve (CLI no Mac, computador p
 - Relatos de corrida de refresh (não oficiais): [anthropics/claude-code#54443](https://github.com/anthropics/claude-code/issues/54443) · [#21765 (espelho)](https://claudeissues.com/issue/21765-oauth-refresh-token-not-used-when-credentials-are-copied-to-remote-headless-mach) · [análise Zylos](https://zylos.ai/research/2026-08-05-refresh-token-rotation-cloned-agent-instances)
 - Codex: [auth](https://learn.chatgpt.com/docs/auth) · [CI/CD auth](https://learn.chatgpt.com/docs/auth/ci-cd-auth) · [hooks](https://developers.openai.com/codex/hooks) · [subagents](https://developers.openai.com/codex/subagents) · [commit de refresh #11802 (espelho)](https://forge.lthn.ai/core/core-agent-ide/commit/999576f7b8626deec238f80225ab18cd323bb3de) · exec-server (terceiros): [danielvaughan](https://codex.danielvaughan.com/2026/04/21/codex-cli-remote-connections-ssh-websocket-secure-tunnels/)
 - Docker Sandboxes: [Claude Code no sbx](https://docs.docker.com/ai/sandboxes/agents/claude-code.md) · [Docker Desktop sandboxes (deprecated)](https://docs.docker.com/ai/sandboxes/docker-desktop.md) · [visão geral (terceiros)](https://www.morphllm.com/docker-sandbox)
-- Skill original: `~/.claude/skills/agentbox/SKILL.md`, `~/orca/projects/agentbox/{bin/agentbox,image/tools/{agentlog.py,tunnel.py,proxy,render},templates/subagent-prompt.md,runs/pp-*}`
+- Skill original: `~/.claude/skills/racky/SKILL.md`, `~/orca/projects/racky/{bin/racky,image/tools/{agentlog.py,tunnel.py,proxy,render},templates/subagent-prompt.md,runs/pp-*}`

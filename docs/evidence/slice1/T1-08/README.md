@@ -1,6 +1,6 @@
 # T1-08: env do shell de login
 
-Código: `Packages/AgentBoxKit/Sources/AgentBoxPlatform/LoginShellEnv/` (provider, filtro, tipos, parser) e `ProcessRunner/ShellProbe.swift` (spawn, PTY, espera, kill). Testes: `Tests/PlatformTests/LoginShellEnv*Tests.swift`.
+Código: `Packages/RackyKit/Sources/RackyPlatform/LoginShellEnv/` (provider, filtro, tipos, parser) e `ProcessRunner/ShellProbe.swift` (spawn, PTY, espera, kill). Testes: `Tests/PlatformTests/LoginShellEnv*Tests.swift`.
 
 ## Comportamento (06 §1.7)
 
@@ -9,7 +9,7 @@ Código: `Packages/AgentBoxKit/Sources/AgentBoxPlatform/LoginShellEnv/` (provide
 - Passo 3, `failed` com os dois motivos tipados e o env do launchd com diretórios conhecidos no PATH (banner `Using fallback environment`).
 - Em todo caminho o grupo e a sessão recebem SIGKILL antes do `waitpid`. Shell interativo põe jobs em grupos próprios, então só `kill(-pgid)` deixou o `sleep` de um `cmd &` no rc vivo (achado deste teste, corrigido varrendo o sid com `proc_listallpids`/`getsid`).
 - Cache em memória com coalescência de chamadas concorrentes, `reload()`, `invalidate()` (mata captura em curso) e `maxAge` opcional. Falha total não entra no cache.
-- Filtro configurável (`EnvFilter`): allow vence deny; padrão = denylist de 06 §1.7 (inclui `ORCA_*`, `AGENTBOX_*`, `CLAUDECODE`) e allowlist de `PATH`, `SSH_AUTH_SOCK` e proxies.
+- Filtro configurável (`EnvFilter`): allow vence deny; padrão = denylist de 06 §1.7 (inclui `ORCA_*`, `RACKY_*`, `CLAUDECODE`) e allowlist de `PATH`, `SSH_AUTH_SOCK` e proxies.
 - Segredos: valores nunca vão para log, `description` ou diagnóstico; o diagnóstico lista só nomes e marca os que casam KEY/TOKEN/SECRET/PASS/AUTH.
 
 ## Testes

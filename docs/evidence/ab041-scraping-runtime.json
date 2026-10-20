@@ -1,6 +1,6 @@
 {
-  "context": "colima-agentbox-dev",
-  "image": "agentbox-browser:ab019-dev",
+  "context": "colima-racky-dev",
+  "image": "racky-browser:ab019-dev",
   "image_id": "sha256:d4a2c9625570e386fc6cd3a13ae5f4cb7e2651b0065dab27abbe0a95c91fcd23",
   "architecture": "arm64",
   "headless_js_pixel": [

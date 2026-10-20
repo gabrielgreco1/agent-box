@@ -16,5 +16,5 @@
     "secret_storage" : "vault"
   },
   "secret" : "armazenado no Vault (kind proxyCredential, entrega sidecarOnly); valor NÃO registrado aqui",
-  "source" : "~\/orca\/projects\/agentbox\/.env (somente leitura; arquivo não modificado)"
+  "source" : "~\/orca\/projects\/racky\/.env (somente leitura; arquivo não modificado)"
 }

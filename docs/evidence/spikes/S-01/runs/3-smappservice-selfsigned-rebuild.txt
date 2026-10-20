@@ -1,4 +1,4 @@
-keychain=/private/tmp/claude-501/-Users-gabriel-orca-workspaces-agent-box-otter/5dda428d-ecea-4852-b667-584fd17012cc/scratchpad/s01//agentbox-ci-6926.keychain-db sha=A1395DB3DA2EE62D5A54FF4C238A46C8DB55C12A
+keychain=/private/tmp/claude-501/-Users-gabriel-orca-workspaces-agent-box-otter/5dda428d-ecea-4852-b667-584fd17012cc/scratchpad/s01//racky-ci-6926.keychain-db sha=A1395DB3DA2EE62D5A54FF4C238A46C8DB55C12A
 /private/tmp/claude-501/-Users-gabriel-orca-workspaces-agent-box-otter/5dda428d-ecea-4852-b667-584fd17012cc/scratchpad/s01/ABS01.app: replacing existing signature
 before: notFound
 register: ok

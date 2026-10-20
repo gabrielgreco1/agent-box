@@ -5,9 +5,9 @@ export SUF="${SUF:-rv1}"
 export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
 S="$(cd "$(dirname "$0")" && pwd)"
 APP="$S/ABS01.app"
-LABEL="app.agentbox.ptyd.test-s01$SUF"
+LABEL="app.racky.ptyd.test-s01$SUF"
 run() { rm -f /tmp/s01-rr-out.txt; open -W -g -n --stdout /tmp/s01-rr-out.txt --stderr /tmp/s01-rr-out.txt "$APP" --args "$1" >/dev/null 2>&1; cat /tmp/s01-rr-out.txt | tr '\n' ' '; echo; }
-conn() { (echo "$1" | nc -U "$(launchctl getenv AGENTBOX_PTYD_SOCK_V1)" & P=$!; for i in 1 2 3 4 5 6; do kill -0 $P 2>/dev/null || break; sleep 1; done; kill $P 2>/dev/null); }
+conn() { (echo "$1" | nc -U "$(launchctl getenv RACKY_PTYD_SOCK_V1)" & P=$!; for i in 1 2 3 4 5 6; do kill -0 $P 2>/dev/null || break; sleep 1; done; kill $P 2>/dev/null); }
 waitexit() { for i in $(seq 1 40); do launchctl print gui/501/$LABEL | grep -q "^	state = running" || break; sleep 1; done; }
 st() { launchctl print gui/501/$LABEL | grep -E "^	state|job state|properties" | tr '\n' ' '; echo; }
 rm -f /tmp/s01-daemon.log

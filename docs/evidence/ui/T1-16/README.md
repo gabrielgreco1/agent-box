@@ -1,6 +1,6 @@
 # T1-16: fluxo de lançamento e estados do pane
 
-Rodado: `open -g -n "Agent Box.app" --env AGENTBOX_AUTOMATION=1 --env AGENTBOX_SKIP_ONBOARDING=1 --env AGENTBOX_HOME=/tmp/abev16`; cada estado vem de `agentbox ctl ui action session.launch set '<json>'` seguido de `agentbox ctl screenshot`. App e daemon filho encerrados por PID.
+Rodado: `open -g -n "Racky.app" --env RACKY_AUTOMATION=1 --env RACKY_SKIP_ONBOARDING=1 --env RACKY_HOME=/tmp/abev16`; cada estado vem de `racky ctl ui action session.launch set '<json>'` seguido de `racky ctl screenshot`. App e daemon filho encerrados por PID.
 
 | Arquivo | Pedido | Estado |
 |---|---|---|
@@ -15,4 +15,4 @@ Rodado: `open -g -n "Agent Box.app" --env AGENTBOX_AUTOMATION=1 --env AGENTBOX_S
 
 Limites da captura: o fallback AppKit (ScreenCaptureKit sem permissão TCC) não desenha o terminal Metal nem animações em voo. Por isso o voo do chip (M-501) não aparece num quadro parado; ele está coberto por `CAAnimation` com os tokens `flight`, `arcLift` e `clickRing` e some com Reduce Motion. Em duas capturas durante a ignição do Claude o render do fallback levou de 13 a 30 s (logo em imagem dentro de camada com opacidade); só afeta a captura, não a tela.
 
-Testes: `LaunchCoordinatorTests` e `LaunchTimelineTests` (fakes), `LaunchIntegrationTests` (zsh e `claude -p --model haiku "reply OK"` reais via `agentboxd`, running -> exited; CLI ausente), `LaunchStatesIntegrationTests` (estados do pane com CLI falso no daemon real).
+Testes: `LaunchCoordinatorTests` e `LaunchTimelineTests` (fakes), `LaunchIntegrationTests` (zsh e `claude -p --model haiku "reply OK"` reais via `rackyd`, running -> exited; CLI ausente), `LaunchStatesIntegrationTests` (estados do pane com CLI falso no daemon real).

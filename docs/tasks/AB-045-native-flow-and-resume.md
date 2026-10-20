@@ -2,7 +2,7 @@
 
 ## Fluxo Claude até o Docker
 
-O teste opt-in `AGENTBOX_TEST_NATIVE_CHILD_FLOW=1` agora percorre o lançamento revisado, PTY real, Claude instalado, hooks de produção, helper MCP, dispatcher do app e Docker real. O teste não fabrica eventos de filhos ou chamadas de ferramentas.
+O teste opt-in `RACKY_TEST_NATIVE_CHILD_FLOW=1` agora percorre o lançamento revisado, PTY real, Claude instalado, hooks de produção, helper MCP, dispatcher do app e Docker real. O teste não fabrica eventos de filhos ou chamadas de ferramentas.
 
 Um subagente nativo adquire uma box independente, navega até a página descartável servida por outro container próprio e retorna um marcador que só existe nessa página. O marcador é produzido por JavaScript. Depois ele chama `computer_request_help`; a callback do teste assume e devolve controle pelo broker compartilhado, e o subagente navega novamente. A segunda visita fica registrada no perfil e é capturada antes da parada automática. A box do pai continua em modo HTTP.
 
@@ -24,4 +24,4 @@ A tabela em `AB-006-visual.md` compara o print fornecido com o estado do código
 
 ## Build de desenvolvimento
 
-O build release passou, mas a cópia do bundle dentro de Documentos voltou a receber `FinderInfo` do File Provider depois da assinatura. Remover o atributo não foi estável. O script agora guarda um único bundle por checkout em `~/Library/Caches/AgentBox/Builds/<chave>/Agent Box.app` e mantém `build/Agent Box.app` como link. A assinatura é verificada no cache e pelo link; o script recusa substituir o executável em uso em qualquer um dos caminhos. O cache é artefato de desenvolvimento, não uma instalação. O runtime Colima iniciado para os testes foi desligado e os containers/volumes descartáveis foram removidos.
+O build release passou, mas a cópia do bundle dentro de Documentos voltou a receber `FinderInfo` do File Provider depois da assinatura. Remover o atributo não foi estável. O script agora guarda um único bundle por checkout em `~/Library/Caches/Racky/Builds/<chave>/Racky.app` e mantém `build/Racky.app` como link. A assinatura é verificada no cache e pelo link; o script recusa substituir o executável em uso em qualquer um dos caminhos. O cache é artefato de desenvolvimento, não uma instalação. O runtime Colima iniciado para os testes foi desligado e os containers/volumes descartáveis foram removidos.

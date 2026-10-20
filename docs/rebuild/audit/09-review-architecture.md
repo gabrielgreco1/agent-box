@@ -12,7 +12,7 @@ Ambiente conferido: Swift 6.2.4, Xcode 26.3, macOS 27.0.1, arm64. Contextos Dock
 1. A rodada 1 acertou o diagnóstico funcional, mas deixou de fora o **modelo de ameaça**. Hoje toda a cerimônia de segurança (Keychain, HMAC, capability, lease com epoch) é contornável por qualquer processo do usuário com acesso ao Docker, **inclusive os próprios agentes no Mac**. O token de cada box vai para `Config.Env` do container e aparece em `docker inspect` (N1, N2).
 2. Há **três riscos de confiabilidade sérios que ninguém citou**: (a) JSON corrompido trava a UI inteira, sem recuperação (N3); (b) chamadas bloqueantes dentro de `Task.detached` podem esgotar o pool cooperativo do Swift e travar todo o trabalho assíncrono do app (N4); (c) o app não tem **nenhum log**, nem `os_log` nem `print` (N5).
 3. **Correção técnica importante**: o SwiftTerm 1.20 já traz renderer **Metal** (`setUseMetal`), `HeadlessTerminal`, OSC 133, teclado Kitty e busca. A rodada 1 tratou o SwiftTerm como "sem GPU" e sugeriu libghostty. A troca de emulador não se justifica. O daemon de PTY pode usar o `HeadlessTerminal` do próprio SwiftTerm.
-4. **Arquitetura-alvo**: um daemon `agentboxd` (LaunchAgent via `SMAppService`, com **ativação por socket do launchd**) dono dos PTYs, com emulador headless e log bruto em disco. O app vira cliente. Estado em SQLite (GRDB 7) com migrações e backup. Core em actors com Swift 6 estrito. Docker via Engine API (eventos em vez de polling) para leitura e CLI para build/pull. Rede por box `internal` com sidecar de egress (proxy, listener e bloqueio de SSRF ao mesmo tempo). Viewer via noVNC em `WKWebView`.
+4. **Arquitetura-alvo**: um daemon `rackyd` (LaunchAgent via `SMAppService`, com **ativação por socket do launchd**) dono dos PTYs, com emulador headless e log bruto em disco. O app vira cliente. Estado em SQLite (GRDB 7) com migrações e backup. Core em actors com Swift 6 estrito. Docker via Engine API (eventos em vez de polling) para leitura e CLI para build/pull. Rede por box `internal` com sidecar de egress (proxy, listener e bloqueio de SSRF ao mesmo tempo). Viewer via noVNC em `WKWebView`.
 5. Os **dois modos de subagente** decididos pelo dono cabem numa única abstração: "sessão = PTY cujo argv é local ou `docker exec -it`". O modo isolado tem duas dependências que a rodada 1 não viu: credenciais do CLI dentro do container (conflita com a regra U9) e worktrees git montados (o arquivo `.git` aponta para caminho absoluto do host) (N16, N17).
 6. **Testes ponta a ponta exigem mudança de empacotamento**: um pacote SPM puro não hospeda XCUITest, e o app tem **zero** `accessibilityIdentifier`. Runners macOS do GitHub não rodam Docker (sem virtualização aninhada), então a integração com Docker real precisa ser gate local ou self-hosted.
 
@@ -26,14 +26,14 @@ Severidade: **Crítica** bloqueia o produto ou causa perda de dados; **Alta** qu
 |---|---|---|---|
 | N1 | Alta | **O token da box vaza via `docker inspect`.** O token é passado por `--env-file` e vira `Config.Env` do container, visível para qualquer processo com acesso ao socket Docker. Com ele dá para falar direto com `127.0.0.1:<porta>` e ignorar MCP, provenance, lease e Keychain. As ≈ 250 linhas de Keychain com contorno de API legada (`KeychainReadGate`, `LegacyKeychainInteraction`) protegem um segredo que já está exposto. | `BrowserComputerService.swift:376-377,703`; `server.py:168` |
 | N2 | Alta | **Os agentes no Mac têm o socket Docker.** Claude/Codex com Bash podem rodar `docker exec` em qualquer box, `docker run -v ~/...` e `docker inspect`. No modo leve, o container isola **o navegador do Mac**, mas não isola o agente. Os comentários e a SPEC prometem mais que isso (lease "exclusivo", caller "autenticado"). Falta um modelo de ameaça escrito. | `TerminalRuntimeManager.swift:353-368` (PATH inclui `/usr/local/bin`); `ComputerCallProvenance.swift` |
-| N3 | Alta | **JSON corrompido trava a UI.** Falha ao decodificar `workspace.json` desabilita a janela inteira (`.disabled(loadError != nil)`), sem botão de restaurar, sem backup e sem "começar do zero". Além disso, cada mudança do snapshot grava o JSON **de forma síncrona no main thread**, inclusive **a cada frame** ao arrastar o divisor da sidebar ou dos splits. O arquivo fica `0644`. | `WorkspaceView.swift:143-150,181,192-196,653-654,956-959`; `ls -la` em `~/Library/Application Support/AgentBox` |
+| N3 | Alta | **JSON corrompido trava a UI.** Falha ao decodificar `workspace.json` desabilita a janela inteira (`.disabled(loadError != nil)`), sem botão de restaurar, sem backup e sem "começar do zero". Além disso, cada mudança do snapshot grava o JSON **de forma síncrona no main thread**, inclusive **a cada frame** ao arrastar o divisor da sidebar ou dos splits. O arquivo fica `0644`. | `WorkspaceView.swift:143-150,181,192-196,653-654,956-959`; `ls -la` em `~/Library/Application Support/Racky` |
 | N4 | Alta | **O pool cooperativo pode ser esgotado.** Operações Docker síncronas (semáforo de até 120 s, `NSRecursiveLock` global) rodam dentro de `Task.detached`, que usa threads do pool cooperativo (cerca de 1 por núcleo). Com vários subagentes chamando `computer_acquire` em paralelo, as threads ficam presas esperando o lock global e **todo `await` do app para**, incluindo UI assíncrona, MCP e hooks. | `AgentComputerAccess.swift:492-514`; `BrowserComputerStore.swift:83-117,198,239,268,315,354,425`; `DockerComputerService.swift:3`; `DockerProcessRunner.swift:62,72` |
 | N5 | Média | **Não há observabilidade.** Zero ocorrências de `Logger`, `os_log`, `OSLog`, `NSLog` ou `print` em `Sources/`. Não há signposts, MetricKit nem detecção de crash anterior. Falhas reais (Keychain, Docker, hooks) não deixam rastro. Isso impede diagnosticar "não funciona" na máquina do dono. | `grep` vazio |
-| N6 | Média | **Assinatura ad-hoc a cada build.** O cdhash muda, então o ACL "Sempre permitir" do Keychain se perde a cada build (o que explica o contorno legado), os prompts de TCC (Documentos/Mesa) se repetem e a identidade das notificações fica instável. Não há hardened runtime, `--deep` está obsoleto e o bundle ID é `local.agentbox.app`. | `build_app.sh:39-63` |
+| N6 | Média | **Assinatura ad-hoc a cada build.** O cdhash muda, então o ACL "Sempre permitir" do Keychain se perde a cada build (o que explica o contorno legado), os prompts de TCC (Documentos/Mesa) se repetem e a identidade das notificações fica instável. Não há hardened runtime, `--deep` está obsoleto e o bundle ID é `local.racky.app`. | `build_app.sh:39-63` |
 | N7 | Média | **O app não pode ser dirigido por agentes nem por XCUITest.** Há zero `accessibilityIdentifier` (28 linhas usam só `accessibilityLabel`/`Value`). O pacote é só SPM com alvos executáveis, sem projeto Xcode, o que impede um bundle de UI test. Não existe canal de automação (CLI/socket) para "abrir sessão, digitar, ler a tela". | `grep accessibilityIdentifier` = 0; `Package.swift` |
 | N8 | Média | **A política de SSRF é inconsistente.** A ferramenta HTTP bloqueia IPs privados (`public_http.py`), mas `navigate` do navegador só valida o esquema e pode abrir `host.docker.internal`, `192.168.x`, `169.254.x` e as portas de outras boxes (todas na rede `bridge` padrão). | `engine.py:378-385`; `BrowserComputerService.swift:701` |
 | N9 | Média | **Canal MCP velho bloqueia o relançamento após crash.** O diretório `/private/tmp/ab-<planID>` é determinístico e criado com `mkdir` exclusivo. Depois de um crash ele sobra, e `register` falha com "O canal deste lançamento já existe". O agente salvo restaurado não volta sem preparar um novo plano. | `ComputerMCPConfiguration.swift:19`; `AgentComputerAccess.swift:150-152` |
-| N10 | Média | **Fluxo de saída fora de ordem.** O app mata os terminais (`runtime.shutdown()`) **antes** de tentar encerrar as boxes. Se as boxes falham e o usuário escolhe "Voltar ao app", os agentes já morreram. `shutdown()` faz `usleep(500_000)` no main thread. | `AgentBoxApp.swift:30-45`; `TerminalRuntimeManager.swift:263-268` |
+| N10 | Média | **Fluxo de saída fora de ordem.** O app mata os terminais (`runtime.shutdown()`) **antes** de tentar encerrar as boxes. Se as boxes falham e o usuário escolhe "Voltar ao app", os agentes já morreram. `shutdown()` faz `usleep(500_000)` no main thread. | `RackyApp.swift:30-45`; `TerminalRuntimeManager.swift:263-268` |
 | N11 | Média | **A imagem não é reprodutível no tempo.** O `Dockerfile` fixa versões exatas de pacotes apt do Ubuntu (`xvfb=2:21.1.12-1ubuntu1.8` etc.). Quando o arquivo do Ubuntu removê-las, o build quebra. Como a imagem não é publicada em nenhum registry, não há como recuperar um build bom. | `runtime/boxes/Dockerfile:2-4` |
 | N12 | Média | **Docker a partir de app GUI.** O runner herda o ambiente do launchd (PATH mínimo). Por isso `docker pull`/`build` com credential helper (`docker-credential-desktop`, `osxkeychain`) falha com "not found in $PATH" fora do Terminal. `findExecutable` não procura em `~/.orbstack/bin`. | `DockerProcessRunner.swift:42-60` |
 | N13 | Média | **Viewer pesado no main thread.** Cada frame MJPEG é decodificado com `NSImage(data:)` dentro de `Task { @MainActor }`. No runtime, `frame()` segura `engine.lock`, então um `navigate` longo congela o viewer. | `RemoteDesktopView.swift:172-174`; `engine.py:387-391` |
@@ -51,7 +51,7 @@ Severidade: **Crítica** bloqueia o produto ou causa perda de dados; **Alta** qu
 - `SecretVault.resolve` não tem chamador.
 - `requestChild`/`revokeChild` só aparecem em testes.
 - Closes no timeout do runner com drain em andamento (`DockerProcessRunner.swift:83`).
-- Testes Docker fixados em `colima-agentbox-dev`.
+- Testes Docker fixados em `colima-racky-dev`.
 - Não verifiquei de novo: a contagem de 121 avisos de concorrência estrita e os 172 testes.
 
 ---
@@ -61,11 +61,11 @@ Severidade: **Crítica** bloqueia o produto ou causa perda de dados; **Alta** qu
 ### 2.1 Visão geral
 
 ```
-┌────────────────────────────── Agent Box.app (assinada, hardened runtime, sem sandbox) ─────────────────────────────┐
-│  AgentBoxApp (@main fino)                                                                                         │
-│   └─ AgentBoxUI  (@MainActor por padrão · @Observable por linha/pane · design system · TerminalSurface Metal)      │
+┌────────────────────────────── Racky.app (assinada, hardened runtime, sem sandbox) ─────────────────────────────┐
+│  RackyApp (@main fino)                                                                                         │
+│   └─ RackyUI  (@MainActor por padrão · @Observable por linha/pane · design system · TerminalSurface Metal)      │
 │        │ view models chamam só serviços                                                                            │
-│   AgentBoxCore (Swift 6 estrito, actors, sem AppKit)                                                               │
+│   RackyCore (Swift 6 estrito, actors, sem AppKit)                                                               │
 │   ┌──────────────┬──────────────┬───────────────┬───────────────┬──────────────┬──────────────┬────────────────┐   │
 │   │ Persistence  │ Workspace    │ LaunchService │ AgentRuns     │ Computers    │ Git/GitHub   │ Catalog        │   │
 │   │ GRDB/SQLite  │ Project/WT/  │ adapters      │ hooks→eventos │ Engine API + │ git CLI + gh │ ~/.claude,     │   │
@@ -73,15 +73,15 @@ Severidade: **Crítica** bloqueia o produto ou causa perda de dados; **Alta** qu
 │   │ backup       │              │ OpenCode/Shell│ estado agente │ pull; GC     │              │ índice só meta │   │
 │   ├──────────────┴──────┬───────┴───────────────┴───────┬───────┴──────┬───────┴──────────────┴────────────────┤   │
 │   │ PTYClient (actor)   │ MCPHost (UDS, por execução)   │ Control      │ Platform: ProcessRunner async,       │   │
-│   │ fala agentboxd      │ identidade via adapter        │ (runtime =   │ Keychain (1 item mestre), Logger,    │   │
+│   │ fala rackyd      │ identidade via adapter        │ (runtime =   │ Keychain (1 item mestre), Logger,    │   │
 │   └─────────┬───────────┴───────────────┬───────────────┘ fonte única) │ SMAppService, Notifications          │   │
 │             │                           │                              └──────────────────────────────────────┘   │
-│  Contents/MacOS/agentboxd  ·  Contents/MacOS/agentbox (helper: mcp | hook | ctl)  ·  Library/LaunchAgents/*.plist │
+│  Contents/MacOS/rackyd  ·  Contents/MacOS/racky (helper: mcp | hook | ctl)  ·  Library/LaunchAgents/*.plist │
 └─────────────┼───────────────────────────┼─────────────────────────────────────────────────────────────────────────┘
               │ UDS framed (hello/versão,  │ stdio MCP ← CLI do agente (modo leve)
               │ peer = uid + code signing) │
 ┌─────────────▼───────────────────────┐   │          ┌────────────── Docker (Desktop | OrbStack | Colima) ───────────────┐
-│ agentboxd (LaunchAgent, socket-     │   │          │ rede agentbox-<box> (internal)                                    │
+│ rackyd (LaunchAgent, socket-     │   │          │ rede racky-<box> (internal)                                    │
 │ activated, sobrevive a quit/crash   │   │          │  ┌──────────────┐   ┌──────────────────┐   ┌─────────────────┐   │
 │ da UI)                              │   └─────────►│  │ box-runtime  │   │ work (modo       │   │ egress sidecar  │   │
 │  Session × N:                       │  HTTP 127.0. │  │ Chromium,    │◄──│ isolado): CLI    │──►│ proxy + listener│──► internet
@@ -93,20 +93,20 @@ Severidade: **Crítica** bloqueia o produto ou causa perda de dados; **Alta** qu
 ```
 
 Princípios:
-1. **O daemon é pequeno e muda pouco.** O daemon do Orca tem 556 arquivos e cerca de 100 mil linhas TypeScript, com 48 versões de protocolo. Isso mostra o custo de um daemon que acumula responsabilidades. Aqui o `agentboxd` só hospeda PTYs, guarda tela e scrollback, faz relay de bytes e emite eventos de processo. Banco de dados, Docker, git e hooks ficam fora dele.
+1. **O daemon é pequeno e muda pouco.** O daemon do Orca tem 556 arquivos e cerca de 100 mil linhas TypeScript, com 48 versões de protocolo. Isso mostra o custo de um daemon que acumula responsabilidades. Aqui o `rackyd` só hospeda PTYs, guarda tela e scrollback, faz relay de bytes e emite eventos de processo. Banco de dados, Docker, git e hooks ficam fora dele.
 2. **Uma fonte de verdade por estado**: PTY → daemon. Controle do computador → runtime da box. Domínio → SQLite do app. Containers → Docker (rótulos) reconciliado com o SQLite.
 3. **Nada bloqueante no pool cooperativo.** Processos via runner async (`swift-subprocess` ou `Process` com `terminationHandler` + `AsyncStream`). Docker via Engine API sobre UDS.
 
-### 2.2 Daemon de PTY (`agentboxd`)
+### 2.2 Daemon de PTY (`rackyd`)
 
 **Hospedagem e ciclo de vida**
-- O LaunchAgent fica registrado com `SMAppService.agent(plistName:)`. O plist em `Contents/Library/LaunchAgents/` usa `BundleProgram=Contents/MacOS/agentboxd`, `AssociatedBundleIdentifiers` (prompts de TCC atribuídos ao app), `ProcessType=Interactive` e `AbandonProcessGroup=true`.
-- **Ativação por socket** (chave `Sockets` com `SockPathName` em `~/Library/Application Support/AgentBox/run/ptyd-v1.sock`, `SockPathMode=0600`). O daemon recebe o fd via `launch_activate_socket`. O launchd vira dono do caminho, o que elimina toda a classe de bugs de "quem pode dar unlink no socket", que custou 23 defeitos ao Orca (`orca-src/src/main/daemon/AGENTS.md`).
+- O LaunchAgent fica registrado com `SMAppService.agent(plistName:)`. O plist em `Contents/Library/LaunchAgents/` usa `BundleProgram=Contents/MacOS/rackyd`, `AssociatedBundleIdentifiers` (prompts de TCC atribuídos ao app), `ProcessType=Interactive` e `AbandonProcessGroup=true`.
+- **Ativação por socket** (chave `Sockets` com `SockPathName` em `~/Library/Application Support/Racky/run/ptyd-v1.sock`, `SockPathMode=0600`). O daemon recebe o fd via `launch_activate_socket`. O launchd vira dono do caminho, o que elimina toda a classe de bugs de "quem pode dar unlink no socket", que custou 23 defeitos ao Orca (`orca-src/src/main/daemon/AGENTS.md`).
 - `KeepAlive=false`. O daemon sai sozinho depois de 60 s sem sessões e sem clientes, e o launchd o relança na próxima conexão.
-- O label e o socket são **por versão major do protocolo** (`com.agentbox.ptyd.v1`). Um app novo com protocolo v2 sobe um daemon v2 para sessões novas, e as sessões v1 continuam no daemon antigo até terminarem. O app suporta N e N-1 e mostra "3 terminais em daemon antigo".
+- O label e o socket são **por versão major do protocolo** (`com.racky.ptyd.v1`). Um app novo com protocolo v2 sobe um daemon v2 para sessões novas, e as sessões v1 continuam no daemon antigo até terminarem. O app suporta N e N-1 e mostra "3 terminais em daemon antigo".
 
 **Protocolo (UDS, framing binário)**
-- Frame: `u32 len | u8 type | payload`. Mensagens de controle em JSON (`Codable`, módulo `AgentBoxProtocol` compartilhado). Dados em binário: `sessionID(16) | seq(u64) | bytes`.
+- Frame: `u32 len | u8 type | payload`. Mensagens de controle em JSON (`Codable`, módulo `RackyProtocol` compartilhado). Dados em binário: `sessionID(16) | seq(u64) | bytes`.
 - Handshake `hello{major, minor, appBuild, capabilities}` → `helloAck{daemonVersion, minor, capabilities, pid, startedAt}`. Recurso novo entra como `capability` e não exige nova versão major.
 - Requests:
   - `create{spec: argv, cwd, env, cols, rows, term, label, coldLogPolicy}` → `sessionID`. **O env vem do app**, já capturado do shell de login (ver §6.7), porque o daemon herda o env mínimo do launchd.
@@ -114,7 +114,7 @@ Princípios:
   - `attach{sessionID, mode: snapshot|sinceSeq}` → `snapshot{ansi, cursor, modes, seq}`, seguido do stream de dados.
   - `input`, `resize` (com debounce no cliente), `signal{group|foreground}`, `detach`, `kill`, `subscribe{exit, title, cwd, bell, osc133, idle}`, `drain` (sair quando ocioso).
 - Backpressure: fila limitada por cliente. Se o limite estoura, o daemon descarta e envia `resyncRequired`, e o cliente pede um snapshot novo. Sessões **não visíveis** no app não recebem bytes, só eventos. Isso também resolve N14, porque o main thread só alimenta os panes visíveis.
-- Autenticação do peer: `getpeereid` (mesmo uid) **e** requisito de assinatura via `LOCAL_PEERTOKEN` + `SecCodeCopyGuestWithAttributes`, aceitando só o app e o helper `agentbox`. Motivo: o socket do daemon permite **injetar teclas em qualquer terminal**, inclusive num Claude com `bypassPermissions`. Um agente rodando como o mesmo usuário não pode ter acesso a ele.
+- Autenticação do peer: `getpeereid` (mesmo uid) **e** requisito de assinatura via `LOCAL_PEERTOKEN` + `SecCodeCopyGuestWithAttributes`, aceitando só o app e o helper `racky`. Motivo: o socket do daemon permite **injetar teclas em qualquer terminal**, inclusive num Claude com `bypassPermissions`. Um agente rodando como o mesmo usuário não pode ter acesso a ele.
 
 **Tela e scrollback**
 - Por sessão, um `SwiftTerm.Terminal` headless (a classe `HeadlessTerminal` já existe em `SwiftTerm/HeadlessTerminal.swift`) numa fila serial própria.
@@ -155,11 +155,11 @@ Tabelas iniciais:
 
 Regras:
 - WAL, `foreign_keys=ON`. Escritas num actor `Store`. A UI observa via `ValueObservation`, sem `onChange` gravando em disco. Arrastar divisor só grava no fim do gesto.
-- Migrações numeradas no `DatabaseMigrator`. **Backup automático antes de cada migração** e um backup diário (`VACUUM INTO backups/agentbox-YYYYMMDD.sqlite`), mantendo 7.
+- Migrações numeradas no `DatabaseMigrator`. **Backup automático antes de cada migração** e um backup diário (`VACUUM INTO backups/racky-YYYYMMDD.sqlite`), mantendo 7.
 - Corrupção: `PRAGMA quick_check` no boot. Se falhar, o arquivo é movido para `corrupt-<ts>.sqlite`, o último backup é restaurado e um banner explica. **Nunca desabilitar a UI.**
 - Importador único do JSON atual (`workspace.json`, `library.json`, `AgentRuns.json`, `ComputerPolicy.json`) com dry-run e os originais preservados.
 - Scrollback e logs **fora** do banco. Transcripts dos CLIs nunca são copiados, só indexados (concorda com o 05).
-- Permissões: diretório `0700`, arquivos `0600`, tudo em `~/Library/Application Support/AgentBox/{db,run,sessions,backups,logs}`.
+- Permissões: diretório `0700`, arquivos `0600`, tudo em `~/Library/Application Support/Racky/{db,run,sessions,backups,logs}`.
 
 ### 2.4 Concorrência (Swift 6 estrito)
 
@@ -187,23 +187,23 @@ Ações oferecidas: "Abrir Docker Desktop" (`open -a`), `orb start`, `colima sta
 | OrbStack | Mais leve, memória dinâmica, domínios `*.orb.local`. Socket próprio, CLI em `~/.orbstack/bin`. |
 | Colima | Portas publicadas passam pelo port-forwarder do Lima, com **atraso de 1 a 3 s** depois do `start`. O health check precisa esperar a porta, não só o container. Mounts virtiofs exigem `vz`. |
 
-**Cliente Docker**: Engine API sobre UDS (cliente HTTP mínimo em `Network.framework`/socket, ou `AsyncHTTPClient` com UDS) para `ps`/`inspect`/`start`/`stop`/`rm`/`stats` e principalmente **`/events?filters=label=agentbox.owner`**, que substitui polling e o N+1 de inspect. O CLI fica só para `build`/`pull`, com PATH aumentado (`/usr/local/bin`, `/opt/homebrew/bin`, `~/.orbstack/bin`, `/Applications/Docker.app/Contents/Resources/bin`) para os credential helpers.
+**Cliente Docker**: Engine API sobre UDS (cliente HTTP mínimo em `Network.framework`/socket, ou `AsyncHTTPClient` com UDS) para `ps`/`inspect`/`start`/`stop`/`rm`/`stats` e principalmente **`/events?filters=label=racky.owner`**, que substitui polling e o N+1 de inspect. O CLI fica só para `build`/`pull`, com PATH aumentado (`/usr/local/bin`, `/opt/homebrew/bin`, `~/.orbstack/bin`, `/Applications/Docker.app/Contents/Resources/bin`) para os credential helpers.
 
 **Imagem**
-- Duas imagens: `agentbox-box` (runtime do navegador, o atual) e `agentbox-agent` (FROM box + node + CLIs fixados, para o modo isolado).
-- Tag = hash do contexto de build (`agentbox-box:ctx-<sha12>`). O app sabe qual tag espera, compara e oferece "Construir (≈ 2 min)" com progresso via `docker build --progress=rawjson`.
-- Publicar em GHCR por digest (`ghcr.io/<owner>/agentbox-box@sha256:…`) como caminho rápido, mantendo o build local como fallback. Remover os pins apt (N11). O base pinado por digest já garante reprodutibilidade, e o registry garante a recuperação.
+- Duas imagens: `racky-box` (runtime do navegador, o atual) e `racky-agent` (FROM box + node + CLIs fixados, para o modo isolado).
+- Tag = hash do contexto de build (`racky-box:ctx-<sha12>`). O app sabe qual tag espera, compara e oferece "Construir (≈ 2 min)" com progresso via `docker build --progress=rawjson`.
+- Publicar em GHCR por digest (`ghcr.io/<owner>/racky-box@sha256:…`) como caminho rápido, mantendo o build local como fallback. Remover os pins apt (N11). O base pinado por digest já garante reprodutibilidade, e o registry garante a recuperação.
 - arm64 é o alvo. amd64 fica não verificado e deve ser declarado assim.
 
 **Rede e portas**
-- Uma rede `internal` por box (`agentbox-<id>`), em vez de `bridge`. Os containers da box (runtime, work) se falam, e a saída para a internet passa **só** pelo sidecar de egress. O sidecar é o proxy (Zyte opcional, com orçamento), o listener (mitmproxy com CA da box) e o filtro (bloqueia RFC1918, link-local, `host.docker.internal`, metadados). Isso resolve N8 e as lacunas de listener e proxy do 05 numa peça só.
+- Uma rede `internal` por box (`racky-<id>`), em vez de `bridge`. Os containers da box (runtime, work) se falam, e a saída para a internet passa **só** pelo sidecar de egress. O sidecar é o proxy (Zyte opcional, com orçamento), o listener (mitmproxy com CA da box) e o filtro (bloqueia RFC1918, link-local, `host.docker.internal`, metadados). Isso resolve N8 e as lacunas de listener e proxy do 05 numa peça só.
 - Portas publicadas só em `127.0.0.1::<porta>` (aleatória), lidas via `inspect`. Publicam-se apenas a API do runtime e o VNC.
 
 **Limites e GC**
 - Defaults coerentes: browser com 2 GiB e 2 CPUs, `--pids-limit 512`. Limite global de boxes ativas calculado com `MemTotal` da VM (por exemplo `floor((MemTotal − 2 GiB) / 2 GiB)`).
 - Box de subagente é **efêmera**: removida (container + volume) no `SubagentStop`, com opção "manter por 24 h para inspeção". Box nomeada/persistente tem volume de perfil e só sai por ação explícita.
-- Reconciliação no boot: tudo com label `agentbox.owner` que não está no SQLite vai para "órfãos", com tamanho em disco e botão de limpar. Nada é apagado sem confirmação, exceto boxes efêmeras marcadas.
-- Segredos: **não usar env.** Token da box = `HMAC(chaveMestra, boxID)`, com a chave mestra num **único** item do Keychain. Nenhum item por box, nenhum prompt. O token chega ao container por arquivo bind-montado read-only (`/run/agentbox/token`, `0400`, uid do runtime). `docker inspect` mostra o caminho, não o conteúdo.
+- Reconciliação no boot: tudo com label `racky.owner` que não está no SQLite vai para "órfãos", com tamanho em disco e botão de limpar. Nada é apagado sem confirmação, exceto boxes efêmeras marcadas.
+- Segredos: **não usar env.** Token da box = `HMAC(chaveMestra, boxID)`, com a chave mestra num **único** item do Keychain. Nenhum item por box, nenhum prompt. O token chega ao container por arquivo bind-montado read-only (`/run/racky/token`, `0400`, uid do runtime). `docker inspect` mostra o caminho, não o conteúdo.
 - No modo isolado, o CLI do agente roda com **outro uid** (10002) e não lê o token do runtime.
 
 ### 2.6 Streaming de desktop
@@ -237,15 +237,15 @@ Consequências:
 - O socket do daemon exige requisito de assinatura do peer (§2.2).
 - Secrets do usuário (API keys, token Zyte, GitHub device flow): Keychain com `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`. Entram no env do PTY só por opt-in por perfil, e o pane mostra "env: 2 segredos".
 - Credenciais do CLI no modo isolado: ver D4.
-- Assinatura: **identidade estável**. Developer ID (US$ 99/ano) ou um certificado de assinatura local autoassinado com designated requirement fixo, que basta para uso pessoal e estabiliza Keychain, TCC, notificações e `SMAppService`. Hardened runtime **ligado**, sem App Sandbox (incompatível com PTY, CLIs arbitrários e socket Docker). Sem entitlements especiais. Assinar `agentboxd` e `agentbox` com a mesma identidade, sem `--deep`.
+- Assinatura: **identidade estável**. Developer ID (US$ 99/ano) ou um certificado de assinatura local autoassinado com designated requirement fixo, que basta para uso pessoal e estabiliza Keychain, TCC, notificações e `SMAppService`. Hardened runtime **ligado**, sem App Sandbox (incompatível com PTY, CLIs arbitrários e socket Docker). Sem entitlements especiais. Assinar `rackyd` e `racky` com a mesma identidade, sem `--deep`.
 - Notarização só se houver distribuição. Para uso pessoal, não é necessária.
 - Atualizações: Sparkle 2 (EdDSA) **só** se houver Developer ID e distribuição. Para app pessoal, `scripts/install.sh` (build, assinar, substituir em `/Applications`, `launchctl kickstart` do daemon se a versão major mudou). Em qualquer caso, a atualização **não mata o daemon**: o binário antigo continua mapeado, e sessões novas usam o novo (§2.2).
 - `security-scoped bookmarks`: desnecessários sem sandbox. Remover `WorkspaceDirectoryAccess`. O que importa é a atribuição de TCC para processos do daemon (`AssociatedBundleIdentifiers`).
 
 **Logs, crash e telemetria local**
-- `Logger(subsystem: "app.agentbox", category: …)` por módulo, com `privacy: .private` em caminhos, argv e tokens. Signposts (`OSSignposter`) em launch, attach, acquire de box e primeiro frame do viewer.
-- O daemon também grava em arquivo rotativo (`logs/agentboxd.log`, 5 × 2 MiB), porque `OSLogStore` no app só lê o próprio processo.
-- Crash: no boot, procurar `~/Library/Logs/DiagnosticReports/AgentBox*.ips` e `agentboxd*.ips` mais novos que a última execução e oferecer "abrir/anexar ao diagnóstico". `MXMetricManager` (MetricKit no macOS 12+) para hangs e crashes.
+- `Logger(subsystem: "app.racky", category: …)` por módulo, com `privacy: .private` em caminhos, argv e tokens. Signposts (`OSSignposter`) em launch, attach, acquire de box e primeiro frame do viewer.
+- O daemon também grava em arquivo rotativo (`logs/rackyd.log`, 5 × 2 MiB), porque `OSLogStore` no app só lê o próprio processo.
+- Crash: no boot, procurar `~/Library/Logs/DiagnosticReports/Racky*.ips` e `rackyd*.ips` mais novos que a última execução e oferecer "abrir/anexar ao diagnóstico". `MXMetricManager` (MetricKit no macOS 12+) para hangs e crashes.
 - "Telemetria" **só local**: tabela `metric` (latências de launch, acquire, attach e criação de box; contagem de erros por tipo) e uma tela de Diagnóstico com "Exportar pacote sanitizado" (logs, versões dos CLIs, `docker info` resumido, sem segredos). Nada sai da máquina.
 
 ### 2.8 Performance do terminal
@@ -263,13 +263,13 @@ Gerar o projeto Xcode a partir de um manifesto (XcodeGen ou Tuist), com o códig
 
 | Alvo | Tipo | Depende de | Conteúdo |
 |---|---|---|---|
-| `AgentBoxProtocol` | lib | — | DTOs `Sendable`, framing, versões e capabilities do daemon, protocolo do helper |
-| `AgentBoxCore` | lib | Protocol, GRDB | Domínio e serviços (§2.1), adapters de CLI, Docker Engine client, MCP host |
-| `AgentBoxPlatform` | lib | — | ProcessRunner async, Keychain, Logger, SMAppService, FSEvents, LoginShellEnv |
-| `AgentBoxUI` | lib | Core, Platform, SwiftTerm | Design system, views, view models (MainActor) |
-| `AgentBoxApp` | app | UI | `@main`, menus/commands, ciclo de vida |
-| `agentboxd` | exe | Protocol, SwiftTerm (só `Terminal`/`LocalProcess`), Platform | Daemon de PTY |
-| `agentbox` | exe | Protocol, Core (parte) | Subcomandos `mcp` (stdio → UDS), `hook` (substitui `claude_event.py`, N15), `ctl` (automação e testes, §3) |
+| `RackyProtocol` | lib | — | DTOs `Sendable`, framing, versões e capabilities do daemon, protocolo do helper |
+| `RackyCore` | lib | Protocol, GRDB | Domínio e serviços (§2.1), adapters de CLI, Docker Engine client, MCP host |
+| `RackyPlatform` | lib | — | ProcessRunner async, Keychain, Logger, SMAppService, FSEvents, LoginShellEnv |
+| `RackyUI` | lib | Core, Platform, SwiftTerm | Design system, views, view models (MainActor) |
+| `RackyApp` | app | UI | `@main`, menus/commands, ciclo de vida |
+| `rackyd` | exe | Protocol, SwiftTerm (só `Terminal`/`LocalProcess`), Platform | Daemon de PTY |
+| `racky` | exe | Protocol, Core (parte) | Subcomandos `mcp` (stdio → UDS), `hook` (substitui `claude_event.py`, N15), `ctl` (automação e testes, §3) |
 | `runtime/box`, `runtime/agent`, `runtime/egress` | imagens | — | Python atual ampliado; Dockerfile do agente; sidecar mitmproxy |
 | Testes | ver §3 | | |
 
@@ -295,18 +295,18 @@ Gerar o projeto Xcode a partir de um manifesto (XcodeGen ou Tuist), com o códig
 | Camada | Ferramenta | O que prova | Onde roda |
 |---|---|---|---|
 | Unidade | Swift Testing (`@Test`) | Mutações puras, adapters de CLI (argv por perfil), parsers (sessões Claude/Codex/OpenCode com fixtures reais anonimizadas), migrações GRDB (banco v1 → vN com dados) | CI macOS (GitHub) |
-| Protocolo do daemon | Swift Testing + processo real | Spawn de `agentboxd` com socket temporário: create → output → **matar o cliente** → attach → snapshot igual; seq sem buracos; backpressure com `resyncRequired`; versão N-1; fuzz do framing | CI macOS |
+| Protocolo do daemon | Swift Testing + processo real | Spawn de `rackyd` com socket temporário: create → output → **matar o cliente** → attach → snapshot igual; seq sem buracos; backpressure com `resyncRequired`; versão N-1; fuzz do framing | CI macOS |
 | PTY real | Já existe (`ProcessesPTYTests`) | Sinais, grupos, exit codes, migrados para o daemon | CI macOS |
 | Runtime da box | `unittest` atual + Playwright real | API, lease, VNC sobe, CDP screencast | **CI Linux** (Docker disponível) |
-| Docker real | Testes gated por `AGENTBOX_DOCKER_CONTEXT` (sem contexto fixo), imagem construída no setup, recursos rotulados por execução e removidos no teardown | Criar, start, health, VNC, stop, rm, GC, eventos, rede `internal` bloqueando RFC1918 | **Mac do dono ou self-hosted.** Runners macOS do GitHub não têm virtualização aninhada e não rodam Docker |
-| Contrato dos CLIs | Gated por `AGENTBOX_REAL_CLI=1`, com orçamento | `claude --session-id` + hooks chegam; `codex -c mcp_servers` enxerga as ferramentas; `--resume` repassa flags | Local, antes de release |
-| UI | **XCUITest** no projeto Xcode | Fluxos P0: criar projeto → ⌘T → terminal já rodando → split → sair e reabrir com processo vivo → takeover de box | Local + CI macOS (sem Docker: box falsa via `AGENTBOX_FAKE_RUNTIME`) |
+| Docker real | Testes gated por `RACKY_DOCKER_CONTEXT` (sem contexto fixo), imagem construída no setup, recursos rotulados por execução e removidos no teardown | Criar, start, health, VNC, stop, rm, GC, eventos, rede `internal` bloqueando RFC1918 | **Mac do dono ou self-hosted.** Runners macOS do GitHub não têm virtualização aninhada e não rodam Docker |
+| Contrato dos CLIs | Gated por `RACKY_REAL_CLI=1`, com orçamento | `claude --session-id` + hooks chegam; `codex -c mcp_servers` enxerga as ferramentas; `--resume` repassa flags | Local, antes de release |
+| UI | **XCUITest** no projeto Xcode | Fluxos P0: criar projeto → ⌘T → terminal já rodando → split → sair e reabrir com processo vivo → takeover de box | Local + CI macOS (sem Docker: box falsa via `RACKY_FAKE_RUNTIME`) |
 | Snapshot | `swift-snapshot-testing` em `NSHostingView` com fonte e tamanho fixos, claro/escuro, Reduce Motion | Componentes do design system e estados (sidebar, tab, badge "esperando você", estados de erro) | CI macOS (imagens de referência por versão de SO) |
 | Motion | Testes de tokens (durações/curvas vêm do enum `Motion`); teste que, com Reduce Motion, nenhuma `Animation` não nula é aplicada; signposts nas transições, medidos com `xctrace` | O 06 §3.4 (0 hitches, um resize de PTY por transição) | Local (Instruments), sem gate de CI |
 
 **Para agentes conseguirem dirigir o app** (requisito explícito do dono):
 1. `accessibilityIdentifier` estáveis e hierárquicos em todo controle e contêiner (`sidebar.project.<id>`, `tab.<id>`, `pane.<terminalID>`, `pane.<id>.status`, `computer.<id>.takeover`). Checklist de PR e um teste XCUITest que percorre a árvore e falha se um controle interativo não tiver ID.
-2. **`agentbox ctl`**: canal de automação opt-in (desligado por padrão, liga em Configurações → Desenvolvedor), via UDS do app, com escopo de capability. Comandos:
+2. **`racky ctl`**: canal de automação opt-in (desligado por padrão, liga em Configurações → Desenvolvedor), via UDS do app, com escopo de capability. Comandos:
    - `ctl session open`
    - `ctl terminal new --provider shell --cwd …`
    - `ctl terminal send <id> "echo ok\n"`
@@ -335,7 +335,7 @@ CI: GitHub Actions `macos-15` (build com Swift 6 estrito, testes unitários, pro
 
 | # | Decisão | Opções | Recomendação |
 |---|---|---|---|
-| D1 | Sobrevivência de PTY | (a) daemon próprio `agentboxd`; (b) tmux com socket próprio (`-L agentbox`, `-CC`); (c) nada na v1 | (a). Tmux custa dependência, conflito de atalhos e TUIs quebradas, e o dono quer "estilo Orca" |
+| D1 | Sobrevivência de PTY | (a) daemon próprio `rackyd`; (b) tmux com socket próprio (`-L racky`, `-CC`); (c) nada na v1 | (a). Tmux custa dependência, conflito de atalhos e TUIs quebradas, e o dono quer "estilo Orca" |
 | D2 | Granularidade do host de PTY | Daemon único **ou** um host por sessão | Daemon único na v1 (mais simples). Reavaliar se crash ou upgrade do daemon virar dor |
 | D3 | Restore de tela | Ring de bytes brutos (v1) **ou** serializador de células | Ring na v1 |
 | D4 | Credenciais no modo isolado | (a) `CLAUDE_CODE_OAUTH_TOKEN` de `claude setup-token` (assinatura, longa duração, o modelo enxerga); (b) API key dedicada com limite de gasto; (c) proxy de credenciais no egress que injeta o header (o agente nunca vê o token) | (c) se viável para Anthropic/OpenAI; senão (b). Revogar a regra U9 explicitamente |
@@ -372,9 +372,9 @@ CI: GitHub Actions `macos-15` (build com Swift 6 estrito, testes unitários, pro
 ## 6. Ordem sugerida (engenharia, não produto)
 
 1. Esqueleto: projeto Xcode gerado, alvos da §2.9, Swift 6 estrito, Logger, lint de proibições, assinatura estável.
-2. `agentboxd` + protocolo + `PTYClient` + testes de protocolo (reattach, versão N-1). Terminal visível com Metal ligado.
+2. `rackyd` + protocolo + `PTYClient` + testes de protocolo (reattach, versão N-1). Terminal visível com Metal ligado.
 3. GRDB, migrações, backup, importador do JSON atual.
-4. LaunchService com adapters e perfis; captura de env do shell de login; `agentbox hook` em Swift; estado do agente via hooks com kqueue.
-5. `agentbox ctl` + accessibility identifiers + XCUITest dos fluxos P0 + `scripts/e2e.sh` (só terminais).
-6. Computers: RuntimeDetector, Engine API + eventos, imagem por hash/GHCR, rede `internal` + egress, token por HMAC, GC, VNC/noVNC. Depois, modo leve com MCP. Depois, modo isolado (`agentbox-agent`, `dtach`, credenciais conforme D4, mount no mesmo caminho).
+4. LaunchService com adapters e perfis; captura de env do shell de login; `racky hook` em Swift; estado do agente via hooks com kqueue.
+5. `racky ctl` + accessibility identifiers + XCUITest dos fluxos P0 + `scripts/e2e.sh` (só terminais).
+6. Computers: RuntimeDetector, Engine API + eventos, imagem por hash/GHCR, rede `internal` + egress, token por HMAC, GC, VNC/noVNC. Depois, modo leve com MCP. Depois, modo isolado (`racky-agent`, `dtach`, credenciais conforme D4, mount no mesmo caminho).
 7. Diagnóstico local (métricas, exportar pacote, detecção de crash).

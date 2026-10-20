@@ -4,12 +4,12 @@ Pergunta (07 §9, CS-102): dá para rodar `exec` com stdin, stdout e stderr inde
 
 ## Resultado: APROVADO no Docker Desktop (arm64)
 
-Máquina: Docker Desktop, Engine 29.6.2, API 1.55, aarch64; cliente em `/v1.43`. Código: `AgentBoxDocker/DockerTransport.swift` (hijack), `ExecSession.swift`. Testes: `Tests/DockerTests/LiveDockerTests.swift` (`execStdinStdoutStderrExitCodeAndHalfClose`, `s9TerminateKillsTheProcessGroupAndEscalatesToSigkill`, `twentyConcurrentInspectsAndExecsStayResponsive`), mais os testes de unidade contra um daemon falso (`ClientTests.swift`) e `PlatformTests/HalfCloseTests`.
+Máquina: Docker Desktop, Engine 29.6.2, API 1.55, aarch64; cliente em `/v1.43`. Código: `RackyDocker/DockerTransport.swift` (hijack), `ExecSession.swift`. Testes: `Tests/DockerTests/LiveDockerTests.swift` (`execStdinStdoutStderrExitCodeAndHalfClose`, `s9TerminateKillsTheProcessGroupAndEscalatesToSigkill`, `twentyConcurrentInspectsAndExecsStayResponsive`), mais os testes de unidade contra um daemon falso (`ClientTests.swift`) e `PlatformTests/HalfCloseTests`.
 
 | Pergunta | Resultado medido |
 |---|---|
 | Upgrade da conexão | `POST /exec/{id}/start` com `Connection: Upgrade` + `Upgrade: tcp` responde `HTTP 101`, `Content-Type: application/vnd.docker.multiplexed-stream`. O cliente aceita também `200` (alguns runtimes) |
-| Stdin e EOF | `cat` recebe o stdin inteiro e termina: o half-close (`shutdown(SHUT_WR)`) feito pelo cliente chega ao processo através do proxy do Docker Desktop. `UDSConnection.finishWriting()` (novo em `AgentBoxPlatform`) espera os bytes pendentes saírem antes do `SHUT_WR` |
+| Stdin e EOF | `cat` recebe o stdin inteiro e termina: o half-close (`shutdown(SHUT_WR)`) feito pelo cliente chega ao processo através do proxy do Docker Desktop. `UDSConnection.finishWriting()` (novo em `RackyPlatform`) espera os bytes pendentes saírem antes do `SHUT_WR` |
 | stdout e stderr | Frames de 8 bytes (`kind`, 3 zeros, tamanho big endian) separam os dois fluxos; `sh -c 'echo out; echo err >&2; exit 7'` devolve `out`, `err` e código 7 (via `GET /exec/{id}/json`) |
 | Integridade e volume | 2 MiB binários de stdin voltam idênticos; 16 MiB de stdout sem perda; stdin interativo em pedaços (`a`, pausa, `b`, fecha) |
 | SIGTERM no grupo | O processo do exec é líder de sessão e de grupo (`pid == pgid == sid`, verificado com `ps -o pid,pgid,sid`), então `kill -s TERM -- -<pid>` alcança os filhos. Wrapper `sh -c 'echo $$ > /tmp/.abx-exec-<uuid>; exec "$@"'` registra o PID. Medido: pai + 2 filhos `sleep` morrem, exit **143**, em ~40 ms |
@@ -19,15 +19,15 @@ Máquina: Docker Desktop, Engine 29.6.2, API 1.55, aarch64; cliente em `/v1.43`.
 
 Desvio em relação ao texto do spike: o transporte não usa Network.framework; usa o `UDSConnection` da Platform (`DispatchSource` sobre o socket BSD, não bloqueante), que já é o padrão do resto do app e cumpre o mesmo critério.
 
-Limite conhecido: o wrapper de grupo exige `/bin/sh` e `/tmp` gravável na imagem (a imagem `agentbox-box` e as de teste têm; o container tem `tmpfs /tmp`). Sem `killableGroup`, `terminate` falha com `DockerError.execNotKillable` em vez de adivinhar.
+Limite conhecido: o wrapper de grupo exige `/bin/sh` e `/tmp` gravável na imagem (a imagem `racky-box` e as de teste têm; o container tem `tmpfs /tmp`). Sem `killableGroup`, `terminate` falha com `DockerError.execNotKillable` em vez de adivinhar.
 
 Evidência bruta: `results.json`.
 
 ## Como reproduzir
 
 ```
-cd Packages/AgentBoxKit
-AGENTBOX_TEST_DOCKER=1 AGENTBOX_EVIDENCE_DIR=$PWD/../../docs/evidence swift test --filter LiveDockerTests
+cd Packages/RackyKit
+RACKY_TEST_DOCKER=1 RACKY_EVIDENCE_DIR=$PWD/../../docs/evidence swift test --filter LiveDockerTests
 ```
 
 ## Pendente

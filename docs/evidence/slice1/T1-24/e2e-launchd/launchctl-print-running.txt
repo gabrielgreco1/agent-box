@@ -1,16 +1,16 @@
-gui/501/app.agentbox.ptyd.test-e51bf = {
+gui/501/app.racky.ptyd.test-e51bf = {
 	active count = 1
 	path = (submitted by smd.525)
 	type = Submitted
 	managed_by = com.apple.xpc.ServiceManagement
 	state = running
 
-	program identifier = Contents/MacOS/agentboxd-launch (mode: 2)
-	parent bundle identifier = app.agentbox.mac.teste51bf
+	program identifier = Contents/MacOS/rackyd-launch (mode: 2)
+	parent bundle identifier = app.racky.mac.teste51bf
 	parent bundle version = 92
 	BTM uuid = 1FE84931-4FBD-41DB-8698-751FBFAC37CE
 	arguments = {
-		Contents/MacOS/agentboxd-launch
+		Contents/MacOS/rackyd-launch
 		--launchd
 		Listeners
 		--build
@@ -20,7 +20,7 @@ gui/501/app.agentbox.ptyd.test-e51bf = {
 	}
 
 	inherited environment = {
-		AGENTBOX_PTYD_SOCK_TEST_E51BF => /var/run/com.apple.launchd.YyrnPogOcc/Listeners
+		RACKY_PTYD_SOCK_TEST_E51BF => /var/run/com.apple.launchd.YyrnPogOcc/Listeners
 		SSH_AUTH_SOCK => /var/run/com.apple.launchd.dhA99DJdfi/Listeners
 	}
 
@@ -30,8 +30,8 @@ gui/501/app.agentbox.ptyd.test-e51bf = {
 
 	environment = {
 		OSLogRateLimit => 64
-		AGENTBOX_HOME => /tmp/abe-e51bf/h
-		XPC_SERVICE_NAME => app.agentbox.ptyd.test-e51bf
+		RACKY_HOME => /tmp/abe-e51bf/h
+		XPC_SERVICE_NAME => app.racky.ptyd.test-e51bf
 	}
 
 	LWCR = {
@@ -69,7 +69,7 @@ gui/501/app.agentbox.ptyd.test-e51bf = {
 			type = stream
 			path = /var/run/com.apple.launchd.YyrnPogOcc/Listeners
 			mode = 600
-			secure key = AGENTBOX_PTYD_SOCK_TEST_E51BF
+			secure key = RACKY_PTYD_SOCK_TEST_E51BF
 			owner uid = 501
 			group id = 0
 
@@ -91,7 +91,7 @@ gui/501/app.agentbox.ptyd.test-e51bf = {
 		type = resource
 		state = active
 		active count = 1
-		name = app.agentbox.ptyd.test-e51bf
+		name = app.racky.ptyd.test-e51bf
 	}
 
 	jetsam coalition = {
@@ -99,7 +99,7 @@ gui/501/app.agentbox.ptyd.test-e51bf = {
 		type = jetsam
 		state = active
 		active count = 1
-		name = app.agentbox.ptyd.test-e51bf
+		name = app.racky.ptyd.test-e51bf
 	}
 
 	spawn type = interactive (4)

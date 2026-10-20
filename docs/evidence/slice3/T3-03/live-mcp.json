@@ -21,9 +21,9 @@
     "uid" : 10002
   },
   "images" : {
-    "box" : "agentbox-box-test-c7cd714f:ctx-9040ad6f569a",
+    "box" : "racky-box-test-c7cd714f:ctx-9040ad6f569a",
     "build_seconds" : 50,
-    "egress" : "agentbox-egress-test-c7cd714f:ctx-6f7c28c42706"
+    "egress" : "racky-egress-test-c7cd714f:ctx-6f7c28c42706"
   },
   "max_tool_call_seconds" : 15,
   "mode_switch" : {

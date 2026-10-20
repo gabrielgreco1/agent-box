@@ -7,70 +7,70 @@
 [3/3] Compiling plugin SwiftTermBuildInfoPlugin
 Building for debugging...
 [3/15] Write swift-version--58304C5D6DBC2206.txt
-[5/16] Compiling AgentBoxProtocol Module.swift
-[6/16] Emitting module AgentBoxProtocol
+[5/16] Compiling RackyProtocol Module.swift
+[6/16] Emitting module RackyProtocol
 [6/16] Linking SwiftTermBuildInfoGenerator-tool
 [8/34] Compiling ProtocolTests SmokeTests.swift
 [9/34] Emitting module ProtocolTests
-[10/34] Compiling AgentBoxPlatform Module.swift
-[11/34] Emitting module AgentBoxPlatform
-[12/34] Compiling AgentBoxPlatform LogFacade.swift
+[10/34] Compiling RackyPlatform Module.swift
+[11/34] Emitting module RackyPlatform
+[12/34] Compiling RackyPlatform LogFacade.swift
 [12/43] Generate SwiftTerm build information
-[14/43] Compiling AgentBoxDesignSystem Space.generated.swift
-[15/43] Compiling AgentBoxStore Module.swift
-[16/43] Emitting module AgentBoxStore
-[17/43] Compiling AgentBoxDesignSystem Shadow.generated.swift
-[18/43] Compiling AgentBoxDocker Module.swift
-[19/43] Emitting module AgentBoxDocker
-[20/45] Compiling AgentBoxDesignSystem MotionTypes.swift
-[21/45] Emitting module agentbox
-[22/45] Compiling agentbox AgentBoxCLI.swift
+[14/43] Compiling RackyDesignSystem Space.generated.swift
+[15/43] Compiling RackyStore Module.swift
+[16/43] Emitting module RackyStore
+[17/43] Compiling RackyDesignSystem Shadow.generated.swift
+[18/43] Compiling RackyDocker Module.swift
+[19/43] Emitting module RackyDocker
+[20/45] Compiling RackyDesignSystem MotionTypes.swift
+[21/45] Emitting module racky
+[22/45] Compiling racky RackyCLI.swift
 [23/44] Compiling PlatformTests SmokeTests.swift
-[24/46] Compiling AgentBoxTerminalCore Module.swift
+[24/46] Compiling RackyTerminalCore Module.swift
 [25/46] Emitting module PlatformTests
 [26/46] Compiling PlatformTests LogFacadeTests.swift
-[27/50] Emitting module AgentBoxTerminalCore
-[28/50] Compiling AgentBoxDesignSystem resource_bundle_accessor.swift
-[29/50] Compiling AgentBoxDesignSystem MotionTokens.generated.swift
-[30/50] Compiling AgentBoxDesignSystem Typography.generated.swift
-[31/50] Compiling AgentBoxDesignSystem Radius.generated.swift
-[32/50] Compiling AgentBoxDesignSystem Colors.generated.swift
-[33/50] Compiling AgentBoxDesignSystem Module.swift
-[34/50] Compiling AgentBoxDesignSystem Fonts.swift
-[35/50] Compiling AgentBoxDesignSystem Motion.swift
-[36/50] Emitting module AgentBoxCore
-[37/50] Compiling AgentBoxCore Module.swift
-[38/56] Emitting module AgentBoxDesignSystem
-[39/56] Compiling AgentBoxDesignSystem DSTypes.swift
+[27/50] Emitting module RackyTerminalCore
+[28/50] Compiling RackyDesignSystem resource_bundle_accessor.swift
+[29/50] Compiling RackyDesignSystem MotionTokens.generated.swift
+[30/50] Compiling RackyDesignSystem Typography.generated.swift
+[31/50] Compiling RackyDesignSystem Radius.generated.swift
+[32/50] Compiling RackyDesignSystem Colors.generated.swift
+[33/50] Compiling RackyDesignSystem Module.swift
+[34/50] Compiling RackyDesignSystem Fonts.swift
+[35/50] Compiling RackyDesignSystem Motion.swift
+[36/50] Emitting module RackyCore
+[37/50] Compiling RackyCore Module.swift
+[38/56] Emitting module RackyDesignSystem
+[39/56] Compiling RackyDesignSystem DSTypes.swift
 [40/56] Compiling StoreTests SmokeTests.swift
 [41/56] Emitting module StoreTests
 [42/56] Emitting module DockerTests
 [43/56] Compiling DockerTests SmokeTests.swift
-[44/58] Emitting module agentboxd
-[45/58] Compiling agentboxd main.swift
+[44/58] Emitting module rackyd
+[45/58] Compiling rackyd main.swift
 [46/65] Compiling TerminalCoreTests SmokeTests.swift
 [47/65] Emitting module TerminalCoreTests
 [48/65] Emitting module DaemonTests
 [49/65] Compiling DaemonTests SmokeTests.swift
-[49/65] Linking agentbox
-[51/65] Emitting module AgentBoxUI
-[52/65] Compiling AgentBoxUI Module.swift
-[52/65] Applying agentbox
+[49/65] Linking racky
+[51/65] Emitting module RackyUI
+[52/65] Compiling RackyUI Module.swift
+[52/65] Applying racky
 [54/65] Compiling CoreTests SmokeTests.swift
 [55/65] Emitting module CoreTests
 [56/67] Emitting module UISnapshotTests
 [57/67] Compiling UISnapshotTests SmokeTests.swift
-[57/67] Linking agentboxd
-[58/67] Applying agentboxd
+[57/67] Linking rackyd
+[58/67] Applying rackyd
 [60/67] Compiling DesignSystemTests FontTests.swift
 [61/67] Compiling DesignSystemTests MotionTests.swift
 [62/67] Compiling DesignSystemTests TestSupport.swift
 [63/67] Emitting module DesignSystemTests
 [64/67] Compiling DesignSystemTests TokensMatchJSONTests.swift
 [65/67] Compiling DesignSystemTests OrcaParityTests.swift
-[66/69] Emitting module AgentBoxKitPackageTests
-[67/69] Compiling AgentBoxKitPackageTests runner.swift
-[67/68] Linking AgentBoxKitPackageTests
+[66/69] Emitting module RackyKitPackageTests
+[67/69] Compiling RackyKitPackageTests runner.swift
+[67/68] Linking RackyKitPackageTests
 Build complete! (8.88s)
 Test Suite 'All tests' started at 2026-10-17 00:48:17.497.
 Test Suite 'All tests' passed at 2026-10-17 00:48:17.498.

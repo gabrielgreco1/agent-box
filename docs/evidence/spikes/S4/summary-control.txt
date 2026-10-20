@@ -1,6 +1,6 @@
 == control (settings: {})
-init: skills listing contains agentbox: True | Skill tool present: True
-tool_use Skill {"skill": "agentbox"}
-tool_result is_error=None Launching skill: agentbox
+init: skills listing contains racky: True | Skill tool present: True
+tool_use Skill {"skill": "racky"}
+tool_result is_error=None Launching skill: racky
 text SKILL_RESULT=loaded Run subagents inside isolated Docker sandboxes, one box per subagent, each with a terminal,
 cost_usd 0.00670748

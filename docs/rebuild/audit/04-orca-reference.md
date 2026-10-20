@@ -1,7 +1,7 @@
-# 04 — Referência de design: Orca → Agent Box
+# 04 — Referência de design: Orca → Racky
 
 Status: auditoria (somente leitura). Data: 2026-10-16.
-Alvo: refazer a UI do Agent Box (SwiftUI/AppKit nativo) com a aparência e o comportamento do Orca.
+Alvo: refazer a UI do Racky (SwiftUI/AppKit nativo) com a aparência e o comportamento do Orca.
 
 ## 0. Fontes e método
 
@@ -514,18 +514,18 @@ Overlay de cartão (até 1100 px, raio 14, título 34/600). Passos:
 | Submeter composer | ⌘↵ |
 | Zoom | ⌘= / ⌘- / ⌘0 |
 
-Settings não tem atalho padrão: ⌘, fica com o terminal. Para o Agent Box, recomendo manter ⌘, para Settings, que é o padrão do macOS.
+Settings não tem atalho padrão: ⌘, fica com o terminal. Para o Racky, recomendo manter ⌘, para Settings, que é o padrão do macOS.
 
 ---
 
-## 7. Orca → Agent Box nativo (SwiftUI/AppKit)
+## 7. Orca → Racky nativo (SwiftUI/AppKit)
 
 | Orca | Implementação nativa recomendada |
 |---|---|
 | `titleBarStyle: hiddenInset`, conteúdo começando em y = 0 | `NSWindow.styleMask.insert(.fullSizeContentView)`, `titlebarAppearsTransparent = true`, `titleVisibility = .hidden`, **sem NSToolbar** (o toolbar força alturas de 38/52 pt e muda o espaçamento). Em SwiftUI: `.windowStyle(.hiddenTitleBar)` mais um `NSViewRepresentable`/`WindowAccessor` para os ajustes finos. `isMovableByWindowBackground = false`. |
 | `trafficLightPosition {x:16, y:12}` (centro em y = 18) | Reposicionar `standardWindowButton(.closeButton/.miniaturizeButton/.zoomButton)` mudando `frame.origin` (x = 16, 36, 56; y centralizado em 18 pt a partir do topo, em coordenadas do superview `NSTitlebarView`). Reaplicar em `windowDidResize`, `windowDidEnterFullScreen`/`Exit` e `viewDidLayout` (o AppKit reseta). Alternativa robusta: subclasse de `NSWindow` com override de `layoutIfNeeded`. Validar com screenshot ao lado do Orca. |
 | Faixa de arrastar (`-webkit-app-region: drag`) | A faixa de 36 px é uma `NSView` com `mouseDownCanMoveWindow = true` (ou `window.performDrag(with:)` no `mouseDown`). Botões dentro dela são views normais (não arrastam). Duplo clique na faixa → `performZoom` (respeitar `AppleActionOnDoubleClick`). |
-| Pad de 80 px + "Orca" + `PanelLeft` + ←/→ | `HStack(spacing:0)` de 36 pt: `Spacer().frame(width:80)`, `Text("Agent Box").font(12, .semibold)` com padding 6 e raio 4, botões de 16 pt com padding 4×8, raio 4 e hover `accent`. ←/→ usam SF Symbol `arrow.left`/`arrow.right` de 12 pt ou lucide exportado. |
+| Pad de 80 px + "Orca" + `PanelLeft` + ←/→ | `HStack(spacing:0)` de 36 pt: `Spacer().frame(width:80)`, `Text("Racky").font(12, .semibold)` com padding 6 e raio 4, botões de 16 pt com padding 4×8, raio 4 e hover `accent`. ←/→ usam SF Symbol `arrow.left`/`arrow.right` de 12 pt ou lucide exportado. |
 | Sidebar 280 (220–500) redimensionável | **`NSSplitViewController`** com `NSSplitViewItem(sidebarWithViewController:)` hospedando SwiftUI (`NSHostingController`), `minimumThickness 220`, `maximumThickness 500`, `canCollapse = true`, divisor fino (`dividerStyle = .thin`, com cor própria via subclasse que desenha `border`). **Não usar** `NavigationSplitView` (aparência de sidebar de sistema com vibrancy e inset). Desligar o material: `NSSplitViewItem.allowsFullHeightLayout = true` e fundo sólido `#2a2a2a`. Colapsar com animação de 200 ms (`NSAnimationContext`). ⌘B → `toggleSidebar`. |
 | Painel direito 310–350 (mín. 220) | Terceiro `NSSplitViewItem(inspectorWithViewController:)` (macOS 14+) ou item comum com `canCollapse`. ⌘L. |
 | Lista de worktrees virtualizada | SwiftUI `ScrollView` + `LazyVStack(spacing: 6)` com `ForEach` hierárquico (projeto → worktree → agentes). Linhas próprias, **não** `List(.sidebar)` (traz seleção azul e insets do sistema). Hover com `.onHover`, seleção desenhada à mão (fundo `fg` 10%, borda `fg` 18%, raio 10). Header de projeto sticky com `LazyVStack(pinnedViews: .sectionHeaders)`. |
@@ -534,7 +534,7 @@ Settings não tem atalho padrão: ⌘, fica com o terminal. Para o Agent Box, re
 | Tab bar de 32 px com tabs de 180/220 (mín. 72) | View própria em SwiftUI (`ScrollView(.horizontal)` + `HStack(spacing:0)`); **não** usar `NSTabView` nem window tabbing. Tab ativa com fundo `fg` 6% e barra inferior de 2 pt. Fechar só no hover nas inativas. Reordenar com `.draggable`/`.dropDestination` (ou `NSDraggingSource` se precisar de split por borda). Clique do meio via `NSEvent` monitor. |
 | "+" com menu omnibox | `Button` + `.popover` customizado (não `Menu`, porque precisa de campo de busca). Itens de 12 px, raio 8. |
 | "▷ Command" | `Button` com `Image(systemName:"play")` de 14 pt e texto de 12/500 muted, altura 28. Vira split button com `Menu` quando houver comandos. |
-| Terminal xterm full-bleed | Engine nativa já existente no Agent Box (SwiftTerm/Ghostty-lib), sem moldura, padding 4, SF Mono 14 peso medium, line-height 1.0, tema Ghostty Default Style Dark (§1.2). Pane inativo com `alphaValue 0.9`. |
+| Terminal xterm full-bleed | Engine nativa já existente no Racky (SwiftTerm/Ghostty-lib), sem moldura, padding 4, SF Mono 14 peso medium, line-height 1.0, tema Ghostty Default Style Dark (§1.2). Pane inativo com `alphaValue 0.9`. |
 | Splits de terminal (divisor 3 px `#3f3f46`, hit 9 px) | `NSSplitView` aninhado com subclasse que sobrescreve `dividerThickness = 3` e `drawDivider(in:)`, e aumenta a área de clique via `splitView(_:effectiveRect:…)`. Ou árvore própria em SwiftUI com `DragGesture`. |
 | Header do pane (24 px, ícones no canto) | Overlay `.overlay(alignment: .topTrailing)` com botões de 24 pt e ícones de 12 pt; aparecem com `.onHover` e opacidade animada em 120 ms. |
 | Status bar de 24 px | `HStack` de 24 pt na base da janela, fundo `card`, `Divider` no topo, texto de 12 px. Opcional e escondível. |
@@ -580,12 +580,12 @@ Inventário:
 - `docs/review.html`.
 - `screens/01–16`: Agora, Terminal+desktop, Human control, Trocar CLI, Boxes/Profiles, Memória, Resultados, Clientes locais, Nova sessão, Atividade, Evidência, Novo perfil, Biblioteca de agentes, Memória IA, Hover preview, Histórico.
 - `motion/`: walkthrough de 24 s, loop do símbolo, `timeline.html`.
-- `source/`: `AgentBox.swift`, `Agents.swift`, `TerminalViews.swift`, `MotionAssetView.swift`.
+- `source/`: `Racky.swift`, `Agents.swift`, `TerminalViews.swift`, `MotionAssetView.swift`.
 - `assets/brands/`: logos oficiais em PNG com proveniência em `sources.json`.
 
 **Reaproveitar:**
 1. **Logos de marca** de `design/assets/brands/` (claude, claude-code-wordmark, codex, opencode, docker) e a regra "só logo oficial, sem sombra/glow".
-2. **Abordagem da janela** (título oculto, titlebar transparente) em `source/AgentBox.swift` (por volta das linhas 146 e 322). Só ajustar a posição dos semáforos para os valores de §7 e parar de desenhá-los à mão (o design antigo desenha círculos de 10 px no conteúdo; usar os botões nativos).
+2. **Abordagem da janela** (título oculto, titlebar transparente) em `source/Racky.swift` (por volta das linhas 146 e 322). Só ajustar a posição dos semáforos para os valores de §7 e parar de desenhá-los à mão (o design antigo desenha círculos de 10 px no conteúdo; usar os botões nativos).
 3. **Tabela de movimento** do spec (cap. 14): fades de 160–200 ms, sheet com escala 0.98, spring de hover peek, "sem progresso falso", fallback de Reduce Motion. Ela é compatível com §1.5.
 4. **Conceitos de fluxo e copy:**
    - `SessionLauncher` (cliente/Shell → Folder/Worktree/Detached → Docker opcional, tela 09). Mapeia bem no composer do Orca: Project / Create From / Agent / Advanced.

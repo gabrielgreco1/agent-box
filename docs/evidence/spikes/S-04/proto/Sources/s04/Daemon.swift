@@ -15,7 +15,7 @@ final class Client {
     init(fd: Int32) { self.fd = fd }
 }
 
-/// Prototype of agentboxd: one session, forkpty, 4 MiB ring, headless emulator, cut points, preamble.
+/// Prototype of rackyd: one session, forkpty, 4 MiB ring, headless emulator, cut points, preamble.
 final class Daemon {
     let q = DispatchQueue(label: "ptyd")
     let ringCap: Int
@@ -245,7 +245,7 @@ func runDaemon(sock: String, cols: Int, rows: Int, ringBytes: Int, cwd: String, 
     let d = Daemon(cols: cols, rows: rows, ringBytes: ringBytes)
     theDaemon = d
     var env = ProcessInfo.processInfo.environment
-    for k in env.keys where k.hasPrefix("CLAUDE") || k.hasPrefix("ORCA_") || k.hasPrefix("AGENTBOX") || k == "TERM_PROGRAM" { if k != "CLAUDE_CONFIG_DIR" { env[k] = nil } }
+    for k in env.keys where k.hasPrefix("CLAUDE") || k.hasPrefix("ORCA_") || k.hasPrefix("RACKY") || k == "TERM_PROGRAM" { if k != "CLAUDE_CONFIG_DIR" { env[k] = nil } }
     env["TERM"] = "xterm-256color"; env["COLORTERM"] = "truecolor"; env["LANG"] = "en_US.UTF-8"
     d.q.sync { d.spawn(argv: argv, cwd: cwd, env: env); d.listen(path: sock) }
     dispatchMain()

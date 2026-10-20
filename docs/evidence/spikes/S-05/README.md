@@ -60,7 +60,7 @@ Codex (b, c):
    - `permission_mode` veio `bypassPermissions` mesmo com `-s read-only` (campo não confiável para o estado).
 5. **Limitação: não foi possível capturar `PreToolUse`, `PostToolUse`, `Stop`/`last_assistant_message`.** Todos os turnos do Codex falharam com "You've hit your usage limit" (a conta só volta em 22/10/2026; é o `turn.failed` que o app mapearia para `failed(reason)`). O que fica pendente: payloads de `PreToolUse`/`PostToolUse`/`Stop`, `SubagentStart/Stop` do Codex e `last_assistant_message` no `Stop`. Reexecutar `codex_trusted_run.py` depois de 22/10 (ou com outra conta).
 6. **Alternativas sem hook, sem tocar o config** (não exercitadas além da leitura): `-c notify=[…]` por lançamento (só fim de turno; o `notify` global do Computer Use é substituído, não encadeado, a menos que o helper o chame), tail do rollout (o caminho vem no `SessionStart` se hooks rodarem, ou por §2.5), app-server JSON-RPC (`hooks/list`, `thread/*`; viável para sonda, mas contra P9 como transporte do agente).
-7. **Efeito colateral observado no config global (não causado por hooks)**: depois das execuções da TUI Codex, `~/.codex/config.toml` mudou de mtime; o diff contra `config.toml.bak` mostra a TUI mantendo `[tui] screen_reader_detection_done` e contadores `[tui.model_availability_nux]`. Nenhuma entrada `hooks.state` nova foi criada. Ou seja, **a própria TUI do Codex escreve estado de UI no config do usuário a cada lançamento**, independente do Agent Box; vale citar em T10/§3.3.1 (a regra "o app não escreve em `~/.codex`" está certa; "o Codex nunca altera" não é verificável). `exec` e `app-server` não alteraram o arquivo (sha conferido).
+7. **Efeito colateral observado no config global (não causado por hooks)**: depois das execuções da TUI Codex, `~/.codex/config.toml` mudou de mtime; o diff contra `config.toml.bak` mostra a TUI mantendo `[tui] screen_reader_detection_done` e contadores `[tui.model_availability_nux]`. Nenhuma entrada `hooks.state` nova foi criada. Ou seja, **a própria TUI do Codex escreve estado de UI no config do usuário a cada lançamento**, independente do Racky; vale citar em T10/§3.3.1 (a regra "o app não escreve em `~/.codex`" está certa; "o Codex nunca altera" não é verificável). `exec` e `app-server` não alteraram o arquivo (sha conferido).
 
 ### (c) App-server daemon × `--no-daemon`
 
@@ -80,7 +80,7 @@ Codex (b, c):
 1. Fatia 1: sem hooks de Codex (`unknown`); Claude por `--settings` como em 06 §3.3.
 2. Fatia 2: Codex por **tail do rollout `estimated`** como baseline sempre ativo; hooks `-c` só depois de D-Codex-1.
 3. Passar `--no-daemon` por padrão no adapter Codex (decide 06 §2.2, linha `--no-daemon`) e registrar a capability.
-4. Manter comando e `timeout` dos hooks do helper constantes (`agentbox hook --provider codex --event X`, `timeout=5`) para o hash não mudar entre versões do app apenas por caminho; o hash só muda quando a definição muda.
+4. Manter comando e `timeout` dos hooks do helper constantes (`racky hook --provider codex --event X`, `timeout=5`) para o hash não mudar entre versões do app apenas por caminho; o hash só muda quando a definição muda.
 
 ## Para decisão do dono: D-Codex-1
 

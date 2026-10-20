@@ -1,6 +1,6 @@
 # T1-17 sessões limpas e T1-21 Quick Launch e ⌘T
 
-Rodado: `open -g -n "Agent Box.app" --env AGENTBOX_AUTOMATION=1 --env AGENTBOX_SKIP_ONBOARDING=1 --env AGENTBOX_HOME=/tmp/abev17 --env AGENTBOX_APP_SOCK=/tmp/abev17/app.sock`. Com `AGENTBOX_HOME` isolado, as pastas das sessões ficam em `<home>/AgentBox/sessions` (padrão de produção: `~/AgentBox/sessions`). App e daemon filho encerrados por PID.
+Rodado: `open -g -n "Racky.app" --env RACKY_AUTOMATION=1 --env RACKY_SKIP_ONBOARDING=1 --env RACKY_HOME=/tmp/abev17 --env RACKY_APP_SOCK=/tmp/abev17/app.sock`. Com `RACKY_HOME` isolado, as pastas das sessões ficam em `<home>/Racky/sessions` (padrão de produção: `~/Racky/sessions`). App e daemon filho encerrados por PID.
 
 | Arquivo | Como | O que mostra |
 |---|---|---|

@@ -42,7 +42,7 @@ Conferidas no código do Orca. Estas linhas valem sobre os relatórios.
 
 ## 1. Princípios visuais
 
-1. **É o Orca.** Antes de inventar um valor, procurar o equivalente no Orca. Quando o Agent Box tem algo que o Orca não tem (computadores, subagentes em box, controle humano), o componente novo é feito **com as peças existentes** (mesmos tamanhos de linha, badges, bolinhas, raios) e nunca com um estilo próprio.
+1. **É o Orca.** Antes de inventar um valor, procurar o equivalente no Orca. Quando o Racky tem algo que o Orca não tem (computadores, subagentes em box, controle humano), o componente novo é feito **com as peças existentes** (mesmos tamanhos de linha, badges, bolinhas, raios) e nunca com um estilo próprio.
 2. **Dois níveis de cinza.** Sidebar `#2a2a2a` mais clara que o canvas `#0a0a0a`; faixa de tabs, status bar e painel direito em `#171717`. O terminal é `#282c34`. Essa hierarquia é a "cara" do Orca.
 3. **Bordas sempre `white/7`.** Nunca cinza sólido, nunca 2 pt (exceto a barra da tab ativa e o divisor de pane de 3 pt).
 4. **Densidade de linha.** Linhas de 24–32 pt, texto de 11–13 pt, raios de 4–10. Nada de cards grandes, padding acima de 16 no conteúdo de trabalho, nem títulos com subtítulo em toda tela.
@@ -54,7 +54,7 @@ Conferidas no código do Orca. Estas linhas valem sobre os relatórios.
 
 ## 2. Cores (tema escuro)
 
-Implementação: `enum DS.Color` no alvo `AgentBoxDesignSystem` (`Packages/AgentBoxKit/Sources/AgentBoxDesignSystem/Tokens/Colors.swift`, 08 §1.2), gerado de `design/tokens/colors.json`. Cada token é um `Color` e um `NSColor` (para AppKit/SwiftTerm). Valores com alfa são `Color(white: 1, opacity: x)` **compostos sobre a superfície**; nunca pré-misturar em hex, porque a mesma opacidade cai sobre fundos diferentes.
+Implementação: `enum DS.Color` no alvo `RackyDesignSystem` (`Packages/RackyKit/Sources/RackyDesignSystem/Tokens/Colors.swift`, 08 §1.2), gerado de `design/tokens/colors.json`. Cada token é um `Color` e um `NSColor` (para AppKit/SwiftTerm). Valores com alfa são `Color(white: 1, opacity: x)` **compostos sobre a superfície**; nunca pré-misturar em hex, porque a mesma opacidade cai sobre fundos diferentes.
 
 ### 2.1 Superfícies
 
@@ -314,7 +314,7 @@ Regras globais: tracking **+0,01 em** em toda a UI (13 pt → +0,13 pt); itens d
 | `composerTitle` | 16 / 600 / 24 | Título do composer e de overlays médios |
 | `dialogTitle` | 18 / 600 / 28 | Título de dialog padrão e de confirmação |
 | `pageTitle` | 24 / 600 / 32 | Título de seção no Settings, título das páginas Library/Computers (Orca `text-2xl font-semibold`) |
-| `display` | 28 / 600 / 34 | "Agent Box" na landing vazia (Orca usa 36/700 em caixa alta para a marca; aqui fica menor e sem caixa alta para não virar "hero") |
+| `display` | 28 / 600 / 34 | "Racky" na landing vazia (Orca usa 36/700 em caixa alta para a marca; aqui fica menor e sem caixa alta para não virar "hero") |
 | `paletteInput` | 16 / 400 / 24 | Campo da palette ⌘J (input de 48 pt) |
 
 Regras: nada abaixo de 9 pt; nada acima de 28; no máximo **dois pesos** por componente; texto longo trunca com `…` no fim (nomes) ou no meio (caminhos: `~/orca/…/arizona/sandperch`); a versão completa vai para o tooltip.
@@ -356,7 +356,7 @@ Regras: nada abaixo de 9 pt; nada acima de 28; no máximo **dois pesos** por com
 | Janela padrão (primeira abertura) | 1440×900, centralizada | — |
 | Dialog padrão / confirmação | 512 / 448 de largura (máx. janela − 32) | `dialog.tsx` (`sm:max-w-lg` / `md`) |
 | Composer | 560 (máx. janela − 32) | Orca 512 + campo de pasta; ver `03 §6`. 04 usa 560 |
-| Palette ⌘J | 720 (máx. 96% da janela), a `min(10%, 64)` do topo | Orca 900 numa janela de 1440+; reduzido porque o Agent Box não lista arquivos |
+| Palette ⌘J | 720 (máx. 96% da janela), a `min(10%, 64)` do topo | Orca 900 numa janela de 1440+; reduzido porque o Racky não lista arquivos |
 | Toast | 360, a 16 da direita e 40 acima da status bar | |
 | Menu | mín. 176 | |
 | Tooltip | máx. 280 | |
@@ -504,7 +504,7 @@ Fecha a lacuna R2 SEM #19 (`audit/01 AA10`).
 - **App icon** (`AppIcon.appiconset`, mestre 1024×1024 em vetor): forma e grade padrão de ícone do macOS, fundo `#171717` sólido, glifo da marca (o mesmo do tile da landing, 03 §19) em `#fafafa`, sem gradiente, sem brilho, sem sombra própria além da do sistema. Todos os tamanhos exigidos pelo Xcode gerados do mestre.
 - **Template da barra de menus**: o mesmo glifo simplificado, monocromático, 18×18 (03 §17).
 - **Tile da landing**: 64×64, raio 18, fundo `secondary`, glifo 32 `textPrimary`.
-- O glifo é desenhado uma vez, em `design/brand/agentbox-glyph.svg`, e todos os usos derivam dele. Entra com aprovação do dono, lado a lado com o ícone do Orca no Dock (P14).
+- O glifo é desenhado uma vez, em `design/brand/racky-glyph.svg`, e todos os usos derivam dele. Entra com aprovação do dono, lado a lado com o ícone do Orca no Dock (P14).
 
 ---
 
@@ -561,7 +561,7 @@ Regra herdada: tudo respeita **Reduce Motion** (troca translação/escala por cr
 
 ## 12. Componentes base
 
-Cada componente vive no alvo `AgentBoxDesignSystem` (`Sources/AgentBoxDesignSystem/Components/`, 08 §1.2). Todos recebem `accessibilityIdentifier` (T13) seguindo §17 e nenhum contém lógica de domínio (T3): recebem valores prontos e closures. Todo controle interativo dispara uma ação do registro (`ActionID`, 03 §24); nenhum `Button` tem closure solta (lint, §15).
+Cada componente vive no alvo `RackyDesignSystem` (`Sources/RackyDesignSystem/Components/`, 08 §1.2). Todos recebem `accessibilityIdentifier` (T13) seguindo §17 e nenhum contém lógica de domínio (T3): recebem valores prontos e closures. Todo controle interativo dispara uma ação do registro (`ActionID`, 03 §24); nenhum `Button` tem closure solta (lint, §15).
 
 ### 12.1 Button
 
@@ -955,7 +955,7 @@ Cada padrão é regex com limite de palavra e tem um caso de teste do próprio l
 | Registro de ações | `ActionRegistry` (`ActionID` → handler, `isEnabled`, motivo) | Protocolo `ActionDispatching` no Core, implementado na UI e injetado no boot (o Core não importa UI, AR-130) | Fonte de 03 §24 e do `ctl ui action` |
 | Notificações | `NotificationRouter` | `UNUserNotificationCenterDelegate` | `willPresent` + `didReceive` |
 | Dock badge | `NSApp.dockTile.badgeLabel` | AppKit | |
-| Tokens | `DS.Color`, `DS.Font`, `DS.Space`, `DS.Radius`, `DS.Shadow` | Swift (`AgentBoxDesignSystem`) | Gerados de `design/tokens/*.json` por `scripts/gen-tokens.py` |
+| Tokens | `DS.Color`, `DS.Font`, `DS.Space`, `DS.Radius`, `DS.Shadow` | Swift (`RackyDesignSystem`) | Gerados de `design/tokens/*.json` por `scripts/gen-tokens.py` |
 
 ---
 
@@ -980,7 +980,7 @@ Todo elemento interativo e todo container de região tem identificador (T13). Fo
 | Dropdowns ricos | `menuPanel.` | `menuPanel.<name>` |
 | Toasts | `toast.<kind>` | `toast.error.action` |
 
-Os identificadores de cada tela estão listados em `03 §22` (lista canônica). Testes XCUITest e `agentbox ctl` só usam identificadores.
+Os identificadores de cada tela estão listados em `03 §22` (lista canônica). Testes XCUITest e `racky ctl` só usam identificadores.
 
 ---
 
@@ -1004,7 +1004,7 @@ Os identificadores de cada tela estão listados em `03 §22` (lista canônica). 
 | Agente espera resposta (estado) | **Needs input** | Needs you (como estado), Waiting |
 | Atenção agregada; computador pede ajuda | **Needs you** | Human request, HITL |
 | Próximo item que pede atenção | **Next Needing Attention** | Next Needs You |
-| Processo de fundo que mantém os terminais | **background service**; o que ele mantém: **background agents** | daemon, agentboxd, terminal daemon (fora de Diagnostics) |
+| Processo de fundo que mantém os terminais | **background service**; o que ele mantém: **background agents** | daemon, rackyd, terminal daemon (fora de Diagnostics) |
 | Proxy configurado pelo usuário (P13) | **Proxy** (nome dado pelo usuário; Zyte é um preset) | Zyte (como nome genérico), budget |
 | Configuração de lançamento | **Profile** | Launch preset |
 | Notificações in-app | **Inbox** | Requests, Activity |

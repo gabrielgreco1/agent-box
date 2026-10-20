@@ -18,9 +18,9 @@
   Never finish without calling box_release. WHAT WE ALREADY KNOW: nothing. OUTPUT: no result      
   needed. After the worker finishes, reply with the single word DONE-LIGHT.                       
 
-  Called agentbox 
+  Called racky 
 
-⏺ agentbox-worker-1(Worker for computer e2e-light)
+⏺ racky-worker-1(Worker for computer e2e-light)
   ⎿  Backgrounded agent (↓ to manage · ctrl+o to expand)
 
 ⏺ Reserved e2e-light (headless, batch e2e) and launched its worker in the background. It is still
@@ -49,4 +49,4 @@
 ──────────────────────────────────────────────────────────────────────────────────────────────────
   tmp/abe2e-eYUOiE/repo | main | 1h17m [█░░░░░░░░░] 11% | Haiku 5.5 | 7d:16%
   ⏵⏵ bypass permissions on (shift+tab to cycle) · ← 3 agents
-  ◯ agentbox-worker-1  Worker for computer e2 -light                         3s · ↓ 14.0k tokens
+  ◯ racky-worker-1  Worker for computer e2 -light                         3s · ↓ 14.0k tokens

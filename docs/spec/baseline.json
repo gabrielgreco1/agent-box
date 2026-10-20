@@ -1,10 +1,10 @@
 {
   "reviewed_date": "2026-10-16",
-  "baseline": "Agent Box Design v0.4 plus unfinished Package.swift preparation",
+  "baseline": "Racky Design v0.4 plus unfinished Package.swift preparation",
   "operational_runtime": false,
   "files": [
     {
-      "path": "source/AgentBox.swift",
+      "path": "source/Racky.swift",
       "bytes": 45918,
       "sha256": "1d20622f33f9efcfae3bea412f271d3a7520fc0d9061490dc3cbd30449fd9ef6"
     },

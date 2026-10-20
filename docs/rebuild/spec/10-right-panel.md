@@ -25,7 +25,7 @@ Status: requisito do dono em 2026-10-17, entra na v1. Decisões em `00-decisions
 Abas:
 1. **Claude** — uso do dia e da semana em tokens e custo estimado, janelas de limite (5 h e 7 d, como a status line do Claude mostra), plano detectado, sessões e modelos mais usados; visualização própria e bonita (não só duas barras): anel/medidor animado da janela atual, heatmap por hora do dia, sparkline semanal.
 2. **Codex** — o mesmo para o Codex (rollouts `token_count`, rate limits, plano).
-3. **Machine** — CPU, memória, disco e rede do Mac; processos/apps que mais usam; agentes e subagentes do Agent Box (por sessão); computadores Docker (memória da VM, por computador); alerta quando subagentes estão pesando demais.
+3. **Machine** — CPU, memória, disco e rede do Mac; processos/apps que mais usam; agentes e subagentes do Racky (por sessão); computadores Docker (memória da VM, por computador); alerta quando subagentes estão pesando demais.
 4. **Proxy** — uso do proxy por computador/lote (P13), quando houver.
 
 Fontes de dados (somente leitura, nada é enviado para fora):

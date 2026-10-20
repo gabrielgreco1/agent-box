@@ -23,7 +23,7 @@ Antes do commit dos metadados, uma falha restaura o original. Depois do commit, 
 
 ## Evidência de 16/10/2026
 
-Build release e assinatura ad hoc do app/helper passaram. A suíte integrada passou com **123 testes, zero falhas**, incluindo o smoke opt-in Docker real (`AGENTBOX_TEST_DOCKER_UPDATE=1`) e 9 testes focados da transação. No Docker real:
+Build release e assinatura ad hoc do app/helper passaram. A suíte integrada passou com **123 testes, zero falhas**, incluindo o smoke opt-in Docker real (`RACKY_TEST_DOCKER_UPDATE=1`) e 9 testes focados da transação. No Docker real:
 
 - tentativa de atualizar container ativo foi recusada sem mutações;
 - atualização trocou o container e manteve IDs de computador/terminal, volume, token e data de criação;
@@ -35,7 +35,7 @@ A suíte também cobriu autorização explícita do token, falha ao salvar metad
 
 ## Verificação e limites
 
-Testes de falha cobrem comandos, metadados e recuperação de operações interrompidas. O smoke opt-in usa contexto `colima-agentbox-dev`, stores temporários e token em memória; não lê o Keychain pessoal. Cria uma imagem derivada com tag exclusiva, mantém a tag normal intacta, verifica arquivos no volume e remove apenas os recursos do teste.
+Testes de falha cobrem comandos, metadados e recuperação de operações interrompidas. O smoke opt-in usa contexto `colima-racky-dev`, stores temporários e token em memória; não lê o Keychain pessoal. Cria uma imagem derivada com tag exclusiva, mantém a tag normal intacta, verifica arquivos no volume e remove apenas os recursos do teste.
 
 O mecanismo preserva arquivos; não garante compatibilidade entre quaisquer versões futuras de Chromium. Backups/versionamento de perfil continuam em AB-021. Alterações de containers por um administrador externo durante a operação não ficam sob o lock do aplicativo: por isso cada etapa revalida recursos, e recuperação incerta deve parar sem apagar dados. O CLI executado no Mac continua fora do isolamento do container.
 

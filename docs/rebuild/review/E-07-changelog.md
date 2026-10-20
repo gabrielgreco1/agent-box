@@ -9,7 +9,7 @@ Data: 2026-10-16. Editor: só o capítulo 07. Base: `00-decisions.md` (P11–P16
 | P13 (proxy genérico, sem teto) | §2.6 "Orçamento" foi substituída por "Proxies configurados pelo usuário": `ProxyProfile` (HTTP/HTTPS/SOCKS5, host, porta, credenciais no Vault, geo opcional, CA extra, render opcional, preço informativo opcional), presets Zyte proxy / Zyte API / Custom e `"Test Proxy"` (CS-160). Seleção em cascata global → lote → reserva → menu, com lista de proxies permitidos por computador (CS-161). Uso medido pelo egress (requests, túneis, bytes, renders) e custo só informativo ou informado pelo provedor (CS-162). Erros de proxy (CS-163). **Removidos:** níveis box/lote/mês, ledger com reserva, 402 `budget_exhausted`, avisos de 80 %, `"Add $1"`, `HelpRequest(kind: budget)`, `"Raise batch budget"`, `budget_usd` em `boxes_reserve`/`batch_create`, CA-108 antigo, Q5 e a entidade `BudgetLedger`. `proxy_set(mode:"direct"|"zyte")` virou `proxy_set(proxy: ProxyRef)`; `render` virou "render via proxy configurado, se suportado" (`not_supported` sem render; adaptador Zyte API na v1, outros `later`); `source` `zyte-api` virou `render-api`; `via` passa a ser o nome do proxy. Chave Zyte virou "credenciais do proxy", só no egress. Import do `.env` cria um proxy preset Zyte e ignora `ZYTE_BUDGET_USD`. Novo CA-108 (SOCKS5 genérico, 10 mil requests sem corte). |
 | P12 (pai envia mensagem com Enter a filho que criou) | CS-307 reescrito: Enter permitido só para filhos criados pelo próprio pai, registro em `logs/messages.jsonl` e na timeline, indicador na tab; para outros terminais vale T11 (`blocked_by_policy`). CS-261 inclui mensagens. CS-543 alinhado. Q2 fechada. |
 | P15 (termo "Computer") | Glossário e microcopy: "box" saiu de todo texto de UI (R1 §10): `"Building computer image…"`, `"Update Computer Image"`, `"Image out of date — restart computer to update"`, `"Computers are CPU-bound"`, `"Allow Local Network for This Computer"`, `"Keep for 24 Hours"`, `"Stopped idle computer …"`, `"Unclaimed computer"`, `"Paste to Computer"` / `"Copy Selection from Computer"`, `"Fit Computer to Window"`, `"Agents in isolated containers…"`, `"Attach Computer"`. "box" ficou só em ferramentas, labels, logs e pastas. |
-| P16 / R1 item 7 (K-66, K-75, K-76) | MCP e Docker no **app** (`AgentBoxCore`, `.accessory` após ⌘Q); `agentboxd` só PTY (inclui os PTYs do isolado). Sidecar renomeado `gate` → `egress` (imagem `agentbox-egress`, `egress:3128`, `egress:8790`). Ponte do isolado: egress não alcança o host, app consome fila SSE (CS-540), retenção 10 mil eventos ou 15 min (CS-542). Helper `agentbox mcp` por `run/app.sock` (K-72). Socket do daemon só aceita o app (CS-607). Todas as menções a `agentboxd` falando com Docker, runtime, Keychain ou git trocadas para o app. |
+| P16 / R1 item 7 (K-66, K-75, K-76) | MCP e Docker no **app** (`RackyCore`, `.accessory` após ⌘Q); `rackyd` só PTY (inclui os PTYs do isolado). Sidecar renomeado `gate` → `egress` (imagem `racky-egress`, `egress:3128`, `egress:8790`). Ponte do isolado: egress não alcança o host, app consome fila SSE (CS-540), retenção 10 mil eventos ou 15 min (CS-542). Helper `racky mcp` por `run/app.sock` (K-72). Socket do daemon só aceita o app (CS-607). Todas as menções a `rackyd` falando com Docker, runtime, Keychain ou git trocadas para o app. |
 | P11 | Seção "Sessions" para sessões limpas citada no diagrama de relações. |
 
 ## 2. Patches de R1 aplicados
@@ -18,14 +18,14 @@ Data: 2026-10-16. Editor: só o capítulo 07. Base: `00-decisions.md` (P11–P16
 - **K-67** portas `3128`/`8790` mantidas, host `egress`.
 - **K-68** entidades: `Computer` em vez de `Box`, sem `BudgetLedger`/`JournalEntry`/`CommandRecord`/`RequestRecord` no SQLite (logs append-only); entram `ProxyProfile`, `ComputerQueue` e `ProxyUsage` (CS-001).
 - **K-69** display `http`/`headless`/`desktop` e parâmetro `display` em `boxes_reserve`, `box_claim`, `box_status`, `computer_mode`, `agent_spawn`, `batch_create`.
-- **K-70** labels `agentbox.computer`, `agentbox.computer_name`, `agentbox.role=runtime|work|egress|agent`; `owner=<installId>`.
-- **K-71** `AGENTBOX_SESSION` sumiu junto com o `Redirect` (D-11); correlação por `AGENTBOX_RUN_ID`.
+- **K-70** labels `racky.computer`, `racky.computer_name`, `racky.role=runtime|work|egress|agent`; `owner=<installId>`.
+- **K-71** `RACKY_SESSION` sumiu junto com o `Redirect` (D-11); correlação por `RACKY_RUN_ID`.
 - **K-73** `v1.2+` → `later` (CS-150, CS-175, render de outros provedores).
 - **K-77** segredos por arquivo (ver §4 abaixo).
 - **K-78 / K-80** estados canônicos: atividade do filho = 01 §6.3 + `blocked` (CS-321, tipo `ActivityState`); estado do computador = 01 §6.4 (`BoxState`, `error` → `failed`); estados do pedido de ajuda = 01 §6.5 (`HelpStatus`: `open|taken_over|resolved|declined|cancelled|expired`).
 - **K-21** stalled em 10 min e v1.1.
 - **K-25 / D-02** par `"Take Over"` / `"Hand Back"` (recomendação de R1, por P16), `"Force Take Over"`, IDs `.takeOver` / `.handBack`.
-- **K-40 / D-11** opções da skill antiga: `"Block in Agent Box"` (padrão) · `"Disable Globally…"` · `"Keep"`, texto de 03; `"Redirect"` → `later`.
+- **K-40 / D-11** opções da skill antiga: `"Block in Racky"` (padrão) · `"Disable Globally…"` · `"Keep"`, texto de 03; `"Redirect"` → `later`.
 - **K-41** `"Docker isn't running"` / `"Start Docker"`; código `docker_unavailable`.
 - **K-44** soltar teclado com ⌘⎋ ou ⌃⌥, selo `"Keyboard captured · ⌃⌥ to release"`.
 - **K-56** `"Waiting for memory · 3 of 15 queued"`, viewer `delayed` / `"Slow connection"`, `"Reconnecting…"`.
@@ -36,7 +36,7 @@ Data: 2026-10-16. Editor: só o capítulo 07. Base: `00-decisions.md` (P11–P16
 - **K-62** pill `"You're in control"` com `"Hand Back ⇧⌘R"` (sem faixa âmbar).
 - **K-87** página `"Computers"` pela nav da sidebar; ⇧⌘C fica para a aba da sessão.
 - **K-89** versões conforme 01 §4: CS-002 (isolado não aparece na v1), CS-004 (Codex v1.1), CS-309 v1.1, CS-350/352 v1.1, CS-321 stalled v1.1, D-07 → CS-280/304/306/307/308 v1.1. Lembrete de 3 min marcado v1.1 (CS-430).
-- **K-98 / K-99** run folder em `~/AgentBox/runs/…` mantido; segredos fora dele, em App Support `boxes/<id>/`.
+- **K-98 / K-99** run folder em `~/Racky/runs/…` mantido; segredos fora dele, em App Support `boxes/<id>/`.
 - **K-100** arquivar a sessão para os computadores; apagar remove.
 - **K-51** notificação de computador: `"<session> — <computer> needs you"`, corpo `"<Kind> on <host>"`.
 - **K-60** rótulos de modo `"On This Mac"` / `"In Container"` no glossário e em CS-609.
@@ -81,6 +81,6 @@ Data: 2026-10-16. Editor: só o capítulo 07. Base: `00-decisions.md` (P11–P16
 | Settings › Computers › Proxies | Nome da seção depende de 03 §14 (editor de 03); 07 cita "nome final em 03 §14". |
 | R2 N6 (tabela de capacidades por harness por versão) | Baixa severidade; os requisitos já marcam Claude v1 e Codex v1.1. Fica para quando S1 e os spikes de Codex rodarem. |
 | R2 SEM #14/#15 detalhados (recuperar perfil corrompido, proteção em repouso) | Cobertos de forma mínima em CS-176 (restore do backup; declaração de que não há cifra em repouso na v1). Cifra de volume: não planejada. |
-| R3 §11.4 (`~/AgentBox/runs` × App Support) | Mantido `~/AgentBox/runs` (R1 K-98 decide a favor de 07). Ajuste de 08 AR-301 é do editor de 08. |
+| R3 §11.4 (`~/Racky/runs` × App Support) | Mantido `~/Racky/runs` (R1 K-98 decide a favor de 07). Ajuste de 08 AR-301 é do editor de 08. |
 | R3 §11.2 (publicação só pelo egress × API/VNC/admin publicados em 08) | 07 mantém só o egress publicado (com API e VNC por reverse proxy), compatível com R1 K-76 ("porta admin publicada"). O ajuste de 08 AR-107/AR-311 (`api_port`, `vnc_port`) é do editor de 08. |
 | Ajustes em 01, 03, 05, 06 e 08 que R1 lista "a partir de 07" | Fora do escopo deste editor (só 07). |

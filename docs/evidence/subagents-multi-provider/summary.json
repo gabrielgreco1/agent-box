@@ -1,6 +1,6 @@
 {
   "task": "Spawn one subagent with its own computer; it opens https://example.com and submits the page title with result_submit",
-  "harness": "scripts/e2e-subagents.sh (isolated app copy, AGENTBOX_HOME temp, own container owner label; Codex with a temp CODEX_HOME)",
+  "harness": "scripts/e2e-subagents.sh (isolated app copy, RACKY_HOME temp, own container owner label; Codex with a temp CODEX_HOME)",
   "runs": {
     "opencode-deepseek-v4.1-flash-free": {"provider": "opencode", "model": "opencode/deepseek-v4.1-flash-free (free)", "pass": true, "note": "reserve -> worker claim -> result_submit validated (verified 2, cited_missing 0) -> release -> container removed; parent printed the title"},
     "opencode-glm-5.3-flash-free": {"provider": "opencode", "model": "opencode/glm-5.3-flash-free (free)", "pass": true, "note": "same flow; the model named the field page_title instead of title (the harness check was loosened to any field afterwards)"},

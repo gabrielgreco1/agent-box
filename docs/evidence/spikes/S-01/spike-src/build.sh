@@ -12,7 +12,7 @@ cat > "$APP/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-<key>CFBundleIdentifier</key><string>app.agentbox.s01test$SUF</string>
+<key>CFBundleIdentifier</key><string>app.racky.s01test$SUF</string>
 <key>CFBundleName</key><string>ABS01</string>
 <key>CFBundleExecutable</key><string>ABS01</string>
 <key>CFBundlePackageType</key><string>APPL</string>
@@ -21,19 +21,19 @@ cat > "$APP/Contents/Info.plist" <<EOF
 <key>LSUIElement</key><true/>
 </dict></plist>
 EOF
-cat > "$APP/Contents/Library/LaunchAgents/app.agentbox.ptyd.test-s01$SUF.plist" <<EOF
+cat > "$APP/Contents/Library/LaunchAgents/app.racky.ptyd.test-s01$SUF.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-<key>Label</key><string>app.agentbox.ptyd.test-s01$SUF</string>
+<key>Label</key><string>app.racky.ptyd.test-s01$SUF</string>
 <key>BundleProgram</key><string>Contents/MacOS/s01d</string>
-<key>AssociatedBundleIdentifiers</key><array><string>app.agentbox.s01test$SUF</string></array>
+<key>AssociatedBundleIdentifiers</key><array><string>app.racky.s01test$SUF</string></array>
 <key>ProcessType</key><string>Interactive</string>
 <key>AbandonProcessGroup</key><true/>
 <key>KeepAlive</key><false/>
 <key>EnvironmentVariables</key><dict><key>S01_LOG</key><string>/tmp/s01-daemon.log</string></dict>
 <key>Sockets</key><dict><key>Listeners</key><dict>
-  <key>SecureSocketWithKey</key><string>AGENTBOX_PTYD_SOCK_V1</string>
+  <key>SecureSocketWithKey</key><string>RACKY_PTYD_SOCK_V1</string>
   <key>SockPathMode</key><integer>384</integer>
 </dict></dict>
 </dict></plist>
@@ -41,8 +41,8 @@ EOF
 # Variante sem SMAppService (launchctl bootstrap): Program absoluto, outro label.
 sed -e 's#<key>BundleProgram</key><string>Contents/MacOS/s01d</string>#<key>Program</key><string>'"$APP"'/Contents/MacOS/s01d</string>#' \
     -e 's#test-s01#test-s01b#' -e '/AssociatedBundleIdentifiers/d' \
-    "$APP/Contents/Library/LaunchAgents/app.agentbox.ptyd.test-s01$SUF.plist" > "$S/app.agentbox.ptyd.test-s01${SUF}b.plist"
-codesign --force --options runtime --sign - --identifier app.agentbox.ptyd.real "$APP/Contents/MacOS/s01d-real"
-codesign --force --options runtime --sign - --identifier app.agentbox.ptyd "$APP/Contents/MacOS/s01d"
-codesign --force --options runtime --sign - --identifier app.agentbox.s01test$SUF "$APP"
+    "$APP/Contents/Library/LaunchAgents/app.racky.ptyd.test-s01$SUF.plist" > "$S/app.racky.ptyd.test-s01${SUF}b.plist"
+codesign --force --options runtime --sign - --identifier app.racky.ptyd.real "$APP/Contents/MacOS/s01d-real"
+codesign --force --options runtime --sign - --identifier app.racky.ptyd "$APP/Contents/MacOS/s01d"
+codesign --force --options runtime --sign - --identifier app.racky.s01test$SUF "$APP"
 codesign --verify --strict "$APP" && echo built-adhoc

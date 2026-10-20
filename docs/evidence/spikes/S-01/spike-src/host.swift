@@ -1,8 +1,8 @@
 import Foundation
 import ServiceManagement
 
-// App de spike (bundle app.agentbox.s01test): registra/consulta/desregistra o LaunchAgent de teste.
-let suffix = ProcessInfo.processInfo.environment["S01_SUF"] ?? (Bundle.main.bundleIdentifier ?? "").replacingOccurrences(of: "app.agentbox.s01test", with: ""); let plist = "app.agentbox.ptyd.test-s01\(suffix).plist"
+// App de spike (bundle app.racky.s01test): registra/consulta/desregistra o LaunchAgent de teste.
+let suffix = ProcessInfo.processInfo.environment["S01_SUF"] ?? (Bundle.main.bundleIdentifier ?? "").replacingOccurrences(of: "app.racky.s01test", with: ""); let plist = "app.racky.ptyd.test-s01\(suffix).plist"
 let svc = SMAppService.agent(plistName: plist)
 func name(_ s: SMAppService.Status) -> String {
     switch s { case .notRegistered: "notRegistered"; case .enabled: "enabled"; case .requiresApproval: "requiresApproval"; case .notFound: "notFound"; @unknown default: "unknown" }

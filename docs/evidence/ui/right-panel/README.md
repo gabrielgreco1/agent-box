@@ -1,6 +1,6 @@
 # Painel direito: contêiner e módulo Files (10-right-panel)
 
-Rodado em segundo plano: `open -g -n "Agent Box.app" --env AGENTBOX_AUTOMATION=1 --env AGENTBOX_HOME=/tmp/abrp --env AGENTBOX_APP_SOCK=/tmp/abrp/app.sock --env AGENTBOX_SCREEN=workspace-demo`, com `agentbox ctl` no mesmo socket isolado. Uma sessão `rp-demo` (shell) aponta para um repositório de fixture em `/tmp/agentbox-rp-demo` (alterados: `main.swift` M, `notes.md` e `Extra.swift` U; `build/` e `node_modules/` ignorados). App e daemon encerrados por PID no fim.
+Rodado em segundo plano: `open -g -n "Racky.app" --env RACKY_AUTOMATION=1 --env RACKY_HOME=/tmp/abrp --env RACKY_APP_SOCK=/tmp/abrp/app.sock --env RACKY_SCREEN=workspace-demo`, com `racky ctl` no mesmo socket isolado. Uma sessão `rp-demo` (shell) aponta para um repositório de fixture em `/tmp/racky-rp-demo` (alterados: `main.swift` M, `notes.md` e `Extra.swift` U; `build/` e `node_modules/` ignorados). App e daemon encerrados por PID no fim.
 
 Captura pelo fallback AppKit (ScreenCaptureKit sem permissão de Gravação de Tela para o app): o corpo Metal do terminal aparece vazio.
 
@@ -16,4 +16,4 @@ Captura pelo fallback AppKit (ScreenCaptureKit sem permissão de Gravação de T
 | `08-760x480-collapsed.png` | Janela mínima: painel recolhido sozinho (<1100), botões dentro da caixa |
 | `09-1440x900-restored.png` | Painel fechado/aberto via ações |
 
-Não coberto aqui: o arrasto do mouse (header, divisor, borda) e o motion de recorte são ações/animações de runtime; as ações equivalentes (`rightPanel.move`, `setSplit`, `setWidth`) têm teste. Seguir o cwd é coberto por `FilesControllerTests` (OSC 7 e hook `cwd` entram por `noteCwd`); o `cwd` por hook só chega com `AGENTBOX_SLICE=2` (ActivityService).
+Não coberto aqui: o arrasto do mouse (header, divisor, borda) e o motion de recorte são ações/animações de runtime; as ações equivalentes (`rightPanel.move`, `setSplit`, `setWidth`) têm teste. Seguir o cwd é coberto por `FilesControllerTests` (OSC 7 e hook `cwd` entram por `noteCwd`); o `cwd` por hook só chega com `RACKY_SLICE=2` (ActivityService).

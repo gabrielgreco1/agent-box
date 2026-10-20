@@ -1,6 +1,6 @@
 # T1-09: evidência de UI do TerminalSurface
 
-Rodado: `open -g -n "Agent Box.app" --env AGENTBOX_AUTOMATION=1 --env AGENTBOX_SCREEN=terminal-demo --env AGENTBOX_HOME=/tmp/abdemo1 --env AGENTBOX_DEMO_SCRIPT=<script zsh>`; o app subiu um `agentboxd` filho, abriu zsh num PTY e digitou o script (origem `ctl`). `demo-status.json`: `metal: true`, 135x52 células, sessão viva. Fechado por PID (o daemon filho encerra junto, sem órfão).
+Rodado: `open -g -n "Racky.app" --env RACKY_AUTOMATION=1 --env RACKY_SCREEN=terminal-demo --env RACKY_HOME=/tmp/abdemo1 --env RACKY_DEMO_SCRIPT=<script zsh>`; o app subiu um `rackyd` filho, abriu zsh num PTY e digitou o script (origem `ctl`). `demo-status.json`: `metal: true`, 135x52 células, sessão viva. Fechado por PID (o daemon filho encerra junto, sem órfão).
 
 ## Limite: não há PNG do pane
 

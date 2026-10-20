@@ -1,5 +1,5 @@
-e2e-subagents 2026-10-20T05:54:38Z provider=opencode model=opencode/deepseek-v4.1-flash-free mock=0 work=/tmp/abmp-SClhji owner=agent-box-ce7702a5
-  PASS  app de teste isolado (dados em /tmp/abmp-SClhji/h, owner agent-box-ce7702a5, não é o do dono)
+e2e-subagents 2026-10-20T05:54:38Z provider=opencode model=opencode/deepseek-v4.1-flash-free mock=0 work=/tmp/abmp-SClhji owner=racky-ce7702a5
+  PASS  app de teste isolado (dados em /tmp/abmp-SClhji/h, owner racky-ce7702a5, não é o do dono)
   PASS  composer oferece Subagent computers para opencode (full aceito)
 terminal 01A157E0-7FA2-71C2-8E1C-4D76560251D3
 esperou 57 s (computador visto: 1, tudo removido: 1)

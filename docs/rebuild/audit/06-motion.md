@@ -22,11 +22,11 @@ Busca: `withAnimation|.animation(|.transition(|matchedGeometryEffect|PhaseAnimat
 
 | # | Local | O que faz | Avaliação |
 |---|---|---|---|
-| S1 | `Sources/AgentBox/Workspace/WorkspaceView.swift:179` | `.animation(reduceMotion ? nil : .easeOut(duration: 0.14), value: snapshot.sidebarCollapsed)` no `HStack` raiz (sidebar + workspace) | **Ruim.** (a) A animação fica no ancestral do `TerminalSurface`, então a largura do workspace é interpolada. O provável resultado é o `LocalProcessTerminalView` receber vários `setFrame` em 140 ms. Cada um recalcula cols/rows e manda SIGWINCH, e o TUI do Claude Code/Codex redesenha várias vezes. *Confirmar no Instruments.* (b) A sidebar sai com `if` e transição padrão (opacity). Ela some por fade enquanto o canvas "pula", sem deslizar. (c) 0,14 s com `easeOut` genérico para ~288 pt dá ~2000 pt/s: rápido demais para ler e curto demais para parecer intencional. (d) Ponto positivo: respeita Reduce Motion (`:102`). |
+| S1 | `Sources/Racky/Workspace/WorkspaceView.swift:179` | `.animation(reduceMotion ? nil : .easeOut(duration: 0.14), value: snapshot.sidebarCollapsed)` no `HStack` raiz (sidebar + workspace) | **Ruim.** (a) A animação fica no ancestral do `TerminalSurface`, então a largura do workspace é interpolada. O provável resultado é o `LocalProcessTerminalView` receber vários `setFrame` em 140 ms. Cada um recalcula cols/rows e manda SIGWINCH, e o TUI do Claude Code/Codex redesenha várias vezes. *Confirmar no Instruments.* (b) A sidebar sai com `if` e transição padrão (opacity). Ela some por fade enquanto o canvas "pula", sem deslizar. (c) 0,14 s com `easeOut` genérico para ~288 pt dá ~2000 pt/s: rápido demais para ler e curto demais para parecer intencional. (d) Ponto positivo: respeita Reduce Motion (`:102`). |
 | S2 | `WorkspaceView.swift:630-643` `statusIcon` | `ProgressView().controlSize(.mini)` → `Circle` verde → ícones | **Sem transição.** O spinner do sistema troca seco para um ponto verde. Não há diferença entre "processo vivo" e "agente trabalhando". |
 | S3 | `WorkspaceView.swift:706-730` `sessionTabs` | Tabs são `Button` com troca de cor de fundo | **Sem motion.** Nem inserção, nem remoção, nem indicador de tab ativa animado. |
 | S4 | `WorkspaceView.swift:925-965` splits / `:1451` `split()` | Novo pane aparece instantâneo; divisor arrastado é imediato | O arrasto imediato está **correto** (AB-006). O split e o fechamento de pane não têm nenhuma transição nem indicação de foco. |
-| S5 | `WorkspaceView.swift:203` + 14 rotas `WorkspaceSheet` (`:65-98`); `LibraryView.swift:90-95`; `BrowserComputerPanel.swift:191,197`; `DockerViews.swift:62`; `AgentBoxApp.swift:70` (11 `.sheet(` no total) | Tudo é `.sheet` do sistema: Biblioteca, Pedidos, Lançar agente, Computador, Configurações iniciais… | **Problema estrutural.** A sheet do macOS desce da barra de título com curva fixa e não aceita customização. Ela não suporta matched geometry a partir do botão de origem e fica estranha para painéis grandes (a Biblioteca inteira dentro de uma sheet). Também não dá para encadear "fechar sheet → agente nasce na tab". |
+| S5 | `WorkspaceView.swift:203` + 14 rotas `WorkspaceSheet` (`:65-98`); `LibraryView.swift:90-95`; `BrowserComputerPanel.swift:191,197`; `DockerViews.swift:62`; `RackyApp.swift:70` (11 `.sheet(` no total) | Tudo é `.sheet` do sistema: Biblioteca, Pedidos, Lançar agente, Computador, Configurações iniciais… | **Problema estrutural.** A sheet do macOS desce da barra de título com curva fixa e não aceita customização. Ela não suporta matched geometry a partir do botão de origem e fica estranha para painéis grandes (a Biblioteca inteira dentro de uma sheet). Também não dá para encadear "fechar sheet → agente nasce na tab". |
 | S6 | `HumanRequestsView.swift:4-26` `HumanRequestBadge` | Cápsula laranja com contagem aparece e some com `if` | **Sem atenção.** Um pedido humano é o evento mais importante do app e chega sem nenhum sinal visual além do número. |
 | S7 | `RemoteDesktopView.swift:499-546` | Botões "Assumir"/"Devolver" e texto `"Ao vivo · somente leitura"` / `"Ao vivo · controle humano"` | **Lacuna principal.** Quem está pilotando o computador só aparece em texto 11 pt cinza. Não há borda, cor, cursor fantasma nem transição de handoff. Os estados `connecting/reconnecting/delayed/disconnected` (`:22-29`) também são só texto. |
 | S8 | `ProgressView` genérico em `CapturePanel.swift:63,244`, `BrowserComputerPanel.swift:183`, `DockerViews.swift:156`, `AppSettingsView.swift:58`, `ConversationResumeView.swift:98`, `WorkspaceView.swift:635,1640` | Spinner do sistema | Aceitável como fallback, mas aparece imediatamente (sem atraso de ~150 ms) e não informa a etapa. |
@@ -39,16 +39,16 @@ Busca: `withAnimation|.animation(|.transition(|matchedGeometryEffect|PhaseAnimat
 
 | # | Local | O que faz | O que está ruim |
 |---|---|---|---|
-| D1 | `design/source/AgentBox.swift:122-124` | `.animation(.easeInOut(0.22), value: model.human)`, `.animation(.easeInOut(0.2), value: model.screen)`, `.animation(.easeOut(0.18), value: model.modal)` na raiz | **Animação implícita global.** Qualquer mudança de layout na mesma transação também anima, o que dá o aspecto "mole". `easeInOut` em entradas parece lento no início. Trocar de tela vira crossfade da página inteira. |
-| D2 | `design/source/AgentBox.swift:125` | Modal `ModalLayer().transition(.opacity)` | Só opacity: sem escala, sem deslocamento, sem coreografia de backdrop e sem origem. Parece "piscar". |
-| D3 | `design/source/AgentBox.swift:126-127` | `AgentPeek` com `.opacity + .scale(0.97, anchor: .topLeading)` e `.spring(response: 0.28, dampingFraction: 0.86)` | **A melhor peça do protótipo.** A âncora vem da origem e o spring é sóbrio. Manter (vira o token `snappy`). |
-| D4 | `design/source/AgentBox.swift:128` | Toast `.move(edge: .bottom) + .opacity` | A direção está ok, mas `move(edge:)` desloca a altura inteira da view: o toast "voa" demais. O correto é um offset de 12 pt. |
+| D1 | `design/source/Racky.swift:122-124` | `.animation(.easeInOut(0.22), value: model.human)`, `.animation(.easeInOut(0.2), value: model.screen)`, `.animation(.easeOut(0.18), value: model.modal)` na raiz | **Animação implícita global.** Qualquer mudança de layout na mesma transação também anima, o que dá o aspecto "mole". `easeInOut` em entradas parece lento no início. Trocar de tela vira crossfade da página inteira. |
+| D2 | `design/source/Racky.swift:125` | Modal `ModalLayer().transition(.opacity)` | Só opacity: sem escala, sem deslocamento, sem coreografia de backdrop e sem origem. Parece "piscar". |
+| D3 | `design/source/Racky.swift:126-127` | `AgentPeek` com `.opacity + .scale(0.97, anchor: .topLeading)` e `.spring(response: 0.28, dampingFraction: 0.86)` | **A melhor peça do protótipo.** A âncora vem da origem e o spring é sóbrio. Manter (vira o token `snappy`). |
+| D4 | `design/source/Racky.swift:128` | Toast `.move(edge: .bottom) + .opacity` | A direção está ok, mas `move(edge:)` desloca a altura inteira da view: o toast "voa" demais. O correto é um offset de 12 pt. |
 | D5 | `design/source/Agents.swift:62` | Hover de card `easeInOut(0.18)` | `easeInOut` no hover dá sensação de atraso. Hover pede ease-out curto (0,12 s). |
 | D6 | `design/source/Agents.swift:105` | `withAnimation(.easeInOut(0.2)) { agentTab = tab }`; sublinhado da tab em `overlay { if … Rectangle() }` | Sem `matchedGeometryEffect`, o sublinhado **some e reaparece** em vez de deslizar até a tab nova. |
 | D7 | `design/source/Agents.swift:18-26` `LiveSurface` | `TimelineView(.animation(minimumInterval: 1/30))` permanente, que redesenha um "navegador fake" com checkmarks progredindo em loop de 8 s | **Custo e mentira.** Reavalia a árvore inteira 30×/s por card, sem pausar quando está invisível, e mostra progresso que não existe. Motion que finge estado destrói a confiança no indicador real. |
 | D8 | `design/source/MotionAssetView.swift` + `design/motion/box-loop.mp4` | Mascote em loop de 4 s via `AVQueuePlayer`/`AVPlayerLooper` | Vídeo para animar um ícone: não muda de cor, não reage a estado, decodifica H.264 continuamente e é bitmap. Deve ser vetor nativo (CA/SwiftUI). |
 | D9 | `design/motion/box-loop.html:133` | `seek(t)`: `translateY(-4·sin)`, `rotate(1.2°·sin)`, piscada gaussiana fixa em t=2,12 s | A senoide simétrica fica com cara de protetor de tela: sem antecipação, sem pausa. A piscada cai sempre no mesmo instante e fica mecânica. Não está ligada a nenhum estado do produto. |
-| D10 | `design/motion/timeline.html:141` (`agentbox-walkthrough.mp4`, 24 s) | 6 screenshots estáticos (`../screens/*.png`) com fade 0,3 s `E.o3`, subida de 8 px e cursor interpolado | **É um slideshow.** Nenhum elemento de UI se move de verdade (tabs, painéis, indicadores), então o vídeo não informa a implementação. A folha `motion-contact-sheet.jpg` confirma: seis telas paradas. |
+| D10 | `design/motion/timeline.html:141` (`racky-walkthrough.mp4`, 24 s) | 6 screenshots estáticos (`../screens/*.png`) com fade 0,3 s `E.o3`, subida de 8 px e cursor interpolado | **É um slideshow.** Nenhum elemento de UI se move de verdade (tabs, painéis, indicadores), então o vídeo não informa a implementação. A folha `motion-contact-sheet.jpg` confirma: seis telas paradas. |
 | D11 | `design/motion/render.sh:5` | `RENDERER=/Users/gabrielgreco/.codex/skills/motion-designer/scripts/render.py` + `tmix=frames=4` | Caminho errado (usuário e pasta `.codex` desta máquina não existem; o certo é `~/.claude/skills/motion-designer/scripts/render.py`). O **motion blur do `tmix` é inadequado para preview de UI**: o app real não tem blur de movimento, então o vídeo parece mais suave do que o app vai ficar. |
 | D12 | `design/index.html:3` (CSS) | `.peek` 0,16/0,18 s, `@keyframes dialogIn` 0,2 s `ease-out` 7 px, `.ping` 1,8 s opacidade infinita, `.agent-card:hover translateY(-3px)`, `@media (prefers-reduced-motion)` zera tudo | As durações estão no lugar, mas o `ease-out` do CSS (0,0,.58,1) é fraco. `.ping` pulsa sem significado. O Reduce Motion "mata tudo", inclusive o feedback de estado (o certo é trocar movimento por fade). |
 | D13 | `design/index.html:35` `animateStreams` | `requestAnimationFrame` contínuo movendo um cursor em senoide | Mesmo problema de D7: atividade falsa e loop permanente. |
@@ -70,7 +70,7 @@ Busca: `withAnimation|.animation(|.transition(|matchedGeometryEffect|PhaseAnimat
 
 Orca é Electron + React + Tailwind/Radix (shadcn). Analisei o CSS compilado (`out/renderer/assets/I18nProvider-*.css`) e componentes JS. Tokens e padrões encontrados:
 
-| Padrão | Valores exatos no Orca | Lição para o Agent Box |
+| Padrão | Valores exatos no Orca | Lição para o Racky |
 |---|---|---|
 | Transição padrão | `--default-transition-duration: .15s`, `cubic-bezier(.4,0,.2,1)`; utilitários mais usados: `duration-150` (30×), `duration-200` (29×), `duration-300` (21×), `ease-out` (96×) | A base é **150–200 ms ease-out**. Animações longas são exceção. |
 | Diálogos/menus (Radix) | `data-[state=open]:animate-in fade-in-0 zoom-in-95` / `closed: fade-out-0 zoom-out-95`, `slide-in-from-{top,bottom,left,right}-2` (8 px), 150 ms | Escala 0,95→1 + fade + 8 px de origem. A saída é mais curta que a entrada. |
@@ -94,7 +94,7 @@ Leitura geral: o Orca **não anima o terminal nem o layout dos panes**. Toda a v
 
 ## 3. Sistema de motion proposto (tokens)
 
-Implementar como `Sources/AgentBox/Design/Motion.swift` e espelhar em `design/motion/tokens.json` (consumido pelos storyboards HTML; ver §6).
+Implementar como `Sources/Racky/Design/Motion.swift` e espelhar em `design/motion/tokens.json` (consumido pelos storyboards HTML; ver §6).
 
 ### 3.1 Durações
 
@@ -168,8 +168,8 @@ Legenda de técnica: **SUI** = SwiftUI (transition/spring/matchedGeometry), **KA
 | Momento | Animação | Duração / curva | Técnica | Reduce Motion |
 |---|---|---|---|---|
 | A1 Abrir o app | Conteúdo da janela: fade 0→1. Linhas da sidebar sobem 4 pt com stagger 35 ms (máx. 6). Terminais restaurados aparecem já no estado "Pronto para iniciar", **sem** animação. | 0,24 `standard`; stagger 0,035 | SUI (`.transition` + `onAppear` com delay por índice) | fade 0,15 só no container |
-| A2 Primeira execução (setup) | Substituir a sheet `AgentBoxApp.swift:70` por um onboarding em overlay de passos: passo novo entra +16 pt/fade, antigo sai −8 pt/fade. Barra de progresso interpola. | 0,32 `expoOut` / saída 0,18 `exit` | SUI | crossfade |
-| A3 Estado vazio (sem sessões) | A marca Agent Box se desenha uma vez (traço `trim` 0→1, depois preenchimento). O texto sobe 4 pt. **Sem loop.** | 0,6 `expoOut` + 0,24 | SUI (`Shape.trim`) ou CA | estático |
+| A2 Primeira execução (setup) | Substituir a sheet `RackyApp.swift:70` por um onboarding em overlay de passos: passo novo entra +16 pt/fade, antigo sai −8 pt/fade. Barra de progresso interpola. | 0,32 `expoOut` / saída 0,18 `exit` | SUI | crossfade |
+| A3 Estado vazio (sem sessões) | A marca Racky se desenha uma vez (traço `trim` 0→1, depois preenchimento). O texto sobe 4 pt. **Sem loop.** | 0,6 `expoOut` + 0,24 | SUI (`Shape.trim`) ou CA | estático |
 
 ### B. Sessões e sidebar
 
@@ -342,12 +342,12 @@ Ou seja: a skill serve para **decidir o desenho e o tempo** e entregar referênc
 ---
 
 ## 7. Arquivos citados
-- `Sources/AgentBox/Workspace/WorkspaceView.swift` (`:102`, `:179`, `:203`, `:630-643`, `:706-730`, `:925-965`)
-- `Sources/AgentBox/Computers/RemoteDesktopView.swift` (`:22-29`, `:499-546`)
-- `Sources/AgentBox/Computers/HumanRequestsView.swift` (`:4-26`), `HumanRequestCenter.swift` (`:69-90`)
-- `Sources/AgentBox/Terminal/TerminalRuntimeManager.swift` (`:7-12`, `:36`, `:382`)
-- `Sources/AgentBoxCore/Control/ControlBroker.swift` (`:10`, `:48-66`), `Sources/AgentBoxCore/AgentRegistry/AgentRunRegistry.swift` (`:18-21`)
-- `design/source/AgentBox.swift` (`:122-128`), `design/source/Agents.swift` (`:18-26`, `:62`, `:105`), `design/source/MotionAssetView.swift`
+- `Sources/Racky/Workspace/WorkspaceView.swift` (`:102`, `:179`, `:203`, `:630-643`, `:706-730`, `:925-965`)
+- `Sources/Racky/Computers/RemoteDesktopView.swift` (`:22-29`, `:499-546`)
+- `Sources/Racky/Computers/HumanRequestsView.swift` (`:4-26`), `HumanRequestCenter.swift` (`:69-90`)
+- `Sources/Racky/Terminal/TerminalRuntimeManager.swift` (`:7-12`, `:36`, `:382`)
+- `Sources/RackyCore/Control/ControlBroker.swift` (`:10`, `:48-66`), `Sources/RackyCore/AgentRegistry/AgentRunRegistry.swift` (`:18-21`)
+- `design/source/Racky.swift` (`:122-128`), `design/source/Agents.swift` (`:18-26`, `:62`, `:105`), `design/source/MotionAssetView.swift`
 - `design/motion/box-loop.html:133`, `design/motion/timeline.html:141`, `design/motion/render.sh:5`, `design/index.html:3,35`
 - `docs/tasks/AB-006-visual.md:13`
 - Skill: `~/.claude/skills/motion-designer/{SKILL.md,references/craft.md,references/pipeline.md,templates/timeline.html}`; `~/Desktop/Labrynth/labrynth-motion-design/skills/labrynth-motion-design/brands/labrynth.md` (§5, §10)

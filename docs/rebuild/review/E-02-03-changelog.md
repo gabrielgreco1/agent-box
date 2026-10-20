@@ -8,7 +8,7 @@ Data: 2026-10-16. Escopo: aplicar em `spec/02-design-system.md` e `spec/03-scree
 - **P11**: "Scratch" saiu de tudo. Agora são clean sessions, seção **Sessions**, ação **New Clean Session** (⇧⌘N) e **New Clean Session in Folder…** (⌥⇧⌘N, que AC-1105 pedia e não existia). O composer usa `No Project (Clean Session)`. IDs: `sidebar.cleanSessions[.new]` e `landing.newCleanSession`. O nome automático é `quiet-harbor` (P15) e renomear a sessão não renomeia a pasta.
 - **P13**:
   - Saiu todo teto de orçamento: os campos de orçamento do Settings, os eventos de 80% e de 100% com `[Add $1]` na Inbox, o switch `Budget alerts` e o alerta de 80% na status bar.
-  - Entrou **Settings › Computers › Proxies**: lista de `ProxyProfile`, `Default proxy for computers`, formulário com `Name` / `Preset` (`Custom` · `Zyte (proxy)` · `Zyte API (render)`) / `Type` (`HTTP` · `HTTPS` · `SOCKS5`) / `Host` / `Port` / `Username` / `Password` / `Country` / `Extra CA certificate` / `Render endpoint` / `API key` / preços informativos, botão `[Test Proxy]` e `Import from agentbox CLI…`.
+  - Entrou **Settings › Computers › Proxies**: lista de `ProxyProfile`, `Default proxy for computers`, formulário com `Name` / `Preset` (`Custom` · `Zyte (proxy)` · `Zyte API (render)`) / `Type` (`HTTP` · `HTTPS` · `SOCKS5`) / `Host` / `Port` / `Username` / `Password` / `Country` / `Extra CA certificate` / `Render endpoint` / `API key` / preços informativos, botão `[Test Proxy]` e `Import from racky CLI…`.
   - Entraram também `Computer proxy` no composer, `Proxy ▸` no viewer, a coluna `Proxy` (nome + uso) na página Computers e o segmento **Proxy usage** (`statusBar.proxyUsage`, que antes era `proxySpend`), sem limites.
 - **P14**: nova **03 §23 Checklist de fidelidade visual com o Orca**. A comparação é lado a lado em 760×480 e 1440×900, com `compare-ui.sh`, `LayoutConformanceTests` e OK explícito do dono. DS §15 e 03 §20 passam a citá-la.
 - **P15**:
@@ -16,7 +16,7 @@ Data: 2026-10-16. Escopo: aplicar em `spec/02-design-system.md` e `spec/03-scree
   - O ⌘Q virou overlay (§16.10), **nunca NSAlert**, com `Keep Running` como padrão e `Don't ask again` ligado ao novo `Ask before quitting with running agents`.
   - Sessões importadas aparecem como `Not started`, com `Start Claude Code`, e cada projeto mostra só as 5 mais recentes mais `Show <n> more`.
   - Raiz de worktree em `~/orca/workspaces`.
-- **P4 / D-03**: saiu a opção `Never` do ícone da menu bar. O helper de login também saiu: o app fica em `.accessory` e ganhou `Quit Agent Box Completely`.
+- **P4 / D-03**: saiu a opção `Never` do ícone da menu bar. O helper de login também saiu: o app fica em `.accessory` e ganhou `Quit Racky Completely`.
 - **P16**: os conflitos foram resolvidos pela recomendação dos revisores, incluindo D-02 (`Take Over` / `Hand Back`, IDs `.takeOver` / `.handBack`, ⇧⌘R), D-09, D-11 e D-12.
 
 ### R1 (consistência)
@@ -31,7 +31,7 @@ Data: 2026-10-16. Escopo: aplicar em `spec/02-design-system.md` e `spec/03-scree
   - K-31 perfis `Claude · Skip permissions` e K-32 opções de "Where";
   - K-34: `Move to Project…`, `Convert to Project…` e `Move Folder into Project…` (v1.1), sem git init;
   - K-35 nome derivado do prompt e K-36 duplo clique na nota;
-  - K-39 `Log In` no lugar de `Sign In` e K-40 `Block in Agent Box` · `Disable Globally…` · `Keep` + `Restore Skill`;
+  - K-39 `Log In` no lugar de `Sign In` e K-40 `Block in Racky` · `Disable Globally…` · `Keep` + `Restore Skill`;
   - K-42: os textos de orçamento foram removidos (P13);
   - K-46 "background service" e K-47/K-48 variantes de saída e de interrupção;
   - K-49 `Try Again`, que substituiu todo `Retry`;
@@ -71,7 +71,7 @@ Data: 2026-10-16. Escopo: aplicar em `spec/02-design-system.md` e `spec/03-scree
   - Filter da sidebar como later (R2.6).
 
 ### R3 (implementabilidade)
-- **Nova 03 §24 Tabela de ações**: `ActionID`, efeito, motivo de desabilitado e versão para cada controle e item de menu, incluindo os mais de 25 itens que estavam sem comportamento (Check for Problems, Hide App Name, Locate Folder…, Show Launch Details, Show Hook Log, Refresh Git, Collapse All Sessions, Mute Notifications, Rename Branch…, Restart with ▸, Reset Title, Send Interrupt, Close Other Panes, Equalize Pane Sizes, Open Computer…, Agent Settings…, Manage Agents…, Open Diagnostics, Stop All Agents…, Pause Notifications, Agent Box Help, Hide from Sidebar, Open in Editor/terminal com a configuração em Settings › General). Novos overlays: §16.13 Rename Branch e §16.14 About.
+- **Nova 03 §24 Tabela de ações**: `ActionID`, efeito, motivo de desabilitado e versão para cada controle e item de menu, incluindo os mais de 25 itens que estavam sem comportamento (Check for Problems, Hide App Name, Locate Folder…, Show Launch Details, Show Hook Log, Refresh Git, Collapse All Sessions, Mute Notifications, Rename Branch…, Restart with ▸, Reset Title, Send Interrupt, Close Other Panes, Equalize Pane Sizes, Open Computer…, Agent Settings…, Manage Agents…, Open Diagnostics, Stop All Agents…, Pause Notifications, Racky Help, Hide from Sidebar, Open in Editor/terminal com a configuração em Settings › General). Novos overlays: §16.13 Rename Branch e §16.14 About.
 - **03 §22 é a lista única e canônica** de IDs (DS §17 só dá a convenção). Inclui:
   - os 35 IDs que 04 marcou com †;
   - os de 07: `batch.*`, `overlay.newBatch.*` e `settings.computers.proxies.*`;
@@ -81,7 +81,7 @@ Data: 2026-10-16. Escopo: aplicar em `spec/02-design-system.md` e `spec/03-scree
 - **Lint de UI** especificado (padrões e testes do próprio lint), mais a regra "todo Button passa pelo ActionRegistry".
 - **Feature flag por fatia**: controle de fatia futura não renderiza (DS §15 regras 20 e 21; 03 §0 e §20).
 - Também:
-  - caminho dos tokens no alvo `AgentBoxDesignSystem` (08) e `design/` declarado legado;
+  - caminho dos tokens no alvo `RackyDesignSystem` (08) e `design/` declarado legado;
   - Geist com o nome upstream, SHA e `OFL.txt`;
   - pacote de referência `docs/rebuild/reference/orca-1.4.219/` no lugar de `scratchpad/orca-src`;
   - estado `Not started` (AC-109);

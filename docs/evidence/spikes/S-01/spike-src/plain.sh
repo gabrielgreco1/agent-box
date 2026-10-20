@@ -1,10 +1,10 @@
 #!/bin/bash
-# Variante sem SMAppService: launchctl bootstrap de um plist de teste (label app.agentbox.ptyd.test-s01plain) com o daemon do spike.
+# Variante sem SMAppService: launchctl bootstrap de um plist de teste (label app.racky.ptyd.test-s01plain) com o daemon do spike.
 # Prova launch_activate_socket, launchctl getenv e a ativacao sob demanda sem depender de aprovacao de Itens de Inicio.
 set -uo pipefail
 S="$(cd "$(dirname "$0")" && pwd)"
 D="$S/ABS01.app/Contents/MacOS/s01d"
-LABEL=app.agentbox.ptyd.test-s01plain
+LABEL=app.racky.ptyd.test-s01plain
 PL="$S/$LABEL.plist"
 rm -f /tmp/s01-daemon.log
 cat > "$PL" <<EOF
@@ -16,14 +16,14 @@ cat > "$PL" <<EOF
 <key>KeepAlive</key><false/>
 <key>EnvironmentVariables</key><dict><key>S01_LOG</key><string>/tmp/s01-daemon.log</string><key>S01_IDLE</key><string>8</string></dict>
 <key>Sockets</key><dict><key>Listeners</key><dict>
-  <key>SecureSocketWithKey</key><string>AGENTBOX_PTYD_SOCK_V1</string>
+  <key>SecureSocketWithKey</key><string>RACKY_PTYD_SOCK_V1</string>
 </dict></dict>
 </dict></plist>
 EOF
-trap 'launchctl bootout gui/501/$LABEL 2>/dev/null; echo "--- bootout; getenv agora: [$(launchctl getenv AGENTBOX_PTYD_SOCK_V1)]"' EXIT
+trap 'launchctl bootout gui/501/$LABEL 2>/dev/null; echo "--- bootout; getenv agora: [$(launchctl getenv RACKY_PTYD_SOCK_V1)]"' EXIT
 echo "--- bootstrap"; launchctl bootstrap gui/501 "$PL"; echo "rc=$?"
-SOCK="$(launchctl getenv AGENTBOX_PTYD_SOCK_V1)"
-echo "--- launchctl getenv AGENTBOX_PTYD_SOCK_V1 => $SOCK (len ${#SOCK})"
+SOCK="$(launchctl getenv RACKY_PTYD_SOCK_V1)"
+echo "--- launchctl getenv RACKY_PTYD_SOCK_V1 => $SOCK (len ${#SOCK})"
 echo "--- job antes de qualquer conexao"; launchctl print gui/501/$LABEL | grep -E "^	state|runs =|secure key|	path = /var|mode ="
 ls -la "$(dirname "$SOCK")"
 echo "--- nc -U acorda o daemon"

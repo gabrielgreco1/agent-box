@@ -1,5 +1,5 @@
-e2e-subagents 2026-10-20T05:56:08Z provider=codex model=gpt-6-luna mock=0 work=/tmp/abmp-KVYwNr owner=agent-box-28f9174f
-  PASS  app de teste isolado (dados em /tmp/abmp-KVYwNr/h, owner agent-box-28f9174f, não é o do dono)
+e2e-subagents 2026-10-20T05:56:08Z provider=codex model=gpt-6-luna mock=0 work=/tmp/abmp-KVYwNr owner=racky-28f9174f
+  PASS  app de teste isolado (dados em /tmp/abmp-KVYwNr/h, owner racky-28f9174f, não é o do dono)
   PASS  composer oferece Subagent computers para codex (full aceito)
 terminal 01A157E1-E203-7D73-8DD8-8011DBC2D245
 esperou 28 s (computador visto: 1, tudo removido: 1)

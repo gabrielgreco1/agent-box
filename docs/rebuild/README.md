@@ -1,6 +1,6 @@
-# Rebuild do Agent Box · índice
+# Rebuild do Racky · índice
 
-Reconstrução do app macOS Agent Box (UI refeita com o Orca 1.4.219 como referência). Três camadas: auditoria (o que existe e o que falta), revisões (o que a spec precisava corrigir) e spec (o que construir). **Em caso de conflito vale `spec/00-decisions.md`.**
+Reconstrução do app macOS Racky (UI refeita com o Orca 1.4.219 como referência). Três camadas: auditoria (o que existe e o que falta), revisões (o que a spec precisava corrigir) e spec (o que construir). **Em caso de conflito vale `spec/00-decisions.md`.**
 
 ## Como ler
 
@@ -19,7 +19,7 @@ Agente de código: leia `spec/09-roadmap.md` §5 antes de qualquer tarefa.
 - `03-screens.md`: cada tela e overlay, microcopy exata, atalhos, `accessibilityIdentifier`, checklist de fidelidade com o Orca (§23), tabela de ações (§24).
 - `04-motion.md`: tokens e catálogo de momentos de motion, os três momentos obrigatórios, workflow de protótipo e aceite.
 - `05-journeys-and-acceptance.md`: jornadas J1…J11 e os ACs, fixtures, definição de pronto da v1, matriz requisito → AC.
-- `06-terminals-and-agents.md`: terminais e daemon `agentboxd`, lançamento de agentes, atividade e notificações, biblioteca, Git e GitHub, importação do Orca.
+- `06-terminals-and-agents.md`: terminais e daemon `rackyd`, lançamento de agentes, atividade e notificações, biblioteca, Git e GitHub, importação do Orca.
 - `07-computers-and-subagents.md`: computadores Docker, egress e proxy, ferramentas MCP, orquestração e lote, controle humano, modo isolado (v1.1).
 - `08-architecture-quality.md`: arquitetura, dados, concorrência, segurança, observabilidade, desempenho, testes, DoD, build, ordem técnica, spikes.
 - `09-roadmap.md`: fatias 0 a 4 e v1.1, tarefas da Fatia 1 (T1-01…T1-27), regras de execução para agentes, decisões abertas do dono.
@@ -40,7 +40,7 @@ Agente de código: leia `spec/09-roadmap.md` §5 antes de qualquer tarefa.
 - `01-features-requested.md`: inventário do que foi pedido e especificado.
 - `02-core-audit.md`: auditoria técnica do Core, MCP, runtime e testes.
 - `03-screens-and-flows.md`: telas, sheets e fluxos do app atual.
-- `04-orca-reference.md`: referência de design Orca → Agent Box.
+- `04-orca-reference.md`: referência de design Orca → Racky.
 - `05-core-features-gaps.md`: lacunas nas funcionalidades centrais.
 - `06-motion.md`: auditoria e proposta de motion.
 - `07-review-ui.md`: revisão de UI/UX e paridade com o Orca.

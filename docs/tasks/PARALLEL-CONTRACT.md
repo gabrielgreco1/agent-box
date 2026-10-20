@@ -1,19 +1,19 @@
 # Contrato do lote 1
 
-Código de design preservado em `design/`. App operacional novo em `Sources/AgentBox`, domínio reutilizável em `Sources/AgentBoxCore`. macOS 14+, Swift 5 language mode, SwiftTerm 1.20.0. Fontes de sistema, logos oficiais, sem fixtures no runtime.
+Código de design preservado em `design/`. App operacional novo em `Sources/Racky`, domínio reutilizável em `Sources/RackyCore`. macOS 14+, Swift 5 language mode, SwiftTerm 1.20.0. Fontes de sistema, logos oficiais, sem fixtures no runtime.
 
 ## Propriedade dos arquivos
 
-- PTY agent: `Sources/AgentBox/Terminal/`, `Sources/AgentBoxCore/Processes/`, `Tests/AgentBoxCoreTests/Processes*`, `docs/tasks/AB-002.md`.
-- UI agent: `Sources/AgentBox/Workspace/`, `Sources/AgentBoxCore/Workspaces/`, `Tests/AgentBoxCoreTests/Workspace*`, `docs/tasks/AB-003.md`.
-- Docker agent: `Sources/AgentBox/Docker/`, `Sources/AgentBoxCore/Docker/`, `Tests/AgentBoxCoreTests/Docker*`, `docs/tasks/AB-004.md`.
+- PTY agent: `Sources/Racky/Terminal/`, `Sources/RackyCore/Processes/`, `Tests/RackyCoreTests/Processes*`, `docs/tasks/AB-002.md`.
+- UI agent: `Sources/Racky/Workspace/`, `Sources/RackyCore/Workspaces/`, `Tests/RackyCoreTests/Workspace*`, `docs/tasks/AB-003.md`.
+- Docker agent: `Sources/Racky/Docker/`, `Sources/RackyCore/Docker/`, `Tests/RackyCoreTests/Docker*`, `docs/tasks/AB-004.md`.
 - Integrador: entry point, Package.swift, Domain.swift, biblioteca/memória/skills, recursos, build, integração, documentação geral e Git.
 
 Não editar arquivos de outro responsável; comunicar ajustes. Não fazer commit/push, instalar software, iniciar CLI pago, criar container ou alterar credenciais sem instrução específica. Testes usam shells locais descartáveis e runners falsos quando apropriado. Nenhum agente usa cópia de UI falsa para representar estado conectado.
 
 ## Interfaces compartilhadas
 
-`AgentBoxCore.Domain.swift` define `CLIProvider`, `TerminalRecord`, `WorkspaceSession` e `AppPaths.applicationSupport`.
+`RackyCore.Domain.swift` define `CLIProvider`, `TerminalRecord`, `WorkspaceSession` e `AppPaths.applicationSupport`.
 
 PTY: `@MainActor TerminalRuntimeManager: ObservableObject`, `init()`, `start(_ terminal: TerminalRecord)`, `stop(_ id: UUID)`, `shutdown()`, `state(for id: UUID) -> TerminalProcessState`. `TerminalProcessState` expõe `idle`, `starting`, `running(pid: Int32)`, `exited(code: Int32?)`, `failed(String)`. `TerminalSurface(terminal: TerminalRecord, runtime: TerminalRuntimeManager)` é NSViewRepresentable/SwiftUI; criar ou remontar a view NÃO relança processo. O manager guarda emulador/PTY por ID enquanto o app vive; não afirmar sobrevivência ao quit/crash.
 

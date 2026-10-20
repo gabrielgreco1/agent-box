@@ -5,7 +5,7 @@
         "Path": "python",
         "Args": [
             "-m",
-            "agentbox_supervisor"
+            "racky_supervisor"
         ],
         "State": {
             "Status": "running",
@@ -49,7 +49,7 @@
             "Binds": [
                 "/tmp/abe2e-eYUOiE/h/computers/runs/01a15702/e2e-light/work:/work",
                 "/tmp/abe2e-eYUOiE/h/computers/boxes/97ce44d0-b257-40e0-bf00-5d602e1b369b/work:/run/abx-secrets:ro",
-                "/tmp/abe2e-eYUOiE/h/computers/runs/01a15702/e2e-light/logs:/run/agentbox/logs",
+                "/tmp/abe2e-eYUOiE/h/computers/runs/01a15702/e2e-light/logs:/run/racky/logs",
                 "ab-prof-97ce44d0-b257-40e0-bf00-5d602e1b369b:/profile"
             ],
             "ContainerIDFile": "",
@@ -106,7 +106,7 @@
             ],
             "Tmpfs": {
                 "/home/agent": "rw,nosuid,size=256m,uid=10001,gid=10001,mode=0755",
-                "/run/agentbox": "rw,nosuid,noexec,size=64m,uid=10003,gid=10003,mode=0700",
+                "/run/racky": "rw,nosuid,noexec,size=64m,uid=10003,gid=10003,mode=0700",
                 "/tmp": "rw,nosuid,size=1g,mode=1777"
             },
             "UTSMode": "",
@@ -193,7 +193,7 @@
             {
                 "Type": "bind",
                 "Source": "/tmp/abe2e-eYUOiE/h/computers/runs/01a15702/e2e-light/logs",
-                "Destination": "/run/agentbox/logs",
+                "Destination": "/run/racky/logs",
                 "Mode": "",
                 "RW": true,
                 "Propagation": "rprivate"
@@ -223,7 +223,7 @@
             "OpenStdin": false,
             "StdinOnce": false,
             "Env": [
-                "AGENTBOX_DISPLAY=browser",
+                "RACKY_DISPLAY=browser",
                 "HOME=/home/agent",
                 "DISPLAY=:99",
                 "HTTP_PROXY=http://127.0.0.1:3128",
@@ -234,7 +234,7 @@
                 "all_proxy=http://127.0.0.1:3128",
                 "NO_PROXY=localhost,127.0.0.1,::1",
                 "no_proxy=localhost,127.0.0.1,::1",
-                "PATH=/opt/agentbox/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "PATH=/opt/racky/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
                 "LANG=C.UTF-8",
                 "LC_ALL=C.UTF-8",
                 "PLAYWRIGHT_BROWSERS_PATH=/ms-playwright",
@@ -242,7 +242,7 @@
                 "PYTHONUNBUFFERED=1",
                 "PIP_NO_CACHE_DIR=1",
                 "PIP_DISABLE_PIP_VERSION_CHECK=1",
-                "PYTHONPATH=/opt/agentbox"
+                "PYTHONPATH=/opt/racky"
             ],
             "Cmd": null,
             "Healthcheck": {
@@ -250,29 +250,29 @@
                     "CMD",
                     "python",
                     "-m",
-                    "agentbox_egress.healthcheck"
+                    "racky_egress.healthcheck"
                 ],
                 "Interval": 5000000000,
                 "Timeout": 3000000000,
                 "StartPeriod": 3000000000,
                 "Retries": 5
             },
-            "Image": "agentbox-computer:ctx-d374b4c1af35",
+            "Image": "racky-computer:ctx-d374b4c1af35",
             "Volumes": null,
             "WorkingDir": "/work",
             "Entrypoint": [
                 "python",
                 "-m",
-                "agentbox_supervisor"
+                "racky_supervisor"
             ],
             "Labels": {
-                "agentbox.batch": "e2e",
-                "agentbox.computer": "97ce44d0-b257-40e0-bf00-5d602e1b369b",
-                "agentbox.computer_name": "e2e-light",
-                "agentbox.context_hash": "d374b4c1af355f8b565e4847039f748c03f6ee3bcd336bb2e14ffc1977a20102",
-                "agentbox.ephemeral": "true",
-                "agentbox.owner": "agent-box-e455c8b1",
-                "agentbox.role": "computer",
+                "racky.batch": "e2e",
+                "racky.computer": "97ce44d0-b257-40e0-bf00-5d602e1b369b",
+                "racky.computer_name": "e2e-light",
+                "racky.context_hash": "d374b4c1af355f8b565e4847039f748c03f6ee3bcd336bb2e14ffc1977a20102",
+                "racky.ephemeral": "true",
+                "racky.owner": "racky-e455c8b1",
+                "racky.role": "computer",
                 "org.opencontainers.image.version": "24.04"
             },
             "StopTimeout": 5

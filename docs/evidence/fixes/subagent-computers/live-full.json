@@ -1,12 +1,12 @@
 {
   "claude_run" : {
     "agent_subagent_types" : [
-      "agentbox-worker-1"
+      "racky-worker-1"
     ],
-    "agentbox_mcp_server_present" : true,
+    "racky_mcp_server_present" : true,
     "app_skills_loaded" : [
-      "agentbox",
-      "agentbox-app:agentbox-boxes"
+      "racky",
+      "racky-app:racky-boxes"
     ],
     "approval_cards_decided" : [
 
@@ -30,7 +30,7 @@
     "other_mcp_servers_count" : 38,
     "parent_tool_uses" : [
       "ToolSearch",
-      "mcp__agentbox__boxes_reserve",
+      "mcp__racky__boxes_reserve",
       "Agent"
     ],
     "reqlog_requests_to_origin" : 3,

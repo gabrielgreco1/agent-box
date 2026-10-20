@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Latência do helper `agentbox hook` (08 AR-707: p95 <= 30 ms). Ferramenta de medição de desenvolvimento; não faz parte do produto.
+"""Latência do helper `racky hook` (08 AR-707: p95 <= 30 ms). Ferramenta de medição de desenvolvimento; não faz parte do produto.
 
-Uso: hook-latency.py <caminho do agentbox> [execuções]
+Uso: hook-latency.py <caminho do racky> [execuções]
 
 Cenários (cada execução é um processo novo, medido de ponta a ponta com perf_counter):
   closed  app fechado: connect falha na hora, o evento vai para o spool
@@ -63,8 +63,8 @@ def bench(mode):
         srv.bind(path)
         srv.listen(16)
         threading.Thread(target=serve, args=(srv, mode), daemon=True).start()
-    env = {"PATH": "/usr/bin:/bin", "HOME": home, "AGENTBOX_APP_SOCK": path, "AGENTBOX_RUN_ID": "11111111-2222-4333-8444-555555555555",
-           "AGENTBOX_PANE_ID": "66666666-7777-4888-9999-000000000000"}
+    env = {"PATH": "/usr/bin:/bin", "HOME": home, "RACKY_APP_SOCK": path, "RACKY_RUN_ID": "11111111-2222-4333-8444-555555555555",
+           "RACKY_PANE_ID": "66666666-7777-4888-9999-000000000000"}
     samples = []
     n = runs if mode != "hung" else max(10, runs // 10)
     for _ in range(n):

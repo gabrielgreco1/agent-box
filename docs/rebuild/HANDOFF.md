@@ -1,6 +1,6 @@
 # Handoff — 2026-10-17 (fim da sessão por limite de uso)
 
-Branch: `gabrielgreco1/test-project-suite` (sem push). Build: `scripts/bootstrap.sh --fonts && scripts/build.sh` → `build/AgentBox/Agent Box.app` (assina com a identidade Apple Development do dono). Testes: `scripts/test.sh unit|integration|all`.
+Branch: `gabrielgreco1/test-project-suite` (sem push). Build: `scripts/bootstrap.sh --fonts && scripts/build.sh` → `build/Racky/Racky.app` (assina com a identidade Apple Development do dono). Testes: `scripts/test.sh unit|integration|all`.
 
 ## Feito e mergeado
 - Fatia 0 inteira; Fatia 1 quase toda (falta T1-22 menus/atalhos completos e T1-25 fechamento).

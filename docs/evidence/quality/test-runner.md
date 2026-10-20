@@ -2,20 +2,20 @@
 
 ## Problema
 
-`swift test` roda os ~1480 testes de todos os alvos em um só processo, em paralelo. Suítes de integração (agentboxd real, zsh, vim,
-Docker, LaunchAgent) e suítes de UI (main actor) competiam: timeouts de 30 a 65 s, testes pendurados e `agentboxd --idle-exit 0` órfãos.
+`swift test` roda os ~1480 testes de todos os alvos em um só processo, em paralelo. Suítes de integração (rackyd real, zsh, vim,
+Docker, LaunchAgent) e suítes de UI (main actor) competiam: timeouts de 30 a 65 s, testes pendurados e `rackyd --idle-exit 0` órfãos.
 
 ## Estrutura
 
 - Tag `integration` (`IntegrationTag.swift` em cada alvo) + `.serialized` + `.timeLimit(.minutes(1))` em 23 suítes: `Daemon*`
-  (todas as de `DaemonTests`), `*IntegrationTests`, `Live*` (Docker, `.timeLimit(.minutes(10))`, desligadas sem `AGENTBOX_TEST_DOCKER=1`),
+  (todas as de `DaemonTests`), `*IntegrationTests`, `Live*` (Docker, `.timeLimit(.minutes(10))`, desligadas sem `RACKY_TEST_DOCKER=1`),
   `RestoreTests`, `LaunchStatesIntegrationTests`, `WorkspaceIntegrationTests`, `WorkspaceModelTests`, `LaunchdSocketTests`,
   `PeerAuthDaemonTests`, `LoginShellEnvRealShellTests`. `ReattachTests` tem teto de 3 min (vim/zsh 20 repetições).
 - `scripts/test.sh unit|all|integration [--no-build]`: a lista de suítes vem do próprio código (`.tags(.integration)`).
   `unit` = `--skip` das suítes de integração, em paralelo; `integration` = `--no-parallel --filter`; `all` = unit e depois integration.
-  Teto de relógio por fase (240 s / 480 s), resumo curto, log completo em `Packages/AgentBoxKit/.build/test-logs/`, exit 0/1/2.
+  Teto de relógio por fase (240 s / 480 s), resumo curto, log completo em `Packages/RackyKit/.build/test-logs/`, exit 0/1/2.
 - Daemons: `DaemonHarness` (dois alvos) nunca usa `--idle-exit 0` (vira 5 s), registra o PID, mata no `defer { harness.terminateNow() }`,
-  no `deinit` e num `atexit`. `scripts/test.sh` falha e mata qualquer `agentboxd` do checkout que sobrou vivo depois da fase.
+  no `deinit` e num `atexit`. `scripts/test.sh` falha e mata qualquer `rackyd` do checkout que sobrou vivo depois da fase.
   `terminateNow` não usa `waitUntilExit` (travava numa thread sem run loop e o `.timeLimit` não resgata).
 - Higiene de tela: `OffscreenAppKit` (trait `.offscreenAppKit` em todas as suítes de UI) põe a política em `.accessory` (sem Dock),
   cria janelas em (-20000, -20000) sem nunca ordená-las; `MainWindowController.orderingEnabled = false` e
@@ -42,7 +42,7 @@ Execuções consecutivas de `scripts/test.sh all`: ver a seção "Três execuç�
 
 ## Três execuções seguidas
 
-`scripts/test.sh all --no-build`: 292 s, 284 s e 285 s, todas exit 0 (1377 unit + 101 integration), zero `agentboxd` vazado ao fim.
+`scripts/test.sh all --no-build`: 292 s, 284 s e 285 s, todas exit 0 (1377 unit + 101 integration), zero `rackyd` vazado ao fim.
 Antes disso, duas execuções interrompidas por erro nosso (windows polling pesado e kill externo) e um hang real de
 `waitUntilExit` (corrigido) mostraram por que o teto de relógio por fase existe.
 

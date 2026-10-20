@@ -12,7 +12,7 @@
 
 - [Claude Code hooks](https://code.claude.com/docs/en/hooks): `SubagentStart` traz `session_id`, `agent_id`, `agent_type`; `SubagentStop` inclui os mesmos identificadores. A documentação alerta que `SubagentStop` também pode vir de agentes internos. Por isso, o registro exige `SubagentStart` prévio.
 - [Codex hooks](https://learn.chatgpt.com/docs/hooks): `SubagentStart` e `SubagentStop` também incluem `agent_id`/`agent_type` e `session_id` comum. Hooks não gerenciados requerem revisão de confiança; nenhum foi instalado pelo projeto.
-- [Codex app-server](https://learn.chatgpt.com/docs/app-server): `thread/list` possui fontes `subAgent` e filtros experimentais `parentThreadId`/`ancestorThreadId`. Isso não significa que o PTY Codex comum do Agent Box esteja inscrito nesse servidor.
+- [Codex app-server](https://learn.chatgpt.com/docs/app-server): `thread/list` possui fontes `subAgent` e filtros experimentais `parentThreadId`/`ancestorThreadId`. Isso não significa que o PTY Codex comum do Racky esteja inscrito nesse servidor.
 
 Falta provar em execução real: identificação inequívoca do run pai no transporte de hook, entrega/ordem dos eventos em uma TUI lançada pelo app, semântica de resume e cobertura de agentes internos, reconciliação após quit/crash, e compatibilidade com as versões efetivamente instaladas. Não foram enviados prompts pagos nem iniciados agentes nativos para este lote.
 

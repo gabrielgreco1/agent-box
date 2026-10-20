@@ -20,7 +20,7 @@
         },
         {
           "pass": true,
-          "check": "dados isolados em AGENTBOX_HOME tempor\u00e1rio (banco em /tmp/abe2e-eYUOiE/h/db/agentbox.sqlite)"
+          "check": "dados isolados em RACKY_HOME tempor\u00e1rio (banco em /tmp/abe2e-eYUOiE/h/db/racky.sqlite)"
         },
         {
           "pass": true,
@@ -126,7 +126,7 @@
         },
         {
           "pass": true,
-          "check": "1 container 'agentbox-computer' em execu\u00e7\u00e3o, com os labels do teste (owner agent-box-e455c8b1, role computer, ef\u00eamero)"
+          "check": "1 container 'racky-computer' em execu\u00e7\u00e3o, com os labels do teste (owner racky-e455c8b1, role computer, ef\u00eamero)"
         },
         {
           "pass": true,
@@ -312,7 +312,7 @@
         },
         {
           "pass": true,
-          "check": "nenhuma rede do teste sobrou (label agentbox.owner=agent-box-e455c8b1)"
+          "check": "nenhuma rede do teste sobrou (label racky.owner=racky-e455c8b1)"
         },
         {
           "pass": true,

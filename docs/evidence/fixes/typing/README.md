@@ -11,9 +11,9 @@ e fechar o Settings nao devolvia o foco (a view oculta ficava como first respond
 ## Correcao
 - `TerminalSurfaceView.mouseDown`: sempre `makeFirstResponder(self)` (overlay aberto engole o clique no hit test).
 - `OverlayFocusCoordinator.restore()`: responder guardado que seja janela, contentView ou `ChromeHostingView` nao vale; cai em `fallbackFocus` (terminal do pane focado).
-- `MainWindowController`: fechar Settings e `windowDidBecomeKey` (volta de NSOpenPanel/sheet/outro app) devolvem o foco ao terminal; `AgentBoxWindow.keyDown` e o watchdog: tecla sem tratador loga `keyDown reached the window but no terminal accepts it` (categoria `focus`) ou refoca o terminal e reenvia.
+- `MainWindowController`: fechar Settings e `windowDidBecomeKey` (volta de NSOpenPanel/sheet/outro app) devolvem o foco ao terminal; `RackyWindow.keyDown` e o watchdog: tecla sem tratador loga `keyDown reached the window but no terminal accepts it` (categoria `focus`) ou refoca o terminal e reenvia.
 - `ctl state` expoe `firstResponder` e `blocksTerminalInput`.
-- Bug 2: `EnvFilter.default` bloqueia `CLAUDE_CODE_*` (exceto OAUTH_TOKEN/USE_BEDROCK/VERTEX/FOUNDRY), `CLAUDECODE*`, `CLAUDE_AGENT_*`, `CODEX_THREAD*`/`CODEX_SANDBOX*`/`CODEX_SESSION*`/`CODEX_CI`, alem de `ORCA_`, `AGENTBOX_`, `TERM_PROGRAM*` ja existentes.
+- Bug 2: `EnvFilter.default` bloqueia `CLAUDE_CODE_*` (exceto OAUTH_TOKEN/USE_BEDROCK/VERTEX/FOUNDRY), `CLAUDECODE*`, `CLAUDE_AGENT_*`, `CODEX_THREAD*`/`CODEX_SANDBOX*`/`CODEX_SESSION*`/`CODEX_CI`, alem de `ORCA_`, `RACKY_`, `TERM_PROGRAM*` ja existentes.
 - Bug 3: `TooltipController` esconde na hora em `didResignKey` da janela do tooltip, `willBeginSheet`, app inativo, miniaturizar/fechar e ao abrir overlay/popover; nao abre em janela que nao e key.
 
 ## Testes

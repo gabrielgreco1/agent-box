@@ -20,7 +20,7 @@ Data: 16/10/2026 · Escopo: só documentação e histórico. Nenhum código foi 
 | REV04 | `design/docs/review.html` | Revisão do protótipo v0.4 |
 | DREADME | `design/README.txt` | Guia do protótipo v0.4 |
 | GIT | `git log --stat` (16 commits, 2e595c4 → c4418cc) | Os commits só têm título, sem corpo |
-| SKILL0 | `~/.claude/skills/agentbox/SKILL.md`, `~/orca/projects/agentbox/{README.md,templates/subagent-prompt.md}` | Skill **original** do Gabriel, que a SPEC1 cap. 02 manda migrar (rev. `1b3e84ac`). É a fonte mais concreta das capacidades de subagente |
+| SKILL0 | `~/.claude/skills/racky/SKILL.md`, `~/orca/projects/racky/{README.md,templates/subagent-prompt.md}` | Skill **original** do Gabriel, que a SPEC1 cap. 02 manda migrar (rev. `1b3e84ac`). É a fonte mais concreta das capacidades de subagente |
 
 A conversa em que o Gabriel listou as capacidades ao Codex **não está no repositório**. Também não apareceu em `~/.codex/sessions` nem em `~/Library/Application Support/Codex`; a busca por texto não achou nada. As capacidades da §2 foram reconstruídas de SKILL0, SPEC04 cap. 13 (ToolBroker), SPEC1 caps. 07–12 e das tasks AB-036/037/039/041/044. **Confirme com o Gabriel se falta algo da conversa original.**
 
@@ -190,7 +190,7 @@ Nenhum dos 68 ACs foi marcado como aceito (AC: `status: planned` em todos, `chec
 | I4 | Visualizar SKILL.md e recursos referenciados antes de ativar | SPEC1 cap.13 | parcial | — |
 | I5 | Seleção padrão na definição e ajustável por execução, mostrando a origem da seleção | SPEC1 cap.13 | parcial | — |
 | I6 | Skill removida ou incompatível bloqueia ou exige retirar a seleção explicitamente | SPEC1 cap.13 | não documentado | — |
-| I7 | **Ativação nativa** no Claude via `--plugin-dir` (snapshot por execução, `/agentbox-<run>:<name>`) | T-032 | não validado (catálogo interativo real não testado) | AC66 |
+| I7 | **Ativação nativa** no Claude via `--plugin-dir` (snapshot por execução, `/racky-<run>:<name>`) | T-032 | não validado (catálogo interativo real não testado) | AC66 |
 | I8 | Pacote completo (arquivos auxiliares) congelado por hash, com limites e filtro de segredos | T-036 | feito (testes) | — |
 | I9 | Skills no **Codex e OpenCode** | T-011; T-032; STATUS:44 | pendente (export-only) | AC66 |
 | I10 | UI distingue “salvo / exportável” de “ativado no CLI” | SPEC1 cap.13 | parcial | AC66 |
@@ -230,10 +230,10 @@ Nenhum dos 68 ACs foi marcado como aceito (AC: `status: planned` em todos, `chec
 
 | # | Funcionalidade | Fonte | Status | Aceite |
 |---|---|---|---|---|
-| L1 | Detectar runtime (Docker Desktop, Colima…) e arquitetura; probe com timeout; o app usa conexão Docker própria (contexto `colima-agentbox-dev`) | SPEC1 cap.08; T-004; STATUS:13,17 | feito (Colima dev) | — |
+| L1 | Detectar runtime (Docker Desktop, Colima…) e arquitetura; probe com timeout; o app usa conexão Docker própria (contexto `colima-racky-dev`) | SPEC1 cap.08; T-004; STATUS:13,17 | feito (Colima dev) | — |
 | L2 | Instalação, downloads e termos visíveis no setup; licença não aceita por checkbox genérico | SPEC1 cap.08 | pendente (instalação foi manual, via Homebrew) | AC44 |
 | L3 | Container HTTP por terminal (python slim, hardening, labels de ownership) | T-004 | feito; depois substituído/complementado pela imagem browser | AC29 |
-| L4 | Imagem browser `agentbox-browser` (Playwright 1.63, Chromium, Xvfb/Openbox, XTEST), ARM64, base fixada por digest | T-019/020; runtime README | feito (smoke arm64) | AC30, AC37 |
+| L4 | Imagem browser `racky-browser` (Playwright 1.63, Chromium, Xvfb/Openbox, XTEST), ARM64, base fixada por digest | T-019/020; runtime README | feito (smoke arm64) | AC30, AC37 |
 | L5 | Volume `/data` por computador (profile, workspace, downloads, checkpoint); parar preserva | T-019/020; T-021 | feito | AC34, AC35 |
 | L6 | Hardening: read-only, cap-drop ALL, no-new-privileges, PIDs/shm/CPU/mem, porta só em loopback, sem socket Docker | T-021; runtime README; SPEC1 cap.08/14 | feito | AC50 |
 | L7 | Token bearer por computador no Keychain, entregue por env-file temporário | T-021 | feito | AC49 |
@@ -322,7 +322,7 @@ Nenhum dos 68 ACs foi marcado como aceito (AC: `status: planned` em todos, `chec
 
 | # | Funcionalidade | Fonte | Status | Aceite |
 |---|---|---|---|---|
-| Q1 | Servidor MCP stdio por lançamento (`--mcp-config`), helper `AgentBoxMCP` empacotado, sem tocar a configuração global | T-039 | feito; uso pelo modelo provado só em `-p` | — |
+| Q1 | Servidor MCP stdio por lançamento (`--mcp-config`), helper `RackyMCP` empacotado, sem tocar a configuração global | T-039 | feito; uso pelo modelo provado só em `-p` | — |
 | Q2 | Token do container nunca chega ao CLI; socket Unix 0600 por plano, UID do peer, capability | T-039 | feito | AC49, AC50 |
 | Q3 | Ferramentas: `computer_acquire`, `computer_status`, `computer_screenshot`, `computer_mode`, `computer_navigate`, `computer_input`, `computer_request_help`, `computer_http_request`, `computer_page` | T-039; T-041; T-044 | feito (código); a TUI interativa não foi validada | — |
 | Q4 | Proveniência assinada por chamada (PreToolUse com nonce, sem replay) para rotear pai ou filho | T-043; T-044 | feito (probe real) | AC19, AC20 |
@@ -453,14 +453,14 @@ Nenhum dos 68 ACs foi marcado como aceito (AC: `status: planned` em todos, `chec
 
 | # | Funcionalidade | Fonte | Status | Aceite |
 |---|---|---|---|---|
-| Z1 | Serviço local (`AgentBoxService`) com IPC autenticado (XPC/socket), SQLite, event stream com seq/replay | SPEC1 cap.14 | pendente (tudo no processo do app, com JSONs) | AC58 |
+| Z1 | Serviço local (`RackyService`) com IPC autenticado (XPC/socket), SQLite, event stream com seq/replay | SPEC1 cap.14 | pendente (tudo no processo do app, com JSONs) | AC58 |
 | Z2 | Recuperação após UI/serviço/Docker cair; sleep/wake renova concessões | SPEC1 cap.15; PLAN AB-028 | pendente | AC58, A15 |
 | Z3 | Migração versionada de banco/config/perfis com backup | SPEC1 cap.14; PLAN AB-028 | parcial (migração de política v1→v2) | AC59 |
 | Z4 | **60 min de carga sustentada** sem vazamento de processos/streams | SPEC1 cap.16; STATUS:45 | pendente | AC60 |
 | Z5 | Disco cheio: bloquear gravações sem apagar perfis | SPEC1 cap.15 | pendente | A28 |
 | Z6 | Quit explícito encerra PTYs e espera a limpeza das boxes; confirmação lista computadores pendentes | T-044 | feito (código) | — |
 | Z7 | Estados formais por objeto (Terminal, AgentRun, Computer, Control, Capture, Auth, Profile) | SPEC1 cap.15 | parcial | — |
-| Z8 | Diretório `Application Support/AgentBox/{database,workspaces,profiles,evidence,checkpoints,diagnostics}` | SPEC1 cap.14 | parcial (JSONs soltos) | — |
+| Z8 | Diretório `Application Support/Racky/{database,workspaces,profiles,evidence,checkpoints,diagnostics}` | SPEC1 cap.14 | parcial (JSONs soltos) | — |
 | Z9 | Diagnósticos/logs sanitizados exportáveis | SPEC1 cap.08/14 | pendente | — |
 
 ### 1.AA Visual, UX, acessibilidade, atalhos e marca
@@ -476,7 +476,7 @@ Nenhum dos 68 ACs foi marcado como aceito (AC: `status: planned` em todos, `chec
 | AA7 | Acessibilidade: teclado, foco visível 2 pt, rótulos, Reduce Motion, 1000×650 sem ações inacessíveis | SPEC1 cap.04; T-006 | não validado | AC07 |
 | AA8 | Atalhos ⌘N, ⌘T, ⌘D, ⌘⇧D, ⌘B, ⌘, e ⌘K (busca/command palette); maximizar e próximo pane; atalhos configuráveis | SPEC1 cap.05; SPEC04 cap.14 | parcial (⌘K e ⌘, citados) | AC07 |
 | AA9 | Motion: expansão 120–160 ms, painel 160–200 ms; sem vídeo decorativo | SPEC1 cap.04; T-006 | parcial | — |
-| AA10 | Marca própria Agent Box (ícone/Dock) | docs/branding/PROVENANCE.md; T-030 | feito | — |
+| AA10 | Marca própria Racky (ícone/Dock) | docs/branding/PROVENANCE.md; T-030 | feito | — |
 | AA11 | Janela mínima de 1000×650, alvos de 1440×900 e 1728×1117 | SPEC1 cap.04 | não validado | AC07 |
 | AA12 | Tabelas/listas com inspector contextual no lugar de galerias de cards | SPEC1 cap.04 | parcial | — |
 
@@ -485,14 +485,14 @@ Nenhum dos 68 ACs foi marcado como aceito (AC: `status: planned` em todos, `chec
 | # | Funcionalidade | Fonte | Status | Aceite |
 |---|---|---|---|---|
 | AB1 | Build SPM reprodutível, separado do design; `scripts/build_app.sh`; assinatura ad hoc verificada | README:19–31; STATUS:33; T-045 | feito | — |
-| AB2 | Bundle no cache `~/Library/Caches/AgentBox/Builds/<chave>` com link em `build/` (contorno do File Provider) | T-045 | feito | — |
+| AB2 | Bundle no cache `~/Library/Caches/Racky/Builds/<chave>` com link em `build/` (contorno do File Provider) | T-045 | feito | — |
 | AB3 | Distribuição/instalador/assinatura estável | PLAN:3; BL M10 | pendente (fora de prioridade) | — |
 
 ---
 
 ## 2. Capacidades de subagentes (lista consolidada)
 
-A origem principal é o skill `agentbox` original do Gabriel (SKILL0), que a SPEC1 manda migrar. Lá cada subagente tinha **a própria box com terminal, listener, browser persistente e proxy com orçamento**. A coluna “Estado no app atual” compara com o que a doc declara (MCP AB-039/041/044 e runtime AB-019/046).
+A origem principal é o skill `racky` original do Gabriel (SKILL0), que a SPEC1 manda migrar. Lá cada subagente tinha **a própria box com terminal, listener, browser persistente e proxy com orçamento**. A coluna “Estado no app atual” compara com o que a doc declara (MCP AB-039/041/044 e runtime AB-019/046).
 
 | # | Capacidade de subagente | Fonte | Estado no app atual |
 |---|---|---|---|
@@ -567,7 +567,7 @@ A origem principal é o skill `agentbox` original do Gabriel (SKILL0), que a SPE
 | Skills nativas Claude (`--plugin-dir`) | **Catálogo interativo nunca executado**; prova = doc + testes de layout | T-032; STATUS:65 |
 | Skill para filhos | Probe `-p` com fixture sintética; settings montados à mão, não pelo planner | EV ab043-child-skill-context |
 | MCP do computador | Uso na TUI interativa e prompts de permissão não validados | T-039; EV ab043-native-routing-probe |
-| Docker/boxes | Só no contexto Colima `agentbox-dev`; outras arquiteturas e runtimes (Docker Desktop) não testados; pacotes apt podem sumir | runtime README; T-019/020 |
+| Docker/boxes | Só no contexto Colima `racky-dev`; outras arquiteturas e runtimes (Docker Desktop) não testados; pacotes apt podem sumir | runtime README; T-019/020 |
 | Perfil persistente | Prova com localStorage de fixture local, **sem login real em site**, sem backup/restore | T-037; EV ab046 `not_proved` |
 | Captura | **Sem bodies do browser**, sem curl/python, sem restauração após relançar, perda possível ao trocar filtro, painel não visto | T-046; EV ab046 |
 | Atualização de imagem | Nenhuma box do usuário migrada; teste de crash sintético; UI não vista | EV ab042 |
@@ -657,7 +657,7 @@ A05 (modo privado), A08 (backup/restore de perfil), A09 (sessão de site expirad
 
 | Commit | Título | Tasks |
 |---|---|---|
-| 2e595c4 | Add existing Agent Box design and consolidated implementation spec | design/, SPEC1 |
+| 2e595c4 | Add existing Racky design and consolidated implementation spec | design/, SPEC1 |
 | 653a0b0 | Implement native terminal workspace and persistent agent library | AB-001…005 |
 | 1666d8f | Package dependency resources and verify local app signature | AB-030 |
 | 951dff3 | docs: split full specification into 30 implementation tasks | PLAN |

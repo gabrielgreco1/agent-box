@@ -11,7 +11,7 @@
 • I’ll reserve one isolated computer for the worker, then have it open the URL and submit the
   observed title.
 
-• Called agentbox.boxes_reserve
+• Called racky.boxes_reserve
   └ {"batch_id":"example-title","boxes":[{"child_id":"01a157e1-w1","display":"headless","name":"e…
     + Show details                                                                                
 
@@ -24,7 +24,7 @@
 • Finished waiting
   └ No agents completed yet
 
-• Called agentbox.boxes_release
+• Called racky.boxes_release
   └ {"not_found":["example-com"],"released":[],"took_ms":5}
     + Show details                                                                                
 

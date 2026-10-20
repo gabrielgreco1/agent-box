@@ -8,60 +8,60 @@
 Building for debugging...
 [3/12] Write swift-version--58304C5D6DBC2206.txt
 [4/25] Linking SwiftTermBuildInfoGenerator-tool
-[6/25] Compiling AgentBoxProtocol Version.swift
-[7/25] Compiling AgentBoxProtocol Module.swift
-[8/25] Compiling AgentBoxProtocol Requests.swift
-[9/25] Compiling AgentBoxProtocol OutboundQueue.swift
-[10/25] Compiling AgentBoxProtocol Identifiers.swift
-[11/25] Compiling AgentBoxProtocol Handshake.swift
-[12/25] Compiling AgentBoxProtocol Frames.swift
-[13/25] Compiling AgentBoxProtocol Events.swift
-[14/25] Compiling AgentBoxProtocol Errors.swift
-[15/25] Emitting module AgentBoxProtocol
-[16/25] Compiling AgentBoxProtocol Replies.swift
+[6/25] Compiling RackyProtocol Version.swift
+[7/25] Compiling RackyProtocol Module.swift
+[8/25] Compiling RackyProtocol Requests.swift
+[9/25] Compiling RackyProtocol OutboundQueue.swift
+[10/25] Compiling RackyProtocol Identifiers.swift
+[11/25] Compiling RackyProtocol Handshake.swift
+[12/25] Compiling RackyProtocol Frames.swift
+[13/25] Compiling RackyProtocol Events.swift
+[14/25] Compiling RackyProtocol Errors.swift
+[15/25] Emitting module RackyProtocol
+[16/25] Compiling RackyProtocol Replies.swift
 [16/25] Generate SwiftTerm build information
-[18/46] Emitting module AgentBoxDesignSystem
-[19/46] Compiling AgentBoxDesignSystem Module.swift
-[20/46] Emitting module AgentBoxTerminalCore
-[21/46] Compiling AgentBoxTerminalCore Module.swift
-[22/48] Compiling AgentBoxPlatform UDSSupport.swift
-[23/48] Compiling AgentBoxPlatform UDSListener.swift
-[24/48] Compiling AgentBoxPlatform LogFacade.swift
-[25/48] Compiling AgentBoxPlatform UDSClient.swift
-[26/48] Compiling AgentBoxPlatform FramedConnection.swift
-[27/48] Compiling AgentBoxPlatform Module.swift
-[28/48] Emitting module AgentBoxPlatform
-[29/48] Compiling AgentBoxPlatform UDSConnection.swift
+[18/46] Emitting module RackyDesignSystem
+[19/46] Compiling RackyDesignSystem Module.swift
+[20/46] Emitting module RackyTerminalCore
+[21/46] Compiling RackyTerminalCore Module.swift
+[22/48] Compiling RackyPlatform UDSSupport.swift
+[23/48] Compiling RackyPlatform UDSListener.swift
+[24/48] Compiling RackyPlatform LogFacade.swift
+[25/48] Compiling RackyPlatform UDSClient.swift
+[26/48] Compiling RackyPlatform FramedConnection.swift
+[27/48] Compiling RackyPlatform Module.swift
+[28/48] Emitting module RackyPlatform
+[29/48] Compiling RackyPlatform UDSConnection.swift
 [30/48] Compiling TerminalCoreTests SmokeTests.swift
 [31/48] Emitting module TerminalCoreTests
-[32/64] Emitting module AgentBoxDocker
-[33/64] Compiling AgentBoxDocker Module.swift
-[34/64] Emitting module AgentBoxStore
-[35/64] Compiling AgentBoxStore Module.swift
-[36/64] Compiling agentboxd main.swift
-[37/64] Emitting module agentboxd
-[38/65] Compiling agentbox AgentBoxCLI.swift
-[39/65] Emitting module agentbox
+[32/64] Emitting module RackyDocker
+[33/64] Compiling RackyDocker Module.swift
+[34/64] Emitting module RackyStore
+[35/64] Compiling RackyStore Module.swift
+[36/64] Compiling rackyd main.swift
+[37/64] Emitting module rackyd
+[38/65] Compiling racky RackyCLI.swift
+[39/65] Emitting module racky
 [40/68] Emitting module DaemonTests
 [41/68] Compiling DaemonTests SmokeTests.swift
-[42/68] Emitting module AgentBoxCore
-[43/68] Compiling AgentBoxCore Module.swift
+[42/68] Emitting module RackyCore
+[43/68] Compiling RackyCore Module.swift
 [44/68] Compiling DockerTests SmokeTests.swift
 [45/68] Emitting module DockerTests
 [46/70] Emitting module StoreTests
 [47/70] Compiling StoreTests SmokeTests.swift
-[48/72] Emitting module AgentBoxUI
-[49/72] Compiling AgentBoxUI Module.swift
+[48/72] Emitting module RackyUI
+[49/72] Compiling RackyUI Module.swift
 [50/72] Emitting module CoreTests
 [51/72] Compiling CoreTests SmokeTests.swift
-[51/72] Linking agentbox
-[52/74] Applying agentbox
+[51/72] Linking racky
+[52/74] Applying racky
 [54/74] Compiling ProtocolTests TestSupport.swift
 [55/74] Compiling ProtocolTests HandshakeTests.swift
 [56/74] Compiling UISnapshotTests SmokeTests.swift
 [57/74] Emitting module UISnapshotTests
-[57/74] Linking agentboxd
-[58/74] Applying agentboxd
+[57/74] Linking rackyd
+[58/74] Applying rackyd
 [60/74] Compiling PlatformTests SmokeTests.swift
 [61/74] Compiling PlatformTests UDSTestSupport.swift
 [62/74] Compiling PlatformTests UDSTransportTests.swift
@@ -75,9 +75,9 @@ Building for debugging...
 [70/74] Compiling PlatformTests LogFacadeTests.swift
 [71/74] Emitting module PlatformTests
 [72/74] Compiling PlatformTests FramedDaemonTransportTests.swift
-[73/76] Emitting module AgentBoxKitPackageTests
-[74/76] Compiling AgentBoxKitPackageTests runner.swift
-[74/75] Linking AgentBoxKitPackageTests
+[73/76] Emitting module RackyKitPackageTests
+[74/76] Compiling RackyKitPackageTests runner.swift
+[74/75] Linking RackyKitPackageTests
 Build complete! (8.34s)
 Test Suite 'All tests' started at 2026-10-17 01:00:28.660.
 Test Suite 'All tests' passed at 2026-10-17 01:00:28.661.

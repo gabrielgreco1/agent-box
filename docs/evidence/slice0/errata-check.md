@@ -35,6 +35,6 @@ Data: 2026-10-17. Base: `docs/evidence/slice0/F0-1-F0-4-report.md`. Capítulos e
 
 - Settings (T1-26) segue coberto por regra (`settings.<section>.<key>`), não por linha por controle.
 - `scratchpad`: 7 negações na spec (e o próprio item do checklist de 09 §2.6). Decisão de política não tomada.
-- 08 §0: faltam `AGENTBOX_CAPACITY_ESTIMATES`, `boxes/` e `previous/`; 08 S-06 (linha 879) ainda cita p10k. 01 não foi tocado (fora do escopo).
+- 08 §0: faltam `RACKY_CAPACITY_ESTIMATES`, `boxes/` e `previous/`; 08 S-06 (linha 879) ainda cita p10k. 01 não foi tocado (fora do escopo).
 - `success` (`#86efac`), `overlayCard`, `menuMaterial`, `terminalBackground` sem variável no CSS extraído (conferir no JS do Orca em F0-3). F0-3 segue parcial (screens/crops/manifest).
 - Hooks do Codex: payloads de `PreToolUse`/`PostToolUse`/`Stop` dependem de reexecutar o spike S-05 depois de 22/10/2026.

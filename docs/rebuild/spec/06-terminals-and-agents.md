@@ -2,14 +2,14 @@
 
 > **Revisado após R1–R3 em 2026-10-16.** Patches de `review/R1-consistency.md`, `R2-coverage.md` e `R3-implementability.md` aplicados; o que mudou e o que não foi aplicado está em `review/E-06-08-changelog.md`. Todo nome que vira código (bundle id, label, socket, env, spool, comando de hook, diretório de lançamento, ops do protocolo, limites, estados) segue a tabela única **`08 §0 Identificadores canônicos`**; se este capítulo e a tabela divergirem, vale a tabela. Spikes e itens "(verificar)" estão consolidados em **`08 §11`**.
 
-Capítulo da spec do rebuild do Agent Box. Data: 2026-10-16. Escrito em português; todo texto de interface aparece em inglês (P2).
+Capítulo da spec do rebuild do Racky. Data: 2026-10-16. Escrito em português; todo texto de interface aparece em inglês (P2).
 
-**Prevalece** `00-decisions.md`. Decisões aplicadas aqui: P3 (importar do Orca, só leitura), P4 (⌘Q não mata agentes; daemon de PTY; ícone na barra de menus), P9 (criar sessão abre o agente rodando), P10 e P11 (sessões limpas; seção "Sessions", ação "New Clean Session" ⇧⌘N), P12 (pai envia mensagem com Enter só a filhos que ele criou), P13 (proxy genérico, sem teto de orçamento), P15 (padrões de 01 §8: raiz de worktrees, nome `quiet-harbor`, aviso no primeiro ⌘Q, sessões importadas sem processo), P16 (conflitos pela recomendação dos revisores), T1 (`agentboxd`), T2 (SQLite/GRDB), T3 (Swift 6, macOS 15), T4 (assinatura estável), T5 (overlays, nunca `.sheet`), T6 (SwiftTerm + Metal, sem leitura de clipboard por OSC 52), T10 (estado por hooks configurados por lançamento), T11 (colar só por clique; prompt inicial como argumento), T12 (skill global `agentbox` concorrente), T13 (`agentbox ctl` e `accessibilityIdentifier`), T14 (sem cerimônia de hash/revisão, sem memória própria, sem Chat UI, sem SSH).
+**Prevalece** `00-decisions.md`. Decisões aplicadas aqui: P3 (importar do Orca, só leitura), P4 (⌘Q não mata agentes; daemon de PTY; ícone na barra de menus), P9 (criar sessão abre o agente rodando), P10 e P11 (sessões limpas; seção "Sessions", ação "New Clean Session" ⇧⌘N), P12 (pai envia mensagem com Enter só a filhos que ele criou), P13 (proxy genérico, sem teto de orçamento), P15 (padrões de 01 §8: raiz de worktrees, nome `quiet-harbor`, aviso no primeiro ⌘Q, sessões importadas sem processo), P16 (conflitos pela recomendação dos revisores), T1 (`rackyd`), T2 (SQLite/GRDB), T3 (Swift 6, macOS 15), T4 (assinatura estável), T5 (overlays, nunca `.sheet`), T6 (SwiftTerm + Metal, sem leitura de clipboard por OSC 52), T10 (estado por hooks configurados por lançamento), T11 (colar só por clique; prompt inicial como argumento), T12 (skill global `racky` concorrente), T13 (`racky ctl` e `accessibilityIdentifier`), T14 (sem cerimônia de hash/revisão, sem memória própria, sem Chat UI, sem SSH).
 
 **Base**: auditoria `docs/rebuild/audit/02`, `05`, `08`, `09`, `10` e trechos da `01` e da `04`. Conferido nesta data, na máquina do dono:
 
 - `claude --help` 2.1.302, `codex --help` / `codex resume --help` / `codex queue --help` / `codex features list` 0.160.0, `opencode --help` / `opencode session list --help` 1.18.34, `gh` 2.93.0 (`gh pr`, `gh run view --log-failed`, `gh auth token`, `gh auth git-credential`).
-- `Sources/AgentBox/Terminal/TerminalRuntimeManager.swift:353-368` (allowlist de env que este capítulo substitui).
+- `Sources/Racky/Terminal/TerminalRuntimeManager.swift:353-368` (allowlist de env que este capítulo substitui).
 - Estado do Orca em `~/Library/Application Support/orca/profiles/local-default/` (só estrutura e contagens, nenhum valor sensível; cópia temporária apagada depois).
 - `~/.claude/settings.json` e `~/.codex/hooks.json` (nomes de eventos dos hooks do Orca), `~/.codex/config.toml` (`notify` ocupado), `~/.codex/sessions/**/rollout-*.jsonl` (formato `session_meta`), `~/.codex/session_index.jsonl`.
 - Código do Orca (só leitura): `src/main/git/worktree-include-file.ts`, `src/shared/orca-yaml.ts`, `src/shared/orca-yaml-hook-types.ts`, `src/main/*/hook-service.ts`.
@@ -20,7 +20,7 @@ Capítulo da spec do rebuild do Agent Box. Data: 2026-10-16. Escrito em portugu�
 - Prioridade: **P0** (sem isso a jornada não fecha), **P1** (fecha, mas mal), **P2** (melhoria).
 - Versão: **v1**, **v1.1** ou **later**.
 - **(verificar)**: comportamento vindo de doc ou inferência, ainda não testado nesta máquina. Todo item assim tem um teste de contrato na §7 que precisa passar antes da implementação depender dele. A lista consolidada, com dono e critério, está em `08 §11`.
-- Caminhos do app: `AB = ~/Library/Application Support/AgentBox` (diretório `0700`, arquivos `0600`).
+- Caminhos do app: `AB = ~/Library/Application Support/Racky` (diretório `0700`, arquivos `0600`).
 - Referências à auditoria levam o prefixo `audit/` (ex.: `audit/09 §2.2`, `audit/04 §5.4`). Sem prefixo, `NN §x` é um capítulo da spec.
 
 ---
@@ -28,59 +28,59 @@ Capítulo da spec do rebuild do Agent Box. Data: 2026-10-16. Escrito em portugu�
 ## 0. Visão geral
 
 ```
-Agent Box.app (assinada, hardened runtime, sem sandbox)
- ├─ AgentBoxUI (MainActor)  ── view models ──►  AgentBoxCore (actors)
- │                                               ├─ PTYClient ──────────── UDS ──► agentboxd (LaunchAgent, socket do launchd)
+Racky.app (assinada, hardened runtime, sem sandbox)
+ ├─ RackyUI (MainActor)  ── view models ──►  RackyCore (actors)
+ │                                               ├─ PTYClient ──────────── UDS ──► rackyd (LaunchAgent, socket do launchd)
  │                                               ├─ LaunchService (adapters)        └─ sessões: PTY + emulador headless + ring + cold log
- │                                               ├─ AgentActivityService ◄── UDS `run/app.sock` ◄── `agentbox hook` (helper)
+ │                                               ├─ AgentActivityService ◄── UDS `run/app.sock` ◄── `racky hook` (helper)
  │                                               ├─ CatalogService (FSEvents)                        └─ spool `run/spool/hooks/` se o app estiver fechado
  │                                               ├─ GitService / GitHubService (git CLI, gh token, GraphQL)
  │                                               ├─ MCPHost + ComputerService (Docker Engine API; capítulo 07)
  │                                               └─ OrcaImporter (cópia read-only do SQLite do Orca)
- ├─ Contents/MacOS/agentboxd
- └─ Contents/MacOS/agentbox   (subcomandos: hook | mcp | ctl)
+ ├─ Contents/MacOS/rackyd
+ └─ Contents/MacOS/racky   (subcomandos: hook | mcp | ctl)
 ```
 
 Quatro regras atravessam o capítulo:
 
-1. **O daemon só hospeda PTYs.** Banco, Git, hooks, Docker, MCP, serviço de computadores e biblioteca ficam **no processo do app** (`AgentBoxCore`), que continua vivo em modo `.accessory` depois do ⌘Q (`08 AR-108`). No daemon ficam só os PTYs, inclusive, na v1.1, os de `docker exec -it agent dtach …` do modo isolado. O sidecar de cada computador se chama **`egress`** (T9). Decisão fechada para todos os capítulos (`08 §0`; R1 K-75).
+1. **O daemon só hospeda PTYs.** Banco, Git, hooks, Docker, MCP, serviço de computadores e biblioteca ficam **no processo do app** (`RackyCore`), que continua vivo em modo `.accessory` depois do ⌘Q (`08 AR-108`). No daemon ficam só os PTYs, inclusive, na v1.1, os de `docker exec -it agent dtach …` do modo isolado. O sidecar de cada computador se chama **`egress`** (T9). Decisão fechada para todos os capítulos (`08 §0`; R1 K-75).
 2. **O lançamento é declarativo.** O app guarda o que foi pedido (`LaunchRequest`) e gera o argv e os arquivos de apoio a cada start. Nada depende de um diretório temporário sobreviver.
-3. **Nada global é escrito.** Hooks, MCP, skills e agentes do Agent Box entram por lançamento (`--settings`, `--mcp-config`, `--plugin-dir`, `--agents`, `-c`). Configuração global do usuário, do Orca e do Codex Computer Use fica intocada. O caso dos hooks do Codex, que exigem *trust* gravado em `~/.codex/config.toml`, está em §3.3.1.
+3. **Nada global é escrito.** Hooks, MCP, skills e agentes do Racky entram por lançamento (`--settings`, `--mcp-config`, `--plugin-dir`, `--agents`, `-c`). Configuração global do usuário, do Orca e do Codex Computer Use fica intocada. O caso dos hooks do Codex, que exigem *trust* gravado em `~/.codex/config.toml`, está em §3.3.1.
 4. **Ninguém digita no PTY de um agente sem clique do usuário** (T11), com uma única exceção: o agente pai pode enviar mensagem completa, com Enter, a subagentes que **ele mesmo** criou (P12; ferramenta de 07). Toda escrita no PTY leva uma origem no protocolo (§1.3) e a de P12 fica registrada na timeline.
 
 ---
 
-## 1. Terminais e o daemon `agentboxd`
+## 1. Terminais e o daemon `rackyd`
 
 ### 1.1 Responsabilidades
 
 | Peça | Faz | Não faz |
 |---|---|---|
-| `agentboxd` | Cria e mantém PTYs; roda um emulador headless (SwiftTerm `Terminal`) por sessão para eventos e modos; guarda ring de bytes e cold log; repassa input, resize e sinais; emite eventos de processo e de OSC | Banco, Git, hooks, notificações, Docker, MCP, captura de env |
+| `rackyd` | Cria e mantém PTYs; roda um emulador headless (SwiftTerm `Terminal`) por sessão para eventos e modos; guarda ring de bytes e cold log; repassa input, resize e sinais; emite eventos de processo e de OSC | Banco, Git, hooks, notificações, Docker, MCP, captura de env |
 | App (`PTYClient`, actor) | Captura o env do shell de login e o envia em cada `create`; anexa só os panes visíveis; renderiza com SwiftTerm + Metal; é o **único** cliente do daemon | Ser dono de processo de agente |
-| `agentbox` (helper) | `hook`: recebe eventos dos CLIs. `mcp`: ponte stdio para o app (07). `ctl`: automação opt-in (T13). Os três falam só com `AB/run/app.sock` | Falar com o daemon (nem o `ctl`: ele passa pelo app, `08 AR-503`) |
+| `racky` (helper) | `hook`: recebe eventos dos CLIs. `mcp`: ponte stdio para o app (07). `ctl`: automação opt-in (T13). Os três falam só com `AB/run/app.sock` | Falar com o daemon (nem o `ctl`: ele passa pelo app, `08 AR-503`) |
 
 ### 1.2 Hospedagem no launchd
 
-- Registro com `SMAppService.agent(plistName: "app.agentbox.ptyd.v1.plist")`. O plist fica em `Contents/Library/LaunchAgents/` com `Label = app.agentbox.ptyd.v1`, `BundleProgram = Contents/MacOS/agentboxd`, `AssociatedBundleIdentifiers = [app.agentbox.mac]`, `ProcessType = Interactive`, `AbandonProcessGroup = true`, `KeepAlive = false`.
+- Registro com `SMAppService.agent(plistName: "app.racky.ptyd.v1.plist")`. O plist fica em `Contents/Library/LaunchAgents/` com `Label = app.racky.ptyd.v1`, `BundleProgram = Contents/MacOS/rackyd`, `AssociatedBundleIdentifiers = [app.racky.mac]`, `ProcessType = Interactive`, `AbandonProcessGroup = true`, `KeepAlive = false`.
 - **Ativação por socket (T1)**. O plist é estático dentro do bundle e não conhece o home do usuário; `SockPathName` é um caminho literal, sem expansão de `~` nem de variáveis (R3 §1). Por isso o socket **não** usa `SockPathName`:
-  - **Canônico**: chave `Sockets` com `SecureSocketWithKey = AGENTBOX_PTYD_SOCK_V1`. O launchd cria o socket num diretório privado dele (`/private/tmp/com.apple.launchd.*/…`, caminho curto, bem abaixo dos 104 bytes de `sun_path`) e publica o caminho na variável `AGENTBOX_PTYD_SOCK_V1` do domínio do usuário (o mesmo mecanismo do `SSH_AUTH_SOCK` do macOS). O app lê o caminho com `launchctl getenv AGENTBOX_PTYD_SOCK_V1` depois do `register()` e o guarda só em memória. O daemon recebe o fd com `launch_activate_socket`; nunca faz `unlink`/`bind`. A variável é removida do env dos terminais pela denylist `AGENTBOX_*` (§1.7).
-  - **Plano B** (se o spike S-01 reprovar o canônico): o daemon roda com `RunAtLoad = false`, o app o acorda com `launchctl kickstart gui/<uid>/app.agentbox.ptyd.v1` e o próprio daemon faz `bind` em `AB/run/ptyd-v1.sock` (`0600`, conferindo dono e modo do diretório). Isso deixa de ser "socket ativado pelo launchd" e exige registrar a exceção a T1 no 00.
-  - **Modo degradado e testes**: daemon filho do app, mesmo binário e protocolo, `bind` em `AB/run/ptyd-v1.sock` (ou `$AGENTBOX_HOME/run/ptyd-v1.sock` nos testes, label `app.agentbox.ptyd.test-<n>`).
-- **Resultado do S-01 (2026-10-17, `docs/evidence/spikes/S-01/`): o plano canônico funciona; o plano B não foi necessário.** Com `SMAppService.agent` e `Sockets/SecureSocketWithKey`: o launchd cria o socket em `/var/run/com.apple.launchd.<id>/Listeners` (diretório `0700`), `launchctl getenv AGENTBOX_PTYD_SOCK_V1` devolve o caminho logo depois do `register()`, `launch_activate_socket("Listeners")` (o nome é o da entrada em `Sockets`, não o da variável; o símbolo vem por `dlsym`) entrega o fd 3 e `nc -U` acorda o daemon; ocioso, ele sai e a conexão seguinte o relança no mesmo caminho. Achados que o plist e o app precisam respeitar: (1) sem `SockPathMode` o socket sai `0666` (o plist de produção fixa `384`); (2) o launchd **prende o job ao `cdhash` do `BundleProgram` no registro**: trocar esse binário (toda atualização do app, ad-hoc ou certificado autoassinado) deixa o job em `spawn failed` (`EX_CONFIG`/`OS_REASON_CODESIGNING`) e a conexão fica pendurada; `unregister()`+`register()` mata o daemon e, logo depois da troca, ainda grava o cdhash velho (o BTM só atualiza minutos depois). **Solução adotada (desvio de 08 §0.1, a ratificar pelo dono): o `BundleProgram` é um launcher estável `agentboxd-launch` (C, 33 KB, só faz `exec` do `agentboxd` ao lado com os mesmos argumentos; o fd do socket é herdado).** O cdhash do launcher não muda, então atualizar o `agentboxd` não exige novo registro: o daemon antigo sai quando a última sessão termina (`drainWhenIdle`) e o novo sobe na conexão seguinte (e2e `scripts/e2e-launchd.sh`, passo 4). Se o launcher mudar, o app guarda o fingerprint dele, nunca desregistra com o job rodando e re-registra com o daemon parado (`BackgroundAgentHost`); (3) com app ad-hoc e Mac sem restrição de Itens de Início o `register()` devolveu `enabled` na hora (sem `requiresApproval`); em outro Mac ou depois de "Itens de Início" restrito o estado pode vir `requiresApproval`, e aí vale o modo degradado abaixo.
+  - **Canônico**: chave `Sockets` com `SecureSocketWithKey = RACKY_PTYD_SOCK_V1`. O launchd cria o socket num diretório privado dele (`/private/tmp/com.apple.launchd.*/…`, caminho curto, bem abaixo dos 104 bytes de `sun_path`) e publica o caminho na variável `RACKY_PTYD_SOCK_V1` do domínio do usuário (o mesmo mecanismo do `SSH_AUTH_SOCK` do macOS). O app lê o caminho com `launchctl getenv RACKY_PTYD_SOCK_V1` depois do `register()` e o guarda só em memória. O daemon recebe o fd com `launch_activate_socket`; nunca faz `unlink`/`bind`. A variável é removida do env dos terminais pela denylist `RACKY_*` (§1.7).
+  - **Plano B** (se o spike S-01 reprovar o canônico): o daemon roda com `RunAtLoad = false`, o app o acorda com `launchctl kickstart gui/<uid>/app.racky.ptyd.v1` e o próprio daemon faz `bind` em `AB/run/ptyd-v1.sock` (`0600`, conferindo dono e modo do diretório). Isso deixa de ser "socket ativado pelo launchd" e exige registrar a exceção a T1 no 00.
+  - **Modo degradado e testes**: daemon filho do app, mesmo binário e protocolo, `bind` em `AB/run/ptyd-v1.sock` (ou `$RACKY_HOME/run/ptyd-v1.sock` nos testes, label `app.racky.ptyd.test-<n>`).
+- **Resultado do S-01 (2026-10-17, `docs/evidence/spikes/S-01/`): o plano canônico funciona; o plano B não foi necessário.** Com `SMAppService.agent` e `Sockets/SecureSocketWithKey`: o launchd cria o socket em `/var/run/com.apple.launchd.<id>/Listeners` (diretório `0700`), `launchctl getenv RACKY_PTYD_SOCK_V1` devolve o caminho logo depois do `register()`, `launch_activate_socket("Listeners")` (o nome é o da entrada em `Sockets`, não o da variável; o símbolo vem por `dlsym`) entrega o fd 3 e `nc -U` acorda o daemon; ocioso, ele sai e a conexão seguinte o relança no mesmo caminho. Achados que o plist e o app precisam respeitar: (1) sem `SockPathMode` o socket sai `0666` (o plist de produção fixa `384`); (2) o launchd **prende o job ao `cdhash` do `BundleProgram` no registro**: trocar esse binário (toda atualização do app, ad-hoc ou certificado autoassinado) deixa o job em `spawn failed` (`EX_CONFIG`/`OS_REASON_CODESIGNING`) e a conexão fica pendurada; `unregister()`+`register()` mata o daemon e, logo depois da troca, ainda grava o cdhash velho (o BTM só atualiza minutos depois). **Solução adotada (desvio de 08 §0.1, a ratificar pelo dono): o `BundleProgram` é um launcher estável `rackyd-launch` (C, 33 KB, só faz `exec` do `rackyd` ao lado com os mesmos argumentos; o fd do socket é herdado).** O cdhash do launcher não muda, então atualizar o `rackyd` não exige novo registro: o daemon antigo sai quando a última sessão termina (`drainWhenIdle`) e o novo sobe na conexão seguinte (e2e `scripts/e2e-launchd.sh`, passo 4). Se o launcher mudar, o app guarda o fingerprint dele, nunca desregistra com o job rodando e re-registra com o daemon parado (`BackgroundAgentHost`); (3) com app ad-hoc e Mac sem restrição de Itens de Início o `register()` devolveu `enabled` na hora (sem `requiresApproval`); em outro Mac ou depois de "Itens de Início" restrito o estado pode vir `requiresApproval`, e aí vale o modo degradado abaixo.
 - Sai sozinho após 60 s sem sessões vivas e sem clientes conectados. O launchd o relança na próxima conexão.
-- Label, plist e variável do socket carregam a versão **major** do protocolo (`…ptyd.v1`, `AGENTBOX_PTYD_SOCK_V1`). Ver §1.10.
-- O primeiro registro pede aprovação do item de login. O app pede isso no onboarding, com uma frase do porquê ("Keeps your agents running when you quit Agent Box"). Sem aprovação, o app funciona em modo degradado (acima) e o quit avisa que vai encerrar tudo. A Fatia 1 roda inteira nesse modo; o LaunchAgent entra na última tarefa da fatia, se o S-01 passar (`08 §10`).
+- Label, plist e variável do socket carregam a versão **major** do protocolo (`…ptyd.v1`, `RACKY_PTYD_SOCK_V1`). Ver §1.10.
+- O primeiro registro pede aprovação do item de login. O app pede isso no onboarding, com uma frase do porquê ("Keeps your agents running when you quit Racky"). Sem aprovação, o app funciona em modo degradado (acima) e o quit avisa que vai encerrar tudo. A Fatia 1 roda inteira nesse modo; o LaunchAgent entra na última tarefa da fatia, se o S-01 passar (`08 §10`).
 
 ### 1.3 Protocolo
 
-Esta seção e `08 AR-102` descrevem o **mesmo** protocolo, com os mesmos nomes. A fonte normativa é o módulo `AgentBoxProtocol` mais as fixtures JSON versionadas em `Tests/ProtocolTests/Fixtures/`, escritas **antes** do daemon (tarefa T-04 de `08 §10`). Mudança aqui exige mudança da fixture, e vice-versa.
+Esta seção e `08 AR-102` descrevem o **mesmo** protocolo, com os mesmos nomes. A fonte normativa é o módulo `RackyProtocol` mais as fixtures JSON versionadas em `Tests/ProtocolTests/Fixtures/`, escritas **antes** do daemon (tarefa T-04 de `08 §10`). Mudança aqui exige mudança da fixture, e vice-versa.
 
 **Transporte**: socket Unix (§1.2), stream. **Frame**: `u32 len (big-endian) | u8 kind | payload`, `len` limitado a 1 MiB; frame maior fecha a conexão com `error{code:"frameTooLarge"}`.
 
 | `kind` | Direção | Payload |
 |---|---|---|
-| `0x01` control | ambos | JSON UTF-8 (`Codable`, módulo `AgentBoxProtocol`) |
+| `0x01` control | ambos | JSON UTF-8 (`Codable`, módulo `RackyProtocol`) |
 | `0x02` output | daemon → cliente | `sessionID (16 B) | seq (u64 BE) | bytes` |
 | `0x03` input | cliente → daemon | `sessionID (16 B) | origin (u8) | bytes` |
 
@@ -91,7 +91,7 @@ Esta seção e `08 AR-102` descrevem o **mesmo** protocolo, com os mesmos nomes.
 
 ```json
 → {"op":"hello","id":1,"protocol":{"major":1,"minor":0},"client":{"kind":"app","build":"1.0 (42)"},"capabilities":["coldLog","osc133","textSnapshot","inputOrigin"]}
-← {"op":"helloAck","id":1,"protocol":{"major":1,"minor":2},"daemon":{"build":"1.0 (41)","pid":812,"startedAt":"…","binary":"…/agentboxd"},"capabilities":["coldLog","osc133","textSnapshot","inputOrigin","drainWhenIdle"],"sessions":7}
+← {"op":"helloAck","id":1,"protocol":{"major":1,"minor":2},"daemon":{"build":"1.0 (41)","pid":812,"startedAt":"…","binary":"…/rackyd"},"capabilities":["coldLog","osc133","textSnapshot","inputOrigin","drainWhenIdle"],"sessions":7}
 ```
 
 `client.kind` só aceita `app` (o `ctl` nunca conecta no daemon, `08 AR-503`).
@@ -102,10 +102,10 @@ Esta seção e `08 AR-102` descrevem o **mesmo** protocolo, com os mesmos nomes.
 **Autenticação do peer** (antes de ler o `hello`):
 
 1. `getpeereid`: uid do peer igual ao do daemon.
-2. `getsockopt(LOCAL_PEERTOKEN)` → audit token → `SecCodeCopyGuestWithAttributes` → `SecCodeCheckValidity` contra um requisito compilado no daemon: mesma folha de certificado da identidade de assinatura (T4) **e** identificador `app.agentbox.mac` (só o app; `08 AR-503`).
-3. Falhou: responde `error{code:"peerRejected"}` (sem `id`), fecha e registra (`Logger`, subsystem `app.agentbox.ptyd`, categoria `auth`). O erro vem antes de qualquer `hello` e não revela o motivo além da categoria.
+2. `getsockopt(LOCAL_PEERTOKEN)` → audit token → `SecCodeCopyGuestWithAttributes` → `SecCodeCheckValidity` contra um requisito compilado no daemon: mesma folha de certificado da identidade de assinatura (T4) **e** identificador `app.racky.mac` (só o app; `08 AR-503`).
+3. Falhou: responde `error{code:"peerRejected"}` (sem `id`), fecha e registra (`Logger`, subsystem `app.racky.ptyd`, categoria `auth`). O erro vem antes de qualquer `hello` e não revela o motivo além da categoria.
 
-Motivo: o socket permite digitar em qualquer terminal, inclusive num Claude com `--dangerously-skip-permissions`. Um processo do mesmo usuário (um agente com Bash) não pode usar o daemon. Builds de desenvolvimento usam a mesma identidade local (T4); não existe bypass por variável de ambiente. Única exceção (T1-07, S-03): enquanto o daemon estiver assinado **ad-hoc** (dono ainda sem `make-dev-cert.sh`) e o build tiver a flag de compilação `AGENTBOX_ALLOW_ADHOC_PEERS`, vale só o uid (modo `adhoc-development`, registrado no log). `scripts/build.sh` passa a flag só quando assina ad-hoc; daemon assinado com certificado ignora a flag; daemon ad-hoc sem a flag recusa todos. Como isso funciona com XCUITest, `ctl` e o runner de CI é o spike S-03 (`08 §11`).
+Motivo: o socket permite digitar em qualquer terminal, inclusive num Claude com `--dangerously-skip-permissions`. Um processo do mesmo usuário (um agente com Bash) não pode usar o daemon. Builds de desenvolvimento usam a mesma identidade local (T4); não existe bypass por variável de ambiente. Única exceção (T1-07, S-03): enquanto o daemon estiver assinado **ad-hoc** (dono ainda sem `make-dev-cert.sh`) e o build tiver a flag de compilação `RACKY_ALLOW_ADHOC_PEERS`, vale só o uid (modo `adhoc-development`, registrado no log). `scripts/build.sh` passa a flag só quando assina ad-hoc; daemon assinado com certificado ignora a flag; daemon ad-hoc sem a flag recusa todos. Como isso funciona com XCUITest, `ctl` e o runner de CI é o spike S-03 (`08 §11`).
 
 **Requisições** (todas com `id`; resposta `{"op":"ok","id":…, …}` ou `{"op":"error","id":…,"code":…,"message":…}`):
 
@@ -136,7 +136,7 @@ O input não é uma requisição JSON: vai em frames `0x03` (com `origin`), sem 
 
 **Capabilities iniciais (minor 0)**: `coldLog`, `osc133`, `textSnapshot`, `inputOrigin`, `drainWhenIdle`.
 
-**Precisões da implementação (T1-04, `AgentBoxProtocol`)**: (1) `len` conta os bytes de `kind` + payload (o prefixo de 4 bytes não entra); `len == 0` é `badRequest`; `len` > 1 MiB responde `frameTooLarge` assim que o prefixo chega, sem esperar o corpo. (2) `ok` leva o campo `result` (`created` com `session`+`spawned`, `list` com `sessions`, `pong`, `textSnapshot`); ausente = resposta vazia. (3) `attachSnapshot` também responde `attach` por `sinceSeq` atendido pelo ring, com `resumed:true` e `modesPreamble` vazio. (4) `error` sem `id` é erro de conexão. (5) Campos e capabilities desconhecidos são ignorados na leitura; `op`, evento, código de erro ou `client.kind` desconhecidos falham a decodificação (`badRequest`). (6) Negociação: versão = major do par e `min(minor)`; capabilities = interseção; N-1 só por cliente de compatibilidade que anuncia a major anterior no socket antigo. As fixtures normativas estão em `Tests/ProtocolTests/Fixtures/` (`v1/`, `n-1/`, `invalid/`, `frames/`).
+**Precisões da implementação (T1-04, `RackyProtocol`)**: (1) `len` conta os bytes de `kind` + payload (o prefixo de 4 bytes não entra); `len == 0` é `badRequest`; `len` > 1 MiB responde `frameTooLarge` assim que o prefixo chega, sem esperar o corpo. (2) `ok` leva o campo `result` (`created` com `session`+`spawned`, `list` com `sessions`, `pong`, `textSnapshot`); ausente = resposta vazia. (3) `attachSnapshot` também responde `attach` por `sinceSeq` atendido pelo ring, com `resumed:true` e `modesPreamble` vazio. (4) `error` sem `id` é erro de conexão. (5) Campos e capabilities desconhecidos são ignorados na leitura; `op`, evento, código de erro ou `client.kind` desconhecidos falham a decodificação (`badRequest`). (6) Negociação: versão = major do par e `min(minor)`; capabilities = interseção; N-1 só por cliente de compatibilidade que anuncia a major anterior no socket antigo. As fixtures normativas estão em `Tests/ProtocolTests/Fixtures/` (`v1/`, `n-1/`, `invalid/`, `frames/`).
 
 ### 1.4 Ciclo de vida da sessão
 
@@ -191,8 +191,8 @@ O daemon nasce com o env mínimo do launchd. O **app** captura o env do usuário
 **Composição do env de cada terminal** (nesta ordem; a última vence):
 
 1. Env capturado.
-2. Remoção (denylist mantida em código, com teste): `PWD`, `OLDPWD`, `SHLVL`, `_`, `TERM_SESSION_ID`, `TERM_PROGRAM*`, `ITERM_*`, `WEZTERM_*`, `KITTY_*`, `GHOSTTY_*`, `VSCODE_*`, `ORCA_*`, `AGENTBOX_*`, `CLAUDECODE`, `CLAUDE_CODE_ENTRYPOINT`, `CLAUDE_CODE_SSE_PORT` e marcadores de sessão de outros agentes (lista revisada a cada versão de CLI). Motivo: `ORCA_PANE_KEY` herdado ativaria os hooks globais do Orca dentro do Agent Box; `CLAUDECODE` faz o Claude achar que é aninhado.
-3. Do app: `TERM=xterm-256color`, `COLORTERM=truecolor`, `TERM_PROGRAM=AgentBox`, `TERM_PROGRAM_VERSION`, `LANG` (se ausente, `en_US.UTF-8`), `AGENTBOX_PANE_ID` (= `terminal.id`), `AGENTBOX_RUN_ID` (= id da execução; novo a cada start ou resume), `AGENTBOX_APP_SOCK` (caminho absoluto de `AB/run/app.sock`). Servem para correlação, não autenticação (`08 AR-111`). Nenhuma outra variável `AGENTBOX_*` chega ao terminal.
+2. Remoção (denylist mantida em código, com teste): `PWD`, `OLDPWD`, `SHLVL`, `_`, `TERM_SESSION_ID`, `TERM_PROGRAM*`, `ITERM_*`, `WEZTERM_*`, `KITTY_*`, `GHOSTTY_*`, `VSCODE_*`, `ORCA_*`, `RACKY_*`, `CLAUDECODE`, `CLAUDE_CODE_ENTRYPOINT`, `CLAUDE_CODE_SSE_PORT` e marcadores de sessão de outros agentes (lista revisada a cada versão de CLI). Motivo: `ORCA_PANE_KEY` herdado ativaria os hooks globais do Orca dentro do Racky; `CLAUDECODE` faz o Claude achar que é aninhado.
+3. Do app: `TERM=xterm-256color`, `COLORTERM=truecolor`, `TERM_PROGRAM=Racky`, `TERM_PROGRAM_VERSION`, `LANG` (se ausente, `en_US.UTF-8`), `RACKY_PANE_ID` (= `terminal.id`), `RACKY_RUN_ID` (= id da execução; novo a cada start ou resume), `RACKY_APP_SOCK` (caminho absoluto de `AB/run/app.sock`). Servem para correlação, não autenticação (`08 AR-111`). Nenhuma outra variável `RACKY_*` chega ao terminal.
 4. Do perfil de lançamento (`env{}`), e segredos marcados por opt-in no perfil (o pane mostra "env: 2 secrets").
 
 Consequências verificáveis:
@@ -232,24 +232,24 @@ Modelo (por sessão): **Session → Tab[] → árvore de splits → Pane → Ter
 **Item na barra de menus** (`MenuBarExtra`, servido pelo próprio processo do app; **não existe helper de login separado**, R1 D-03 fechado por P16):
 
 - Ícone conforme 03 §17: número ao lado quando há pendências; ponto âmbar só com não lidos; sem animação. Setting "Show menu bar icon": `Always` · `When agents are running` (padrão). Não existe `Never` (P4 exige o ícone enquanto houver agentes; R1 K-91).
-- Menu: seção "Needs You" (cada item vai ao pane), seção "Working" (agente, sessão, tempo), "Open Agent Box", "Stop All Agents…", "Quit Agent Box Completely" (encerra o processo do app e **tira o ícone até reabrir**; os agentes seguem no daemon; notificações, MCP e computadores param até reabrir; o spool cobre os hooks do intervalo e `agentbox mcp` reabre o app em segundo plano quando um agente chama uma ferramenta, `08 AR-110`).
+- Menu: seção "Needs You" (cada item vai ao pane), seção "Working" (agente, sessão, tempo), "Open Racky", "Stop All Agents…", "Quit Racky Completely" (encerra o processo do app e **tira o ícone até reabrir**; os agentes seguem no daemon; notificações, MCP e computadores param até reabrir; o spool cobre os hooks do intervalo e `racky mcp` reabre o app em segundo plano quando um agente chama uma ferramenta, `08 AR-110`).
 - v1.1: ações no próprio menu (assumir computador, responder) (R6.5).
 
 ### 1.10 Upgrade do daemon
 
 - `install.sh` troca o bundle com `rename` atômico. O daemon em execução continua com o binário antigo mapeado.
 - **Mesma major**: no `helloAck` o app compara builds. Se o daemon for mais antigo, envia `drainWhenIdle`: ele continua aceitando sessões e sai quando a última terminar; o launchd sobe o binário novo na conexão seguinte. Diagnostics (que pode usar termos técnicos, 01) mostra "Daemon update pending (7 terminals running)" e oferece [Restart Daemon Now…], que lista o que vai morrer e oferece [Resume] depois. Fora do Diagnostics, o texto é o de `08 AR-904` ("Restart background service to update").
-- **Vários apps, um daemon (F30)**: o job do launchd é um só por label e fica preso ao bundle que o registrou. Um app de outra pasta/versão que encontra o job rodando **adota o daemon vivo** (conecta no socket publicado) e nunca chama `register`/`unregister` (isso derrubaria o daemon com as sessões). O launcher `agentboxd-launch` consulta o ponteiro `AB/bin/agentboxd-current` (caminho do `agentboxd` e build do app instalado mais novo, mantido pelo app: build maior ou igual assume, menor de outra pasta não troca) e só então cai no `agentboxd` ao lado. A troca de daemon é sempre `drainWhenIdle` (ocioso) ou lado a lado: as sessões antigas ficam no daemon antigo até acabarem. O daemon ignora SIGTERM/SIGHUP/SIGINT (handler vazio, que o `exec` dos filhos PTY desfaz) e só sai por `shutdown` do protocolo ou ocioso sem sessões; o app trata SIGTERM/SIGINT/SIGHUP e logout como Keep Running (sai, daemon e agentes ficam). Só "Stop All and Quit…" e "Quit Agent Box Completely" são ações explícitas. Instalação recomendada: `scripts/install.sh` em `/Applications/Agent Box.app` (backup em `previous/`, `--rollback`).
-- **Major nova**: novo label, plist e variável de socket (`app.agentbox.ptyd.v2`, `AGENTBOX_PTYD_SOCK_V2`). O app registra o agente v2 para sessões novas e mantém um cliente de compatibilidade N-1 (`list`, `attach`, input, `resize`, `signal`, `kill`) para as sessões do daemon antigo, que sai sozinho quando fica ocioso. O app nunca suporta mais de N-1.
+- **Vários apps, um daemon (F30)**: o job do launchd é um só por label e fica preso ao bundle que o registrou. Um app de outra pasta/versão que encontra o job rodando **adota o daemon vivo** (conecta no socket publicado) e nunca chama `register`/`unregister` (isso derrubaria o daemon com as sessões). O launcher `rackyd-launch` consulta o ponteiro `AB/bin/rackyd-current` (caminho do `rackyd` e build do app instalado mais novo, mantido pelo app: build maior ou igual assume, menor de outra pasta não troca) e só então cai no `rackyd` ao lado. A troca de daemon é sempre `drainWhenIdle` (ocioso) ou lado a lado: as sessões antigas ficam no daemon antigo até acabarem. O daemon ignora SIGTERM/SIGHUP/SIGINT (handler vazio, que o `exec` dos filhos PTY desfaz) e só sai por `shutdown` do protocolo ou ocioso sem sessões; o app trata SIGTERM/SIGINT/SIGHUP e logout como Keep Running (sai, daemon e agentes ficam). Só "Stop All and Quit…" e "Quit Racky Completely" são ações explícitas. Instalação recomendada: `scripts/install.sh` em `/Applications/Racky.app` (backup em `previous/`, `--rollback`).
+- **Major nova**: novo label, plist e variável de socket (`app.racky.ptyd.v2`, `RACKY_PTYD_SOCK_V2`). O app registra o agente v2 para sessões novas e mantém um cliente de compatibilidade N-1 (`list`, `attach`, input, `resize`, `signal`, `kill`) para as sessões do daemon antigo, que sai sozinho quando fica ocioso. O app nunca suporta mais de N-1.
 - Teste obrigatório: app N com daemon N-1 vivo e 3 sessões; attach, input e kill funcionam; sessão nova vai para o daemon N.
 
 ### 1.11 Requisitos — terminais e daemon
 
 | ID | P | Versão | Requisito | Aceite |
 |---|---|---|---|---|
-| TA-101 | P0 | v1 | `agentboxd` como LaunchAgent via `SMAppService`, ativado por socket do launchd, saída após 60 s ocioso | `launchctl print gui/$UID/app.agentbox.ptyd.v1` mostra o job e `launchctl getenv AGENTBOX_PTYD_SOCK_V1` devolve o caminho do socket (S-01); matar o cliente e reconectar relança o daemon; sem sessões, o processo some em ≤ 70 s |
+| TA-101 | P0 | v1 | `rackyd` como LaunchAgent via `SMAppService`, ativado por socket do launchd, saída após 60 s ocioso | `launchctl print gui/$UID/app.racky.ptyd.v1` mostra o job e `launchctl getenv RACKY_PTYD_SOCK_V1` devolve o caminho do socket (S-01); matar o cliente e reconectar relança o daemon; sem sessões, o processo some em ≤ 70 s |
 | TA-102 | P0 | v1 | Protocolo com framing binário, handshake `hello/helloAck`, major/minor e capabilities | Teste de protocolo: cliente com major errada recebe `protocolMajorMismatch`; capability ausente no daemon desabilita o recurso no cliente sem erro |
-| TA-103 | P0 | v1 | Autenticação do peer por uid **e** requisito de assinatura (só `app.agentbox.mac`) | Um binário não assinado (ou assinado com outra identidade, inclusive o helper `agentbox`) do mesmo usuário é desconectado antes do `hello`; o app conecta |
+| TA-103 | P0 | v1 | Autenticação do peer por uid **e** requisito de assinatura (só `app.racky.mac`) | Um binário não assinado (ou assinado com outra identidade, inclusive o helper `racky`) do mesmo usuário é desconectado antes do `hello`; o app conecta |
 | TA-104 | P0 | v1 | `create` idempotente por `sessionID`; `attach`/`detach`/`resize`/`signal`/`kill` conforme §1.3; input com `origin` e contadores por origem | Teste: `create` repetido não faz segundo spawn; Ctrl-C chega ao grupo de foreground; `kill graceful` encerra `sleep 100` e um `bash` com filho; `list` devolve `inputBytesByOrigin` coerente com o que foi enviado |
 | TA-105 | P0 | v1 | Ring de 4 MiB, ponto de corte, preâmbulo de modos e redraw forçado no attach | Teste: rodar `vim` e o Claude, matar o cliente, reanexar; a tela renderizada é igual (comparação de `textSnapshot`), bracketed paste continua ativo, seq sem buracos |
 | TA-106 | P0 | v1 | Backpressure de 2 MiB por cliente com `resyncRequired`; sessões ocultas não recebem bytes | `yes | head -c 200M` num pane oculto não aumenta a memória do app além de 50 MB; o pane visível ao lado continua respondendo (hitch < 50 ms) |
@@ -262,7 +262,7 @@ Modelo (por sessão): **Session → Tab[] → árvore de splits → Pane → Ter
 | TA-113 | P0 | v1 | Layout, tab ativa e foco persistidos em SQLite com debounce, restaurados ao abrir | Arrastar divisor por 5 s gera ≤ 2 escritas; reabrir mostra as mesmas frações (±1 pt) e o mesmo pane focado |
 | TA-114 | P0 | v1 | ⌘W e apagar terminal/sessão com confirmação quando há processo; Force Quit só por ação explícita | Fechar pane com Claude vivo pede confirmação; Cancel não envia sinal; nenhum SIGKILL sem clique em Force Quit |
 | TA-115 | P0 | v1 | Overlay de quit com Keep Running / Stop All and Quit… no primeiro ⌘Q (P15); modo accessory; sem helper de login | Com 2 agentes, ⌘Q + Keep Running: sem ícone no Dock, item na barra de menus presente, hooks continuam chegando (notificação de fim de turno aparece) |
-| TA-116 | P0 | v1 | Item na barra de menus (03 §17) com contagem, "Needs You", "Working", Open, Stop All, Quit Completely | Com 1 agente em needs input, o ícone mostra "1"; clicar no item abre a janela no pane certo; "Quit Agent Box Completely" tira o ícone e não mata nenhum PTY |
+| TA-116 | P0 | v1 | Item na barra de menus (03 §17) com contagem, "Needs You", "Working", Open, Stop All, Quit Completely | Com 1 agente em needs input, o ícone mostra "1"; clicar no item abre a janela no pane certo; "Quit Racky Completely" tira o ícone e não mata nenhum PTY |
 | TA-117 | P1 | v1 | Upgrade com `drainWhenIdle` (mesma major) e compatibilidade N-1 (major nova) | Teste de §1.10 passa; Diagnostics mostra o daemon pendente |
 | TA-118 | P1 | v1 | Modo degradado sem aprovação do item de login, com aviso no quit | Negar a aprovação: terminais funcionam; o overlay de quit diz "Agents will stop when you quit" |
 | TA-119 | P1 | v1 | Tab ou cabeçalho de pane arrastado para as zonas de drop de um pane (esquerda/direita/cima/baixo criam split; centro troca de lugar); cabeçalho arrastado para a tab row vira tab | Soltar na borda direita cria o split; layout persiste; o terminal mantém o mesmo processo (F11) |
@@ -309,9 +309,9 @@ Cada adapter declara capabilities verificadas por versão. A detecção roda no 
 | Permissões | `--permission-mode acceptEdits|auto|bypassPermissions|manual|dontAsk|plan`, `--dangerously-skip-permissions` | |
 | Diretórios extras | `--add-dir` | |
 | Hooks, statusLine, deny rules | `--settings <arquivo>` | Mescla com as settings do usuário (verificar: hooks de várias fontes rodam todos) |
-| MCP do Agent Box | `--mcp-config <arquivo>` | **Sem** `--strict-mcp-config`: os MCPs do usuário continuam |
+| MCP do Racky | `--mcp-config <arquivo>` | **Sem** `--strict-mcp-config`: os MCPs do usuário continuam |
 | Skills/plugins da sessão | `--plugin-dir <dir|zip>` (repetível) | |
-| Agentes da sessão / agente principal | `--agents <json|arquivo>`, `--agent <nome>` | Formato verificado em 2.1.302 (S-08): `mcpServers` de cada subagente é um **array** de `{ "<nome>": {command,args} }` (um objeto `{nome:{…}}` é recusado com `expected array, received object`); `tools` do filho limitado a `mcp__<nome>__*`; nome de servidor único por filho (`agentbox-<runId>-<n>`) |
+| Agentes da sessão / agente principal | `--agents <json|arquivo>`, `--agent <nome>` | Formato verificado em 2.1.302 (S-08): `mcpServers` de cada subagente é um **array** de `{ "<nome>": {command,args} }` (um objeto `{nome:{…}}` é recusado com `expected array, received object`); `tools` do filho limitado a `mcp__<nome>__*`; nome de servidor único por filho (`racky-<runId>-<n>`) |
 | Modelo de fallback | `--fallback-model` | Opcional no perfil |
 | Não usados | `--bg`, `-w/--worktree`, `--tmux`, `--bare`, `--safe-mode`, `--remote-control` | O daemon e o GitService cobrem; `--remote-control` é later. `--bare` e `--safe-mode` **desligam hooks**: se um perfil (inclusive importado do Orca) trouxer uma delas em `extraArgs`, o perfil mostra o aviso "Activity status is unavailable with --bare" e o terminal fica `unknown` (R3 §1) |
 
@@ -326,10 +326,10 @@ Cada adapter declara capabilities verificadas por versão. A detecção roda no 
 | Modelo / perfil | `-m`, `-p/--profile` | |
 | Sandbox / aprovação | `-s read-only|workspace-write|danger-full-access`, `-a on-request|never`, `--dangerously-bypass-approvals-and-sandbox` | |
 | Diretórios extras | `--add-dir` | |
-| MCP, hooks, overrides | `-c chave=valor` (TOML) | `-c mcp_servers.agentbox.command=…` etc. Hooks por `-c` entram como `untrusted` e só rodam com o trust inline de §3.3.1 (`-c 'hooks.state={…}'`, P18) |
+| MCP, hooks, overrides | `-c chave=valor` (TOML) | `-c mcp_servers.racky.command=…` etc. Hooks por `-c` entram como `untrusted` e só rodam com o trust inline de §3.3.1 (`-c 'hooks.state={…}'`, P18) |
 | Scrollback nativo | `--no-alt-screen` | Opção do perfil (padrão desligado) |
 | Mensagem para sessão existente | `codex queue --thread <id> --message` | Later (steering) |
-| App-server compartilhado | `--no-daemon` | **Padrão do adapter Codex (S-05(c), `docs/evidence/spikes/S-05/README.md`; P18).** O daemon (`codex app-server daemon`) roda com ppid 1 e pgid próprio, socket em `~/.codex/app-server-control/`, fora do grupo do PTY. O adapter passa `--no-daemon` para que a sessão e os `-c` por lançamento fiquem no processo do pane, `kill` do pane encerre o agente e o ID seja capturável. Capability `noDaemon` registrada por versão do Codex (se a versão não aceita a flag, o lançamento segue sem ela e o Diagnostics avisa). A TUI do Codex atualiza `[tui]` em `~/.codex/config.toml` por conta própria a cada lançamento, independente do Agent Box: a regra "o app não escreve em `~/.codex`" vale para o app, não para o Codex |
+| App-server compartilhado | `--no-daemon` | **Padrão do adapter Codex (S-05(c), `docs/evidence/spikes/S-05/README.md`; P18).** O daemon (`codex app-server daemon`) roda com ppid 1 e pgid próprio, socket em `~/.codex/app-server-control/`, fora do grupo do PTY. O adapter passa `--no-daemon` para que a sessão e os `-c` por lançamento fiquem no processo do pane, `kill` do pane encerre o agente e o ID seja capturável. Capability `noDaemon` registrada por versão do Codex (se a versão não aceita a flag, o lançamento segue sem ela e o Diagnostics avisa). A TUI do Codex atualiza `[tui]` em `~/.codex/config.toml` por conta própria a cada lançamento, independente do Racky: a regra "o app não escreve em `~/.codex`" vale para o app, não para o Codex |
 | Nunca usar | `--dangerously-bypass-hook-trust`, `--worktree`, `--remote` | |
 
 O Codex 0.160 **não** tem `--session-id`. Captura do ID na §2.5.
@@ -408,7 +408,7 @@ Sem ID capturado, [Resume] vira "Continue Last" (`-c`, `resume --last`, `-c`) co
 
 ### 2.7 Sessões limpas (P10)
 
-- "New Clean Session" (⇧⌘N, um clique; P11): cria `~/AgentBox/sessions/<nome>` ou usa uma pasta escolhida ("New Clean Session in Folder…"). Raiz configurável. "Scratch" não é usado em lugar nenhum (P11).
+- "New Clean Session" (⇧⌘N, um clique; P11): cria `~/Racky/sessions/<nome>` ou usa uma pasta escolhida ("New Clean Session in Folder…"). Raiz configurável. "Scratch" não é usado em lugar nenhum (P11).
 - **Nome automático** (P15): par adjetivo-substantivo em kebab-case, como `quiet-harbor`; o gerador nunca reaproveita uma pasta existente (AC-1102). Com prompt, o título da sessão são as primeiras palavras do prompt como digitadas e a pasta usa o slug (AC-303). Renomear a sessão não renomeia a pasta. O mesmo gerador serve worktrees sem nome.
 - Lança exatamente como uma sessão de projeto: mesmo lançador, perfis, injeções, estados e notificações. Recursos de Git (branch, PR, worktree) ficam ocultos. No domínio, `session.kind = clean` (`08 §0`).
 - Aparece na seção **"Sessions"** da sidebar (P11; 03).
@@ -423,27 +423,27 @@ Diretório por execução: `AB/run/launch/<runID>/` (`0700`), criado no start, *
 
 | Injeção | Claude | Codex | OpenCode |
 |---|---|---|---|
-| Hooks de atividade (§3) | `--settings settings.json` com `hooks` apontando para `"<bundle>/Contents/MacOS/agentbox" hook --provider claude --event <Evento>` | Estratégia da §3.3.1 (P18: hooks por `-c` com *trust* inline `-c 'hooks.state={…}'`, sem gravar em `~/.codex`; fallback: tail do rollout `estimated`). Nunca `--dangerously-bypass-hook-trust` | — (estimado) |
-| MCP do Agent Box | `--mcp-config mcp.json` (`agentbox mcp --run <runID>`) | `-c mcp_servers.agentbox.command="…"`, `-c mcp_servers.agentbox.args=[…]` (v1.1, R7.4) | later |
-| Skill de orquestração do app | plugin `agentbox` em `--plugin-dir` | later | later |
+| Hooks de atividade (§3) | `--settings settings.json` com `hooks` apontando para `"<bundle>/Contents/MacOS/racky" hook --provider claude --event <Evento>` | Estratégia da §3.3.1 (P18: hooks por `-c` com *trust* inline `-c 'hooks.state={…}'`, sem gravar em `~/.codex`; fallback: tail do rollout `estimated`). Nunca `--dangerously-bypass-hook-trust` | — (estimado) |
+| MCP do Racky | `--mcp-config mcp.json` (`racky mcp --run <runID>`) | `-c mcp_servers.racky.command="…"`, `-c mcp_servers.racky.args=[…]` (v1.1, R7.4) | later |
+| Skill de orquestração do app | plugin `racky` em `--plugin-dir` | later | later |
 | Skills/agentes da sessão | `--plugin-dir` (plugin gerado) e `--agents agents.json` | §4.3 | `--agent` |
 | Medidor de uso | `statusLine` em `--settings` que chama o comando do usuário, repassa o mesmo JSON e devolve a mesma saída (status bar, 03 §5) | lido dos rollouts | — |
-| Bloqueio da skill `agentbox` antiga | `permissions.deny` em `--settings` (§2.9) | — | — |
+| Bloqueio da skill `racky` antiga | `permissions.deny` em `--settings` (§2.9) | — | — |
 
 Regras:
 
 - Nunca escrever em `~/.claude/settings.json`, `~/.claude.json`, `~/.codex/config.toml`, `~/.codex/hooks.json`, `~/.config/opencode/*`, nem no repositório do usuário.
 - `notify` do Codex fica intocado no `config.toml` (ocupado pelo Codex Computer Use). Override por lançamento (`-c notify=…`) só como alternativa da §3.3.1, e encadeando o comando original.
-- Os hooks globais do Orca continuam instalados e saem cedo porque o env do Agent Box não tem `ORCA_*` (§1.7).
-- Uma injeção que falha ao gerar (ex.: binário `agentbox` ausente) não impede o lançamento: o terminal abre sem ela e o pane mostra "Activity tracking unavailable" com o motivo.
+- Os hooks globais do Orca continuam instalados e saem cedo porque o env do Racky não tem `ORCA_*` (§1.7).
+- Uma injeção que falha ao gerar (ex.: binário `racky` ausente) não impede o lançamento: o terminal abre sem ela e o pane mostra "Activity tracking unavailable" com o motivo.
 
-### 2.9 Coexistência com o Orca e com a skill global `agentbox`
+### 2.9 Coexistência com o Orca e com a skill global `racky`
 
-- **Orca**: os dois apps rodam juntos. O Agent Box não escreve nada do Orca, remove `ORCA_*` do env e avisa antes de remover um worktree que o Orca também lista (§5.2, §6.4). Os dois podem ter terminais no mesmo worktree; o app avisa, não bloqueia.
-- **Skill `agentbox` antiga** (`~/.claude/skills/agentbox/SKILL.md`, e qualquer skill cuja descrição case com "spawn … subagents … Docker"): detectada no onboarding e no catálogo. Banner: "A global *agentbox* skill competes with Agent Box computers." Opções:
-  Texto do aviso (03): `A global "agentbox" skill is installed and may compete with Agent Box tools.` Opções canônicas (R1 K-40):
-  1. **Block in Agent Box** (padrão): `--settings` com `permissions.deny: ["Skill(agentbox)", "Bash(agentbox *)"]` (verificar a sintaxe `Skill(...)` e que deny vale com `--dangerously-skip-permissions`, V3; se não valer, cair para a opção 2 com explicação). Antes da Fatia 2, quando ainda não há injeções, a opção fica indisponível com o motivo.
-  2. **Disable Globally…**: move a pasta para `~/.claude/skills/.disabled/agentbox` com backup e confirmação; afeta Orca e terminais externos (dito no diálogo).
+- **Orca**: os dois apps rodam juntos. O Racky não escreve nada do Orca, remove `ORCA_*` do env e avisa antes de remover um worktree que o Orca também lista (§5.2, §6.4). Os dois podem ter terminais no mesmo worktree; o app avisa, não bloqueia.
+- **Skill `racky` antiga** (`~/.claude/skills/racky/SKILL.md`, e qualquer skill cuja descrição case com "spawn … subagents … Docker"): detectada no onboarding e no catálogo. Banner: "A global *racky* skill competes with Racky computers." Opções:
+  Texto do aviso (03): `A global "racky" skill is installed and may compete with Racky tools.` Opções canônicas (R1 K-40):
+  1. **Block in Racky** (padrão): `--settings` com `permissions.deny: ["Skill(racky)", "Bash(racky *)"]` (verificar a sintaxe `Skill(...)` e que deny vale com `--dangerously-skip-permissions`, V3; se não valer, cair para a opção 2 com explicação). Antes da Fatia 2, quando ainda não há injeções, a opção fica indisponível com o motivo.
+  2. **Disable Globally…**: move a pasta para `~/.claude/skills/.disabled/racky` com backup e confirmação; afeta Orca e terminais externos (dito no diálogo).
   3. **Keep**: nada muda; o banner some.
   - `Redirect` (skill-shim global, 07) fica fora da v1: escreve fora do app (R1 D-11).
 - **Claude `--bg` / `claude agents`**: o app não usa, mas lê `claude agents --json` só para detectar conversa aberta fora (§2.6).
@@ -467,9 +467,9 @@ Regras:
 | TA-213 | P0 | v1 | Sessões limpas em um clique, mesma experiência de lançamento, "Move to Project…" sem mover | "New Clean Session" cria a pasta com nome `quiet-harbor`-style, abre o agente e não mostra UI de Git; anexar a um projeto mantém terminais vivos |
 | TA-214 | P1 | v1.1 | "Move Folder into Project…" com terminais parados e aviso de resume | Mover com terminal vivo é recusado |
 | TA-215 | P0 | v1 | Injeções por lançamento em `AB/run/launch/<runID>/` (a partir da Fatia 2), apagadas no exit e no boot | Depois de 20 lançamentos encerrados, o diretório está vazio; nenhum arquivo global dos CLIs mudou (checksum antes/depois em teste) |
-| TA-216 | P0 | v1 | Falha de injeção não bloqueia o lançamento e é visível no pane | Remover o helper `agentbox`: o Claude abre e o pane mostra "Activity tracking unavailable" |
-| TA-217 | P0 | v1 | Coexistência com Orca: env sem `ORCA_*`, nenhuma escrita em arquivos do Orca | Com o Orca aberto, terminal do Agent Box no mesmo worktree não muda o estado de nenhum pane do Orca |
-| TA-218 | P0 | v1 | Detecção da skill `agentbox` e opções Block in Agent Box / Disable Globally… / Keep | Com "Block in Agent Box", pedir "spawn 2 subagents for Phoenix and Austin" num Claude do app não executa o CLI antigo |
+| TA-216 | P0 | v1 | Falha de injeção não bloqueia o lançamento e é visível no pane | Remover o helper `racky`: o Claude abre e o pane mostra "Activity tracking unavailable" |
+| TA-217 | P0 | v1 | Coexistência com Orca: env sem `ORCA_*`, nenhuma escrita em arquivos do Orca | Com o Orca aberto, terminal do Racky no mesmo worktree não muda o estado de nenhum pane do Orca |
+| TA-218 | P0 | v1 | Detecção da skill `racky` e opções Block in Racky / Disable Globally… / Keep | Com "Block in Racky", pedir "spawn 2 subagents for Phoenix and Austin" num Claude do app não executa o CLI antigo |
 | TA-219 | P1 | v1.1 | Fork de conversa (`--fork-session`, `codex fork`, `--fork`) | Fork cria terminal novo com ID novo e a origem intacta |
 | TA-220 | P2 | later | MCP e skills por lançamento no OpenCode (`OPENCODE_CONFIG` ou equivalente, verificar) | — |
 
@@ -503,10 +503,10 @@ Agregação (card de sessão, menu bar, Dock): a de 01 §6.3.
 
 ### 3.2 Transporte dos eventos
 
-- Hooks **command** chamando o helper assinado: `"<bundle>/Contents/MacOS/agentbox" hook --provider <claude|codex> --event <Evento>` (comando canônico, `08 §0`). Sem `python3` (resolve `audit/09` N15).
-- O helper lê o JSON do stdin, sai em silêncio se `AGENTBOX_RUN_ID` não existir, envia um frame ao serviço `hook` de `AGENTBOX_APP_SOCK` (`AB/run/app.sock`) com timeout de **200 ms** e, se o app não responder, faz append em `AB/run/spool/hooks/<runID>.jsonl` (`0600`; limite 4 MiB por arquivo; acima disso descarta os mais antigos e grava um marcador `truncated`). Escreve `{}` no stdout e sai com 0, p95 ≤ 30 ms (`08 AR-707`). Nunca bloqueia nem muda o comportamento do agente. `timeout` do hook nas settings: 5 s.
+- Hooks **command** chamando o helper assinado: `"<bundle>/Contents/MacOS/racky" hook --provider <claude|codex> --event <Evento>` (comando canônico, `08 §0`). Sem `python3` (resolve `audit/09` N15).
+- O helper lê o JSON do stdin, sai em silêncio se `RACKY_RUN_ID` não existir, envia um frame ao serviço `hook` de `RACKY_APP_SOCK` (`AB/run/app.sock`) com timeout de **200 ms** e, se o app não responder, faz append em `AB/run/spool/hooks/<runID>.jsonl` (`0600`; limite 4 MiB por arquivo; acima disso descarta os mais antigos e grava um marcador `truncated`). Escreve `{}` no stdout e sai com 0, p95 ≤ 30 ms (`08 AR-707`). Nunca bloqueia nem muda o comportamento do agente. `timeout` do hook nas settings: 5 s.
 - O app drena o spool no boot, ao reconectar e enquanto roda (kqueue no diretório, nunca polling; `08 AR-109`), avançando o cursor **mesmo** em linha inválida (linha registrada como erro; corrige `audit/02` #11). O "cursor" é a existência do arquivo: o leitor toma `flock`, renomeia `<runID>.jsonl` para `<runID>.jsonl.<id>.draining`, lê, e apaga o renomeado quando todas as linhas foram processadas (o escritor confere o inode depois do lock e reabre se o arquivo foi renomeado, então nada se perde nem se lê duas vezes). Um `.draining` que sobrou por crash é relido no boot: a ingestão é idempotente pelo `event_id` do envelope. Erro transitório do banco mantém o arquivo; linha inválida ou com run id que não é UUID é pulada. `--provider` assume `claude` e `--event` assume `hook_event_name` do payload; o helper reduz o payload antes de enviar ou gravar (nunca leva o prompt nem `tool_response`).
-- `AGENTBOX_PANE_ID` e `AGENTBOX_RUN_ID` só correlacionam evento ↔ terminal e execução. Não são autenticação (`audit/09 §2.7`). Não existe `AGENTBOX_HOOK_TOKEN`.
+- `RACKY_PANE_ID` e `RACKY_RUN_ID` só correlacionam evento ↔ terminal e execução. Não são autenticação (`audit/09 §2.7`). Não existe `RACKY_HOOK_TOKEN`.
 - Hooks `type: "http"` ficam para o modo isolado (v1.1, 07; `http://egress:8790/hooks/<provider>`), porque no host o app pode estar fechado e eventos HTTP se perderiam.
 - Eventos são gravados em `agent_event(run_id, seq, type, payload_json, at)` com retenção de **30 dias e 10 mil eventos por execução** (`08 AR-311`). O payload guardado é reduzido aos campos da §3.3.
 
@@ -540,7 +540,7 @@ Agregação (card de sessão, menu bar, Dock): a de 01 §6.3.
 
 **Procedimento por lançamento do adapter Codex** (com `--no-daemon`, §2.2):
 
-1. Os hooks do helper são sempre os mesmos: `"<bundle>/Contents/MacOS/agentbox" hook --provider codex --event <Evento>`, `timeout=5`, **sem run id nem pane no comando** (correlação só por env, §1.7). Assim o hash não muda entre execuções nem entre versões do app apenas por caminho.
+1. Os hooks do helper são sempre os mesmos: `"<bundle>/Contents/MacOS/racky" hook --provider codex --event <Evento>`, `timeout=5`, **sem run id nem pane no comando** (correlação só por env, §1.7). Assim o hash não muda entre execuções nem entre versões do app apenas por caminho.
 2. O app sobe um app-server de sonda (`codex app-server --listen stdio://`, ~0,3 s) com os mesmos `-c hooks.<Evento>=[…]` e chama `hooks/list` para ler o `currentHash` de cada hook; guarda em cache por (versão do Codex, hash da definição) e só refaz a sonda quando a definição ou a versão mudam.
 3. Lança o Codex com os `-c hooks.<Evento>=[…]` e com `-c 'hooks.state={…}'` contendo o `trusted_hash` de cada chave `/<session-flags>/config.toml:<evento>:i:j`.
 4. **Fallback:** se a sonda falhar, o trust não entrar (o `hooks/list` pós-lançamento mostra `untrusted`) ou a versão do Codex mudar o formato, o terminal usa **tail do rollout** (`~/.codex/sessions/AAAA/MM/DD/rollout-*.jsonl`, como em §2.5), só leitura, estado marcado `estimated`, e o Diagnostics mostra o motivo. O rollout continua sendo o baseline sempre disponível.
@@ -583,8 +583,8 @@ Nenhum caminho usa `--dangerously-bypass-hook-trust` nem grava em `~/.codex/*` p
 | ID | P | Versão | Requisito | Aceite |
 |---|---|---|---|---|
 | TA-301 | P0 | v1 | Máquina de estados da §3.1 e agregação por precedência | Teste unitário com sequências reais de eventos (fixtures gravadas dos CLIs) cobre todas as transições |
-| TA-302 | P0 | v1 | Helper `agentbox hook` assinado, sem Python, com spool quando o app está fechado | Com o app em "Quit Completely", um turno do Claude termina; ao reabrir, a sessão mostra `done` com a última mensagem e o horário certo |
-| TA-303 | P0 | v1 | Hooks do Claude por `--settings`, nunca globais; helper inerte sem `AGENTBOX_RUN_ID` | Checksum de `~/.claude/settings.json` igual antes e depois; um `claude` aberto no Terminal.app não gera eventos no app |
+| TA-302 | P0 | v1 | Helper `racky hook` assinado, sem Python, com spool quando o app está fechado | Com o app em "Quit Completely", um turno do Claude termina; ao reabrir, a sessão mostra `done` com a última mensagem e o horário certo |
+| TA-303 | P0 | v1 | Hooks do Claude por `--settings`, nunca globais; helper inerte sem `RACKY_RUN_ID` | Checksum de `~/.claude/settings.json` igual antes e depois; um `claude` aberto no Terminal.app não gera eventos no app |
 | TA-304 | P0 | v1 | Estado `waitingOnSubagents` quando o pai para com filhos vivos | Pedir ao Claude dois subagentes em background: o pai fica "Waiting on 2 subagents" até o último `SubagentStop`, depois `done` |
 | TA-305 | P0 | v1 | `needsInput` por permissão e por pergunta | Claude em `manual` pedindo para rodar `ls` vira `needsInput(permission)` em ≤ 1 s; aprovar volta a `working` |
 | TA-306 | P0 | v1 | Última mensagem por terminal na sidebar (uma linha, hover com o texto) | Depois de um turno, a linha mostra o começo da resposta, sem ANSI |
@@ -630,7 +630,7 @@ Escopo v1: **catálogo só leitura** das fontes nativas, ativação por sessão 
 | Item | Claude | Codex | OpenCode |
 |---|---|---|---|
 | Global (usuário/projeto/plugin instalado) | Sempre ativo pelo próprio CLI; o app só mostra | Sempre ativo (agentes `.toml`, `~/.agents/skills`) | Sempre ativo (config) |
-| Skill ativada na sessão | Plugin gerado por lançamento `AB/run/launch/<runID>/plugin-session/` com `.claude-plugin/plugin.json` (`name: "agentbox-session"`) e `skills/<nome>` como symlink para a pasta de origem (verificar que o Claude segue symlink; senão, cópia por lançamento sem hash) → `--plugin-dir`. Invocação `/agentbox-session:<nome>` | Não suportado na 0.160 sem escrever em pasta lida pelo Codex (verificar `-c` para caminhos de skills). A UI diz "Not available in Codex" | later |
+| Skill ativada na sessão | Plugin gerado por lançamento `AB/run/launch/<runID>/plugin-session/` com `.claude-plugin/plugin.json` (`name: "racky-session"`) e `skills/<nome>` como symlink para a pasta de origem (verificar que o Claude segue symlink; senão, cópia por lançamento sem hash) → `--plugin-dir`. Invocação `/racky-session:<nome>` | Não suportado na 0.160 sem escrever em pasta lida pelo Codex (verificar `-c` para caminhos de skills). A UI diz "Not available in Codex" | later |
 | Agente ativado na sessão (subagente) | `--agents agents.json` gerado do frontmatter + corpo (`description`, `prompt`, `tools`, `model`, `skills`, `mcpServers` como **array**, S-08) | Agentes só via `~/.codex/agents` (verificar override por `-c`) | config por lançamento (later) |
 | Agente principal | `--agent <nome>` | — | `--agent <nome>` |
 | Plugin ativado na sessão | `--plugin-dir <pasta|zip>` | — | — |
@@ -640,11 +640,11 @@ Regras de produto:
 
 - Ativação de sessão vale para o **próximo lançamento** do terminal. O painel mostra "Applies on next launch" e oferece [Relaunch With Resume].
 - Agent teams do Claude: os lançamentos do app não ligam `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` (o Orca do dono está com `claudeAgentTeamsMode: off`); se o env do usuário ligar, a UI avisa que subagentes nomeados podem virar teammates e ignorar `mcpServers` (`audit/08` C7).
-- A skill de orquestração e o MCP do computador entram pelos mecanismos da §2.8; o preset "Web scraping" fixo no código sai (`audit/02` #5). Um agente da biblioteca pode declarar o MCP do Agent Box em `mcpServers` (v1.1, R9.3).
+- A skill de orquestração e o MCP do computador entram pelos mecanismos da §2.8; o preset "Web scraping" fixo no código sai (`audit/02` #5). Um agente da biblioteca pode declarar o MCP do Racky em `mcpServers` (v1.1, R9.3).
 
 ### 4.3 Criar e editar (v1.1)
 
-- **New Agent**: nome, descrição, modelo, ferramentas, skills, MCP, instruções. Escopo: User (`~/.claude/agents/<nome>.md`), Project (`<repo>/.claude/agents/<nome>.md`) ou Agent Box only (`AB/library/agents/`, injetado por `--agents`). Checkbox "Also create Codex agent" gera `~/.codex/agents/<nome>.toml` (`name`, `description`, `developer_instructions` = corpo; campos sem equivalente listados no diálogo como "not converted").
+- **New Agent**: nome, descrição, modelo, ferramentas, skills, MCP, instruções. Escopo: User (`~/.claude/agents/<nome>.md`), Project (`<repo>/.claude/agents/<nome>.md`) ou Racky only (`AB/library/agents/`, injetado por `--agents`). Checkbox "Also create Codex agent" gera `~/.codex/agents/<nome>.toml` (`name`, `description`, `developer_instructions` = corpo; campos sem equivalente listados no diálogo como "not converted").
 - **Edit Skill / Edit Agent**: editor de texto simples no painel direito ou "Open in Editor" (Cursor/VS Code/Zed configurável). Antes de salvar: diff, backup em `AB/backups/library/<timestamp>/<caminho relativo>`, aviso "Used by 3 running terminals · applies on next launch". "Revert" usa o backup.
 - Escrita em `~/.claude` e `~/.codex` só por ação explícita, com diff e backup (R9.4). Nunca durante lançamento.
 
@@ -653,7 +653,7 @@ Regras de produto:
 - Mesmo nome em mais de uma fonte: o catálogo agrupa e marca a vencedora pela precedência do cliente (Claude: managed > `--agents` > projeto > usuário > plugin; Codex: projeto > usuário, verificar). As perdedoras aparecem como "Shadowed by …".
 - Skill de plugin é namespaced; não conflita com skill de mesmo nome.
 - Espelhos `.md` ↔ `.toml` divergentes (nome igual, descrição ou instruções diferentes): lint P2 "Out of sync with Codex agent".
-- Descrição que concorre com ferramentas do app (caso `agentbox`): §2.9.
+- Descrição que concorre com ferramentas do app (caso `racky`): §2.9.
 
 ### 4.5 Requisitos — biblioteca
 
@@ -669,7 +669,7 @@ Regras de produto:
 | TA-408 | P1 | v1.1 | Criar agente nos formatos nativos, com espelho Codex opcional | Criar "permit-portal-scout" gera o `.md` e o `.toml` válidos; `claude agents`/Codex o listam |
 | TA-409 | P1 | v1.1 | Editar skill/agente com diff, backup, aviso de uso e Revert | Editar e reverter restaura o arquivo byte a byte |
 | TA-410 | P2 | later | Lint da biblioteca (frontmatter, referências quebradas, espelhos divergentes) e conversor Claude ↔ Codex ↔ OpenCode | — |
-| TA-411 | P2 | v1 (Fatia 4) | "Insert Skill/Agent…" na palette (03 §8): insere `/agentbox-session:<nome>` ou a menção do agente no prompt do pane focado, por colagem com clique e **sem Enter** (T11, origem `0x02`) (R2 SEM #1; proposta, 03 desenha) | Escolher uma skill na palette deixa o texto no prompt do Claude sem enviar |
+| TA-411 | P2 | v1 (Fatia 4) | "Insert Skill/Agent…" na palette (03 §8): insere `/racky-session:<nome>` ou a menção do agente no prompt do pane focado, por colagem com clique e **sem Enter** (T11, origem `0x02`) (R2 SEM #1; proposta, 03 desenha) | Escolher uma skill na palette deixa o texto no prompt do Claude sem enviar |
 | TA-412 | P2 | later | Visualizar a memória automática do Claude, renomear a conversa nativa e promover uma execução a agente salvo (R2 SEM #9, #16, #17) | — |
 
 ---
@@ -695,7 +695,7 @@ Regras de produto:
 
 **Nomes**:
 
-- Raiz: `settings.worktreeRoot`, padrão `~/orca/workspaces` quando importado do Orca (`workspaceDir`), senão `~/AgentBox/worktrees`. Caminho: `<raiz>/<repo>/<slug>`.
+- Raiz: `settings.worktreeRoot`, padrão `~/orca/workspaces` quando importado do Orca (`workspaceDir`), senão `~/Racky/worktrees`. Caminho: `<raiz>/<repo>/<slug>`.
 - Slug: do nome digitado ou das primeiras palavras do prompt; minúsculas ASCII, hífens, até 40 caracteres.
 - Branch: `<prefix>/<slug>`. Prefixo: modo `git-username` (login do `gh`, senão `git config user.name` normalizado), `custom` ou `none`; importado do Orca (`branchPrefix: git-username` → `gabrielgreco1/…`).
 - Colisão de caminho ou branch: sufixo `-2`, `-3`. Branch digitada que já existe: oferece [Use Existing Branch].
@@ -817,19 +817,19 @@ Alternativa sempre disponível: "Open Compare on GitHub" (`gh pr create --web`).
 
 ## 6. Importação do Orca (removida por P21)
 
-O Agent Box não importa nem lê dados do Orca (P21). Fica só o importador dos JSONs antigos do próprio Agent Box (T2-10). Requisitos TA-601…TA-607 removidos. A pasta padrão de worktrees é `~/AgentBox/worktrees/<repo>/<nome>`.
+O Racky não importa nem lê dados do Orca (P21). Fica só o importador dos JSONs antigos do próprio Racky (T2-10). Requisitos TA-601…TA-607 removidos. A pasta padrão de worktrees é `~/Racky/worktrees/<repo>/<nome>`.
 
 ---
 
 ## 7. Testes de contrato e verificações pendentes
 
-Rodam com `AGENTBOX_REAL_CLI=1`, contra as versões instaladas, antes de qualquer código depender do item. Resultado vira evidência JSON em `docs/evidence/`. Modelo barato e prompts curtos. Dono, fatia e critério de cada linha, junto com os spikes S-01…S-08, estão na lista consolidada de `08 §11`.
+Rodam com `RACKY_REAL_CLI=1`, contra as versões instaladas, antes de qualquer código depender do item. Resultado vira evidência JSON em `docs/evidence/`. Modelo barato e prompts curtos. Dono, fatia e critério de cada linha, junto com os spikes S-01…S-08, estão na lista consolidada de `08 §11`.
 
 | # | Verificar | Como | Se falhar |
 |---|---|---|---|
 | V1 | Hooks de `--settings` rodam junto com os hooks do usuário (Orca) e recebem `session_id`, `source`, `last_assistant_message`, `notification_type` (**confirmado em 2.1.302, S-05(a)**, exceto `notification_type`) | Claude real com `--settings` de teste gravando payloads | Ler a última mensagem do transcript (§3.4) |
 | V2 | Nome da ferramenta de pergunta ao usuário (`AskUserQuestion`?) e evento de permissão em `manual` | Prompt que força pergunta e comando que pede permissão | Ficar só com `PermissionRequest`/`Notification` |
-| V3 | `permissions.deny: ["Skill(agentbox)"]` bloqueia a skill mesmo com `--dangerously-skip-permissions` | Claude real pedindo para usar a skill | Opção "Disable globally…" como recomendação |
+| V3 | `permissions.deny: ["Skill(racky)"]` bloqueia a skill mesmo com `--dangerously-skip-permissions` | Claude real pedindo para usar a skill | Opção "Disable globally…" como recomendação |
 | V4 | `--plugin-dir` segue symlinks de `skills/<nome>` | Plugin gerado com symlink | Cópia por lançamento |
 | V5 | `--resume <id>` com `--settings`/`--mcp-config`/`--plugin-dir`/`--agents` regenerados restaura tudo | Lançar, encerrar, retomar, conferir `/skills` e `/mcp` | — (bloqueante para TA-209) |
 | V6 | Codex aceita hooks e `mcp_servers` por `-c`; exige *trust*? Hash estável entre lançamentos? Campos de `SessionStart`/`Stop` | **Respondido em S-05 (2026-10-17):** exige trust (`untrusted` não executa); hash estável com comando e `timeout` constantes; trust inline por `-c 'hooks.state={…}'`; `SessionStart`/`UserPromptSubmit` capturados. **Aberto:** `PreToolUse`/`PostToolUse`/`Stop` e `mcp_servers` por `-c` (reexecutar depois de 22/10/2026) | Estado do Codex por tail do rollout, marcado "estimated" (baseline de §3.3.1) |
@@ -843,4 +843,4 @@ Rodam com `AGENTBOX_REAL_CLI=1`, contra as versões instaladas, antes de qualque
 
 Testes automáticos sem CLI real (CI macOS): protocolo do daemon (handshake, idempotência, reattach com seq, backpressure, N-1), autenticação do peer com binário assinado por outra identidade, argv por adapter e perfil, máquina de estados com fixtures de payloads gravados, drenagem do spool, parser de `.worktreeinclude` (casos do Orca), mapeamento da importação com um SQLite de fixture anonimizado, `git status --porcelain=v2` com repos temporários.
 
-E2E (`scripts/e2e.sh` com `agentbox ctl`): composer → worktree → Claude rodando com prompt → split com shell → `ctl app quit` (Keep Running) → reabrir com mesmo PID → `kill -9` no daemon → cold restore → [Resume] com hooks de volta → fim de turno gera `done` e notificação.
+E2E (`scripts/e2e.sh` com `racky ctl`): composer → worktree → Claude rodando com prompt → split com shell → `ctl app quit` (Keep Running) → reabrir com mesmo PID → `kill -9` no daemon → cold restore → [Resume] com hooks de volta → fim de turno gera `done` e notificação.

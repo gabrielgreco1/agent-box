@@ -1,6 +1,6 @@
 # T1-27 arquivar, apagar e "Open in…"
 
-Rodado: `open -g -n "Agent Box.app" --env AGENTBOX_AUTOMATION=1 --env AGENTBOX_SKIP_ONBOARDING=1 --env AGENTBOX_HOME=/tmp/abev27/home --env AGENTBOX_APP_SOCK=/tmp/abev27/app.sock`, projeto `rti-platform` temporário (repo com `origin` local e dois worktrees em `/tmp/abev27/ws`; `dev/permits-crawler` com 3 arquivos alterados, 3 não rastreados e 1 commit não publicado). App encerrado por PID.
+Rodado: `open -g -n "Racky.app" --env RACKY_AUTOMATION=1 --env RACKY_SKIP_ONBOARDING=1 --env RACKY_HOME=/tmp/abev27/home --env RACKY_APP_SOCK=/tmp/abev27/app.sock`, projeto `rti-platform` temporário (repo com `origin` local e dois worktrees em `/tmp/abev27/ws`; `dev/permits-crawler` com 3 arquivos alterados, 3 não rastreados e 1 commit não publicado). App encerrado por PID.
 
 | Arquivo | O que mostra |
 |---|---|

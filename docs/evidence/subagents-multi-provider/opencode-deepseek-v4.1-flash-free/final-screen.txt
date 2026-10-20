@@ -6,9 +6,9 @@
                                                                                                   
      I'll reserve a computer and spawn a worker for it.                                           
                                                                                                   
-     ⚙ agentbox_boxes_reserve [display=headless, batch=example-title]                             
+     ⚙ racky_boxes_reserve [display=headless, batch=example-title]                             
                                                                                                   
-     ✓ Agentbox-Worker-1 Task — Get example.com title                                             
+     ✓ Racky-Worker-1 Task — Get example.com title                                             
        ↳ 10 toolcalls · 45.3s                                                                     
                                                                                                   
      ctrl+x down view subagents                                                                   

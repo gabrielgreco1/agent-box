@@ -1,6 +1,6 @@
 # 05 · Jornadas e critérios de aceite
 
-Agent Box rebuild · capítulo 05 · 2026-10-16
+Racky rebuild · capítulo 05 · 2026-10-16
 **Revisado após R1–R3 em 2026-10-16** (patches de `review/R1-consistency.md`, `R2-coverage.md` e `R3-implementability.md`, com as decisões P11–P16 do `00`).
 Depende de: `00-decisions.md` (prevalece), `01-product.md` (princípios PP-*, modelo e estados). Base: `docs/rebuild/audit/10-review-journeys.md` (jornadas J1–J10 e requisitos R*.*), com 01, 05, 07, 08 e 09.
 Referências cruzadas: UI em `03-screens.md`, motion em `04-motion.md`, terminais, agentes, biblioteca e GitHub em `06-terminals-and-agents.md`, computadores e subagentes em `07-computers-and-subagents.md`, arquitetura, testes e segurança em `08-architecture-quality.md`.
@@ -25,7 +25,7 @@ Os textos de UI citados nos ACs são o microcopy de referência e seguem 03 (que
 Convenções desta revisão:
 - Referências à auditoria levam o prefixo `audit/NN` (ex.: `audit/07 #23`, `audit/09 N4`); `NN §x` sem prefixo é capítulo da spec.
 - Estados de agente, processo e computador são os de 01 §6 (conjunto canônico, R1 K-78 a K-80).
-- Motion é citado pelo ID `M-xxx` de 04; `accessibilityIdentifier`, pela convenção de 02 §17 e pela lista de 03 §22; atalhos, pela tabela de 03 §21; identificadores técnicos (bundle `app.agentbox.mac`, label `app.agentbox.ptyd.v1`, env `AGENTBOX_PANE_ID`/`AGENTBOX_RUN_ID`), pelos de 08.
+- Motion é citado pelo ID `M-xxx` de 04; `accessibilityIdentifier`, pela convenção de 02 §17 e pela lista de 03 §22; atalhos, pela tabela de 03 §21; identificadores técnicos (bundle `app.racky.mac`, label `app.racky.ptyd.v1`, env `RACKY_PANE_ID`/`RACKY_RUN_ID`), pelos de 08.
 - Ferramentas MCP com os nomes de 07 §3.2 e §4.2 (`boxes_reserve`, `box_claim`, `help_request`, `help_wait`, `exec`, `http_request`, `browser_type`, `agent_wait`).
 - Proxy segue P13: genérico, escolhido pelo usuário, sem teto de orçamento nem corte automático.
 - Cada AC vale a partir da fatia de 01 §4.1 em que a superfície existe; controle de fatia futura não é renderizado (AC-T28).
@@ -35,9 +35,9 @@ Convenções desta revisão:
 | Método | O que é | Onde roda |
 |---|---|---|
 | `UNIT` | Swift Testing sobre domínio, adapters (argv por perfil), parsers e migrações | CI macOS |
-| `XCUI` | XCUITest no projeto Xcode gerado, localizando controles por `accessibilityIdentifier`. Usa `AGENTBOX_FAKE_RUNTIME=1` (Docker falso) e os stubs de CLI quando indicado | CI macOS e local |
-| `E2E` | `scripts/e2e.sh` dirigindo o app por `agentbox ctl`, com daemon real e, quando a jornada pede, Docker real. Gera evidência JSON em `docs/evidence/` | Mac do dono ou runner self-hosted (runner macOS do GitHub não roda Docker) |
-| `CLI` | Teste de contrato com o CLI real instalado (`AGENTBOX_REAL_CLI=1`), modelo barato e poucas chamadas | Local, antes de cada release |
+| `XCUI` | XCUITest no projeto Xcode gerado, localizando controles por `accessibilityIdentifier`. Usa `RACKY_FAKE_RUNTIME=1` (Docker falso) e os stubs de CLI quando indicado | CI macOS e local |
+| `E2E` | `scripts/e2e.sh` dirigindo o app por `racky ctl`, com daemon real e, quando a jornada pede, Docker real. Gera evidência JSON em `docs/evidence/` | Mac do dono ou runner self-hosted (runner macOS do GitHub não roda Docker) |
+| `CLI` | Teste de contrato com o CLI real instalado (`RACKY_REAL_CLI=1`), modelo barato e poucas chamadas | Local, antes de cada release |
 | `PERF` | Instruments/`xctrace` (Animation Hitches, Time Profiler) com o protocolo de 08 | Local |
 | `MANUAL` | O Gabriel executa numa build assinada de forma estável, com gravação de tela. Usado para site real, julgamento visual e motion | Mac do dono |
 
@@ -51,14 +51,14 @@ Um AC pode listar mais de um método; todos precisam passar.
 | `F-CLI` | Stubs `fake-claude` e `fake-codex` que aceitam as flags reais, imprimem uma TUI mínima e disparam os hooks por lançamento (SessionStart, UserPromptSubmit, PreToolUse, Notification, Stop, StopFailure, SubagentStart/Stop) num roteiro controlado pelo teste |
 | `F-REPO` | Repositório Git temporário com remote bare local; para PR, o repositório de teste `gabrielgreco1/agentbox-e2e` no GitHub |
 | `F-SITE` | Servidor local, alcançável só pelo egress de teste, com páginas que exigem humano (formulário "I'm not a robot" de teste), XHR com JSON, login simples e uma página que redireciona |
-| `F-HOME` | `$HOME` temporário com `~/.claude/settings.json`, `statusLine`, hooks do Orca, `~/.codex/config.toml` com `notify` e a skill global `agentbox`, todos com hash registrado antes do teste |
+| `F-HOME` | `$HOME` temporário com `~/.claude/settings.json`, `statusLine`, hooks do Orca, `~/.codex/config.toml` com `notify` e a skill global `racky`, todos com hash registrado antes do teste |
 | `F-LONG` | Projetos, sessões, branches, agentes, skills, computadores e credenciais com nomes de 80+ caracteres, sem espaços e com espaços, mais strings longas de erro, para os testes de transbordo (AC-T27) |
-| `F-REF` | Pacote de referência do Orca 1.4.219 em `docs/rebuild/reference/orca-1.4.219/` (PNG @2x por superfície, 1440×900, tema escuro, mesmos dados fictícios destas fixtures, `manifest.json` ligando cada PNG à tela de 03 e ao identificador do Agent Box) (P14, R3 §5) |
+| `F-REF` | Pacote de referência do Orca 1.4.219 em `docs/rebuild/reference/orca-1.4.219/` (PNG @2x por superfície, 1440×900, tema escuro, mesmos dados fictícios destas fixtures, `manifest.json` ligando cada PNG à tela de 03 e ao identificador do Racky) (P14, R3 §5) |
 
 ### 0.4 Definição de pronto da v1 (RT.2)
 
 1. Todos os ACs marcados v1 passam nos métodos indicados.
-2. O Gabriel roda, num dia real e numa build com assinatura estável, as jornadas J2, J3, J4, J6, J8 e J11, com gravação de tela, e usa o Agent Box no lugar do Orca nesse dia.
+2. O Gabriel roda, num dia real e numa build com assinatura estável, as jornadas J2, J3, J4, J6, J8 e J11, com gravação de tela, e usa o Racky no lugar do Orca nesse dia.
 4. Toda tela da v1 tem a evidência lado a lado com o Orca e o OK explícito do dono registrado (P14, AC-T26).
 3. Um lote real de pelo menos 10 subagentes com computador (J4) termina com resultado e evidência no host, sem intervenção fora do app.
 
@@ -71,18 +71,18 @@ Um AC pode listar mais de um método; todos precisam passar.
 
 ### Roteiro-alvo
 
-1. O Gabriel abre o app. A janela já tem o visual final: titlebar do Orca, sidebar vazia com as seções "Projects" e "Sessions" (P11). Por cima, um overlay de onboarding (cartão dentro da janela, não sheet) com o título "Set Up Agent Box". Todas as verificações rodam em paralelo e mostram resultado em até 3 s (microcopy de referência em 03 §15):
+1. O Gabriel abre o app. A janela já tem o visual final: titlebar do Orca, sidebar vazia com as seções "Projects" e "Sessions" (P11). Por cima, um overlay de onboarding (cartão dentro da janela, não sheet) com o título "Set Up Racky". Todas as verificações rodam em paralelo e mostram resultado em até 3 s (microcopy de referência em 03 §15):
    - "Claude Code · 2.1.302 · Logged in", "Codex · 0.160.0 · Logged in", "OpenCode · 1.18.34 · Login can't be verified". Um CLI deslogado mostra "Log In", que abre um terminal inline no próprio onboarding com o comando oficial de login.
    - "GitHub CLI · Logged in as gabrielgreco1 · repo, workflow". Sem login: "Log In", que abre o terminal inline com `gh auth login`.
    - "Docker · Docker Desktop is installed but not running" com "Start Docker". O app abre o Docker, espera o socket e o item vira "Running". Logo abaixo, "Computer image · Not downloaded · 1.2 GB" com "Download" e "Build Locally". O download ou build corre em segundo plano com progresso, sem travar o resto. Depois aparece a capacidade: "VM memory 8 GB · ≈ 6 headless or 3 desktop computers".
    - "Notifications" com "Allow" e a frase "So you know when an agent needs you."
-   - "Keep agents running" ("Terminals survive quitting Agent Box.") com "Allow in Login Items". Ao confirmar, o app registra o agente de login e mostra "Approved" ou "Needs approval in System Settings" com o botão que abre o painel certo.
+   - "Keep agents running" ("Terminals survive quitting Racky.") com "Allow in Login Items". Ao confirmar, o app registra o agente de login e mostra "Approved" ou "Needs approval in System Settings" com o botão que abre o painel certo.
 2. **Import from Orca**: "Found 6 projects, 103 worktrees and default agent arguments." com "Review…", que troca o conteúdo do overlay para o passo "Import from Orca" (texto "Nothing is moved or written to Orca."; grupos "Projects", "Worktrees", "Default agent arguments"). Agentes e skills não são importados: a Biblioteca já lê as pastas nativas. "Import" cria projetos e sessões sem mover arquivos. As sessões entram sem processo e sem tabs (P15).
 3. **Perfis**: os `agentDefaultArgs` viram os perfis padrão "Claude · Skip permissions" e "Codex · Bypass approvals", com aviso de uma linha. Nenhum proxy é criado nem escolhido (P13): o proxy é configurado depois, em Settings (o importador de `.env` de Settings › Credentials reconhece `ZYTE_API_KEY` e oferece o preset Zyte).
 4. **Conflicts** (só informativos, exceto o último):
    - "Orca hooks found (harmless)."
    - "Codex notify is used by another app (left untouched)."
-   - `A global "agentbox" skill is installed and may compete with Agent Box tools.`, com "Block in Agent Box" (padrão; bloqueio por lançamento), "Disable Globally…" (move com backup) e "Keep".
+   - `A global "racky" skill is installed and may compete with Racky tools.`, com "Block in Racky" (padrão; bloqueio por lançamento), "Disable Globally…" (move com backup) e "Keep".
 5. "Done" abre o composer com o último projeto usado no Orca já selecionado. Sem projetos, abre a landing com "Add Project…", "New Clean Session" e "Import from Orca…".
 
 A mesma checklist fica em Settings › Diagnostics, com "Run All Checks Again".
@@ -97,7 +97,7 @@ Fatias (01 §4.1): na Fatia 1 só existem os itens de CLI (detectado, logado ou 
 | Nenhum runtime Docker | "No Docker runtime found" com "Get Docker Desktop" e a alternativa OrbStack; o resto do app funciona só com terminais |
 | Build ou download da imagem falha | "Image build failed" com "Show Log" e "Try Again"; onboarding continua |
 | `profile-state.db` e `orca-data.json` ilegíveis ou ausentes | Passo de importação mostra "Nothing to import" ou "Couldn't read Orca data · Skip" |
-| Notificação negada | Cartão "Notifications are off for Agent Box." com "Open System Settings" e "Send Test Notification" |
+| Notificação negada | Cartão "Notifications are off for Racky." com "Open System Settings" e "Send Test Notification" |
 | Aprovação de segundo plano negada | "Agents will stop when you quit. Turn on in Settings › General." O quit passa a perguntar e encerrar |
 
 ### Critérios de aceite
@@ -132,10 +132,10 @@ Fatias (01 §4.1): na Fatia 1 só existem os itens de CLI (detectado, logado ou 
 > **AC-111** · removido por P21 (sem importação nem convivência com o Orca).
 
 > **AC-112** · v1 · `E2E` com `F-HOME` · R1.5, PP-6, T10
-> **Dado** os hashes de `~/.claude/settings.json`, do script de statusline, de `~/.claude/skills`, de `~/.codex/config.toml` e de `~/.codex/hooks.json` · **Quando** o onboarding termina e o usuário lança Claude e Codex com MCP e hooks do Agent Box · **Então** todos os hashes continuam iguais e o estado dos agentes funciona (AC-601). Se os hooks do Codex por `-c` exigirem trust gravado no `config.toml` (spike S-05 de R3), o Codex aparece com a marca `estimated` em vez de o app gravar o trust: o hash continua igual em qualquer caso.
+> **Dado** os hashes de `~/.claude/settings.json`, do script de statusline, de `~/.claude/skills`, de `~/.codex/config.toml` e de `~/.codex/hooks.json` · **Quando** o onboarding termina e o usuário lança Claude e Codex com MCP e hooks do Racky · **Então** todos os hashes continuam iguais e o estado dos agentes funciona (AC-601). Se os hooks do Codex por `-c` exigirem trust gravado no `config.toml` (spike S-05 de R3), o Codex aparece com a marca `estimated` em vez de o app gravar o trust: o hash continua igual em qualquer caso.
 
 > **AC-113** · v1 · `XCUI` com `F-HOME` · R1.6, T12
-> **Dado** a skill global `agentbox` em `~/.claude/skills` · **Quando** o onboarding chega a "Conflicts" · **Então** o item mostra `A global "agentbox" skill is installed and may compete with Agent Box tools.` com "Block in Agent Box" (padrão; `permissions.deny` por lançamento, nada global muda), "Disable Globally…" e "Keep"; "Disable Globally…" move a pasta para um backup do app, e "Restore Skill" em Settings › Agents › Agent Box skill desfaz. Não existe opção "Redirect" (01 §4.4).
+> **Dado** a skill global `racky` em `~/.claude/skills` · **Quando** o onboarding chega a "Conflicts" · **Então** o item mostra `A global "racky" skill is installed and may compete with Racky tools.` com "Block in Racky" (padrão; `permissions.deny` por lançamento, nada global muda), "Disable Globally…" e "Keep"; "Disable Globally…" move a pasta para um backup do app, e "Restore Skill" em Settings › Agents › Racky skill desfaz. Não existe opção "Redirect" (01 §4.4).
 
 > **AC-114** · v1 · `XCUI` · R1.5
 > **Dado** hooks do Orca em `~/.claude/settings.json` e `notify` do Codex ocupado · **Quando** o onboarding chega a "Conflicts" · **Então** os dois aparecem como informação, sem botão de ação que altere esses arquivos.
@@ -150,10 +150,10 @@ Fatias (01 §4.1): na Fatia 1 só existem os itens de CLI (detectado, logado ou 
 > **Dado** o item "Keep agents running" · **Quando** o usuário clica "Allow in Login Items" · **Então** o agente de login é registrado, o estado aparece como "Approved" ou "Needs approval in System Settings" com o botão para o painel certo, e o pedido de aprovação não aparece antes desse clique.
 
 > **AC-118** · v1 · `UNIT` + `XCUI` · R1.4 (parte), T9, P13
-> **Dado** `ZYTE_API_KEY` em `~/orca/projects/agentbox/.env` · **Quando** o usuário usa "Import .env File…" em Settings › Credentials e marca a chave · **Então** o valor vai para o Vault do app (08 AR-510/511), Settings › Credentials mostra só o nome, a origem e o valor mascarado, o app oferece `Import from agentbox CLI…` em Settings › Computers › Proxies, que cria um proxy com o preset `Zyte (proxy)` sem defini-lo em `Default proxy for computers`, e o valor não aparece em banco em claro, log nem exportação de diagnóstico.
+> **Dado** `ZYTE_API_KEY` em `~/orca/projects/racky/.env` · **Quando** o usuário usa "Import .env File…" em Settings › Credentials e marca a chave · **Então** o valor vai para o Vault do app (08 AR-510/511), Settings › Credentials mostra só o nome, a origem e o valor mascarado, o app oferece `Import from racky CLI…` em Settings › Computers › Proxies, que cria um proxy com o preset `Zyte (proxy)` sem defini-lo em `Default proxy for computers`, e o valor não aparece em banco em claro, log nem exportação de diagnóstico.
 
 > **AC-119** · v1.1 · `E2E` · R1.4
-> **Dado** `~/orca/projects/agentbox/runs` com 34 runs · **Quando** o usuário importa o histórico do CLI antigo · **Então** cada run aparece só leitura (result, journal, reqlog) na seção de histórico de computadores, sem copiar os 1,3 GB, e os pais podem consultá-los pelo MCP (`runs_search`).
+> **Dado** `~/orca/projects/racky/runs` com 34 runs · **Quando** o usuário importa o histórico do CLI antigo · **Então** cada run aparece só leitura (result, journal, reqlog) na seção de histórico de computadores, sem copiar os 1,3 GB, e os pais podem consultá-los pelo MCP (`runs_search`).
 
 > **AC-120** · v1 · `XCUI` · fluxo J1 passo 5
 > **Dado** o onboarding concluído com projetos importados · **Quando** o usuário clica "Done" · **Então** o composer abre com o último projeto usado no Orca selecionado; sem projetos, aparece a landing (`landing`) com "Add Project…", "New Clean Session" e "Import from Orca…".
@@ -246,7 +246,7 @@ Fatias (01 §4.1): na Fatia 1 só existem os itens de CLI (detectado, logado ou 
 > **Dado** um projeto importado do Orca · **Quando** se cria uma worktree · **Então** ela nasce sob `~/orca/workspaces/<repo>/` (padrão de transição, P15), e trocar "Worktree folder" em Settings › General muda o destino das próximas; o `worktreeRoot` do projeto (01 §5.2), quando importado, tem precedência.
 
 > **AC-305** · v1 · `XCUI` · R3.3, P10, P11
-> **Dado** o composer · **Quando** o usuário deixa "Project" sem projeto e escolhe "New Folder" em "Where" · **Então** a sessão é criada como sessão limpa em `~/AgentBox/sessions/<nome>` (sem projeto, na seção "Sessions"), sem campos de Git; "Choose Folder…" e "Existing Worktree" usam o caminho escolhido sem copiar nada.
+> **Dado** o composer · **Quando** o usuário deixa "Project" sem projeto e escolhe "New Folder" em "Where" · **Então** a sessão é criada como sessão limpa em `~/Racky/sessions/<nome>` (sem projeto, na seção "Sessions"), sem campos de Git; "Choose Folder…" e "Existing Worktree" usam o caminho escolhido sem copiar nada.
 
 > **AC-306** · v1 · `XCUI` + `E2E` · RT.3, PP-8
 > **Dado** um fetch que leva 5 s · **Quando** o usuário aperta ⌘↵ · **Então** o overlay fecha em menos de 100 ms, a linha pendente aparece na sidebar com a fase atual e, no fim, a sessão fica ativa com a tab do agente.
@@ -294,11 +294,11 @@ Fatias (01 §4.1): na Fatia 1 só existem os itens de CLI (detectado, logado ou 
 A jornada que justifica o app. O Gabriel já fez isso com o CLI antigo em lotes de 15 cidades.
 
 **Versão**: v1 (modo leve). O modo isolado está na J4b, v1.1.
-**Pré-condições**: Docker rodando, imagem pronta, um proxy configurado em Settings e escolhido para a sessão (opcional, P13), skill global `agentbox` tratada com "Block in Agent Box" ou "Disable Globally…".
+**Pré-condições**: Docker rodando, imagem pronta, um proxy configurado em Settings e escolhido para a sessão (opcional, P13), skill global `racky` tratada com "Block in Racky" ou "Disable Globally…".
 
 ### Roteiro-alvo
 
-1. **Sessão** `permits-oct` (sessão limpa, J11). O Claude pai foi lançado pelo Agent Box, então já tem o MCP do app e a skill de orquestração, injetados por lançamento.
+1. **Sessão** `permits-oct` (sessão limpa, J11). O Claude pai foi lançado pelo Racky, então já tem o MCP do app e a skill de orquestração, injetados por lançamento.
 2. O Gabriel digita: "spawn 2 subagents for Phoenix and Austin; map permit systems (zoning, building), endpoints and coverage; output result.json".
 3. O pai monta o brief de cada filho (tarefa, o que já se sabe, spec de saída), seguindo o template da skill de orquestração.
 4. O pai chama `boxes_reserve(names: ["phoenix-az", "austin-tx"], display: "headless")`. O app checa capacidade, cria os dois computadores em paralelo com o proxy da sessão e responde na hora com o estado de cada um, sem esperar o Chromium. Na sidebar, sob o terminal pai, nascem duas linhas filhas com o glifo de provisionamento (M-601).
@@ -307,7 +307,7 @@ A jornada que justifica o app. O Gabriel já fez isso com o CLI antigo em lotes 
 7. **Captcha em Phoenix**: o filho chama `help_request(kind: "captcha", reason: "hCaptcha on Accela search")`. A chamada volta na hora com um `request_id`, e o filho passa a chamar `help_wait`. Notificação: título "permits-oct — phoenix-az needs you", corpo "Captcha on aca-prod.accela.com". O clique abre o viewer com "Take Over" em destaque.
 8. Ele assume (M-606). Phoenix fica pausado; Austin segue. Um selo mostra "Keyboard captured · ⌃⌥ to release". Ele resolve o captcha e clica "Hand Back" (⇧⌘R), com a nota "Solved, session logged in". O filho recebe a URL atual, as abas e a nota, e continua.
 9. **Evidência**: cada linha filha abre o detalhe com as abas "Activity", "Network" (request log com filtro XHR e erros, corpo completo, "Copy as cURL"), "Journal" (PLAN, DOING, FOUND, BLOCKED), "Commands", "Files" (o `work/`), "Timeline" e "Result" (07 CS-320).
-10. **Resultado volta ao pai**: o subagente nativo devolve a resposta final ao pai, como o Claude já faz. O run folder `~/AgentBox/runs/permits-oct/phoenix-az/` tem `work/result.json` e `logs/`, atualizados ao vivo. O pai chama `box_collect("phoenix-az")` e recebe timeline e resultado. Cada afirmação sem ID de request aparece como "Not verified" na aba "Result".
+10. **Resultado volta ao pai**: o subagente nativo devolve a resposta final ao pai, como o Claude já faz. O run folder `~/Racky/runs/permits-oct/phoenix-az/` tem `work/result.json` e `logs/`, atualizados ao vivo. O pai chama `box_collect("phoenix-az")` e recebe timeline e resultado. Cada afirmação sem ID de request aparece como "Not verified" na aba "Result".
 11. **Fim**: os computadores param sozinhos quando o filho termina, e os perfis ficam. O card mostra a duração ("18 min") e, quando o provedor do proxy informa, o uso por computador. "Archive Computers" remove containers e mantém run folders e perfis.
 
 ### Falhas e o que aparece
@@ -324,10 +324,10 @@ A jornada que justifica o app. O Gabriel já fez isso com o CLI antigo em lotes 
 ### Critérios de aceite
 
 > **AC-401** · v1 · `CLI` + `E2E` · R4.1, audit/05 P0.8, T10
-> **Dado** um terminal Claude comum criado pelo composer (sem Biblioteca) · **Quando** o usuário roda `/mcp` · **Então** o servidor `agentbox` aparece com as ferramentas de computador, a skill de orquestração aparece entre as skills da sessão, e nenhum arquivo global foi alterado (AC-112).
+> **Dado** um terminal Claude comum criado pelo composer (sem Biblioteca) · **Quando** o usuário roda `/mcp` · **Então** o servidor `racky` aparece com as ferramentas de computador, a skill de orquestração aparece entre as skills da sessão, e nenhum arquivo global foi alterado (AC-112).
 
 > **AC-402** · v1 · `CLI` com `F-HOME` · R1.6, R4.1
-> **Dado** a skill global `agentbox` tratada com "Block in Agent Box" · **Quando** o usuário escreve "spawn 2 subagents for Phoenix and Austin" · **Então** o transcript mostra chamadas às ferramentas do Agent Box (`boxes_reserve`, `box_claim`) e nenhuma execução de `bin/agentbox`.
+> **Dado** a skill global `racky` tratada com "Block in Racky" · **Quando** o usuário escreve "spawn 2 subagents for Phoenix and Austin" · **Então** o transcript mostra chamadas às ferramentas do Racky (`boxes_reserve`, `box_claim`) e nenhuma execução de `bin/racky`.
 
 > **AC-403** · v1 · `E2E` · R4.2, R4.7
 > **Dado** dois rótulos pedidos por `boxes_reserve` · **Quando** a chamada é feita · **Então** ela retorna em até 2 s com o estado de cada computador (`provisioning` ou `queued`), os dois containers são criados em paralelo, e as linhas filhas aparecem na sidebar sob o pai com o glifo de provisionamento.
@@ -381,7 +381,7 @@ A jornada que justifica o app. O Gabriel já fez isso com o CLI antigo em lotes 
 > **Dado** um computador · **Quando** o agente navega ou faz request para `host.docker.internal`, `192.168.1.1`, `169.254.169.254` ou a porta de outro computador · **Então** o egress bloqueia, o request aparece em "Network" como "Blocked by policy", e um site público funciona.
 
 > **AC-420** · v1 · `E2E` · R4.5, audit/08 N11
-> **Dado** um filho escrevendo `result.json` e arquivos em `work/` · **Quando** o run está em andamento · **Então** `~/AgentBox/runs/permits-oct/phoenix-az/work/` mostra os arquivos ao vivo no Finder, e "Open Run Folder" na linha abre o run folder.
+> **Dado** um filho escrevendo `result.json` e arquivos em `work/` · **Quando** o run está em andamento · **Então** `~/Racky/runs/permits-oct/phoenix-az/work/` mostra os arquivos ao vivo no Finder, e "Open Run Folder" na linha abre o run folder.
 
 > **AC-421** · v1 · `E2E` · R4.5, audit/08 N8
 > **Dado** um `result.json` com 5 afirmações, 3 citando IDs de request existentes, 1 citando um ID inexistente e 1 sem citação · **Quando** o pai chama `box_collect("phoenix-az")` e o usuário abre "Result" · **Então** a ferramenta devolve timeline e resultado, e a UI marca 3 como "Verified" (com link para o request), 1 como "Cited request not found" e 1 como "Not verified".
@@ -390,7 +390,7 @@ A jornada que justifica o app. O Gabriel já fez isso com o CLI antigo em lotes 
 > **Dado** um filho que termina (`SubagentStop`) · **Quando** o evento chega · **Então** o computador dele para, o perfil do navegador e o run folder ficam, e o card da sessão mostra a duração total e, quando o provedor informa, o uso do proxy por computador.
 
 > **AC-423** · v1 · `E2E` · R4.5, audit/08 N27
-> **Dado** dois computadores parados numa sessão · **Quando** o usuário clica "Archive Computers" e confirma · **Então** containers e volumes de trabalho saem (conferido por `docker ps -a` e `docker volume ls` com o label `agentbox.owner=<installId>`), e run folders e perfis ficam.
+> **Dado** dois computadores parados numa sessão · **Quando** o usuário clica "Archive Computers" e confirma · **Então** containers e volumes de trabalho saem (conferido por `docker ps -a` e `docker volume ls` com o label `racky.owner=<installId>`), e run folders e perfis ficam.
 
 > **AC-424** · v1 · `E2E` · audit/09 N1, N18, T9
 > **Dado** um computador ativo · **Quando** se roda `docker inspect` no container e se lê o env de Xvfb, Openbox e xdotool · **Então** o token do computador não aparece em `Config.Env` nem em nenhum desses processos; ele está só no arquivo montado só leitura.
@@ -581,7 +581,7 @@ A jornada que justifica o app. O Gabriel já fez isso com o CLI antigo em lotes 
 
 1. A status bar mostra "5h 96%" no medidor do Claude. O Claude bate no limite e um banner no pane diz "Claude hit its 5-hour limit (resets at 2:20 PM). Continue in Codex?".
 2. "Continue in… › Codex" monta um brief editável: objetivo (nota da sessão e prompt inicial), últimos pedidos do usuário, última resposta, `git status` e resumo do diff, pendências (lista de tarefas do transcript), filhos e computadores ativos.
-3. Ele revisa e confirma. Uma tab nova abre o Codex na mesma worktree, com o brief salvo em `.agentbox/handoff.md` e passado como prompt inicial, e com o MCP do Agent Box configurado por `-c mcp_servers`.
+3. Ele revisa e confirma. Uma tab nova abre o Codex na mesma worktree, com o brief salvo em `.racky/handoff.md` e passado como prompt inicial, e com o MCP do Racky configurado por `-c mcp_servers`.
 4. A tab do Claude continua lá, marcada "Handed off to Codex". Os computadores do Claude só mudam de dono se ele marcar "Transfer computers".
 5. Fechar a tab nova desfaz o handoff.
 
@@ -594,7 +594,7 @@ A jornada que justifica o app. O Gabriel já fez isso com o CLI antigo em lotes 
 > **Dado** uma sessão com nota, prompt inicial, alterações no Git e um filho ativo · **Quando** o usuário escolhe "Continue in… › Codex" · **Então** o overlay mostra o brief com essas seções, editável, e nada é lançado até "Start Codex".
 
 > **AC-703** · v1.1 · `E2E` + `CLI` · R7.1, R7.4
-> **Dado** o brief confirmado · **Quando** a tab nova abre · **Então** o Codex roda no mesmo cwd, `.agentbox/handoff.md` contém o brief, o prompt inicial referencia o arquivo, e `/mcp` no Codex lista o servidor `agentbox`; nenhum arquivo global do Codex muda.
+> **Dado** o brief confirmado · **Quando** a tab nova abre · **Então** o Codex roda no mesmo cwd, `.racky/handoff.md` contém o brief, o prompt inicial referencia o arquivo, e `/mcp` no Codex lista o servidor `racky`; nenhum arquivo global do Codex muda.
 
 > **AC-704** · v1.1 · `XCUI` · R7.1, R7.3
 > **Dado** o handoff concluído · **Quando** se olha a tab original · **Então** ela continua aberta com o selo "Handed off to Codex"; os computadores continuam com o Claude, a menos que "Transfer computers" tenha sido marcado.
@@ -613,7 +613,7 @@ A jornada que justifica o app. O Gabriel já fez isso com o CLI antigo em lotes 
 
 ### Roteiro-alvo
 
-1. ⌘Q com agentes rodando. Um overlay na janela (T5; texto de 03 §16.10) explica que 4 agentes e 2 computadores seguem rodando, com "Keep Running" (padrão), "Stop All and Quit…", "Cancel" e "Don't ask again". "Keep Running" fecha a janela e deixa o app em modo accessory (08 AR-108). Com "Don't ask again" marcado, os próximos ⌘Q fazem isso direto. O item da barra de menus continua mostrando o que segue rodando; "Quit Agent Box Completely" tira o ícone até reabrir.
+1. ⌘Q com agentes rodando. Um overlay na janela (T5; texto de 03 §16.10) explica que 4 agentes e 2 computadores seguem rodando, com "Keep Running" (padrão), "Stop All and Quit…", "Cancel" e "Don't ask again". "Keep Running" fecha a janela e deixa o app em modo accessory (08 AR-108). Com "Don't ask again" marcado, os próximos ⌘Q fazem isso direto. O item da barra de menus continua mostrando o que segue rodando; "Quit Racky Completely" tira o ícone até reabrir.
 2. Reabrir: os panes reaparecem com os processos vivos e o scrollback, inclusive o que saiu com o app fechado.
 3. Atualização do Mac e reboot. Ao abrir: layout e último scrollback voltam esmaecidos; cada pane tem "Resume", que relança com o ID capturado **e** as mesmas flags, MCP, hooks e skills do lançamento original.
 4. Subagentes que estavam rodando aparecem "Interrupted" (tooltip "Stopped when your Mac restarted."), com a última nota do diário de cada um e "Ask Parent to Relaunch", que cola um pedido no prompt do pai, sem Enter (R5.1).
@@ -632,13 +632,13 @@ A jornada que justifica o app. O Gabriel já fez isso com o CLI antigo em lotes 
 > **Dado** agentes rodando · **Quando** o processo do app é morto com `kill -9` · **Então** os agentes continuam vivos e, ao reabrir, os panes reanexam como na AC-802.
 
 > **AC-804** · v1 · `MANUAL` + `E2E` · P4, R1 D-03
-> **Dado** o app em modo accessory (depois do ⌘Q) com 3 processos no daemon · **Quando** o usuário olha a barra de menus · **Então** o item mostra a contagem (e pendências, se houver), clicar abre a janela, e "Quit Agent Box Completely" encerra o app e tira o ícone sem matar os 3 processos.
+> **Dado** o app em modo accessory (depois do ⌘Q) com 3 processos no daemon · **Quando** o usuário olha a barra de menus · **Então** o item mostra a contagem (e pendências, se houver), clicar abre a janela, e "Quit Racky Completely" encerra o app e tira o ícone sem matar os 3 processos.
 
 > **AC-805** · v1 · `E2E` · audit/09 N10, PP-8
 > **Dado** agentes e computadores rodando · **Quando** o usuário escolhe "Stop All and Quit…" e confirma · **Então** o overlay lista o que vai parar, mostra o progresso de cada item sem bloquear o thread principal, e se um computador não parar oferece "Try Again" e "Quit Anyway", sem nunca deixar agentes mortos com a UI ainda pedindo para "voltar ao app".
 
 > **AC-806** · v1 · `E2E` + `CLI` · R8.1, audit/09 N9
-> **Dado** um terminal Claude lançado com MCP, hooks, statusline encadeada e uma skill de sessão, e um reboot simulado que apaga todos os diretórios temporários · **Quando** o usuário clica "Resume" · **Então** o argv contém `--resume <id>` e as mesmas flags do perfil, `--mcp-config`, `--settings` e `--plugin-dir` regenerados, e `/mcp` mostra o `agentbox` de novo.
+> **Dado** um terminal Claude lançado com MCP, hooks, statusline encadeada e uma skill de sessão, e um reboot simulado que apaga todos os diretórios temporários · **Quando** o usuário clica "Resume" · **Então** o argv contém `--resume <id>` e as mesmas flags do perfil, `--mcp-config`, `--settings` e `--plugin-dir` regenerados, e `/mcp` mostra o `racky` de novo.
 
 > **AC-807** · v1 · `E2E` · R8.2, PP-2
 > **Dado** um pai com 2 filhos com computador rodando no momento do reboot simulado · **Quando** o app abre · **Então** os filhos aparecem "Interrupted" com a última nota do diário, os computadores aparecem "Stopped", nada é relançado, e "Ask Parent to Relaunch" cola no prompt do pai o pedido com os rótulos, sem Enter.
@@ -653,7 +653,7 @@ A jornada que justifica o app. O Gabriel já fez isso com o CLI antigo em lotes 
 > **Dado** sessões vivas · **Quando** o daemon morre com `kill -9` · **Então** o app mostra "Background agents stopped unexpectedly" com o último scrollback de cada pane esmaecido e "Resume"; o daemon volta na próxima conexão (ativação por socket).
 
 > **AC-811** · v1 · `E2E` · T1
-> **Dado** sessões vivas num daemon de protocolo v1 (`app.agentbox.ptyd.v1`) · **Quando** o app atualiza para uma build que fala v1 e v2 · **Então** as sessões antigas continuam anexáveis, Settings › Diagnostics mostra "3 terminals on previous background service", e sessões novas usam o daemon novo.
+> **Dado** sessões vivas num daemon de protocolo v1 (`app.racky.ptyd.v1`) · **Quando** o app atualiza para uma build que fala v1 e v2 · **Então** as sessões antigas continuam anexáveis, Settings › Diagnostics mostra "3 terminals on previous background service", e sessões novas usam o daemon novo.
 
 > **AC-812** · v1.1 · `MANUAL` · R8.4
 > **Dado** "Keep Mac awake while agents work" ligado e um agente trabalhando · **Quando** o Mac ficaria inativo · **Então** ele não dorme, o item da barra de menus mostra o indicador, e na bateria aparece o aviso; com tudo ocioso, a asserção de energia sai.
@@ -674,7 +674,7 @@ A jornada que justifica o app. O Gabriel já fez isso com o CLI antigo em lotes 
 3. "Open in Editor" e "Reveal in Finder" por item.
 4. **Ativar só nesta sessão**: na aba "Context" da sessão, ele liga a skill `arcgis-playbook` e o agente `permit-portal-scout` para esta sessão. O app aplica no próximo lançamento e oferece "Relaunch with resume". Skills globais aparecem como "Always on", separadas das adicionadas na sessão.
 5. Cada terminal mostra "Loaded in this run" com skills, agentes, MCP, instruções e plugins efetivos, com a fonte.
-6. (v1.1) "New agent" cria `permit-portal-scout`: nome, descrição, modelo, ferramentas, skills, MCP (inclusive o computador do Agent Box) e escopo. Grava `~/.claude/agents/permit-portal-scout.md` e, se marcado, o `.toml` espelho do Codex, com backup.
+6. (v1.1) "New agent" cria `permit-portal-scout`: nome, descrição, modelo, ferramentas, skills, MCP (inclusive o computador do Racky) e escopo. Grava `~/.claude/agents/permit-portal-scout.md` e, se marcado, o `.toml` espelho do Codex, com backup.
 7. (v1.1) Editar uma skill abre o `SKILL.md`; o app avisa "Used by 3 active sessions · applies on next launch", guarda backup e oferece "Relaunch with resume".
 
 ### Critérios de aceite
@@ -689,7 +689,7 @@ A jornada que justifica o app. O Gabriel já fez isso com o CLI antigo em lotes 
 > **Dado** uma sessão com Claude rodando · **Quando** o usuário liga a skill `arcgis-playbook` em "Context" · **Então** a UI diz "Applies on next launch" com "Relaunch with resume"; depois do relançamento, a skill aparece entre as skills do Claude naquela sessão e em nenhuma outra, e nenhum arquivo global mudou.
 
 > **AC-904** · v1 · `XCUI` · audit/08 N24
-> **Dado** um terminal de agente · **Quando** o usuário abre "Loaded in this run" · **Então** a lista mostra skills, agentes, MCP, instruções e plugins efetivos, separando "Always on" de "This session" e das integrações do Agent Box.
+> **Dado** um terminal de agente · **Quando** o usuário abre "Loaded in this run" · **Então** a lista mostra skills, agentes, MCP, instruções e plugins efetivos, separando "Always on" de "This session" e das integrações do Racky.
 
 > **AC-905** · v1 · `CLI` + `XCUI` · R9.1
 > **Dado** uma skill global · **Quando** o usuário tenta desligá-la só para a sessão · **Então**, se a versão instalada do CLI não suporta desligar por lançamento, o controle fica desabilitado com "Claude Code loads global skills in every session" em vez de prometer o efeito.
@@ -704,7 +704,7 @@ A jornada que justifica o app. O Gabriel já fez isso com o CLI antigo em lotes 
 > **Dado** uma skill usada por 3 sessões ativas · **Quando** o usuário edita e salva · **Então** aparece "Used by 3 active sessions · applies on next launch" com "Relaunch with resume" por sessão, e o histórico permite reverter a edição.
 
 > **AC-908** · v1.1 · `CLI` · R9.3
-> **Dado** um agente da biblioteca com `mcpServers: {agentbox: …}` e skill `webscraping-expert` · **Quando** o Claude delega a ele · **Então** o subagente tem as ferramentas de computador e a skill, sem o preset de scraping fixo no código.
+> **Dado** um agente da biblioteca com `mcpServers: {racky: …}` e skill `webscraping-expert` · **Quando** o Claude delega a ele · **Então** o subagente tem as ferramentas de computador e a skill, sem o preset de scraping fixo no código.
 
 ---
 
@@ -753,7 +753,7 @@ A jornada que justifica o app. O Gabriel já fez isso com o CLI antigo em lotes 
 ### Roteiro-alvo
 
 1. O Gabriel quer começar algo sem repositório (um lote de scraping, uma pesquisa). Na sidebar, ele clica no "+" do header "Sessions" (ou usa "File › New Clean Session", ⇧⌘N; P11).
-2. Sem diálogo, o app cria `~/AgentBox/sessions/<name>` com um nome automático adjetivo + substantivo (`quiet-harbor`, P15), cria a sessão na seção "Sessions" e abre uma tab com o agente padrão rodando nessa pasta, com o foco no terminal.
+2. Sem diálogo, o app cria `~/Racky/sessions/<name>` com um nome automático adjetivo + substantivo (`quiet-harbor`, P15), cria a sessão na seção "Sessions" e abre uma tab com o agente padrão rodando nessa pasta, com o foco no terminal.
 3. Ele renomeia a sessão com duplo clique ("permits-oct"). A pasta mantém o nome original.
 4. A sessão tem o mesmo card, estados, agentes, computadores e status note das sessões de projeto. Não tem branch, chip de PR nem "Create PR".
 5. Variante: no composer (⌘N), sem projeto e com "Choose Folder…" em "Where", a sessão limpa usa uma pasta existente; o app não cria nem apaga nada nela.
@@ -763,10 +763,10 @@ A jornada que justifica o app. O Gabriel já fez isso com o CLI antigo em lotes 
 ### Critérios de aceite
 
 > **AC-1101** · v1 · `XCUI` + `E2E` · P10, P9, PP-4
-> **Dado** o app aberto · **Quando** o usuário clica no "+" de "Sessions" · **Então** em até 1 s existe a pasta `~/AgentBox/sessions/<name>`, a sessão aparece na seção "Sessions" e uma tab roda o agente padrão com cwd nessa pasta e foco no terminal, sem nenhum diálogo.
+> **Dado** o app aberto · **Quando** o usuário clica no "+" de "Sessions" · **Então** em até 1 s existe a pasta `~/Racky/sessions/<name>`, a sessão aparece na seção "Sessions" e uma tab roda o agente padrão com cwd nessa pasta e foco no terminal, sem nenhum diálogo.
 
 > **AC-1102** · v1 · `UNIT` · P10
-> **Dado** `~/AgentBox/sessions/quiet-harbor` já existente · **Quando** o nome gerado colide · **Então** o app gera outro nome e nunca reaproveita uma pasta existente.
+> **Dado** `~/Racky/sessions/quiet-harbor` já existente · **Quando** o nome gerado colide · **Então** o app gera outro nome e nunca reaproveita uma pasta existente.
 
 > **AC-1103** · v1 · `XCUI` · P10
 > **Dado** uma sessão limpa · **Quando** o usuário renomeia para "permits-oct" · **Então** o título muda, a pasta continua `quiet-harbor`, e o caminho real aparece no hover e em "Copy path".
@@ -784,7 +784,7 @@ A jornada que justifica o app. O Gabriel já fez isso com o CLI antigo em lotes 
 > **Dado** uma sessão limpa com terminais rodando · **Quando** o usuário abre o menu · **Então** "Move Folder into Project…" aparece desabilitado com o tooltip "Stop all terminals in this session first"; com tudo parado, a ação move a pasta e atualiza os caminhos.
 
 > **AC-1108** · v1 · `E2E` · P10, 01 §6.1
-> **Dado** uma sessão limpa criada pelo app · **Quando** o usuário escolhe "Delete" e confirma "Delete Session" · **Então** a sessão some, a pasta vai para o Lixo do macOS (recuperável) e os run folders da sessão em `~/AgentBox/runs/` ficam, a menos que "Also delete run folders" seja marcado.
+> **Dado** uma sessão limpa criada pelo app · **Quando** o usuário escolhe "Delete" e confirma "Delete Session" · **Então** a sessão some, a pasta vai para o Lixo do macOS (recuperável) e os run folders da sessão em `~/Racky/runs/` ficam, a menos que "Also delete run folders" seja marcado.
 
 ---
 
@@ -801,7 +801,7 @@ Não pertencem a uma jornada só, mas toda jornada depende deles.
 > **Dado** o registro central de ações (menus, atalhos, palette, botões), em que cada controle aponta para um `ActionID` · **Quando** a suíte roda · **Então** (a) o lint falha em qualquer `Button`, `.onTapGesture` ou `NSButton` cuja ação não passe pelo registro; (b) cada `ActionID` tem um XCUITest com clique ou atalho real (não só `ctl ui action`) que confere o efeito declarado: mudança de estado, navegação ou um erro específico declarado no teste ("algum erro visível" não conta); (c) todo controle desabilitado tem tooltip com o motivo; (d) atalho duplicado no mesmo escopo de 03 §21 ou que capture tecla reservada ao terminal reprova.
 
 > **AC-T03** · v1 · `E2E` · T13
-> **Dado** "Automation channel (agentbox ctl)" desligado em Settings › Advanced (padrão) · **Quando** um processo chama `agentbox ctl state` · **Então** a chamada é recusada; com a opção ligada, a titlebar mostra "Automation on" e `ctl state`, `ctl session open`, `ctl terminal new`, `ctl terminal send`, `ctl terminal screen`, `ctl ui tree`, `ctl ui action <id> focus` e `ctl screenshot --window` funcionam (tabela de 08 §8), e o cenário canônico de `scripts/e2e.sh` passa.
+> **Dado** "Automation channel (racky ctl)" desligado em Settings › Advanced (padrão) · **Quando** um processo chama `racky ctl state` · **Então** a chamada é recusada; com a opção ligada, a titlebar mostra "Automation on" e `ctl state`, `ctl session open`, `ctl terminal new`, `ctl terminal send`, `ctl terminal screen`, `ctl ui tree`, `ctl ui action <id> focus` e `ctl screenshot --window` funcionam (tabela de 08 §8), e o cenário canônico de `scripts/e2e.sh` passa.
 
 > **AC-T04** · v1 · `XCUI` · P2
 > **Dado** todas as telas · **Quando** se extraem as strings visíveis · **Então** todas estão em inglês e vêm do String Catalog; nenhuma string em português aparece na UI.
@@ -874,7 +874,7 @@ Não pertencem a uma jornada só, mas toda jornada depende deles.
 > **Dado** o viewer aberto enquanto o agente navega numa página lenta · **Quando** se mede · **Então** a decodificação de frames não acontece no thread principal, e a navegação longa não congela o viewer.
 
 > **AC-T24** · v1 · `UNIT` + `E2E` · audit/09 N15
-> **Dado** um Mac sem Command Line Tools (sem `python3`) · **Quando** um agente roda com hooks do app · **Então** os hooks funcionam (helper `agentbox hook` ou hook HTTP), e nenhum instalador do Xcode aparece.
+> **Dado** um Mac sem Command Line Tools (sem `python3`) · **Quando** um agente roda com hooks do app · **Então** os hooks funcionam (helper `racky hook` ou hook HTTP), e nenhum instalador do Xcode aparece.
 
 ### Motion e visual
 
@@ -882,7 +882,7 @@ Não pertencem a uma jornada só, mas toda jornada depende deles.
 > **Dado** os três momentos obrigatórios (abrir telas e overlays: M-101/M-102/M-109; agente sendo lançado: M-501 a M-506; agente usando um computador: M-604 a M-611) · **Quando** o Gabriel os revê com gravação (`ctl record`) ao lado do protótipo aprovado · **Então** batem com os protótipos aprovados de 04 e ele registra o OK; com Reduce Motion ligado, nenhuma animação não nula é aplicada (teste automatizado de 04).
 
 > **AC-T26** · v1 · `MANUAL` + `XCUI` (captura) · P1, P14, PP-12
-> **Dado** cada tela e componente entregue numa tarefa visual e a referência equivalente em `F-REF` · **Quando** a tarefa fecha · **Então** existe em `docs/evidence/ui/<tarefa>/` a captura do Agent Box (`ctl screenshot`, mesmo tamanho e mesmos dados) lado a lado com o PNG do Orca, mais o diff de sobreposição de `scripts/compare-ui.sh`; cada item da checklist de fidelidade da auditoria 04 §8 (referida em 02 §15) que a tela toca passa ou tem a divergência justificada em 03; e o OK explícito do dono está registrado. Sem OK, a tarefa não fecha (P14). Não há aprovação em lote no fim da v1.
+> **Dado** cada tela e componente entregue numa tarefa visual e a referência equivalente em `F-REF` · **Quando** a tarefa fecha · **Então** existe em `docs/evidence/ui/<tarefa>/` a captura do Racky (`ctl screenshot`, mesmo tamanho e mesmos dados) lado a lado com o PNG do Orca, mais o diff de sobreposição de `scripts/compare-ui.sh`; cada item da checklist de fidelidade da auditoria 04 §8 (referida em 02 §15) que a tela toca passa ou tem a divergência justificada em 03; e o OK explícito do dono está registrado. Sem OK, a tarefa não fecha (P14). Não há aprovação em lote no fim da v1.
 
 ---
 
@@ -899,7 +899,7 @@ Versão: v1, v1.1, later (depois) ou out (fora). A coluna "Prio." é a prioridad
 | R1.3 | - | Importar do Orca (removido por P21) | J1 | - | removido |
 | R1.4 | P1 | Importar CLI antigo: credenciais do `.env` com preset de proxy (v1) e runs (v1.1) | J1 | AC-118 (v1), AC-119 (v1.1) | v1 / v1.1 |
 | R1.5 | P0 | Nunca sobrescrever config global dos CLIs | J1, J4, J10 | AC-112, 114, 401, 1001 | v1 |
-| R1.6 | P0 | Detectar a skill global `agentbox` e oferecer opções | J1, J4 | AC-113, 402 | v1 |
+| R1.6 | P0 | Detectar a skill global `racky` e oferecer opções | J1, J4 | AC-113, 402 | v1 |
 | R1.7 | P1 | Detectar `gh` e escopos | J1 | AC-115 | v1 |
 | R1.8 | P1 | Aprovação do item de login só ao ativar segundo plano | J1 | AC-117 | v1 |
 | R1.9 | P2 | Reprobe de CLI com "o que mudou" | — | — | later |
@@ -1081,7 +1081,7 @@ Versão: v1, v1.1, later (depois) ou out (fora). A coluna "Prio." é a prioridad
 | T9 · Egress sidecar desde a v1 | J4 | AC-417, 418, 419, 424 | v1 |
 | T11 · Colar só por clique explícito | J5 | AC-505 | v1 |
 | T12 · Ferramentas do CLI antigo via MCP; conflito com a skill global | J1, J4 | AC-113, 402, 415, 416 | v1 |
-| T13 · `agentbox ctl` e `accessibilityIdentifier` | JT | AC-T01, T03 | v1 |
+| T13 · `racky ctl` e `accessibilityIdentifier` | JT | AC-T01, T03 | v1 |
 | T14 · Fora do escopo | — | — | out |
 | T5 · Overlays dentro da janela | J1, J3, J8, JT | AC-101, 301, 801, T06 | v1 |
 

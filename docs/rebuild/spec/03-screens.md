@@ -227,7 +227,7 @@ Superfície DS §12.9. Uma sessão = um card. O card **é o item selecionável**
 
 **Linha 2** (altura 14, `small` 11 `textSecondary`, lh 1):
 - Sessão de projeto: `GitBranch` 10 + branch truncado no meio · ponto `gitModified` 6 se há alterações não commitadas · `↑<n>` se há commits não enviados (só >0) · à direita, **chip de PR** (DS §12.4 `chip`: ícone de estado 13 + `#<n>` + glifo de checks 12). Sem PR: nada.
-- Sessão limpa: `FolderOpen` 10 + caminho abreviado (`~/AgentBox/sessions/quiet-harbor`).
+- Sessão limpa: `FolderOpen` 10 + caminho abreviado (`~/Racky/sessions/quiet-harbor`).
 - Sessão importada sem processo: depois da branch, `Not started` em `textTertiary`.
 - Altura reservada desde o início (placeholder `fg5` 60×8 enquanto o Git não respondeu).
 
@@ -240,7 +240,7 @@ Superfície DS §12.9. Uma sessão = um card. O card **é o item selecionável**
 **Hover card** (250 ms, DS §12.16), 300 de largura:
 ```
 stacktax-pr-bronze                         (bodyStrong)
-rti-platform · ~/AgentBox/worktrees/rti-platform/stacktax   (small, path middle-truncated)
+rti-platform · ~/Racky/worktrees/rti-platform/stacktax   (small, path middle-truncated)
 State      Claude Code needs input · 4m
 Branch     gabrielgreco1/stacktax  ↑2  ● 3 files changed
 PR         #412 Open · Checks 2 failing, 9 passing
@@ -334,7 +334,7 @@ Aparece **na hora** em que o composer fecha (P9, M-204), no topo do projeto (ou 
 
 ### 2.10 Seção Sessions (sessões limpas, P10/P11)
 
-- Header igual a "Projects" (32): label `"Sessions"`, tooltip do label `Sessions without a project or Git`. Ação única `Plus` (tooltip `New Clean Session ⇧⌘N`) → **New Clean Session**: cria na hora `~/AgentBox/sessions/<auto-name>` e abre o agente padrão, com foco no terminal, sem diálogo (AC-1101). ⌥-clique no `+` abre o composer com `No Project (Clean Session)` pré-selecionado.
+- Header igual a "Projects" (32): label `"Sessions"`, tooltip do label `Sessions without a project or Git`. Ação única `Plus` (tooltip `New Clean Session ⇧⌘N`) → **New Clean Session**: cria na hora `~/Racky/sessions/<auto-name>` e abre o agente padrão, com foco no terminal, sem diálogo (AC-1101). ⌥-clique no `+` abre o composer com `No Project (Clean Session)` pré-selecionado.
 - **New Clean Session in Folder…** (⌥⇧⌘N, menu File): `NSOpenPanel` escuro; a sessão usa a pasta escolhida e o app não cria nem apaga nada nela (AC-1105).
 - Nome automático: adjetivo + substantivo (`quiet-harbor`, P15), nunca reaproveita pasta existente (AC-1102). Renomear a sessão não renomeia a pasta.
 - Cards iguais (§2.6), linha 2 com pasta; sem branch, chip de PR nem `Create Pull Request…`.
@@ -579,14 +579,14 @@ Overlay DS §12.17, **560** de largura (máx. janela − 32). Abre por ⌘N, `+`
 |---|---|---|---|
 | Session name | input, placeholder com o nome automático | Derivado do prompt (3–5 primeiras palavras, como digitadas; pasta e branch usam o slug kebab-case, 06 §5.2); sem prompt, adjetivo + substantivo (`quiet-harbor`, P15) | `overlay.composer.name` |
 | Branch name (New Worktree) | input mono | `<git user>/<session name>` (prefixo de Settings › Git) | `overlay.composer.branch` |
-| Worktree location (New Worktree) | texto read-only mono `textSecondary` + `[Change…]` | `<worktree root>/<repo>/<session name>` (padrão `~/AgentBox/worktrees`, P21) | `overlay.composer.location` |
+| Worktree location (New Worktree) | texto read-only mono `textSecondary` + `[Change…]` | `<worktree root>/<repo>/<session name>` (padrão `~/Racky/worktrees`, P21) | `overlay.composer.location` |
 | Subagent computers (Fatia 3) | `DSSegmented`: `Off` · `On This Mac` · `In Container` (v1.1; na v1 o segmento não existe) | `On This Mac` | `overlay.composer.computers` |
 | Computer proxy (Fatia 3, P13) | `DSCombobox`: `Default (<nome>)` · `None` · proxies de Settings › Computers › Proxies | o padrão de Settings | `overlay.composer.proxy` |
 | Watch Claude subagents (Fatia 2) | switch | On (Claude) | `overlay.composer.watchSubagents` |
 
 ### 6.3 Footer e resumo
 
-- Linha de resumo acima do footer, `small` mono `textSecondary`, uma linha truncada no meio, com tooltip completo: `claude --dangerously-skip-permissions "<prompt…>" in ~/AgentBox/worktrees/rti-platform/fix-arcgis-pagination`. É a confirmação do que vai rodar (P9, `audit/07 #42`).
+- Linha de resumo acima do footer, `small` mono `textSecondary`, uma linha truncada no meio, com tooltip completo: `claude --dangerously-skip-permissions "<prompt…>" in ~/Racky/worktrees/rti-platform/fix-arcgis-pagination`. É a confirmação do que vai rodar (P9, `audit/07 #42`).
 - Footer esquerdo: switch compacto `Create More` (mantém o overlay aberto e limpa o prompt).
 - Footer direito: `[Cancel]` (outline sm, Esc) · `[Create Session]` (primary sm, keycaps `⌘↵`). Desabilitado só se faltar projeto ou pasta.
 - Erro de validação (M-808): caixa `destructive/10` com borda `/40` acima do footer, ícone + uma linha (`Branch "x" already exists.` com link `Reuse it`). Erro por campo: `overlay.composer.<field>.error`.
@@ -869,7 +869,7 @@ Aberto pelo `⋯` do viewer ou da linha filha: o painel direito › Computers tr
 - **Network**: filtros chip (`All` · `XHR` · `Errors` · `Document`) + busca; linhas 28: método (mono 10 badge), status (cor: 2xx `success`, 4xx `warning`, 5xx `destructive`), host+path (mono 11), tamanho, tempo, origem (`browser`/`curl`/`python`). Clique abre detalhe (headers, body com `Copy as cURL`).
 - **Journal**: entradas `PLAN`/`DOING`/`FOUND`/`BLOCKED` (badge mono, `BLOCKED` em `destructive`), texto, evidências como links para requests.
 - **Commands**: comandos de `exec` (hora, comando mono, código de saída, duração); clique mostra stdout/stderr.
-- **Files**: árvore de `/work` (mapeado para `~/AgentBox/runs/<session>/<computer>/work/`), `Reveal in Finder`.
+- **Files**: árvore de `/work` (mapeado para `~/Racky/runs/<session>/<computer>/work/`), `Reveal in Finder`.
 - **Timeline**: lista combinada cronológica.
 - **Result**: `result.json` formatado + evidências, `[Reveal in Finder]`.
 IDs: `rightPanel.computer.<id>.tab.<name>` (`activity`, `network`, `journal`, `commands`, `files`, `timeline`, `result`).
@@ -929,7 +929,7 @@ Segmented no header: `Agents` · `Skills` · `Profiles` (lembrado). Lista: busca
 
 Detalhe:
 - Título + descrição.
-- Tabela de meta (`small`, rótulo `textSecondary` 96 de largura): `Source` (caminho mono + `Reveal`), `Works with` (logos), `Model`, `Tools`, `Skills` (chips), `MCP Servers` (chips; `agent-box computer` destacado), `Used by` (`2 running sessions`).
+- Tabela de meta (`small`, rótulo `textSecondary` 96 de largura): `Source` (caminho mono + `Reveal`), `Works with` (logos), `Model`, `Tools`, `Skills` (chips), `MCP Servers` (chips; `racky computer` destacado), `Used by` (`2 running sessions`).
 - Ações: `[New Session with Agent]` (primary sm → composer com agente `Claude Code` e `--agent <name>`), `[Enable in This Session]` (outline sm; ativação aditiva, aplicada no próximo lançamento), `[Insert in Prompt]` (ghost sm, §8), `[Open in Editor]` (ghost sm), `[Reveal in Finder]`. v1.1: `[Edit]`, `[Duplicate]`, `[Make Available to Codex]`, `Delete…`.
 - Conteúdo: o `.md` em `editor` surface, SF Mono 12, rolável, somente leitura.
 - Vazio: `No agents found in ~/.claude/agents or ~/.codex/agents.`
@@ -938,7 +938,7 @@ Detalhe:
 
 Detalhe: título, descrição, `Source`, `Files` (lista de arquivos da pasta da skill com tamanho; scripts marcados com `TriangleAlert` `warning` e tooltip `Contains executable scripts`), `Activation` (`Always on (global)` / `On in this session` / `Off`), `Used by`. Ações: `[Enable in This Session]` / `[Disable in This Session]` (só para skills não globais; para globais o botão não aparece e há a linha `Global skills load in every Claude Code session.`), `[Insert in Prompt]` (§8), `[Open in Editor]`, `[Reveal in Finder]`. Conteúdo do `SKILL.md`.
 
-Conflito detectado (R1.6): a skill global `agentbox` aparece com badge `warning` `Conflicts with Racky` e ações `[Block in Racky]` (padrão; `permissions.deny` por lançamento, nada global muda) · `[Disable Globally…]` (move para backup, confirmação) · `[Keep]`. Texto: `A global "agentbox" skill is installed and may compete with Racky tools.`
+Conflito detectado (R1.6): a skill global `racky` aparece com badge `warning` `Conflicts with Racky` e ações `[Block in Racky]` (padrão; `permissions.deny` por lançamento, nada global muda) · `[Disable Globally…]` (move para backup, confirmação) · `[Keep]`. Texto: `A global "racky" skill is installed and may compete with Racky tools.`
 
 ### 13.4 Profiles
 
@@ -999,7 +999,7 @@ Página da janela inteira (sidebar, centro e painel dão lugar ao Settings; a fa
   - `Status hooks` — `Installed for each launch` (`success`) + `[Show Details]` (popover com eventos suportados pela versão, T10).
   - Ações: `[Log In]` (abre tab com `claude /login` ou `codex login`), `[Check Again]` (refaz a detecção de versão e login).
 - `Watch Claude subagents` — switch, on.
-- `Racky skill` — linha de conflito (R1.6) quando aplicável: `A global "agentbox" skill is installed and may compete with Racky tools.` `[Block in Racky]` (padrão) · `[Disable Globally…]` · `[Keep]`. Depois de `Disable Globally…`: `[Restore Skill]` desfaz a partir do backup.
+- `Racky skill` — linha de conflito (R1.6) quando aplicável: `A global "racky" skill is installed and may compete with Racky tools.` `[Block in Racky]` (padrão) · `[Disable Globally…]` · `[Keep]`. Depois de `Disable Globally…`: `[Restore Skill]` desfaz a partir do backup.
 
 `Accounts` (`settings.nav.accounts`)
 - `Claude Code` — `Logged in with Claude.ai (Team)`; sem `[Log Out]` (gerido pelo CLI); `[Open Login in Terminal]`.
@@ -1019,9 +1019,9 @@ Página da janela inteira (sidebar, centro e painel dão lugar ao Settings; a fa
 - `Keep agents running when you quit` — switch, on (P4). Ajuda: `Terminals keep running in the background and reappear when you reopen Racky.` Se o item de login não foi aprovado: `warning` + `[Allow in Login Items]`.
 - `Show menu bar icon` — `Always` · `When agents are running` (padrão). Não existe `Never` (P4: com o app em modo accessory, o ícone é a única porta de volta).
 - `Ask before quitting with running agents` — switch, on (é o "Don't ask again" do §16.10).
-- `Worktree folder` — caminho + `[Change…]`; padrão `~/AgentBox/worktrees` (P21).
-- `Clean session folder` — caminho + `[Change…]`; padrão `~/AgentBox/sessions`.
-- `Projects folder` — caminho + `[Change…]`; padrão `~/AgentBox/projects`. Onde `Clone from GitHub…` cria `<pasta>/<repo>` (F24).
+- `Worktree folder` — caminho + `[Change…]`; padrão `~/Racky/worktrees` (P21).
+- `Clean session folder` — caminho + `[Change…]`; padrão `~/Racky/sessions`.
+- `Projects folder` — caminho + `[Change…]`; padrão `~/Racky/projects`. Onde `Clone from GitHub…` cria `<pasta>/<repo>` (F24).
 - `Branch prefix` — `Git user name` (padrão) · `Custom` (input) · `None`.
 - `Open in editor` — combobox com os editores detectados em `/Applications` e no PATH (Cursor, VS Code, Zed, Xcode, Sublime Text) + `Other…` (`NSOpenPanel` de app); é o destino de `Open in Editor` (⇧⌘O) em todo o app.
 - `Open in terminal` — combobox (`Terminal`, `iTerm`, `Ghostty`, `Warp`, detectados) para "Open in another terminal".
@@ -1035,7 +1035,7 @@ Página da janela inteira (sidebar, centro e painel dão lugar ao Settings; a fa
 - `Show pull request on session cards` — switch, on.
 
 `Import` (`settings.nav.import`)
-- `agentbox CLI runs` (v1.1) — `[Import Runs…]`.
+- `racky CLI runs` (v1.1) — `[Import Runs…]`.
 
 **COMPUTERS**
 
@@ -1059,7 +1059,7 @@ Subseção **Proxies** de `Computers` (P13; `ProxyProfile` de 07 CS-160; deep li
 - Lista de proxies (linha 32: nome, tipo, host, geo, uso informado se houver; `settings.computers.proxies.row.<proxyId>`) + `[Add Proxy]` (`settings.computers.proxies.add`). Vazio: `No proxies. Computers connect directly.`
 - `Default proxy for computers` — combobox `None` (padrão) · proxies da lista. É o que o composer (`Computer proxy`), o `New Batch…` e as ferramentas usam quando nada mais específico foi escolhido (cascata global → lote → reserva → menu do viewer, 07 CS-161).
 - Formulário do proxy (overlay 512; depois de criado, regra de salvamento de §14.1): `Name` · `Preset` (`Custom` · `Zyte (proxy)` · `Zyte API (render)`; o preset só preenche campos) · `Type` (`HTTP` · `HTTPS` · `SOCKS5`) · `Host` · `Port` · `Username` · `Password` (Vault, mascarado) · `Country` (opcional) · `Extra CA certificate` (opcional, `[Choose…]`) · `Render endpoint` e `API key` (só com render) · `Price per request` / `Price per render` (opcionais, só informativos). `[Test Proxy]` (`settings.computers.proxies.test`; sobe um egress descartável e mostra `Exit IP 203.0.113.7 · US · 312 ms` em `success` ou o erro em uma linha) · `Delete…`.
-- `Import from agentbox CLI…` — só aparece se o `.env` do CLI antigo tem chave Zyte: cria um proxy com preset `Zyte (proxy)`.
+- `Import from racky CLI…` — só aparece se o `.env` do CLI antigo tem chave Zyte: cria um proxy com preset `Zyte (proxy)`.
 - Uso: medido pelo egress (requests, bytes, renders) e custo só informativo; nunca bloqueia nada.
 
 **INTERFACE**
@@ -1095,7 +1095,7 @@ Subseção **Proxies** de `Computers` (P13; `ProxyProfile` de 07 CS-160; deep li
 - `[Run All Checks Again]`.
 
 `Advanced` (`settings.nav.advanced`)
-- `Automation channel (agentbox ctl)` — switch, off (T13); ajuda `Lets scripts and agents drive Racky. Off by default.` Enquanto ligado, a faixa da titlebar mostra `Automation on` (AR-806).
+- `Automation channel (racky ctl)` — switch, off (T13); ajuda `Lets scripts and agents drive Racky. Off by default.` Enquanto ligado, a faixa da titlebar mostra `Automation on` (AR-806).
 - `Security model` — linha com `[Read]` que abre o texto publicado (AR-501).
 - `Data location` — caminho read-only + `[Reveal]`.
 - `Database` — `[Export Database…]` · `[Restore from Backup…]` (lista de backups com data; confirmação; AR-332).
@@ -1122,7 +1122,7 @@ Título `"Set Up Racky"` (18/600). Descrição: `Racky checks what's on this Mac
 | 6 | `Computer image` | `Not downloaded · 1.2 GB` / barra com bytes / `Ready` | `[Download]` (continua em segundo plano) | `onboarding.item.image` |
 | 7 | `Notifications` | `So you know when an agent needs you.` | `[Allow]` | `onboarding.item.notifications` |
 | 8 | `Keep agents running` | `Terminals survive quitting Racky.` | `[Allow in Login Items]` | `onboarding.item.background` |
-| 9 | `Conflicts` (só se houver) | `A global "agentbox" skill may compete with Racky.` · `Codex notify is used by another app (left untouched).` | `[Block in Racky]` · `[Disable Globally…]` · `[Keep]` | `onboarding.item.conflicts` |
+| 9 | `Conflicts` (só se houver) | `A global "racky" skill may compete with Racky.` · `Codex notify is used by another app (left untouched).` | `[Block in Racky]` · `[Disable Globally…]` · `[Keep]` | `onboarding.item.conflicts` |
 
 Itens 5 e 6 são da Fatia 3: antes dela, não renderizam.
 
@@ -1165,7 +1165,7 @@ Fechar vários (Close Other Tabs, fechar sessão com 3 rodando): `Close 3 termin
 ### 16.4 Delete computer
 
 - Título: `Delete "<computer>"?`
-- Texto: `Removes the container and its profile (logins, cookies). Run files in ~/AgentBox/runs stay.`
+- Texto: `Removes the container and its profile (logins, cookies). Run files in ~/Racky/runs stay.`
 - Botões: `[Cancel]` · `[Delete Computer]` (destructive).
 - IDs: `overlay.confirmDeleteComputer`, `.confirm`.
 
@@ -1173,7 +1173,7 @@ Fechar vários (Close Other Tabs, fechar sessão com 3 rodando): `Close 3 termin
 
 - Título: `Delete "<session>"?`
 - Texto (worktree nova): `Stops its terminals and computers, removes the worktree folder and deletes the local branch "<branch>".`; aviso adicional `destructive` quando há alterações não commitadas ou commits não enviados: `3 uncommitted files and 2 unpushed commits will be lost.`; checkbox `Keep the branch`. Main checkout / pasta existente / sessão limpa com pasta escolhida: `Stops its terminals and computers. The folder stays on disk.` (sem checkbox de Lixo, AC-1105).
-- Sessão limpa com pasta criada pelo app: texto `Stops its terminals and computers.` + checkbox `Move folder to Trash` (marcada; move `~/AgentBox/sessions/<name>` para o Lixo do macOS) + checkbox `Also delete run folders` (desmarcada; AC-1108).
+- Sessão limpa com pasta criada pelo app: texto `Stops its terminals and computers.` + checkbox `Move folder to Trash` (marcada; move `~/Racky/sessions/<name>` para o Lixo do macOS) + checkbox `Also delete run folders` (desmarcada; AC-1108).
 - Sessão de worktree: antes de abrir o overlay o app lê o worktree (`GitService.inspectRemoval`, 06 §5.2); a leitura termina antes de o overlay abrir. Com perda (`.changes`, `destructive`): a lista dos primeiros arquivos alterados ou não rastreados e as contagens; sem `Don't ask again` e o overlay aparece mesmo com a confirmação desligada em Settings. Confirmar é a confirmação explícita do `--force`. `Keep the branch` desmarcada = `git branch -d` (nunca `-D`; se a branch não está mesclada ela fica e o toast avisa). Se surgir trabalho novo entre a abertura do overlay e o clique (mais arquivos ou commits que os listados), nada é apagado e o toast `The worktree changed.` pede para revisar. Falha ao ler: `Couldn't check the worktree.`; falha ao remover: `Couldn't delete the worktree.` com o erro e a sessão continua na sidebar. Sem Undo (a pasta saiu do disco).
 - Checkbox: `Don't ask again` (só quando não há perda de dados).
 - Botões: `[Cancel]` · `[Delete Session]` (destructive). Depois: toast `Session deleted.` `Undo` (8 s, restaura só o registro).
@@ -1223,7 +1223,7 @@ Overlay 512 (sub-overlay quando aberto pelo composer; o composer mantém o que f
 - Campo (28, foco ao abrir): placeholder `Paste a repository URL or owner/repo`. Aceita URL https, SSH (`git@github.com:owner/repo.git`, `ssh://`) e `owner/repo`. Digitar também filtra a lista (nome, dono, linguagem, descrição). Quando o texto é uma referência válida, a primeira linha vira `Clone <owner/repo>` e fica selecionada.
 - Lista `RECENT REPOSITORIES` (label 11/500; vira `RESULTS` com busca): repositórios da conta e das organizações via `gh repo list`, ordenados por `pushedAt`/`updatedAt` (mais recente primeiro), com cache de 5 min. Linha 44: nome 13/500 + `owner` em `textTertiary`, badge `Private`/`Public`, linguagem e `Updated 3 days ago` em `small`. ↑↓ navegam, ↵ clona o selecionado, Esc cancela.
 - Sem `gh` logado (ou sem `gh`): faixa `Log in to GitHub to see your repositories.` com `[Log in to GitHub]` (abre uma tab com `gh auth login`); o campo continua aceitando URL pública.
-- Clonar (↵ ou `[Clone]`): a lista dá lugar ao progresso no próprio painel (`Cloning octocat/Hello-World…`, barra determinada, fase `Receiving objects 42%`, `[Cancel]`) e a sidebar mostra a linha pendente `Cloning… 42%` com `Cancel`. Destino: `<Projects folder>/<repo>` (Settings › General › Folders › `Projects folder`, padrão `~/AgentBox/projects`). Pasta já existente com o mesmo remote vira o projeto sem clonar; pasta com outro conteúdo usa `<repo>-<owner>` ou falha com mensagem clara.
+- Clonar (↵ ou `[Clone]`): a lista dá lugar ao progresso no próprio painel (`Cloning octocat/Hello-World…`, barra determinada, fase `Receiving objects 42%`, `[Cancel]`) e a sidebar mostra a linha pendente `Cloning… 42%` com `Cancel`. Destino: `<Projects folder>/<repo>` (Settings › General › Folders › `Projects folder`, padrão `~/Racky/projects`). Pasta já existente com o mesmo remote vira o projeto sem clonar; pasta com outro conteúdo usa `<repo>-<owner>` ou falha com mensagem clara.
 - Erro: mensagem de uma linha (`Repository not found. If it is private, log in to GitHub.`, `Couldn't reach GitHub.`, `A folder named x already exists and isn't this repository.`) com `[Try Again]`; nada fica pela metade (a pasta parcial é removida).
 - Ao concluir: o painel fecha, o projeto é registrado e fica selecionado no composer (quando aberto por ele) ou aparece expandido na sidebar. Toast `Cloned <repo>.`
 - IDs: `overlay.cloneRepo`, `.input`, `.list`, `.row.<id>`, `.progress`, `.logIn`, `.error`, `.retry`, `.cancel`, `.submit`.
@@ -1588,7 +1588,7 @@ Toda interação da UI é uma ação do registro (`ActionRegistry`: `ActionID` �
 - O `ActionID` é `<grupo>.<ação>` em lowerCamelCase e dá o sufixo do ID do item de menu (`menu.<grupo>.<ação>`).
 - Cada `ActionID` tem um XCUITest com clique ou atalho real que confere o efeito declarado (estado, navegação ou erro específico; "erro visível" genérico não conta), e o teste de cobertura cruza esta tabela com os testes (AC-T02).
 - "Desabilitado" traz o tooltip exato do motivo. Ação de versão futura não aparece (não é desabilitada).
-- A coluna **Atalho** repete o atalho canônico de §21 (`—` = sem atalho; `⌥` = item extra do menu com ⌥ pressionado, convenção de §21). A coluna **Teste (XCUITest)** dá o nome do teste: `testAction_<ActionID>` em `AgentBoxUITests/Actions/`, que dispara a ação por atalho real quando há atalho e por clique quando não há (AC-T02 cruza esta coluna com os testes que existem). Em linhas com mais de um ActionID há um teste por ID.
+- A coluna **Atalho** repete o atalho canônico de §21 (`—` = sem atalho; `⌥` = item extra do menu com ⌥ pressionado, convenção de §21). A coluna **Teste (XCUITest)** dá o nome do teste: `testAction_<ActionID>` em `RackyUITests/Actions/`, que dispara a ação por atalho real quando há atalho e por clique quando não há (AC-T02 cruza esta coluna com os testes que existem). Em linhas com mais de um ActionID há um teste por ID.
 - Atalhos: §21. Microcopy de cada overlay: seções citadas.
 - Fatia 1 (09 §3): o painel direito é oculto, então `view.toggleRightPanel` (⌘L), `tab.quickLaunchResume` e `sidebar.search` são da Fatia 2 e **não existem** na UI da Fatia 1.
 - Controles de Settings (§24.6): a Fatia 1 (09 T1-26) fixou as chaves de General, Agents e Terminal e cada uma tem linha em §24.6; as chaves das seções de fatias futuras entram com a fatia delas.
@@ -1627,7 +1627,7 @@ Toda interação da UI é uma ação do registro (`ActionRegistry`: `ActionID` �
 | Ação | ActionID | Atalho | Efeito | Desabilitado (tooltip) | Versão | Teste (XCUITest) |
 |---|---|---|---|---|---|---|
 | New Session… | `session.new` | ⌘N | Composer (§6) com o projeto atual | — | v1 | `testAction_session_new` |
-| New Clean Session | `session.newClean` | ⇧⌘N | Cria `~/AgentBox/sessions/<nome>` e abre o agente padrão (§2.10); também o `+` da seção Sessions | Agente padrão não instalado: `Install <agent> or choose another default agent.` | v1 | `testAction_session_newClean` |
+| New Clean Session | `session.newClean` | ⇧⌘N | Cria `~/Racky/sessions/<nome>` e abre o agente padrão (§2.10); também o `+` da seção Sessions | Agente padrão não instalado: `Install <agent> or choose another default agent.` | v1 | `testAction_session_newClean` |
 | New Clean Session in Folder… | `session.newCleanInFolder` | ⌥⇧⌘N | `NSOpenPanel` → sessão na pasta escolhida + agente padrão | idem | v1 | `testAction_session_newCleanInFolder` |
 | Add Project… | `project.add` | — | Overlay §16.9 | — | v1 | `testAction_project_add` |
 | Subagent computers (card, header do pane) | `session.setSubagentComputers` | — | `select(off/ask/full)` na sessão selecionada, ou `select(<sessionId>:<modo>)`: liga ou desliga os computadores dos subagentes (F12). Sessão rodando: aparece `Restart to apply` | Só Claude Code: `Subagent computers works with Claude Code.` | v1 (Fatia 3) | `testAction_session_setSubagentComputers` |
@@ -1815,7 +1815,7 @@ Toda interação da UI é uma ação do registro (`ActionRegistry`: `ActionID` �
 | Add Proxy / Test Proxy / Delete… | `proxy.add` / `proxy.test` / `proxy.delete` | — | §14.2 Computers › Proxies | Proxy em uso (Delete): `Used by <n> computers.` | v1 (Fatia 3) | `testAction_proxy_add` · `testAction_proxy_test` · `testAction_proxy_delete` |
 | Edit Proxy / Save Proxy / Cancel (proxy) | `proxy.edit` / `proxy.save` / `proxy.cancel` | — | Abre o formulário do proxy (`select(<proxyId>)`) / grava o formulário (valida nome, host e porta; a senha vai para o Vault) / descarta | Save: `Enter a name.` · `Enter a host.` · `Port must be 1–65535.` · nome já usado | v1 (Fatia 3) | `testAction_proxy_edit` · `testAction_proxy_save` · `testAction_proxy_cancel` |
 | Preset / Type / Default proxy (proxy) | `proxy.preset` / `proxy.scheme` / `proxy.setDefault` | — | `select(custom\|zyte)` (preenche host e porta do preset) / `select(http\|https\|socks5)` / `select(<proxyId>\|none)` (padrão global, CS-161) | — | v1 (Fatia 3) | `testAction_proxy_preset` · `testAction_proxy_scheme` · `testAction_proxy_setDefault` |
-| Import from agentbox CLI… | `proxy.importFromCLI` | — | Sem argumento arma a confirmação inline; `select(confirm)` lê SÓ `ZYTE_API_KEY` do `.env` do CLI antigo (somente leitura) e cria/atualiza o proxy `zyte` | `No Zyte key found in the agentbox CLI settings.` | v1 (Fatia 3) | `testAction_proxy_importFromCLI` |
+| Import from racky CLI… | `proxy.importFromCLI` | — | Sem argumento arma a confirmação inline; `select(confirm)` lê SÓ `ZYTE_API_KEY` do `.env` do CLI antigo (somente leitura) e cria/atualiza o proxy `zyte` | `No Zyte key found in the racky CLI settings.` | v1 (Fatia 3) | `testAction_proxy_importFromCLI` |
 
 ### 24.6 Settings e onboarding
 

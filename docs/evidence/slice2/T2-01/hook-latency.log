@@ -1,4 +1,4 @@
-binary=/Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/build/AgentBox/Agent Box.app/Contents/MacOS/agentbox
+binary=/Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/build/Racky/Racky.app/Contents/MacOS/racky
 spawn baseline (/usr/bin/true): p50=4.9 ms p95=9.1 ms
 closed  runs= 200 p50=  16.9 ms  p95=  20.2 ms  max=  23.5 ms  spooled=True
 live    runs= 200 p50=  15.5 ms  p95=  20.3 ms  max=  28.8 ms  spooled=False

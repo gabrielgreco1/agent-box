@@ -2,7 +2,7 @@ No "base" settings found
 No "debug config" settings found
 No "release config" settings found
 No "macOS" settings found
-gen: AgentBox.xcodeproj gerado
+gen: Racky.xcodeproj gerado
 build: xcodebuild Release (app)
 --- xcodebuild: WARNING: Using the first of multiple matching destinations:
 { platform:macOS, arch:arm64, id:00006040-0014281E1120801C, name:My Mac }
@@ -11,34 +11,34 @@ build: xcodebuild Release (app)
 ** BUILD SUCCEEDED **
 
 build: assinando com 'Apple Development: gabrielargreco@gmail.com (2K5DAY7JTU)'
-build: swift build -c release (agentbox, agentboxd, agentboxd-launch)
+build: swift build -c release (racky, rackyd, rackyd-launch)
 [0/3] Write swift-version--58304C5D6DBC2206.txt
 [1/2] Linking SwiftTermBuildInfoGenerator-tool
 [0/1] Planning build
 Building for production...
 [0/2] Write swift-version--58304C5D6DBC2206.txt
-Build of product 'agentbox' complete! (4.48s)
+Build of product 'racky' complete! (4.48s)
 Building for production...
 [0/2] Write swift-version--58304C5D6DBC2206.txt
 [1/4] Linking SwiftTermBuildInfoGenerator-tool
 [2/4] Generate SwiftTerm build information
-Build of product 'agentboxd' complete! (1.06s)
+Build of product 'rackyd' complete! (1.06s)
 Building for production...
-Build of product 'agentboxd-launch' complete! (0.17s)
-/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Agent Box.app/Contents/MacOS/agentbox: replacing existing signature
-/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Agent Box.app/Contents/MacOS/agentboxd: replacing existing signature
-/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Agent Box.app/Contents/MacOS/agentboxd-launch: replacing existing signature
-/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Agent Box.app: replacing existing signature
+Build of product 'rackyd-launch' complete! (0.17s)
+/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Racky.app/Contents/MacOS/racky: replacing existing signature
+/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Racky.app/Contents/MacOS/rackyd: replacing existing signature
+/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Racky.app/Contents/MacOS/rackyd-launch: replacing existing signature
+/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Racky.app: replacing existing signature
 build: verificando assinatura
---prepared:/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Agent Box.app/Contents/MacOS/agentboxd-launch
---validated:/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Agent Box.app/Contents/MacOS/agentboxd-launch
---prepared:/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Agent Box.app/Contents/MacOS/agentboxd
---validated:/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Agent Box.app/Contents/MacOS/agentboxd
---prepared:/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Agent Box.app/Contents/MacOS/agentbox
---validated:/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Agent Box.app/Contents/MacOS/agentbox
-/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Agent Box.app: valid on disk
-/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Agent Box.app: satisfies its Designated Requirement
-Identifier=app.agentbox.mac
+--prepared:/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Racky.app/Contents/MacOS/rackyd-launch
+--validated:/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Racky.app/Contents/MacOS/rackyd-launch
+--prepared:/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Racky.app/Contents/MacOS/rackyd
+--validated:/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Racky.app/Contents/MacOS/rackyd
+--prepared:/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Racky.app/Contents/MacOS/racky
+--validated:/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Racky.app/Contents/MacOS/racky
+/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Racky.app: valid on disk
+/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Racky.app: satisfies its Designated Requirement
+Identifier=app.racky.mac
 CodeDirectory v=20500 size=82460 flags=0x10000(runtime) hashes=2570+3 location=embedded
 TeamIdentifier=K8V3PNBTZJ
-build: OK -> /Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Agent Box.app
+build: OK -> /Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e/Racky.app

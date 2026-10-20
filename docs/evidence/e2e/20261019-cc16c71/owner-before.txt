@@ -1,6 +1,6 @@
 app instalado:
 daemons fora do teste:
-/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentboxd --launchd Listeners --build 167
+/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app/Contents/MacOS/rackyd --launchd Listeners --build 167
 job do launchd:
 	state = running
 containers:

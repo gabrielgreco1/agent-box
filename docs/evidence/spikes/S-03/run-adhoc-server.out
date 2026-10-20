@@ -1,5 +1,5 @@
 ### server=srvAdhoc (ad-hoc daemon) client=cliAdhoc, requirement: identifier only
-{"ACCEPT":true,"getpeereid":501,"guestStatus":0,"LOCAL_PEERPID":62493,"LOCAL_PEERTOKEN":"ok(len=32)","peerAdhoc":true,"peerIdentifier":"app.agentbox.mac","peerLeafSHA1":"","reqCompile":0,"reqStatus":0,"server":{"adhoc":true,"flags":"10002","identifier":"app.agentbox.ptyd","leafSHA1":""},"tokenPid":62493,"uidMatches":true,"validityNoReq":0}
+{"ACCEPT":true,"getpeereid":501,"guestStatus":0,"LOCAL_PEERPID":62493,"LOCAL_PEERTOKEN":"ok(len=32)","peerAdhoc":true,"peerIdentifier":"app.racky.mac","peerLeafSHA1":"","reqCompile":0,"reqStatus":0,"server":{"adhoc":true,"flags":"10002","identifier":"app.racky.ptyd","leafSHA1":""},"tokenPid":62493,"uidMatches":true,"validityNoReq":0}
 ### unsigned binary (signature removed) on arm64:
 /private/tmp/claude-501/s03/run2.sh: line 10: 62555 Killed: 9               ./cliUnsigned self
 exit=137

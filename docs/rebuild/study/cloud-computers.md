@@ -1,6 +1,6 @@
 # BK-12 · Computadores na nuvem: estudo de viabilidade e avaliação de riscos
 
-> Racky (ex-Agent Box) · Roadmap `09-roadmap.md` §4.4b, item BK-12 · Pesquisa feita em **20/10/2026** · Nenhum código foi alterado.
+> Racky (ex-Racky) · Roadmap `09-roadmap.md` §4.4b, item BK-12 · Pesquisa feita em **20/10/2026** · Nenhum código foi alterado.
 > Público: dono do produto (não especialista), com rigor técnico suficiente para o time de engenharia decidir.
 
 ---
@@ -39,7 +39,7 @@ Consequências já implementadas na fundação (BK-12 Fase 1, T-01 a T-07): `Com
 
 ## 1. O que precisa ser replicado (leitura do código)
 
-Fontes: `docs/rebuild/spec/07-computers-and-subagents.md` (§2.2, CS-110 a CS-116), `00-decisions.md` (P24), `runtime/computer/Dockerfile`, `agentbox_supervisor/firewall.py`, `Packages/AgentBoxKit/Sources/AgentBoxDocker/`.
+Fontes: `docs/rebuild/spec/07-computers-and-subagents.md` (§2.2, CS-110 a CS-116), `00-decisions.md` (P24), `runtime/computer/Dockerfile`, `racky_supervisor/firewall.py`, `Packages/RackyKit/Sources/RackyDocker/`.
 
 ### 1.1 O computador hoje
 
@@ -51,7 +51,7 @@ Um container por computador (`ab-<id8>`), imagem única, base Playwright Python 
 | Servidor de controle `:8765` | Só em loopback, CDP por **pipe** | Nada a expor. |
 | x11vnc `:5900` | Só loopback; ponte WebSocket com ticket de uso único (60 s) | Nada a expor diretamente. |
 | Proxy de egress `:3128`, admin `:8790` | Reqlog com corpos, SSRF, cadeia para proxy upstream (Zyte etc.). **O admin `:8790` é a única porta publicada** | Esta é a porta que a nuvem precisa tornar alcançável de forma segura. |
-| Dois uids (`agent` 10001, `egress` 10003) | Segredos em tmpfs `/run/agentbox` 0700 | Exige kernel Linux padrão e tmpfs. |
+| Dois uids (`agent` 10001, `egress` 10003) | Segredos em tmpfs `/run/racky` 0700 | Exige kernel Linux padrão e tmpfs. |
 | **Firewall por uid** (`iptables -m owner --uid-owner`) | O supervisor roda como root com `NET_ADMIN, SETUID, SETGID, SETPCAP, KILL`; se o iptables falhar, **o container sai (fail closed)** (`firewall.py`, `__main__.py`) | **O requisito mais restritivo.** Elimina Fargate, Cloud Run e provedores que não deixam adicionar capacidades. |
 | Hardening | `--read-only`, `CapDrop ALL`, `no-new-privileges`, `--init`, `PidsLimit 1536`, tmpfs `/tmp` 1 GiB | VM com Docker real cobre tudo. |
 | Memória estimada | headless 1,2 GiB, desktop 2,2 GiB (07 §2.4); alvo 15 headless + 2 desktop = 22,4 GiB | Define o tamanho do host (§4.3). |
@@ -66,7 +66,7 @@ Um container por computador (`ab-<id8>`), imagem única, base Playwright Python 
 | Exec com stdin e conexão sequestrada (`Upgrade: tcp`), como usuário `agent` | `ExecSession.swift`, `ComputerToolService+Exec.swift` | Funciona por qualquer túnel que preserve a conexão (SSH sim). |
 | Porta efêmera publicada em `127.0.0.1` | `ComputerProvisioner.containerSpec` (`PortBindings`), `EgressAdminClient` (URL fixa `http://127.0.0.1:<porta>`) | Em nuvem, "127.0.0.1" é a VM, não o Mac; precisa de um forward local por computador. |
 | **Binds de pastas do Mac** (`work/`, `logs/`, segredos de tarefa) | `ContainerSpec.binds` | **Não existem na VM.** Trabalho, reqlog e segredos precisam de caminho alternativo (§4.4). |
-| Eventos por label, GC por label `agentbox.owner` | `EventMonitor.swift`, `GarbageCollector.swift`, `Labels.swift` | Excelente base para o "reaper" de órfãos. |
+| Eventos por label, GC por label `racky.owner` | `EventMonitor.swift`, `GarbageCollector.swift`, `Labels.swift` | Excelente base para o "reaper" de órfãos. |
 | Capacidade (`MemTotal`, `NCPU`) e fila | `Capacity.swift`, CS-130/131 | Reaproveitável: o host remoto responde `/info`. |
 | Viewer: noVNC em WKWebView sobre WebSocket ao admin `/vnc?ticket=…` | spec CS-401, `Viewer/` | Só precisa que a URL do WebSocket chegue ao host (via forward). |
 | Ferramentas MCP do agente rodam no app (`app.sock`), que faz exec no container | `ComputerToolService*` | **O CLI do agente continua no Mac** (modo leve). Só o "computador" vai para a nuvem. O modo isolado (CLI dentro do container, v1.1) levaria credenciais do Claude/Codex para a nuvem; recomendo **não** fazer isso no BK-12. |
@@ -234,7 +234,7 @@ Docker também oferece TLS com certificados de cliente na porta 2376, mas avisa 
 
 ### 5.1 Onde ficam as credenciais da nuvem
 
-- **No Mac, no Vault do app / Keychain** (já existem `Packages/AgentBoxKit/Sources/AgentBoxPlatform/Vault`), nunca em arquivo de texto, nunca em log, nunca enviadas ao agente nem ao container. As credenciais do **host** (chave SSH efêmera) existem só enquanto o host existir.
+- **No Mac, no Vault do app / Keychain** (já existem `Packages/RackyKit/Sources/RackyPlatform/Vault`), nunca em arquivo de texto, nunca em log, nunca enviadas ao agente nem ao container. As credenciais do **host** (chave SSH efêmera) existem só enquanto o host existir.
 - **O container na nuvem não recebe nenhuma credencial da nuvem.** O agente não deve poder chamar a API da AWS. A VM não tem papel IAM (ou tem um papel mínimo só para autodestruição, §6.3).
 
 ### 5.2 Como o usuário "conecta a AWS" com atrito baixo

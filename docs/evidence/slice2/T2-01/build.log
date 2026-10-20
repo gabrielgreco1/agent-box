@@ -2,7 +2,7 @@ No "base" settings found
 No "debug config" settings found
 No "release config" settings found
 No "macOS" settings found
-gen: AgentBox.xcodeproj gerado
+gen: Racky.xcodeproj gerado
 build: xcodebuild Release (app)
 --- xcodebuild: WARNING: Using the first of multiple matching destinations:
 { platform:macOS, arch:arm64, id:00006040-0014281E1120801C, name:My Mac }
@@ -10,31 +10,31 @@ build: xcodebuild Release (app)
 
 ** BUILD SUCCEEDED **
 
-AVISO: identidade 'Agent Box Local Signing' ausente; assinando AD-HOC (rode scripts/make-dev-cert.sh uma vez para assinatura estável).
-build: swift build -c release (agentbox, agentboxd)
+AVISO: identidade 'Racky Local Signing' ausente; assinando AD-HOC (rode scripts/make-dev-cert.sh uma vez para assinatura estável).
+build: swift build -c release (racky, rackyd)
 [0/3] Write swift-version--58304C5D6DBC2206.txt
 [1/2] Linking SwiftTermBuildInfoGenerator-tool
 [0/1] Planning build
 Building for production...
 [0/2] Write swift-version--58304C5D6DBC2206.txt
-Build of product 'agentbox' complete! (3.88s)
+Build of product 'racky' complete! (3.88s)
 Building for production...
 [0/5] Write swift-version--58304C5D6DBC2206.txt
 [1/4] Linking SwiftTermBuildInfoGenerator-tool
 [2/4] Generate SwiftTerm build information
-Build of product 'agentboxd' complete! (1.04s)
-/Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/build/AgentBox/Agent Box.app/Contents/MacOS/agentbox: replacing existing signature
-/Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/build/AgentBox/Agent Box.app/Contents/MacOS/agentboxd: replacing existing signature
-/Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/build/AgentBox/Agent Box.app: replacing existing signature
+Build of product 'rackyd' complete! (1.04s)
+/Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/build/Racky/Racky.app/Contents/MacOS/racky: replacing existing signature
+/Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/build/Racky/Racky.app/Contents/MacOS/rackyd: replacing existing signature
+/Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/build/Racky/Racky.app: replacing existing signature
 build: verificando assinatura
---prepared:/Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/build/AgentBox/Agent Box.app/Contents/MacOS/agentbox
---prepared:/Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/build/AgentBox/Agent Box.app/Contents/MacOS/agentboxd
---validated:/Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/build/AgentBox/Agent Box.app/Contents/MacOS/agentbox
---validated:/Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/build/AgentBox/Agent Box.app/Contents/MacOS/agentboxd
-/Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/build/AgentBox/Agent Box.app: valid on disk
-/Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/build/AgentBox/Agent Box.app: satisfies its Designated Requirement
-Identifier=app.agentbox.mac
+--prepared:/Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/build/Racky/Racky.app/Contents/MacOS/racky
+--prepared:/Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/build/Racky/Racky.app/Contents/MacOS/rackyd
+--validated:/Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/build/Racky/Racky.app/Contents/MacOS/racky
+--validated:/Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/build/Racky/Racky.app/Contents/MacOS/rackyd
+/Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/build/Racky/Racky.app: valid on disk
+/Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/build/Racky/Racky.app: satisfies its Designated Requirement
+Identifier=app.racky.mac
 CodeDirectory v=20500 size=31025 flags=0x10002(adhoc,runtime) hashes=963+3 location=embedded
 TeamIdentifier=not set
-build: OK -> /Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/build/AgentBox/Agent Box.app
+build: OK -> /Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/build/Racky/Racky.app
 exit=0

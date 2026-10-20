@@ -7,7 +7,7 @@
     "TerminalRuntimeManager",
     "NativeAgentMonitor",
     "claude_event.py",
-    "AgentBoxMCP",
+    "RackyMCP",
     "AgentComputerAccess",
     "BrowserComputerService",
     "ComputerControlBridge"

@@ -10,7 +10,7 @@ Um cliente novo consegue reconstruir a mesma tela de uma sessão viva a partir d
 
 Protótipo em `proto/` (código descartável, 570 linhas, Swift 5 mode, GCD):
 
-- `agentboxd` simplificado: um `forkpty` por sessão, leitura do master por `DispatchSource`, ring circular de 4 MiB com offset absoluto `seq`, emulador headless (`Terminal` do SwiftTerm) alimentado com o mesmo stream, respostas de DA/DSR escritas no PTY pelo daemon (AR-105).
+- `rackyd` simplificado: um `forkpty` por sessão, leitura do master por `DispatchSource`, ring circular de 4 MiB com offset absoluto `seq`, emulador headless (`Terminal` do SwiftTerm) alimentado com o mesmo stream, respostas de DA/DSR escritas no PTY pelo daemon (AR-105).
 - Protocolo reduzido, mesmo enquadramento da 06 §1.3: `u32 len | u8 kind | payload`, `kind` 1 controle (texto), 2 saída (`seq u64 | bytes`), 3 entrada. `attach` responde `snap start end preâmbulo-base64` e depois os bytes do replay em frames de 32 KiB, depois o stream ao vivo. `redraw` faz `cols-1`, espera 50 ms e volta a `cols`.
 - Ponto de corte (06 §1.5): um rastreador de bytes marca o offset do último `ESC c`, `CSI 2J`, `CSI 3J` ou entrada em alt-screen (`?1049h`, `?47h`, `?1047h`) e guarda o preâmbulo do estado **anterior** à sequência. O preâmbulo é uma sequência VT: `?1049h` se estava em alt-screen, os modos DEC vistos (`?2004`, `?1`, `?25`, `?1000`, `?1006`...), keypad (`ESC =`/`ESC >`), título (OSC 0) e o cursor (`CUP`) lido do emulador headless no instante do corte. Sem corte no ring: início do ring precedido de `ESC c`.
 - Por que um rastreador próprio: a API pública do `Terminal` (1.20.0 e 1.99.0) expõe `bracketedPasteMode`, `applicationCursor`, `mouseMode`, `isCurrentBufferAlternate`, `hostCurrentDirectory`, `getCursorLocation()`, mas **não** `cursorHidden`, `applicationKeypad`, o título nem a codificação de mouse (`internal`).
@@ -18,7 +18,7 @@ Protótipo em `proto/` (código descartável, 570 linhas, Swift 5 mode, GCD):
 - Harness (`s04 harness`): por repetição sobe um daemon novo, conecta A (que digita um roteiro) e um observador O (fica conectado), espera 500 ms de silêncio, tira `sa` = snapshot de A e `dref` = snapshot do emulador do daemon, **desconecta A**. Conecta B, `attach` sem redraw, espera silêncio e tira `sb0`; depois `redraw`, espera e tira `sb1`; tira `so` do observador. Resultados: **replay-only** `sa == sb0`; **after-redraw** `so == sb1`; **daemon-ref** `dref == sa`.
 - O snapshot é o texto das linhas visíveis (sem espaços à direita) mais `alt`, `bracketedPaste`, `applicationCursor`, `mouseMode`, posição do cursor e tamanho. A comparação de after-redraw usa o observador porque o redraw muda legitimamente a tela (ex. o `vim` apaga a linha de comando `:set number` ao redesenhar, e isso aparece em A e em O, mas não em `sa`).
 - Cenários (cada um 20 repetições, 100x30): `modes` (script que liga `?2004`, `?1`, `ESC =`, `?25l`, `?1000`, `?1006` e título), `zsh` (`-f -i`, comandos, texto digitado e não enviado), `less -N` (arquivo de 200 linhas, rolagem), `vim` (inserção, `:set number`), `vim-after-flood` (8 MB de texto antes do `vim`, ring estoura), `flood-nocut` (8 MB e nenhum ponto de corte), `alt-overflow` (entra em alt-screen e escreve 8 MB posicionados sem nenhum `2J`: o ponto de corte sai do ring), `claude` e `codex` (TUI real).
-- Isolamento: `claude` com `CLAUDE_CONFIG_DIR` e `codex` com `CODEX_HOME` apontando para diretórios vazios no scratchpad, env do agente (`CLAUDE*`, `ORCA_*`, `AGENTBOX*`) removido do filho (06 §1.7). Sem login, os dois mostram a tela de onboarding (Claude: escolha de tema; Codex: tela inicial de login). Nada foi enviado a nenhum modelo.
+- Isolamento: `claude` com `CLAUDE_CONFIG_DIR` e `codex` com `CODEX_HOME` apontando para diretórios vazios no scratchpad, env do agente (`CLAUDE*`, `ORCA_*`, `RACKY*`) removido do filho (06 §1.7). Sem login, os dois mostram a tela de onboarding (Claude: escolha de tema; Codex: tela inicial de login). Nada foi enviado a nenhum modelo.
 - Os sockets ficam em `/tmp/s04s/` (limite de 104 bytes do `sun_path`; o diretório foi removido ao fim).
 
 ## Comandos
@@ -63,7 +63,7 @@ Total: 180 repetições por versão sem a mitigação (160 passam, 20 falham, to
 5. **Claude e Codex só foram exercitados até a tela de onboarding** (sem login, sem chamar o modelo). Prova modos pesados (Claude usa alt-screen, mouse e bracketed paste) e redraw, mas não o REPL com streaming de resposta, o spinner nem o rodapé de status. Repetir com sessão autenticada exige credencial e pode ter custo; não foi feito.
 6. **Ring cheio exige cortar em linha.** No `flood-nocut` o replay começa no meio de uma linha; a linha parcial fica fora da tela e o teste passa, mas com texto longo sem quebra a primeira linha visível poderia aparecer cortada. Aceitável (mesmo comportamento de qualquer terminal ao reabrir um buffer circular).
 7. **Backpressure não testado.** O protótipo escreve no socket de forma síncrona na fila do daemon (SO_SNDBUF de 1 MiB); um cliente lento bloquearia a sessão. O `resyncRequired` e a fila de 2 MiB por cliente da 06 §1.3 não foram implementados aqui.
-8. **Armadilhas de implementação encontradas:** (a) `DispatchSource` sem referência forte para de entregar eventos (o daemon ficou mudo; guardar fonte de accept, de leitura do master e de cada cliente); (b) em Swift 6 em modo release o objeto local é liberado depois do último uso, então o daemon precisa de referência global antes de `dispatchMain()`; (c) caminho do socket tem limite de 104 bytes: o caminho do scratchpad estoura, daí `/tmp/s04s`. O `launch_activate_socket` da 06 §1.2 já resolve o (c) em produção; (a) e (b) valem para o `agentboxd`.
+8. **Armadilhas de implementação encontradas:** (a) `DispatchSource` sem referência forte para de entregar eventos (o daemon ficou mudo; guardar fonte de accept, de leitura do master e de cada cliente); (b) em Swift 6 em modo release o objeto local é liberado depois do último uso, então o daemon precisa de referência global antes de `dispatchMain()`; (c) caminho do socket tem limite de 104 bytes: o caminho do scratchpad estoura, daí `/tmp/s04s`. O `launch_activate_socket` da 06 §1.2 já resolve o (c) em produção; (a) e (b) valem para o `rackyd`.
 
 ## Conclusão
 
@@ -79,7 +79,7 @@ Adotar a 06 §1.5 com o texto abaixo (checkpoints, avaliação do critério em d
 
 ## Texto proposto para a AR-122 (parte do daemon)
 
-> O emulador headless do daemon e o do cliente são o `Terminal` do SwiftTerm na versão fixada nesta tabela. Como a API pública não expõe `cursorHidden`, `applicationKeypad`, título nem codificação de mouse, o preâmbulo de reattach (06 §1.5) usa um rastreador de bytes próprio no `agentboxd`, e o teste de reattach (`DaemonTests`) roda nas duas versões enquanto o S-02 estiver aberto.
+> O emulador headless do daemon e o do cliente são o `Terminal` do SwiftTerm na versão fixada nesta tabela. Como a API pública não expõe `cursorHidden`, `applicationKeypad`, título nem codificação de mouse, o preâmbulo de reattach (06 §1.5) usa um rastreador de bytes próprio no `rackyd`, e o teste de reattach (`DaemonTests`) roda nas duas versões enquanto o S-02 estiver aberto.
 
 ## Pendências
 

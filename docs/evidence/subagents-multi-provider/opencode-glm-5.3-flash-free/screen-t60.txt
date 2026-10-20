@@ -4,9 +4,9 @@
   ┃  the page title with result_submit. When it finishes, tell me the title it submitted.         
   ┃                                                                                               
                                                                                                   
-     ⚙ agentbox_boxes_reserve [display=headless]                                                  
+     ⚙ racky_boxes_reserve [display=headless]                                                  
                                                                                                   
-     ⠙ Agentbox-Worker-1 Task — Get example.com page title                                        
+     ⠙ Racky-Worker-1 Task — Get example.com page title                                        
        ↳ 4 toolcalls                                                                              
                                                                                                   
      ctrl+x down view subagents                                                                   

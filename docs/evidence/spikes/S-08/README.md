@@ -31,7 +31,7 @@ Primeira tentativa: `mcpServers` como objeto `{nome:{…}}` foi **recusado** ("e
   - `SubagentStop`: `agent_id`, `agent_type`, `agent_transcript_path`, `last_assistant_message` (`I_AM_A`), `stop_hook_active`, `permission_mode`, `effort`.
   - `Stop` do pai: `last_assistant_message: "I_AM_A I_AM_B"`.
 - **Dois filhos distinguíveis**: os pares (`agent_id`, `agent_type`, `mcp_server.name`, resposta `I_AM_A`/`I_AM_B`) são coerentes de ponta a ponta; as chamadas simultâneas não se misturaram.
-- **O que o processo MCP vê**: o ambiente herdado do `claude` (sem variável com `agent_id`) e o `argv` da própria definição. Portanto a identidade no servidor MCP vem da **configuração por filho** (argv/env do `mcpServers` inline, p.ex. `agentbox mcp --child <id> --capability …`), não do protocolo. O `agent_id` do hook só existe no lado do hook.
+- **O que o processo MCP vê**: o ambiente herdado do `claude` (sem variável com `agent_id`) e o `argv` da própria definição. Portanto a identidade no servidor MCP vem da **configuração por filho** (argv/env do `mcpServers` inline, p.ex. `racky mcp --child <id> --capability …`), não do protocolo. O `agent_id` do hook só existe no lado do hook.
 
 ## Conclusão
 
@@ -39,7 +39,7 @@ O modelo de identidade de 07 (§ identidade do chamador) é viável como escrito
 
 ## Recomendação
 
-- Definir o subagente com `mcpServers` como **array** e nome de servidor único por filho (`agentbox-<runId>-<n>`), e `tools` do filho limitado a `mcp__<nome>__*`.
+- Definir o subagente com `mcpServers` como **array** e nome de servidor único por filho (`racky-<runId>-<n>`), e `tools` do filho limitado a `mcp__<nome>__*`.
 - Correlacionar no app: `PreToolUse.mcp_server.name` → filho; `SubagentStart.agent_id` → contador de filhos vivos (06 §3.3).
 - Não fiar em `agent_id` como autenticação (07 já trata nome como dica).
 - Teste pendente (barato, Fatia 3): filho tentando chamar a ferramenta do irmão (`tools` deveria impedir), `--resume` com `--agents` regenerado, e `agents` vindos de plugin/arquivo em vez de `--agents`.

@@ -1,12 +1,12 @@
 # T2-08 · Importação do Orca (núcleo)
 
-Código: `Packages/AgentBoxKit/Sources/AgentBoxCore/Import/` (`OrcaSource.swift`, `OrcaImporter.swift`, `OrcaCoexistence.swift`) e `AgentBoxStore+Import.swift` (tabela `import_run`). Testes: `Tests/CoreTests/Import/`.
+Código: `Packages/RackyKit/Sources/RackyCore/Import/` (`OrcaSource.swift`, `OrcaImporter.swift`, `OrcaCoexistence.swift`) e `RackyStore+Import.swift` (tabela `import_run`). Testes: `Tests/CoreTests/Import/`.
 
 ## Regra de segurança
 
 O Orca estava em uso durante a descoberta. Nada dele é aberto, movido ou gravado:
 
-- `profile-state.db`, `-wal` e `-shm` são **copiados** para `agentbox-orca-import-<uuid>/` (temporário do app) e só a cópia é aberta, com `SQLITE_OPEN_READONLY`. A cópia é apagada ao terminar (com erro também).
+- `profile-state.db`, `-wal` e `-shm` são **copiados** para `racky-orca-import-<uuid>/` (temporário do app) e só a cópia é aberta, com `SQLITE_OPEN_READONLY`. A cópia é apagada ao terminar (com erro também).
 - Teste de fixture: hash SHA-256 de todos os arquivos sob a pasta de dados do Orca igual antes/depois de dry-run e de import real; diretório temporário vazio depois.
 - Dry-run real abaixo: tamanho e mtime de `profile-state.db*` e `orca-data.json` iguais antes/depois (`originalProfileFilesUntouchedByReader: true`).
 
@@ -37,7 +37,7 @@ Campos lidos (o resto é ignorado):
 
 ## Mapeamento implementado
 
-| Orca | Agent Box |
+| Orca | Racky |
 |---|---|
 | `repos[]` | `project` (dedupe por caminho canônico; `source=orca_import`, `import_source_id=orca:<repoId>`), nome, cor, `worktreeRoot = settings.workspaceDir/<pasta>`, prefixo de branch (`gitUsername` / custom / nenhum) |
 | `git worktree list` x `worktreeMeta` | `worktree` + `session` tipo `worktree` (`checkout` para o principal, só se houver meta): `displayName` (senão branch, senão pasta), `comment` como nota de status (autor `orca`), `sortOrder` desc como `sortIndex`, `lastActivityAt` como `lastActiveAt`. **Sem tabs nem terminais**: nenhum processo (P15) |
@@ -55,10 +55,10 @@ Reimportar: atualiza por caminho real, adiciona novos, não sobrescreve ediçõe
 
 ## Dry-run real (Orca em uso, cópia temporária)
 
-Gerado por `RealOrcaDryRunTests` (`AGENTBOX_REAL_ORCA=1`); detalhes e nomes em `dry-run.json`. Só contagens e nomes de repositórios/worktrees.
+Gerado por `RealOrcaDryRunTests` (`RACKY_REAL_ORCA=1`); detalhes e nomes em `dry-run.json`. Só contagens e nomes de repositórios/worktrees.
 
 - Fonte: `sqlite` (JSON legado não usado). 7 repositórios, 120 entradas em `worktreeMeta`.
-- Projetos a importar (7): rti-platform, rti-content-platform, rti-global, labrynth-motiondesign, arizona-data-request, crawlers, agent-box. Pulados: 0.
-- Sessões a importar: 119 (1 pulada: meta sem worktree no disco). Por projeto: rti-content-platform 73, agent-box 28, rti-platform 7, arizona-data-request 4, rti-global 3, crawlers 2, labrynth-motiondesign 2. Worktrees do git sem meta: 0.
-- Perfis: "Claude · Skip permissions", "Codex · Bypass approvals". Agentes do Orca sem perfil no Agent Box (ignorados): 22. Chaves de env importáveis: nenhuma.
+- Projetos a importar (7): rti-platform, rti-content-platform, rti-global, labrynth-motiondesign, arizona-data-request, crawlers, racky. Pulados: 0.
+- Sessões a importar: 119 (1 pulada: meta sem worktree no disco). Por projeto: rti-content-platform 73, racky 28, rti-platform 7, arizona-data-request 4, rti-global 3, crawlers 2, labrynth-motiondesign 2. Worktrees do git sem meta: 0.
+- Perfis: "Claude · Skip permissions", "Codex · Bypass approvals". Agentes do Orca sem perfil no Racky (ignorados): 22. Chaves de env importáveis: nenhuma.
 - Arquivos do Orca inalterados durante a leitura e diretório temporário vazio depois: verdadeiro.

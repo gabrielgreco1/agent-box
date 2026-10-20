@@ -1,14 +1,14 @@
 # T2-11 Desempenho: 10 sessões em paralelo (AC-608, AC-609, AR-702/703/704/705/706)
 
 Data 2026-10-20, branch `slice4-b`. Máquina: Apple Silicon, 14 CPUs, macOS 27.0.1 (a de referência de 08 §7). Build Release, Metal ligado.
-Nenhum modelo rodou: só shells (`yes`, `sleep`, `cat`). Nada do app, do daemon, do launchd nem dos dados do dono foi tocado: o bench sobe um `agentboxd`
-próprio em `/tmp` e a medição ao vivo usa uma cópia do app com `AGENTBOX_HOME` temporário (`open -g -n`).
+Nenhum modelo rodou: só shells (`yes`, `sleep`, `cat`). Nada do app, do daemon, do launchd nem dos dados do dono foi tocado: o bench sobe um `rackyd`
+próprio em `/tmp` e a medição ao vivo usa uma cópia do app com `RACKY_HOME` temporário (`open -g -n`).
 
 ## Como foi medido
 
 | Medida | Ferramenta | Comando |
 |---|---|---|
-| Eco de tecla (tecla → emulador alimentado), parada do main (timer de 2 ms), CPU e pegada do app (processo do bench com as views reais) e do daemon, custo de atualização da sidebar | `agentbox-bench` (views `TerminalHostView` + Metal reais, daemon real) | `scripts/bench.sh --ten` → `bench-ten.json`; `scripts/bench.sh` → `bench-standard.json` |
+| Eco de tecla (tecla → emulador alimentado), parada do main (timer de 2 ms), CPU e pegada do app (processo do bench com as views reais) e do daemon, custo de atualização da sidebar | `racky-bench` (views `TerminalHostView` + Metal reais, daemon real) | `scripts/bench.sh --ten` → `bench-ten.json`; `scripts/bench.sh` → `bench-standard.json` |
 | CPU e memória do **app de verdade** e do daemon (RSS e `footprint`) com 10 sessões ociosas e +10 com saída alta | cópia isolada do `Racky.app` Release, `ctl session.launch` com `provider: custom`, `ps`/`footprint` | `scripts/perf-live.sh <Racky.app> <saida.json>` → `live-app.json` |
 | Onde o app gasta CPU e memória | `sample`, `footprint` no app isolado | ver "Pontos quentes" |
 
@@ -59,8 +59,8 @@ daemon em carga.
 | 3 | Enumeração de todos os processos a cada tick (`readProcesses`, 0,5 % de um núcleo) | listas "top" recalculadas a 1,5 s | listas "top" renovadas a cada 2,5 s (CPU e memória da máquina continuam a cada tick) | metade das enumerações | `MachineSamplerCapacityTests` (5 ticks → 3 leituras) |
 | 4 | `DSTextStyle.nsFont` (descriptor + eixo variável) no perfil de cada `body` do Insights | fonte recriada a cada renderização | cache de `NSFont` por estilo no `DSTextStyle` | some do perfil | coberto pelos testes de snapshot do DesignSystem/UI (fonte idêntica) |
 
-Também corrigido no caminho: `scripts/bench.sh` nunca funcionou em Release (o `agentboxd` de Release recusava o cliente ad-hoc do bench); agora compila o daemon
-com `-DAGENTBOX_ALLOW_ADHOC_PEERS` (só vale se o próprio daemon é ad-hoc, S-03).
+Também corrigido no caminho: `scripts/bench.sh` nunca funcionou em Release (o `rackyd` de Release recusava o cliente ad-hoc do bench); agora compila o daemon
+com `-DRACKY_ALLOW_ADHOC_PEERS` (só vale se o próprio daemon é ad-hoc, S-03).
 
 ## O que ainda não fecha
 
@@ -70,4 +70,4 @@ com `-DAGENTBOX_ALLOW_ADHOC_PEERS` (só vale se o próprio daemon é ad-hoc, S-0
 2. Tempo de quadro e `xctrace`: precisam do Mac do dono com a tela ligada (item no checklist).
 3. AR-706 completo (15 boxes + 2 desktop, miniaturas, `boxes_reserve` → `ready`) precisa de Docker e do `e2e.sh`.
 
-Arquivos: `bench-ten.json`, `bench-standard.json`, `live-app.json` (esta pasta); código em `Packages/AgentBoxKit/Sources/AgentBoxBench`, `scripts/bench.sh`, `scripts/perf-live.sh`.
+Arquivos: `bench-ten.json`, `bench-standard.json`, `live-app.json` (esta pasta); código em `Packages/RackyKit/Sources/RackyBench`, `scripts/bench.sh`, `scripts/perf-live.sh`.

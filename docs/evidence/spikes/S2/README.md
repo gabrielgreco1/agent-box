@@ -6,7 +6,7 @@ Pergunta (07 §9, CS-110/111/112): numa rede Docker `internal: true`, os contain
 
 Máquina: Docker Desktop, Engine 29.6.2, API 1.55, aarch64, VM de 8 GB, contexto `desktop-linux`. O cliente fala `/v1.43`.
 
-Topologia montada pelo teste (`Packages/AgentBoxKit/Tests/DockerTests/LiveNetworkTests.swift`, `s2InternalNetworkDNSAndPortPublishedOnlyByEgress`), tudo com `agentbox.test=1`:
+Topologia montada pelo teste (`Packages/RackyKit/Tests/DockerTests/LiveNetworkTests.swift`, `s2InternalNetworkDNSAndPortPublishedOnlyByEgress`), tudo com `racky.test=1`:
 
 - rede `internal` (Internal=true) e rede bridge de saída;
 - `runtime`: só na rede internal, alias `runtime`, serve HTTP em 9000, **sem porta publicada**;
@@ -23,16 +23,16 @@ Topologia montada pelo teste (`Packages/AgentBoxKit/Tests/DockerTests/LiveNetwor
 
 Conclusão para a arquitetura: o desenho de CS-111 funciona sem o container de ingress de fallback no Docker Desktop. A ordem "criar na internal, conectar a bridge depois, iniciar" publica a porta normalmente.
 
-Evidência bruta: `results.json` (gerado pelo teste com `AGENTBOX_EVIDENCE_DIR`).
+Evidência bruta: `results.json` (gerado pelo teste com `RACKY_EVIDENCE_DIR`).
 
 ## Como reproduzir
 
 ```
-cd Packages/AgentBoxKit
-AGENTBOX_TEST_DOCKER=1 AGENTBOX_EVIDENCE_DIR=$PWD/../../docs/evidence swift test --filter LiveNetworkTests
+cd Packages/RackyKit
+RACKY_TEST_DOCKER=1 RACKY_EVIDENCE_DIR=$PWD/../../docs/evidence swift test --filter LiveNetworkTests
 ```
 
-Só cria recursos com os labels `agentbox.test=1` e `agentbox.test_run=<id>` e remove tudo ao final (o teste falha se sobrar algo).
+Só cria recursos com os labels `racky.test=1` e `racky.test_run=<id>` e remove tudo ao final (o teste falha se sobrar algo).
 
 ## Pendente
 

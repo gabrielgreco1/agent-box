@@ -4,7 +4,7 @@ for l in open(sys.argv[1]):
     except Exception: continue
     t = o.get("type")
     if t == "system" and o.get("subtype") == "init":
-        print("init: skills listing contains agentbox:", any("agentbox" in s for s in o.get("skills", [])), "| Skill tool present:", "Skill" in o.get("tools", []))
+        print("init: skills listing contains racky:", any("racky" in s for s in o.get("skills", [])), "| Skill tool present:", "Skill" in o.get("tools", []))
     if t == "assistant":
         for c in o["message"]["content"]:
             if c["type"] == "tool_use": print("tool_use", c["name"], json.dumps(c["input"])[:100])

@@ -2,6 +2,6 @@ ok: Xcode 26.3
 ok: ripgrep 15.1.0
 ok: xcodegen 2.46.0 (.tools/bin/xcodegen)
 ok: Geist 1.8.1 (SHA-256 conferido)
-ok: Geist embutida em Packages/AgentBoxKit/Sources/AgentBoxDesignSystem/Resources/Fonts (Geist[wght].ttf + OFL.txt)
+ok: Geist embutida em Packages/RackyKit/Sources/RackyDesignSystem/Resources/Fonts (Geist[wght].ttf + OFL.txt)
 ok: pins de Package.resolved (nenhum divergente)
 bootstrap: OK

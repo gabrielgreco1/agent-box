@@ -1,6 +1,6 @@
 # T1-20: composer ⌘N real
 
-Rodado: `open -g -n "Agent Box.app" --env AGENTBOX_AUTOMATION=1 --env AGENTBOX_SKIP_ONBOARDING=1 --env AGENTBOX_HOME=/tmp/abev20/home --env AGENTBOX_APP_SOCK=/tmp/abev20/app.sock`, projeto = repositório temporário `otter` (com `origin` local), worktrees em `/tmp/abev20/orca-workspaces`, sessões limpas em `/tmp/abev20/sessions`, prefixo de branch `gabrielgreco1`. Tudo via `agentbox ctl ui action` (as mesmas ações dos cliques) e `agentbox ctl screenshot`. App e daemon encerrados por PID. Perfil de usuário "Claude · Haiku" (`--model haiku`) para a corrida real; prompt `reply OK`.
+Rodado: `open -g -n "Racky.app" --env RACKY_AUTOMATION=1 --env RACKY_SKIP_ONBOARDING=1 --env RACKY_HOME=/tmp/abev20/home --env RACKY_APP_SOCK=/tmp/abev20/app.sock`, projeto = repositório temporário `otter` (com `origin` local), worktrees em `/tmp/abev20/orca-workspaces`, sessões limpas em `/tmp/abev20/sessions`, prefixo de branch `gabrielgreco1`. Tudo via `racky ctl ui action` (as mesmas ações dos cliques) e `racky ctl screenshot`. App e daemon encerrados por PID. Perfil de usuário "Claude · Haiku" (`--model haiku`) para a corrida real; prompt `reply OK`.
 
 | Arquivo | Estado |
 |---|---|
@@ -23,4 +23,4 @@ Rodado: `open -g -n "Agent Box.app" --env AGENTBOX_AUTOMATION=1 --env AGENTBOX_S
 
 Limites: o fallback AppKit da captura (sem permissão de Gravação de Tela) não desenha o terminal Metal, então a prova de que o agente roda vem do processo real: `claude --session-id … --model haiku --dangerously-skip-permissions reply OK` com cwd na worktree (`ps`/`lsof`). O voo do chip aparece num quadro de `pending-immediately`. Em `pending-error-fetch` o card "reply OK" está vermelho porque o Claude daquela execução foi encerrado por mim.
 
-Testes: `ComposerDraftTests` (nomes, branch, caminho, validação, resumo, pedido), `SessionCreationTests` (repo temporário: worktree com fetch, colisões, adoção da sessão não iniciada, branch em uso, fetch falho, pastas limpas), `ComposerFlowTests` (fluxo completo por ações, overlay fecha na hora, linha pendente, Create More, erros e Try Again), `ComposerLaunchIntegrationTests` (worktree criada e `zsh` / `claude -p --model haiku "reply OK"` reais no `agentboxd`, `AB_REAL_CLI=1`).
+Testes: `ComposerDraftTests` (nomes, branch, caminho, validação, resumo, pedido), `SessionCreationTests` (repo temporário: worktree com fetch, colisões, adoção da sessão não iniciada, branch em uso, fetch falho, pastas limpas), `ComposerFlowTests` (fluxo completo por ações, overlay fecha na hora, linha pendente, Create More, erros e Try Again), `ComposerLaunchIntegrationTests` (worktree criada e `zsh` / `claude -p --model haiku "reply OK"` reais no `rackyd`, `AB_REAL_CLI=1`).

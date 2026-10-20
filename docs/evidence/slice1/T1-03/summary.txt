@@ -5,7 +5,7 @@ Comandos (saida completa nos arquivos ao lado):
   scripts/gen.sh                 -> gen.txt
   scripts/gen-tokens.py / --check -> gen-tokens.txt (7 arquivos; --check sai 0 quando em dia)
   scripts/lint.sh (+ --self-test) -> lint.txt (Swift 6 estrito, warnings como erro: OK)
-  swift test (Packages/AgentBoxKit) -> tests.txt (47 testes, 13 suites, 0 falhas; 37 sao de DesignSystemTests)
+  swift test (Packages/RackyKit) -> tests.txt (47 testes, 13 suites, 0 falhas; 37 sao de DesignSystemTests)
 
 Testes de DesignSystemTests:
   TokensMatchJSONTests : DS.ColorSpec/Color/NS, Terminal, Font, Space, Layout, Radius, Shadow, MotionTokens (tipado e flat)
@@ -32,7 +32,7 @@ Nao feito nesta tarefa:
   - Pagina de amostras lado a lado com o Orca e OK do dono (SxS, P14): exige janela/captura; fica para quando houver tela (T1-11).
   - lib/motion.js (solver de bezier/spring em JS) e a comparacao de 101 amostras JS x Swift (04 §9.4); hoje a paridade
     cobre os VALORES (tokens.js = Swift = JSON), nao o solver.
-  - Embutir o bundle de recursos AgentBoxKit_AgentBoxDesignSystem.bundle no .app: o app ainda so linka AgentBoxPlatform
-    (project.yml); entra quando AgentBoxDesignSystem for dependencia do app (T1-10/T1-11).
+  - Embutir o bundle de recursos RackyKit_RackyDesignSystem.bundle no .app: o app ainda so linka RackyPlatform
+    (project.yml); entra quando RackyDesignSystem for dependencia do app (T1-10/T1-11).
   - lint-ui.sh (T1-02) ainda e esqueleto: as regras de literais fora de DS.* nao rodam.
   - Light theme: so registrado no JSON ('light'), nao gerado em Swift (DS13).

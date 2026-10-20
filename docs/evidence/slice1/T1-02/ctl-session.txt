@@ -1,5 +1,5 @@
 $ ctl ui wait window.appName --timeout 2
-{"ok":true,"waited":{"children":[],"enabled":true,"frame":{"height":13,"width":49.5,"x":16,"y":48},"id":"window.appName","kind":"text","label":"Agent Box"},"waitedMs":0}
+{"ok":true,"waited":{"children":[],"enabled":true,"frame":{"height":13,"width":49.5,"x":16,"y":48},"id":"window.appName","kind":"text","label":"Racky"},"waitedMs":0}
 rc=0
 $ ctl ui action app.hideAppName
 {"action":{"actionID":"app.hideAppName","message":"hidden","ok":true},"ok":true}

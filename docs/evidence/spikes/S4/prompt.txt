@@ -1,1 +1,1 @@
-Call the Skill tool with skill "agentbox" exactly once. Then reply with one line: SKILL_RESULT=<loaded|denied|unavailable> followed by the first 10 words of the tool result. Do not do anything else.
+Call the Skill tool with skill "racky" exactly once. Then reply with one line: SKILL_RESULT=<loaded|denied|unavailable> followed by the first 10 words of the tool result. Do not do anything else.

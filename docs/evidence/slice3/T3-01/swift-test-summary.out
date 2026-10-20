@@ -12,5 +12,5 @@
 ✔ Suite BuildContextTests passed
 ✔ Suite ClientAgainstFakeDaemonTests passed
 ✔ Suite "Spike S2 - rede internal e publicação pelo egress" passed
-✔ Suite "Docker real (AGENTBOX_TEST_DOCKER=1)" passed
+✔ Suite "Docker real (RACKY_TEST_DOCKER=1)" passed
 ✔ Test run with 572 tests in 88 suites passed

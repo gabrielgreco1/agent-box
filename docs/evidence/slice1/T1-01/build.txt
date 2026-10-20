@@ -2,7 +2,7 @@ No "base" settings found
 No "debug config" settings found
 No "release config" settings found
 No "macOS" settings found
-gen: AgentBox.xcodeproj gerado
+gen: Racky.xcodeproj gerado
 build: xcodebuild Release (app)
 --- xcodebuild: WARNING: Using the first of multiple matching destinations:
 { platform:macOS, arch:arm64, id:00006040-0014281E1120801C, name:My Mac }
@@ -10,30 +10,30 @@ build: xcodebuild Release (app)
 
 ** BUILD SUCCEEDED **
 
-build: swift build -c release (agentbox, agentboxd)
+build: swift build -c release (racky, rackyd)
 [0/3] Write swift-version--58304C5D6DBC2206.txt
 [1/2] Linking SwiftTermBuildInfoGenerator-tool
 [0/1] Planning build
 Building for production...
 [0/2] Write swift-version--58304C5D6DBC2206.txt
-Build of product 'agentbox' complete! (1.93s)
+Build of product 'racky' complete! (1.93s)
 Building for production...
 [0/2] Write swift-version--58304C5D6DBC2206.txt
 [1/4] Linking SwiftTermBuildInfoGenerator-tool
 [2/4] Generate SwiftTerm build information
-Build of product 'agentboxd' complete! (1.03s)
-AVISO: identidade 'Agent Box Local Signing' ausente; assinando AD-HOC (rode scripts/make-dev-cert.sh uma vez para assinatura estável).
-/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentbox: replacing existing signature
-/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentboxd: replacing existing signature
-/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app: replacing existing signature
+Build of product 'rackyd' complete! (1.03s)
+AVISO: identidade 'Racky Local Signing' ausente; assinando AD-HOC (rode scripts/make-dev-cert.sh uma vez para assinatura estável).
+/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app/Contents/MacOS/racky: replacing existing signature
+/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app/Contents/MacOS/rackyd: replacing existing signature
+/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app: replacing existing signature
 build: verificando assinatura
---prepared:/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentboxd
---validated:/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentboxd
---prepared:/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentbox
---validated:/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentbox
-/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app: valid on disk
-/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app: satisfies its Designated Requirement
-Identifier=app.agentbox.mac
+--prepared:/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app/Contents/MacOS/rackyd
+--validated:/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app/Contents/MacOS/rackyd
+--prepared:/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app/Contents/MacOS/racky
+--validated:/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app/Contents/MacOS/racky
+/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app: valid on disk
+/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app: satisfies its Designated Requirement
+Identifier=app.racky.mac
 CodeDirectory v=20500 size=401 flags=0x10002(adhoc,runtime) hashes=6+3 location=embedded
 TeamIdentifier=not set
-build: OK -> /Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app
+build: OK -> /Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app

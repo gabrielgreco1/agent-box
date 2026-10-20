@@ -2,7 +2,7 @@
 
 ## Entrega
 
-O lançamento revisado do agente de scraping no terminal dono da box inclui um servidor MCP stdio temporário, usando `--mcp-config`. O executável `AgentBoxMCP` acompanha o app. Não altera a configuração global do Claude e não troca seu harness ou TUI. Codex/OpenCode ainda precisam de adapters próprios comprovados; esta entrega não anuncia suporte MCP nesses clientes.
+O lançamento revisado do agente de scraping no terminal dono da box inclui um servidor MCP stdio temporário, usando `--mcp-config`. O executável `RackyMCP` acompanha o app. Não altera a configuração global do Claude e não troca seu harness ou TUI. Codex/OpenCode ainda precisam de adapters próprios comprovados; esta entrega não anuncia suporte MCP nesses clientes.
 
 O planner congela o JSON de configuração e uma capability aleatória por plano, com hashes e arquivos locais protegidos. A restauração verifica ambos. O token de API do container permanece no processo do aplicativo; não aparece em argumentos, variáveis de ambiente ou contexto entregue ao CLI. O helper recebe somente caminhos para socket e capability.
 

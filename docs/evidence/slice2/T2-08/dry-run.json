@@ -42,12 +42,12 @@
       "labrynth-motiondesign",
       "arizona-data-request",
       "crawlers",
-      "agent-box"
+      "racky"
     ]
   },
   "repositories" : 7,
   "sessionsByProject" : {
-    "agent-box" : [
+    "racky" : [
       "worktree-agent-a188988df56b4165c",
       "worktree-agent-abe210185a79a9410",
       "worktree-agent-a3f406cd6bf6abcc3",

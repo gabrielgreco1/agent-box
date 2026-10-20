@@ -1,6 +1,6 @@
 # T2-04: atencao e notificacoes
 
-`drive.sh` abre o app em segundo plano (`open -g`, `AGENTBOX_AUTOMATION=1`, `AGENTBOX_SLICE=2`, `AGENTBOX_HOME` isolado, `AGENTBOX_NOTIFICATIONS=fake`, fixture `attention-demo`) e dispara eventos REAIS com `agentbox hook` (payloads S-05 e S-08). Nenhuma notificacao real e pedida ou enviada; o app e encerrado por PID.
+`drive.sh` abre o app em segundo plano (`open -g`, `RACKY_AUTOMATION=1`, `RACKY_SLICE=2`, `RACKY_HOME` isolado, `RACKY_NOTIFICATIONS=fake`, fixture `attention-demo`) e dispara eventos REAIS com `racky hook` (payloads S-05 e S-08). Nenhuma notificacao real e pedida ou enviada; o app e encerrado por PID.
 
 | Arquivo | O que mostra |
 |---|---|

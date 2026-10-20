@@ -1,4 +1,4 @@
-agentbox-egress
+racky-egress
 bridge
 host
 none

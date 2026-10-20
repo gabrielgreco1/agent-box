@@ -1,4 +1,4 @@
-✔ Suite "Docker real (AGENTBOX_TEST_DOCKER=1)" passed after 27.004 seconds.
+✔ Suite "Docker real (RACKY_TEST_DOCKER=1)" passed after 27.004 seconds.
 ✔ Suite "Spike S2 - rede internal e publicação pelo egress" passed after 7.438 seconds.
 ✔ Suite "T3-02 - config do egress, segredos em arquivo e integridade do reqlog" passed after 9.848 seconds.
 ✔ Suite "T3-02 - egress sidecar com Docker real" passed after 43.614 seconds.

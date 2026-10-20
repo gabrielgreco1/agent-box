@@ -24,7 +24,7 @@
     "failures": 0
   },
   "real_docker": {
-    "context": "colima-agentbox-dev",
+    "context": "colima-racky-dev",
     "two_independent_child_computers": true,
     "headless_javascript": true,
     "separate_profile_markers": true,

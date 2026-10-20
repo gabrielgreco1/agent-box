@@ -1,5 +1,5 @@
-e2e-subagents 2026-10-20T06:06:17Z provider=opencode model=opencode/glm-5.3-flash-free mock=0 work=/tmp/abmp-9tSgj2 owner=agent-box-85b46651
-  PASS  app de teste isolado (dados em /tmp/abmp-9tSgj2/h, owner agent-box-85b46651, não é o do dono)
+e2e-subagents 2026-10-20T06:06:17Z provider=opencode model=opencode/glm-5.3-flash-free mock=0 work=/tmp/abmp-9tSgj2 owner=racky-85b46651
+  PASS  app de teste isolado (dados em /tmp/abmp-9tSgj2/h, owner racky-85b46651, não é o do dono)
   PASS  composer oferece Subagent computers para opencode (full aceito)
 terminal 01A157EB-2894-7251-A4AC-3D69DC00A861
 esperou 107 s (computador visto: 1, tudo removido: 1)

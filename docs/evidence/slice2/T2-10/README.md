@@ -1,9 +1,9 @@
 # T2-10 Vault, catalog and legacy JSON importer
 
-Files in this folder come from `AGENTBOX_EVIDENCE_DIR=<this folder> swift test --filter T210EvidenceTests`, run against the real user data, read-only.
+Files in this folder come from `RACKY_EVIDENCE_DIR=<this folder> swift test --filter T210EvidenceTests`, run against the real user data, read-only.
 
 - `catalog-dry-run.md`: real `~/.claude`, `~/.agents`, `~/.codex` and installed plugins; names and counts only.
-- `legacy-importer-dry-run.md`: real `~/Library/Application Support/AgentBox` JSONs; counts only, with source hash before and after (unchanged).
+- `legacy-importer-dry-run.md`: real `~/Library/Application Support/Racky` JSONs; counts only, with source hash before and after (unchanged).
 
 ## Verification (2026-10-17)
 

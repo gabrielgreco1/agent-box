@@ -1,6 +1,6 @@
 # T1-22 · Tabela de atalhos (gerada)
 
-Gerada de `KeyBindingRegistry.canonical()` e do menu montado por `MainMenu.build` (03 §21). Não editar: `AGENTBOX_WRITE_SHORTCUTS=1 swift test --filter ShortcutsTable`.
+Gerada de `KeyBindingRegistry.canonical()` e do menu montado por `MainMenu.build` (03 §21). Não editar: `RACKY_WRITE_SHORTCUTS=1 swift test --filter ShortcutsTable`.
 
 Coluna Terminal: `PTY` = a tecla é reservada ao terminal (03 §21) e o app não a captura; `exceção` = ⌃⇥ e ⌃1…⌃9, tirados do PTY de propósito;
 `escopo` = só vale no escopo indicado (o item de menu perde o key equivalent quando o escopo não está ativo); `-` = sem conflito.

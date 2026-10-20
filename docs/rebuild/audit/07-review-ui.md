@@ -3,14 +3,14 @@
 Data: 2026-10-16. Somente leitura: nada foi alterado em `Sources/`.
 
 **Escopo.** Revisei 03, 04 e 06 por inteiro e as partes de UI de 01 e 05. Também revisei:
-- `Sources/AgentBox/**`;
+- `Sources/Racky/**`;
 - o checkout do SwiftTerm 1.20.0 em `.build/checkouts/SwiftTerm`, porque muitos comportamentos do terminal vêm dele e não do nosso código;
 - o código-fonte do Orca, que tratei só como dado, sem executar;
 - as chaves de aparência, terminal e notificação das configurações reais do Orca do dono (`~/Library/Application Support/orca/profiles/local-default/orca-data.json`). Não li nenhuma chave de segredo.
 
 **Convenções.**
 - Caminhos do Orca são relativos a `scratchpad/orca-src/src/`. `R/` é o mesmo que `renderer/src/`.
-- Caminhos do Agent Box são relativos a `Sources/AgentBox/`. `ST/` é o mesmo que `.build/checkouts/SwiftTerm/Sources/SwiftTerm/`.
+- Caminhos do Racky são relativos a `Sources/Racky/`. `ST/` é o mesmo que `.build/checkouts/SwiftTerm/Sources/SwiftTerm/`.
 - **P0:** bloqueia o rebuild ou é risco de segurança/confiança. **P1:** necessário para a paridade "parece o Orca". **P2:** polimento.
 - Só entram achados **novos**. Quando um achado complementa algo da rodada 1, isso vem indicado como "(complementa 03 #x)".
 
@@ -19,18 +19,18 @@ Data: 2026-10-16. Somente leitura: nada foi alterado em `Sources/`.
 ## A. Terminal (onde o dono passa 90% do tempo)
 
 1. **P0: o terminal entrega o clipboard do Mac a qualquer programa que pedir (OSC 52 query).**
-   - Evidência: `ST/Mac/MacLocalTerminalView.swift:121-126` implementa `clipboardRead` devolvendo `NSPasteboard.general`. `ST/Terminal.swift:2695-2701` responde a `OSC 52;c;?` com o conteúdo em base64 direto no PTY. O Agent Box usa `LocalProcessTerminalView` sem sobrescrever nada disso (`Terminal/TerminalRuntimeManager.swift:311-316`).
+   - Evidência: `ST/Mac/MacLocalTerminalView.swift:121-126` implementa `clipboardRead` devolvendo `NSPasteboard.general`. `ST/Terminal.swift:2695-2701` responde a `OSC 52;c;?` com o conteúdo em base64 direto no PTY. O Racky usa `LocalProcessTerminalView` sem sobrescrever nada disso (`Terminal/TerminalRuntimeManager.swift:311-316`).
    - Por que importa: um `cat` de página raspada, um log ou o próprio agente pode ler o que o usuário copiou, inclusive senhas e tokens. O Orca **nunca** responde a essa consulta (`R/components/terminal-pane/osc52-clipboard.ts:16-22,176`; teste "never answers a clipboard query" em `osc52-clipboard.test.ts:125`). A escrita via OSC 52 é permitida por padrão, mas fica atrás de uma configuração e mostra um toast (`osc52-clipboard-toast.ts`).
    - Recomendação: subclasse que devolve `nil` em `clipboardRead`. Escrita OSC 52 permitida, mas com o toggle "Permitir que apps do terminal escrevam no clipboard" em Configurações › Terminal.
 
 2. **P1: a busca no terminal (⌘F) já existe no SwiftTerm, só não está ligada.**
-   - Evidência: SwiftTerm 1.20 tem `TerminalFindBarView` e `performFindPanelAction` (`ST/Mac/MacTerminalView.swift:2506-2566,2664`). Ele depende de um item de menu com `NSFindPanelAction`, e o app não declara `.commands {}` (`App/AgentBoxApp.swift:57-61`).
+   - Evidência: SwiftTerm 1.20 tem `TerminalFindBarView` e `performFindPanelAction` (`ST/Mac/MacTerminalView.swift:2506-2566,2664`). Ele depende de um item de menu com `NSFindPanelAction`, e o app não declara `.commands {}` (`App/RackyApp.swift:57-61`).
    - Orca: barra flutuante de 340 px no canto superior direito, com `Aa` (case), regex, ↑/↓, contador `i/N` e "No results", e Enter/⇧Enter/Esc (`R/components/TerminalSearch.tsx:39-58,126-153`).
    - Recomendação: no MVP, `CommandGroup(after: .textEditing)` com "Buscar…" ⌘F, ⌘G e ⇧⌘G mandando `performFindPanelAction` ao first responder. Na fase Orca, uma barra própria com contador (o `SearchService` do SwiftTerm já devolve as ocorrências).
 
 3. **P1: não existe menu de contexto no terminal.** O SwiftTerm para Mac não implementa `rightMouseDown` nem `menu(for:)` (grep em `ST/Mac/MacTerminalView.swift`). O clique direito não faz nada.
    - Orca (`R/components/terminal-pane/TerminalContextMenu.tsx:195-354`), na ordem: Copiar, Selecionar tudo, Colar (com atalho) · Quick Commands · Fork/Copiar contexto da sessão do agente · Dividir à direita/abaixo · Igualar tamanhos, Expandir pane · Definir título…, Limpar título · Copiar ID da sessão/terminal/pane · Fechar pane · Limpar tela, Reiniciar terminal.
-   - Recomendação: `NSMenu` nativo com esse conjunto, em português. Para o Agent Box, adicionar "Copiar ID da conversa" e "Abrir computador".
+   - Recomendação: `NSMenu` nativo com esse conjunto, em português. Para o Racky, adicionar "Copiar ID da conversa" e "Abrir computador".
 
 4. **P1: links no terminal.** O SwiftTerm abre o link direto com `NSWorkspace` (`ST/Mac/MacLocalTerminalView.swift:143-146`). Ele só detecta URLs (`linkReporting = .implicit`) e não tem dica de hover, popover, caminhos `arquivo:linha:coluna` nem ⌘-clique.
    - Orca:
@@ -50,7 +50,7 @@ Data: 2026-10-16. Somente leitura: nada foi alterado em `Sources/`.
 
 6. **P1: zoom de fonte do terminal (⌘= ⌘- ⌘0) e a fonte em si.** 03 só diz "fonte 12pt fixa". O que falta:
    - Orca: com o terminal focado, ⌘=/⌘- muda **só a fonte do pane ativo** (±1 entre 8 e 32, com overlay de porcentagem). Com o foco fora do terminal, muda o zoom da UI inteira (`R/components/terminal-pane/useTerminalFontZoom.ts:26-68`, `R/hooks/ipc-events/zoom-ipc-bridge.ts:23-54`). O UI zoom vai de −3 a +5 em passos de 0,5 (`shared/ui-zoom-level.ts:4-6`).
-   - Agent Box: `monospacedSystemFont(ofSize: 12, weight: .regular)` (`TerminalRuntimeManager.swift:313`). O dono usa SF Mono **14, peso 500**, line-height 1 (config real).
+   - Racky: `monospacedSystemFont(ofSize: 12, weight: .regular)` (`TerminalRuntimeManager.swift:313`). O dono usa SF Mono **14, peso 500**, line-height 1 (config real).
    - Recomendação: padrão 14/medium, ⌘=/⌘-/⌘0 por pane e persistido por terminal. O zoom de UI pode ficar para o P2.
 
 7. **P1: a paleta ANSI nunca é instalada, então o tema não é o do dono.** Só `nativeBackgroundColor` e `nativeForegroundColor` são definidos (`TerminalRuntimeManager.swift:314-315`). As 16 cores ANSI, a cor de seleção (padrão do SwiftTerm: ciano `#00A6B2`, `ST/Mac/MacTerminalView.swift:1030`) e o cursor (padrão: `selectedControlColor`, azul do sistema, `ST/Mac/MacCaretView.swift:115`) ficam nos defaults.
@@ -64,7 +64,7 @@ Data: 2026-10-16. Somente leitura: nada foi alterado em `Sources/`.
 
 9. **P1: verificar Shift+Enter e os atalhos de edição do macOS no Claude Code.**
    - Orca: anuncia o protocolo de teclado kitty. Shift+Enter manda CSI-u; ⌘←/→ viram ^A/^E; ⌘⌫ vira ^U; ⌥←/→ movem por palavra (`R/components/terminal-pane/terminal-shortcut-policy.ts:179-295`).
-   - SwiftTerm: tem suporte a kitty (`kittyModifiers`, `ST/Mac/MacTerminalView.swift:1580`), mas ninguém testou no Agent Box. Sem Shift+Enter, o usuário não consegue quebrar linha no prompt do Claude.
+   - SwiftTerm: tem suporte a kitty (`kittyModifiers`, `ST/Mac/MacTerminalView.swift:1580`), mas ninguém testou no Racky. Sem Shift+Enter, o usuário não consegue quebrar linha no prompt do Claude.
    - Recomendação: caso de aceite explícito, com teste manual em Claude Code e Codex.
 
 10. **P1: um processo que saiu com erro aparece com ✓.**
@@ -81,21 +81,21 @@ Data: 2026-10-16. Somente leitura: nada foi alterado em `Sources/`.
     - Recomendação: `bellStyle = .none` mais um delegate próprio que marca "não lido" (bolinha âmbar, 04 §5.4). O SwiftTerm também entrega OSC 777 (notify) e OSC 9;4 (progresso), em `ST/Terminal.swift:219-225` e `ST/Mac/MacTerminalView.swift:3397`. Esses sinais servem de fonte barata de estado do agente, além dos hooks citados em 05.
 
 12. **P1: atalho ⌘K em conflito.**
-    - Agent Box: ⌘K foca "Buscar sessões" (`WorkspaceView.swift:798`).
+    - Racky: ⌘K foca "Buscar sessões" (`WorkspaceView.swift:798`).
     - Em Terminal.app, iTerm, Ghostty e **no Orca**, ⌘K é "Limpar tela" (`shared/keybindings/definitions-core-3.ts:258-263`). A palette do Orca é ⌘J.
     - Recomendação: ⌘K = Limpar, ⌘J = palette/busca. O 01 AA8 tem ⌘K como palette e precisa ser corrigido.
 
 13. **P1: não existe política de "quem é dono do atalho" entre o app e a TUI.**
     - Orca: registro central de atalhos com escopo (`global`, `tabs`, `terminal`, `browser`…), `conflictGroup`, padrão por plataforma e **atalhos remapeáveis** (gravador, filtros "Modificados/Sem atalho/Conflitos", arquivo editável, aviso de conflito com Mission Control). Fontes: `shared/keybindings/definitions-core-*.ts`, `R/components/settings/ShortcutRecorderButton.tsx:155-182`, `ShortcutFilterRail.tsx:30-150`, `ShortcutsPane.tsx:93`.
-    - Agent Box: atalhos espalhados em `.keyboardShortcut` de botões, alguns dentro de um `Menu` (03 #11).
+    - Racky: atalhos espalhados em `.keyboardShortcut` de botões, alguns dentro de um `Menu` (03 #11).
     - Recomendação: no rebuild, criar `KeyBindingRegistry` (id, título pt-BR, escopo, padrão), alimentando `.commands`, os tooltips com keycap e a palette. Remapear pode ficar para o P2, mas a estrutura é P1.
 
 14. **P1: ⌘W fecha a única janela do app.**
-    - Evidência: a cena é `Window` única (`App/AgentBoxApp.swift:57-59`) e não há comando ⌘W para "fechar pane/tab". Então ⌘W cai em Arquivo › Fechar e fecha a janela principal.
+    - Evidência: a cena é `Window` única (`App/RackyApp.swift:57-59`) e não há comando ⌘W para "fechar pane/tab". Então ⌘W cai em Arquivo › Fechar e fecha a janela principal.
     - O app continua vivo (`applicationShouldTerminateAfterLastWindowClosed → false`, `:18`). A reabertura pelo Dock procura `sender.windows.first(where: canBecomeMain)` (`:19-22`), que pode não existir depois que o SwiftUI libera uma cena `Window`. **Não verifiquei em runtime.**
     - Recomendação: ⌘W = fechar pane, depois tab (como no Orca, `definitions-core-4.ts:49`, `definitions-core-2.ts:132`), com confirmação se houver processo rodando. Fechar a janela só por ⌘⇧W. Reabrir pelo Dock com `openWindow(id:)`.
 
-15. **P2: configurações de terminal que o Orca expõe e o rebuild precisa decidir.** Lista completa em `R/components/settings/terminal-*-search.ts`. O mínimo para o Agent Box:
+15. **P2: configurações de terminal que o Orca expõe e o rebuild precisa decidir.** Lista completa em `R/components/settings/terminal-*-search.ts`. O mínimo para o Racky:
     - fonte (família, tamanho, peso), line-height;
     - cursor (forma, piscar);
     - tema escuro e claro;
@@ -131,7 +131,7 @@ Data: 2026-10-16. Somente leitura: nada foi alterado em `Sources/`.
     - Recomendação: menus em pt-BR com o mesmo conjunto, gerados pelo registro do item 13.
 
 19. **P1: o tema escuro só vale para a janela SwiftUI.**
-    - Evidência: `.preferredColorScheme(.dark)` está na raiz (`AgentBoxApp.swift:58,60`). `NSAlert` (sair, computadores; `:28,39`) e `NSOpenPanel` (`WorkspaceView.swift:1373,1585,1658`) seguem a aparência do sistema. Com o macOS em modo claro, aparecem alerts **claros** sobre o app escuro.
+    - Evidência: `.preferredColorScheme(.dark)` está na raiz (`RackyApp.swift:58,60`). `NSAlert` (sair, computadores; `:28,39`) e `NSOpenPanel` (`WorkspaceView.swift:1373,1585,1658`) seguem a aparência do sistema. Com o macOS em modo claro, aparecem alerts **claros** sobre o app escuro.
     - Recomendação: `NSApp.appearance = NSAppearance(named: .darkAqua)` enquanto não houver tema claro.
     - Decisão de produto: o Orca tem claro/escuro/sistema (padrão: sistema; `shared/default-global-settings.ts:44`) e tema de terminal separado para o claro (o dono tem `Builtin Tango Light` configurado). Recomendo **só escuro no v1**, com os tokens de 04 §1.1 já em pares claro/escuro, para não ter de refazer depois.
 
@@ -139,10 +139,10 @@ Data: 2026-10-16. Somente leitura: nada foi alterado em `Sources/`.
     - Orca: `window:fullscreen-changed` remove o padding (`main/window/main-window-state-lifecycle.ts:142-147`, `R/app-shell/TitlebarLeftControls.tsx:45`).
     - Recomendação: observar `NSWindow.didEnterFullScreenNotification` e `didExitFullScreenNotification`, zerar o pad e reaplicar a posição dos semáforos na saída. Testar também Stage Manager e Split View.
 
-21. **P2: multi-janela e pop-outs.** O Agent Box tem uma única `Window`. O Orca também tem uma janela principal, mas abre:
+21. **P2: multi-janela e pop-outs.** O Racky tem uma única `Window`. O Orca também tem uma janela principal, mas abre:
     - o dashboard de agentes em pop-out (960×720, mín. 480×360; `main/window/dashboard-popout-window.ts:18-21`);
     - uma janela "space" (`workspace-space-window.ts:47-48`).
-    - Para o Agent Box, o candidato natural é o **viewer do desktop do computador em janela própria**: hoje é sheet sobre sheet, com mínimo de 800×560 (`Docker/BrowserComputerPanel.swift:195`). Como janela, o usuário pode colocá-lo em outro monitor enquanto o terminal roda. Recomendo `WindowGroup(for: ComputerID.self)` no P1 do viewer.
+    - Para o Racky, o candidato natural é o **viewer do desktop do computador em janela própria**: hoje é sheet sobre sheet, com mínimo de 800×560 (`Docker/BrowserComputerPanel.swift:195`). Como janela, o usuário pode colocá-lo em outro monitor enquanto o terminal roda. Recomendo `WindowGroup(for: ComputerID.self)` no P1 do viewer.
 
 22. **P2: as sheets maiores que o mínimo da janela não foram testadas.** A janela tem mínimo de 1000×650 (`WorkspaceView.swift:183`). A sheet do computador tem mínimo de 800×560, mais `idealHeight 760` (`BrowserComputerPanel.swift:195`), e ainda empilha sobre outra sheet. Some quando as sheets forem trocadas por overlay/janela (06 C9), mas é preciso definir o comportamento de overlays em janela pequena (rolagem ou limite de altura).
 
@@ -160,7 +160,7 @@ Data: 2026-10-16. Somente leitura: nada foi alterado em `Sources/`.
     - Vale também para a palette (⌘J) e para o popover do "+".
 
 24. **P1: navegação por teclado na sidebar.**
-    - Agent Box: a sidebar é `ScrollView` + `LazyVStack` de `Button(.plain)` (`WorkspaceView.swift:361-392`). Não há seta para cima/baixo, Enter, item selecionado com `isSelected`, nem foco programático.
+    - Racky: a sidebar é `ScrollView` + `LazyVStack` de `Button(.plain)` (`WorkspaceView.swift:361-392`). Não há seta para cima/baixo, Enter, item selecionado com `isSelected`, nem foco programático.
     - Orca:
       - `role="listbox"` com `aria-activedescendant`;
       - ↑/↓ movem, Enter foca o terminal (`R/components/sidebar/worktree-list/navigation/use-keyboard.ts:150-172`);
@@ -169,7 +169,7 @@ Data: 2026-10-16. Somente leitura: nada foi alterado em `Sources/`.
     - Recomendação: `List(selection:)` não serve (visual de sistema, 04 §7). Usar `@FocusState` na lista mais `.onKeyPress(.upArrow/.downArrow/.return)` (macOS 14) e `.accessibilityAddTraits(.isSelected)` na linha ativa.
 
 25. **P1: foco visível e rótulos.**
-    - Agent Box: todos os controles usam `.buttonStyle(.plain)`, sem anel de foco próprio. As tabs e as linhas não anunciam seleção nem estado (`WorkspaceView.swift:706-730`). A taxa de rótulos de acessibilidade é baixa: cerca de 40 ocorrências no app inteiro (grep).
+    - Racky: todos os controles usam `.buttonStyle(.plain)`, sem anel de foco próprio. As tabs e as linhas não anunciam seleção nem estado (`WorkspaceView.swift:706-730`). A taxa de rótulos de acessibilidade é baixa: cerca de 40 ocorrências no app inteiro (grep).
     - Orca: anel de 3 px `ring/50` em `focus-visible` nos botões e inputs (`R/components/ui/button.tsx:8`, `input.tsx:15`). Cerca de 1.092 `aria-label` e 75 `aria-live` no renderer.
     - Recomendação: `ButtonStyle` próprio com anel de 2 pt `ring` (`#737373`, com o mesmo alfa de 50% que o Orca usa) quando `isFocused`. Cada tab e linha precisa anunciar o rótulo ("Claude Code, trabalhando, branch main") e o traço `isSelected`.
 
@@ -201,7 +201,7 @@ Data: 2026-10-16. Somente leitura: nada foi alterado em `Sources/`.
     - **Worktree** (`R/components/sidebar/WorktreeContextMenuView.tsx:157-383`): Atualizar · Abrir em ▸ (apps, "Personalizar…") · Copiar caminho · Copiar nome · Fixar/Desafixar · Marcar como lido/não lido · Grupos · Dormir · Excluir worktree (desabilitado no checkout primário, com tooltip explicando).
     - Itens de desenvolvedor só com ⌥ pressionado (`worktree-context-menu-policy.ts:44-51`). É um bom padrão para esconder ações técnicas como "Reautorizar pasta…" e "Atualizar Git".
     - **Tab de terminal** (`R/components/tab-bar/SortableTabContextMenu.tsx:30-86,176-271`; `TabWorkspaceLayoutMenuSection.tsx:33-68`): Dividir ▸ · Fixar · Copiar ID · Fechar (desabilitado se fixada) · Fechar outras · Fechar à direita/esquerda · Mudar título · Cor da tab ▸ (10 cores) · Mover para split ▸ direita/esquerda/baixo/cima.
-    - Recomendação para o Agent Box: na sessão, Renomear · Novo terminal/agente ▸ · Abrir pasta no Finder/editor · Copiar caminho · Fixar · Marcar como lida · Arquivar/Excluir (com confirmação). No terminal, ver o item 3, mais "Abrir computador" e "Retomar conversa".
+    - Recomendação para o Racky: na sessão, Renomear · Novo terminal/agente ▸ · Abrir pasta no Finder/editor · Copiar caminho · Fixar · Marcar como lida · Arquivar/Excluir (com confirmação). No terminal, ver o item 3, mais "Abrir computador" e "Retomar conversa".
 
 31. **P1: renomear inline, regras exatas.** 03 #21 só diz "sem rename inline". Orca:
     - gatilhos: duplo clique, "Mudar título" ou ⌘R (tab) e ⌘⌥R (worktree);
@@ -225,7 +225,7 @@ Data: 2026-10-16. Somente leitura: nada foi alterado em `Sources/`.
     - Recomendação: a semântica deve ser "fechar tab = encerrar processo, com confirmação" e "⌘⇧T reabre (relançando com `--resume` quando houver ID nativo)".
 
 34. **P1: largura das tabs.**
-    - Agent Box: as tabs não têm largura máxima (`WorkspaceView.swift:713-724`, só `lineLimit(1)`). Um título longo empurra as outras e não há tooltip com o título completo. A fonte é de 13 pt; no Orca é 12.
+    - Racky: as tabs não têm largura máxima (`WorkspaceView.swift:713-724`, só `lineLimit(1)`). Um título longo empurra as outras e não há tooltip com o título completo. A fonte é de 13 pt; no Orca é 12.
     - Orca: largura fixa de 180/220 com mínimo de 72, para que **uma mudança de título não redimensione todas as tabs** (`R/components/tab-bar/tab-width-rules.ts:1-3`).
     - Recomendação: seguir a regra do Orca e mostrar o hover card da tab com o título, o cwd e o estado.
 
@@ -251,7 +251,7 @@ Data: 2026-10-16. Somente leitura: nada foi alterado em `Sources/`.
       - `NSApp.dockTile.badgeLabel` com a contagem de "precisa de você".
 
 39. **P1: a permissão negada é silenciosa.**
-    - Agent Box: o toggle chama `requestAuthorization`. Se o usuário negar, o toggle simplesmente volta a "desligado", sem explicação (`App/AppSettingsView.swift:17`, `HumanRequestCenter.swift:52-61`). O estado real do sistema nunca é relido.
+    - Racky: o toggle chama `requestAuthorization`. Se o usuário negar, o toggle simplesmente volta a "desligado", sem explicação (`App/AppSettingsView.swift:17`, `HumanRequestCenter.swift:52-61`). O estado real do sistema nunca é relido.
     - Orca: cartão "Allow notifications for Orca" com botão "Abrir Ajustes do Sistema" (`R/components/notifications/mac-notification-permission-card.tsx:161-220`) e botão "Enviar notificação de teste" (`R/components/settings/NotificationsPane.tsx:246`).
     - Notificações por evento no Orca: tarefa concluída, BEL do terminal, workspaces escondidos, som com volume, "suprimir com foco" (`NotificationsPane.tsx:115-246`). O dono usa `enabled`, `agentTaskComplete`, `terminalBell` e `suppressWhenFocused` ligados, com som "system".
     - Recomendação: seção Notificações com esses toggles, o cartão de permissão e o teste. É o par de UI do estado "esperando você" de 05.
@@ -295,9 +295,9 @@ A rodada 1 só trata a decisão como "pendente" (02 §4.3, 02:350). Com a decis�
 
 ## H. Configurações, onboarding e telas do Orca não inventariadas em 04
 
-47. **P1: arquitetura de Configurações.** 04 §5.7 lista os grupos do Orca, mas não diz o que o Agent Box precisa ter. Seções mínimas:
+47. **P1: arquitetura de Configurações.** 04 §5.7 lista os grupos do Orca, mas não diz o que o Racky precisa ter. Seções mínimas:
     - Geral;
-    - Agentes: agente padrão; por agente, comando, argumentos e env; "Permissões: YOLO/Manual". O Orca: `R/components/settings/AgentsPane.tsx:70-120`, `AgentLaunchDefaultsEditor.tsx:37-219`. O dono usa `--dangerously-skip-permissions` no Claude e `--dangerously-bypass-approvals-and-sandbox` no Codex, então o padrão do Agent Box precisa permitir isso em 1 clique;
+    - Agentes: agente padrão; por agente, comando, argumentos e env; "Permissões: YOLO/Manual". O Orca: `R/components/settings/AgentsPane.tsx:70-120`, `AgentLaunchDefaultsEditor.tsx:37-219`. O dono usa `--dangerously-skip-permissions` no Claude e `--dangerously-bypass-approvals-and-sandbox` no Codex, então o padrão do Racky precisa permitir isso em 1 clique;
     - Aparência;
     - Terminal (item 15);
     - Notificações (item 39);
@@ -312,7 +312,7 @@ A rodada 1 só trata a decisão como "pendente" (02 §4.3, 02:350). Com a decis�
     - o Orca roda um **terminal inline dentro do onboarding** para instalar ou logar CLIs (`R/components/onboarding/FeatureSetupInlineTerminal.tsx`, `OnboardingInlineCommandTerminal.tsx`);
     - pular pede confirmação ("Skip onboarding?", `OnboardingSkipConfirmationDialog.tsx:16-29`);
     - o tema escolhido no preview é revertido se o usuário pular (`onboarding-flow-state.ts:146`).
-    - Para o Agent Box: passo "Agente padrão" (detectado, com "Instalar" e "Entrar" rodando no terminal inline), passo "Computadores" (detectar Docker/Colima com "Iniciar Colima" e "Baixar imagem" no terminal inline, ou "Pular, uso só terminais") e passo "Notificações". Isso substitui a sheet com o formulário técnico inteiro (03 #2).
+    - Para o Racky: passo "Agente padrão" (detectado, com "Instalar" e "Entrar" rodando no terminal inline), passo "Computadores" (detectar Docker/Colima com "Iniciar Colima" e "Baixar imagem" no terminal inline, ou "Pular, uso só terminais") e passo "Notificações". Isso substitui a sheet com o formulário técnico inteiro (03 #2).
 
 49. **P1: o painel "Agents · retomar sessões" do Orca é o modelo do "Retomar conversa".** 03 #23 mostra que a sheet atual é inutilizável, e 04 não descreve a alternativa.
     - Orca (`R/components/right-sidebar/AiVaultPanelHeader.tsx:84-184`, `AiVaultPanelControls.tsx:92-357`, `AiVaultSessionActionMenuItems.tsx:77-187`):
@@ -351,7 +351,7 @@ A rodada 1 só trata a decisão como "pendente" (02 §4.3, 02:350). Com a decis�
 ## I. Microcopy e idioma
 
 52. **P1: não há infraestrutura de localização, e o Orca não tem português.**
-    - Agent Box: todas as strings estão no código (`Text("…")`). Não há String Catalog (`find -name '*.xcstrings'` vazio) e não há `Info.plist` do app com `CFBundleDevelopmentRegion` (só existe `design/source/Info.plist`).
+    - Racky: todas as strings estão no código (`Text("…")`). Não há String Catalog (`find -name '*.xcstrings'` vazio) e não há `Info.plist` do app com `CFBundleDevelopmentRegion` (só existe `design/source/Info.plist`).
     - Orca: suporta en, es, fr, ja, ko e zh (`R/i18n/supported-languages.ts:22-40`). **Não tem pt-BR.** Então "copiar o Orca" significa traduzir cada rótulo, e o rebuild precisa de um glossário.
     - Recomendação: String Catalog com `pt-BR` como idioma de desenvolvimento. Datas e tempos relativos ("agora", "12 min", "3 h", "5 d") via `RelativeDateTimeFormatter`, porque o Orca usa "now", "12m", "3h", "5d".
 

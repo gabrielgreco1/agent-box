@@ -18,7 +18,7 @@ Uma falha de digitação anterior transformou uma URL local em busca. Isso expli
 
 ## Evidência de 16/10/2026
 
-Smoke arm64 no Colima `agentbox-dev`, imagem `sha256:43bf099353c79148d8b960389f2359864a121183585e10b61d1c54ef7509166c`:
+Smoke arm64 no Colima `racky-dev`, imagem `sha256:43bf099353c79148d8b960389f2359864a121183585e10b61d1c54ef7509166c`:
 
 1. JavaScript headless executou fixture local: pixel vermelho `[254, 0, 2]`.
 2. Desktop inteiro 1280×800; clique XTEST mudou fixture para verde `[0, 127, 0]`.

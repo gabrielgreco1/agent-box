@@ -1,8 +1,8 @@
 # 04 · Motion
 
-Spec de rebuild do Agent Box · capítulo de animação · 2026-10-16
+Spec de rebuild do Racky · capítulo de animação · 2026-10-16
 **Revisado após R1–R3 em 2026-10-16** (patches de `review/R1-consistency.md`, `R2-coverage.md` e `R3-implementability.md`; registro em `review/E-04-changelog.md`).
-Decisão de origem: **P8** (`00-decisions.md`). Também valem: P1 (UI no estilo Orca), P2 (texto de UI em inglês), P4 (reattach), P5/P6 (computadores), P9 (sessão abre agente), P10/P11 (sessões limpas, seção "Sessions"), P14 (aprovação visual pelo dono), P15 ("Computer" na UI; ⌘Q com overlay), P16 (conflitos resolvidos pelos revisores), T3 (macOS 15, Swift 6), T5 (overlays na janela, nunca `.sheet`), T6 (SwiftTerm com Metal), T8 (noVNC), T10 (estados por hooks), T13 (`agentbox ctl` + `accessibilityIdentifier`).
+Decisão de origem: **P8** (`00-decisions.md`). Também valem: P1 (UI no estilo Orca), P2 (texto de UI em inglês), P4 (reattach), P5/P6 (computadores), P9 (sessão abre agente), P10/P11 (sessões limpas, seção "Sessions"), P14 (aprovação visual pelo dono), P15 ("Computer" na UI; ⌘Q com overlay), P16 (conflitos resolvidos pelos revisores), T3 (macOS 15, Swift 6), T5 (overlays na janela, nunca `.sheet`), T6 (SwiftTerm com Metal), T8 (noVNC), T10 (estados por hooks), T13 (`racky ctl` + `accessibilityIdentifier`).
 Base: `audit/06-motion.md` (proposta original), `audit/04-orca-reference.md`, `audit/07-review-ui.md` (correções), código do Orca 1.4.219 (renderer, só leitura; os caminhos citados são relativos a `src/renderer/src` e passam a vir do pacote de referência versionado `docs/rebuild/reference/orca-1.4.219/` proposto em R3 F0-3, nunca de um scratchpad) e a skill `motion-designer` do dono (`~/.claude/skills/motion-designer`).
 
 Toda string entre aspas que aparece na tela está em inglês. O resto do texto está em português. Microcopy, atalhos e `accessibilityIdentifier` **não são definidos aqui**: este capítulo cita os de `03-screens.md` (§21 atalhos, §22 IDs, telas) e a convenção de `02-design-system.md` §17. Se um texto citado aqui divergir de 03, vale 03. Toda referência à auditoria leva o prefixo `audit/NN` (R1 X-21).
@@ -62,7 +62,7 @@ Os capítulos 02 e 03 citavam os IDs da auditoria (`A1…F6`, `E0…E4`, e em 03
 
 ## 0. Resumo
 
-- O motion do Agent Box serve para **mostrar estado real**: o que está sendo lançado, quem está trabalhando, quem precisa de você e quem está pilotando um computador. Decoração e atividade fingida estão proibidas.
+- O motion do Racky serve para **mostrar estado real**: o que está sendo lançado, quem está trabalhando, quem precisa de você e quem está pilotando um computador. Decoração e atividade fingida estão proibidas.
 - A base é o Orca: 150–200 ms para quase tudo, deslocamentos de 2–8 pt, um spinner único a 12 passos/s sincronizado entre instâncias, e Reduce Motion com fallback desenhado. Os números divergentes da auditoria foram conferidos no código do Orca (§2).
 - Os tokens ficam em um arquivo só, `design/motion/tokens.json`. Ele gera `MotionTokens.generated.swift` para o app e `tokens.js` para os protótipos HTML. O vídeo do protótipo e o app usam as mesmas curvas e springs.
 - O terminal **nunca anima geometria**. Cada transição faz no máximo um resize do PTY, sempre no início. Loops infinitos rodam em Core Animation a ≤ 30 fps (spinner a 12) e param quando não estão visíveis.
@@ -129,7 +129,7 @@ Também revisei duas regras de `audit/06`:
 
 - Arquivo canônico: `design/motion/tokens.json` (versionado, revisado como código).
 - Gerador: `scripts/motion/gen_tokens.py` (Python stdlib) produz:
-  - `MotionTokens.generated.swift`, no alvo `AgentBoxDesignSystem` de `Packages/AgentBoxKit` (nome fixado em 08, AR-121; pasta `AgentBoxDesignSystem/Tokens/`, a mesma dos tokens de 02);
+  - `MotionTokens.generated.swift`, no alvo `RackyDesignSystem` de `Packages/RackyKit` (nome fixado em 08, AR-121; pasta `RackyDesignSystem/Tokens/`, a mesma dos tokens de 02);
   - `design/motion/lib/tokens.js` com `window.MOTION = {...}`. Ele existe porque `fetch()` de `file://` é bloqueado no render da skill (`pipeline.md`, "Gotchas").
 - O CI roda o gerador e falha se os arquivos gerados diferirem do commit.
 - Nenhum `Animation.easeOut(duration:)`, `timingCurve(...)` ou `spring(...)` literal fora de `Motion.swift`. Uma regra de lint (SwiftLint custom rule ou `grep` no CI) bloqueia literais de animação em views.
@@ -219,7 +219,7 @@ Regra de fase global: `beginTime = CACurrentMediaTime() − fmod(CACurrentMediaT
 
 ```json
 {
-  "schema": "agentbox.motion.tokens",
+  "schema": "racky.motion.tokens",
   "version": 1,
   "duration": {
     "press": 0.08, "hover": 0.12, "paneOpacity": 0.14, "fast": 0.15,
@@ -352,16 +352,16 @@ Esta é a seção de Reduce Motion citada pelos outros capítulos (a referência
 - **Duração · curva** usa nomes de token (§3). "→" separa fases encadeadas.
 - **Técnica**: SUI = SwiftUI (`transition`, `withAnimation`, `matchedGeometryEffect`, `contentTransition`) · KA = `KeyframeAnimator` · PA = `PhaseAnimator` · CA = Core Animation num `NSViewRepresentable` · AK = AppKit (`NSAnimationContext`, `NSScrollView`) · Sys = sistema.
 - **RM** = fallback com Reduce Motion.
-- **Test ID** = `accessibilityIdentifier` do elemento animado, **tirado da lista canônica de 03 §22** e da convenção de 02 §17 (R1 §4). Este capítulo não cria identificadores. Os poucos que 03 §22 ainda não lista estão marcados com † e devem entrar lá (pedido registrado em `review/E-04-changelog.md`). `<id>` é o identificador do domínio (sessão, terminal, computador); `<terminalId>`, `<computerId>` e `<childId>` quando a distinção importa. Todo momento também emite o evento de motion `M-xxx` com fases (`begin`, marcos nomeados, `end`) em signpost e no canal `agentbox ctl` (§11.3).
+- **Test ID** = `accessibilityIdentifier` do elemento animado, **tirado da lista canônica de 03 §22** e da convenção de 02 §17 (R1 §4). Este capítulo não cria identificadores. Os poucos que 03 §22 ainda não lista estão marcados com † e devem entrar lá (pedido registrado em `review/E-04-changelog.md`). `<id>` é o identificador do domínio (sessão, terminal, computador); `<terminalId>`, `<computerId>` e `<childId>` quando a distinção importa. Todo momento também emite o evento de motion `M-xxx` com fases (`begin`, marcos nomeados, `end`) em signpost e no canal `racky ctl` (§11.3).
 - **Prioridade e fatia** seguem §12 (§12.2 diz em que fatia cada momento fica `verified`).
 
 ### 6.2 App e janela (M-0xx)
 
 | ID | Momento | Gatilho | Duração · curva | Propriedades | Técnica | RM | Test ID |
 |---|---|---|---|---|---|---|---|
-| M-001 | Abrir o app (reattach) | Lançamento; daemon `agentboxd` responde ao handshake | sidebar: 0,20 `standard`, stagger `list` (máx. 6; o resto aparece junto com o 6º) | Linhas da sidebar: opacidade 0 → 1, y +4 → 0. Panes reanexados: buffer pintado **antes** do primeiro frame visível; `PaneCover` 1 → 0 em 0,16 só se o primeiro frame do ring buffer atrasar > 1 quadro. Indicadores começam na fase global. Janela: animação do sistema. | SUI + `PaneCover` | fade 0,15 no container da sidebar | `sidebar`, `pane.<terminalId>.cover`† |
-| M-002 | Processo morreu desde a última abertura (estado `Interrupted`, 03 §4.6) | Reattach encontra o processo encerrado (reboot, crash) | 0,16 `ease` → banner 0,24 `drawer` → ações 0,20 `standard` | Opacidade do container do terminal 1 → `interruptedContent` (0,50; opacidade de container, R1 permite). Depois o banner do topo revela por recorte: "This terminal stopped while Agent Box was closed." (ou "This terminal stopped when your Mac restarted."), com os botões de 03 §4.6 ("Resume" / "Start Fresh" / "Close"; shell: "Restart" / "Close") subindo 4 pt com fade, stagger 0,035. | SUI (banner irmão) | fade | `pane.<terminalId>.interrupted`, `pane.<terminalId>.interrupted.resume` |
-| M-003 | Serviço de segundo plano desconectado / reconectando | Socket do `agentboxd` cai | entrada 0,24 `drawer`; spinner M-811 | Banner `warning` no topo de cada pane revela por recorte vertical (03 §4.6 "Daemon unavailable"): "Lost connection to the background service. Reconnecting…" com spinner; o terminal fica congelado, sem esmaecer. Depois de 10 s, os botões "Restart Background Service" / "Open Diagnostics" entram com fade (0,20). Ao reconectar: banner recolhe (0,18 `exit`). O banner de janela "Background agents stopped unexpectedly" (AC-810) usa a mesma entrada. Nenhum texto de UI cita "daemon" nem "agentboxd" (R1 K-46). | SUI | banner estático, spinner parado | `pane.<terminalId>.daemonBanner`; janela: `window.daemonBanner`† |
+| M-001 | Abrir o app (reattach) | Lançamento; daemon `rackyd` responde ao handshake | sidebar: 0,20 `standard`, stagger `list` (máx. 6; o resto aparece junto com o 6º) | Linhas da sidebar: opacidade 0 → 1, y +4 → 0. Panes reanexados: buffer pintado **antes** do primeiro frame visível; `PaneCover` 1 → 0 em 0,16 só se o primeiro frame do ring buffer atrasar > 1 quadro. Indicadores começam na fase global. Janela: animação do sistema. | SUI + `PaneCover` | fade 0,15 no container da sidebar | `sidebar`, `pane.<terminalId>.cover`† |
+| M-002 | Processo morreu desde a última abertura (estado `Interrupted`, 03 §4.6) | Reattach encontra o processo encerrado (reboot, crash) | 0,16 `ease` → banner 0,24 `drawer` → ações 0,20 `standard` | Opacidade do container do terminal 1 → `interruptedContent` (0,50; opacidade de container, R1 permite). Depois o banner do topo revela por recorte: "This terminal stopped while Racky was closed." (ou "This terminal stopped when your Mac restarted."), com os botões de 03 §4.6 ("Resume" / "Start Fresh" / "Close"; shell: "Restart" / "Close") subindo 4 pt com fade, stagger 0,035. | SUI (banner irmão) | fade | `pane.<terminalId>.interrupted`, `pane.<terminalId>.interrupted.resume` |
+| M-003 | Serviço de segundo plano desconectado / reconectando | Socket do `rackyd` cai | entrada 0,24 `drawer`; spinner M-811 | Banner `warning` no topo de cada pane revela por recorte vertical (03 §4.6 "Daemon unavailable"): "Lost connection to the background service. Reconnecting…" com spinner; o terminal fica congelado, sem esmaecer. Depois de 10 s, os botões "Restart Background Service" / "Open Diagnostics" entram com fade (0,20). Ao reconectar: banner recolhe (0,18 `exit`). O banner de janela "Background agents stopped unexpectedly" (AC-810) usa a mesma entrada. Nenhum texto de UI cita "daemon" nem "rackyd" (R1 K-46). | SUI | banner estático, spinner parado | `pane.<terminalId>.daemonBanner`; janela: `window.daemonBanner`† |
 | M-004 | Onboarding (passos) | Primeira abertura (P3) | passo novo: 0,30 `expoOut` (x +16 → 0, fade); passo antigo: 0,18 `exit` (x 0 → −8, fade) | Itens importados (projetos, worktrees, args) entram conforme são lidos: fade + 4 pt, stagger `list`; check desenhado 0,24 `expoOut`. Barra de progresso: largura em 0,30 `twEaseOut`. | SUI | crossfade entre passos | `onboarding`, `onboarding.item.<key>`, `onboarding.import.<group>` |
 | M-005 | Janela fica ativa/inativa | `NSWindow` key/occlusion | — | Não anima nada. Pausa e retoma loops (R7). | — | — | — |
 
@@ -518,7 +518,7 @@ Detalhe quadro a quadro em §7.3. **Fatia 3** (modo leve); variantes do modo iso
 | M-901 | Landing vazia (sem projetos nem sessões; 03 §19) | Lista vazia | tile 0,20 `standard` → texto 0,20 `standard` | O tile de 64 com o logo entra com fade + escala 0,98 → 1, **sem desenho de traço** (03 §19 e DS §12.21: sem ilustração). Título, texto e ações ("Add Project…", "New Clean Session" (P11), "Import from Orca…" quando couber) sobem 4 pt, stagger 0,035. Sem loop. | SUI | fade | `landing`, `landing.addProject`, `landing.newScratch` (renomear para `landing.newCleanSession` em 03, P11)†, `landing.importOrca` |
 | M-902 | Busca sem resultado | Filtro zera a lista | 0,15 `ease` | `No sessions match "<query>".` + "Clear Search" com fade (03 §2.2). | SUI | igual | `sidebar.search.empty`, `sidebar.search.clear` |
 | M-903 | Docker indisponível / imagem ausente | Detector de runtime (T7) | banner 0,24 `drawer`; ações 0,20 | Banner no topo da página Computers (e da aba Computers) revela por recorte: "Docker isn't running." + "Start Docker" (03 §12.3). A ação em andamento usa M-813. | SUI | fade | `computers.dockerBanner`† |
-| M-904 | Persistência degradada (T2: corrupção nunca desabilita a UI) | Falha de migração/leitura | banner 0,24 `drawer` | Banner no topo do centro com o texto de 03 §1.4: "Agent Box couldn't read its database. Your terminals are still running." + "Open Diagnostics" (variantes de 08: "Database was created by a newer Agent Box", "Restored from the backup of <date>." + "Reveal Corrupt File"). UI continua interativa. | SUI | fade | `window.databaseBanner`† |
+| M-904 | Persistência degradada (T2: corrupção nunca desabilita a UI) | Falha de migração/leitura | banner 0,24 `drawer` | Banner no topo do centro com o texto de 03 §1.4: "Racky couldn't read its database. Your terminals are still running." + "Open Diagnostics" (variantes de 08: "Database was created by a newer Racky", "Restored from the backup of <date>." + "Reveal Corrupt File"). UI continua interativa. | SUI | fade | `window.databaseBanner`† |
 | M-905 | Lista ou painel vazio (sem computadores, Inbox vazia, sem histórico) | Lista vazia | 0,20 `standard` | Texto + ação opcional (DS §12.21: sem ilustração, sem ícone grande), ex.: "No computers yet. Agents create them when they need a browser.", "Nothing needs you."; fade + 4 pt. | SUI | fade | `<panel>.empty`† |
 | M-906 | Erro genérico de ação longa (`audit/10` RT.3) | Falha | 0,24 | Erro aparece **no lugar onde a ação foi pedida** (linha, card, pane, painel) com o padrão M-205/M-505: indicador → vermelho, mensagem e ação sobem 4 pt. Nunca alerta modal genérico. | SUI | fade | `<host>.error` |
 
@@ -615,7 +615,7 @@ Cada linha corresponde a um evento `LaunchProgress` emitido pelo core (requisito
 | A | `files.copy` (v1.1, `.worktreeinclude`, R1 K-89a) | "Copying .env files…" | configurado no projeto | cópia concluída |
 | A | `setup.script` | "Running setup script"† (abre em tab própria) | `setup` do projeto | script iniciado (não espera terminar) |
 | B · Terminal (Fatia 1) | `launch.config` | "Preparing launch" (hooks, MCP, skills, por lançamento) | sempre | arquivos `--settings`, `--mcp-config`, `--plugin-dir` gravados |
-| B | `pty.spawn` | — (não aparece; a linha seguinte cobre) | sempre | `agentboxd` confirma o PTY |
+| B | `pty.spawn` | — (não aparece; a linha seguinte cobre) | sempre | `rackyd` confirma o PTY |
 | B | `cli.exec` | "Starting Claude Code…" (nome de exibição do agente) | sempre | primeiro byte no PTY (encerra a ignição, M-504) |
 | B | `hooks.handshake` (Fatia 2) | — (não aparece na lista) | Claude/Codex | `SessionStart` recebido; se não chegar em 10 s, o indicador vai para `unknown` (M-407) |
 | C · Computador (Fatia 3, modo leve; v1.1 isolado) | `box.runtime` | "Checking Docker"† | sempre que há computador | Engine API responde |
@@ -710,7 +710,7 @@ O viewer vira first responder em g0: o cursor do sistema já controla o computad
 | Componente | Momentos | Notas |
 |---|---|---|
 | `Motion` + `MotionTokens` (gerado) + `MotionPolicy` | todos | §3.8; `MotionPolicy.mode` aceita `.instant` e `.slow(x)` |
-| `MotionEvents` | todos | `os_signpost` (subsystem `app.agentbox`, category `Motion`, nome = ID) + stream para `agentbox ctl motion events` em modo de automação |
+| `MotionEvents` | todos | `os_signpost` (subsystem `app.racky`, category `Motion`, nome = ID) + stream para `racky ctl motion events` em modo de automação |
 | `LoopHost` | todos os loops | registra layers em loop, aplica fase global, teto de fps, pausa/retoma (R5–R7) |
 | `OverlayHost` (dialog, palette, menu, tooltip, hover card) | M-101…M-107 | `anchorPreference` do botão de origem; foco e Esc; uma pilha por janela |
 | `SidePanelHost` | M-108 | máscara de recorte + coordenação com R2 |
@@ -732,7 +732,7 @@ Lottie e Rive ficam fora (`audit/06` §4.H). `MotionAssetView`/AVPlayer não é 
 
 ### 9.1 O que usar da skill
 
-A skill `motion-designer` (`~/.claude/skills/motion-designer`) foi feita para vídeos sociais. Para a UI do Agent Box:
+A skill `motion-designer` (`~/.claude/skills/motion-designer`) foi feita para vídeos sociais. Para a UI do Racky:
 
 - **Usar:** o método de timeline determinística (`window.seek(t)` função pura de t, `window.MARK`, `window.DUR`, `window.ready`; sem `Date.now`, transições CSS ou `Math.random`), o template `templates/timeline.html` como base, `scripts/render.py` (frames, `--test` com contact sheet, `--scale`, `--range`), `scripts/export_marks.py`, `scripts/sheet.py`, `scripts/encode.sh` e as regras de `references/craft.md` que valem para UI: um movimento por vez; se o olho persegue, está rápido; saídas antes de entradas; revisão em vídeo e não em stills; versões paralelas por agentes independentes.
 - **Pular:** o intake (Q0–Q16), safe zones e faixas HEAD/VIS/CAP de redes sociais, narração, legendas, trilha e CTA. O render usa `--ar` customizado (`1440x900` para a janela inteira, `640x400` para um componente), com uma entrada `LAYOUT` própria.
@@ -792,7 +792,7 @@ O vídeo do storyboard nunca é usado dentro do app.
 
 ## 10. Motion Lab (debug no app)
 
-Janela `Motion Lab`, disponível em builds Debug (⌃⌥⌘M; o ⌥⌘M antigo colide com "Minimize All" do sistema, R3 §2.2, e o novo não aparece em 03 §21) e por `agentbox ctl motion lab` quando o canal de automação está ligado.
+Janela `Motion Lab`, disponível em builds Debug (⌃⌥⌘M; o ⌥⌘M antigo colide com "Minimize All" do sistema, R3 §2.2, e o novo não aparece em 03 §21) e por `racky ctl motion lab` quando o canal de automação está ligado.
 
 | Recurso | Comportamento |
 |---|---|
@@ -819,10 +819,10 @@ Um momento só passa de `ported` para `verified` quando cumpre tudo abaixo, os d
 |---|---|---|
 | MA1 | Durações e curvas vêm de tokens | CI: lint sem literais de animação; teste de paridade (§9.4) verde |
 | MA2 | Coreografia igual ao storyboard aprovado | `compare.sh`: vídeo lado a lado app × storyboard; o dono aprova assistindo. Nos quadros-chave de §7, diferença ≤ 1 quadro e ≤ 2% nas propriedades medidas (scrub no Motion Lab + leitura do `presentation()`) |
-| MA3 | Ordem e duração dos eventos | XCUITest/integração lê `agentbox ctl motion events` e confere a sequência de fases (ex.: `M-501 begin → landed → M-503 begin → M-504 begin → M-501 end`) e cada duração com tolerância de ±16 ms (`mode = .normal`) |
-| MA4 | Funcional em `instant` | Suíte XCUITest completa com `-AgentBoxMotionMode instant`: mesmos eventos, duração 0, nenhum teste depende de `sleep` |
-| MA5 | Reduce Motion | Suíte com `-AgentBoxReduceMotion YES`: cada momento emite o fallback esperado (ex.: `M-501 chipFlight=skipped`); screenshots por momento mostram estado legível sem movimento; nenhum loop ativo além de zero no `LoopHost` |
-| MA6 | Terminal intocado | Contador de resizes de PTY (exposto em `agentbox ctl debug pty-resizes`) = **exatamente 1** por transição de layout (M-201, M-108, M-306, M-307) e 0 para os demais momentos. Teste automatizado |
+| MA3 | Ordem e duração dos eventos | XCUITest/integração lê `racky ctl motion events` e confere a sequência de fases (ex.: `M-501 begin → landed → M-503 begin → M-504 begin → M-501 end`) e cada duração com tolerância de ±16 ms (`mode = .normal`) |
+| MA4 | Funcional em `instant` | Suíte XCUITest completa com `-RackyMotionMode instant`: mesmos eventos, duração 0, nenhum teste depende de `sleep` |
+| MA5 | Reduce Motion | Suíte com `-RackyReduceMotion YES`: cada momento emite o fallback esperado (ex.: `M-501 chipFlight=skipped`); screenshots por momento mostram estado legível sem movimento; nenhum loop ativo além de zero no `LoopHost` |
+| MA6 | Terminal intocado | Contador de resizes de PTY (exposto em `racky ctl debug pty-resizes`) = **exatamente 1** por transição de layout (M-201, M-108, M-306, M-307) e 0 para os demais momentos. Teste automatizado |
 | MA7 | Sem hitches | Instruments, template *Animation Hitches*, a 120 Hz, com os 4 terminais em stress do Motion Lab, disparando cada momento de prioridade A. Meta: 0 hitches; reprova acima de 5 ms/s de hitch time. Automatizado no lane de performance com `xcrun xctrace record --template 'Animation Hitches' --launch …` e um parser que extrai o hitch ratio |
 | MA8 | Custo dos loops | 10 indicadores `working` visíveis por 60 s: CPU do app ≤ 2% de um núcleo e do WindowServer ≤ 3% acima da linha de base (`top -l` amostrado pelo script de performance); instrumento *Core Animation* mostra 12 commits/s para o spinner |
 | MA9 | Pausa fora de vista | Janela ocluída por 10 s: 0 commits de loop (instrumento Core Animation / contador do `LoopHost`); ao voltar, as fases batem com a fase global (teste unitário do cálculo de `beginTime`) |
@@ -838,9 +838,9 @@ Um momento só passa de `ported` para `verified` quando cumpre tudo abaixo, os d
 
 ### 11.3 Instrumentação para os testes
 
-- `-AgentBoxMotionMode normal|instant|slow:<fator>` e `-AgentBoxReduceMotion YES|NO` como launch arguments (só respeitados em builds de teste ou com o canal de automação ligado).
-- `agentbox ctl motion events --follow` emite JSON por linha: `{"id":"M-501","phase":"landed","t":0.421,"target":"sidebar.pending.8F2…","reduced":false}`.
-- `agentbox ctl motion trigger M-xxx [--fixture …]` dispara um momento com dados simulados (o mesmo motor do Motion Lab). É o que os testes de MA2/MA3 usam.
+- `-RackyMotionMode normal|instant|slow:<fator>` e `-RackyReduceMotion YES|NO` como launch arguments (só respeitados em builds de teste ou com o canal de automação ligado).
+- `racky ctl motion events --follow` emite JSON por linha: `{"id":"M-501","phase":"landed","t":0.421,"target":"sidebar.pending.8F2…","reduced":false}`.
+- `racky ctl motion trigger M-xxx [--fixture …]` dispara um momento com dados simulados (o mesmo motor do Motion Lab). É o que os testes de MA2/MA3 usam.
 - Signposts `Motion` com begin/end por ID aparecem no Instruments ao lado do *Animation Hitches*, o que permite atribuir um hitch a um momento.
 
 ---
@@ -872,7 +872,7 @@ As fatias são as de 01 §4.1. Um momento só pode ficar `verified` (§11.1, cri
 
 Leitura de P8 e de 01 §4.1 ("os três momentos de motion obrigatórios" na Fatia 1): na Fatia 1 os momentos 1 e 2 ficam `verified`; o momento 3 tem storyboard aprovado e port no Motion Lab com dados simulados, e fica `verified` na Fatia 3. A aprovação do dono segue P14 (lado a lado com a referência, OK explícito).
 
-Dependências de dados (para outros capítulos): `AgentActivityState` por hooks (T10), `LaunchProgress` com `stepKey` (§7.2.2), eventos de etapa de computador, `ControlBroker` com `revoking` e ACK, eventos de input do MCP do computador com coordenadas e confirmação de execução, contador de resizes de PTY e canal `agentbox ctl motion` (T13).
+Dependências de dados (para outros capítulos): `AgentActivityState` por hooks (T10), `LaunchProgress` com `stepKey` (§7.2.2), eventos de etapa de computador, `ControlBroker` com `revoking` e ACK, eventos de input do MCP do computador com coordenadas e confirmação de execução, contador de resizes de PTY e canal `racky ctl motion` (T13).
 
 ---
 
@@ -882,4 +882,4 @@ Dependências de dados (para outros capítulos): `AgentActivityState` por hooks 
 - `docs/rebuild/review/R1-consistency.md` (§0, §4, K-04…K-06, K-20, K-25…K-27, K-34, K-46…K-50, K-53…K-59, K-62, K-63, K-74, K-78, K-84…K-90, X-20), `R2-coverage.md` (§5), `R3-implementability.md` (§2.2, §2.3, §4.1, §10).
 - `docs/rebuild/audit/06-motion.md` (inventário, proposta e catálogo originais), `04-orca-reference.md` §1.5 e §5, `07-review-ui.md` (correções 3, 5 e 6; itens 34, 36 e 38), `10-review-journeys.md` (J3, J4, R4.7, R6.1, RT.3).
 - Código do Orca (só leitura): `components/ui/dialog.tsx:41,115`; `components/ui/dropdown-menu.tsx:36`; `components/ui/context-menu.tsx:62`; `components/ui/popover.tsx:174`; `components/ui/tooltip.tsx:36`; `App.tsx:92`; `components/tab-bar/TabStripTooltipProvider.tsx:13`; `components/StateIndicatorTooltip.tsx:4`; `components/sidebar/WorktreeCardMeta.tsx:74-75`; `components/AgentWorkingSpinner.tsx`; `components/AgentStateDot.tsx`; `assets/main.css` (linhas 228-235, 345-346, 1451, 1792-1822, 1940-2003, 2035-2091, 2587-2623, 2788-2802, 2993-3005); `assets/terminal.css:120-206`; `lib/pane-manager/pane-divider.ts:79-86`; `shared/constants.ts:42`; `shared/default-global-settings.ts:90`; `components/feature-wall/*` (origem de `browserTabIn` e afins).
-- Skill do dono: `~/.claude/skills/motion-designer/SKILL.md`, `references/craft.md` (§2, §3, §5c, §9), `references/pipeline.md`, `templates/timeline.html`, `scripts/render.py`, `scripts/encode.sh`, `scripts/export_marks.py`, `scripts/sheet.py`. Variante com brand kits: `~/Desktop/Labrynth/labrynth-motion-design/skills/labrynth-motion-design/` (mesmo pipeline; não usada para tokens do Agent Box).
+- Skill do dono: `~/.claude/skills/motion-designer/SKILL.md`, `references/craft.md` (§2, §3, §5c, §9), `references/pipeline.md`, `templates/timeline.html`, `scripts/render.py`, `scripts/encode.sh`, `scripts/export_marks.py`, `scripts/sheet.py`. Variante com brand kits: `~/Desktop/Labrynth/labrynth-motion-design/skills/labrynth-motion-design/` (mesmo pipeline; não usada para tokens do Racky).

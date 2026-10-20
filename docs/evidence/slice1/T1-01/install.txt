@@ -1,35 +1,35 @@
 --- xcodebuild: WARNING: Using the first of multiple matching destinations:
 { platform:macOS, arch:arm64, id:00006040-0014281E1120801C, name:My Mac }
 { platform:macOS, arch:x86_64, id:00006040-0014281E1120801C, name:My Mac }
-AVISO: identidade 'Agent Box Local Signing' ausente; assinando AD-HOC (rode scripts/make-dev-cert.sh uma vez para assinatura estável).
-/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentbox: replacing existing signature
-/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentboxd: replacing existing signature
-/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app: replacing existing signature
---prepared:/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentboxd
---prepared:/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentbox
---validated:/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentboxd
---validated:/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentbox
-/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app: valid on disk
-/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app: satisfies its Designated Requirement
-build: OK -> /Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app
-install: instalado -> /tmp/ab-inst/Agent Box.app (anterior em /tmp/ab-home/previous)
+AVISO: identidade 'Racky Local Signing' ausente; assinando AD-HOC (rode scripts/make-dev-cert.sh uma vez para assinatura estável).
+/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app/Contents/MacOS/racky: replacing existing signature
+/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app/Contents/MacOS/rackyd: replacing existing signature
+/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app: replacing existing signature
+--prepared:/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app/Contents/MacOS/rackyd
+--prepared:/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app/Contents/MacOS/racky
+--validated:/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app/Contents/MacOS/rackyd
+--validated:/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app/Contents/MacOS/racky
+/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app: valid on disk
+/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app: satisfies its Designated Requirement
+build: OK -> /Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app
+install: instalado -> /tmp/ab-inst/Racky.app (anterior em /tmp/ab-home/previous)
 --- xcodebuild: WARNING: Using the first of multiple matching destinations:
 { platform:macOS, arch:arm64, id:00006040-0014281E1120801C, name:My Mac }
 { platform:macOS, arch:x86_64, id:00006040-0014281E1120801C, name:My Mac }
-AVISO: identidade 'Agent Box Local Signing' ausente; assinando AD-HOC (rode scripts/make-dev-cert.sh uma vez para assinatura estável).
-/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentbox: replacing existing signature
-/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentboxd: replacing existing signature
-/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app: replacing existing signature
---prepared:/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentbox
---validated:/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentbox
---prepared:/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentboxd
---validated:/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app/Contents/MacOS/agentboxd
-/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app: valid on disk
-/Users/gabriel/orca/workspaces/agent-box/otter/build/AgentBox/Agent Box.app: satisfies its Designated Requirement
-install: instalado -> /tmp/ab-inst/Agent Box.app (anterior em /tmp/ab-home/previous)
-install: rollback concluído -> /tmp/ab-inst/Agent Box.app
+AVISO: identidade 'Racky Local Signing' ausente; assinando AD-HOC (rode scripts/make-dev-cert.sh uma vez para assinatura estável).
+/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app/Contents/MacOS/racky: replacing existing signature
+/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app/Contents/MacOS/rackyd: replacing existing signature
+/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app: replacing existing signature
+--prepared:/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app/Contents/MacOS/racky
+--validated:/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app/Contents/MacOS/racky
+--prepared:/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app/Contents/MacOS/rackyd
+--validated:/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app/Contents/MacOS/rackyd
+/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app: valid on disk
+/Users/gabriel/orca/workspaces/agent-box/otter/build/Racky/Racky.app: satisfies its Designated Requirement
+install: instalado -> /tmp/ab-inst/Racky.app (anterior em /tmp/ab-home/previous)
+install: rollback concluído -> /tmp/ab-inst/Racky.app
 total 9048
--rwxr-xr-x@ 1 gabriel  staff   167792 Oct 17 00:36 Agent Box
--rwxr-xr-x@ 1 gabriel  staff  1638160 Oct 17 00:36 agentbox
--rwxr-xr-x@ 1 gabriel  staff  2823920 Oct 17 00:36 agentboxd
+-rwxr-xr-x@ 1 gabriel  staff   167792 Oct 17 00:36 Racky
+-rwxr-xr-x@ 1 gabriel  staff  1638160 Oct 17 00:36 racky
+-rwxr-xr-x@ 1 gabriel  staff  2823920 Oct 17 00:36 rackyd
 verify-ok

@@ -9,7 +9,7 @@ Building for debugging...
 [6/8] Emitting module UISnapshotTests
 [7/8] Compiling UISnapshotTests LiveViewerWebViewTests.swift
 [7/9] Write Objects.LinkFileList
-[8/9] Linking AgentBoxKitPackageTests
+[8/9] Linking RackyKitPackageTests
 Build complete! (12.07s)
 Test Suite 'All tests' started at 2026-10-17 07:08:44.475.
 Test Suite 'All tests' passed at 2026-10-17 07:08:44.476.
@@ -43,7 +43,7 @@ Test Suite 'All tests' passed at 2026-10-17 07:08:44.476.
 ◇ Suite "T3-05 - viewer isolado" started.
 ◇ Suite CapacityPlannerTests started.
 ◇ Suite "T3-02 - egress sidecar com Docker real" started.
-◇ Suite "Docker real (AGENTBOX_TEST_DOCKER=1)" started.
+◇ Suite "Docker real (RACKY_TEST_DOCKER=1)" started.
 ◇ Suite ModelDecodingTests started.
 ◇ Suite ProjectRenameRemoveTests started.
 ◇ Suite ErrorMappingTests started.
@@ -2472,9 +2472,9 @@ Test Suite 'All tests' passed at 2026-10-17 07:08:44.476.
 ✔ Test explicitExistingBranchOffersUseExisting() passed after 15.064 seconds.
 ✔ Test branchCheckedOutInMainIsInUse() passed after 15.190 seconds.
 ✔ Test renamedSessionAndStartedSessionSurviveSync() passed after 15.315 seconds.
-agentbox hook latency, binary=/Users/gabriel/orca/agent-box/.claude/worktrees/agent-afabb8c64edd326a9/Packages/AgentBoxKit/.build/debug/agentbox
-agentbox hook latency (60 runs, app closed/spool): p50=101.750166 ms p95=175.736375 ms
-agentbox hook latency (60 runs, app live/socket): p50=105.801291 ms p95=155.54875 ms
+racky hook latency, binary=/Users/gabriel/orca/agent-box/.claude/worktrees/agent-afabb8c64edd326a9/Packages/RackyKit/.build/debug/racky
+racky hook latency (60 runs, app closed/spool): p50=101.750166 ms p95=175.736375 ms
+racky hook latency (60 runs, app live/socket): p50=105.801291 ms p95=155.54875 ms
 ✔ Test helperLatencyStaysWellUnderTheDeadlineWithTheAppLiveAndClosed() passed after 15.475 seconds.
 ✔ Suite HookCLITests passed after 15.487 seconds.
 ✔ Test containerLifecycleHardeningLabelsAndEvents() passed after 2.843 seconds.
@@ -2746,8 +2746,8 @@ agentbox hook latency (60 runs, app live/socket): p50=105.801291 ms p95=155.5487
 ✔ Test overlayLayerIsAboveEverythingAndPassesClicksThroughWhenEmpty() passed after 0.149 seconds.
 ◇ Suite PopoverTests started.
 ◇ Test popoverFromTheTitlebarCapturesTheKeyboardAndReturnsItToTheTerminal() started.
-2026-10-17 07:09:12.550 swiftpm-testing-helper[15651:12043540] View <AgentBoxUI.ChromeContainerView: 0x7a9e0ade00> has 1 views pointing at it that can't be found.
-2026-10-17 07:09:12.550 swiftpm-testing-helper[15651:12043540] View <AgentBoxUI.OverlayHostingView: 0x7aa10c8a00> has 16380 views pointing at it that can't be found.
+2026-10-17 07:09:12.550 swiftpm-testing-helper[15651:12043540] View <RackyUI.ChromeContainerView: 0x7a9e0ade00> has 1 views pointing at it that can't be found.
+2026-10-17 07:09:12.550 swiftpm-testing-helper[15651:12043540] View <RackyUI.OverlayHostingView: 0x7aa10c8a00> has 16380 views pointing at it that can't be found.
 ✔ Test linkActivationOpensOnlyAllowedSchemes() passed after 0.165 seconds.
 ◇ Test zoomStepsAndClamps() started.
 ✔ Test helpRequestReachesInboxBadgeAndNotificationOnceAndOpeningMarksItRead() passed after 1.338 seconds.
@@ -2801,7 +2801,7 @@ agentbox hook latency (60 runs, app live/socket): p50=105.801291 ms p95=155.5487
 ✔ Test newCleanSessionHonorsTheDefaultAgentSetting() passed after 1.151 seconds.
 ◇ Test newCleanSessionInFolderUsesTheChosenFolderAndTouchesNothingInIt() started.
 ✔ Test twentyConcurrentInspectsAndExecsStayResponsive() passed after 0.824 seconds.
-✔ Suite "Docker real (AGENTBOX_TEST_DOCKER=1)" passed after 29.541 seconds.
+✔ Suite "Docker real (RACKY_TEST_DOCKER=1)" passed after 29.541 seconds.
 ✔ Test motionEventsRecordM105() passed after 0.431 seconds.
 ◇ Test arrowsAndReturnChooseAnItemAndRunItsAction() started.
 ✔ Test daemonExitsWhenIdle() passed after 1.589 seconds.
@@ -2868,8 +2868,8 @@ agentbox hook latency (60 runs, app live/socket): p50=105.801291 ms p95=155.5487
 ◇ Test controlsAre240WideWhenThereIsRoom() started.
 ✔ Test commandKeysStillReachTheMenuBar() passed after 0.381 seconds.
 ◇ Test placementOpensBelowAndFlipsAboveNearTheBottom() started.
-2026-10-17 07:09:15.777 swiftpm-testing-helper[15651:12043540] View <AgentBoxUI.ChromeContainerView: 0x7aa1072d00> has 1 views pointing at it that can't be found.
-2026-10-17 07:09:15.784 swiftpm-testing-helper[15651:12043540] View <AgentBoxUI.OverlayHostingView: 0x7aa10c8000> has 16380 views pointing at it that can't be found.
+2026-10-17 07:09:15.777 swiftpm-testing-helper[15651:12043540] View <RackyUI.ChromeContainerView: 0x7aa1072d00> has 1 views pointing at it that can't be found.
+2026-10-17 07:09:15.784 swiftpm-testing-helper[15651:12043540] View <RackyUI.OverlayHostingView: 0x7aa10c8000> has 16380 views pointing at it that can't be found.
 ✔ Test placementOpensBelowAndFlipsAboveNearTheBottom() passed after 0.070 seconds.
 ◇ Test placementClampsToTheWindowAndSupportsTrailingAlignment() started.
 ✔ Test placementClampsToTheWindowAndSupportsTrailingAlignment() passed after 0.001 seconds.
@@ -2883,8 +2883,8 @@ agentbox hook latency (60 runs, app live/socket): p50=105.801291 ms p95=155.5487
 ✔ Test appNameClickPresentsTheMenuPanel() passed after 0.132 seconds.
 ✔ Suite PopoverTests passed after 3.434 seconds.
 ✔ Suite OverlayHostTests passed after 31.342 seconds.
-2026-10-17 07:09:15.985 swiftpm-testing-helper[15651:12043540] View <AgentBoxUI.ChromeContainerView: 0x7a9c92aa80> has 1 views pointing at it that can't be found.
-2026-10-17 07:09:15.985 swiftpm-testing-helper[15651:12043540] View <AgentBoxUI.OverlayHostingView: 0x7aa10c8000> has 16380 views pointing at it that can't be found.
+2026-10-17 07:09:15.985 swiftpm-testing-helper[15651:12043540] View <RackyUI.ChromeContainerView: 0x7a9c92aa80> has 1 views pointing at it that can't be found.
+2026-10-17 07:09:15.985 swiftpm-testing-helper[15651:12043540] View <RackyUI.OverlayHostingView: 0x7aa10c8000> has 16380 views pointing at it that can't be found.
 ✔ Test hidingAProjectRemovesItFromTheSidebar() passed after 0.885 seconds.
 ◇ Test renameCommitsToTheStoreWithoutTouchingBranchOrFolder() started.
 ✔ Test profileLifecycleListCreateDuplicateEditDelete() passed after 0.840 seconds.
@@ -2927,8 +2927,8 @@ agentbox hook latency (60 runs, app live/socket): p50=105.801291 ms p95=155.5487
 ◇ Test killingTheDaemonWhileTheAppIsOpenInterruptsTheRunningPanes() started.
 ✔ Test moveToProjectLinksTheSessionWithoutMovingFiles() passed after 0.463 seconds.
 ◇ Test convertToProjectUsesTheFolderAsTheRoot() started.
-2026-10-17 07:09:17.012 swiftpm-testing-helper[15651:12043540] View <AgentBoxUI.ChromeContainerView: 0x7a9cdf9b80> has 1 views pointing at it that can't be found.
-2026-10-17 07:09:17.013 swiftpm-testing-helper[15651:12043540] View <AgentBoxUI.OverlayHostingView: 0x7a9cd4e800> has 16289 views pointing at it that can't be found.
+2026-10-17 07:09:17.012 swiftpm-testing-helper[15651:12043540] View <RackyUI.ChromeContainerView: 0x7a9cdf9b80> has 1 views pointing at it that can't be found.
+2026-10-17 07:09:17.013 swiftpm-testing-helper[15651:12043540] View <RackyUI.OverlayHostingView: 0x7a9cd4e800> has 16289 views pointing at it that can't be found.
 2026-10-17 07:09:17.020 swiftpm-testing-helper[15651:12043540] View <SwiftUI.KeyViewProxy: 0x7aabdb0c00> has 94 views pointing at it that can't be found.
 ✔ Test searchAndNavItemsDoNotRenderInSliceOneButDoFromSliceTwoOrFour() passed after 0.703 seconds.
 ◇ Test systemActionsCopyPathBranchAndReveal() started.
@@ -2962,8 +2962,8 @@ agentbox hook latency (60 runs, app live/socket): p50=105.801291 ms p95=155.5487
 ◇ Test closedTabCanBeReopened() started.
 ✔ Test onboardingOverlayStaysInsideTheWindowAtMinimumWidth() passed after 1.494 seconds.
 ✔ Suite SettingsSnapshotTests passed after 33.045 seconds.
-2026-10-17 07:09:17.688 swiftpm-testing-helper[15651:12043540] View <AgentBoxUI.ChromeContainerView: 0x7a9d4eb200> has 1 views pointing at it that can't be found.
-2026-10-17 07:09:17.690 swiftpm-testing-helper[15651:12043540] View <AgentBoxUI.OverlayHostingView: 0x7a9d3bf200> has 16224 views pointing at it that can't be found.
+2026-10-17 07:09:17.688 swiftpm-testing-helper[15651:12043540] View <RackyUI.ChromeContainerView: 0x7a9d4eb200> has 1 views pointing at it that can't be found.
+2026-10-17 07:09:17.690 swiftpm-testing-helper[15651:12043540] View <RackyUI.OverlayHostingView: 0x7a9d3bf200> has 16224 views pointing at it that can't be found.
 2026-10-17 07:09:17.698 swiftpm-testing-helper[15651:12043540] View <SwiftUI.KeyViewProxy: 0x7aa9ecf000> has 159 views pointing at it that can't be found.
 ✔ Test closedTabCanBeReopened() passed after 0.181 seconds.
 ◇ Test expandHidesTheOthersAndEqualizeResetsRatios() started.
@@ -2992,7 +2992,7 @@ agentbox hook latency (60 runs, app live/socket): p50=105.801291 ms p95=155.5487
 ◇ Test cancelDuringIgnitionRemovesThePane() started.
 ✔ Test cancelDuringIgnitionRemovesThePane() passed after 0.467 seconds.
 ✘ Suite LaunchStatesIntegrationTests failed after 61.614 seconds with 1 issue.
-↳ /// Estados do pane (T1-16) com o `agentboxd` real e CLI falso (`/bin/sh -c ...`): ignição só depois de 300 ms, running no
+↳ /// Estados do pane (T1-16) com o `rackyd` real e CLI falso (`/bin/sh -c ...`): ignição só depois de 300 ms, running no
 ↳ /// primeiro byte, exited com código, "Couldn't start" (spawn e saída precoce) e Restart/Retry reconstruindo o argv.
 ✔ Test vim20() passed after 67.106 seconds.
 ◇ Test miniTUI20() started.

@@ -18,7 +18,7 @@ Cada fatia de produto termina com **um dia de uso real** do dono e só fecha com
 | **1 · Casca, terminais e sessões limpas** | Substituir o Orca em trabalho **sem** computadores: janela, sidebar, tabs, splits, composer, Quick Launch, sessões limpas, daemon que sobrevive ao ⌘Q | Criar sessão com agente já rodando, abrir sessão limpa em um clique, dividir e fechar panes, fechar o app e reabrir com os agentes vivos | J3 (sem PR e sem hooks), J11, J8 passos de ⌘Q e relançamento, com gravação | AC-000, AC-101 (só CLI detectado e logado), AC-120 (landing), AC-301…316, AC-801…805 e 811, AC-1101…1106 e 1108, AC-T01…T09, T12, T14, T16, T25 (momentos 1 e 2), T26, T27, T28 |
 | **2 · Atenção, GitHub** | Saber quem precisa de mim sem olhar cada terminal; PR e checks; importar o Orca | Ver estado real dos agentes (hooks), receber notificação e ir ao agente certo, abrir PR, importar projetos do Orca e usar os dois apps | J1, J2, J5 e J6 completos, com gravação | AC-101…120 (exceto AC-119), AC-201…209, AC-501…506, AC-601…612, AC-806…810, AC-T10, T11, T13, T15, T17, T18, T24 |
 | **3 · Computadores, modo leve** | Superar o CLI antigo: o pai pede computador, o filho nativo usa, o dono acompanha e assume | Rodar "spawn 2 subagents" e um lote real de 10+ filhos com computador, ver o viewer, assumir e devolver, coletar resultado com evidência no host | J4 com lote real de pelo menos 10 subagentes (RT.2 item 3) | AC-401…425, AC-428, AC-429, AC-105…107, AC-T19…T23, AC-418, AC-117, AC-118 |
-| **4 · Uso, biblioteca mínima e endurecimento** | Fechar a v1: status bar de uso, Library só leitura com ativação por sessão, "Insert Skill or Agent…", observabilidade, benchmarks | Ver uso dos limites do Claude e do Codex, computadores e proxy na status bar; ativar skill numa sessão; inserir skill ou agente no prompt pela palette | RT.2: J2, J3, J4, J6, J8 e J11 num dia real com assinatura estável, usando o Agent Box no lugar do Orca | AC-901…905, AC-1001…1004, AC-T26 de todas as telas, todos os ACs v1 de 05 verdes, release `1.0.0` |
+| **4 · Uso, biblioteca mínima e endurecimento** | Fechar a v1: status bar de uso, Library só leitura com ativação por sessão, "Insert Skill or Agent…", observabilidade, benchmarks | Ver uso dos limites do Claude e do Codex, computadores e proxy na status bar; ativar skill numa sessão; inserir skill ou agente no prompt pela palette | RT.2: J2, J3, J4, J6, J8 e J11 num dia real com assinatura estável, usando o Racky no lugar do Orca | AC-901…905, AC-1001…1004, AC-T26 de todas as telas, todos os ACs v1 de 05 verdes, release `1.0.0` |
 | **v1.1** | Modo isolado e o que 01 §4.2 adia | Rodar CLIs dentro de containers como tabs, handoff, diff, limpeza etc. | Definido na abertura da v1.1 | AC-4xx do modo isolado (AC-451…464) e demais ACs v1.1 de 05 |
 
 ---
@@ -31,7 +31,7 @@ Responsáveis: agentes executam, o dono decide e aprova onde indicado. Nenhuma t
 
 | # | Item | Dono | Pronto quando |
 |---|---|---|---|
-| F0-1 | Errata aplicada nos capítulos (nomes canônicos de 08 §0, IDs de motion `M-xxx`, `accessibilityIdentifier` de 02 §17 e 03 §22, atalhos de 03 §21) | Agente redige; dono aprova | `grep` por `M:[A-F][0-9]` retorna 0; nenhum nome de 08 §0 divergente. **Concluído em 2026-10-17 nos capítulos 02, 03, 04, 06, 07:** ver [`errata-check.md`](../../evidence/slice0/errata-check.md) e o relatório [`F0-1-F0-4-report.md`](../../evidence/slice0/F0-1-F0-4-report.md). Restam fora desses capítulos: três nomes a acrescentar em 08 §0 (`AGENTBOX_CAPACITY_ESTIMATES`, `boxes/`, `previous/`) e a política sobre as 7 negações de `scratchpad` |
+| F0-1 | Errata aplicada nos capítulos (nomes canônicos de 08 §0, IDs de motion `M-xxx`, `accessibilityIdentifier` de 02 §17 e 03 §22, atalhos de 03 §21) | Agente redige; dono aprova | `grep` por `M:[A-F][0-9]` retorna 0; nenhum nome de 08 §0 divergente. **Concluído em 2026-10-17 nos capítulos 02, 03, 04, 06, 07:** ver [`errata-check.md`](../../evidence/slice0/errata-check.md) e o relatório [`F0-1-F0-4-report.md`](../../evidence/slice0/F0-1-F0-4-report.md). Restam fora desses capítulos: três nomes a acrescentar em 08 §0 (`RACKY_CAPACITY_ESTIMATES`, `boxes/`, `previous/`) e a política sobre as 7 negações de `scratchpad` |
 | F0-2 | Fatia 1 redefinida em 01 §4.1 | — | Feito (P16); só confirmar que 09 §3 e 01 §4.1 batem |
 | F0-3 | Pacote de referência visual do Orca 1.4.219 (§2.3) | Agente com Gravação de Tela; dono valida | `manifest.json` cobre todas as superfícies da Fatia 1 nos dois tamanhos; script de extração reproduz os tokens |
 | F0-4 | Tabela de ações da Fatia 1 | Agente; dono revisa | 03 §24 já existe; conferir que todo controle visível na Fatia 1 tem linha (ID, rótulo, atalho, efeito, desabilitado com motivo, teste). Controle sem linha sai da UI. **Concluído em 2026-10-17:** 03 §24 agora tem as colunas Atalho e Teste e linhas para o composer inteiro, a linha pendente, `Open Agent Settings`, os diálogos de §16, a busca do terminal, o menu ⋯ dos panes e a palette ([relatório](../../evidence/slice0/F0-1-F0-4-report.md), [`errata-check.md`](../../evidence/slice0/errata-check.md)). Settings segue por regra até T1-26 |
@@ -45,7 +45,7 @@ Cada spike grava a evidência em `docs/evidence/spikes/<id>/` e escreve o result
 
 | # | Spike | Dono (executa / decide) | Critério de saída | Bloqueia |
 |---|---|---|---|---|
-| S-01 | `SMAppService.agent` com `Sockets/SecureSocketWithKey`, `launch_activate_socket`, `launchctl getenv`, aprovação de login item, label de teste com `AGENTBOX_HOME` | Agente executa; dono aprova o login item | App assinado registra, o launchd cria o socket, `getenv` devolve o caminho, `nc -U` acorda o daemon; log e `launchctl print` | T1-24 (a Fatia 1 já roda no modo degradado) |
+| S-01 | `SMAppService.agent` com `Sockets/SecureSocketWithKey`, `launch_activate_socket`, `launchctl getenv`, aprovação de login item, label de teste com `RACKY_HOME` | Agente executa; dono aprova o login item | App assinado registra, o launchd cria o socket, `getenv` devolve o caminho, `nc -U` acorda o daemon; log e `launchctl print` | T1-24 (a Fatia 1 já roda no modo degradado) |
 | S-02 | SwiftTerm 1.20.0 × 1.99.0: Metal, `feed` fora do main, `send` de outra thread, busca, OSC 133/7, latência com 4 panes e `yes \| head -c 200M` | Agente; dono ratifica a versão | Medição nos dois; decisão de versão escrita na AR-122 | T1-09 |
 | S-03 | Peer auth (`LOCAL_PEERTOKEN` + `SecCodeCheckValidity`) com certificado local, runner do XCUITest e CI | Agente | Peer aceito e recusado; receita de CI com certificado efêmero (08 §8.4) | T1-07 |
 | S-04 | Reattach: replay do ring desde o ponto de corte, preâmbulo de modos, redraw `cols-1`, com Claude, Codex e `vim` | Agente | `textSnapshot` antes e depois iguais em 20 repetições; vídeo | T1-06 |
@@ -73,7 +73,7 @@ docs/rebuild/reference/orca-1.4.219/
   source/                    trechos do renderer citados por 02 e 04 (se a licença permitir; senão só o índice com hash)
 ```
 
-`manifest.json`, por PNG: `file`, `screenId` (03 §0), `state`, `size` (`1440x900` ou `760x480`), `a11yId` equivalente no Agent Box (03 §22), `fixture` (05 §0.3), `slice` (1 a 4), `capturedAt`, `notes`.
+`manifest.json`, por PNG: `file`, `screenId` (03 §0), `state`, `size` (`1440x900` ou `760x480`), `a11yId` equivalente no Racky (03 §22), `fixture` (05 §0.3), `slice` (1 a 4), `capturedAt`, `notes`.
 
 Superfícies e estados da Fatia 1 (mínimo): janela vazia; sidebar com 3 projetos (card ativo, hover, unread, pendente, vazio, `F-LONG`); seção Sessions; tab row (ativa, hover, overflow, rename); dois panes em split com header; find bar; estados do pane (running, exited, couldn't start); composer (cada variante de "Where", Advanced aberto, erro); Quick Launch; palette; confirmações (fechar terminal, ⌘Q, apagar sessão); toast; menus de contexto; landing; onboarding mínimo; Settings (Agents e launch profiles). Fatias 2 a 4 acrescentam suas telas antes de suas tarefas visuais (Inbox, painel direito, viewer, Computers, Batch, Library, Settings, status bar), sempre nos dois tamanhos.
 
@@ -87,7 +87,7 @@ Cada script já nasce com contrato de entrada e saída, código de saída difere
 |---|---|---|
 | `scripts/bootstrap.sh` | Confere Xcode 26.x e `rg`; baixa e confere XcodeGen 2.46.0 por SHA-256 e as versões de `scripts/tool-versions.txt`; falha com versão errada | F0-7, T1-01 |
 | `scripts/extract-orca-reference.sh` | Extrai renderer e tokens do `app.asar` | F0-3 |
-| `scripts/compare-ui.sh <tela>` | `ctl screenshot` do Agent Box no mesmo tamanho e fixtures; monta lado a lado e diff de sobreposição (50% e diferença absoluta) em `docs/evidence/ui/<tarefa>/`, nos dois tamanhos | T1-02 (usa o `ctl`); contrato fechado na Fatia 0 |
+| `scripts/compare-ui.sh <tela>` | `ctl screenshot` do Racky no mesmo tamanho e fixtures; monta lado a lado e diff de sobreposição (50% e diferença absoluta) em `docs/evidence/ui/<tarefa>/`, nos dois tamanhos | T1-02 (usa o `ctl`); contrato fechado na Fatia 0 |
 | `scripts/lint.sh` | Swift 6 sem warnings, proibições de concorrência (`DispatchSemaphore.wait`, `Thread.sleep`, locks em I/O fora de `Platform/`) | T1-01 |
 | `scripts/lint-ui.sh` | Proíbe `.sheet(`, `List(`, `Form(`, `Color(hex:` fora de `DS.Color`, literais em `.padding(`/`.frame(` fora de `DS.Space`, `LocalProcessTerminalView`, emojis; exige `Button` via `ActionRegistry`; strings no String Catalog | T1-02 |
 | `scripts/gen-tokens.py` | Tokens JSON para `DS.*` e `MotionTokens.generated.swift` + `tokens.js` | T1-03 |
@@ -124,16 +124,16 @@ Reconciliação com R3 §10: as 25 tarefas de R3 (T-01…T-25) viram **T1-01…T
 ### 3.2 Tarefas
 
 **T1-01 · Esqueleto e build**
-- Escopo: `project.yml` (XcodeGen fixado), `Packages/AgentBoxKit` com os alvos de 08 AR-121 vazios, Swift 6 estrito, `defaultIsolation`, `bootstrap/gen/build/install.sh`, certificado local, `LogFacade`, CI macOS (`macos-15` e o mais novo) com build, lint e testes vazios.
-- Arquivos: `project.yml`, `Packages/AgentBoxKit/Package.swift`, `scripts/*.sh`, `scripts/tool-versions.txt`, `.github/workflows/`.
+- Escopo: `project.yml` (XcodeGen fixado), `Packages/RackyKit` com os alvos de 08 AR-121 vazios, Swift 6 estrito, `defaultIsolation`, `bootstrap/gen/build/install.sh`, certificado local, `LogFacade`, CI macOS (`macos-15` e o mais novo) com build, lint e testes vazios.
+- Arquivos: `project.yml`, `Packages/RackyKit/Package.swift`, `scripts/*.sh`, `scripts/tool-versions.txt`, `.github/workflows/`.
 - Depende de: F0-6, F0-7.
 - Cobre: T3, T4, AC-T16, AC-T18 (manual).
 - Pronto quando: app vazio assinado instala, abre e passa `codesign --verify --strict` com o designated requirement esperado; CI verde. Isenta dos itens 3 a 5 da DoD (AR-820).
 - Evidência: [L] `build.sh`, `codesign -dr -`, link do CI.
 
 **T1-02 · Registro de ações, A11yID e `ctl` mínimo**
-- Escopo: `ActionRegistry` (ActionID → handler, enabled, motivo), `A11yID` tipado, `app.sock` só com `ctl` e opt-in, `agentbox ctl state | ui tree | ui action | ui wait | screenshot | record`, varredura de IDs, `lint-ui.sh`, `compare-ui.sh`, `qa-preflight.sh`, `KeyBindingRegistry` base e feature flag por fatia.
-- Arquivos: `AgentBoxCore/Control/`, `AgentBoxUI/Actions/`, `agentbox/ctl`, `scripts/lint-ui.sh`, `scripts/compare-ui.sh`.
+- Escopo: `ActionRegistry` (ActionID → handler, enabled, motivo), `A11yID` tipado, `app.sock` só com `ctl` e opt-in, `racky ctl state | ui tree | ui action | ui wait | screenshot | record`, varredura de IDs, `lint-ui.sh`, `compare-ui.sh`, `qa-preflight.sh`, `KeyBindingRegistry` base e feature flag por fatia.
+- Arquivos: `RackyCore/Control/`, `RackyUI/Actions/`, `racky/ctl`, `scripts/lint-ui.sh`, `scripts/compare-ui.sh`.
 - Depende de: T1-01, S-07.
 - Cobre: T13, AC-T01, T02, T03, T28.
 - Pronto quando: `ctl ui tree` lista a janela vazia; `ctl screenshot` gera PNG fiel; o lint falha num `Button` solto de teste; `compare-ui.sh` roda numa tela de teste contra um PNG do pacote.
@@ -141,15 +141,15 @@ Reconciliação com R3 §10: as 25 tarefas de R3 (T-01…T-25) viram **T1-01…T
 
 **T1-03 · Tokens e fontes**
 - Escopo: `design/tokens/*.json` a partir de 02 §2–§8; `gen-tokens.py` gera `DS.Color/Font/Space/Radius` e `MotionTokens.generated.swift` + `tokens.js`; Geist embutida com `OFL.txt`; teste de paridade JS↔Swift (04 MA1); página de amostras.
-- Arquivos: `design/tokens/`, `design/motion/tokens.json`, `scripts/gen-tokens.py`, `AgentBoxDesignSystem/Tokens/`.
+- Arquivos: `design/tokens/`, `design/motion/tokens.json`, `scripts/gen-tokens.py`, `RackyDesignSystem/Tokens/`.
 - Depende de: T1-01. Compara com `tokens/` do pacote da §2.3.
 - Cobre: 02 §2–§8, §15, 04 §3, AC-T26 (parcial), AC-T27 (parcial).
-- Pronto quando: todo token de 02 existe com o valor certo; `Font.custom("Geist")` resolve; tokens extraídos do Orca e tokens do Agent Box divergem só onde 02 §0 justifica.
+- Pronto quando: todo token de 02 existe com o valor certo; `Font.custom("Geist")` resolve; tokens extraídos do Orca e tokens do Racky divergem só onde 02 §0 justifica.
 - Evidência: [T]; [SxS] página de amostras ao lado das cores e tipos do Orca, com OK do dono.
 
 **T1-04 · Protocolo do daemon**
-- Escopo: `AgentBoxProtocol`: framing, DTOs de ops e eventos (schema unificado da errata), códigos de erro, capabilities, handshake N e N-1, fixtures JSON.
-- Arquivos: `AgentBoxProtocol/`, `Tests/ProtocolTests/Fixtures/`.
+- Escopo: `RackyProtocol`: framing, DTOs de ops e eventos (schema unificado da errata), códigos de erro, capabilities, handshake N e N-1, fixtures JSON.
+- Arquivos: `RackyProtocol/`, `Tests/ProtocolTests/Fixtures/`.
 - Depende de: T1-01, F0-1.
 - Cobre: T1, 08 §0.3, AR-904 (teste N vs N-1).
 - Pronto quando: encode/decode de todas as fixtures; frame > 1 MiB rejeitado; teste N × N-1.
@@ -157,15 +157,15 @@ Reconciliação com R3 §10: as 25 tarefas de R3 (T-01…T-25) viram **T1-01…T
 
 **T1-05 · Domínio e Store da Fatia 1**
 - Escopo: modelos `Project, Worktree, Session, Tab, PaneLayout, Terminal, LaunchProfile, LaunchSpec` (Sendable); GRDB `v1_initial` só com as tabelas da Fatia 1 mais `setting` e `ui_state`; backup pré-migração e diário (últimos 7); corrupção abre com banner (AR-322); `ValueObservation` no MainActor.
-- Arquivos: `AgentBoxCore/Domain/`, `AgentBoxStore/`.
+- Arquivos: `RackyCore/Domain/`, `RackyStore/`.
 - Depende de: T1-01, F0-1.
 - Cobre: T2, AC-T13, AC-T14.
 - Pronto quando: CRUD, migração de banco vazio, corrupção restaura o backup com o banner de AC-T13.
 - Evidência: [T].
 
-**T1-06 · `agentboxd` núcleo (filho do app)**
+**T1-06 · `rackyd` núcleo (filho do app)**
 - Escopo: PTY (forkpty, pgid), ops `create/list/attach/detach/resize/signal/kill/subscribe/textSnapshot/forget/ping`, ring de 4 MiB com ponto de corte e preâmbulo, coalescência, backpressure, emulador headless que nunca responde OSC 52 de leitura, dono das respostas de consulta (AR-105). Socket privado passado pelo app.
-- Arquivos: `agentboxd/`, `AgentBoxTerminalCore/`.
+- Arquivos: `rackyd/`, `RackyTerminalCore/`.
 - Depende de: T1-04, S-04.
 - Cobre: T1, T6, AC-T05, AC-801 (base).
 - Pronto quando: `DaemonTests`: matar o cliente e reanexar devolve a mesma tela com `vim` e um TUI de teste; ninguém responde a `OSC 52;c;?`.
@@ -173,7 +173,7 @@ Reconciliação com R3 §10: as 25 tarefas de R3 (T-01…T-25) viram **T1-01…T
 
 **T1-07 · Peer auth**
 - Escopo: `LOCAL_PEERTOKEN` + requisito de código; caminho de CI do S-03.
-- Arquivos: `AgentBoxPlatform/PeerAuth/`.
+- Arquivos: `RackyPlatform/PeerAuth/`.
 - Depende de: T1-06, S-03.
 - Cobre: 08 §5, AC-T19 (parte).
 - Pronto quando: peer assinado aceito e não assinado recusado, no Mac e no CI.
@@ -181,7 +181,7 @@ Reconciliação com R3 §10: as 25 tarefas de R3 (T-01…T-25) viram **T1-01…T
 
 **T1-08 · Env de login**
 - Escopo: captura com marcador, fallback `-l -c` com timeout, denylist (inclui `ORCA_*`), cache e invalidação.
-- Arquivos: `AgentBoxPlatform/LoginShellEnv/`.
+- Arquivos: `RackyPlatform/LoginShellEnv/`.
 - Depende de: T1-01, S-06.
 - Cobre: TA-110, AC-312.
 - Pronto quando: unidade + AC-312 no shell do dono; env do agente sem `ORCA_*`.
@@ -189,7 +189,7 @@ Reconciliação com R3 §10: as 25 tarefas de R3 (T-01…T-25) viram **T1-01…T
 
 **T1-09 · `TerminalSurface`**
 - Escopo: `TerminalHostView` com `TerminalView` (nunca `LocalProcessTerminalView`), Metal, delegate próprio (`clipboardRead → nil`, OSC 52 de escrita conforme o setting), tema de 02 §3, `PTYClient` actor com alimentação por orçamento (AR-406), política de paste e links, find bar com a busca pública do SwiftTerm, zoom ⌘= ⌘- ⌘0, tabela tecla→bytes.
-- Arquivos: `AgentBoxUI/Terminal/`, `AgentBoxCore/PTYClient/`.
+- Arquivos: `RackyUI/Terminal/`, `RackyCore/PTYClient/`.
 - Depende de: T1-03, T1-06, S-02.
 - Cobre: T6, AC-T05, AC-T07, AC-T08, 03 §4.1 e §4.4.
 - Pronto quando: AC-T05, AC-T07 (p95 ≤ 33 ms conforme AR-702), testes tecla→bytes, `bench.sh` verde.
@@ -198,7 +198,7 @@ Reconciliação com R3 §10: as 25 tarefas de R3 (T-01…T-25) viram **T1-01…T
 
 **T1-10 · Janela e chrome**
 - Escopo: `MainWindowController` (`fullSizeContentView`, sem `NSToolbar`), semáforos em x 16/36/56 e y 18 reaplicados em resize e tela cheia, faixa de titlebar 36, `MainSplitViewController` com sidebar 280 (220–500, ⌘B), painel direito **oculto**, janela mínima 760×480 e inicial 1440×900, regiões de erro (03 §1.4).
-- Arquivos: `AgentBoxUI/Window/`.
+- Arquivos: `RackyUI/Window/`.
 - Depende de: T1-02, T1-03.
 - Cobre: T5, 03 §1, AC-T27 (parcial), AC-T26.
 - Pronto quando: `LayoutConformanceTests` (semáforos, faixas, larguras); XCUI de ⌘B, resize e tela cheia.
@@ -206,7 +206,7 @@ Reconciliação com R3 §10: as 25 tarefas de R3 (T-01…T-25) viram **T1-01…T
 
 **T1-11 · Overlay host e componentes base**
 - Escopo: `OverlayPanelHost/OverlayRouter` com o contrato de foco (nenhuma tecla vai ao PTY), `DSButton`, `DSIconButton`, `DSTextField`, `Keycap`, `DSSegmented`, `DSSwitch`, `ConfirmationOverlay`, `ToastCenter`; motion M-101/102/103/110 com Reduce Motion primeiro.
-- Arquivos: `AgentBoxDesignSystem/Components/`, `AgentBoxUI/Overlay/`.
+- Arquivos: `RackyDesignSystem/Components/`, `RackyUI/Overlay/`.
 - Depende de: T1-03, T1-10.
 - Cobre: T5, AC-T06, AC-T25 (parcial), 02 §12.
 - Pronto quando: AC-T06; snapshot de cada componente aprovado.
@@ -214,7 +214,7 @@ Reconciliação com R3 §10: as 25 tarefas de R3 (T-01…T-25) viram **T1-01…T
 
 **T1-12 · `DSCombobox`, `DSMenuPanel`, `TooltipController`, `PromptEditor`**
 - Escopo: componentes AppKit com type-ahead, delays de tooltip (400/500/1000/200 ms), IME, ⌘↵.
-- Arquivos: `AgentBoxDesignSystem/Components/`.
+- Arquivos: `RackyDesignSystem/Components/`.
 - Depende de: T1-11.
 - Cobre: 02 §12, AC-T02 (tooltip do desabilitado).
 - Pronto quando: testes de teclado; snapshots aprovados.
@@ -222,7 +222,7 @@ Reconciliação com R3 §10: as 25 tarefas de R3 (T-01…T-25) viram **T1-01…T
 
 **T1-13 · Sidebar: estrutura**
 - Escopo: `ScrollView` + `LazyVStack` (sem `List`), seções Projects e Sessions, linha de projeto, card de sessão na versão da Fatia 1 (título, pasta ou branch, linhas de agente com estado do processo e `unknown`), linha pendente com fases (M-204), rename inline, estados vazios, teclado, menus de contexto só com as ações da tabela da Fatia 1.
-- Arquivos: `AgentBoxUI/Sidebar/`.
+- Arquivos: `RackyUI/Sidebar/`.
 - Depende de: T1-05, T1-11, F0-4.
 - Cobre: 03 §2, AC-305, AC-T27, AC-1105 (parte).
 - Pronto quando: `LayoutConformanceTests` (alturas 32/28/24, raio do card 10, padding 6); XCUI com clique real de cada ação do menu.
@@ -230,7 +230,7 @@ Reconciliação com R3 §10: as 25 tarefas de R3 (T-01…T-25) viram **T1-01…T
 
 **T1-14 · Tabs e panes**
 - Escopo: tab row 32 + 4, tab 180/220 (mín. 72), overflow, rename, reordenar, fechar com confirmação (`kill graceful`, "Force Quit" após 5 s), ⇧⌘T; árvore de splits ⌘D/⇧⌘D, divisor 3 pt (hit 9), tamanho mínimo, header do pane com 2+ panes, foco ⌘]/⌘[, opacidade 0,8 inativo, persistência do layout; M-301/302/304/306/307 com um resize por transição.
-- Arquivos: `AgentBoxUI/Tabs/`, `AgentBoxUI/Panes/`.
+- Arquivos: `RackyUI/Tabs/`, `RackyUI/Panes/`.
 - Depende de: T1-09, T1-11, T1-05.
 - Cobre: 03 §3–§4, AC-T09, AC-T25 (parcial), AC-314.
 - Pronto quando: contador de resize do PTY = 1 por gesto (04 MA6); resize, colapso ou troca de tab nunca recriam o PTY; XCUI de cada ação.
@@ -238,7 +238,7 @@ Reconciliação com R3 §10: as 25 tarefas de R3 (T-01…T-25) viram **T1-01…T
 
 **T1-15 · Adapters de lançamento e captura do ID nativo**
 - Escopo: `LaunchPlanner` com perfis (Claude, Codex, OpenCode, shell, Custom Command), resolução terminal → projeto → global, probe de CLI (instalado, logado), argv dourado por adapter e perfil, `--session-id` no Claude, prompt como argumento com o limiar da errata, **sem injeções** (sem hooks) na Fatia 1, captura do ID nativo, env da execução.
-- Arquivos: `AgentBoxCore/Launch/`.
+- Arquivos: `RackyCore/Launch/`.
 - Depende de: T1-05, T1-08, F0-1, S-05 (define o adapter).
 - Cobre: R3.1, R3.3, T11, AC-307, AC-308, AC-309, AC-104 (parte).
 - Pronto quando: golden files para cada combinação; zero bytes escritos no PTY pelo app (teste com o daemon).
@@ -246,15 +246,15 @@ Reconciliação com R3 §10: as 25 tarefas de R3 (T-01…T-25) viram **T1-01…T
 
 **T1-16 · Fluxo de lançamento e estados do pane**
 - Escopo: criar terminal → `create` no daemon → ignição se o primeiro byte demorar > 300 ms (M-503/504/506) → Running / Exited / Couldn't start (Try Again, Open Agent Settings, Copy Details) / daemon indisponível; `LaunchProgress`.
-- Arquivos: `AgentBoxCore/Launch/`, `AgentBoxUI/Panes/States/`.
+- Arquivos: `RackyCore/Launch/`, `RackyUI/Panes/States/`.
 - Depende de: T1-14, T1-15.
 - Cobre: P8 momento 2, AC-310, AC-T12, 03 §4.6.
 - Pronto quando: XCUI de cada estado com CLI falso (sucesso, demora, falha no spawn, saída precoce).
 - Evidência: [T]; [V] dos quatro casos; [SxS].
 
 **T1-17 · Sessões limpas**
-- Escopo: gerador de nome `quiet-harbor` (nunca reaproveita pasta), criação em `~/AgentBox/sessions/`, um clique no "+" da seção Sessions ou ⇧⌘N → tab com o agente padrão e foco no terminal em menos de 1 s, "New Clean Session in Folder…" (⌥⇧⌘N), rename sem mexer na pasta, apagar com "Move folder to Trash" só se gerenciada, promoção "Move to Project…".
-- Arquivos: `AgentBoxCore/Sessions/`, `AgentBoxUI/Sidebar/`.
+- Escopo: gerador de nome `quiet-harbor` (nunca reaproveita pasta), criação em `~/Racky/sessions/`, um clique no "+" da seção Sessions ou ⇧⌘N → tab com o agente padrão e foco no terminal em menos de 1 s, "New Clean Session in Folder…" (⌥⇧⌘N), rename sem mexer na pasta, apagar com "Move folder to Trash" só se gerenciada, promoção "Move to Project…".
+- Arquivos: `RackyCore/Sessions/`, `RackyUI/Sidebar/`.
 - Depende de: T1-13, T1-16.
 - Cobre: P10, P11, P15, AC-1101…1106, AC-1108.
 - Pronto quando: AC-1101…1106 e 1108 em XCUI e E2E.
@@ -262,7 +262,7 @@ Reconciliação com R3 §10: as 25 tarefas de R3 (T-01…T-25) viram **T1-01…T
 
 **T1-18 · Git mínimo**
 - Escopo: `GitService` async: detectar repo, listar worktrees, `worktree add` com branch e prefixo, base `origin/main`, fetch com timeout, erros mapeados para "Use Existing Branch" e "Create Without Fetching"; raiz de worktrees `~/orca/workspaces/<repo>/` (P15).
-- Arquivos: `AgentBoxCore/Git/`.
+- Arquivos: `RackyCore/Git/`.
 - Depende de: T1-05.
 - Cobre: R3.2, AC-303, AC-304.
 - Pronto quando: testes com repositório temporário (branch existente, fetch falho, pasta ocupada).
@@ -270,7 +270,7 @@ Reconciliação com R3 §10: as 25 tarefas de R3 (T-01…T-25) viram **T1-01…T
 
 **T1-19 · Projetos**
 - Escopo: "Add Project…" (pasta, bookmark), linha de projeto, remover projeto sem apagar arquivos, landing (03 §19).
-- Arquivos: `AgentBoxCore/Projects/`, `AgentBoxUI/Sidebar/`.
+- Arquivos: `RackyCore/Projects/`, `RackyUI/Sidebar/`.
 - Depende de: T1-13, T1-18.
 - Cobre: AC-120 (landing), 03 §16.6 e §16.9.
 - Pronto quando: XCUI.
@@ -278,7 +278,7 @@ Reconciliação com R3 §10: as 25 tarefas de R3 (T-01…T-25) viram **T1-01…T
 
 **T1-20 · Composer ⌘N**
 - Escopo: overlay (largura da errata), campos de 03 §6.1 (Project, Where por contexto, Create from só com nome de branch na Fatia 1, Agent, Profile, Prompt), Advanced (Session name, Branch, Worktree location; **sem** "Subagent computers" nem "Watch Claude subagents"), linha de resumo do comando, validação, Create More, Esc com descarte; ao criar: fecha na hora, linha pendente, tab rodando (P9).
-- Arquivos: `AgentBoxUI/Composer/`.
+- Arquivos: `RackyUI/Composer/`.
 - Depende de: T1-12, T1-15, T1-16, T1-18, T1-19.
 - Cobre: AC-301, 302, 305, 306, 307…309, 313, 314, 316.
 - Pronto quando: XCUI com clique real em todo campo; tempo do submit até o pane com output medido.
@@ -286,7 +286,7 @@ Reconciliação com R3 §10: as 25 tarefas de R3 (T-01…T-25) viram **T1-01…T
 
 **T1-21 · Quick Launch e ⌘T**
 - Escopo: popover `DSMenuPanel` (⌥⌘N e "+"), "Start <agente> with …", ⇧↵ em split; ⌘T shell; ⌥⌘T agente padrão.
-- Arquivos: `AgentBoxUI/QuickLaunch/`.
+- Arquivos: `RackyUI/QuickLaunch/`.
 - Depende de: T1-12, T1-16.
 - Cobre: AC-313, 03 §7.
 - Pronto quando: XCUI de cada item.
@@ -294,7 +294,7 @@ Reconciliação com R3 §10: as 25 tarefas de R3 (T-01…T-25) viram **T1-01…T
 
 **T1-22 · Menus do app e atalhos**
 - Escopo: `KeyBindingRegistry` com escopo, menus `File/Edit/View/Window/Help` só com ações da Fatia 1, teste anti-conflito, teclas reservadas ao terminal.
-- Arquivos: `AgentBoxUI/Commands/`.
+- Arquivos: `RackyUI/Commands/`.
 - Depende de: T1-02, T1-14, T1-20.
 - Cobre: 03 §18 e §21, AC-T02, AC-T08.
 - Pronto quando: teste de conflito; XCUI disparando cada atalho.
@@ -302,15 +302,15 @@ Reconciliação com R3 §10: as 25 tarefas de R3 (T-01…T-25) viram **T1-01…T
 
 **T1-23 · Persistência e reabertura (sem LaunchAgent)**
 - Escopo: ao reabrir o app, sessões, tabs e layout voltam; terminais mortos aparecem como "Interrupted" com Resume (`claude --resume <id>` com flags regeneradas) e Start Fresh.
-- Arquivos: `AgentBoxCore/Sessions/Restore`.
+- Arquivos: `RackyCore/Sessions/Restore`.
 - Depende de: T1-14, T1-15.
 - Cobre: R8.1, R2.2 (parte), AC-806, AC-802 (parte).
 - Pronto quando: XCUI: fecha, abre e confere a mesma árvore; Resume executa o argv correto.
 - Evidência: [T]; [V].
 
 **T1-24 · Daemon como LaunchAgent e ⌘Q mantém agentes**
-- Escopo: `SMAppService` com o socket do S-01, ⌘Q com overlay "Keep Running" (§16.10 de 03, nunca `NSAlert`), ícone na barra de menus, `Quit Agent Box Completely`, reattach com scrollback, cold restore depois de `kill -9`. Se o S-01 falhar, aplica o plano B aprovado pelo dono.
-- Arquivos: `agentboxd/Launchd`, `AgentBoxUI/MenuBar/`, `AgentBoxCore/AppLifecycle/`.
+- Escopo: `SMAppService` com o socket do S-01, ⌘Q com overlay "Keep Running" (§16.10 de 03, nunca `NSAlert`), ícone na barra de menus, `Quit Racky Completely`, reattach com scrollback, cold restore depois de `kill -9`. Se o S-01 falhar, aplica o plano B aprovado pelo dono.
+- Arquivos: `rackyd/Launchd`, `RackyUI/MenuBar/`, `RackyCore/AppLifecycle/`.
 - Depende de: T1-06, T1-07, T1-23, S-01.
 - Cobre: P4, T1, AC-801…805, AC-811.
 - Pronto quando: `e2e.sh` passos 1–3 e 7 passam: mesmo PID depois de quit e launch; cold restore.
@@ -325,7 +325,7 @@ Reconciliação com R3 §10: as 25 tarefas de R3 (T-01…T-25) viram **T1-01…T
 
 **T1-26 · Onboarding mínimo e Settings mínimo** (adicionada na reconciliação)
 - Escopo: onboarding com CLI detectado, logado ou não (03 §15, só o que a Fatia 1 mostra); Settings com Agents e launch profiles (a tela alvo de "Open Agent Settings"), regra de salvamento de 03 §14.1.
-- Arquivos: `AgentBoxUI/Onboarding/`, `AgentBoxUI/Settings/`.
+- Arquivos: `RackyUI/Onboarding/`, `RackyUI/Settings/`.
 - Depende de: T1-12, T1-15.
 - Cobre: AC-101 (parte), AC-104, AC-T04, AC-T27.
 - Pronto quando: XCUI com stubs de CLI (instalado, deslogado, ausente); nenhuma seção de fatia futura renderizada.
@@ -333,7 +333,7 @@ Reconciliação com R3 §10: as 25 tarefas de R3 (T-01…T-25) viram **T1-01…T
 
 **T1-27 · Arquivar, apagar e "Open in…"** (adicionada na reconciliação)
 - Escopo: arquivar e apagar terminal, sessão e worktree com os diálogos de 03 §16.1, §16.2, §16.5; "Open in…" (R5.2) com os editores e terminais configurados em Settings.
-- Arquivos: `AgentBoxCore/Sessions/`, `AgentBoxUI/Dialogs/`.
+- Arquivos: `RackyCore/Sessions/`, `RackyUI/Dialogs/`.
 - Depende de: T1-17, T1-18, T1-26.
 - Cobre: AC-T09, AC-1105, AC-502, AC-306.
 - Pronto quando: XCUI de cada diálogo, incluindo "Keep the branch".
@@ -355,7 +355,7 @@ Pré-requisitos de verificação: S-05 (concluído) e V1…V13 (08 §11.2); D-Co
 
 | Tarefa principal | Resumo | Depende de | ACs |
 |---|---|---|---|
-| T2-01 Atividade e spool | `v2_activity`, `agentbox hook` (sem python3) + spool, máquina de estados de 01 §6, última mensagem por terminal | Fatia 1 | AC-201, 202, AC-T24 |
+| T2-01 Atividade e spool | `v2_activity`, `racky hook` (sem python3) + spool, máquina de estados de 01 §6, última mensagem por terminal | Fatia 1 | AC-201, 202, AC-T24 |
 | T2-02 Injeções Claude por lançamento | `--settings`, `--mcp-config`, `--plugin-dir`; nada escrito em `~/.claude` | T2-01, S-05 | AC-112, 401 (parte) |
 | T2-03 Estratégia Codex | Hooks por `-c` com trust inline (P18) e `--no-daemon`, ou rollout `estimated` como fallback | T2-01, S-05, D-Codex-1 | AC-202, 601, 607 |
 | T2-04 Atenção e notificações | Notificações do sistema, Inbox (⇧⌘I), badge no Dock, "Next Needing Attention" (⇧⌘A), ⌘J, ⌘1…9, estado do pai considera os filhos | T2-01 | AC-204, 601…607, 611, 612 |
@@ -371,14 +371,14 @@ Saída: J1, J2, J5, J6 num dia real; hooks chegam com o app fechado; nenhuma esc
 
 ### 4.2 Fatia 3 · Computadores, modo leve
 
-Spikes na primeira semana: S2 (porta e DNS em rede `internal` no Docker Desktop, OrbStack e Colima), S8 (bind de arquivo 0400 por uid), S9 (exec com stdin pela Engine API), depois S3 (noVNC ≥ 20 fps), S4 (`deny` de `Skill(agentbox)`), S6 (uso informado pelo provedor do proxy). S-08 já veio da Fatia 0.
+Spikes na primeira semana: S2 (porta e DNS em rede `internal` no Docker Desktop, OrbStack e Colima), S8 (bind de arquivo 0400 por uid), S9 (exec com stdin pela Engine API), depois S3 (noVNC ≥ 20 fps), S4 (`deny` de `Skill(racky)`), S6 (uso informado pelo provedor do proxy). S-08 já veio da Fatia 0.
 
 | Tarefa principal | Resumo | Depende de | ACs |
 |---|---|---|---|
-| T3-01 Docker e imagens | `AgentBoxDocker` (Engine API, eventos, exec hijacked), imagens por digest (GHCR ou build local), contexto ativo, `v3_computers` | Fatia 1, S2, S9 | AC-105…107, AC-T20…T22 |
-| T3-02 Egress sidecar e proxy genérico | Proxy escolhido por computador, reqlog com corpos, uso do proxy, bloqueio de SSRF, token por arquivo; Settings › Computers › Proxies (P13), `Import from agentbox CLI…` | T3-01 | AC-117, 118, 417, 418, 419, 424 |
-| T3-03 Runtime e ferramentas MCP | `exec`, `curl_cffi`, `http_request`, navegador por seletor (Xvfb headed), diário, render quando o proxy suporta (T12); `agentbox mcp` | T3-01, T3-02, S-08 | AC-411, 412, 415, 416, 428 |
-| T3-04 Orquestração | Skill de orquestração por lançamento, conflito com a skill global `agentbox` (S4), `boxes_reserve`, `box_claim`, `ComputerScheduler` com capacidade e fila | T3-03, T2-02 | AC-401…406 |
+| T3-01 Docker e imagens | `RackyDocker` (Engine API, eventos, exec hijacked), imagens por digest (GHCR ou build local), contexto ativo, `v3_computers` | Fatia 1, S2, S9 | AC-105…107, AC-T20…T22 |
+| T3-02 Egress sidecar e proxy genérico | Proxy escolhido por computador, reqlog com corpos, uso do proxy, bloqueio de SSRF, token por arquivo; Settings › Computers › Proxies (P13), `Import from racky CLI…` | T3-01 | AC-117, 118, 417, 418, 419, 424 |
+| T3-03 Runtime e ferramentas MCP | `exec`, `curl_cffi`, `http_request`, navegador por seletor (Xvfb headed), diário, render quando o proxy suporta (T12); `racky mcp` | T3-01, T3-02, S-08 | AC-411, 412, 415, 416, 428 |
+| T3-04 Orquestração | Skill de orquestração por lançamento, conflito com a skill global `racky` (S4), `boxes_reserve`, `box_claim`, `ComputerScheduler` com capacidade e fila | T3-03, T2-02 | AC-401…406 |
 | T3-05 Viewer e controle humano | noVNC em WKWebView ≥ 20 fps, Take Over e Hand Back com nota, aba Computers (⇧⌘C), página Computers, `help_request` e `help_wait` | T3-03, S3 | AC-407…410, 413, 414, AC-T23 |
 | T3-06 Resultado e evidência | `box_collect`, validação de afirmações com request citado, run folder no host, parada e arquivamento | T3-03 | AC-420…423, 425 |
 | T3-07 Lote | `Batch`, painel, `New Batch…`, consolidado, notificação "lote concluído" | T3-04, T3-06 | AC-429 |
@@ -402,7 +402,7 @@ Saída: J4 com lote real de pelo menos 10 subagentes terminando com resultado e 
 
 | Épico | Conteúdo | Depende de |
 |---|---|---|
-| V11-A Modo isolado | Imagem `agentbox-agent`, container com `dtach`, sessões `docker exec` no daemon, hooks HTTP e MCP via egress, credenciais (P7), worktree por filho, broker de git, kit de skills somente leitura, `v4_batches` e `v5_legacy_runs` | Fatia 3, Q1, Q3, Q4, S5, S7 |
+| V11-A Modo isolado | Imagem `racky-agent`, container com `dtach`, sessões `docker exec` no daemon, hooks HTTP e MCP via egress, credenciais (P7), worktree por filho, broker de git, kit de skills somente leitura, `v4_batches` e `v5_legacy_runs` | Fatia 3, Q1, Q3, Q4, S5, S7 |
 | V11-B Mensagens e workers | `agent_message` com Enter (P12), worker leve, `agent_stop`, `ask_parent`, detector de filho parado | V11-A |
 | V11-C Handoff e Codex pleno | "Continue in…", detecção de limite, transferência de computador, paridade do Codex | Fatia 2 |
 | V11-D GitHub e diff | Diff só leitura, "Send failures to agent", eventos de PR e checks | Fatia 2 |
@@ -442,7 +442,7 @@ Pedidos do dono depois do primeiro uso real. Só tarefas anotadas; a ordem e o i
 |---|---|---|
 | BK-11 Outro modelo para o subagente | Escolher o modelo/CLI de cada subagente: por exemplo um subagente no Codex, ou com uma API de terceiros (DeepSeek e afins via endpoint compatível). Precisa de desenho: como o pai Claude delega para um worker que não é Claude (worker leve da V11-B? CLI diferente por slot?), credenciais no Vault, custo por modelo | V11-B, V11-C |
 | BK-12 Computadores na nuvem | Rodar os computadores fora do Mac: conta AWS, Cloudflare e outros provedores ligados por uma UI simples (login, região, limite como "no máximo 5 na AWS"); o mesmo container/compose sobe lá em vez do Docker local; viewer, egress e ferramentas iguais; custo visível | T3-01, T3-09 |
-| BK-13 Gatilho de spawn no Codex e no OpenCode | **OpenCode feito** (plugin `spawn-guard.js` por lançamento em `OPENCODE_CONFIG_CONTENT.plugin`, `tool.execute.before` na ferramenta `task`, chama `agentbox hook-guard`; throw bloqueia; payload real em `docs/evidence/spikes/BK-13/opencode-task-before.json`; só com Ask/Full). **Codex pendente (cota).** Antes: só o Claude tinha o gatilho `PreToolUse` em `Agent|Task` (F12: "Give this subagent a computer?"). No Codex e no OpenCode o modo Ask já pede aprovação em `boxes_reserve`; falta o gatilho para subagente comum que vai mexer com web. Precisa gravar os payloads reais (`PreToolUse` do Codex via `-c hooks…` com trust inline; `tool.execute.before` de plugin no OpenCode) antes de codar: Codex com cota (rodar poucas vezes), OpenCode só com modelo grátis | S-05 (payloads do Codex) |
+| BK-13 Gatilho de spawn no Codex e no OpenCode | **OpenCode feito** (plugin `spawn-guard.js` por lançamento em `OPENCODE_CONFIG_CONTENT.plugin`, `tool.execute.before` na ferramenta `task`, chama `racky hook-guard`; throw bloqueia; payload real em `docs/evidence/spikes/BK-13/opencode-task-before.json`; só com Ask/Full). **Codex pendente (cota).** Antes: só o Claude tinha o gatilho `PreToolUse` em `Agent|Task` (F12: "Give this subagent a computer?"). No Codex e no OpenCode o modo Ask já pede aprovação em `boxes_reserve`; falta o gatilho para subagente comum que vai mexer com web. Precisa gravar os payloads reais (`PreToolUse` do Codex via `-c hooks…` com trust inline; `tool.execute.before` de plugin no OpenCode) antes de codar: Codex com cota (rodar poucas vezes), OpenCode só com modelo grátis | S-05 (payloads do Codex) |
 
 
 #### 4.4c Plano de fases do BK-12 (P27; estudo em `study/cloud-computers.md` §9.3)
@@ -479,7 +479,7 @@ Pedidos do dono depois do primeiro uso real. Só tarefas anotadas; a ordem e o i
 
 #### 4.5.1 Verificações de contrato dos CLIs
 
-Rodam com `AGENTBOX_REAL_CLI=1`, modelo barato, no Mac do dono, antes das tarefas que dependem delas (V1…V13, 08 §11.2). Resultado vira fixture em `docs/evidence/` e é escrito no capítulo dono (06).
+Rodam com `RACKY_REAL_CLI=1`, modelo barato, no Mac do dono, antes das tarefas que dependem delas (V1…V13, 08 §11.2). Resultado vira fixture em `docs/evidence/` e é escrito no capítulo dono (06).
 
 #### 4.5.2 Evidências e onde moram
 

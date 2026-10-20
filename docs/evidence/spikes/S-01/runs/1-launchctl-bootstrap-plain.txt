@@ -1,11 +1,11 @@
 --- bootstrap
 rc=0
---- launchctl getenv AGENTBOX_PTYD_SOCK_V1 => /var/run/com.apple.launchd.1zETeIKcxQ/Listeners (len 47)
+--- launchctl getenv RACKY_PTYD_SOCK_V1 => /var/run/com.apple.launchd.1zETeIKcxQ/Listeners (len 47)
 --- job antes de qualquer conexao
 	state = not running
 	runs = 0
 			path = /var/run/com.apple.launchd.1zETeIKcxQ/Listeners
-			secure key = AGENTBOX_PTYD_SOCK_V1
+			secure key = RACKY_PTYD_SOCK_V1
 total 0
 drwx------   3 gabriel  wheel     96 Oct 17 06:10 .
 drwxrwxr-x  54 root     daemon  1728 Oct 17 06:10 ..

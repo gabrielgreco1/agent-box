@@ -1,4 +1,4 @@
-build: agentbox-box:ctx-cc3afb33e867 (contexto /Users/gabriel/orca/agent-box/.claude/worktrees/agent-a3537edf57d7bccdc/runtime/box, hash cc3afb33e867754680c7dcdd69505e9dee21f1cbef1ce1b441d11c7576f73a6b)
+build: racky-box:ctx-cc3afb33e867 (contexto /Users/gabriel/orca/agent-box/.claude/worktrees/agent-a3537edf57d7bccdc/runtime/box, hash cc3afb33e867754680c7dcdd69505e9dee21f1cbef1ce1b441d11c7576f73a6b)
 #0 building with "desktop-linux" instance using docker driver
 
 #1 [internal] load build definition from Dockerfile
@@ -29,13 +29,13 @@ build: agentbox-box:ctx-cc3afb33e867 (contexto /Users/gabriel/orca/agent-box/.cl
 #8 [3/7] COPY requirements.txt /tmp/requirements.txt
 #8 CACHED
 
-#9 [5/7] RUN useradd --uid 10001 --create-home --shell /usr/sbin/nologin runtime     && useradd --uid 10002 --create-home --shell /usr/sbin/nologin work     && mkdir -p /opt/agentbox /work     && chown work:work /work
+#9 [5/7] RUN useradd --uid 10001 --create-home --shell /usr/sbin/nologin runtime     && useradd --uid 10002 --create-home --shell /usr/sbin/nologin work     && mkdir -p /opt/racky /work     && chown work:work /work
 #9 CACHED
 
-#10 [6/7] COPY entrypoint.sh /opt/agentbox/entrypoint.sh
+#10 [6/7] COPY entrypoint.sh /opt/racky/entrypoint.sh
 #10 DONE 0.0s
 
-#11 [7/7] RUN chmod 0755 /opt/agentbox/entrypoint.sh
+#11 [7/7] RUN chmod 0755 /opt/racky/entrypoint.sh
 #11 DONE 0.1s
 
 #12 exporting to image
@@ -44,7 +44,7 @@ build: agentbox-box:ctx-cc3afb33e867 (contexto /Users/gabriel/orca/agent-box/.cl
 #12 exporting config sha256:be0856db276c696bfbfb86fc6755f5e72bca55a2c1b4fd8835ff96f488efc014 done
 #12 exporting attestation manifest sha256:b091da149045354f14d077f32e1139c90465cd3ba6c912284689819cfaf3489c done
 #12 exporting manifest list sha256:3e6b7db795a328e2d6e12fe100c5406a749370f0be742007b483a79cede21751 done
-#12 naming to docker.io/library/agentbox-box:ctx-cc3afb33e867 done
-#12 unpacking to docker.io/library/agentbox-box:ctx-cc3afb33e867 0.0s done
+#12 naming to docker.io/library/racky-box:ctx-cc3afb33e867 done
+#12 unpacking to docker.io/library/racky-box:ctx-cc3afb33e867 0.0s done
 #12 DONE 0.1s
-agentbox-box:ctx-cc3afb33e867
+racky-box:ctx-cc3afb33e867

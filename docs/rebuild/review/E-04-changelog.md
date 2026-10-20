@@ -9,7 +9,7 @@ Data: 2026-10-16. Editor: só `04-motion.md` foi alterado. Base: `00-decisions.m
 - Regra explícita: 04 não define microcopy, atalhos nem `accessibilityIdentifier`. Cita 03 (§21 atalhos, §22 IDs, telas) e a convenção de 02 §17. Se divergir, vale 03.
 - **Tabela de correspondência audit/06 → M-xxx** (A1…F6, E0…E4, C9 etc.), copiada de R1 §4 com M-404b em E1. Fica para referência histórica.
 - Referências à auditoria com prefixo `audit/NN` (R1 X-21): "06 dizia", "07 (correção 5)", "R6.1 do 10", "R4.7 do 10", "RT.3 do 10", "06 §4.H", "S1".
-- "Capítulo de UI" e "capítulo de arquitetura", que não existem, passam a citar 02 e 08. O pacote do DS passa a ser `AgentBoxDesignSystem` (08 AR-121), no lugar de `AgentBoxDesign`.
+- "Capítulo de UI" e "capítulo de arquitetura", que não existem, passam a citar 02 e 08. O pacote do DS passa a ser `RackyDesignSystem` (08 AR-121), no lugar de `RackyDesign`.
 - `orca-src` em scratchpad sai. O código do Orca passa a vir do pacote versionado `docs/rebuild/reference/orca-1.4.219/` (R3 F0-3).
 - §5 se declara a seção de Reduce Motion. A referência "04 §3.3" de 02 está quebrada; o certo é 04 §5. A correção do lado de 02 fica com o editor de 02.
 
@@ -46,7 +46,7 @@ Todos os pares da tabela de R1 §4 foram aplicados: `sidebar.sessionRow` → `si
 - Inbox: M-701 passou a ser o badge do item `Inbox` da sidebar. M-705 é o feed da sidebar. M-109 deixou de tratar Inbox como página (K-27, K-63).
 - Needs input / Needs you: "Needs input" para estado de agente; "needs you" só para computador e atenção agregada.
 - "Requesting control…" mantido (K-26). Verbos **Take Over / Hand Back** e "Force Take Over" (D-02 com P16). "Paused" virou "You're in control" (K-62).
-- Daemon perdido (M-003): banner por pane com "Lost connection to the background service. Reconnecting…", depois "Restart Background Service" / "Open Diagnostics". A UI não usa "agentboxd" nem "daemon" (K-46).
+- Daemon perdido (M-003): banner por pane com "Lost connection to the background service. Reconnecting…", depois "Restart Background Service" / "Open Diagnostics". A UI não usa "rackyd" nem "daemon" (K-46).
 - Pane interrompido (M-002): estado Interrupted de 03 §4.6, com "Resume" / "Start Fresh" / "Close" (K-47).
 - Saída com erro (M-312): cartão "Terminal exited" com Close / Restart / Resume Conversation. Com código 0, o banner "Claude Code exited." (K-48).
 - Erro de lançamento (M-313, M-505, M-205): "Try Again" / "Open Agent Settings" / "Copy Details", mais "Use Existing Branch" e "Create Without Fetching" (K-48, K-49). Pendente falho usa `AlertCircle` e "Couldn't create worktree".

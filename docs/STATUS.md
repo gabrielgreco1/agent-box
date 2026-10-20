@@ -14,9 +14,9 @@ A spec completa continua sendo o contrato de entrega. Código compilado, teste d
 
 ## Runtime Linux testado de verdade
 
-Docker CLI e Colima instalados via Homebrew oficial. Perfil de desenvolvimento `agentbox-dev`: 2 CPUs, 4 GiB, disco virtual 24 GiB, sem mounts do host, sem ativar contexto global e sem serviço automático no login.
+Docker CLI e Colima instalados via Homebrew oficial. Perfil de desenvolvimento `racky-dev`: 2 CPUs, 4 GiB, disco virtual 24 GiB, sem mounts do host, sem ativar contexto global e sem serviço automático no login.
 
-Imagem `agentbox-browser:ab019-dev`, arm64, ID `sha256:43bf099353c79148d8b960389f2359864a121183585e10b61d1c54ef7509166c`:
+Imagem `racky-browser:ab019-dev`, arm64, ID `sha256:43bf099353c79148d8b960389f2359864a121183585e10b61d1c54ef7509166c`:
 
 - Página JavaScript em modo headless, captura de desktop Xvfb/Openbox inteiro em 1280×800 e input real via XTEST.
 - Clique mudou o resultado visual; revogação retornou ACK; token antigo deixou de funcionar; concessão humana nova funcionou.
@@ -30,7 +30,7 @@ O viewer nativo, bridge de leases e serviço Docker autenticado estão integrado
 
 - Suíte Swift com Docker integrado: **152 testes, zero falhas**, incluindo dois computadores de filhos, takeover isolado, persistência de perfil e atualização/rollback de imagem. Execução com Xcode e scratch de build isolado; resultados posteriores de regressão em `evidence/ab044-child-routing.json`.
 - Suite Python do runtime: **20 testes locais**, além do smoke Docker real descrito em `tasks/AB-019-020-browser-runtime.md`.
-- Build release e assinatura ad hoc verificados. O bundle fica no cache local por checkout, com link em `build/Agent Box.app`, para evitar metadados reaplicados pelo File Provider em Documentos. Build recusa substituir app em execução.
+- Build release e assinatura ad hoc verificados. O bundle fica no cache local por checkout, com link em `build/Racky.app`, para evitar metadados reaplicados pelo File Provider em Documentos. Build recusa substituir app em execução.
 - Captura operacional: `evidence/terminal-split-2026-10-16.png`.
 - Detalhes por feature e limites em `tasks/`, incluindo AB-031 a AB-034.
 
@@ -66,7 +66,7 @@ Docker real confirmou dois computadores separados, navegação JS, takeover, rev
 - AB-033: arraste, rolagem, atalhos e soltura de botões antes do ACK de revogação. Input real pelo viewer em conferência; teste prolongado e latência ainda pendentes.
 - AB-034: inbox opt-in de hooks Claude com assinatura por execução, limite de tamanho e vínculo de sessão. Ainda não ligado ao lançamento do app; não anuncia captura ao vivo de filhos.
 
-Recursos de teste: app encerrado, computador de teste parado e perfil Colima `agentbox-dev` desligado ao final da rodada. Imagem e volumes permanecem locais para retomada; nenhum serviço de login foi instalado.
+Recursos de teste: app encerrado, computador de teste parado e perfil Colima `racky-dev` desligado ao final da rodada. Imagem e volumes permanecem locais para retomada; nenhum serviço de login foi instalado.
 
 ## Scraping e navegador — AB-036/037
 

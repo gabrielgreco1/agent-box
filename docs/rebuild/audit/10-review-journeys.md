@@ -14,16 +14,16 @@ Os relatórios 01 a 06 descrevem o app e o Orca. Faltava olhar como o Gabriel tr
 | Sinal | Onde | O que muda |
 |---|---|---|
 | Orca com **6 repositórios e 103 worktrees** registrados; worktrees em `~/orca/workspaces/<repo>/<nome>` (rti-platform tem 6, arizona-data-request 3) | `~/Library/Application Support/orca/profiles/local-default/orca-data.json` (só contagens) | Worktree por tarefa é o hábito central. Importar isso do Orca no primeiro uso vale muito. |
-| `agentDefaultArgs.claude = "--dangerously-skip-permissions"` | mesmo arquivo, `settings` | Ele roda Claude sem prompts de permissão. "Precisa de você" vem quase sempre de **fim de turno ou pergunta**, raramente de permissão. O perfil padrão do Agent Box deve herdar isso, com indicador visível. |
+| `agentDefaultArgs.claude = "--dangerously-skip-permissions"` | mesmo arquivo, `settings` | Ele roda Claude sem prompts de permissão. "Precisa de você" vem quase sempre de **fim de turno ou pergunta**, raramente de permissão. O perfil padrão do Racky deve herdar isso, com indicador visível. |
 | `automations: 0`, `sshTargets: 0`, `experimentalMobile/NativeChat/AgentHibernation/Activity: false`, `keepComputerAwakeWhileAgentsRun: false` | idem | Automations, SSH, Chat UI, hibernação e feed não são usados. Corta-se da v1 sem perda. |
 | 1 aparelho pareado em `orca-devices.json`, mas Mobile experimental desligado | idem | Mobile foi testado e não ficou. Não entra na v1 (ver §11). |
 | Checklist do onboarding do Orca: `reviewedDiff: false`, `openedPr: false`, `triedCmdJ: false` | idem | Sinal fraco (o checklist pode parar de contar depois de fechado), mas sugere que diff e PR são feitos pelo agente e pelo `gh`, não pela UI do Orca. A v1 precisa de **visibilidade** de PR/checks, não de um painel de source control completo. |
-| Orca instala hooks globais em `~/.claude/settings.json` (13 eventos) e em `~/.codex/hooks.json` (Stop, PermissionRequest, SubagentStart/Stop, SessionStart…), todos condicionados a `ORCA_AGENT_HOOK_PORT` / `ORCA_PANE_KEY` | arquivos de config | (a) O Agent Box vai conviver com esses hooks. (b) **O Codex já tem hooks de estado e de subagente** nesta versão, ao contrário do que o relatório 05 assume (só `notify`). |
-| `notify` do Codex aponta para o Codex Computer Use | `~/.codex/config.toml:1` | O único slot `notify` está ocupado. O Agent Box não pode sobrescrevê-lo. |
+| Orca instala hooks globais em `~/.claude/settings.json` (13 eventos) e em `~/.codex/hooks.json` (Stop, PermissionRequest, SubagentStart/Stop, SessionStart…), todos condicionados a `ORCA_AGENT_HOOK_PORT` / `ORCA_PANE_KEY` | arquivos de config | (a) O Racky vai conviver com esses hooks. (b) **O Codex já tem hooks de estado e de subagente** nesta versão, ao contrário do que o relatório 05 assume (só `notify`). |
+| `notify` do Codex aponta para o Codex Computer Use | `~/.codex/config.toml:1` | O único slot `notify` está ocupado. O Racky não pode sobrescrevê-lo. |
 | Statusline do Claude é um script do usuário que lê `rate_limits.five_hour/seven_day` | `~/.claude/statusline-command.sh` | Fonte pronta para medir uso. Não pode ser substituída, só encadeada. |
 | Último rollout do Codex mostra `rate_limits.primary.used_percent = 100` (janela de 300 min) | `~/.codex/sessions/2026/10/…` | Ele bate no limite. A troca Claude ↔ Codex (J7) tem gatilho real. |
-| CLI antigo `~/orca/projects/agentbox`: 34 runs, incluindo `pp-phoenix-az` e `pp-austin-tx`; **15 boxes `pp-*` criadas em 12 minutos** no dia 13/10; runs de até 391 MB; 1,3 GB no total | `runs/` | A jornada 4 já aconteceu, em escala de 15 boxes, com o CLI antigo. O app novo precisa aguentar esse lote e não pode regredir em relação a ele. |
-| Skill global `~/.claude/skills/agentbox` com descrição que casa literalmente com "spawn 2 subagents for Phoenix and Austin" | SKILL.md | Dentro do Agent Box, o Claude vai escolher essa skill (o CLI antigo) em vez das ferramentas do app, a menos que o conflito seja resolvido. |
+| CLI antigo `~/orca/projects/racky`: 34 runs, incluindo `pp-phoenix-az` e `pp-austin-tx`; **15 boxes `pp-*` criadas em 12 minutos** no dia 13/10; runs de até 391 MB; 1,3 GB no total | `runs/` | A jornada 4 já aconteceu, em escala de 15 boxes, com o CLI antigo. O app novo precisa aguentar esse lote e não pode regredir em relação a ele. |
+| Skill global `~/.claude/skills/racky` com descrição que casa literalmente com "spawn 2 subagents for Phoenix and Austin" | SKILL.md | Dentro do Racky, o Claude vai escolher essa skill (o CLI antigo) em vez das ferramentas do app, a menos que o conflito seja resolvido. |
 | Máquina: 48 GB de RAM, 14 núcleos, 98 GB livres em disco; Docker Desktop instalado com daemon parado; Colima ausente | `sysctl`, `df`, relatório 05 | 15 boxes em modo desktop a 2 GB cada não cabem na VM padrão do Docker Desktop. Capacidade e fila deixam de ser detalhe. |
 | `claude --session-id <uuid>`, `--name`, `--bg`, `--remote-control` existem na 2.1.302 | `claude --help` | Captura de ID sem hook (já citado no 05) e uma alternativa barata ao Mobile (`--remote-control`). |
 
@@ -43,15 +43,15 @@ Antes das jornadas, quatro escolhas aparecem em quase todas. Sem elas, os requis
 ## J1. Primeira abertura e onboarding
 
 ### Roteiro ideal
-1. O Gabriel abre o app. A janela já tem o visual final (sidebar vazia, titlebar Orca). Um overlay de onboarding (não sheet) mostra a checklist "Preparar o Agent Box", e todas as detecções rodam em paralelo, com resultado em 2–3 s:
+1. O Gabriel abre o app. A janela já tem o visual final (sidebar vazia, titlebar Orca). Um overlay de onboarding (não sheet) mostra a checklist "Preparar o Racky", e todas as detecções rodam em paralelo, com resultado em 2–3 s:
    - Claude 2.1.302 logado, Codex 0.160.0 logado, OpenCode 1.18.34 ("login não verificável"). Cada CLI deslogado tem "Abrir login", que abre um terminal com o comando oficial.
    - `gh` 2.93.0 logado como `gabrielgreco1`, com escopos `repo` e `workflow`.
    - Docker: "Docker Desktop instalado, parado" → **Iniciar** (abre o Docker e espera o socket). Imagem da box ausente → **Construir em segundo plano** (tamanho e tempo estimados), sem travar o onboarding. A VM tem X GB de RAM, o que dá "≈ N boxes headless ou M desktop".
    - Notificações: pede permissão com uma frase do porquê.
    - Agentes em segundo plano: "Manter agentes rodando quando fechar o app" pede aprovação do item de login/LaunchAgent.
-2. **Importar**: "Encontrei 6 repositórios e 103 worktrees no Orca, 13 agentes Claude, 12 agentes Codex, ~160 skills e 34 runs do agentbox CLI". Toggles por grupo. Projetos e worktrees viram projetos e sessões sem mover arquivos. Agentes e skills são indexados por referência.
-3. **Padrões**: agente padrão Claude com `--dangerously-skip-permissions` (herdado do Orca, com aviso); modo de subagente B; orçamento Zyte US$ 1 por box; chave Zyte lida de `~/orca/projects/agentbox/.env` e guardada como segredo.
-4. **Conflitos detectados**: hooks globais do Orca (inofensivos, apenas informa); `notify` do Codex ocupado (não será tocado); skill global `agentbox` que concorre com o app (oferece desativar ou redirecionar).
+2. **Importar**: "Encontrei 6 repositórios e 103 worktrees no Orca, 13 agentes Claude, 12 agentes Codex, ~160 skills e 34 runs do racky CLI". Toggles por grupo. Projetos e worktrees viram projetos e sessões sem mover arquivos. Agentes e skills são indexados por referência.
+3. **Padrões**: agente padrão Claude com `--dangerously-skip-permissions` (herdado do Orca, com aviso); modo de subagente B; orçamento Zyte US$ 1 por box; chave Zyte lida de `~/orca/projects/racky/.env` e guardada como segredo.
+4. **Conflitos detectados**: hooks globais do Orca (inofensivos, apenas informa); `notify` do Codex ocupado (não será tocado); skill global `racky` que concorre com o app (oferece desativar ou redirecionar).
 5. Termina no composer de nova sessão com o último projeto do Orca pré-selecionado.
 
 ### Onde falha hoje
@@ -67,11 +67,11 @@ Onboarding em passos no estilo Orca (04 §5.8, 06 A2), preparar Docker e imagem 
 | ID | P | Requisito | Por quê |
 |---|---|---|---|
 | R1.1 | P0 | Onboarding como **checklist de diagnóstico não bloqueante**: cada item tem estado, motivo e uma ação de um clique; nada de formulário de política no primeiro uso. A mesma checklist fica em Configurações › Diagnóstico, para rodar de novo. | "Tudo que eu clico parece que não funciona" começa no primeiro minuto. |
-| R1.2 | P0 | Usar o **contexto Docker ativo** (hoje `desktop-linux`) e só sugerir Colima/OrbStack quando não houver runtime. Ler a memória da VM (`docker info`) e mostrar a capacidade em boxes. | Os testes e o código fixam `colima-agentbox-dev` (02); a capacidade decide o tamanho do lote (J4). |
+| R1.2 | P0 | Usar o **contexto Docker ativo** (hoje `desktop-linux`) e só sugerir Colima/OrbStack quando não houver runtime. Ler a memória da VM (`docker info`) e mostrar a capacidade em boxes. | Os testes e o código fixam `colima-racky-dev` (02); a capacidade decide o tamanho do lote (J4). |
 | R1.3 | P0 | **Importar do Orca** (leitura): repositórios, worktrees ativos e args padrão por agente, a partir de `orca-data.json` e de `~/orca/workspaces`. Nada é movido nem gravado no Orca. | 103 worktrees. Sem isso, o primeiro dia começa vazio e ele volta para o Orca. |
-| R1.4 | P1 | Importar o **CLI agentbox antigo**: runs como histórico só-leitura de boxes (result.json, journal, reqlog) e a chave Zyte do `.env` como segredo. | São os dados de trabalho dele; a J4 consulta runs anteriores ("o que já sabemos de Phoenix"). |
-| R1.5 | P0 | **Nunca sobrescrever configuração global** dos CLIs: `statusLine`, `notify`, hooks e skills globais ficam intocados. Tudo do Agent Box vai por lançamento (`--settings`, `--mcp-config`, `--plugin-dir`, `-c`). Quando um recurso só existe em config global (hooks do Codex), usar o padrão do Orca: entrada global condicionada a uma variável de ambiente do Agent Box, com aviso e remoção limpa. | Há três donos disputando os mesmos arquivos (Orca, Codex Computer Use, o próprio usuário). |
-| R1.6 | P0 | Detectar a skill global `agentbox` (e outras cuja descrição concorra com as ferramentas do app) e oferecer: desativar, manter, ou deixar o app servir de backend dos mesmos comandos. | Sem isso, a frase da J4 aciona o CLI antigo dentro do app novo. |
+| R1.4 | P1 | Importar o **CLI racky antigo**: runs como histórico só-leitura de boxes (result.json, journal, reqlog) e a chave Zyte do `.env` como segredo. | São os dados de trabalho dele; a J4 consulta runs anteriores ("o que já sabemos de Phoenix"). |
+| R1.5 | P0 | **Nunca sobrescrever configuração global** dos CLIs: `statusLine`, `notify`, hooks e skills globais ficam intocados. Tudo do Racky vai por lançamento (`--settings`, `--mcp-config`, `--plugin-dir`, `-c`). Quando um recurso só existe em config global (hooks do Codex), usar o padrão do Orca: entrada global condicionada a uma variável de ambiente do Racky, com aviso e remoção limpa. | Há três donos disputando os mesmos arquivos (Orca, Codex Computer Use, o próprio usuário). |
+| R1.6 | P0 | Detectar a skill global `racky` (e outras cuja descrição concorra com as ferramentas do app) e oferecer: desativar, manter, ou deixar o app servir de backend dos mesmos comandos. | Sem isso, a frase da J4 aciona o CLI antigo dentro do app novo. |
 | R1.7 | P1 | Detectar `gh` e escopos; sem login, "Abrir terminal com `gh auth login`". Mostrar qual fonte de auth GitHub está ativa. | GitHub integrado é pedido explícito; hoje nada detecta o `gh`. |
 | R1.8 | P1 | Pedir a aprovação do item de login (SMAppService) só quando ele ativar "continuar em segundo plano", com texto explicando o que roda. | O daemon de PTY (05 c) depende disso no macOS atual. |
 | R1.9 | P2 | Reprobe automático quando a versão de um CLI muda, com "o que mudou" (flags e hooks suportados). | Os adapters dependem de versão (02, 05). |
@@ -130,7 +130,7 @@ Composer do Orca (04 §5.2, §7), lançador de um passo e perfis (05 a, P0), wor
 |---|---|---|---|
 | R3.1 | P0 | O **prompt inicial vai como argumento do CLI** (`claude "<prompt>"`, `codex "<prompt>"`, `opencode --prompt`), nunca digitado no PTY. Prompt longo vai por arquivo referenciado no argumento. | Cumpre a regra J6 sem gambiarra e é o que faz "já rodando com prompt" funcionar. |
 | R3.2 | P0 | **Diretório gerenciado e nomes**: raiz de worktrees configurável (padrão compatível com `~/orca/workspaces/<repo>/<nome>` durante a transição), prefixo de branch do usuário Git, nome automático e tratamento de colisão. | O composer sem convenção vira formulário de 6 campos de novo. |
-| R3.3 | P0 | O composer aceita **sessão sem Git**: pasta existente ou pasta nova em `~/AgentBox/scratch/<nome>`. | Lotes de scraping não são repositórios; o composer do Orca é centrado em worktree. |
+| R3.3 | P0 | O composer aceita **sessão sem Git**: pasta existente ou pasta nova em `~/Racky/scratch/<nome>`. | Lotes de scraping não são repositórios; o composer do Orca é centrado em worktree. |
 | R3.4 | P1 | **Arquivos ignorados na worktree nova**: ler `.worktreeinclude` e `orca.yaml` (`scripts.setup`, `worktree.sharedDirectories`) quando existirem, e oferecer "copiar `.env*`" por projeto. | Sem `.env`, o agente falha nos primeiros minutos da worktree nova. Reaproveitar o formato do Orca evita configurar duas vezes. |
 | R3.5 | P1 | Script de setup com política "esperar" ou "iniciar o agente já", com a saída numa aba "Setup". | `pnpm install` e similares atrasam o agente sem feedback. |
 | R3.6 | P2 | Anexar imagem ou arquivo ao prompt do composer (o app salva e passa o caminho). | Uso comum no Claude Code. |
@@ -143,7 +143,7 @@ Composer do Orca (04 §5.2, §7), lançador de um passo e perfis (05 a, P0), wor
 A jornada que justifica o app. O Gabriel já fez isso com o CLI antigo, em lote de 15 cidades.
 
 ### Roteiro ideal (modo B: CLI no Mac, computador no container)
-1. **Sessão** `permits-oct` (pasta sem Git). Claude pai lançado pelo Agent Box, portanto já com o MCP do app e a skill de orquestração do app, injetados por lançamento.
+1. **Sessão** `permits-oct` (pasta sem Git). Claude pai lançado pelo Racky, portanto já com o MCP do app e a skill de orquestração do app, injetados por lançamento.
 2. Ele digita: "spawn 2 subagentes para Phoenix e Austin; levantar sistemas de permits (zoning, building), endpoints e cobertura; saída result.json".
 3. O pai consulta runs anteriores (`runs/pp-phoenix-az/result.json` importado) e monta o brief de cada filho com tarefa, o que já se sabe e spec de saída.
 4. O pai chama `boxes_reserve(["phoenix-az", "austin-tx"], mode: headless)`. O app checa capacidade e orçamento, cria as duas boxes em paralelo e responde logo, sem esperar o Chromium. Na sidebar, embaixo do terminal pai, nascem duas linhas filhas com o glifo de provisionamento (06 E3).
@@ -152,7 +152,7 @@ A jornada que justifica o app. O Gabriel já fez isso com o CLI antigo, em lote 
 7. **Captcha em Phoenix**: o filho chama `computer_request_help(kind: captcha, reason: "hCaptcha na busca do Accela")`. A chamada volta na hora com um `request_id`, e o filho fica em `computer_wait_help`. Notificação: "Phoenix precisa de você · captcha em aca-prod.accela.com". O clique abre o viewer com **Assumir** em destaque.
 8. Ele assume. Phoenix fica pausado; Austin segue. Resolve o captcha e clica **Devolver** (⌘⇧R), com uma nota opcional ("resolvido, sessão logada"). O filho recebe URL atual, abas e a nota, e continua.
 9. **Evidências**: cada linha filha abre abas Rede (reqlog com filtro XHR/erros, corpo completo, "copiar como curl"), Diário (PLAN/DOING/FOUND/BLOCKED), Comandos, Arquivos (`/work`) e Timeline.
-10. **Resultado volta ao pai**: o subagente nativo devolve a resposta final ao pai, como já faz o Claude. Além disso, o app copia `/work/result.json` e os logs para `~/AgentBox/runs/permits-oct/phoenix-az/`, e o pai chama `box_collect("phoenix-az")` para receber a timeline e conferir cada afirmação contra os IDs de request. Afirmação sem evidência aparece marcada na UI.
+10. **Resultado volta ao pai**: o subagente nativo devolve a resposta final ao pai, como já faz o Claude. Além disso, o app copia `/work/result.json` e os logs para `~/Racky/runs/permits-oct/phoenix-az/`, e o pai chama `box_collect("phoenix-az")` para receber a timeline e conferir cada afirmação contra os IDs de request. Afirmação sem evidência aparece marcada na UI.
 11. **Fim**: as boxes param sozinhas quando o filho termina e os perfis ficam. O card da sessão mostra "Phoenix US$ 0,12 · Austin US$ 0,00 · 18 min". "Arquivar lote" remove containers e mantém runs e perfis.
 
 ### Onde falha hoje
@@ -243,7 +243,7 @@ Estado via hooks e notificação (05 c, P0), atalhos e notificações do Orca (0
 ### Roteiro ideal
 1. A status bar mostra Claude 5 h em 96 %. O Claude bate no limite; um banner no pane diz "Limite de 5 h atingido (volta às 14:20). Continuar no Codex?".
 2. **Continuar em… Codex** monta um brief editável: objetivo (nota da sessão e primeiro prompt), últimos pedidos do usuário, última resposta, `git status` e diff resumido, pendências (lista de tarefas do transcript), filhos e boxes ativos.
-3. Ele revisa o "recibo" e confirma. Uma aba nova abre o Codex no mesmo worktree, com o brief salvo em `.agentbox/handoff.md` e passado no prompt inicial, e com o MCP do Agent Box configurado por `-c mcp_servers`.
+3. Ele revisa o "recibo" e confirma. Uma aba nova abre o Codex no mesmo worktree, com o brief salvo em `.racky/handoff.md` e passado no prompt inicial, e com o MCP do Racky configurado por `-c mcp_servers`.
 4. A aba do Claude continua lá, marcada "passou para Codex". As boxes do Claude só mudam de dono se ele marcar.
 5. Às 14:20, "Voltar ao Claude" retoma a conversa original com um resumo do que o Codex mudou desde o handoff.
 
@@ -259,7 +259,7 @@ Handoff transacional com checkpoint e rollback (SPEC1 X2–X5), MCP para Codex (
 | R7.1 | P1 | **Handoff leve** em vez do transacional do SPEC1: nova aba, origem mantida, brief gerado do transcript e do Git, editável antes de lançar. Rollback = fechar a aba nova. | O transacional (pausar, checkpoint, revogar, associar, validar) é caro e não muda o resultado para um usuário só. |
 | R7.2 | P1 | **Detecção de limite**: `rate_limits` do statusline do Claude e do rollout do Codex alimentam um banner com a hora de reset e a oferta de troca. | O último rollout dele está em 100 %. |
 | R7.3 | P1 | **Transferir box** entre terminais como ação explícita (SPEC L17, pendente). | Sem isso, o Codex começa sem o browser logado. |
-| R7.4 | P1 | **Paridade mínima do Codex** na v1.1: MCP do Agent Box por `-c`, estado e subagentes pelos hooks que o Codex já tem (`Stop`, `PermissionRequest`, `SubagentStart/Stop`), ID pelo rollout. Corrige o 05, que trata o Codex como "só notify". Conferir por versão. | O Codex é o segundo agente do dia, não um extra. |
+| R7.4 | P1 | **Paridade mínima do Codex** na v1.1: MCP do Racky por `-c`, estado e subagentes pelos hooks que o Codex já tem (`Stop`, `PermissionRequest`, `SubagentStart/Stop`), ID pelo rollout. Corrige o 05, que trata o Codex como "só notify". Conferir por versão. | O Codex é o segundo agente do dia, não um extra. |
 | R7.5 | P2 | "Voltar ao agente original" com o diff desde o handoff. | Fecha o ciclo quando o limite reseta. |
 | R7.6 | P2 | Troca de conta Claude/Codex (como o hot-swap do Orca), com uso por conta. | Há duas contas Codex registradas no Orca e um registro de créditos de reset. |
 
@@ -297,7 +297,7 @@ Daemon de PTY e reanexação (05 c, P0), restauração de buffer (05 c, P1), ret
 
 ### Roteiro ideal
 1. ⌘⇧L abre a Biblioteca no painel direito, com abas Agentes, Skills e Instruções e as fontes com contagem: `~/.claude/agents` (13), `~/.codex/agents` (12), `~/.claude/skills` (133), `~/.agents/skills` (~30), plugins, `.claude/` do projeto.
-2. **Criar agente** "permit-portal-scout": nome, descrição, modelo, ferramentas, skills (`webscraping-expert`), MCP (`agent-box` computer). Escopo: usuário, projeto ou "só no app". Grava `~/.claude/agents/permit-portal-scout.md` e, se ele marcar, o `.toml` espelho do Codex.
+2. **Criar agente** "permit-portal-scout": nome, descrição, modelo, ferramentas, skills (`webscraping-expert`), MCP (`racky` computer). Escopo: usuário, projeto ou "só no app". Grava `~/.claude/agents/permit-portal-scout.md` e, se ele marcar, o `.toml` espelho do Codex.
 3. **Editar skill**: abre o `SKILL.md` num editor simples ou no editor externo. O app avisa "usada por 3 sessões ativas; vale a partir do próximo lançamento" e guarda backup antes de salvar.
 4. **Ativar só nesta sessão**: na aba "Contexto" da sessão, ele liga a skill `arcgis-playbook` e o agente "permit-portal-scout" só para esta sessão. O app aplica no próximo lançamento (ou oferece "relançar com resume"). Skills globais aparecem como "sempre ativas", diferenciadas das adicionadas na sessão.
 
@@ -312,7 +312,7 @@ Catálogo das fontes nativas, ativação nativa no Claude (`--agents`, `--agent`
 |---|---|---|---|
 | R9.1 | P1 | **Escopo de ativação explícito**: global (sempre ativo, vem dos arquivos do CLI), sessão (aditivo, por lançamento) e "só no app" (guardado fora das pastas globais e injetado por lançamento). Mover uma skill de global para "só no app" é uma ação com backup. Conferir se a versão instalada do Claude permite desligar uma skill global por lançamento; se não permitir, a UI diz isso em vez de prometer. | "Ativar só numa sessão" não existe para skills globais, porque o Claude carrega todas. |
 | R9.2 | P1 | **Quando a mudança vale**: cada edição mostra "próximo lançamento" ou "relançar agora com resume", e quais sessões ativas usam o item. | Editar uma skill e não ver efeito é outro "não funciona". |
-| R9.3 | P1 | Agente da biblioteca pode declarar o computador do Agent Box em `mcpServers` e skills em `skills`; isso substitui o preset "Web scraping" fixo no código (02 #5). | Tira o caso pessoal do Core sem perder o atalho. |
+| R9.3 | P1 | Agente da biblioteca pode declarar o computador do Racky em `mcpServers` e skills em `skills`; isso substitui o preset "Web scraping" fixo no código (02 #5). | Tira o caso pessoal do Core sem perder o atalho. |
 | R9.4 | P1 | **Backup e histórico** de toda escrita em `~/.claude` e `~/.codex` (diff e reverter). | Escrever ali afeta todos os terminais, inclusive os do Orca. |
 | R9.5 | P2 | Lint da biblioteca: frontmatter inválido, skill referenciada que não existe, `.md` e `.toml` divergentes. | Ele mantém os espelhos à mão (13 contra 12). |
 | R9.6 | — | **Recomendação**: tirar a memória própria do app da v1. Memória fica nos formatos nativos (`CLAUDE.md`, `AGENTS.md`, memória automática do Claude). | O 05 já pede para avaliar; nenhuma jornada precisou dela. |
@@ -344,7 +344,7 @@ Proxy com orçamento por box (05 b, P1), painel de computadores com CPU/RAM (05 
 
 ---
 
-## 11. O que o Orca tem e o Agent Box não
+## 11. O que o Orca tem e o Racky não
 
 A coluna "Uso" vem dos sinais do §0.
 
@@ -372,10 +372,10 @@ A coluna "Uso" vem dos sinais do §0.
 | `orca.yaml`, `.worktreeinclude` | Provável nos repos | v1.1, leitura compatível (R3.4) | Evita configurar duas vezes. |
 | Worktree comment atualizado pelo agente | — | **v1** (R2.4) | Barato e útil para retomar. |
 | Caffeinate | Desligado | v1.1, desligado por padrão (R8.4) | Lote noturno. |
-| Orchestration (runs, tasks, dispatch) | Não | Fora | O Agent Box tem a própria orquestração (boxes e filhos); copiar a do Orca duplicaria. |
+| Orchestration (runs, tasks, dispatch) | Não | Fora | O Racky tem a própria orquestração (boxes e filhos); copiar a do Orca duplicaria. |
 | Editor Monaco, explorer, Quick Open ⌘P | — | Fora | "Abrir em…" resolve. |
 
-O que o Agent Box tem e o Orca não: computador Docker por subagente, takeover com pausa só do filho afetado, reqlog e diário como evidência, orçamento de proxy, dois modos de subagente. É isso que justifica sair do Orca, e é a parte que a v1 não pode entregar pela metade.
+O que o Racky tem e o Orca não: computador Docker por subagente, takeover com pausa só do filho afetado, reqlog e diário como evidência, orçamento de proxy, dois modos de subagente. É isso que justifica sair do Orca, e é a parte que a v1 não pode entregar pela metade.
 
 ---
 
@@ -443,4 +443,4 @@ Automations e lotes agendados; `--remote-control` como "mobile"; hibernação au
 4. Browser das boxes sempre headed em Xvfb, aceitando o custo de RAM (R4.4)?
 5. Portar o runtime do CLI antigo para dentro do runtime novo (§1.4) em vez de evoluir só o atual?
 6. Onde ficam worktrees e runs na transição: `~/orca/workspaces` compartilhado ou pasta própria (R3.2)?
-7. Aposentar a skill global `agentbox` quando a fatia 3 estiver pronta (R1.6)?
+7. Aposentar a skill global `racky` quando a fatia 3 estiver pronta (R1.6)?

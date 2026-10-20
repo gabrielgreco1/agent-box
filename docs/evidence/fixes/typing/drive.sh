@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Smoke do app real: onboarding aberto -> Done -> estado de foco.
 ROOT=/Users/gabriel/orca/agent-box/.claude/worktrees/agent-a7af4e68d6743ce91
-APP="$ROOT/build/AgentBox/Agent Box.app"
-BIN="$APP/Contents/MacOS/agentbox"
+APP="$ROOT/build/Racky/Racky.app"
+BIN="$APP/Contents/MacOS/racky"
 H=/tmp/abfix1
 SOCK=$H/run/app.sock
 rm -rf $H; mkdir -p $H/run
-open -g -n "$APP" --env AGENTBOX_AUTOMATION=1 --env AGENTBOX_HOME=$H --env AGENTBOX_APP_SOCK=$SOCK
+open -g -n "$APP" --env RACKY_AUTOMATION=1 --env RACKY_HOME=$H --env RACKY_APP_SOCK=$SOCK
 PID=""
 for i in $(seq 1 60); do
   PID=$(lsof -U 2>/dev/null | awk -v s="$SOCK" '$0 ~ s {print $2; exit}')

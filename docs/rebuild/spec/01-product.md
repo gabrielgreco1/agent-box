@@ -1,6 +1,6 @@
 # 01 · Produto
 
-Agent Box rebuild · capítulo 01 · 2026-10-16
+Racky rebuild · capítulo 01 · 2026-10-16
 **Revisado após R1–R3 em 2026-10-16** (patches de `review/R1-consistency.md`, `R2-coverage.md` e `R3-implementability.md`, com as decisões P11–P16 do `00`).
 Depende de: `00-decisions.md` (prevalece sobre este capítulo). Fontes: `docs/rebuild/audit/01..10`, principalmente `10-review-journeys.md`.
 Capítulos irmãos: `02-design-system.md`, `03-screens.md` (UI), `04-motion.md`, `05-journeys-and-acceptance.md` (jornadas e aceite), `06-terminals-and-agents.md` (daemon, lançamento, estados, biblioteca, git/GitHub), `07-computers-and-subagents.md`, `08-architecture-quality.md`.
@@ -11,12 +11,12 @@ Convenção: a spec é em português. Todo texto que aparece na interface vem em
 
 ## 1. Visão
 
-O Agent Box é o app macOS nativo e pessoal do Gabriel para trabalhar com vários agentes de código ao mesmo tempo. Cada **sessão** junta terminais reais (Claude Code, Codex, OpenCode ou shell) num diretório: uma worktree de um repositório, um checkout existente, uma pasta comum ou uma pasta nova criada pelo app. Quando um agente precisa de um navegador, ele delega para **subagentes**, e cada subagente ganha o próprio **computador** Docker, com navegador persistente, terminal, captura de rede, proxy configurável e um viewer onde o Gabriel assume o controle quando aparece um captcha ou um login.
+O Racky é o app macOS nativo e pessoal do Gabriel para trabalhar com vários agentes de código ao mesmo tempo. Cada **sessão** junta terminais reais (Claude Code, Codex, OpenCode ou shell) num diretório: uma worktree de um repositório, um checkout existente, uma pasta comum ou uma pasta nova criada pelo app. Quando um agente precisa de um navegador, ele delega para **subagentes**, e cada subagente ganha o próprio **computador** Docker, com navegador persistente, terminal, captura de rede, proxy configurável e um viewer onde o Gabriel assume o controle quando aparece um captcha ou um login.
 
 A v1 tem dois objetivos, e só vale se cumprir os dois:
 
 1. **Substituir o Orca no dia a dia.** Worktree por tarefa, agente já rodando ao criar a sessão, estado de cada agente visível, notificação quando alguém precisa dele, agentes que continuam vivos quando o app fecha.
-2. **Fazer o lote de scraping melhor que o CLI `agentbox` antigo.** Quinze subagentes em paralelo, cada um com o próprio computador, com evidência de cada afirmação, logs e uso de proxy que o agente não consegue adulterar e takeover sem perder a página.
+2. **Fazer o lote de scraping melhor que o CLI `racky` antigo.** Quinze subagentes em paralelo, cada um com o próprio computador, com evidência de cada afirmação, logs e uso de proxy que o agente não consegue adulterar e takeover sem perder a página.
 
 O que justifica sair do Orca é o que o Orca não tem: computador Docker por subagente, takeover que pausa só o filho afetado, reqlog e diário como evidência, proxy configurável por computador e os dois modos de subagente (leve e isolado). Essa parte não pode chegar pela metade.
 
@@ -58,9 +58,9 @@ Criar uma sessão e ver o agente começar a rodar (P9) **é** o clique explícit
 
 **PP-5 · Agentes não morrem com o app.** ⌘Q, crash da UI ou atualização do app não matam agentes (P4). O que segue rodando fica visível num item da barra de menus. Reboot mata os processos; o app devolve layout, último scrollback e um botão "Resume" por pane.
 
-**PP-6 · A configuração global dos CLIs é do usuário.** `~/.claude/settings.json`, `statusLine`, hooks, skills globais, `~/.codex/config.toml`, `notify` e `hooks.json` não são tocados. Tudo que o Agent Box precisa entra por lançamento: `--settings`, `--mcp-config`, `--plugin-dir`, `--session-id`, `-c` (T10, R1.5). A única escrita em pastas globais acontece por ação explícita na Biblioteca (criar ou editar agente/skill, v1.1) ou ao desativar a skill `agentbox` concorrente, sempre com backup e desfazer.
+**PP-6 · A configuração global dos CLIs é do usuário.** `~/.claude/settings.json`, `statusLine`, hooks, skills globais, `~/.codex/config.toml`, `notify` e `hooks.json` não são tocados. Tudo que o Racky precisa entra por lançamento: `--settings`, `--mcp-config`, `--plugin-dir`, `--session-id`, `-c` (T10, R1.5). A única escrita em pastas globais acontece por ação explícita na Biblioteca (criar ou editar agente/skill, v1.1) ou ao desativar a skill `racky` concorrente, sempre com backup e desfazer.
 
-**PP-7 · Convivência com o Orca.** Os dois apps rodam juntos por semanas. A importação é só leitura. Nenhum arquivo do Orca é escrito. Os hooks globais do Orca ficam inertes nos terminais do Agent Box porque as variáveis `ORCA_*` não chegam a eles. Apagar uma worktree que o Orca também registra exige aviso (P3, RT.1).
+**PP-7 · Convivência com o Orca.** Os dois apps rodam juntos por semanas. A importação é só leitura. Nenhum arquivo do Orca é escrito. Os hooks globais do Orca ficam inertes nos terminais do Racky porque as variáveis `ORCA_*` não chegam a eles. Apagar uma worktree que o Orca também registra exige aviso (P3, RT.1).
 
 **PP-8 · Ação longa tem estado no lugar onde foi pedida.** Criar worktree, provisionar computador, construir imagem e retomar em lote mostram progresso no próprio card, linha ou pane, e terminam em sucesso ou em erro com uma ação ("Try Again", "Use Existing Branch"). Nada de spinner sem fim nem alerta genérico (RT.3).
 
@@ -70,9 +70,9 @@ Criar uma sessão e ver o agente começar a rodar (P9) **é** o clique explícit
 
 **PP-11 · Segurança honesta.** O modelo de ameaça fica escrito e a UI não promete mais do que entrega. Um agente no Mac (modo leve) tem os mesmos poderes do usuário, e o app não finge isolá-lo. O container protege o Mac do navegador e, no modo isolado, do próprio agente. Detalhe em `08-architecture-quality.md`.
 
-**PP-12 · Orca como referência, inglês na UI.** O visual, as interações e o microcopy seguem o Orca (P1, P2). Divergir do Orca pede um motivo escrito na spec. Toda tela só fecha com captura do Agent Box lado a lado com a referência versionada do Orca e OK explícito do dono (P14, AC-T26).
+**PP-12 · Orca como referência, inglês na UI.** O visual, as interações e o microcopy seguem o Orca (P1, P2). Divergir do Orca pede um motivo escrito na spec. Toda tela só fecha com captura do Racky lado a lado com a referência versionada do Orca e OK explícito do dono (P14, AC-T26).
 
-**PP-13 · Teclado primeiro e app dirigível.** Toda ação frequente tem atalho e entra na palette (⌘J). Todo controle tem `accessibilityIdentifier`, e existe um canal de automação opt-in (`agentbox ctl`) para testes e agentes dirigirem o app ponta a ponta (T13).
+**PP-13 · Teclado primeiro e app dirigível.** Toda ação frequente tem atalho e entra na palette (⌘J). Todo controle tem `accessibilityIdentifier`, e existe um canal de automação opt-in (`racky ctl`) para testes e agentes dirigirem o app ponta a ponta (T13).
 
 **PP-14 · Barato por padrão.** Panes ocultos não desenham. Miniaturas fora da tela param. Lotes usam headless. Computador de subagente é efêmero, mas o perfil de navegador fica. Nada roda em segundo plano sem aparecer no item da barra de menus.
 
@@ -86,14 +86,14 @@ Critério (`audit/10 §13`): a v1 entra em uso quando substitui o Orca **e** sup
 
 Regras que valem para todas as fatias:
 - **Controle de fatia futura não é renderizado.** Cada fatia liga suas superfícies por feature flag. Desabilitar não basta (PP-1).
-- **Aprovação visual por tela (P14).** Toda tarefa visual só fecha com captura do Agent Box lado a lado com a referência do Orca e OK explícito do dono, registrado em `docs/evidence/ui/<tarefa>/` (AC-T26).
+- **Aprovação visual por tela (P14).** Toda tarefa visual só fecha com captura do Racky lado a lado com a referência do Orca e OK explícito do dono, registrado em `docs/evidence/ui/<tarefa>/` (AC-T26).
 - Cada tarefa entrega o que a Definition of Done de 08 pede, e o canal `ctl` mínimo existe desde a primeira tarefa (Fatia 1).
 
 ### 4.1 v1
 
 **Fatia 0 · Fechamento** (antes da primeira linha de código)
 - Errata aplicada: nomes canônicos, IDs de motion `M-xxx`, `accessibilityIdentifier` de 02 §17 / 03 §22, atalhos de 03 §21 (P16).
-- Pacote de referência do Orca 1.4.219 versionado em `docs/rebuild/reference/orca-1.4.219/` (screenshots por superfície, `manifest.json` ligando cada PNG à tela de 03 e ao identificador do Agent Box), extraído por script e nunca de um scratchpad (P14).
+- Pacote de referência do Orca 1.4.219 versionado em `docs/rebuild/reference/orca-1.4.219/` (screenshots por superfície, `manifest.json` ligando cada PNG à tela de 03 e ao identificador do Racky), extraído por script e nunca de um scratchpad (P14).
 - Tabela de ações da Fatia 1 (ID, rótulo, atalho, efeito, estado desabilitado com motivo, teste). Controle sem linha na tabela sai da UI.
 - Spikes S-01 a S-07 de R3 §6.1 (launchd com socket no home, SwiftTerm, peer auth em dev e CI, reattach, hooks por lançamento do Claude e do Codex, env de login, `ctl screenshot`), com evidência em `docs/evidence/spikes/`.
 - `design/` antigo e código antigo fora do caminho do build; versões fixadas (XcodeGen, SwiftTerm, GRDB, Geist com `OFL.txt`).
@@ -104,11 +104,11 @@ Regras que valem para todas as fatias:
 - **Sessões limpas** em um clique ("New Clean Session", ⇧⌘N, ou o "+" da seção "Sessions"), promovíveis com "Move to Project…" (P10, P11).
 - Composer (⌘N): com projeto, "New Worktree", "Existing Worktree" ou "Main Checkout"; sem projeto, "New Folder" ou "Choose Folder…". Agente já rodando com o prompt como argumento (P9, R3.1–R3.3). Quick Launch (⌥⌘N), ⌘T para shell, ⌥⌘T para o agente padrão.
 - Perfis de lançamento para Claude, Codex, OpenCode e shell, mais "Custom Command"; ambiente do shell de login; padrão sem permissões.
-- Daemon `agentboxd`: na fatia nasce como filho do app, com o mesmo protocolo (modo degradado de 06). LaunchAgent, sobrevivência a ⌘Q e crash e item na barra de menus entram na última tarefa da fatia, se o spike S-01 passar (P4, T1).
+- Daemon `rackyd`: na fatia nasce como filho do app, com o mesmo protocolo (modo degradado de 06). LaunchAgent, sobrevivência a ⌘Q e crash e item na barra de menus entram na última tarefa da fatia, se o spike S-01 passar (P4, T1).
 - Captura do ID nativo; reabertura com "Interrupted" e "Resume" com flags regeneradas (R2.2, R8.1).
 - Sem hooks nesta fatia: o card mostra o estado do processo, e a atividade do agente aparece como `unknown` ("Status unavailable").
 - Onboarding mínimo: CLI detectado, logado ou não.
-- `agentbox ctl` mínimo (`state`, `ui tree`, `ui action`, `ui wait`, `screenshot`), registro de ações e `accessibilityIdentifier` em todo controle desde a primeira tarefa (T13).
+- `racky ctl` mínimo (`state`, `ui tree`, `ui action`, `ui wait`, `screenshot`), registro de ações e `accessibilityIdentifier` em todo controle desde a primeira tarefa (T13).
 
 **Fatia 2 · Atenção, GitHub e convivência com o Orca**
 - Estado de agente via hooks por lançamento: Claude completo; Codex com os eventos que os hooks dele oferecem, ou marcado `estimated` se o spike S-05 não fechar sem escrita global (T10). Estado do pai considera os filhos (R6.1). Última mensagem por terminal (R2.1).
@@ -122,7 +122,7 @@ Regras que valem para todas as fatias:
 
 **Fatia 3 · Computadores, modo leve** (supera o CLI antigo)
 - Docker e imagem preparados pelo app, contexto ativo, capacidade e fila (R1.2, R4.7, T7).
-- MCP do computador em qualquer terminal Claude; skill de orquestração do app entregue por lançamento; conflito com a skill global `agentbox` resolvido (R4.1, R1.6, T12).
+- MCP do computador em qualquer terminal Claude; skill de orquestração do app entregue por lançamento; conflito com a skill global `racky` resolvido (R4.1, R1.6, T12).
 - Reserva de computador por nome (`boxes_reserve`) e reivindicação pelo filho (`box_claim`) (R4.2). Navegador headed em Xvfb (R4.4). Pedido de ajuda assíncrono (`help_request`, `help_wait`) (R4.3).
 - Runtime com as ferramentas do CLI antigo: `exec`, `curl_cffi`, `http_request`, navegador por seletor, reqlog com corpos, diário, proxy configurável e render quando o proxy escolhido suportar (T12, P13).
 - Egress sidecar por computador: aplica o proxy escolhido para aquele computador, grava reqlog e uso do proxy, bloqueia SSRF e mantém o token fora do env (T9). Sem teto de gasto e sem corte automático (P13).
@@ -136,7 +136,7 @@ Regras que valem para todas as fatias:
 - Biblioteca só leitura das fontes nativas, ativação aditiva por sessão (R9.1 parcial), "Open in Editor".
 - "Insert Skill or Agent…" na palette (03 §8): cola a referência no prompt do pane focado, por colagem com clique e sem Enter (`audit/05 e3`, T11). Decisão final: v1, Fatia 4, junto da Library.
 
-**Transversal à v1**: `agentbox ctl` e `accessibilityIdentifier` (T13), SQLite com backup (T2), Swift 6 estrito (T3), assinatura estável (T4), logs e diagnóstico local (08), aprovação visual por tela (P14).
+**Transversal à v1**: `racky ctl` e `accessibilityIdentifier` (T13), SQLite com backup (T2), Swift 6 estrito (T3), assinatura estável (T4), logs e diagnóstico local (08), aprovação visual por tela (P14).
 
 ### 4.2 v1.1
 
@@ -231,7 +231,7 @@ A unidade de trabalho que o usuário vê na sidebar: um diretório e os terminai
 | `titleSource` | `auto` \| `user` | Título automático vem do prompt ou de nome gerado; vazio volta ao automático |
 | `directoryPath` | caminho | cwd padrão dos terminais |
 | `worktreeId` | ref Worktree? | Para `kind = worktree` ou `checkout` |
-| `managedDirectory` | bool | `true` quando o app criou a pasta (`~/AgentBox/sessions/<nome>` ou worktree nova). Só pasta gerenciada pode ir para o Lixo pelo app |
+| `managedDirectory` | bool | `true` quando o app criou a pasta (`~/Racky/sessions/<nome>` ou worktree nova). Só pasta gerenciada pode ir para o Lixo pelo app |
 | `statusNote` | texto curto + autor (`user` \| run id) + data | R2.4. Linha 3 do card (03 §2.6) |
 | `initialPrompt` | texto? | O prompt do composer, guardado para handoff e resumo |
 | `origin` | `composer` \| `cleanQuick` \| `orcaImport` \| `promoted` | Para diagnóstico |
@@ -283,7 +283,7 @@ Invariantes: um terminal aparece em no máximo um pane por vez (`audit/01 B7`). 
 | `resolvedArgv`, `resolvedEnvKeys` | | Como foi lançado de fato (sem valores de segredo) |
 | `cwd` | caminho | |
 | `placement` | `local` \| `container(computerId)` | `container` só no modo isolado (v1.1) |
-| `ptySessionId`, `daemonProtocol` | | Vínculo com o `agentboxd` |
+| `ptySessionId`, `daemonProtocol` | | Vínculo com o `rackyd` |
 | `nativeConversationId` | texto? | Capturado em todo lançamento (R2.2) |
 | `processState` | ver §6.2 | |
 | `exitCode`, `exitedAt` | | |
@@ -305,7 +305,7 @@ O que o usuário pediu, salvo antes do processo nascer e usado para regerar tudo
 | `resumeOf` | ID nativo a retomar, quando for retomada |
 | `agentDefinition` | ref CatalogItem? (`--agent`, `--agents`) |
 | `sessionActivations` | Snapshot das skills e agentes ativados na sessão no momento do lançamento |
-| `appIntegrations` | MCP do Agent Box, hooks de estado, skill de orquestração, statusline encadeada. Regerados por lançamento (T10) |
+| `appIntegrations` | MCP do Racky, hooks de estado, skill de orquestração, statusline encadeada. Regerados por lançamento (T10) |
 | `secrets` | Refs de Secret injetadas no env por opt-in do perfil |
 
 ### 5.8 LaunchProfile
@@ -351,7 +351,7 @@ Uma conversa de agente observada pelo app. O agente principal de um terminal é 
 | Onde roda o CLI | No Mac, dentro do processo do pai (subagente nativo) | No container, como processo próprio |
 | Aparece como | Linha filha na sidebar e no card; não é terminal digitável | Tab de terminal real, pendurada no pai |
 | Computador | Container com navegador (headless ou desktop), controlado via MCP | Na mesma box do CLI, em container irmão, com o lease fora do alcance do CLI (07 §6.1; "mesmo container" de P5 lido como "mesma box", R1 D-08) |
-| Quem cria | O pai, com as ferramentas do Agent Box (`boxes_reserve`; o subagente nativo reivindica com `box_claim`) | O pai via `agent_spawn` ou o usuário pela UI |
+| Quem cria | O pai, com as ferramentas do Racky (`boxes_reserve`; o subagente nativo reivindica com `box_claim`) | O pai via `agent_spawn` ou o usuário pela UI |
 | Login do CLI | O do Mac | Já logado no container (P7) |
 | Mensagens do pai | Não se aplica (o filho nativo vive no processo do pai) | `agent_message` com Enter, só para filhos que o pai criou, registrado na timeline (P12) |
 
@@ -359,7 +359,7 @@ Detalhe em `07-computers-and-subagents.md`.
 
 ### 5.10 Computer (box)
 
-Na UI o termo é **"Computer"** ("Container" no modo isolado). "Box" aparece só em nomes de ferramentas MCP, logs e pastas (`boxes_reserve`, `box_claim`, `~/AgentBox/runs/<sessão>/<computer>/`) (P15).
+Na UI o termo é **"Computer"** ("Container" no modo isolado). "Box" aparece só em nomes de ferramentas MCP, logs e pastas (`boxes_reserve`, `box_claim`, `~/Racky/runs/<sessão>/<computer>/`) (P15).
 
 | Campo | Notas |
 |---|---|
@@ -374,7 +374,7 @@ Na UI o termo é **"Computer"** ("Container" no modo isolado). "Box" aparece só
 | `control` | `agent` \| `human` \| `none`, com `epoch` |
 | `imageDigest`, `containers` | `runtime`, `work` (v1, `exec`) ou `agent` (isolado, v1.1, substitui `work`), `egress` (R1 K-66) |
 | `profileVolume` | Perfil do navegador; sobrevive à remoção do container |
-| `runFolder` | `~/AgentBox/runs/<sessão>/<label>/` com `work/` (inclui `result.json`), `logs/`, `transcript/` e `box.json` (07 §2.8) |
+| `runFolder` | `~/Racky/runs/<sessão>/<label>/` com `work/` (inclui `result.json`), `logs/`, `transcript/` e `box.json` (07 §2.8) |
 | `proxyProfileId` | ref ProxyProfile? escolhido para este computador (sobrepõe sessão e global); `nil` = saída direta pelo egress (§5.15, P13) |
 | `proxyUsage` | Uso informado pelo provedor, quando disponível; sem teto (P13) |
 | `resources` | CPU e memória pedidos; uso medido |
@@ -410,7 +410,7 @@ A Biblioteca indexa os formatos nativos por referência. Conteúdo é lido sob d
 
 **SessionActivation** (`sessionId`, `catalogItemId`, `addedAt`, `appliesFrom: nextLaunch`): liga um item a uma sessão. Vale a partir do próximo lançamento; o app oferece "Relaunch with resume" (R9.1, R9.2). Se a versão instalada do CLI não permite desligar um item global por lançamento, a UI diz isso em vez de prometer.
 
-A skill de orquestração do Agent Box e o MCP do computador **não** são CatalogItems do usuário: entram sempre por lançamento como `appIntegrations`.
+A skill de orquestração do Racky e o MCP do computador **não** são CatalogItems do usuário: entram sempre por lançamento como `appIntegrations`.
 
 ### 5.12 AttentionItem e InboxEvent (notificações)
 
@@ -454,14 +454,14 @@ Valores ficam cifrados no banco (AES-GCM) com a chave mestra num único item do 
 | `scope` | `global` \| `project` |
 | `delivery` | `sidecarOnly` (credencial de proxy: nunca chega ao agente) \| `profileEnv` (opt-in por perfil) \| `boxFileReadOnly` (v1.1) |
 | `createdAt`, `lastUsedAt`, `expiresAt` | |
-| `importedFrom` | Ex.: `~/orca/projects/agentbox/.env` |
+| `importedFrom` | Ex.: `~/orca/projects/racky/.env` |
 
 Regras: nenhum valor em evento, log, histórico, crash report ou export. Nunca copiar refresh tokens do Mac nem montar o token do `gh` (P7). O token de cada computador é derivado da chave mestra e entregue por arquivo `0400` montado só leitura, nunca por env (T9, 08 AR-512).
 
 ### 5.14 Outros objetos
 
 - **UsageMeter** (`provider`, `window` 5h/7d, `percent`, `resetsAt`, `source`, `observedAt`): alimentado pela statusline encadeada do Claude e pelos `rate_limits` dos rollouts do Codex (R10.1).
-- **OrcaImport** (`sourcePath`, `importedAt`, contagens, mapa id Orca → id Agent Box): torna a importação repetível sem duplicar.
+- **OrcaImport** (`sourcePath`, `importedAt`, contagens, mapa id Orca → id Racky): torna a importação repetível sem duplicar.
 - **ConversationIndexEntry** (`provider`, `nativeId`, `cwd`, `title` ou primeira mensagem, `updatedAt`, `openElsewhere`): só metadados dos transcripts dos CLIs, para a lista "Conversations". Transcript nunca é copiado.
 - **Batch** (v1, `audit/08 N7`, 07 CS-323/324): alvos, template de brief, consolidado `results.jsonl`, resumo ao concluir. Um lote pertence a uma sessão; os computadores do lote levam `batch_id`.
 
@@ -652,7 +652,7 @@ Termo de UI em inglês, com a definição usada em toda a spec. Termos técnicos
 |---|---|
 | **Project** | Repositório Git ou pasta raiz que agrupa sessões. |
 | **Session** | Um diretório de trabalho com seus terminais, agentes e computadores. Aparece como card na sidebar. |
-| **Clean session** | Sessão sem projeto e sem Git (`kind = clean`), criada em um clique por "New Clean Session" (⇧⌘N) numa pasta gerenciada (`~/AgentBox/sessions/<name>`) ou, pelo composer, numa pasta escolhida ("Choose Folder…"). Fica na seção "Sessions" (P11). O termo "Scratch" não é usado. |
+| **Clean session** | Sessão sem projeto e sem Git (`kind = clean`), criada em um clique por "New Clean Session" (⇧⌘N) numa pasta gerenciada (`~/Racky/sessions/<name>`) ou, pelo composer, numa pasta escolhida ("Choose Folder…"). Fica na seção "Sessions" (P11). O termo "Scratch" não é usado. |
 | **Projects / Sessions** (seções da sidebar) | "Projects" lista projetos com suas sessões; "Sessions" lista as sessões limpas (P11). |
 | **Worktree** | Worktree Git criada para uma tarefa. Mantém o termo do Git. |
 | **Primary** | O checkout original de um projeto; nunca é apagado pelo app. |
@@ -698,7 +698,7 @@ Termo de UI em inglês, com a definição usada em toda a spec. Termos técnicos
 | **Timeline** | Visão combinada de diário, comandos, requests e mensagens do pai de um computador. |
 | **Result** | O `result.json` do subagente, com cada afirmação ligada à evidência. |
 | **Not verified** | Afirmação de resultado sem request ou arquivo que a sustente. |
-| **Run folder** | Pasta no Mac com resultado e logs de um computador: `~/AgentBox/runs/<session>/<computer>/`. |
+| **Run folder** | Pasta no Mac com resultado e logs de um computador: `~/Racky/runs/<session>/<computer>/`. |
 | **Proxy** | Configuração de saída escolhida pelo usuário (HTTP/HTTPS/SOCKS ou modo API de um provedor, como o preset Zyte) e dada a um computador (entidade `ProxyProfile`, P13, §5.15). |
 | **Proxy usage** | Uso informado pelo provedor do proxy, quando ele informa. Não há teto nem corte automático (P13). |
 | **Usage** | Medidores das janelas de uso do Claude e do Codex na status bar. |
@@ -719,7 +719,7 @@ Estes pontos não estavam no `00` original. O dono os adotou em P15; os itens 4 
 1. **Raiz de worktrees novas**: `~/orca/workspaces/<repo>/<nome>` durante a transição, configurável por projeto (R3.2; pergunta 6 de `audit/10`).
 2. **Termo de UI**: "Computer" na interface, "box" só em ferramentas, logs e pastas (`audit/07` #53 adaptado ao inglês). No modo isolado, o que o usuário vê é "Container".
 3. **Sessões importadas do Orca** entram sem processo rodando; a sidebar mostra as 5 mais recentes por projeto e "Show N more".
-4. **Item da barra de menus com o app fechado**: depois do ⌘Q o app continua em modo accessory só com o item da barra de menus (08 AR-108); "Quit Agent Box Completely" remove o ícone até reabrir. Não há helper separado.
+4. **Item da barra de menus com o app fechado**: depois do ⌘Q o app continua em modo accessory só com o item da barra de menus (08 AR-108); "Quit Racky Completely" remove o ícone até reabrir. Não há helper separado.
 5. **⌘Q com agentes rodando** mostra um overlay na janela (T5) com "Keep Running" (padrão), "Stop All and Quit…", "Cancel" e "Don't ask again" (`audit/09 D12`). Com "Don't ask again" marcado, ⌘Q fecha a janela e deixa o app em modo accessory. `NSAlert` só quando não há janela aberta.
 6. **Nome automático de sessão limpa**: adjetivo + substantivo (`quiet-harbor`), um gerador só para sessões limpas e worktrees sem prompt; renomear a sessão não renomeia a pasta.
 7. **Proxy**: nenhum proxy vem configurado por padrão (P13). Ao importar um `.env` em Settings › Credentials ("Import .env File…"), uma chave `ZYTE_API_KEY` é reconhecida e o app oferece criar um proxy com o preset Zyte. A importação dos runs antigos fica na v1.1 (R1.4).

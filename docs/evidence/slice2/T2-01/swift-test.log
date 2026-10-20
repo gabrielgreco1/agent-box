@@ -9,165 +9,165 @@ Building for debugging...
 [3/15] Write swift-version--58304C5D6DBC2206.txt
 [4/42] Linking SwiftTermBuildInfoGenerator-tool
 [5/42] Generate SwiftTerm build information
-[7/49] Compiling AgentBoxProtocol HookPayloadReducer.swift
-[8/49] Compiling AgentBoxProtocol AutomationTypes.swift
-[9/49] Compiling AgentBoxProtocol CtlWire.swift
-[10/49] Compiling AgentBoxProtocol Version.swift
-[11/49] Compiling AgentBoxProtocol Identifiers.swift
-[12/49] Compiling AgentBoxProtocol Session.swift
-[13/49] Compiling AgentBoxProtocol Terminal.swift
-[14/49] Compiling AgentBoxProtocol HookWire.swift
-[15/49] Compiling AgentBoxProtocol A11yID.generated.swift
-[16/49] Compiling AgentBoxProtocol A11yID.swift
-[17/49] Compiling AgentBoxProtocol Handshake.swift
-[18/49] Compiling AgentBoxProtocol OutboundQueue.swift
-[19/49] Compiling AgentBoxProtocol DaemonIdentifiers.swift
-[20/49] Compiling AgentBoxProtocol Errors.swift
-[21/49] Compiling AgentBoxProtocol Events.swift
-[22/49] Compiling AgentBoxProtocol Frames.swift
-[23/49] Compiling AgentBoxProtocol Layout.swift
-[24/49] Compiling AgentBoxProtocol Project.swift
-[25/49] Compiling AgentBoxProtocol AppSockFrame.swift
-[26/49] Compiling AgentBoxProtocol AppSockPath.swift
-[27/49] Compiling AgentBoxProtocol Replies.swift
-[28/49] Compiling AgentBoxProtocol Requests.swift
-[29/50] Compiling AgentBoxProtocol ActionID.generated.swift
-[30/50] Compiling AgentBoxProtocol ActionID.swift
-[31/50] Emitting module AgentBoxProtocol
-[32/50] Compiling AgentBoxTerminalCore RingBuffer.swift
-[33/50] Compiling AgentBoxTerminalCore ReplayIndex.swift
-[34/50] Emitting module AgentBoxTerminalCore
-[35/50] Compiling AgentBoxTerminalCore Module.swift
-[36/50] Compiling AgentBoxTerminalCore HeadlessEmulatorHost.swift
-[37/50] Compiling AgentBoxTerminalCore VTTracker.swift
-[38/50] Compiling AgentBoxTerminalCore QueryReplyFilter.swift
-[39/50] Compiling AgentBoxProtocol Module.swift
+[7/49] Compiling RackyProtocol HookPayloadReducer.swift
+[8/49] Compiling RackyProtocol AutomationTypes.swift
+[9/49] Compiling RackyProtocol CtlWire.swift
+[10/49] Compiling RackyProtocol Version.swift
+[11/49] Compiling RackyProtocol Identifiers.swift
+[12/49] Compiling RackyProtocol Session.swift
+[13/49] Compiling RackyProtocol Terminal.swift
+[14/49] Compiling RackyProtocol HookWire.swift
+[15/49] Compiling RackyProtocol A11yID.generated.swift
+[16/49] Compiling RackyProtocol A11yID.swift
+[17/49] Compiling RackyProtocol Handshake.swift
+[18/49] Compiling RackyProtocol OutboundQueue.swift
+[19/49] Compiling RackyProtocol DaemonIdentifiers.swift
+[20/49] Compiling RackyProtocol Errors.swift
+[21/49] Compiling RackyProtocol Events.swift
+[22/49] Compiling RackyProtocol Frames.swift
+[23/49] Compiling RackyProtocol Layout.swift
+[24/49] Compiling RackyProtocol Project.swift
+[25/49] Compiling RackyProtocol AppSockFrame.swift
+[26/49] Compiling RackyProtocol AppSockPath.swift
+[27/49] Compiling RackyProtocol Replies.swift
+[28/49] Compiling RackyProtocol Requests.swift
+[29/50] Compiling RackyProtocol ActionID.generated.swift
+[30/50] Compiling RackyProtocol ActionID.swift
+[31/50] Emitting module RackyProtocol
+[32/50] Compiling RackyTerminalCore RingBuffer.swift
+[33/50] Compiling RackyTerminalCore ReplayIndex.swift
+[34/50] Emitting module RackyTerminalCore
+[35/50] Compiling RackyTerminalCore Module.swift
+[36/50] Compiling RackyTerminalCore HeadlessEmulatorHost.swift
+[37/50] Compiling RackyTerminalCore VTTracker.swift
+[38/50] Compiling RackyTerminalCore QueryReplyFilter.swift
+[39/50] Compiling RackyProtocol Module.swift
 [40/107] Compiling ProtocolTests resource_bundle_accessor.swift
-[41/107] Compiling AgentBoxDesignSystem Typography.generated.swift
-[42/108] Emitting module AgentBoxPlatform
-[43/109] Compiling AgentBoxPlatform UDSListener.swift
-[44/109] Compiling AgentBoxDesignSystem Space.generated.swift
-[45/109] Compiling AgentBoxDesignSystem Shadow.generated.swift
-[46/109] Compiling AgentBoxPlatform UDSClient.swift
-[47/109] Compiling AgentBoxPlatform UDSConnection.swift
-[48/109] Compiling AgentBoxPlatform AsyncFD.swift
-[49/109] Compiling AgentBoxPlatform FramedConnection.swift
+[41/107] Compiling RackyDesignSystem Typography.generated.swift
+[42/108] Emitting module RackyPlatform
+[43/109] Compiling RackyPlatform UDSListener.swift
+[44/109] Compiling RackyDesignSystem Space.generated.swift
+[45/109] Compiling RackyDesignSystem Shadow.generated.swift
+[46/109] Compiling RackyPlatform UDSClient.swift
+[47/109] Compiling RackyPlatform UDSConnection.swift
+[48/109] Compiling RackyPlatform AsyncFD.swift
+[49/109] Compiling RackyPlatform FramedConnection.swift
 [50/109] Compiling ProtocolTests SmokeTests.swift
 [51/109] Compiling ProtocolTests TestSupport.swift
-[52/109] Compiling AgentBoxDesignSystem resource_bundle_accessor.swift
-[53/109] Compiling AgentBoxDesignSystem Radius.generated.swift
-[54/109] Compiling AgentBoxDesignSystem MotionTokens.generated.swift
-[55/109] Compiling AgentBoxDesignSystem Colors.generated.swift
-[56/109] Compiling AgentBoxDesignSystem MotionTypes.swift
-[57/109] Compiling AgentBoxDesignSystem Motion.swift
-[58/109] Compiling AgentBoxPlatform UDSSupport.swift
-[59/109] Compiling AgentBoxDesignSystem Module.swift
-[62/109] Compiling AgentBoxPlatform AppSockClient.swift
-[63/109] Compiling AgentBoxPlatform AppSockServer.swift
-[64/109] Compiling AgentBoxPlatform CodeIdentity.swift
-[65/109] Compiling AgentBoxPlatform PeerAuthPolicy.swift
-[66/109] Compiling AgentBoxPlatform ProcessRunner.swift
-[67/109] Compiling AgentBoxPlatform ShellProbe.swift
+[52/109] Compiling RackyDesignSystem resource_bundle_accessor.swift
+[53/109] Compiling RackyDesignSystem Radius.generated.swift
+[54/109] Compiling RackyDesignSystem MotionTokens.generated.swift
+[55/109] Compiling RackyDesignSystem Colors.generated.swift
+[56/109] Compiling RackyDesignSystem MotionTypes.swift
+[57/109] Compiling RackyDesignSystem Motion.swift
+[58/109] Compiling RackyPlatform UDSSupport.swift
+[59/109] Compiling RackyDesignSystem Module.swift
+[62/109] Compiling RackyPlatform AppSockClient.swift
+[63/109] Compiling RackyPlatform AppSockServer.swift
+[64/109] Compiling RackyPlatform CodeIdentity.swift
+[65/109] Compiling RackyPlatform PeerAuthPolicy.swift
+[66/109] Compiling RackyPlatform ProcessRunner.swift
+[67/109] Compiling RackyPlatform ShellProbe.swift
 [68/109] Compiling ProtocolTests RoundTripTests.swift
 [69/109] Compiling TerminalCoreTests SmokeTests.swift
 [70/109] Compiling TerminalCoreTests TerminalCoreTests.swift
 [71/109] Emitting module TerminalCoreTests
 [72/109] Compiling ProtocolTests HookPayloadTests.swift
 [73/109] Compiling ProtocolTests HandshakeTests.swift
-[74/109] Compiling AgentBoxPlatform LoginShellEnvTypes.swift
-[75/109] Compiling AgentBoxPlatform Module.swift
-[78/109] Compiling AgentBoxPlatform BlockingIOBridge.swift
-[79/109] Compiling AgentBoxPlatform DirectoryWatcher.swift
-[80/109] Emitting module AgentBoxDesignSystem
-[81/109] Compiling AgentBoxPlatform PeerAuthenticator.swift
-[82/109] Compiling AgentBoxPlatform PeerCredentials.swift
-[83/109] Compiling AgentBoxPlatform LogFacade.swift
-[84/109] Compiling AgentBoxPlatform EnvFilter.swift
-[89/109] Compiling AgentBoxPlatform HookSpool.swift
-[90/109] Compiling AgentBoxPlatform HookTransport.swift
-[91/109] Compiling AgentBoxPlatform LoginShellEnvParser.swift
-[92/109] Compiling AgentBoxPlatform LoginShellEnvProvider.swift
+[74/109] Compiling RackyPlatform LoginShellEnvTypes.swift
+[75/109] Compiling RackyPlatform Module.swift
+[78/109] Compiling RackyPlatform BlockingIOBridge.swift
+[79/109] Compiling RackyPlatform DirectoryWatcher.swift
+[80/109] Emitting module RackyDesignSystem
+[81/109] Compiling RackyPlatform PeerAuthenticator.swift
+[82/109] Compiling RackyPlatform PeerCredentials.swift
+[83/109] Compiling RackyPlatform LogFacade.swift
+[84/109] Compiling RackyPlatform EnvFilter.swift
+[89/109] Compiling RackyPlatform HookSpool.swift
+[90/109] Compiling RackyPlatform HookTransport.swift
+[91/109] Compiling RackyPlatform LoginShellEnvParser.swift
+[92/109] Compiling RackyPlatform LoginShellEnvProvider.swift
 [93/109] Compiling ProtocolTests FrameCodecTests.swift
 [94/109] Compiling ProtocolTests DomainTests.swift
 [95/109] Compiling ProtocolTests BackpressureTests.swift
 [96/109] Compiling ProtocolTests AutomationTests.swift
 [97/109] Compiling ProtocolTests FixtureTests.swift
 [98/109] Emitting module ProtocolTests
-[99/152] Compiling AgentBoxDocker Module.swift
-[100/152] Emitting module AgentBoxDocker
-[101/154] Compiling AgentBoxStore Module.swift
+[99/152] Compiling RackyDocker Module.swift
+[100/152] Emitting module RackyDocker
+[101/154] Compiling RackyStore Module.swift
 [102/154] Compiling peerprobe PeerProbe.swift
 [103/154] Emitting module peerprobe
 [104/153] Compiling DockerTests SmokeTests.swift
 [105/153] Emitting module DockerTests
-[106/153] Compiling AgentBoxStore StoreTypes.swift
-[107/153] Compiling agentbox HookCommand.swift
-[108/153] Compiling agentboxd AgentBoxD.swift
-[109/153] Compiling agentbox ImageCompare.swift
-[110/153] Compiling AgentBoxStore Bootstrap.swift
+[106/153] Compiling RackyStore StoreTypes.swift
+[107/153] Compiling racky HookCommand.swift
+[108/153] Compiling rackyd RackyD.swift
+[109/153] Compiling racky ImageCompare.swift
+[110/153] Compiling RackyStore Bootstrap.swift
 [110/153] Linking peerprobe
-[112/153] Compiling agentboxd PTYSpawner.swift
+[112/153] Compiling rackyd PTYSpawner.swift
 [112/153] Applying peerprobe
-[114/153] Compiling agentbox CtlClient.swift
-[115/153] Compiling agentbox AgentBoxCLI.swift
-[116/153] Emitting module agentbox
-[117/153] Compiling agentbox CtlCommands.swift
-[118/152] Compiling agentboxd ColdLog.swift
-[119/152] Emitting module AgentBoxStore
-[120/152] Compiling AgentBoxStore AgentBoxStore+Activity.swift
-[121/152] Compiling agentboxd DaemonServer.swift
-[122/152] Compiling AgentBoxStore Schema.swift
-[123/152] Compiling AgentBoxStore AgentBoxStore.swift
-[124/152] Compiling AgentBoxStore Records.swift
-[125/152] Compiling agentboxd DaemonPaths.swift
-[126/152] Compiling agentboxd ClientOutbox.swift
-[127/152] Emitting module agentboxd
-[128/152] Compiling agentboxd PTYSession.swift
+[114/153] Compiling racky CtlClient.swift
+[115/153] Compiling racky RackyCLI.swift
+[116/153] Emitting module racky
+[117/153] Compiling racky CtlCommands.swift
+[118/152] Compiling rackyd ColdLog.swift
+[119/152] Emitting module RackyStore
+[120/152] Compiling RackyStore RackyStore+Activity.swift
+[121/152] Compiling rackyd DaemonServer.swift
+[122/152] Compiling RackyStore Schema.swift
+[123/152] Compiling RackyStore RackyStore.swift
+[124/152] Compiling RackyStore Records.swift
+[125/152] Compiling rackyd DaemonPaths.swift
+[126/152] Compiling rackyd ClientOutbox.swift
+[127/152] Emitting module rackyd
+[128/152] Compiling rackyd PTYSession.swift
 [129/151] Compiling PlatformTests PeerAuthTests.swift
-[129/183] Linking agentbox
+[129/183] Linking racky
 [131/183] Compiling PlatformTests UDSTestSupport.swift
 [132/183] Compiling PlatformTests ProcessRunnerTests.swift
 [133/183] Compiling PlatformTests SmokeTests.swift
 [134/183] Compiling PlatformTests UDSTransportTests.swift
-[134/183] Applying agentbox
+[134/183] Applying racky
 [136/183] Compiling StoreTests SmokeTests.swift
-[137/183] Compiling AgentBoxCore ShellAdapters.swift
-[138/183] Compiling AgentBoxCore Module.swift
+[137/183] Compiling RackyCore ShellAdapters.swift
+[138/183] Compiling RackyCore Module.swift
 [139/184] Emitting module StoreTests
 [140/184] Compiling StoreTests StoreTestSupport.swift
 [141/184] Emitting module PlatformTests
-[142/184] Compiling AgentBoxCore OpenCodeAdapter.swift
-[143/184] Compiling AgentBoxCore ProviderAdapter.swift
-[143/184] Linking agentboxd
-[144/184] Applying agentboxd
-[146/184] Compiling AgentBoxCore ClaudeAdapter.swift
-[147/184] Compiling AgentBoxCore CodexAdapter.swift
-[148/184] Compiling AgentBoxCore HookInjection.swift
-[149/184] Compiling AgentBoxCore LaunchFileWriter.swift
-[150/184] Compiling AgentBoxCore CLIProber.swift
-[151/184] Compiling AgentBoxCore CLIVersion.swift
+[142/184] Compiling RackyCore OpenCodeAdapter.swift
+[143/184] Compiling RackyCore ProviderAdapter.swift
+[143/184] Linking rackyd
+[144/184] Applying rackyd
+[146/184] Compiling RackyCore ClaudeAdapter.swift
+[147/184] Compiling RackyCore CodexAdapter.swift
+[148/184] Compiling RackyCore HookInjection.swift
+[149/184] Compiling RackyCore LaunchFileWriter.swift
+[150/184] Compiling RackyCore CLIProber.swift
+[151/184] Compiling RackyCore CLIVersion.swift
 [152/184] Compiling PlatformTests LoginShellEnvEvidenceTests.swift
 [153/184] Compiling PlatformTests LogFacadeTests.swift
 [154/184] Compiling PlatformTests FramedDaemonTransportTests.swift
 [155/184] Compiling PlatformTests LoginShellEnvTests.swift
-[156/184] Compiling AgentBoxCore CtlServer.swift
-[157/184] Compiling AgentBoxCore StateMachines.swift
-[158/184] Compiling AgentBoxCore GitParsers.swift
-[159/184] Compiling AgentBoxCore GitRunner.swift
-[160/184] Compiling AgentBoxCore GitError.swift
-[161/184] Compiling AgentBoxCore GitModels.swift
-[162/184] Compiling AgentBoxCore GitService.swift
-[163/184] Compiling AgentBoxCore CLICapabilities.swift
-[164/184] Compiling AgentBoxCore PTYClient.swift
-[165/184] Compiling AgentBoxCore LaunchPlanner.swift
-[166/184] Compiling AgentBoxCore LaunchProfiles.swift
-[167/184] Compiling AgentBoxCore LaunchSupport.swift
-[168/184] Compiling AgentBoxCore NativeIDCapture.swift
-[169/184] Compiling AgentBoxCore ActivityReducer.swift
-[170/184] Compiling AgentBoxCore ActivityService.swift
-[171/184] Compiling AgentBoxCore ActionDispatching.swift
-[172/184] Compiling AgentBoxCore AppSockHub.swift
-[173/184] Emitting module AgentBoxCore
+[156/184] Compiling RackyCore CtlServer.swift
+[157/184] Compiling RackyCore StateMachines.swift
+[158/184] Compiling RackyCore GitParsers.swift
+[159/184] Compiling RackyCore GitRunner.swift
+[160/184] Compiling RackyCore GitError.swift
+[161/184] Compiling RackyCore GitModels.swift
+[162/184] Compiling RackyCore GitService.swift
+[163/184] Compiling RackyCore CLICapabilities.swift
+[164/184] Compiling RackyCore PTYClient.swift
+[165/184] Compiling RackyCore LaunchPlanner.swift
+[166/184] Compiling RackyCore LaunchProfiles.swift
+[167/184] Compiling RackyCore LaunchSupport.swift
+[168/184] Compiling RackyCore NativeIDCapture.swift
+[169/184] Compiling RackyCore ActivityReducer.swift
+[170/184] Compiling RackyCore ActivityService.swift
+[171/184] Compiling RackyCore ActionDispatching.swift
+[172/184] Compiling RackyCore AppSockHub.swift
+[173/184] Emitting module RackyCore
 [174/184] Compiling StoreTests ActivityStoreTests.swift
 [175/233] Compiling DesignSystemTests OverlayMotionTests.swift
 [176/233] Compiling DesignSystemTests TestSupport.swift
@@ -176,32 +176,32 @@ Building for debugging...
 [179/233] Compiling DesignSystemTests MotionTests.swift
 [180/233] Emitting module DesignSystemTests
 [181/233] Compiling DesignSystemTests TokensMatchJSONTests.swift
-[182/233] Compiling AgentBoxUI WindowGeometry.swift
-[183/233] Compiling AgentBoxUI TrafficLightPositioner.swift
+[182/233] Compiling RackyUI WindowGeometry.swift
+[183/233] Compiling RackyUI TrafficLightPositioner.swift
 [184/234] Compiling StoreTests StoreTests.swift
 [185/234] Compiling DaemonTests SmokeTests.swift
 [186/234] Compiling DaemonTests DaemonSupport.swift
 [187/234] Compiling DaemonTests ReattachTests.swift
 [188/234] Compiling CoreTests LaunchGoldenTests.swift
-[189/235] Compiling AgentBoxUI TitlebarStrip.swift
-[190/235] Compiling AgentBoxUI MainSplitViewController.swift
-[191/235] Compiling AgentBoxUI MainWindowController.swift
-[192/235] Compiling AgentBoxUI resource_bundle_accessor.swift
+[189/235] Compiling RackyUI TitlebarStrip.swift
+[190/235] Compiling RackyUI MainSplitViewController.swift
+[191/235] Compiling RackyUI MainWindowController.swift
+[192/235] Compiling RackyUI resource_bundle_accessor.swift
 [193/235] Compiling CoreTests GitTestSupport.swift
 [194/235] Compiling CoreTests GitUnitTests.swift
-[195/235] Compiling AgentBoxUI OverlayRouter.swift
-[196/235] Compiling AgentBoxUI ComposerSample.swift
-[197/235] Compiling AgentBoxUI ToastCenter.swift
-[198/235] Compiling AgentBoxUI AppDelegate.swift
-[199/235] Compiling AgentBoxUI ActionButton.swift
-[200/235] Compiling AgentBoxUI ActionRegistry.swift
+[195/235] Compiling RackyUI OverlayRouter.swift
+[196/235] Compiling RackyUI ComposerSample.swift
+[197/235] Compiling RackyUI ToastCenter.swift
+[198/235] Compiling RackyUI AppDelegate.swift
+[199/235] Compiling RackyUI ActionButton.swift
+[200/235] Compiling RackyUI ActionRegistry.swift
 [201/235] Compiling CoreTests ActivityReducerTests.swift
 [202/235] Compiling CoreTests ActivityServiceTests.swift
 [203/235] Compiling CoreTests CtlServerTests.swift
 [204/235] Compiling CoreTests GitIntegrationTests.swift
-[205/235] Compiling AgentBoxUI ConfirmationOverlay.swift
-[206/235] Compiling AgentBoxUI OverlayPanelHost.swift
-[207/235] Emitting module AgentBoxUI
+[205/235] Compiling RackyUI ConfirmationOverlay.swift
+[206/235] Compiling RackyUI OverlayPanelHost.swift
+[207/235] Emitting module RackyUI
 [208/235] Compiling CoreTests HookDeliveryTests.swift
 [209/235] Compiling CoreTests HookInjectionTests.swift
 [210/235] Compiling CoreTests ActivityTestSupport.swift
@@ -226,9 +226,9 @@ Building for debugging...
 [237/243] Compiling UISnapshotTests SmokeTests.swift
 [238/243] Compiling UISnapshotTests OverlayHostTests.swift
 [239/243] Emitting module CoreTests
-[242/245] Compiling AgentBoxKitPackageTests runner.swift
-[243/245] Emitting module AgentBoxKitPackageTests
-[243/244] Linking AgentBoxKitPackageTests
+[242/245] Compiling RackyKitPackageTests runner.swift
+[243/245] Emitting module RackyKitPackageTests
+[243/244] Linking RackyKitPackageTests
 Build complete! (17.63s)
 Test Suite 'All tests' started at 2026-10-17 02:44:07.646.
 Test Suite 'All tests' passed at 2026-10-17 02:44:07.647.
@@ -1568,8 +1568,8 @@ Test Suite 'All tests' passed at 2026-10-17 02:44:07.647.
 ◇ Test twoConnectionsSeeTheSameSessionIndependently() started.
 ✔ Test overlayLayerIsAboveEverythingAndPassesClicksThroughWhenEmpty() passed after 0.312 seconds.
 ✔ Suite OverlayHostTests passed after 5.641 seconds.
-2026-10-17 02:44:13.399 swiftpm-testing-helper[81885:10093298] View <AgentBoxUI.ChromeContainerView: 0x76c14b3200> has 1 views pointing at it that can't be found.
-2026-10-17 02:44:13.399 swiftpm-testing-helper[81885:10093298] View <AgentBoxUI.OverlayHostingView: 0x76c2745e00> has 16380 views pointing at it that can't be found.
+2026-10-17 02:44:13.399 swiftpm-testing-helper[81885:10093298] View <RackyUI.ChromeContainerView: 0x76c14b3200> has 1 views pointing at it that can't be found.
+2026-10-17 02:44:13.399 swiftpm-testing-helper[81885:10093298] View <RackyUI.OverlayHostingView: 0x76c2745e00> has 16380 views pointing at it that can't be found.
 ✔ Test cleanWorktreeIsRemovedAndPruned() passed after 5.769 seconds.
 ✔ Test hangingInteractiveRcIsKilledAfterFiveSecondsWithoutOrphanAndFallsBack() passed after 6.072 seconds.
 ✔ Suite LoginShellEnvTests passed after 6.075 seconds.
@@ -1612,9 +1612,9 @@ Test Suite 'All tests' passed at 2026-10-17 02:44:07.647.
 ◇ Test coldLogKeepsOutputWithRotationAndNoEnvValues() started.
 ✔ Test collisionAddsSuffixOnBothBranchAndFolder() passed after 9.828 seconds.
 ✔ Suite GitWorktreeCreateTests passed after 9.832 seconds.
-agentbox hook latency, binary=/Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/Packages/AgentBoxKit/.build/debug/agentbox
-agentbox hook latency (60 runs, app closed/spool): p50=85.884958 ms p95=181.296417 ms
-agentbox hook latency (60 runs, app live/socket): p50=81.51175 ms p95=93.860959 ms
+racky hook latency, binary=/Users/gabriel/orca/agent-box/.claude/worktrees/agent-ae032c14b06d61c34/Packages/RackyKit/.build/debug/racky
+racky hook latency (60 runs, app closed/spool): p50=85.884958 ms p95=181.296417 ms
+racky hook latency (60 runs, app live/socket): p50=81.51175 ms p95=93.860959 ms
 ✔ Test helperLatencyStaysWellUnderTheDeadlineWithTheAppLiveAndClosed() passed after 10.503 seconds.
 ✔ Suite HookCLITests passed after 10.525 seconds.
 ✔ Test coldLogKeepsOutputWithRotationAndNoEnvValues() passed after 3.116 seconds.

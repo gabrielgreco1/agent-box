@@ -2,24 +2,24 @@
 # drive.sh - evidencia visual da T2-04 (atencao e notificacoes).
 #
 # Contrato
-#   Entrada : build/AgentBox/Agent Box.app (scripts/build.sh). Nada de notificacao real: AGENTBOX_NOTIFICATIONS=fake.
-#   Efeitos : abre o app em segundo plano (open -g) com a automacao, Fatia 2 e um AGENTBOX_HOME isolado, com a fixture
+#   Entrada : build/Racky/Racky.app (scripts/build.sh). Nada de notificacao real: RACKY_NOTIFICATIONS=fake.
+#   Efeitos : abre o app em segundo plano (open -g) com a automacao, Fatia 2 e um RACKY_HOME isolado, com a fixture
 #             `attention-demo` (7 sessoes com terminais de agente de mentira, sem daemon nem processo). Dispara eventos
-#             REAIS com `agentbox hook` (payloads gravados no S-05 e no S-08) e fotografa a janela com `agentbox ctl screenshot`.
+#             REAIS com `racky hook` (payloads gravados no S-05 e no S-08) e fotografa a janela com `racky ctl screenshot`.
 #   Saida   : PNGs, fake-notifications.jsonl e dock-badge.txt em docs/evidence/ui/T2-04/. Encerra o app so por PID.
 # Uso: docs/evidence/ui/T2-04/drive.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
 OUT="$ROOT/docs/evidence/ui/T2-04"
-APP="$ROOT/build/AgentBox/Agent Box.app"
-BIN="$APP/Contents/MacOS/agentbox"
+APP="$ROOT/build/Racky/Racky.app"
+BIN="$APP/Contents/MacOS/racky"
 H=/tmp/abev24
 SOCK="$H/run/app.sock"
 SPIKES="$ROOT/docs/evidence/spikes"
 rm -rf "$H"; mkdir -p "$H/run"
 
-open -g -n "$APP" --env AGENTBOX_AUTOMATION=1 --env AGENTBOX_SLICE=2 --env AGENTBOX_SKIP_ONBOARDING=1 \
-  --env AGENTBOX_HOME="$H" --env AGENTBOX_APP_SOCK="$SOCK" --env AGENTBOX_SCREEN=attention-demo --env AGENTBOX_NOTIFICATIONS=fake
+open -g -n "$APP" --env RACKY_AUTOMATION=1 --env RACKY_SLICE=2 --env RACKY_SKIP_ONBOARDING=1 \
+  --env RACKY_HOME="$H" --env RACKY_APP_SOCK="$SOCK" --env RACKY_SCREEN=attention-demo --env RACKY_NOTIFICATIONS=fake
 PID=""
 for _ in $(seq 1 50); do
   PID="$(lsof -U 2>/dev/null | awk -v s="$SOCK" '$0 ~ s {print $2; exit}' || true)"
@@ -34,14 +34,14 @@ ctl() { "$BIN" ctl "$@" --sock "$SOCK"; }
 shot() { ctl screenshot --window --size "${2:-1440x900}" --out "$OUT/$1.png" >/dev/null; echo "shot $1"; }
 act() { ctl ui action "$@" >/dev/null; }
 
-# Eventos reais: payload gravado, correlacao so por env (AGENTBOX_RUN_ID, AGENTBOX_PANE_ID), como o Claude o chamaria.
+# Eventos reais: payload gravado, correlacao so por env (RACKY_RUN_ID, RACKY_PANE_ID), como o Claude o chamaria.
 hook() { # <n> <fixture> <evento[@ocorrencia][>evento-enviado]> [campo=valor ...]
   local n="$1" fixture="$2" spec="$3"; shift 3
   local event="${spec##*>}"; event="${event%@*}"
   local pane run
   pane="$(printf '%08X-0000-4000-8000-A%d0000000000' "$n" "$n")"
   run="$(printf '%08X-0000-4000-8000-B%d0000000000' "$n" "$n")"
-  python3 - "$SPIKES/$fixture" "$spec" "$@" <<'PY' | AGENTBOX_APP_SOCK="$SOCK" AGENTBOX_RUN_ID="$run" AGENTBOX_PANE_ID="$pane" "$BIN" hook --provider claude --event "$event" >/dev/null
+  python3 - "$SPIKES/$fixture" "$spec" "$@" <<'PY' | RACKY_APP_SOCK="$SOCK" RACKY_RUN_ID="$run" RACKY_PANE_ID="$pane" "$BIN" hook --provider claude --event "$event" >/dev/null
 import json, sys
 path, spec, *edits = sys.argv[1:]
 source, _, dest = spec.partition(">")
@@ -82,7 +82,7 @@ act settings.notifications.terminalBell set off
 act settings.back
 sleep 0.4
 
-# 3. Eventos reais por `agentbox hook`.
+# 3. Eventos reais por `racky hook`.
 hook 1 "$PERM" SessionStart; hook 1 "$PERM" UserPromptSubmit
 hook 1 "$PERM" PermissionRequest tool_input.command="git push origin fix/pagination" tool_name=Bash
 hook 2 "$BASIC" SessionStart; hook 2 "$BASIC" UserPromptSubmit

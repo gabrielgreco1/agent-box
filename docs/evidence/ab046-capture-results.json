@@ -7,7 +7,7 @@
     "total": 172,
     "failures": 0,
     "skipped": 3,
-    "enabled_opt_in": "AGENTBOX_TEST_CAPTURE_DOCKER=1",
+    "enabled_opt_in": "RACKY_TEST_CAPTURE_DOCKER=1",
     "skipped_gates": [
       "native Claude child flow (previous AB045 proof)",
       "child Docker control (previous AB044 proof)",
@@ -21,12 +21,12 @@
   "build": {
     "release": true,
     "ad_hoc_signature_verified": true,
-    "app": "build/Agent Box.app",
+    "app": "build/Racky.app",
     "launched": false
   },
   "docker": {
-    "context": "colima-agentbox-dev",
-    "image": "agentbox-browser:ab019-dev",
+    "context": "colima-racky-dev",
+    "image": "racky-browser:ab019-dev",
     "image_id": "sha256:a98fc001c9126068eb4569ce9a388ecc7e8160d533eb6b0e94de2264448cc000",
     "architecture": "arm64",
     "fixture": "local HTTP server inside owned disposable box",

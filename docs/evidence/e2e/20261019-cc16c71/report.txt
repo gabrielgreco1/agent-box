@@ -1,13 +1,13 @@
 e2e 2026-10-20T01:51:53Z sha=cc16c71 passos=1,2,3,4,5,6,7,8,9 work=/tmp/abe2e-eYUOiE
 macOS 27.0.1 (arm64); docker VM: 14 CPUs, 8320954368 bytes
-owner dos containers do teste: agent-box-e455c8b1 (o do dono é agent-box)
+owner dos containers do teste: racky-e455c8b1 (o do dono é racky)
 
 == 1. build, instalação temporária e isolamento
-build: scripts/build.sh (AGENTBOX_BUILD_DIR=/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e)
+build: scripts/build.sh (RACKY_BUILD_DIR=/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e)
   PASS  scripts/build.sh e instalação temporária (/tmp/abe2e-eYUOiE/install) sem tocar em /Applications
   PASS  assinatura do bundle copiado válida
   PASS  app de teste no ar, respondendo ao ctl (pid 86442)
-  PASS  dados isolados em AGENTBOX_HOME temporário (banco em /tmp/abe2e-eYUOiE/h/db/agentbox.sqlite)
+  PASS  dados isolados em RACKY_HOME temporário (banco em /tmp/abe2e-eYUOiE/h/db/racky.sqlite)
   PASS  o app de teste não é o do dono (processo vem do diretório temporário)
   PASS  daemon filho próprio (--home do teste), não o launchd do dono
   PASS  owner dos containers do teste difere do do dono
@@ -38,7 +38,7 @@ build: scripts/build.sh (AGENTBOX_BUILD_DIR=/Users/gabriel/orca/workspaces/agent
 
 == 4. subagente leve com box_claim: container, rede, iptables, VNC, um quadro
   PASS  Claude pediu o computador e2e-light (Ask aprovado) e o subagente fez box_claim (estado in_use)
-  PASS  1 container 'agentbox-computer' em execução, com os labels do teste (owner agent-box-e455c8b1, role computer, efêmero)
+  PASS  1 container 'racky-computer' em execução, com os labels do teste (owner racky-e455c8b1, role computer, efêmero)
   PASS  saudável (healthcheck)
   PASS  rede: só a bridge padrão, sem rede extra por computador (P24; não existe rede 'internal' por computador)
   PASS  portas publicadas só em 127.0.0.1
@@ -97,7 +97,7 @@ build: scripts/build.sh (AGENTBOX_BUILD_DIR=/Users/gabriel/orca/workspaces/agent
   PASS  todos os computadores liberados (estado removed)
   PASS  nenhum container do teste sobrou
   PASS  nenhum volume de perfil do teste sobrou
-  PASS  nenhuma rede do teste sobrou (label agentbox.owner=agent-box-e455c8b1)
+  PASS  nenhuma rede do teste sobrou (label racky.owner=racky-e455c8b1)
   note  lote: 62 s de relógio, pico de 4 computadores simultâneos, custo estimado US$ 0.808 ({"input":236,"output":27475,"cache_write":333867,"cache_read":2534987})
   PASS  custo do lote dentro do orçamento (US$ 2, estimado)
   note  14 segredos conhecidos (token e egress.json dos computadores, capabilities dos MCP)

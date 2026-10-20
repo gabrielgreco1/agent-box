@@ -1,6 +1,6 @@
 {
   "date": "2026-10-16",
-  "context": "colima-agentbox-dev",
+  "context": "colima-racky-dev",
   "suite_tests": 123,
   "suite_failures": 0,
   "docker_test": "BrowserImageUpdateDockerTests.testStoppedBoxUpdateAndRollbackWithRealDocker",

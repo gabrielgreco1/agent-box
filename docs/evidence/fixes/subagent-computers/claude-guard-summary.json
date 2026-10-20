@@ -1,12 +1,12 @@
 {
   "agent_subagent_types" : [
     "general-purpose",
-    "agentbox-worker-1"
+    "racky-worker-1"
   ],
-  "agentbox_mcp_server_present" : true,
+  "racky_mcp_server_present" : true,
   "app_skills_loaded" : [
-    "agentbox",
-    "agentbox-app:agentbox-boxes"
+    "racky",
+    "racky-app:racky-boxes"
   ],
   "approval_cards_decided" : [
 
@@ -16,7 +16,7 @@
   ],
   "cost_usd" : 0.0159315,
   "exit" : 0,
-  "final_text" : "The page title of http://origin:8080/ is **\"Origin Page\"**. The page returned HTTP 200 with no redirect.\n\nThe first attempt used a plain general-purpose subagent, as you asked, but a hook blocked it. The hook said website work must run on an Agent Box computer. Following your instruction to act on hooks first, I reserved one computer (`origin-8080`) and ran the study through its worker, `agentbox-worker-1`. The worker's report says it touched only that one URL. The box is released; a status check shows no remaining boxes.\n\nThe worker also reported the title and status were verified, and noted ",
+  "final_text" : "The page title of http://origin:8080/ is **\"Origin Page\"**. The page returned HTTP 200 with no redirect.\n\nThe first attempt used a plain general-purpose subagent, as you asked, but a hook blocked it. The hook said website work must run on a Racky computer. Following your instruction to act on hooks first, I reserved one computer (`origin-8080`) and ran the study through its worker, `racky-worker-1`. The worker's report says it touched only that one URL. The box is released; a status check shows no remaining boxes.\n\nThe worker also reported the title and status were verified, and noted ",
   "guard_blocked_a_plain_subagent" : true,
   "image_setup_labels" : [
     "Building computer image… 1 of 17",
@@ -31,10 +31,10 @@
   "parent_tool_uses" : [
     "Agent",
     "ToolSearch",
-    "mcp__agentbox__boxes_reserve",
-    "mcp__agentbox__boxes_status",
+    "mcp__racky__boxes_reserve",
+    "mcp__racky__boxes_status",
     "Agent",
-    "mcp__agentbox__boxes_status"
+    "mcp__racky__boxes_status"
   ],
   "reqlog_requests_to_origin" : 3,
   "skill_invocations" : [
@@ -44,7 +44,7 @@
 
   ],
   "tool_errors" : [
-    "PreToolUse:Agent hook error: Agent Box: Subagent computers is on for this session, and this subagent will work on a website, portal, URL or API. Do not spawn a "
+    "PreToolUse:Agent hook error: Racky: Subagent computers is on for this session, and this subagent will work on a website, portal, URL or API. Do not spawn a "
   ],
   "turns" : 7,
   "worker_tool_uses" : [

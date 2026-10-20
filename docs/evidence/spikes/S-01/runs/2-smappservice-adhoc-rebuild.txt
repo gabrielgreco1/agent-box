@@ -1,4 +1,4 @@
-keychain=/private/tmp/claude-501/-Users-gabriel-orca-workspaces-agent-box-otter/5dda428d-ecea-4852-b667-584fd17012cc/scratchpad/s01//agentbox-ci-4149.keychain-db sha=C993421246F155EC2641F991BB272ECF2A298355
+keychain=/private/tmp/claude-501/-Users-gabriel-orca-workspaces-agent-box-otter/5dda428d-ecea-4852-b667-584fd17012cc/scratchpad/s01//racky-ci-4149.keychain-db sha=C993421246F155EC2641F991BB272ECF2A298355
 before: notFound
 register: ok
 after: enabled

@@ -1,4 +1,4 @@
-# Agent Box
+# Racky
 
 > **Rebuild em andamento.** A UI e o core estão sendo refeitos do zero. Ponto de entrada: [docs/rebuild/README.md](docs/rebuild/README.md) (spec, roadmap, decisões). O app antigo foi movido, sem alterações, para `legacy/` e sai do repositório depois da release 1.0 (AR-202). O novo build nunca referencia `legacy/`.
 >
@@ -29,7 +29,7 @@ Requer macOS 14+ e Xcode com Swift 6. O script usa Xcode.app quando disponível,
 
 ```sh
 bash legacy/scripts/build_app.sh
-open "legacy/build/Agent Box.app"
+open "legacy/build/Racky.app"
 ```
 
 Para os testes no ambiente usado:
@@ -38,7 +38,7 @@ Para os testes no ambiente usado:
 cd legacy && DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test  
 ```
 
-Fechar uma visualização não encerra seu processo. Sair do aplicativo solicita encerrar os processos ativos; sobrevivência ao quit/crash depende de um serviço ainda não implementado. Metadados ficam em `~/Library/Application Support/AgentBox`; restaurar uma sessão não reexecuta comandos automaticamente.
+Fechar uma visualização não encerra seu processo. Sair do aplicativo solicita encerrar os processos ativos; sobrevivência ao quit/crash depende de um serviço ainda não implementado. Metadados ficam em `~/Library/Application Support/Racky`; restaurar uma sessão não reexecuta comandos automaticamente.
 
 ## Documentação
 
@@ -64,7 +64,7 @@ Requer macOS em Apple Silicon e Xcode Command Line Tools.
 bash design/source/build.sh
 ```
 
-A saída local é `design/Agent Box Preview.app`. Binários, credenciais, diretórios de runtime e arquivos `.env` não são versionados. O manifest SwiftTerm preparatório, que referenciava arquivos ausentes, foi preservado em `docs/archive/` e não é o build do app.
+A saída local é `design/Racky Preview.app`. Binários, credenciais, diretórios de runtime e arquivos `.env` não são versionados. O manifest SwiftTerm preparatório, que referenciava arquivos ausentes, foi preservado em `docs/archive/` e não é o build do app.
 
 ## Modelo de segurança (resumo)
 
