@@ -13,13 +13,13 @@ extension PanelModuleID {
 @MainActor
 final class ContextController {
     let library: LibraryController
-    @ObservationIgnored private let overlays: OverlayRouter
-    @ObservationIgnored private let showModule: @MainActor (PanelModuleID) -> Void
+    private let overlays: OverlayRouter
+    private let showModule: @MainActor (PanelModuleID) -> Void
     /// Agentes Claude da sessão que a reinicialização atinge: rodando e com ID de conversa (os outros não são tocados).
-    @ObservationIgnored var restartableAgents: @MainActor () -> [UUID] = { [] }
+    var restartableAgents: @MainActor () -> [UUID] = { [] }
     /// Encerra com calma e relança com `--resume` (as flags e o plugin da sessão são regerados no lançamento).
-    @ObservationIgnored var relaunch: @MainActor (UUID) async -> Void = { _ in }
-    @ObservationIgnored private var pendingRestart: [UUID] = []
+    var relaunch: @MainActor (UUID) async -> Void = { _ in }
+    private var pendingRestart: [UUID] = []
 
     init(library: LibraryController, overlays: OverlayRouter, showModule: @escaping @MainActor (PanelModuleID) -> Void) {
         self.library = library

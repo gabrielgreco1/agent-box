@@ -65,6 +65,9 @@ public final class AppEnvironment {
     let library: LibraryController
     private(set) var context: ContextController!
     let activations: SessionActivationStore
+    /// `Insert Skill or Agent…` (03 §8) e a palette (⌘J) onde ele mora.
+    private(set) var inserter: PromptInsertController!
+    private(set) var palette: PaletteController!
     private var catalogWatch: Task<Void, Never>?
     /// Status bar (03 §5): lê o Insights e os computadores; nada de polling próprio.
     let statusBar: StatusBarController
@@ -253,6 +256,19 @@ public final class AppEnvironment {
         controller.relaunch = { [workspace] id in await workspace.relaunchApplyingSettings(id) }
         context = controller
         do { try controller.register(in: registry) } catch { log.publicError("duplicate context registration") }
+        let insert = PromptInsertController(library: library, registry: { [weak self] in self?.registry })
+        insert.focusedAgent = { [workspace] in
+            guard let id = workspace.focusedTerminalID, let terminal = workspace.terminal(id), terminal.provider.isAgent, workspace.paneState(id) == .running else { return nil }
+            return FocusedAgent(terminal: id, provider: terminal.provider)
+        }
+        insert.returnFocusToTerminal = { [workspace] in workspace.focusTerminalOfActiveTab() }
+        insert.closeLibraryPage = { [computers] in if computers.page == .library { computers.closePage() } }
+        inserter = insert
+        let commandPalette = PaletteController(inserter: insert, overlays: overlays, sidebar: sidebar, workspace: workspace, registry: { [weak self] in self?.registry })
+        insert.openPalette = { [commandPalette] in commandPalette.open(insertMode: $0) }
+        palette = commandPalette
+        do { try insert.register(in: registry) } catch { log.publicError("duplicate prompt insert registration") }
+        do { try commandPalette.register(in: registry) } catch { log.publicError("duplicate palette registration") }
     }
 
     /// Índice do catálogo (`CatalogService`) sobre o Store aberto: leitura das pastas nativas, só com FSEvents/kqueue no app de verdade.

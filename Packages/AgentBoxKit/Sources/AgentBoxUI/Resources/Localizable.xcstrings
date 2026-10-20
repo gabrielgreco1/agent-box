@@ -8899,6 +8899,105 @@
           }
         }
       }
+    },
+    "Focus an agent terminal first.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Focus an agent terminal first."
+          }
+        }
+      }
+    },
+    "Insert a skill or agent into the focused prompt…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Insert a skill or agent into the focused prompt…"
+          }
+        }
+      }
+    },
+    "Jump to a session, terminal, computer or command…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jump to a session, terminal, computer or command…"
+          }
+        }
+      }
+    },
+    "↵ Insert · Esc Close": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "↵ Insert · Esc Close"
+          }
+        }
+      }
+    },
+    "↵ Open · ⌘↵ New Session · Esc Close": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "↵ Open · ⌘↵ New Session · Esc Close"
+          }
+        }
+      }
+    },
+    "Open the palette first.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open the palette first."
+          }
+        }
+      }
+    },
+    "No such row.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No such row."
+          }
+        }
+      }
+    },
+    "No results for \"%@\".": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No results for \"%@\"."
+          }
+        }
+      }
+    },
+    "%@ can't use this item.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ can't use this item."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

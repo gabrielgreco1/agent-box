@@ -694,6 +694,9 @@ A jornada que justifica o app. O Gabriel já fez isso com o CLI antigo em lotes 
 > **AC-905** · v1 · `CLI` + `XCUI` · R9.1
 > **Dado** uma skill global · **Quando** o usuário tenta desligá-la só para a sessão · **Então**, se a versão instalada do CLI não suporta desligar por lançamento, o controle fica desabilitado com "Claude Code loads global skills in every session" em vez de prometer o efeito.
 
+> **AC-909** · v1 · `XCUI` · 06 TA-411, R2 SEM #1
+> **Dado** um Claude rodando no pane focado e a skill `code-review` na Library · **Quando** o usuário escolhe "Insert Skill or Agent…" na palette (ou digita `/`) e confirma a skill, ou clica em `[Insert in Prompt]` na Library, ou no item da aba "Context" · **Então** `/code-review` aparece no prompt do Claude por bracketed paste com origem `app-paste` (0x02), sem Enter e sem enviar a mensagem, a palette fecha e o foco volta ao terminal; sem pane de agente focado, as linhas ficam desabilitadas com "Focus an agent terminal first.".
+
 > **AC-906** · v1.1 · `E2E` · R9.4, PP-6
 > **Dado** "New agent" preenchido com escopo "User" e "Mirror to Codex" · **Quando** o usuário salva · **Então** existem `~/.claude/agents/permit-portal-scout.md` e o `.toml` espelho, um backup e uma entrada no histórico com diff e "Revert".
 
@@ -949,7 +952,7 @@ Versão: v1, v1.1, later (depois) ou out (fora). A coluna "Prio." é a prioridad
 | R8.4 | P1 | Manter acordado | J8 | AC-812 | v1.1 |
 | R8.5 | P1 | Sessão do CLI isolado no volume | J4b, J8 | AC-459, 813 | v1.1 |
 | R8.6 | P2 | Abrir no login | — | — | later |
-| R9.1 | P1 | Escopo de ativação explícito | J9 | AC-901, 902, 903, 905 | v1 (parte) / v1.1 (app only) |
+| R9.1 | P1 | Escopo de ativação explícito | J9 | AC-901, 902, 903, 905, 909 | v1 (parte) / v1.1 (app only) |
 | R9.2 | P1 | Quando a mudança vale | J9 | AC-903 (v1), AC-907 (v1.1) | v1 / v1.1 |
 | R9.3 | P1 | Agente da biblioteca declara MCP de computador | J9 | AC-908 | v1.1 |
 | R9.4 | P1 | Backup e histórico de escrita em `~/.claude`/`~/.codex` | J9 | AC-906, 907 | v1.1 |
@@ -1100,6 +1103,7 @@ Cobrem itens P1 dos relatórios 01 e 07 ou passos das jornadas. Entram na v1 por
 | AC-810 | audit/09 §2.2 (crash do daemon, cold restore) | v1 |
 | AC-811 | T1 (protocolo versionado do daemon) | v1 |
 | AC-904 | audit/08 N24 ("Loaded in this run") | v1 |
+| AC-909 | R2 SEM #1 ("Insert Skill or Agent…", TA-411) | v1 |
 | AC-T02 | PP-1 (cada ação registrada tem teste) | v1 |
 | AC-T08 | audit/07 #9 (Shift+Enter e atalhos de edição) | v1 |
 | AC-T14 | T2 (backup antes de migração) | v1 |

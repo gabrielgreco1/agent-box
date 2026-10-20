@@ -67,6 +67,7 @@ private struct ContextRowView: View {
     let controller: ContextController
     let row: ContextController.Row
 
+    @State private var hovering = false
     private var on: Bool { row.activation != .off }
 
     var body: some View {
@@ -76,8 +77,15 @@ private struct ContextRowView: View {
                 Text(verbatim: row.source).dsFont(DS.Font.micro).foregroundStyle(DS.Color.textTertiary).lineLimit(1)
             }
             Spacer(minLength: DS.Space.s1)
+            // `Insert in Prompt` no hover (03 §8): cola `/<skill>` ou a menção do agente no prompt do pane focado.
+            ActionButton(.promptInsertItem, id: .rightPanelContextItemInsert(row.entry.kind.rawValue, row.entry.id), argument: .select(row.entry.id), tooltip: String(localized: "Insert in Prompt", bundle: .module)) {
+                Image(systemName: "text.insert")
+            }
+            .buttonStyle(DSIconButtonStyle(.header))
+            .opacity(hovering ? 1 : 0)
             toggle
         }
+        .onHover { hovering = $0 }
         .padding(.horizontal, DS.Space.s3)
         .frame(minHeight: ContextMetrics.rowHeight)
         .a11y(.rightPanelContextItem(row.entry.kind.rawValue, row.entry.id), kind: "row", label: row.entry.name)

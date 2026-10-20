@@ -30,9 +30,9 @@ final class LibraryFixture {
     var settingsSection: String?
     var page = false
 
-    init() async throws {
-        // Caminho fixo (a suíte é serial): o caminho do arquivo aparece nas imagens de referência.
-        base = URL(fileURLWithPath: "/private/tmp/abx-library-fixture", isDirectory: true)
+    /// `fixedPath`: só a suíte `LibraryUITests` (serial) o usa, porque o caminho do arquivo aparece nas imagens de referência.
+    init(fixedPath: Bool = false) async throws {
+        base = URL(fileURLWithPath: fixedPath ? "/private/tmp/abx-library-fixture" : "/private/tmp/abx-library-\(UUID().uuidString.lowercased())", isDirectory: true)
         try? FileManager.default.removeItem(at: base)
         home = base.appendingPathComponent("home", isDirectory: true)
         project = base.appendingPathComponent("repo", isDirectory: true)
@@ -116,7 +116,7 @@ final class LibraryFixture {
 struct LibraryUITests {
     /// AC-901: as contagens por fonte batem com o disco e cada item tem fonte e CLIs.
     @Test func sourcesListTheDiskCountsAndEveryItemShowsSourceAndClients() async throws {
-        let f = try await LibraryFixture(); defer { f.remove() }
+        let f = try await LibraryFixture(fixedPath: true); defer { f.remove() }
         await f.controller.reload()
         #expect(f.controller.counts[.claude] == 2 && f.controller.counts[.codex] == 1 && f.controller.counts[.opencode] == 1)
         #expect(f.controller.presentCategories == [.claude, .codex, .opencode])
@@ -126,7 +126,7 @@ struct LibraryUITests {
     }
 
     @Test func sectionSearchSourceAndSelectionGoThroughRegisteredActions() async throws {
-        let f = try await LibraryFixture(); defer { f.remove() }
+        let f = try await LibraryFixture(fixedPath: true); defer { f.remove() }
         await f.controller.reload()
         #expect(f.controller.section == .agents && f.controller.visibleItems.map(\.name) == ["data-engineer", "permit-portal-scout", "qa-engineer", "reviewer"])
         #expect(f.controller.selectedID == f.controller.visibleItems.first?.id, "o primeiro item abre no detalhe")
@@ -145,7 +145,7 @@ struct LibraryUITests {
     }
 
     @Test func previewLoadsFrontmatterBodyAndSkillFiles() async throws {
-        let f = try await LibraryFixture(); defer { f.remove() }
+        let f = try await LibraryFixture(fixedPath: true); defer { f.remove() }
         await f.controller.reload()
         _ = try await f.registry.perform(.librarySetSection, .select("skills"))
         let skill = try #require(f.controller.items.first { $0.name == "arcgis-playbook" })
@@ -157,7 +157,7 @@ struct LibraryUITests {
 
     /// AC-902: Open in Editor abre o arquivo do item; Reveal in Finder o revela.
     @Test func openInEditorAndRevealAct() async throws {
-        let f = try await LibraryFixture(); defer { f.remove() }
+        let f = try await LibraryFixture(fixedPath: true); defer { f.remove() }
         await f.controller.reload()
         let agent = try #require(f.controller.items.first { $0.name == "data-engineer" })
         _ = try await f.registry.perform(.libraryOpenInEditor, .select(agent.id))
@@ -169,7 +169,7 @@ struct LibraryUITests {
     /// AC-903 (parte da UI): ligar a skill vale só na sessão em foco, o aviso `Applies on next launch` aparece depois de um lançamento e
     /// nenhum arquivo nativo muda.
     @Test func enablingASkillIsPerSessionAdditiveAndTouchesNoFile() async throws {
-        let f = try await LibraryFixture(); defer { f.remove() }
+        let f = try await LibraryFixture(fixedPath: true); defer { f.remove() }
         let before = f.fingerprint()
         await f.controller.reload()
         _ = try await f.registry.perform(.librarySetSection, .select("skills"))
@@ -188,7 +188,7 @@ struct LibraryUITests {
 
     /// AC-905: a skill global não tem como ser desligada só na sessão; o controle diz por quê em vez de prometer.
     @Test func globalSkillsCannotBeTurnedOffAndSayWhy() async throws {
-        let f = try await LibraryFixture(); defer { f.remove() }
+        let f = try await LibraryFixture(fixedPath: true); defer { f.remove() }
         await f.controller.reload()
         let global = try #require(f.controller.items.first { $0.name == "code-review" })
         #expect(f.controller.activation(of: global) == .alwaysOn)
@@ -200,7 +200,7 @@ struct LibraryUITests {
     }
 
     @Test func toggleNeedsASession() async throws {
-        let f = try await LibraryFixture(); defer { f.remove() }
+        let f = try await LibraryFixture(fixedPath: true); defer { f.remove() }
         f.controller.currentSession = { nil }
         await f.controller.reload()
         let skill = try #require(f.controller.items.first { $0.name == "arcgis-playbook" })
@@ -208,7 +208,7 @@ struct LibraryUITests {
     }
 
     @Test func contextGroupsListSessionItemsFirstThenAvailableThenGlobal() async throws {
-        let f = try await LibraryFixture(); defer { f.remove() }
+        let f = try await LibraryFixture(fixedPath: true); defer { f.remove() }
         await f.controller.reload()
         let skill = try #require(f.controller.items.first { $0.name == "arcgis-playbook" })
         _ = try await f.registry.perform(.contextToggleItem, .select(skill.id))
@@ -223,7 +223,7 @@ struct LibraryUITests {
     }
 
     @Test func restartAgentsAsksThenRelaunchesOnlyTheListedAgents() async throws {
-        let f = try await LibraryFixture(); defer { f.remove() }
+        let f = try await LibraryFixture(fixedPath: true); defer { f.remove() }
         await #expect(throws: ActionError.disabled(.contextRestartWithResume, reason: "No agent in this session can be restarted.")) {
             _ = try await f.registry.perform(.contextRestartWithResume, .press)
         }
@@ -236,7 +236,7 @@ struct LibraryUITests {
     }
 
     @Test func pageActionTogglesTheCenterPageAndEditProfilesOpensSettings() async throws {
-        let f = try await LibraryFixture(); defer { f.remove() }
+        let f = try await LibraryFixture(fixedPath: true); defer { f.remove() }
         #expect(try await f.registry.perform(.pageLibrary, .press).message == "open" && f.page)
         #expect(try await f.registry.perform(.pageLibrary, .press).message == "closed" && !f.page)
         _ = try await f.registry.perform(.libraryEditProfiles, .press)
@@ -246,7 +246,7 @@ struct LibraryUITests {
     // MARK: Imagens
 
     @Test func pageShowsAgentsSkillsAndProfiles() async throws {
-        let f = try await LibraryFixture(); defer { f.remove() }
+        let f = try await LibraryFixture(fixedPath: true); defer { f.remove() }
         f.controller.profiles = { ProfileCatalog().profiles }
         await f.controller.reload()
         for _ in 0 ..< 100 where f.controller.preview == nil { try await Task.sleep(for: .milliseconds(20)) }
@@ -268,14 +268,14 @@ struct LibraryUITests {
     }
 
     @Test func emptyLibraryExplainsWhereItLooks() async throws {
-        let f = try await LibraryFixture(); defer { f.remove() }
+        let f = try await LibraryFixture(fixedPath: true); defer { f.remove() }
         f.controller.loadRows = { _ in [] }
         await f.controller.reload()
         f.render(LibraryPageView(controller: f.controller), size: CGSize(width: 900, height: 360), name: "pageEmpty")
     }
 
     @Test func contextTabShowsGroupsTogglesAndTheBanner() async throws {
-        let f = try await LibraryFixture(); defer { f.remove() }
+        let f = try await LibraryFixture(fixedPath: true); defer { f.remove() }
         await f.controller.reload()
         let skill = try #require(f.controller.items.first { $0.name == "arcgis-playbook" })
         await f.controller.activations.noteLaunched(session: sessionID, ids: [])

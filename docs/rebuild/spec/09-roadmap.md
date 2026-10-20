@@ -393,7 +393,7 @@ Saída: J4 com lote real de pelo menos 10 subagentes terminando com resultado e 
 |---|---|---|---|
 | T4-01 Status bar | Janelas de uso do Claude e do Codex (`rate_limits`), computadores, RAM, segmento `Proxy usage` e popover (03 §5) | Fatias 2 e 3 | AC-1001…1004 |
 | T4-02 Library só leitura | Agents, Skills, Profiles das fontes nativas, ativação aditiva por sessão via plugin gerado, "Open in Editor" | Fatia 2 | AC-901…905 |
-| T4-03 Insert Skill or Agent | Comando `Insert Skill or Agent…` na palette (03 §8), `[Insert in Prompt]` na Library, ação na aba Context; colagem por clique sem Enter (TA-411, v1, Fatia 4) | T4-02, T2-06 | Sem AC numerado em 05 (§7, item 11) |
+| T4-03 Insert Skill or Agent | Comando `Insert Skill or Agent…` na palette (03 §8), `[Insert in Prompt]` na Library, ação na aba Context; colagem por clique sem Enter (TA-411, v1, Fatia 4) | T4-02, T2-06 | AC-909 |
 | T4-04 Observabilidade | Signposts, `metric`, Diagnostics, pacote exportável, crash | Fatia 3 | AC-T17 |
 | T4-05 Endurecimento | Benchmarks completos, snapshots aprovados, modelo de ameaça revisado (AC-T19), TCC e Keychain estáveis (AC-T18), M-109 da Library | todas | AC-T18, T19, T23 |
 | T4-06 Fechamento da v1 | Todos os ACs v1 de 05 verdes; AC-T26 com OK do dono em **toda** tela; dia real J2, J3, J4, J6, J8, J11; release `1.0.0` | todas | RT.2 itens 1 a 4 |
@@ -534,7 +534,7 @@ Consolidadas de `review/E-*.md`, 07 §9, 08 §11 e R3 §12. Nenhuma bloqueia a F
 | 8 | **Q1** (modo isolado): runtime em container separado do `agent` × P5 "mesmo container" | 07 Q1, R1 D-08 | Manter separado, lido como "mesmo computador"; aberta para a v1.1 | V11-A |
 | 9 | **Q3 / P7**: credencial do modo isolado (setup-token direto ou gateway) | 07 Q3, 00 P7 | Abrir a v1.1 com `claude setup-token` e gateway na mesma versão se os termos permitirem | V11-A |
 | 10 | **Q4**: modo de permissão padrão no container isolado | 07 Q4 | Herdar o perfil do pai | V11-A |
-| 11 | Falta AC em 05 para "Insert Skill or Agent…" (TA-411, agora v1 na Fatia 4); proposta de um AC novo com XCUI da palette e do `[Insert in Prompt]` | Esta revisão | Criar AC-909 em 05 antes da T4-03 | T4-03 |
+| 11 | Falta AC em 05 para "Insert Skill or Agent…" (TA-411, agora v1 na Fatia 4); proposta de um AC novo com XCUI da palette e do `[Insert in Prompt]` | Esta revisão | Criar AC-909 em 05 antes da T4-03 (**feito**: AC-909 em 05 §J9) | T4-03 |
 | 12 | Imagem do runtime no GHCR pública ou privada | 08 §11.4 | Pública (não contém segredo) | T3-01 |
 | 13 | Metas de desempenho iniciais (AR-7xx prevalece sobre 05) | 05 / 08 | Manter 08 | T1-09 |
 | 14 | 04: blur do scrim (desligado na v1), dono do `ui-kit.css`, aprovação de tokens `"draft": true`, aprovação por momento | 08 §11.4 | Aprovar por momento no gate P14 | T1-03, T1-11 |
