@@ -8,9 +8,40 @@ struct SpawnedPTY: Sendable {
 }
 
 /// Cria o PTY e lança o processo com `setsid` (líder de sessão e de grupo: `pgid == pid`) sem `fork` do processo
-/// multithread do daemon: `posix_spawn` com `POSIX_SPAWN_SETSID`, o slave aberto por caminho (vira o tty de controle)
-/// e `POSIX_SPAWN_CLOEXEC_DEFAULT` (nenhum fd do daemon vaza para o filho).
+/// multithread do daemon: `posix_spawn` com `POSIX_SPAWN_SETSID`, o slave aberto por caminho e `POSIX_SPAWN_CLOEXEC_DEFAULT`
+/// (nenhum fd do daemon vaza para o filho).
+///
+/// No macOS abrir o slave NÃO faz dele o tty de controle (no Linux faz): sem `TIOCSCTTY` o processo ficava sem tty de controle
+/// (`ps` mostra `??`), o kernel não entregava SIGWINCH no resize e o Claude nunca redesenhava na largura nova; ⌃C/⌃Z do
+/// terminal também não viravam sinal. O `posix_spawn` não tem ação para isso, então o filho é o próprio `agentboxd` no modo
+/// trampolim (`--exec-with-ctty`): faz `ioctl(0, TIOCSCTTY)` e `execve` do programa, no mesmo pid.
 enum PTYSpawner {
+    static let cttyFlag = "--exec-with-ctty"
+    /// Caminho do próprio executável (o trampolim). `nil`: lança o programa direto (sem tty de controle).
+    nonisolated(unsafe) static var cttyShim: String?  // SAFETY: gravado uma vez no início do main, antes de qualquer spawn; depois só leitura.
+
+    static func ownExecutablePath() -> String? {
+        var size: UInt32 = 0
+        _ = _NSGetExecutablePath(nil, &size)
+        var buffer = [CChar](repeating: 0, count: Int(size) + 1)
+        guard _NSGetExecutablePath(&buffer, &size) == 0 else { return nil }
+        let bytes = buffer.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }
+        let path = URL(fileURLWithPath: String(decoding: bytes, as: UTF8.self)).resolvingSymlinksInPath().path
+        return access(path, X_OK) == 0 ? path : nil
+    }
+
+    /// Modo trampolim: `[programa, argv0, argv1...]`. Só chamadas seguras antes do `execve`; em falha, sai com 127.
+    static func execWithControllingTTY(_ arguments: [String]) -> Never {
+        _ = ioctl(0, TIOCSCTTY, 0)
+        let path = arguments[0]
+        var cArgv: [UnsafeMutablePointer<CChar>?] = arguments.dropFirst().map { strdup($0) }
+        cArgv.append(nil)
+        execve(path, cArgv, environ)
+        let message = "agentboxd: exec \(path) failed: \(String(cString: strerror(errno)))\n"
+        _ = message.withCString { write(2, $0, strlen($0)) }
+        _exit(127)
+    }
+
     static func spawn(argv: [String], cwd: String, env: [String: String], cols: UInt16, rows: UInt16) throws(DaemonError) -> SpawnedPTY {
         guard let first = argv.first else { throw DaemonError(.badRequest, "argv must not be empty") }
         var isDirectory: ObjCBool = false
@@ -21,13 +52,19 @@ enum PTYSpawner {
             throw DaemonError(.spawnFailed, "executable not found", errnoValue: ENOENT, path: first)
         }
 
-        var master: Int32 = -1
-        var slave: Int32 = -1
-        var name = [CChar](repeating: 0, count: 128)
-        var size = winsize(ws_row: rows, ws_col: cols, ws_xpixel: 0, ws_ypixel: 0)
-        guard openpty(&master, &slave, &name, nil, &size) == 0 else {
-            throw DaemonError(.spawnFailed, "openpty failed", errnoValue: errno)
+        // `posix_openpt` + `O_NOCTTY` e o slave NUNCA aberto aqui: o daemon do launchd é líder de sessão sem tty de controle, e
+        // o `openpty` abria o slave nele, o que no macOS dá aquele tty ao DAEMON. O filho ficava sem tty de controle (sem
+        // SIGWINCH no resize, sem ⌃C/⌃Z como sinal). Só o filho abre o slave, já líder de sessão nova.
+        let master = posix_openpt(O_RDWR | O_NOCTTY)
+        guard master >= 0 else { throw DaemonError(.spawnFailed, "posix_openpt failed", errnoValue: errno) }
+        guard grantpt(master) == 0, unlockpt(master) == 0, let slaveName = ptsname(master) else {
+            let failure = errno
+            close(master)
+            throw DaemonError(.spawnFailed, "pty setup failed", errnoValue: failure)
         }
+        let name = Array(UnsafeBufferPointer(start: slaveName, count: strlen(slaveName) + 1))
+        var size = winsize(ws_row: rows, ws_col: cols, ws_xpixel: 0, ws_ypixel: 0)
+        _ = ioctl(master, TIOCSWINSZ, &size)
         var attributes = termios()
         if tcgetattr(master, &attributes) == 0 {
             attributes.c_iflag |= tcflag_t(IUTF8)
@@ -56,7 +93,11 @@ enum PTYSpawner {
         posix_spawn_file_actions_adddup2(&actions, 0, 2)
         posix_spawn_file_actions_addchdir_np(&actions, cwd)
 
-        var cArgv: [UnsafeMutablePointer<CChar>?] = argv.map { strdup($0) }
+        // Com o trampolim: `agentboxd --exec-with-ctty <executável> <argv...>`; o argv do programa chega intacto.
+        let shim = cttyShim.flatMap { access($0, X_OK) == 0 ? $0 : nil }
+        let spawnPath = shim ?? executable
+        let spawnArgv = shim.map { [$0, cttyFlag, executable] + argv } ?? argv
+        var cArgv: [UnsafeMutablePointer<CChar>?] = spawnArgv.map { strdup($0) }
         cArgv.append(nil)
         var cEnv: [UnsafeMutablePointer<CChar>?] = env.map { strdup("\($0.key)=\($0.value)") }
         cEnv.append(nil)
@@ -66,8 +107,7 @@ enum PTYSpawner {
         }
 
         var pid: pid_t = 0
-        let result = posix_spawn(&pid, executable, &actions, &spawnAttributes, cArgv, cEnv)
-        close(slave)
+        let result = posix_spawn(&pid, spawnPath, &actions, &spawnAttributes, cArgv, cEnv)
         guard result == 0 else {
             close(master)
             throw DaemonError(.spawnFailed, "posix_spawn failed", errnoValue: result, path: executable)

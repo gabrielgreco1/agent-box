@@ -52,19 +52,33 @@ final class DaemonHarness: @unchecked Sendable {  // SAFETY: `process` só muda 
 
     var sessionsDirectory: URL { home.appendingPathComponent("sessions") }
 
-    func start(idleExit: Int = 0, binary: URL? = nil) async throws {
-        let process = Process()
-        process.executableURL = binary ?? agentboxdBinary()
+    /// `sessionLeader`: o daemon roda como líder de sessão sem tty de controle, como o launchd o inicia (`posix_spawn` com
+    /// `POSIX_SPAWN_SETSID`). Foi assim que os filhos ficavam sem tty de controle e o resize não virava SIGWINCH.
+    func start(idleExit: Int = 0, binary: URL? = nil, sessionLeader: Bool = false) async throws {
         // Nunca `0`: um daemon órfão de um teste que travou some sozinho 5 s depois de ficar sem sessões.
-        process.arguments = ["--idle-exit", "\(idleExit == 0 ? 5 : idleExit)"]
+        let daemonArguments = ["--idle-exit", "\(idleExit == 0 ? 5 : idleExit)"]
+        let daemon = binary ?? agentboxdBinary()
         var environment = ProcessInfo.processInfo.environment
         environment["AGENTBOX_HOME"] = home.path
+        if sessionLeader {
+            leaderPID = try Self.spawnSessionLeader(daemon.path, arguments: daemonArguments, environment: environment)
+            SpawnedDaemons.add(leaderPID!)
+            try await waitForSocket()
+            return
+        }
+        let process = Process()
+        process.executableURL = daemon
+        process.arguments = daemonArguments
         process.environment = environment
         process.standardOutput = FileHandle.nullDevice
         process.standardError = FileHandle.nullDevice
         try process.run()
         self.process = process
         SpawnedDaemons.add(process.processIdentifier)
+        try await waitForSocket()
+    }
+
+    private func waitForSocket() async throws {
         for _ in 0 ..< 100 {
             if let connection = try? await UDSClient.connect(path: socketPath) {
                 connection.close()
@@ -75,7 +89,37 @@ final class DaemonHarness: @unchecked Sendable {  // SAFETY: `process` só muda 
         throw HarnessError.daemonDidNotStart
     }
 
-    var pid: Int32? { process?.processIdentifier }
+    /// Daemon iniciado como líder de sessão (sem `Process`, que já faz do filho um líder de grupo e impede o `setsid`).
+    private var leaderPID: pid_t?
+
+    private static func spawnSessionLeader(_ path: String, arguments: [String], environment: [String: String]) throws -> pid_t {
+        var attributes: posix_spawnattr_t? = nil
+        posix_spawnattr_init(&attributes)
+        defer { posix_spawnattr_destroy(&attributes) }
+        posix_spawnattr_setflags(&attributes, Int16(POSIX_SPAWN_SETSID))
+        var actions: posix_spawn_file_actions_t? = nil
+        posix_spawn_file_actions_init(&actions)
+        defer { posix_spawn_file_actions_destroy(&actions) }
+        for fd: Int32 in 0 ... 2 { posix_spawn_file_actions_addopen(&actions, fd, "/dev/null", O_RDWR, 0) }
+        var argv: [UnsafeMutablePointer<CChar>?] = ([path] + arguments).map { strdup($0) } + [nil]
+        var envp: [UnsafeMutablePointer<CChar>?] = environment.map { strdup("\($0.key)=\($0.value)") } + [nil]
+        defer { for p in argv + envp { free(p) } }
+        var pid: pid_t = 0
+        let result = posix_spawn(&pid, path, &actions, &attributes, &argv, &envp)
+        guard result == 0 else { throw HarnessError.daemonDidNotStart }
+        return pid
+    }
+
+    private func endLeader() {
+        guard let pid = leaderPID else { return }
+        Darwin.kill(pid, SIGKILL)
+        var status: Int32 = 0
+        for _ in 0 ..< 100 where waitpid(pid, &status, WNOHANG) == 0 { Thread.sleep(forTimeInterval: 0.02) }
+        SpawnedDaemons.remove(pid)
+        leaderPID = nil
+    }
+
+    var pid: Int32? { process?.processIdentifier ?? leaderPID }
 
     /// Mata o daemon (SIGKILL: simula crash) e espera o término.
     func kill() async {
@@ -96,6 +140,7 @@ final class DaemonHarness: @unchecked Sendable {  // SAFETY: `process` só muda 
 
     /// Encerramento síncrono e idempotente (`defer` e `deinit` dos testes): SIGKILL, espera o término e apaga o home.
     func terminateNow(removeHome: Bool = true) {
+        endLeader()
         if let process {
             if process.isRunning {
                 Darwin.kill(process.processIdentifier, SIGKILL)
@@ -113,6 +158,7 @@ final class DaemonHarness: @unchecked Sendable {  // SAFETY: `process` só muda 
 
     func stop() async {
         await DaemonReaper.shutdown(home: home)  // `shutdown` do protocolo; SIGKILL de reserva; pega também o filho de um TerminalRuntime no mesmo home
+        endLeader()
         if let process, process.isRunning { Darwin.kill(process.processIdentifier, SIGKILL) }
         await waitForExit()
         if let process { SpawnedDaemons.remove(process.processIdentifier) }

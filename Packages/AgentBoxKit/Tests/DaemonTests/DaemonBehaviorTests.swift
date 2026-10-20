@@ -7,10 +7,10 @@ import Testing
 @testable import AgentBoxPlatform
 
 @Suite(.serialized, .tags(.integration), .timeLimit(.minutes(1))) struct DaemonBehaviorTests {
-    private func withDaemon(idleExit: Int = 0, _ body: (DaemonHarness) async throws -> Void) async throws {
+    private func withDaemon(idleExit: Int = 0, sessionLeader: Bool = false, _ body: (DaemonHarness) async throws -> Void) async throws {
         let harness = try DaemonHarness()
         defer { harness.terminateNow() }
-        try await harness.start(idleExit: idleExit)
+        try await harness.start(idleExit: idleExit, sessionLeader: sessionLeader)
         do {
             try await body(harness)
         } catch {
@@ -215,6 +215,27 @@ import Testing
             await #expect(throws: PTYClientError.self) { try await client.resize(sessionID: create.sessionID, cols: 80, rows: 24) }
             try await client.forget(sessionID: create.sessionID)
             #expect(try await client.list().isEmpty)
+            await client.stop()
+        }
+    }
+
+    /// O processo tem tty de controle: o resize vira SIGWINCH de verdade (o Claude só redesenha na largura nova se receber o
+    /// sinal; medir o tamanho com `stty` não basta) e o `ps` mostra o tty, não `??`.
+    @Test(arguments: [false, true]) func resizeDeliversSIGWINCHBecauseTheChildOwnsItsTTY(launchdLike: Bool) async throws {
+        try await withDaemon(sessionLeader: launchdLike) { harness in
+            let client = harness.makeClient()
+            try await client.start()
+            let script = "trap 'echo WINCH-$(stty size)' WINCH; echo TTY-$(ps -o tty= -p $$); while :; do sleep 0.05; done"
+            let create = makeCreate(["/bin/sh", "-c", script])
+            _ = try await client.create(create)
+            let attachment = try await client.attach(sessionID: create.sessionID, cols: 100, rows: 30)
+            let replica = Replica(cols: 100, rows: 30)
+            Task { await replica.run(attachment) }
+            try await eventually("tty reported") { await replica.screen().contains("TTY-") }
+            #expect(await !replica.screen().contains("TTY-??"), "sem tty de controle o kernel não entrega SIGWINCH")
+            try await client.resize(sessionID: create.sessionID, cols: 132, rows: 40)
+            try await eventually("SIGWINCH delivered") { await replica.screen().contains("WINCH-40 132") }
+            try await client.kill(sessionID: create.sessionID, mode: .force)
             await client.stop()
         }
     }

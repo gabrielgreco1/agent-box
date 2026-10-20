@@ -19,6 +19,10 @@ import Foundation
 @main
 struct AgentBoxD {
     static func main() async {
+        // Trampolim do spawn (PTYSpawner): já líder de sessão com o slave no fd 0, pega o tty de controle e vira o programa.
+        let launch = CommandLine.arguments
+        if launch.count >= 3, launch[1] == PTYSpawner.cttyFlag { PTYSpawner.execWithControllingTTY(Array(launch.dropFirst(2))) }
+        PTYSpawner.cttyShim = PTYSpawner.ownExecutablePath()
         signal(SIGPIPE, SIG_IGN)
         // F30: o daemon só encerra por `shutdown` (protocolo) ou ocioso sem sessões. SIGTERM/SIGHUP/SIGINT do app, do shell ou de
         // um `kill` por engano são ignorados. Um handler (e não `SIG_IGN`) para que os filhos PTY voltem ao padrão no `exec`.

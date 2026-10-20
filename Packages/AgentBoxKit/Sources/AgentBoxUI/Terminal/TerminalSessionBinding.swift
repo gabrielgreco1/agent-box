@@ -72,6 +72,10 @@ public final class TerminalSessionBinding {
         let resizer = PTYResizeCoordinator(initial: size) { applied in
             counter.increment()
             try? await client.resize(sessionID: sessionID, cols: applied.cols, rows: applied.rows)
+            // Processo sem tty de controle (daemons até a correção do spawn, que ainda seguram sessões vivas): o kernel não
+            // entrega SIGWINCH e o Claude nunca redesenha na largura nova. O sinal explícito cobre esse caso; com tty de
+            // controle é só um aviso a mais, inofensivo.
+            try? await client.signal(sessionID: sessionID, signal: SIGWINCH, target: .group)
         }
         self.resizer = resizer
         surface.onResize = { cols, rows in
