@@ -226,7 +226,7 @@ import Testing
         #expect(env.registry.isOffered(.projectAdd), "adicionar projeto é de T1-19")
         #expect(env.registry.isOffered(.projectNewSession), "composer é de T1-20")
         #expect(env.registry.isOffered(.sessionEditNote), "a nota da sessão é de T2-05")
-        #expect(!env.registry.isOffered(.libraryOpenInEditor), "fatia futura")
+        #expect(!env.registry.isOffered(.libraryNewAgent), "fatia futura")
         #expect(env.registry.isOffered(.sessionRename))
     }
 

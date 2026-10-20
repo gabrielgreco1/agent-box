@@ -15,6 +15,7 @@ enum RightPanelModules {
             controller.register(SourceControlModule(controller: env.github))
             controller.register(ChecksModule(controller: env.github))
         }
+        if env.flags.offersSlice4 { controller.register(ContextModule(controller: env.context)) }
     }
 
     static func makeInsightsModule(env: AppEnvironment) -> any RightPanelModule {

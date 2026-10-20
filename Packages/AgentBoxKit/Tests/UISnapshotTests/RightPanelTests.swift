@@ -16,7 +16,7 @@ import Testing
 
     @Test func environmentRegistersTheModulesWithStripButtonsForFilesAndInsights() {
         let env = AppEnvironment(environment: [:])
-        #expect(env.rightPanel.modules.map(\.id) == [.files, .insights, .computers, .conversations, .sourceControl, .checks])
+        #expect(env.rightPanel.modules.map(\.id) == [.files, .insights, .computers, .conversations, .sourceControl, .checks, .context])
         #expect(env.rightPanel.layout.visible == [.files, .insights])
         let withButtons = env.rightPanel.modules.filter { $0.toggleAction != nil }.map(\.id)
         #expect(withButtons == [.files, .insights])

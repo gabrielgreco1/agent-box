@@ -120,12 +120,15 @@ public struct LaunchJob: Sendable {
     public var mode: LaunchMode
     /// Atributo "Subagent computers" da sessão (F12). `nil` = sem computadores.
     public var subagent: SubagentLaunch?
+    /// Sessão do Racky dona do terminal: a Library liga itens só nela (T4-02). `nil` = terminal sem sessão.
+    public var sessionID: UUID?
 
     public init(
         terminalID: UUID, spec: LaunchSpec, cwd: String, addDirs: [String] = [], projectID: UUID? = nil, coldLog: Bool = true,
         cols: UInt16 = 100, rows: UInt16 = 30, catalog: ProfileCatalog = ProfileCatalog(), workspace: LaunchWorkspaceStep? = nil,
-        mode: LaunchMode = .automatic, subagent: SubagentLaunch? = nil
+        mode: LaunchMode = .automatic, subagent: SubagentLaunch? = nil, sessionID: UUID? = nil
     ) {
+        self.sessionID = sessionID
         self.subagent = subagent
         self.mode = mode
         self.terminalID = terminalID; self.spec = spec; self.cwd = cwd; self.addDirs = addDirs; self.projectID = projectID
@@ -179,6 +182,8 @@ public actor LaunchCoordinator {
         public var prepareOrchestration: (@Sendable (ParentInfo) async -> OrchestrationBundle?)?
         /// O pai terminou (saiu, restart, fechou): solta o que ele reservou.
         public var endOrchestration: (@Sendable (String) async -> Void)?
+        /// T4-02: plugin e agentes que a Library ligou só nesta sessão (regerado a cada start e resume). `nil` = sem Library.
+        public var sessionLibrary: (@Sendable (UUID) async -> SessionLibraryInjection?)?
 
         public init(
             launchRoot: URL, appSocketPath: String, appVersion: String = "0.1.0",
@@ -189,8 +194,10 @@ public actor LaunchCoordinator {
             clock: @escaping @Sendable () -> Date = { Date() }, slice: LaunchSlice = .slice1,
             injection: @escaping @Sendable (TerminalProvider) -> LaunchInjection? = { _ in nil },
             prepareOrchestration: (@Sendable (ParentInfo) async -> OrchestrationBundle?)? = nil,
-            endOrchestration: (@Sendable (String) async -> Void)? = nil
+            endOrchestration: (@Sendable (String) async -> Void)? = nil,
+            sessionLibrary: (@Sendable (UUID) async -> SessionLibraryInjection?)? = nil
         ) {
+            self.sessionLibrary = sessionLibrary
             self.prepareOrchestration = prepareOrchestration; self.endOrchestration = endOrchestration
             self.slice = slice; self.injection = injection
             self.launchRoot = launchRoot; self.appSocketPath = appSocketPath; self.appVersion = appVersion
@@ -275,6 +282,10 @@ public actor LaunchCoordinator {
             do {
                 let capabilities = await configuration.capabilities(job.spec.provider, executable)
                 var injection = configuration.injection(job.spec.provider)
+                // Itens da Library ligados só nesta sessão (Claude): plugin `plugin-session/` e agentes em `--agents`.
+                if job.spec.provider == .claude, injection != nil, let session = job.sessionID, let library = configuration.sessionLibrary {
+                    injection?.claudeSessionLibrary = await library(session)
+                }
                 // Claude parte da injeção de hooks; Codex e OpenCode só levam a de orquestração (hooks do Codex precisam de trust sondado).
                 if job.spec.provider.supportsSubagentComputers, let sub = job.subagent, sub.mode.isOn, injection != nil || job.spec.provider != .claude,
                    let prepare = configuration.prepareOrchestration {

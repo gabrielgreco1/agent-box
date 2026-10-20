@@ -303,6 +303,10 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `rightPanel.context.item.<kind>.<id>`
 - `rightPanel.context.item.<kind>.<id>.toggle`
 - `rightPanel.context.item.<kind>.<id>.insert`
+- `rightPanel.context.banner`
+- `rightPanel.context.restart`
+- `rightPanel.context.openLibrary`
+- `rightPanel.context.empty`
 - `rightPanel.computer.<id>.tab.<name>`
 - `rightPanel.computer.<id>.back`
 - `rightPanel.computer.<id>.reveal`
@@ -411,6 +415,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `library.detail.insert`
 - `library.detail.openInEditor`
 - `library.detail.reveal`
+- `library.detail.restart`
 - `library.profile.name`
 - `library.profile.agent`
 - `library.profile.model`
@@ -418,6 +423,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `library.profile.args`
 - `library.profile.env`
 - `library.profile.default`
+- `library.profile.row.<id>`
+- `library.profile.edit`
 
 ### Settings
 
@@ -453,6 +460,9 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `overlay.confirmStopComputer`
 - `overlay.confirmStopComputer.cancel`
 - `overlay.confirmStopComputer.confirm`
+- `overlay.confirmRestartAgents`
+- `overlay.confirmRestartAgents.cancel`
+- `overlay.confirmRestartAgents.confirm`
 - `overlay.confirmDeleteComputer.confirm`
 - `overlay.confirmDelete`
 - `overlay.confirmDelete.keepBranch`
@@ -783,6 +793,11 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `library.toggleInSession` | Library: Enable / Disable in This Session | — | slice4 |
 | `library.openInEditor` | Library: Open in Editor | — | slice4 |
 | `library.reveal` | Reveal in Finder | — | slice4 |
+| `library.setSection` | Library: seção | — | slice4 |
+| `library.setSearch` | busca | — | slice4 |
+| `library.setSource` | fonte | — | slice4 |
+| `library.selectItem` | item | — | slice4 |
+| `library.editProfiles` | Library: Edit Profiles… | — | slice4 |
 | `profile.new` | Library: New Profile | — | slice4 |
 | `profile.duplicate` | Duplicate | — | slice4 |
 | `profile.delete` | Delete… | — | slice4 |
@@ -927,6 +942,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `dialog.archiveBatch.cancel` | Cancel (confirmação com filhos rodando: `Stop <n> running subagents?`) | Esc | slice3 |
 | `dialog.stopComputer.confirm` | Stop Computer | — | slice3 |
 | `dialog.stopComputer.cancel` | Cancel (§16.3) | Esc | slice3 |
+| `dialog.restartAgents.confirm` | Restart Agents | — | slice4 |
+| `dialog.restartAgents.cancel` | Cancel (aba Context, §10.6) | Esc | slice4 |
 | `dialog.deleteComputer.confirm` | Delete Computer (§16.4) | — | slice3 |
 | `dialog.deleteSession.confirm` | Delete Session (§16.5) | — | slice1 |
 | `dialog.deleteSession.cancel` | Cancel (§16.5) | Esc | slice1 |

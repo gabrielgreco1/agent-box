@@ -272,6 +272,7 @@ final class WorkspaceViewController: NSViewController {
         case .workspace: return nil
         case .computers: content = AnyView(ComputersPageView(controller: controller))
         case .batch(let id): content = AnyView(BatchPageView(controller: controller, batchID: id))
+        case .library: content = AnyView(LibraryPageView(controller: env.library))
         case .viewer(let name):
             guard let viewer = controller.ensureViewer(name) else { return nil }
             let origin = env.sidebar.selectedSession.flatMap { env.sidebar.session($0)?.title }

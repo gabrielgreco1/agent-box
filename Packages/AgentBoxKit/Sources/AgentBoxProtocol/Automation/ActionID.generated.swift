@@ -225,6 +225,11 @@ extension ActionID {
     public static let libraryToggleInSession = ActionID(unchecked: "library.toggleInSession")
     public static let libraryOpenInEditor = ActionID(unchecked: "library.openInEditor")
     public static let libraryReveal = ActionID(unchecked: "library.reveal")
+    public static let librarySetSection = ActionID(unchecked: "library.setSection")
+    public static let librarySetSearch = ActionID(unchecked: "library.setSearch")
+    public static let librarySetSource = ActionID(unchecked: "library.setSource")
+    public static let librarySelectItem = ActionID(unchecked: "library.selectItem")
+    public static let libraryEditProfiles = ActionID(unchecked: "library.editProfiles")
     public static let profileNew = ActionID(unchecked: "profile.new")
     public static let profileDuplicate = ActionID(unchecked: "profile.duplicate")
     public static let profileDelete = ActionID(unchecked: "profile.delete")
@@ -369,6 +374,8 @@ extension ActionID {
     public static let dialogArchiveBatchCancel = ActionID(unchecked: "dialog.archiveBatch.cancel")
     public static let dialogStopComputerConfirm = ActionID(unchecked: "dialog.stopComputer.confirm")
     public static let dialogStopComputerCancel = ActionID(unchecked: "dialog.stopComputer.cancel")
+    public static let dialogRestartAgentsConfirm = ActionID(unchecked: "dialog.restartAgents.confirm")
+    public static let dialogRestartAgentsCancel = ActionID(unchecked: "dialog.restartAgents.cancel")
     public static let dialogDeleteComputerConfirm = ActionID(unchecked: "dialog.deleteComputer.confirm")
     public static let dialogDeleteSessionConfirm = ActionID(unchecked: "dialog.deleteSession.confirm")
     public static let dialogDeleteSessionCancel = ActionID(unchecked: "dialog.deleteSession.cancel")
@@ -672,6 +679,11 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "library.toggleInSession"), label: "Library: Enable / Disable in This Session", shortcut: "", slice: .slice4),
         ActionSpec(id: ActionID(unchecked: "library.openInEditor"), label: "Library: Open in Editor", shortcut: "", slice: .slice4),
         ActionSpec(id: ActionID(unchecked: "library.reveal"), label: "Reveal in Finder", shortcut: "", slice: .slice4),
+        ActionSpec(id: ActionID(unchecked: "library.setSection"), label: "Library: seção", shortcut: "", slice: .slice4),
+        ActionSpec(id: ActionID(unchecked: "library.setSearch"), label: "busca", shortcut: "", slice: .slice4),
+        ActionSpec(id: ActionID(unchecked: "library.setSource"), label: "fonte", shortcut: "", slice: .slice4),
+        ActionSpec(id: ActionID(unchecked: "library.selectItem"), label: "item", shortcut: "", slice: .slice4),
+        ActionSpec(id: ActionID(unchecked: "library.editProfiles"), label: "Library: Edit Profiles…", shortcut: "", slice: .slice4),
         ActionSpec(id: ActionID(unchecked: "profile.new"), label: "Library: New Profile", shortcut: "", slice: .slice4),
         ActionSpec(id: ActionID(unchecked: "profile.duplicate"), label: "Duplicate", shortcut: "", slice: .slice4),
         ActionSpec(id: ActionID(unchecked: "profile.delete"), label: "Delete…", shortcut: "", slice: .slice4),
@@ -816,6 +828,8 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "dialog.archiveBatch.cancel"), label: "Cancel (confirmação com filhos rodando: `Stop <n> running subagents?`)", shortcut: "Esc", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dialog.stopComputer.confirm"), label: "Stop Computer", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dialog.stopComputer.cancel"), label: "Cancel (§16.3)", shortcut: "Esc", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dialog.restartAgents.confirm"), label: "Restart Agents", shortcut: "", slice: .slice4),
+        ActionSpec(id: ActionID(unchecked: "dialog.restartAgents.cancel"), label: "Cancel (aba Context, §10.6)", shortcut: "Esc", slice: .slice4),
         ActionSpec(id: ActionID(unchecked: "dialog.deleteComputer.confirm"), label: "Delete Computer (§16.4)", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dialog.deleteSession.confirm"), label: "Delete Session (§16.5)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.deleteSession.cancel"), label: "Cancel (§16.5)", shortcut: "Esc", slice: .slice1),

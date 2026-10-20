@@ -22,6 +22,7 @@ extension AppEnvironment {
         case .viewer(let name): return .viewer(name)
         case .computers: return .computers
         case .batch(let name): return .batch(name)
+        case .library: return .library
         case .workspace: break
         }
         if sidebar.inboxOpen { return .inbox }
@@ -38,7 +39,7 @@ extension AppEnvironment {
         case .computers: true
         case .batch(let name): computers.model.batch(name) != nil
         case .inbox: attention != nil
-        case .library: false
+        case .library: true
         }
     }
 
@@ -93,7 +94,8 @@ extension AppEnvironment {
             sidebar.select(session, requestingListFocus: false)
             workspace.show(terminalID: terminal)
         case .library:
-            break
+            sidebar.setInbox(open: false)
+            computers.show(.library)
         }
     }
 }

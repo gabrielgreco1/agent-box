@@ -18,11 +18,11 @@ public struct CatalogRoots: Sendable, Equatable {
 
     /// Diretórios a observar (existentes ou não: o watcher cai para o ancestral mais próximo).
     public var watchedDirectories: [URL] {
-        var dirs = [".claude/agents", ".claude/skills", ".claude/plugins", ".agents/skills", ".codex/agents", ".codex/skills"]
+        var dirs = [".claude/agents", ".claude/skills", ".claude/plugins", ".agents/skills", ".codex/agents", ".codex/skills", ".codex/prompts", ".config/opencode/agent", ".config/opencode/agents"]
             .map { home.appendingPathComponent($0, isDirectory: true) }
         dirs += [home.appendingPathComponent(".claude", isDirectory: true), home.appendingPathComponent(".codex", isDirectory: true)]
         for root in projectRoots {
-            dirs += [".claude/agents", ".claude/skills", ".agents/skills"].map { root.appendingPathComponent($0, isDirectory: true) }
+            dirs += [".claude/agents", ".claude/skills", ".agents/skills", ".opencode/agent", ".opencode/agents"].map { root.appendingPathComponent($0, isDirectory: true) }
         }
         return dirs
     }
@@ -95,6 +95,10 @@ public enum CatalogScanner {
             Spec(label: "~/.agents/skills", url: dir(".agents/skills"), source: "agents", kind: "skill", scope: "user", clients: ["codex"], layout: .skillFolders),
             Spec(label: "~/.codex/agents", url: dir(".codex/agents"), source: "codex", kind: "agent", scope: "user", clients: ["codex"], layout: .tomlAgents),
             Spec(label: "~/.codex/skills", url: dir(".codex/skills"), source: "codex", kind: "skill", scope: "user", clients: ["codex"], layout: .skillFolders),
+            // Prompts do Codex (`/prompts:<nome>`): entram como skills da fonte `codex`, sem ativação por sessão.
+            Spec(label: "~/.codex/prompts", url: dir(".codex/prompts"), source: "codex", kind: "skill", scope: "user", clients: ["codex"], layout: .markdownFiles, namePrefix: "prompts"),
+            Spec(label: "~/.config/opencode/agent", url: dir(".config/opencode/agent"), source: "opencode", kind: "agent", scope: "user", clients: ["opencode"], layout: .markdownFiles),
+            Spec(label: "~/.config/opencode/agents", url: dir(".config/opencode/agents"), source: "opencode", kind: "agent", scope: "user", clients: ["opencode"], layout: .markdownFiles),
             Spec(label: "~/.claude/CLAUDE.md", url: h.appendingPathComponent(".claude/CLAUDE.md"), source: "claude", kind: "instructions", scope: "user", clients: ["claude"], layout: .singleFile),
             Spec(label: "~/.codex/AGENTS.md", url: h.appendingPathComponent(".codex/AGENTS.md"), source: "codex", kind: "instructions", scope: "user", clients: ["codex"], layout: .singleFile),
         ]
@@ -109,6 +113,8 @@ public enum CatalogScanner {
                 Spec(label: "\(tag)/.claude/agents", url: root.appendingPathComponent(".claude/agents", isDirectory: true), source: "claude", kind: "agent", scope: "project", clients: ["claude"], layout: .markdownFiles),
                 Spec(label: "\(tag)/.claude/skills", url: root.appendingPathComponent(".claude/skills", isDirectory: true), source: "claude", kind: "skill", scope: "project", clients: ["claude"], layout: .skillFolders),
                 Spec(label: "\(tag)/.agents/skills", url: root.appendingPathComponent(".agents/skills", isDirectory: true), source: "agents", kind: "skill", scope: "project", clients: ["codex"], layout: .skillFolders),
+                Spec(label: "\(tag)/.opencode/agent", url: root.appendingPathComponent(".opencode/agent", isDirectory: true), source: "opencode", kind: "agent", scope: "project", clients: ["opencode"], layout: .markdownFiles),
+                Spec(label: "\(tag)/.opencode/agents", url: root.appendingPathComponent(".opencode/agents", isDirectory: true), source: "opencode", kind: "agent", scope: "project", clients: ["opencode"], layout: .markdownFiles),
                 Spec(label: "\(tag)/CLAUDE.md", url: root.appendingPathComponent("CLAUDE.md"), source: "claude", kind: "instructions", scope: "project", clients: ["claude"], layout: .singleFile),
                 Spec(label: "\(tag)/AGENTS.md", url: root.appendingPathComponent("AGENTS.md"), source: "agents", kind: "instructions", scope: "project", clients: ["codex"], layout: .singleFile),
             ]

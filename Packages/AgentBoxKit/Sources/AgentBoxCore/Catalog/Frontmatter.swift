@@ -30,6 +30,22 @@ public struct FrontmatterResult: Sendable, Equatable {
 /// Subconjunto de YAML suficiente para `---` de agentes e skills: escalares (puros, com aspas, `|` e `>`), listas inline
 /// e em bloco, e valores aninhados mantidos como texto cru. Nunca avalia nada (08: dados, não código).
 public enum FrontmatterParser {
+    /// O texto depois do `---` de fechamento (sem a linha em branco inicial). Sem frontmatter, o texto inteiro; frontmatter aberto
+    /// e nunca fechado, nada (o arquivo está inválido: o preview mostra o erro).
+    public static func body(of text: String) -> String {
+        var lines = text.replacingOccurrences(of: "\r\n", with: "\n").replacingOccurrences(of: "\r", with: "\n")
+            .split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        if let first = lines.first, first.hasPrefix("\u{FEFF}") { lines[0] = String(first.dropFirst()) }
+        guard let first = lines.first, first.trimmingCharacters(in: .whitespaces) == "---" else { return text }
+        guard let close = lines.indices.dropFirst().first(where: {
+            let t = lines[$0].trimmingCharacters(in: .whitespaces)
+            return t == "---" || t == "..."
+        }) else { return "" }
+        var rest = Array(lines[(close + 1)...])
+        while rest.first?.trimmingCharacters(in: .whitespaces).isEmpty == true { rest.removeFirst() }
+        return rest.joined(separator: "\n")
+    }
+
     public static func parse(_ text: String) -> FrontmatterResult {
         var lines = text.replacingOccurrences(of: "\r\n", with: "\n").replacingOccurrences(of: "\r", with: "\n")
             .split(separator: "\n", omittingEmptySubsequences: false).map(String.init)

@@ -55,6 +55,8 @@ public struct LaunchInjection: Sendable, Equatable {
     public var claudeAgentsJSON: Data?
     /// Claude: regras de `permissions.deny` de `--settings` (ex.: `Skill(agentbox)`, S4). Valem também com `--dangerously-skip-permissions`.
     public var claudeDenyRules: [String]
+    /// Claude: itens da Library ligados só nesta sessão (T4-02): plugin `plugin-session/` em `--plugin-dir` e agentes somados a `--agents`.
+    public var claudeSessionLibrary: SessionLibraryInjection?
     /// Claude: variáveis de ambiente do lançamento (ex.: `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`, CS-325).
     public var claudeEnvironment: [String: String]
     /// Claude: variáveis que NÃO podem chegar ao CLI mesmo vindas do shell de login (agent teams desligado, CS-310).
@@ -72,8 +74,9 @@ public struct LaunchInjection: Sendable, Equatable {
         helperPath: String, codexHookHashes: [HookEventName: String] = [:], claudeMCPConfig: Data? = nil, claudePluginFiles: [LaunchFile] = [],
         claudeAgentsJSON: Data? = nil, claudeDenyRules: [String] = [], claudeEnvironment: [String: String] = [:], claudeUnsetEnvironment: [String] = [],
         claudeSpawnGuard: SpawnGuardConfig? = nil, codexActivityHooks: Bool = true, codexOrchestration: CodexOrchestration? = nil,
-        openCodeOrchestration: OpenCodeOrchestration? = nil
+        openCodeOrchestration: OpenCodeOrchestration? = nil, claudeSessionLibrary: SessionLibraryInjection? = nil
     ) {
+        self.claudeSessionLibrary = claudeSessionLibrary
         self.codexActivityHooks = codexActivityHooks; self.codexOrchestration = codexOrchestration; self.openCodeOrchestration = openCodeOrchestration
         self.claudeSpawnGuard = claudeSpawnGuard
         self.helperPath = helperPath; self.codexHookHashes = codexHookHashes
@@ -100,7 +103,12 @@ extension LaunchInjection {
             files += claudePluginFiles
             injected += ["--plugin-dir", "\(dir)/\(Self.pluginDirectoryName)"]
         }
-        if let agents = claudeAgentsJSON, !agents.isEmpty {
+        if let library = claudeSessionLibrary, !library.pluginFiles.isEmpty {
+            files += library.pluginFiles
+            injected += ["--plugin-dir", "\(dir)/\(SessionLibraryInjection.directoryName)"]
+        }
+        let agents = claudeSessionLibrary?.mergedAgentsJSON(into: claudeAgentsJSON) ?? claudeAgentsJSON
+        if let agents, !agents.isEmpty {
             // `--agents` leva o JSON inline (o arquivo só vale com `--print`); fica no argv como UM argumento.
             injected += ["--agents", String(decoding: agents, as: UTF8.self)]
         }

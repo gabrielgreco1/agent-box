@@ -61,6 +61,11 @@ public final class AppEnvironment {
     let github: GitHubController
     /// Módulo Insights: uso de IA (transcripts do Claude/Codex) e máquina; só amostra enquanto a view está em cena.
     let insights: InsightsModel
+    /// Library só leitura (03 §13) e a aba Context (03 §10.6): ativação aditiva por sessão, plugin gerado no lançamento.
+    let library: LibraryController
+    private(set) var context: ContextController!
+    let activations: SessionActivationStore
+    private var catalogWatch: Task<Void, Never>?
     /// Status bar (03 §5): lê o Insights e os computadores; nada de polling próprio.
     let statusBar: StatusBarController
     /// "Subagent computers" por sessão (F12): ícone, menu, `Restart to apply`.
@@ -108,6 +113,9 @@ public final class AppEnvironment {
         dockBadgeOverride = dockBadge
         let holder = OrchestratorHolder()
         orchestratorHolder = holder
+        let activations = SessionActivationStore()
+        self.activations = activations
+        library = LibraryController(activations: activations)
         let flags = SliceFlags.fromEnvironment(environment)
         self.flags = flags
         self.automationEnabled = environment["AGENTBOX_AUTOMATION"] == "1"
@@ -165,6 +173,13 @@ public final class AppEnvironment {
                 backgroundAgent: Self.makeBackgroundAgent(environment: environment, storeRoot: storeRoot),
                 loginEnvironment: { await loginProvider.environment().variables },
                 slice: slice2 ? .slice2 : .slice1, helperPath: slice2 ? Self.helperPath(environment) : nil,
+                sessionLibrary: { session in
+                    // Itens da Library ligados só nesta sessão: o plugin nasce a cada lançamento e o que ele levou fica registrado.
+                    let refs = await activations.refs(for: session)
+                    await activations.noteLaunched(session: session, ids: Set(refs.map(\.id)))
+                    guard !refs.isEmpty else { return nil }
+                    return await BlockingIOBridge.run { SessionLibraryBuilder.build(refs) }
+                },
                 prepareOrchestration: { info in
                     guard let orchestrator = holder.value else { return nil }
                     return try? await orchestrator.prepareParent(info)
@@ -201,9 +216,58 @@ public final class AppEnvironment {
         wireSettings()
         wireAttention(environment: environment)
         wireComputers()
+        wireLibrary()
         wireRightPanel()
         wireStatusBar()
         wireGitHub(slice2: slice2, environment: environment)
+    }
+
+    /// Liga a Library e a aba Context: ações `page.library`, `library.*` e `context.*`, abrir no editor pelo `OpenInController` e a sessão
+    /// em foco da sidebar. O índice do catálogo entra quando o Store abre (`startStore`).
+    private func wireLibrary() {
+        library.projectRoots = { [sidebar] in sidebar.snapshot.projects.map { URL(fileURLWithPath: $0.rootPath, isDirectory: true) } }
+        library.currentSession = { [sidebar] in
+            guard let id = sidebar.selectedSession, let session = sidebar.session(id) else { return nil }
+            return LibrarySessionTarget(id: id, title: session.title, folder: session.folderPath)
+        }
+        library.profiles = { [settings] in settings.catalog.profiles }
+        library.openFile = { [weak self] url in
+            guard let openIn = self?.openIn else { throw ActionError.failed(.libraryOpenInEditor, message: "Open in… isn't available.") }
+            _ = try await openIn.openFile(url, target: nil)
+        }
+        library.reveal = { [weak self] url in self?.openIn?.system.reveal(url) }
+        library.showPage = { [computers, sidebar] in
+            sidebar.setInbox(open: false)
+            computers.show(.library)
+        }
+        library.hidePage = { [computers] in computers.closePage() }
+        library.isPageOpen = { [computers] in computers.page == .library }
+        library.openSettings = { [settings] section in settings.open(section: section) }
+        do { try library.register(in: registry) } catch { log.publicError("duplicate library registration") }
+        let controller = ContextController(library: library, overlays: overlays, showModule: { [rightPanel] in rightPanel.show($0) })
+        controller.restartableAgents = { [workspace] in
+            workspace.terminalsInCurrentSession
+                .filter { $0.provider == .claude && ($0.state == .running || $0.state == .launching) && RestorePlanner.nativeID(of: $0) != nil }
+                .map(\.id)
+        }
+        controller.relaunch = { [workspace] id in await workspace.relaunchApplyingSettings(id) }
+        context = controller
+        do { try controller.register(in: registry) } catch { log.publicError("duplicate context registration") }
+    }
+
+    /// Índice do catálogo (`CatalogService`) sobre o Store aberto: leitura das pastas nativas, só com FSEvents/kqueue no app de verdade.
+    private func startCatalog(store: AgentBoxStore) async {
+        let service = CatalogService(store: store, roots: .current())
+        library.loadRows = { roots in
+            try? await service.setProjectRoots(roots)
+            return ((try? await service.items()) ?? []).map { $0 }
+        }
+        guard !headless, fixture == nil else { return }
+        catalogWatch?.cancel()
+        catalogWatch = Task { [weak self] in
+            guard let stream = try? await service.startWatching() else { return }
+            for await _ in stream { await self?.library.reload() }
+        }
     }
 
     /// Liga a status bar: ações `view.toggleStatusBar` e `statusBar.*`, Docker parado vindo do Settings e `Start Docker`.
@@ -722,6 +786,8 @@ public final class AppEnvironment {
                 }
             }
             await rightPanel.attach(store: opened)
+            await library.attach(store: opened)
+            await startCatalog(store: opened)
             await statusBar.attach(store: opened)
             await insights.service?.attach(
                 agents: StoreAgentSource(store: opened), proxies: StoreProxySource(store: opened),
@@ -861,6 +927,8 @@ public final class AppEnvironment {
         computers.stopRefreshing()
         await computers.tearDownDemo()
         computerSweeper?.cancel()
+        catalogWatch?.cancel()
+        statusBar.stop()
         await ctl?.stop()
         ctl = nil
         await hub?.stop()

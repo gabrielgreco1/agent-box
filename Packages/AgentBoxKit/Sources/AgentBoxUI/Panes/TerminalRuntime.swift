@@ -67,6 +67,8 @@ final class TerminalRuntime {
         var slice: LaunchSlice = .slice1
         /// `agentbox` embutido (`Contents/MacOS/agentbox`): o helper que os hooks chamam. Sem ele não há injeção.
         var helperPath: String?
+        /// T4-02: plugin e agentes que a Library ligou só na sessão do terminal (regerados a cada lançamento).
+        var sessionLibrary: (@Sendable (UUID) async -> SessionLibraryInjection?)?
         /// F12: gera e registra as peças de orquestração do pai (sessão com "Subagent computers" Ask ou Full).
         var prepareOrchestration: (@Sendable (ParentInfo) async -> OrchestrationBundle?)?
         var endOrchestration: (@Sendable (String) async -> Void)?
@@ -351,20 +353,21 @@ final class TerminalRuntime {
                     guard provider == .claude, let helper else { return nil }
                     return LaunchInjection(helperPath: helper)
                 },
-                prepareOrchestration: configuration.prepareOrchestration, endOrchestration: configuration.endOrchestration))
+                prepareOrchestration: configuration.prepareOrchestration, endOrchestration: configuration.endOrchestration,
+                sessionLibrary: configuration.sessionLibrary))
     }()
 
     /// Lança o terminal pelo `LaunchCoordinator`: resolve o CLI, gera o plano, cria a sessão no daemon e anexa a view.
     /// `onEvent` recebe o progresso real (qualquer thread).
     func launch(
         _ terminal: Terminal, mode: LaunchMode = .automatic, catalog: ProfileCatalog = ProfileCatalog(), subagent: SubagentLaunch? = nil,
-        onEvent: @escaping @Sendable (LaunchEvent) -> Void
+        sessionID: UUID? = nil, onEvent: @escaping @Sendable (LaunchEvent) -> Void
     ) async throws -> LaunchResult {
         let entry = entry(for: terminal.id)
         let dims = entry.host.surface.terminalDimensions
         let job = LaunchJob(
             terminalID: terminal.id, spec: terminal.launchSpec, cwd: terminal.cwd, addDirs: terminal.addDirs, coldLog: terminal.coldLog,
-            cols: UInt16(clamping: dims.cols), rows: UInt16(clamping: dims.rows), catalog: catalog, mode: mode, subagent: subagent)
+            cols: UInt16(clamping: dims.cols), rows: UInt16(clamping: dims.rows), catalog: catalog, mode: mode, subagent: subagent, sessionID: sessionID)
         return try await coordinator.launch(
             job, onEvent: onEvent,
             attach: { [weak self] summary, runID in try await self?.attach(entry, session: summary.sessionID, mode: .snapshot, runID: runID) })

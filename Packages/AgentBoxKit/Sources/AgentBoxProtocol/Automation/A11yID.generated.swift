@@ -252,6 +252,14 @@ extension A11yID {
     public static let rightPanelConversationsBack = A11yID(unchecked: "rightPanel.conversations.back")
     /// `rightPanel.conversations.transcript`
     public static let rightPanelConversationsTranscript = A11yID(unchecked: "rightPanel.conversations.transcript")
+    /// `rightPanel.context.banner`
+    public static let rightPanelContextBanner = A11yID(unchecked: "rightPanel.context.banner")
+    /// `rightPanel.context.restart`
+    public static let rightPanelContextRestart = A11yID(unchecked: "rightPanel.context.restart")
+    /// `rightPanel.context.openLibrary`
+    public static let rightPanelContextOpenLibrary = A11yID(unchecked: "rightPanel.context.openLibrary")
+    /// `rightPanel.context.empty`
+    public static let rightPanelContextEmpty = A11yID(unchecked: "rightPanel.context.empty")
     /// `rightPanel.divider`
     public static let rightPanelDivider = A11yID(unchecked: "rightPanel.divider")
     /// `rightPanel.insights.empty`
@@ -336,6 +344,8 @@ extension A11yID {
     public static let libraryDetailOpenInEditor = A11yID(unchecked: "library.detail.openInEditor")
     /// `library.detail.reveal`
     public static let libraryDetailReveal = A11yID(unchecked: "library.detail.reveal")
+    /// `library.detail.restart`
+    public static let libraryDetailRestart = A11yID(unchecked: "library.detail.restart")
     /// `library.profile.name`
     public static let libraryProfileName = A11yID(unchecked: "library.profile.name")
     /// `library.profile.agent`
@@ -350,6 +360,8 @@ extension A11yID {
     public static let libraryProfileEnv = A11yID(unchecked: "library.profile.env")
     /// `library.profile.default`
     public static let libraryProfileDefault = A11yID(unchecked: "library.profile.default")
+    /// `library.profile.edit`
+    public static let libraryProfileEdit = A11yID(unchecked: "library.profile.edit")
     /// `settings.page`
     public static let settingsPage = A11yID(unchecked: "settings.page")
     /// `settings.back`
@@ -392,6 +404,12 @@ extension A11yID {
     public static let overlayConfirmStopComputerCancel = A11yID(unchecked: "overlay.confirmStopComputer.cancel")
     /// `overlay.confirmStopComputer.confirm`
     public static let overlayConfirmStopComputerConfirm = A11yID(unchecked: "overlay.confirmStopComputer.confirm")
+    /// `overlay.confirmRestartAgents`
+    public static let overlayConfirmRestartAgents = A11yID(unchecked: "overlay.confirmRestartAgents")
+    /// `overlay.confirmRestartAgents.cancel`
+    public static let overlayConfirmRestartAgentsCancel = A11yID(unchecked: "overlay.confirmRestartAgents.cancel")
+    /// `overlay.confirmRestartAgents.confirm`
+    public static let overlayConfirmRestartAgentsConfirm = A11yID(unchecked: "overlay.confirmRestartAgents.confirm")
     /// `overlay.confirmDeleteComputer.confirm`
     public static let overlayConfirmDeleteComputerConfirm = A11yID(unchecked: "overlay.confirmDeleteComputer.confirm")
     /// `overlay.confirmDelete`
@@ -1454,6 +1472,11 @@ extension A11yID {
         A11yID(unchecked: "library.row.\(A11yID.segment(kind)).\(A11yID.segment(id))")
     }
 
+    /// `library.profile.row.<id>`
+    public static func libraryProfileRow(_ id: String) -> A11yID {
+        A11yID(unchecked: "library.profile.row.\(A11yID.segment(id))")
+    }
+
     /// `settings.nav.<section>`
     public static func settingsNav(_ section: String) -> A11yID {
         A11yID(unchecked: "settings.nav.\(A11yID.segment(section))")
@@ -1768,6 +1791,10 @@ extension A11yID {
         A11yIDSpec(pattern: "rightPanel.context.item.<kind>.<id>", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.context.item.<kind>.<id>.toggle", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.context.item.<kind>.<id>.insert", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.context.banner", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.context.restart", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.context.openLibrary", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.context.empty", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.computer.<id>.tab.<name>", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.computer.<id>.back", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.computer.<id>.reveal", surface: "Painel direito"),
@@ -1864,6 +1891,7 @@ extension A11yID {
         A11yIDSpec(pattern: "library.detail.insert", surface: "Páginas"),
         A11yIDSpec(pattern: "library.detail.openInEditor", surface: "Páginas"),
         A11yIDSpec(pattern: "library.detail.reveal", surface: "Páginas"),
+        A11yIDSpec(pattern: "library.detail.restart", surface: "Páginas"),
         A11yIDSpec(pattern: "library.profile.name", surface: "Páginas"),
         A11yIDSpec(pattern: "library.profile.agent", surface: "Páginas"),
         A11yIDSpec(pattern: "library.profile.model", surface: "Páginas"),
@@ -1871,6 +1899,8 @@ extension A11yID {
         A11yIDSpec(pattern: "library.profile.args", surface: "Páginas"),
         A11yIDSpec(pattern: "library.profile.env", surface: "Páginas"),
         A11yIDSpec(pattern: "library.profile.default", surface: "Páginas"),
+        A11yIDSpec(pattern: "library.profile.row.<id>", surface: "Páginas"),
+        A11yIDSpec(pattern: "library.profile.edit", surface: "Páginas"),
         A11yIDSpec(pattern: "settings.page", surface: "Settings"),
         A11yIDSpec(pattern: "settings.back", surface: "Settings"),
         A11yIDSpec(pattern: "settings.search", surface: "Settings"),
@@ -1897,6 +1927,9 @@ extension A11yID {
         A11yIDSpec(pattern: "overlay.confirmStopComputer", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmStopComputer.cancel", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmStopComputer.confirm", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmRestartAgents", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmRestartAgents.cancel", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmRestartAgents.confirm", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmDeleteComputer.confirm", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmDelete", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmDelete.keepBranch", surface: "Dialogs"),

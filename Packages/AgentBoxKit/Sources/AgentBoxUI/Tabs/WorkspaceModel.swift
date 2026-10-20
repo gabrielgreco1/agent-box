@@ -958,8 +958,9 @@ final class WorkspaceModel {
             defer { launching.remove(id) }
             guard let current = self.terminal(id) else { return }
             let subagent = self.subagentLaunch(for: current)
+            let sessionID = self.sessionID(of: current)
             do {
-                let result = try await runtime.launch(current, mode: mode, catalog: ProfileCatalog(userProfiles: self.snapshot.profiles), subagent: subagent) { [weak self] event in
+                let result = try await runtime.launch(current, mode: mode, catalog: ProfileCatalog(userProfiles: self.snapshot.profiles), subagent: subagent, sessionID: sessionID) { [weak self] event in
                     Task { @MainActor in self?.apply(launchEvent: event, terminalID: id) }
                 }
                 guard self.terminal(id) != nil else { return }

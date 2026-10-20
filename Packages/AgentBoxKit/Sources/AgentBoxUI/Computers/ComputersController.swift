@@ -12,6 +12,8 @@ public enum CenterPage: Equatable, Sendable {
     case computers
     /// Painel do lote (03 §12.4); o valor é o nome do lote.
     case batch(String)
+    /// Library (03 §13, ⇧⌘L): Agents, Skills e Profiles.
+    case library
 }
 
 extension CenterPage {
