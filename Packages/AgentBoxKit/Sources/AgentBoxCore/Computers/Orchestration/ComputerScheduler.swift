@@ -1,5 +1,6 @@
 import AgentBoxDocker
 import AgentBoxPlatform
+import AgentBoxProtocol
 import AgentBoxStore
 import Foundation
 
@@ -114,11 +115,21 @@ public protocol ParentOrchestrating: Sendable {
     func childClaimed(_ child: String, computer: String) async
     /// Codex: o slot de worker (id do filho) a que o computador `name` foi reservado, se é deste pai.
     func workerChild(ofComputer name: String, parent: String) async -> String?
+    /// `box_collect` (T3-06): resultado, validação e timeline de um computador do pai, mesmo já removido (o run folder fica).
+    func collect(parent: String, name: String, include: Set<CollectedRun.Section>) async throws -> JSON
 }
 
 extension ParentOrchestrating {
     public func childClaimed(_ child: String, computer: String) async {}
     public func workerChild(ofComputer name: String, parent: String) async -> String? { nil }
+    public func collect(parent: String, name: String, include: Set<CollectedRun.Section>) async throws -> JSON { throw ToolError(.notSupported, "collect is not supported") }
+}
+
+/// A sessão do app dona do pai: id e título.
+public struct SessionRef: Sendable, Equatable {
+    public var id: UUID?
+    public var title: String?
+    public init(id: UUID? = nil, title: String? = nil) { self.id = id; self.title = title }
 }
 
 public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
@@ -147,23 +158,28 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
     public let hub: ComputerHub
     private let provisioning: any ComputerProvisioning
     private let capacity: @Sendable () async -> VMCapacity
-    private let runDirectory: @Sendable (_ parent: String, _ name: String) -> URL
-    private let store: AgentBoxStore?
+    let runDirectory: @Sendable (_ parent: String, _ name: String) async -> URL
+    let store: AgentBoxStore?
     private let proxies: (any ProxyDirectory)?
     /// Proxy padrão da sessão do pai (escolhido no card de aprovação); `nil` = usar o padrão global.
     private let sessionProxy: @Sendable (_ parent: String) async -> String?
-    private let now: @Sendable () -> Date
-    private let log = LogFacade(.app, category: "scheduler")
+    /// Sessão do pai (metadados do run e título de "lote concluído").
+    let sessionInfo: @Sendable (_ parent: String) async -> SessionRef?
+    let now: @Sendable () -> Date
+    let log = LogFacade(.app, category: "scheduler")
     private var tracker: EstimateTracker
 
-    private var entries: [String: Entry] = [:]
+    var entries: [String: Entry] = [:]
+    /// Pasta da sessão (`runs/<slug>/`) de cada pai, fixada na primeira reserva: renomear a sessão no meio não muda onde os runs ficam.
+    var sessionFolders: [String: URL] = [:]
+
 
     public func childClaimed(_ child: String, computer: String) async {
         guard entries[computer]?.childID == child else { return }
         try? await store?.updateOrchestrationChild(id: child, state: .claimed, computerName: .some(computer), at: now())
         await persist(computer)
     }
-    private var queue: [String] = []
+    var queue: [String] = []
     private var creating = 0
     private var permits: Int
     private var permitWaiters: [CheckedContinuation<Void, Never>] = []
@@ -173,12 +189,13 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
 
     public init(
         hub: ComputerHub, provisioning: any ComputerProvisioning, capacity: @escaping @Sendable () async -> VMCapacity,
-        runDirectory: @escaping @Sendable (_ parent: String, _ name: String) -> URL, store: AgentBoxStore? = nil,
+        runDirectory: @escaping @Sendable (_ parent: String, _ name: String) async -> URL, store: AgentBoxStore? = nil,
         maxParallelCreations: Int = ComputerScheduler.defaultMaxParallelCreations, fixedEstimates: Bool? = nil,
         proxies: (any ProxyDirectory)? = nil, sessionProxy: @escaping @Sendable (_ parent: String) async -> String? = { _ in nil },
+        sessionInfo: @escaping @Sendable (_ parent: String) async -> SessionRef? = { _ in nil },
         now: @escaping @Sendable () -> Date = { Date() }
     ) {
-        self.proxies = proxies; self.sessionProxy = sessionProxy
+        self.proxies = proxies; self.sessionProxy = sessionProxy; self.sessionInfo = sessionInfo
         self.hub = hub; self.provisioning = provisioning; self.capacity = capacity; self.runDirectory = runDirectory; self.store = store
         self.permits = max(1, maxParallelCreations); self.now = now
         // Nos testes (`AGENTBOX_CAPACITY_ESTIMATES=fixed`) a tabela inicial fica fixa para os aceites serem determinísticos (CS-130).
@@ -273,10 +290,15 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
         case .failure(let failure): return unavailable(name, "unknown_proxy", failure.message)
         }
         let children = await hub.children(of: parent)
+        let runFolder = RunFolder(root: await runURL(parent: parent, name: name))
+        // 07 §2.8: nome repetido na mesma sessão arquiva o run anterior em `_archive/<nome>-<data>/`; nada é apagado.
+        if entries[name] == nil, let archived = try? RunArchive.archivePrevious(run: runFolder, name: name, now: now()) {
+            log.info("archived the previous run of \(name) to \(archived.lastPathComponent)")
+        }
         let spec0 = ComputerSpec(
             name: name, parent: parent, display: request.display, profile: request.profile, proxy: proxy,
             proxiesAllowed: request.proxiesAllowed, allowHosts: request.allowHosts, batch: request.batch,
-            run: RunFolder(root: runDirectory(parent, name)))
+            run: runFolder)
         let lazy = LazyComputerBackend()
         let computer: ManagedComputer
         do {
@@ -306,6 +328,7 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
         await hub.register(computer)
         try? await store?.updateOrchestrationChild(id: childID, state: .reserved, computerName: .some(name), batchID: .some(request.batch), at: now())
         await persist(name)
+        await writeStartMetadata(entry)
         return await boxJSON(entry, base: [:])
     }
 
@@ -316,7 +339,7 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
     }
 
     /// Admite da frente da fila enquanto couber (FIFO estrito: um pedido grande à frente segura os menores atrás).
-    private func drain() async {
+    func drain() async {
         let vm = await capacity()
         let planner = CapacityPlanner(vm: vm, estimatesGiB: tracker.estimatesGiB)
         while let head = queue.first, var entry = entries[head] {
@@ -372,6 +395,7 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
             await current.computer.setState(.failed)
             await current.computer.setDetail(String(Self.describe(error).prefix(240)))
             await persist(name)
+            await closeRun(current, outcome: .failed)
             await drain()  // a vaga volta para a fila
         }
     }
@@ -391,6 +415,7 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
         }
         if event == "SubagentStop", let childID = agentToChild[agentID] {
             try? await store?.updateOrchestrationChild(id: childID, state: .ended, at: now())
+            await childStopped(childID)
         }
     }
 
@@ -399,6 +424,7 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
     /// `ComputerLifecycle`: o filho liberou (`box_release`). Coleta já foi gerada pelo hub; aqui sai o desmonte e a vaga volta.
     public func finish(_ computer: ManagedComputer, keep24h: Bool) async {
         guard var entry = entries[computer.name] else { return }
+        await closeRun(entry, outcome: .released)
         if keep24h || entry.keepUntil == .distantFuture {
             entry.keepUntil = now().addingTimeInterval(Self.keepDuration)
             entries[computer.name] = entry
@@ -410,9 +436,10 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
         await drain()
     }
 
-    private func discard(_ name: String, childState: OrchestrationChildState = .idle) async {
+    func discard(_ name: String, childState: OrchestrationChildState = .idle) async {
         guard let entry = entries.removeValue(forKey: name) else { return }
         queue.removeAll { $0 == name }
+        await closeRun(entry, outcome: .stopped)  // não sobrescreve um run já fechado (released/failed)
         entry.lazy.detach()
         await entry.computer.setState(.stopped)
         await hub.remove(name: name)
@@ -483,7 +510,7 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
             let display = ComputerDisplay(rawValue: row.display) ?? .headless
             var spec = ComputerSpec(
                 name: row.name, parent: parent, display: display, profile: nil, proxy: "direct", proxiesAllowed: [], allowHosts: [],
-                batch: child.batchID ?? container.batch, run: RunFolder(root: runDirectory(parent, row.name)), computerID: row.id)
+                batch: child.batchID ?? container.batch, run: RunFolder(root: await runURL(parent: parent, name: row.name)), computerID: row.id)
             let recovered: AdoptedComputer
             do { recovered = try await provisioning.adopt(container, spec: spec) } catch {
                 log.error("computer \(row.name) could not be adopted: \(error)")
@@ -501,6 +528,7 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
             // Mantido por 24 h (`released` sem `ended`): a data exata não foi persistida, conta a partir de agora.
             if child.state == .released { entry.keepUntil = now().addingTimeInterval(Self.keepDuration) }
             entries[row.name] = entry
+            if spec.run.readMetadata() == nil { await writeStartMetadata(entry) }
             await hub.register(computer)
             if child.state == .claimed { _ = try? await hub.claim(name: row.name, child: child.id) }
             await persist(row.name)
@@ -512,7 +540,7 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
 
     // MARK: Persistência
 
-    private func persist(_ name: String) async {
+    func persist(_ name: String) async {
         guard let store, let entry = entries[name] else { return }
         let state = await entry.computer.state
         try? await store.saveComputerState(ComputerStateRow(

@@ -177,9 +177,13 @@ extension ComputerToolService {
             PathGuard.exists(root: work, ref)
         }
         let validation = try validator.validate(result: result, evidence: evidence)
-        let file = try PathGuard.write(root: c.run.work, "/work/result.json", result.data(pretty: true))
-        // A validação mora em `logs/` (fora do alcance do agente) para o app mostrar as marcas ao lado de cada campo.
-        try? validation.json.data(pretty: true).write(to: c.run.file("validation.json"))
+        let resultData = result.data(pretty: true)
+        let file = try PathGuard.write(root: c.run.work, "/work/result.json", resultData)
+        // A validação mora em `logs/` (fora do alcance do agente) para o app mostrar as marcas ao lado de cada campo. O hash do
+        // `result.json` diz, ao coletar, se ele foi reescrito à mão depois (então a validação é refeita pelo padrão de ids).
+        var stored = validation.json.object ?? [:]
+        stored["result_sha256"] = .string(RunCollector.sha256(resultData))
+        try? JSON.object(stored).data(pretty: true).write(to: c.run.validationFile)
         _ = try? await c.appendJournal(
             kind: "NOTE", text: "result submitted: \(validation.verified) verified, \(validation.citedMissing) cited_missing, \(validation.notVerified) not_verified", evidence: [], system: true)
         return ToolResult(["file": .string(file), "validation": validation.json])

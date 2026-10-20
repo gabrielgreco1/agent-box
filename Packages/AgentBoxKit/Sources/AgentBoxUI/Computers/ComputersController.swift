@@ -16,6 +16,14 @@ extension CenterPage {
     var isViewer: Bool { if case .viewer = self { true } else { false } }
 }
 
+/// Detalhe de um computador ou run no painel direito (03 §11.7): hoje a aba `Result`.
+public struct ComputerDetail: Equatable, Sendable {
+    public var name: String
+    /// Pasta do run no host (`runs/<sessão>/<computador>/`).
+    public var run: URL
+    public var tab = "result"
+}
+
 /// F28: saída do viewer pedida enquanto o humano tem o controle; a UI mostra `Hand back to <Agent>?` antes de sair.
 public struct PendingViewerExit: Equatable, Sendable {
     public var computer: String
@@ -36,6 +44,11 @@ public final class ComputersController {
     public private(set) var viewers: [String: ComputerViewerController] = [:]
     /// F28: o viewer só fecha depois da resposta do overlay `Hand back to <Agent>?`.
     public private(set) var pendingExit: PendingViewerExit?
+    /// Detalhe aberto no painel direito (aba `Result`) e o que o run mostra agora.
+    public internal(set) var detail: ComputerDetail?
+    public internal(set) var detailCollected: CollectedRun?
+    @ObservationIgnored let loader = RunResultLoader()
+    @ObservationIgnored var detailTick = 0
     /// F28: um lease humano ocioso voltou sozinho ao agente (o app mostra o toast `Control returned to <Agent>`).
     /// F29: nomes dos proxies salvos (Settings › Computers › Proxies) e o menu do card de aprovação; ligados pelo app.
     @ObservationIgnored public var proxyNames: () async -> [String] = { [] }
@@ -112,6 +125,7 @@ public final class ComputersController {
                 // Miniaturas só quando alguém as vê (painel aberto ou página Computers) e ≤ 1 fps por computador (CS-403).
                 let visible = self.panelOpen || self.page == .computers || self.hoverPreviewOpen
                 await self.model.refresh(withThumbnails: visible)
+                await self.refreshDetail()
                 for name in await self.model.returnIdleControl() { self.onControlReturned(name, self.agentName(forComputer: name)) }
                 try? await Task.sleep(for: .seconds(1))
             }

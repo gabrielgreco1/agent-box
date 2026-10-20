@@ -284,7 +284,7 @@ struct SchedulerRig {
             let reply = try #require(await server.handle(Data(#"{"jsonrpc":"2.0","id":1,"method":"tools/list"}"#.utf8), child: child))
             return try JSON.parse(reply)["result"]?["tools"]?.array?.compactMap { $0["name"]?.string } ?? []
         }
-        #expect(try await names(rig.parent) == ["boxes_reserve", "boxes_status", "boxes_release", "agent_message"])
+        #expect(try await names(rig.parent) == ["boxes_reserve", "boxes_status", "boxes_release", "box_collect", "agent_message"])
         #expect(try await names(bundleChild) == ToolCatalog.all.map(\.name))
         let initialize = try #require(await server.handle(Data(#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}"#.utf8), child: rig.parent))
         let instructions = try JSON.parse(initialize)["result"]?["instructions"]?.string ?? ""

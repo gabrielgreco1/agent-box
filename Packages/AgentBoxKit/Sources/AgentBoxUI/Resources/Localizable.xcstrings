@@ -7865,6 +7865,138 @@
           }
         }
       }
+    },
+    "Agent-reported": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agent-reported"
+          }
+        }
+      }
+    },
+    "Cited request not found": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cited request not found"
+          }
+        }
+      }
+    },
+    "Cited request not found.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cited request not found."
+          }
+        }
+      }
+    },
+    "Loading…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading…"
+          }
+        }
+      }
+    },
+    "No result.json yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No result.json yet"
+          }
+        }
+      }
+    },
+    "No run folder for this computer.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No run folder for this computer."
+          }
+        }
+      }
+    },
+    "Not verified": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not verified"
+          }
+        }
+      }
+    },
+    "Observed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Observed"
+          }
+        }
+      }
+    },
+    "Open Run Folder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Run Folder"
+          }
+        }
+      }
+    },
+    "Result": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Result"
+          }
+        }
+      }
+    },
+    "Verified": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verified"
+          }
+        }
+      }
+    },
+    "result.json was not written by result_submit. Evidence ids were found by pattern.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "result.json was not written by result_submit. Evidence ids were found by pattern."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -241,6 +241,9 @@ extension ActionID {
     public static let computerDeclineHelp = ActionID(unchecked: "computer.declineHelp")
     public static let computerReleaseKeyboard = ActionID(unchecked: "computer.releaseKeyboard")
     public static let computerShowTab = ActionID(unchecked: "computer.showTab")
+    public static let computerOpenRunFolder = ActionID(unchecked: "computer.openRunFolder")
+    public static let computerRevealResult = ActionID(unchecked: "computer.revealResult")
+    public static let computerOpenEvidence = ActionID(unchecked: "computer.openEvidence")
     public static let computerSetDisplay = ActionID(unchecked: "computer.setDisplay")
     public static let computerSetProxy = ActionID(unchecked: "computer.setProxy")
     public static let computerPaste = ActionID(unchecked: "computer.paste")
@@ -668,7 +671,10 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "computer.forceTakeOver"), label: "Force Take Over", shortcut: "⇧⌘R", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "computer.declineHelp"), label: "Decline… (pedido de ajuda)", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "computer.releaseKeyboard"), label: "Release Keyboard", shortcut: "⌘⎋ / ⌃⌥", slice: .slice3),
-        ActionSpec(id: ActionID(unchecked: "computer.showTab"), label: "Show Network / Journal / Files / Timeline", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "computer.showTab"), label: "Show Network / Journal / Files / Timeline / Result", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "computer.openRunFolder"), label: "Open Run Folder", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "computer.revealResult"), label: "Reveal Result in Finder", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "computer.openEvidence"), label: "Open Evidence", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "computer.setDisplay"), label: "Change type (HTTP/Headless/Desktop)", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "computer.setProxy"), label: "Proxy ▸", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "computer.paste"), label: "Paste to Computer", shortcut: "", slice: .slice3),

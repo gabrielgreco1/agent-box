@@ -1127,6 +1127,41 @@ extension A11yID {
         A11yID(unchecked: "rightPanel.computer.\(A11yID.segment(id)).tab.\(A11yID.segment(name))")
     }
 
+    /// `rightPanel.computer.<id>.back`
+    public static func rightPanelComputerBack(_ id: String) -> A11yID {
+        A11yID(unchecked: "rightPanel.computer.\(A11yID.segment(id)).back")
+    }
+
+    /// `rightPanel.computer.<id>.reveal`
+    public static func rightPanelComputerReveal(_ id: String) -> A11yID {
+        A11yID(unchecked: "rightPanel.computer.\(A11yID.segment(id)).reveal")
+    }
+
+    /// `rightPanel.computer.<id>.openRun`
+    public static func rightPanelComputerOpenRun(_ id: String) -> A11yID {
+        A11yID(unchecked: "rightPanel.computer.\(A11yID.segment(id)).openRun")
+    }
+
+    /// `rightPanel.computer.<id>.summary`
+    public static func rightPanelComputerSummary(_ id: String) -> A11yID {
+        A11yID(unchecked: "rightPanel.computer.\(A11yID.segment(id)).summary")
+    }
+
+    /// `rightPanel.computer.<id>.integrity`
+    public static func rightPanelComputerIntegrity(_ id: String) -> A11yID {
+        A11yID(unchecked: "rightPanel.computer.\(A11yID.segment(id)).integrity")
+    }
+
+    /// `rightPanel.computer.<id>.field.<pointer>`
+    public static func rightPanelComputerField(_ id: String, _ pointer: String) -> A11yID {
+        A11yID(unchecked: "rightPanel.computer.\(A11yID.segment(id)).field.\(A11yID.segment(pointer))")
+    }
+
+    /// `rightPanel.computer.<id>.evidence.<ref>`
+    public static func rightPanelComputerEvidence(_ id: String, _ ref: String) -> A11yID {
+        A11yID(unchecked: "rightPanel.computer.\(A11yID.segment(id)).evidence.\(A11yID.segment(ref))")
+    }
+
     /// `rightPanel.module.<id>`
     public static func rightPanelModule(_ id: String) -> A11yID {
         A11yID(unchecked: "rightPanel.module.\(A11yID.segment(id))")
@@ -1310,6 +1345,16 @@ extension A11yID {
     /// `batch.<batchId>.archive`
     public static func batchArchive(_ batchId: String) -> A11yID {
         A11yID(unchecked: "batch.\(A11yID.segment(batchId)).archive")
+    }
+
+    /// `computers.row.<id>.result`
+    public static func computersRowResult(_ id: String) -> A11yID {
+        A11yID(unchecked: "computers.row.\(A11yID.segment(id)).result")
+    }
+
+    /// `computers.row.<id>.runFolder`
+    public static func computersRowRunFolder(_ id: String) -> A11yID {
+        A11yID(unchecked: "computers.row.\(A11yID.segment(id)).runFolder")
     }
 
     /// `library.row.<kind>.<id>`
@@ -1624,6 +1669,13 @@ extension A11yID {
         A11yIDSpec(pattern: "rightPanel.context.item.<kind>.<id>.toggle", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.context.item.<kind>.<id>.insert", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.computer.<id>.tab.<name>", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.computer.<id>.back", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.computer.<id>.reveal", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.computer.<id>.openRun", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.computer.<id>.summary", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.computer.<id>.integrity", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.computer.<id>.field.<pointer>", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.computer.<id>.evidence.<ref>", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.module.<id>", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
         A11yIDSpec(pattern: "rightPanel.module.<id>.header", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
         A11yIDSpec(pattern: "rightPanel.module.<id>.minimize", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
@@ -1691,6 +1743,8 @@ extension A11yID {
         A11yIDSpec(pattern: "batch.<batchId>.row.<childId>", surface: "Páginas"),
         A11yIDSpec(pattern: "batch.<batchId>.collectAll", surface: "Páginas"),
         A11yIDSpec(pattern: "batch.<batchId>.archive", surface: "Páginas"),
+        A11yIDSpec(pattern: "computers.row.<id>.result", surface: "Páginas"),
+        A11yIDSpec(pattern: "computers.row.<id>.runFolder", surface: "Páginas"),
         A11yIDSpec(pattern: "library.page", surface: "Páginas"),
         A11yIDSpec(pattern: "library.section", surface: "Páginas"),
         A11yIDSpec(pattern: "library.search", surface: "Páginas"),

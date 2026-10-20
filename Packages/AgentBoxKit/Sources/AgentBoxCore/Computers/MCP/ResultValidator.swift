@@ -10,6 +10,8 @@ public struct Citation: Sendable, Equatable {
     public var trust: String?
     public var exists: Bool
 
+    public init(ref: String, kind: Kind, trust: String? = nil, exists: Bool) { self.ref = ref; self.kind = kind; self.trust = trust; self.exists = exists }
+
     public var json: JSON {
         var o: [String: JSON] = ["ref": .string(ref), "kind": .string(kind.rawValue)]
         if let trust { o["trust"] = .string(trust) }
@@ -21,10 +23,15 @@ public struct FieldValidation: Sendable, Equatable {
     public var pointer: String
     public var status: FieldStatus
     public var citations: [Citation]
+
+    public init(pointer: String, status: FieldStatus, citations: [Citation]) { self.pointer = pointer; self.status = status; self.citations = citations }
 }
 
 public struct ResultValidation: Sendable, Equatable {
     public var fields: [FieldValidation]
+
+    public init(fields: [FieldValidation]) { self.fields = fields }
+
     public var verified: Int { fields.filter { $0.status == .verified }.count }
     public var citedMissing: Int { fields.filter { $0.status == .citedMissing }.count }
     public var notVerified: Int { fields.filter { $0.status == .notVerified }.count }

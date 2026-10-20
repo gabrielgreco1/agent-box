@@ -113,6 +113,14 @@ struct ComputersPanelView: View {
     let controller: ComputersController
 
     var body: some View {
+        if let detail = controller.detail {
+            ComputerDetailView(controller: controller, detail: detail)
+        } else {
+            list
+        }
+    }
+
+    private var list: some View {
         ScrollView {
             LazyVStack(spacing: DS.Space.s3) {
                 if controller.model.rows.isEmpty {
@@ -181,9 +189,17 @@ struct ComputersPageView: View {
                 ScrollView {
                     LazyVStack(spacing: 0) {
                         ForEach(controller.model.rows) { row in
-                            ActionButton(.computerOpenViewer, argument: .select(row.id)) { ComputersRow(row: row) }
-                                .buttonStyle(DSListRowStyle())
-                                .a11y(.computersRow(row.id), kind: "row", label: row.id, value: row.snapshot.control.rawValue)
+                            ZStack(alignment: .trailing) {
+                                ActionButton(.computerOpenViewer, argument: .select(row.id)) { ComputersRow(row: row) }
+                                    .buttonStyle(DSListRowStyle())
+                                    .a11y(.computersRow(row.id), kind: "row", label: row.id, value: row.snapshot.control.rawValue)
+                                // Irmãos da linha (botão dentro de botão não clica): `Result` (03 §11.7) e `Open Run Folder` (AC-420).
+                                HStack(spacing: DS.Space.s1) {
+                                    DSButton(.computerShowTab, id: .computersRowResult(row.id), "Result", variant: .ghost, size: .xs, argument: .select(row.id))
+                                    DSButton(.computerOpenRunFolder, id: .computersRowRunFolder(row.id), "Open Run Folder", variant: .ghost, size: .xs, argument: .select(row.id))
+                                }
+                                .padding(.trailing, DS.Space.s3)
+                            }
                         }
                     }
                 }

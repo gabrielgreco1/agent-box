@@ -36,9 +36,14 @@ public final class ComputerOrchestrator: Sendable {
         self.parents = parents
         scheduler = ComputerScheduler(
             hub: hub, provisioning: provisioning, capacity: { await provisioning.vmCapacity() },
-            runDirectory: { parent, name in runsRoot.appendingPathComponent("\(parent.prefix(8))/\(name)", isDirectory: true) },
+            // `runs/<session-slug>/<computador>` (07 §2.8); sem sessão conhecida, os 8 primeiros caracteres do pai.
+            runDirectory: { parent, name in
+                let slug = RunArchive.slug(await parents.info(parent)?.sessionTitle, fallback: String(parent.prefix(8)))
+                return runsRoot.appendingPathComponent("\(slug)/\(name)", isDirectory: true)
+            },
             store: store, maxParallelCreations: maxParallelCreations, fixedEstimates: fixedEstimates, proxies: proxies,
-            sessionProxy: { parent in await parents.info(parent)?.proxy })
+            sessionProxy: { parent in await parents.info(parent)?.proxy },
+            sessionInfo: { parent in await parents.info(parent).map { SessionRef(id: $0.sessionID, title: $0.sessionTitle) } })
         let approvals = ComputerApprovalCenter()
         self.approvals = approvals
         let scheduler = scheduler
@@ -153,6 +158,14 @@ public final class ComputerOrchestrator: Sendable {
     public func agentName(ofComputer name: String) async -> String {
         guard let parent = await scheduler.parent(of: name) else { return TerminalProvider.claude.computerAgentName }
         return (await parents.info(parent)?.provider ?? .claude).computerAgentName
+    }
+
+    /// `Archive Computers` de uma sessão (AC-423): os computadores dela saem; runs e perfis ficam.
+    @discardableResult
+    public func archiveComputers(sessionID: UUID) async -> [String] {
+        var names: [String] = []
+        for info in await parents.all where info.sessionID == sessionID { names += await scheduler.computerNames(of: info.parentID) }
+        return await scheduler.archiveComputers(names: names)
     }
 
     /// Qual sessão do app é dona do computador (linha filha, título do Inbox).

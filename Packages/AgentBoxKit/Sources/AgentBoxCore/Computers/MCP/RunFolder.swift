@@ -4,7 +4,7 @@ import Foundation
 
 /// Pasta do run no host (07 §2.8): `work/` (bind rw em `/work`) e `logs/` (só o egress e o app escrevem; NÃO é montada no
 /// `work`). O diário, os comandos, os pedidos de ajuda e a timeline moram em `logs/`, fora do alcance do agente (CS-149).
-public struct RunFolder: Sendable {
+public struct RunFolder: Sendable, Equatable {
     public let root: URL
     public var work: URL { root.appendingPathComponent("work", isDirectory: true) }
     public var logs: URL { root.appendingPathComponent("logs", isDirectory: true) }

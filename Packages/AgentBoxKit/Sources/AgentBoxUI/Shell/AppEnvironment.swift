@@ -274,6 +274,7 @@ public final class AppEnvironment {
     /// Liga o controlador de computadores: ações `computer.*`, ⌘W fecha a página do viewer e a notificação de pedido de ajuda.
     private func wireComputers() {
         do { try computers.register(in: registry) } catch { log.publicError("duplicate computer action registration") }
+        do { try computers.registerResults(in: registry) } catch { log.publicError("duplicate result action registration") }
         do { try subagentComputers.register(in: registry) } catch { log.publicError("duplicate subagent computers registration") }
         subagentHoverCards = SubagentHoverCardController(computers: computers, registry: registry, elements: elements)
         computers.hoverCards = subagentHoverCards

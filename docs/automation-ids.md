@@ -296,6 +296,13 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `rightPanel.context.item.<kind>.<id>.toggle`
 - `rightPanel.context.item.<kind>.<id>.insert`
 - `rightPanel.computer.<id>.tab.<name>`
+- `rightPanel.computer.<id>.back`
+- `rightPanel.computer.<id>.reveal`
+- `rightPanel.computer.<id>.openRun`
+- `rightPanel.computer.<id>.summary`
+- `rightPanel.computer.<id>.integrity`
+- `rightPanel.computer.<id>.field.<pointer>`
+- `rightPanel.computer.<id>.evidence.<ref>`
 
 ### Painel direito (contêiner e módulos, 10-right-panel)
 
@@ -375,6 +382,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `batch.<batchId>.row.<childId>`
 - `batch.<batchId>.collectAll`
 - `batch.<batchId>.archive`
+- `computers.row.<id>.result`
+- `computers.row.<id>.runFolder`
 - `library.page`
 - `library.section`
 - `library.search`
@@ -758,7 +767,10 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `computer.forceTakeOver` | Force Take Over | ⇧⌘R | slice3 |
 | `computer.declineHelp` | Decline… (pedido de ajuda) | — | slice3 |
 | `computer.releaseKeyboard` | Release Keyboard | ⌘⎋ / ⌃⌥ | slice3 |
-| `computer.showTab` | Show Network / Journal / Files / Timeline | — | slice3 |
+| `computer.showTab` | Show Network / Journal / Files / Timeline / Result | — | slice3 |
+| `computer.openRunFolder` | Open Run Folder | — | slice3 |
+| `computer.revealResult` | Reveal Result in Finder | — | slice3 |
+| `computer.openEvidence` | Open Evidence | — | slice3 |
 | `computer.setDisplay` | Change type (HTTP/Headless/Desktop) | — | slice3 |
 | `computer.setProxy` | Proxy ▸ | — | slice3 |
 | `computer.paste` | Paste to Computer | — | slice3 |
