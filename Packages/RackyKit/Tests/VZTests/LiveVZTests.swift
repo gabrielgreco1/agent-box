@@ -22,6 +22,8 @@ struct LiveVZTests {
         let process = Process()
         process.executableURL = script
         process.currentDirectoryURL = Self.repoRoot
+        // O `swift test` segura o lock do .build: o script usa o autoteste que este alvo de teste já compilou (dependência do VZTests).
+        process.environment = ProcessInfo.processInfo.environment.merging(["RACKY_VZ_SELFTEST_NO_BUILD": "1"]) { $1 }
         let pipe = Pipe()
         process.standardOutput = pipe
         process.standardError = pipe
