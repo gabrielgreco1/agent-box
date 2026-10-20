@@ -27,6 +27,9 @@ extension ActionID {
     public static let helpRevealLogs = ActionID(unchecked: "help.revealLogs")
     public static let helpExportDiagnostics = ActionID(unchecked: "help.exportDiagnostics")
     public static let appOpenDiagnostics = ActionID(unchecked: "app.openDiagnostics")
+    public static let diagnosticsSaveExport = ActionID(unchecked: "diagnostics.saveExport")
+    public static let diagnosticsCancelExport = ActionID(unchecked: "diagnostics.cancelExport")
+    public static let diagnosticsDismissCrash = ActionID(unchecked: "diagnostics.dismissCrash")
     public static let appRestartBackgroundService = ActionID(unchecked: "app.restartBackgroundService")
     public static let appErrorTryAgain = ActionID(unchecked: "app.errorTryAgain")
     public static let appCopyDetails = ActionID(unchecked: "app.copyDetails")
@@ -481,6 +484,9 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "help.revealLogs"), label: "Reveal Logs in Finder", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "help.exportDiagnostics"), label: "Export Diagnostics…", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "app.openDiagnostics"), label: "Open Diagnostics", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "diagnostics.saveExport"), label: "Save Diagnostics", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "diagnostics.cancelExport"), label: "Cancel Export", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "diagnostics.dismissCrash"), label: "Dismiss Crash", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "app.restartBackgroundService"), label: "Restart Background Service", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "app.errorTryAgain"), label: "Try Again", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "app.copyDetails"), label: "Copy Details (região com erro)", shortcut: "", slice: .slice1),

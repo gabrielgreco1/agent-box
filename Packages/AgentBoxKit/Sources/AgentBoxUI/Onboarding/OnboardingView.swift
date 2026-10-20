@@ -114,7 +114,7 @@ struct OnboardingView: View {
 }
 
 /// Linha da checklist (56): ícone de estado, título 13/500, detalhe `small` e uma ação à direita (03 §15, AC-103).
-private struct OnboardingItemRow: View {
+struct OnboardingItemRow: View {
     let model: OnboardingModel
     let info: AgentInfo
 
@@ -172,7 +172,7 @@ private struct OnboardingItemRow: View {
 
 /// Linha de diagnóstico (gh, Docker, imagem, conflitos): estado, motivo em uma linha, no máximo uma ação primária e, se houver,
 /// as secundárias numa segunda linha (03 §15, AC-103).
-private struct OnboardingDiagnosticRow: View {
+struct OnboardingDiagnosticRow: View {
     let model: OnboardingModel
     let item: DiagnosticItem
 

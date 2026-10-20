@@ -1,0 +1,1 @@
+{'children': [], 'enabled': True, 'frame': {'height': 148, 'width': 696, 'x': 527.5, 'y': 1087}, 'id': 'settings.diagnostics.exportFiles', 'kind': 'container', 'label': 'Files in the diagnostics zip', 'value': '10'}

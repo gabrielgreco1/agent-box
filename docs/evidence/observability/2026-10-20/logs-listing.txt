@@ -1,0 +1,4 @@
+total 8
+drwx------@ 3 gabriel  wheel    96 Oct 20 07:49 .
+drwx------@ 8 gabriel  wheel   256 Oct 20 07:49 ..
+-rw-------@ 1 gabriel  wheel  1265 Oct 20 07:49 app.jsonl

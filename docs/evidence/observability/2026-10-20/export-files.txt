@@ -1,0 +1,10 @@
+checks.json
+daemon-sessions.json
+docker.json
+logs/app.jsonl
+metrics.json
+README.txt
+recent-errors.txt
+settings.json
+tables.json
+versions.json

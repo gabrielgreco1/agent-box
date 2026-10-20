@@ -13,6 +13,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     public override init() { super.init() }
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
+        let bootPerf = Perf.begin(.boot)
         log.publicInfo("launch")
         // Uma instância por pasta de dados: duas janelas no mesmo PTY brigam pelo tamanho e o Claude redesenha para a largura da
         // outra (texto sobreposto e duplicado). O lock é da pasta de dados: uma cópia de teste com `AGENTBOX_HOME` próprio não
@@ -32,6 +33,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         if !env.headless { NSApp.mainMenu = MainMenu.build(registry: env.registry) }
         // Com a automação ligada o app abre sem tirar o foco de quem o lançou (`open -g`).
         controller.present(activate: !env.automationEnabled && !env.headless)
+        bootPerf.end()  // do início do `applicationDidFinishLaunching` até a janela estar na tela (AR-605)
         Task { await env.start() }
         let signals = ExternalTerminationSignals { [weak self] number in
             self?.log.info("received signal \(number): leaving the agents running")

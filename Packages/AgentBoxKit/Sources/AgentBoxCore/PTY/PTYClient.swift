@@ -308,6 +308,8 @@ public actor PTYClient {
     }
 
     public func resize(sessionID: SessionID, cols: UInt16, rows: UInt16) async throws {
+        let interval = Perf.begin(.resize)
+        defer { interval.end() }
         _ = try await okResult(.resize(ResizeRequest(sessionID: sessionID, cols: cols, rows: rows)))
         routes[sessionID]?.cols = cols
         routes[sessionID]?.rows = rows
