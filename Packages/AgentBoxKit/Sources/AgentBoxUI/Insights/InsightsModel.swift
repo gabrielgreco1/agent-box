@@ -41,7 +41,7 @@ public struct InsightsHistory: Sendable, Equatable {
 public final class InsightsModel {
     public private(set) var snapshot: InsightsSnapshot
     public private(set) var history: InsightsHistory
-    public var tab: InsightsTab
+    public var tab: InsightsTab { didSet { if tab != oldValue { pushCadence() } } }
     /// Lista de apps do Machine: por CPU ou por memória.
     public var appsSortedByMemory = false
     public private(set) var now: Date
@@ -69,7 +69,15 @@ public final class InsightsModel {
         self.now = now
     }
 
+    /// Só a aba Machine pede amostras da máquina na cadência cheia (o resto se contenta com 5 s: CPU ocioso ≤ 1%, AR-720).
+    private func pushCadence() {
+        guard let service else { return }
+        let detail = tab == .machine
+        Task { await service.setMachineDetail(detail) }
+    }
+
     public func viewDidAppear() {
+        pushCadence()
         guard task == nil, let service else { return }
         task = Task { [weak self] in
             await service.start()

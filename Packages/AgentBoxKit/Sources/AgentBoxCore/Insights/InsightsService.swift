@@ -158,6 +158,10 @@ public actor InsightsService {
         try? UsageLedgerStore.save(ledger, to: config.ledgerURL)
     }
 
+    /// A aba Machine está na tela: amostra na cadência cheia (`machineInterval`).
+    private var machineDetail = false
+    public func setMachineDetail(_ value: Bool) { machineDetail = value }
+
     /// Liga/desliga o que custa CPU: amostras da máquina e releitura periódica. Fora de vista, só o watcher fica.
     public func setVisible(_ value: Bool) {
         guard value != visible else { return }
@@ -167,7 +171,8 @@ public actor InsightsService {
                 while !Task.isCancelled {
                     guard let self else { return }
                     await self.tickMachine()
-                    let interval = self.config.machineInterval
+                    // Cadência cheia só com a aba Machine na tela; fora dela (barra de status, outras abas) basta a RAM a cada 5 s.
+                    let interval = await self.machineDetail ? self.config.machineInterval : max(self.config.machineInterval, 5)
                     try? await Task.sleep(for: .seconds(interval))
                 }
             }
