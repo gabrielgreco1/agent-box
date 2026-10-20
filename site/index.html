@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Racky — every subagent gets its own computer</title>
+<meta name="description" content="Racky is a Mac app that runs Claude Code, Codex and OpenCode side by side and gives every subagent its own isolated computer with a real browser you can watch and take over.">
+<meta property="og:title" content="Racky">
+<meta property="og:description" content="Run coding agents side by side. Every subagent gets its own computer.">
+<meta property="og:image" content="assets/demo-poster.jpg">
+<link rel="icon" href="assets/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0a; --panel:#141414; --line:rgba(255,255,255,.09); --line-strong:rgba(255,255,255,.16);
+    --fg:#fafafa; --muted:#a1a1a1; --quiet:#737373; --accent:#3b82f6; --accent-2:#1f5fff;
+  }
+  * { box-sizing:border-box; }
+  html,body { margin:0; background:var(--bg); color:var(--fg); }
+  body { font:16px/1.6 Geist, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; -webkit-font-smoothing:antialiased; }
+  a { color:inherit; }
+  .wrap { max-width:1120px; margin:0 auto; padding:0 24px; }
+
+  header { position:sticky; top:0; z-index:10; backdrop-filter:blur(12px); background:rgba(10,10,10,.72); border-bottom:1px solid var(--line); }
+  header .wrap { display:flex; align-items:center; justify-content:space-between; height:64px; }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px; text-decoration:none; }
+  .brand img { width:28px; height:28px; border-radius:7px; }
+  .nav { display:flex; align-items:center; gap:22px; font-size:14px; color:var(--muted); }
+  .nav a { text-decoration:none; } .nav a:hover { color:var(--fg); }
+
+  .btn { display:inline-flex; align-items:center; gap:10px; border-radius:12px; padding:12px 20px; font-weight:600; font-size:15px; text-decoration:none; transition:transform .15s ease, background .15s ease, border-color .15s ease; }
+  .btn:hover { transform:translateY(-1px); }
+  .btn-primary { background:var(--fg); color:#0a0a0a; }
+  .btn-ghost { border:1px solid var(--line-strong); color:var(--fg); }
+  .btn-ghost:hover { border-color:rgba(255,255,255,.3); }
+  .btn-sm { padding:8px 14px; font-size:14px; border-radius:10px; }
+  .btn svg { width:18px; height:18px; }
+
+  .hero { position:relative; padding:96px 0 40px; text-align:center; overflow:hidden; }
+  .hero::before { content:""; position:absolute; inset:-200px 0 auto; height:620px; background:radial-gradient(600px 300px at 50% 40%, rgba(31,95,255,.28), transparent 70%); pointer-events:none; }
+  .hero > * { position:relative; }
+  .hero .icon { width:84px; height:84px; border-radius:20px; box-shadow:0 18px 50px rgba(31,95,255,.35); }
+  h1 { font-size:clamp(36px, 6vw, 64px); line-height:1.05; letter-spacing:-.03em; margin:28px auto 18px; max-width:860px; font-weight:700; }
+  h1 span { color:var(--muted); }
+  .lead { color:var(--muted); font-size:clamp(17px, 2vw, 20px); max-width:680px; margin:0 auto 32px; }
+  .cta { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .req { margin-top:14px; color:var(--quiet); font-size:13px; }
+
+  .video { margin:56px auto 0; max-width:1040px; border-radius:16px; overflow:hidden; border:1px solid var(--line-strong); box-shadow:0 40px 120px rgba(0,0,0,.6); background:#000; }
+  .video video { display:block; width:100%; height:auto; }
+
+  section { padding:88px 0; }
+  .eyebrow { color:var(--accent); font-size:13px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
+  h2 { font-size:clamp(28px, 4vw, 40px); letter-spacing:-.02em; line-height:1.15; margin:10px 0 14px; }
+  .sub { color:var(--muted); max-width:620px; margin:0; }
+
+  .grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-top:40px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:24px; }
+  .card h3 { font-size:17px; margin:14px 0 6px; }
+  .card p { color:var(--muted); margin:0; font-size:15px; }
+  .card .ic { width:36px; height:36px; border-radius:10px; display:grid; place-items:center; background:rgba(59,130,246,.12); color:var(--accent); }
+  .card .ic svg { width:20px; height:20px; }
+
+  .shot { display:grid; grid-template-columns:1fr 1.35fr; gap:48px; align-items:center; margin-top:72px; }
+  .shot.rev { grid-template-columns:1.35fr 1fr; }
+  .shot.rev .text { order:2; }
+  .shot img { width:100%; border-radius:14px; border:1px solid var(--line-strong); box-shadow:0 30px 80px rgba(0,0,0,.5); display:block; }
+  .shot h3 { font-size:26px; letter-spacing:-.015em; margin:8px 0 10px; }
+  .shot p { color:var(--muted); margin:0 0 10px; }
+  .shot ul { color:var(--muted); padding-left:18px; margin:10px 0 0; } .shot li { margin:4px 0; }
+
+  .steps { counter-reset:s; display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-top:36px; }
+  .step { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:24px; }
+  .step::before { counter-increment:s; content:counter(s); display:inline-grid; place-items:center; width:28px; height:28px; border-radius:999px; background:var(--fg); color:#0a0a0a; font-weight:700; font-size:14px; }
+  .step h3 { margin:14px 0 6px; font-size:17px; }
+  .step p { color:var(--muted); margin:0; font-size:15px; }
+  .step code { background:rgba(255,255,255,.08); padding:2px 6px; border-radius:6px; font-size:13px; }
+
+  .final { text-align:center; padding:96px 0 120px; }
+  footer { border-top:1px solid var(--line); color:var(--quiet); font-size:13px; }
+  footer .wrap { display:flex; justify-content:space-between; align-items:center; height:72px; gap:16px; }
+
+  @media (max-width: 860px) {
+    .grid, .steps { grid-template-columns:1fr; }
+    .shot, .shot.rev { grid-template-columns:1fr; gap:24px; }
+    .shot.rev .text { order:0; }
+    .nav .hide-sm { display:none; }
+    section { padding:64px 0; }
+    .hero { padding-top:64px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .btn { transition:none; } .btn:hover { transform:none; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <a class="brand" href="#"><img src="assets/icon.png" alt="">Racky</a>
+    <nav class="nav">
+      <a class="hide-sm" href="#features">Features</a>
+      <a class="hide-sm" href="#install">Install</a>
+      <a class="hide-sm" href="https://github.com/gabrielgreco1/racky">GitHub</a>
+      <a class="btn btn-primary btn-sm" href="https://github.com/gabrielgreco1/racky/releases/latest/download/Racky.dmg">Download</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="hero wrap">
+    <img class="icon" src="assets/icon.png" alt="Racky">
+    <h1>Run coding agents side by side. <span>Every subagent gets its own computer.</span></h1>
+    <p class="lead">Racky is a Mac app for Claude Code, Codex and OpenCode. Each subagent works on an isolated machine with a real browser you can watch live, and take over whenever it needs a human.</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://github.com/gabrielgreco1/racky/releases/latest/download/Racky.dmg">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.4 12.6c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9s-1.9-.9-3.2-.8c-1.6 0-3.1 1-4 2.4-1.7 3-.4 7.4 1.2 9.8.8 1.2 1.8 2.5 3 2.4 1.2 0 1.7-.8 3.1-.8s1.9.8 3.2.8c1.3 0 2.1-1.2 2.9-2.4.9-1.3 1.3-2.6 1.3-2.7 0 0-2.4-1-2.4-4zM14 5.4c.7-.8 1.1-1.9 1-3-1 0-2.1.7-2.8 1.5-.6.7-1.2 1.8-1 2.9 1.1.1 2.1-.6 2.8-1.4z"/></svg>
+        Download for Mac
+      </a>
+      <a class="btn btn-ghost" href="https://github.com/gabrielgreco1/racky">View on GitHub</a>
+    </div>
+    <div class="req">Free · macOS 26 or later · Apple silicon · nothing else to install</div>
+
+    <div class="video">
+      <video src="assets/demo.mp4" poster="assets/demo-poster.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Racky demo: a subagent scrapes 1,213 hotels from TripAdvisor on its own computer"></video>
+    </div>
+  </div>
+
+  <section id="features">
+    <div class="wrap">
+      <div class="eyebrow">What it does</div>
+      <h2>Your agents get real machines, not just a terminal.</h2>
+      <p class="sub">Give a task to Claude Code. It spawns subagents, and each one gets a computer of its own: a browser, a terminal, an HTTP client and a log of every request it makes.</p>
+      <div class="grid">
+        <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="8" height="16" rx="2"/><rect x="13" y="4" width="8" height="16" rx="2"/></svg></div>
+          <h3>Agents side by side</h3><p>Claude Code, Codex and OpenCode in tabs and splits, each session in its own folder or worktree.</p></div>
+        <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></div>
+          <h3>A computer per subagent</h3><p>Isolated machines with a real browser, terminal and HTTP tools. Many run in parallel and nothing touches your Mac.</p></div>
+        <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 13V5a2 2 0 1 1 4 0v6"/><path d="M12 11V4a2 2 0 1 1 4 0v8"/><path d="M16 9a2 2 0 1 1 4 0v5a7 7 0 0 1-7 7h-1a7 7 0 0 1-6-3.4L4 15a2 2 0 0 1 3.4-2L8 14"/></svg></div>
+          <h3>Take Over anytime</h3><p>Watch every computer live. Captcha or login? Take control, solve it, hand it back, and the agent carries on.</p></div>
+        <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h10"/></svg></div>
+          <h3>Every request logged</h3><p>Traffic goes through a proxy that records each request, so every result comes with the evidence behind it.</p></div>
+        <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></div>
+          <h3>You stay in control</h3><p>Per session: no computers, ask before each one, or full access. You approve, the agent waits.</p></div>
+        <div class="card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 18a4 4 0 0 1-.6-8 6 6 0 0 1 11.4 1.6A3.5 3.5 0 0 1 17.5 18z"/></svg></div>
+          <h3>Local first, cloud soon</h3><p>Computers run right on your Mac today. Cloud computers for more parallel power are coming.</p></div>
+      </div>
+
+      <div class="shot">
+        <div class="text">
+          <div class="eyebrow">Take Over</div>
+          <h3>When the site asks for a human, you step in.</h3>
+          <p>The subagent flags the captcha and waits. You take control of its browser, solve it, and hand it back with a note. It continues from where it stopped.</p>
+        </div>
+        <img src="assets/viewer.webp" alt="Racky showing a subagent's browser on TripAdvisor with the Hand Back button" loading="lazy">
+      </div>
+
+      <div class="shot rev">
+        <div class="text">
+          <div class="eyebrow">Start in one click</div>
+          <h3>Pick an agent, or open a project.</h3>
+          <p>Start Claude Code, Codex or OpenCode in a clean folder, open a folder you already have, or clone a repository from GitHub.</p>
+        </div>
+        <img src="assets/start.webp" alt="Racky start screen with Claude Code, Codex and OpenCode" loading="lazy">
+      </div>
+
+      <div class="shot">
+        <div class="text">
+          <div class="eyebrow">Computers</div>
+          <h3>Decide where computers run.</h3>
+          <p>On this Mac for free, and soon in the cloud. Choose whether new sessions get computers by default.</p>
+        </div>
+        <img src="assets/computers.webp" alt="Racky Computers page: This Mac or your cloud" loading="lazy">
+      </div>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="wrap">
+      <div class="eyebrow">Install</div>
+      <h2>Download, drag, done.</h2>
+      <p class="sub">No Docker, no setup. Racky runs its computers with the virtualization built into macOS.</p>
+      <div class="steps">
+        <div class="step"><h3>Download</h3><p>Get <code>Racky.dmg</code> and open it.</p></div>
+        <div class="step"><h3>Drag to Applications</h3><p>Drag Racky into your Applications folder and open it.</p></div>
+        <div class="step"><h3>Allow it once</h3><p>If macOS says it can't check the developer, go to System Settings › Privacy &amp; Security and click <strong>Open Anyway</strong>.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="final wrap">
+    <h2>Give your agents a computer.</h2>
+    <div class="cta" style="margin-top:24px">
+      <a class="btn btn-primary" href="https://github.com/gabrielgreco1/racky/releases/latest/download/Racky.dmg">Download for Mac</a>
+    </div>
+    <div class="req">You need Claude Code, Codex or OpenCode installed and signed in.</div>
+  </div>
+</main>
+
+<footer><div class="wrap"><span>© 2026 Racky</span><a href="https://github.com/gabrielgreco1/racky">GitHub</a></div></footer>
+</body>
+</html>
