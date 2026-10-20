@@ -250,7 +250,7 @@ final class ComposerController {
             return "settings"
         }
         try edit(.composerSetSubagentComputers) { model, arg in
-            guard model.draft.provider == .claude else { throw ActionError.failed(.composerSetSubagentComputers, message: "Subagent computers works with Claude Code.") }
+            guard model.draft.provider.supportsSubagentComputers else { throw ActionError.failed(.composerSetSubagentComputers, message: "Subagent computers works with Claude Code, Codex and OpenCode.") }
             if let value = arg.value, let mode = SubagentComputersMode(rawValue: value) { model.draft.subagentComputers = mode }
             return model.draft.subagentComputers.rawValue
         }

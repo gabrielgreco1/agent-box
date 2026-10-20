@@ -98,7 +98,7 @@ private func fixedBundle(parent: String = "parent-aaaaaaaa") throws -> Orchestra
         #expect(ended.items == [info.parentID])
     }
 
-    @Test func resumeRegeneratesTheInjectionAndOtherProvidersNeverGetIt() async throws {
+    @Test func resumeRegeneratesTheInjectionAndShellsNeverGetIt() async throws {
         let gateway = FakeGateway()
         let prepared = Rec<ParentInfo>(), ended = Rec<String>()
         let c = coordinator(gateway: gateway, prepared: prepared, ended: ended)
@@ -108,7 +108,7 @@ private func fixedBundle(parent: String = "parent-aaaaaaaa") throws -> Orchestra
         #expect(argv.contains("--resume") && argv.contains("--agents") && argv.contains("--mcp-config"), "Restart to apply: resume carries the new flags")
         _ = try await c.launch(job(.codex, mode: .full), onEvent: { _ in })
         _ = try await c.launch(job(.shell, mode: .full, spec: LaunchSpec(provider: .shell)), onEvent: { _ in })
-        #expect(prepared.items.count == 1, "only Claude gets the orchestration")
+        #expect(prepared.items.map(\.provider) == [.claude, .codex], "the three agents get the orchestration, a shell never does")
     }
 
     @Test func aFailingOrchestratorLeavesTheLaunchWorkingWithoutComputers() async throws {

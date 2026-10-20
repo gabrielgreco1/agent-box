@@ -61,12 +61,20 @@ public struct LaunchInjection: Sendable, Equatable {
     public var claudeUnsetEnvironment: [String]
     /// Claude: hook `PreToolUse` na ferramenta de spawn de subagentes (F12). `nil` = sem gatilho.
     public var claudeSpawnGuard: SpawnGuardConfig?
+    /// Codex: `false` = sem `-c hooks.*` (injeção só de orquestração, sem hashes de trust sondados: hooks sem trust não valem a pena).
+    public var codexActivityHooks: Bool
+    /// Codex: MCP do pai, MCP "pool" dos workers, agentes e instruções (Subagent computers).
+    public var codexOrchestration: CodexOrchestration?
+    /// OpenCode: MCP do pai e dos workers, agentes e instruções (Subagent computers).
+    public var openCodeOrchestration: OpenCodeOrchestration?
 
     public init(
         helperPath: String, codexHookHashes: [HookEventName: String] = [:], claudeMCPConfig: Data? = nil, claudePluginFiles: [LaunchFile] = [],
         claudeAgentsJSON: Data? = nil, claudeDenyRules: [String] = [], claudeEnvironment: [String: String] = [:], claudeUnsetEnvironment: [String] = [],
-        claudeSpawnGuard: SpawnGuardConfig? = nil
+        claudeSpawnGuard: SpawnGuardConfig? = nil, codexActivityHooks: Bool = true, codexOrchestration: CodexOrchestration? = nil,
+        openCodeOrchestration: OpenCodeOrchestration? = nil
     ) {
+        self.codexActivityHooks = codexActivityHooks; self.codexOrchestration = codexOrchestration; self.openCodeOrchestration = openCodeOrchestration
         self.claudeSpawnGuard = claudeSpawnGuard
         self.helperPath = helperPath; self.codexHookHashes = codexHookHashes
         self.claudeMCPConfig = claudeMCPConfig; self.claudePluginFiles = claudePluginFiles
@@ -99,9 +107,23 @@ extension LaunchInjection {
         return (injected, files)
     }
 
-    /// Codex: `-c hooks.<Evento>=…` e, com hashes, `-c hooks.state={…}` (P18). Nada em arquivo.
-    func codexInjection() throws -> [String] {
-        try CodexHookConfig.arguments(helperPath: helperPath, hashes: codexHookHashes).arguments
+    /// Codex: `-c hooks.<Evento>=…` e, com hashes, `-c hooks.state={…}` (P18); com Subagent computers, os `-c` de MCP/agentes e os
+    /// arquivos dos agentes (`codex-agents/*.toml`) no diretório do lançamento.
+    func codexInjection(launchDirectory: URL) throws -> (injected: [String], files: [LaunchFile]) {
+        var injected = codexActivityHooks ? try CodexHookConfig.arguments(helperPath: helperPath, hashes: codexHookHashes).arguments : []
+        var files: [LaunchFile] = []
+        if let orchestration = codexOrchestration {
+            let rendered = orchestration.render(launchDirectory: launchDirectory)
+            injected += rendered.arguments
+            files += rendered.files
+        }
+        return (injected, files)
+    }
+
+    /// OpenCode: `OPENCODE_CONFIG_CONTENT` com a config inline e o arquivo de instruções. Sem Subagent computers não injeta nada.
+    func openCodeInjection(launchDirectory: URL) throws -> (environment: [String: String], files: [LaunchFile]) {
+        guard let orchestration = openCodeOrchestration else { return ([:], []) }
+        return try orchestration.render(launchDirectory: launchDirectory)
     }
 }
 

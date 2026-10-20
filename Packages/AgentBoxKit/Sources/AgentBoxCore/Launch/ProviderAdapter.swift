@@ -56,6 +56,8 @@ public struct AdapterOutput: Sendable, Equatable {
     public var skipsPermissions: SkipPermissionsIndicator?
     public var warnings: [LaunchWarning]
     public var files: [LaunchFile]
+    /// Variáveis de ambiente do lançamento (OpenCode: config inline). Vazio na maioria dos adapters.
+    public var environment: [String: String] = [:]
 }
 
 /// Um adapter por CLI (06 §2.2). Puro: não lê disco nem roda processo; o argv sai de `EffectiveLaunch` + capabilities.

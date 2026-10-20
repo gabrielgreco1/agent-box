@@ -93,15 +93,15 @@ final class SubagentComputersController {
 
     // MARK: Consultas
 
-    /// O card mostra o controle em sessões que têm (ou terão) um Claude; só com shells não faz sentido.
+    /// O card mostra o controle em sessões que têm (ou terão) um agente; só com shells não faz sentido.
     func offersToggle(for session: UUID) -> Bool {
-        let terminals = claudeTerminals(in: session, includeAll: true)
+        let terminals = agentTerminals(in: session, includeAll: true)
         return terminals.isEmpty ? !hasOnlyOtherAgents(session) : true
     }
 
     private func hasOnlyOtherAgents(_ session: UUID) -> Bool {
         let all = terminals(in: session)
-        return !all.isEmpty && !all.contains { $0.provider == .claude }
+        return !all.isEmpty && !all.contains { $0.provider.supportsSubagentComputers }
     }
 
     private func terminals(in session: UUID) -> [Terminal] {
@@ -109,16 +109,18 @@ final class SubagentComputersController {
         return sidebar.snapshot.terminals.filter { tabs.contains($0.tabID) }
     }
 
-    private func claudeTerminals(in session: UUID, includeAll: Bool = false) -> [Terminal] {
-        terminals(in: session).filter { $0.provider == .claude && (includeAll || $0.state == .running || $0.state == .launching) }
+    private func agentTerminals(in session: UUID, includeAll: Bool = false) -> [Terminal] {
+        terminals(in: session).filter { $0.provider.supportsSubagentComputers && (includeAll || $0.state == .running || $0.state == .launching) }
     }
 
-    /// O Claude vivo foi lançado com outro modo que o da sessão: precisa de "Restart to apply".
+    /// O agente vivo foi lançado com outro modo que o da sessão: precisa de "Restart to apply".
     func restartPending(session id: UUID) -> Bool {
         guard let session = sidebar.session(id) else { return false }
         let wanted = session.subagentComputers
-        return claudeTerminals(in: id).contains { terminal in
-            let launched = launchedModes[terminal.id] ?? (terminal.resolvedArgv?.injected.contains("--agents") == true ? (wanted.isOn ? wanted : .full) : .off)
+        return agentTerminals(in: id).contains { terminal in
+            let injected = terminal.resolvedArgv?.injected ?? []
+            let injectedAgents = injected.contains("--agents") || injected.contains { $0.hasPrefix("mcp_servers.\(OrchestrationText.parentServerName)=") }
+            let launched = launchedModes[terminal.id] ?? (injectedAgents ? (wanted.isOn ? wanted : .full) : .off)
             return launched != wanted
         }
     }
@@ -187,10 +189,10 @@ final class SubagentComputersController {
             alignment: .trailing)
     }
 
-    /// Relança com Resume os Claude vivos da sessão, para o próximo lançamento levar o modo novo.
+    /// Relança com Resume os agentes vivos da sessão, para o próximo lançamento levar o modo novo.
     @discardableResult
     func restart(session id: UUID) async -> Int {
-        let targets = claudeTerminals(in: id).map(\.id)
+        let targets = agentTerminals(in: id).map(\.id)
         guard !targets.isEmpty else { return 0 }
         _ = sidebar.select(id)
         for _ in 0 ..< 100 where !workspace.isLoaded(session: id) { try? await Task.sleep(for: .milliseconds(20)) }

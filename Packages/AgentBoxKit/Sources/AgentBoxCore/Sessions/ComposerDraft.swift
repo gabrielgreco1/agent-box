@@ -287,7 +287,7 @@ public struct ComposerDraft: Sendable, Equatable {
         }
         return SessionCreationRequest(
             sessionID: ids.session, tabID: ids.tab, terminalID: ids.terminal, title: sessionTitle, target: target, spec: spec(),
-            subagentComputers: provider == .claude ? subagentComputers : .off)
+            subagentComputers: provider.supportsSubagentComputers ? subagentComputers : .off)
     }
 
     /// `Reuse it` (03 §6.3): o branch digitado em Advanced passa a ser o de "Create from", reaproveitado.

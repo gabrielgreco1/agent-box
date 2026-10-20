@@ -242,8 +242,10 @@ public struct ParentInfo: Sendable, Equatable {
     public var mode: SubagentComputersMode
     /// F29: proxy padrão da sessão (card de aprovação, composer); `nil` = padrão global de Settings.
     public var proxy: String?
-    public init(parentID: String, sessionID: UUID?, sessionTitle: String, mode: SubagentComputersMode, proxy: String? = nil) {
-        self.parentID = parentID; self.sessionID = sessionID; self.sessionTitle = sessionTitle; self.mode = mode; self.proxy = proxy
+    /// CLI do pai (decide a injeção; Claude por padrão).
+    public var provider: TerminalProvider
+    public init(parentID: String, sessionID: UUID?, sessionTitle: String, mode: SubagentComputersMode, proxy: String? = nil, provider: TerminalProvider = .claude) {
+        self.parentID = parentID; self.sessionID = sessionID; self.sessionTitle = sessionTitle; self.mode = mode; self.proxy = proxy; self.provider = provider
     }
 }
 

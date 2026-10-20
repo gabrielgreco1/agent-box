@@ -129,7 +129,7 @@ final class SessionLauncher {
         let spec = LaunchSpec(provider: provider, profileID: provider.isAgent ? settings?.defaultProfile(for: provider)?.id : nil, model: request.model, extraArgs: request.args ?? [], customArgv: request.argv, initialPrompt: prompt)
         var session = Session(id: sessionID, kind: .clean, folderPath: folder.path, title: title)
         session.managedFolder = managed
-        if provider == .claude {
+        if provider.supportsSubagentComputers {
             session.subagentComputers = request.subagentComputers.flatMap(SubagentComputersMode.init(rawValue:))
                 ?? settings?.settings.computers.defaultSubagentMode ?? .off
         }

@@ -57,10 +57,66 @@ public struct ComputerMCPServer: Sendable {
             guard let name = params?["name"]?.string else { return Self.fail(id, code: -32602, "Invalid tool call: name is required") }
             let arguments = params?["arguments"] ?? [:]
             guard arguments.object != nil || arguments.isNull else { return Self.fail(id, code: -32602, "Invalid tool call: arguments must be an object") }
-            let outcome = await tools.call(name, arguments: arguments, child: child)
+            let routed = await route(name, arguments: arguments, params: params, child: child)
+            let outcome: ToolOutcome
+            switch routed {
+            case .failure(let denied): outcome = denied
+            case .child(let effective): outcome = await tools.call(name, arguments: arguments, child: effective)
+            }
             return Self.reply(id, result: ["content": .array(outcome.content), "isError": .bool(outcome.isError)])
         default:
             return Self.fail(id, code: -32601, "Method not found")
+        }
+    }
+}
+
+extension ComputerMCPServer {
+    enum Routing { case child(String), failure(ToolOutcome) }
+
+    /// Quem chamou, segundo o Codex: `_meta.threadId` e `x-codex-turn-metadata.thread_source` em cada `tools/call`. Outros clientes
+    /// (Claude, OpenCode) não mandam isso e passam direto.
+    struct CallerMeta: Equatable {
+        var threadID: String?
+        var isSubagent: Bool
+        init(_ params: JSON?) {
+            let meta = params?["_meta"]
+            threadID = meta?["threadId"]?.string ?? meta?["x-codex-turn-metadata"]?["thread_id"]?.string
+            isSubagent = meta?["x-codex-turn-metadata"]?["thread_source"]?.string == "subagent"
+        }
+    }
+
+    /// Decide com que identidade a chamada roda. Pool (workers do Codex): a thread vira o slot do computador que ela reivindica com
+    /// `box_claim` (o computador foi reservado para um slot do MESMO pai); sem `box_claim` antes, erro. Pai: um subagente do Codex
+    /// herda o MCP do pai e não pode reservar nem liberar computadores.
+    func route(_ name: String, arguments: JSON, params: JSON?, child: String) async -> Routing {
+        let hub = tools.hub
+        let meta = CallerMeta(params)
+        switch await hub.role(of: child) {
+        case .pool?:
+            guard let thread = meta.threadID, meta.isSubagent, let parent = await hub.poolParent(of: child) else {
+                return .failure(ComputerToolService.failure(
+                    ToolError(.blockedByPolicy, "\(name) is a worker tool: only the agentbox-worker-N subagents spawned for a reserved computer can use it"), box: nil))
+            }
+            if name == "box_claim" {
+                let computer = arguments["name"]?.string ?? ""
+                guard let slot = await tools.orchestrator?.workerChild(ofComputer: computer, parent: parent) else {
+                    return .failure(ComputerToolService.failure(
+                        ToolError(.notFound, "no computer named \(computer) was reserved by your parent session; use the name from your brief"), box: nil))
+                }
+                await hub.bind(thread: thread, pool: child, to: slot)
+            }
+            guard let bound = await hub.boundChild(thread: thread, pool: child) else {
+                return .failure(ComputerToolService.failure(ToolError(.notClaimed, "call box_claim first; each worker operates the computer it claimed"), box: nil))
+            }
+            return .child(bound)
+        case .parent?:
+            if meta.isSubagent {
+                return .failure(ComputerToolService.failure(
+                    ToolError(.blockedByPolicy, "\(name) belongs to the parent session; workers use the computer they claimed"), box: nil))
+            }
+            return .child(child)
+        default:
+            return .child(child)
         }
     }
 }

@@ -275,11 +275,13 @@ public actor LaunchCoordinator {
             do {
                 let capabilities = await configuration.capabilities(job.spec.provider, executable)
                 var injection = configuration.injection(job.spec.provider)
-                if job.spec.provider == .claude, let sub = job.subagent, sub.mode.isOn, let base = injection,
+                // Claude parte da injeção de hooks; Codex e OpenCode só levam a de orquestração (hooks do Codex precisam de trust sondado).
+                if job.spec.provider.supportsSubagentComputers, let sub = job.subagent, sub.mode.isOn, injection != nil || job.spec.provider != .claude,
                    let prepare = configuration.prepareOrchestration {
-                    let info = ParentInfo(parentID: runID.uuidString.lowercased(), sessionID: sub.sessionID, sessionTitle: sub.sessionTitle, mode: sub.mode)
+                    let info = ParentInfo(
+                        parentID: runID.uuidString.lowercased(), sessionID: sub.sessionID, sessionTitle: sub.sessionTitle, mode: sub.mode, provider: job.spec.provider)
                     if let bundle = await prepare(info) {
-                        injection = bundle.apply(to: base)
+                        injection = bundle.applied(to: injection)
                         orchestrated.insert(runID)
                     }
                 }

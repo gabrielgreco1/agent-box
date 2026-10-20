@@ -93,7 +93,7 @@ public enum LaunchPlanner {
         for name in claudeInjection?.claudeUnsetEnvironment ?? [] { captured[name] = nil }
         let composed = composer.compose(
             captured: captured, terminalID: input.terminalID, runID: input.runID,
-            profileEnv: launch.env, overrides: claudeInjection?.claudeEnvironment ?? [:]
+            profileEnv: launch.env, overrides: (claudeInjection?.claudeEnvironment ?? [:]).merging(output.environment) { _, new in new }
         )
 
         var updated = spec
