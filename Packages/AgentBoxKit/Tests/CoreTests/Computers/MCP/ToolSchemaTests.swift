@@ -97,7 +97,7 @@ import Testing
         let text = ToolCatalog.serverInstructions
         for rule in ["prefer official APIs and open data", "never buy, pay, subscribe, donate or accept terms", "never create accounts, change account data or settings",
                      "send messages, emails or contact forms", "search and filter forms are fine", "never bypass a login, paywall or captcha",
-                     "help_request(kind=login)", "help_request(kind=permission)", "journal BLOCKED", "cite a request id for every claim", "keep /work clean"] {
+                     "help_request(kind=login)", "help_request(kind=permission)", "journal BLOCKED", "cite a request id for every claim", "throwaway files in /work/scratch/"] {
             #expect(text.contains(rule), "instructions lack: \(rule)")
         }
     }
