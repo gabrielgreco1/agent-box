@@ -23,6 +23,16 @@ public enum ComputerProvisionerError: Error, Sendable, Equatable {
     case runtimeNotReady(String)
     case noPublishedPort
     case provisioningFailed(String)
+    /// A volta dos arquivos do host remoto falhou: o computador NÃO foi apagado (a VM não deve ser terminada ainda).
+    case syncFailed(String)
+}
+
+/// De onde vêm `/work`, os logs e os segredos de tarefa no container.
+public enum ComputerMounts: Sendable, Equatable {
+    /// Pastas do host do Docker (local: do Mac). Binds `host:container`.
+    case hostPaths(work: URL, logs: URL, taskSecrets: URL)
+    /// Volumes nomeados (host remoto).
+    case volumes(RemoteStorageSeeder.Volumes)
 }
 
 /// Pedido para montar um computador: UM container (P24) com navegador, terminal de trabalho e proxy/egress.
@@ -66,11 +76,15 @@ public struct ProvisionedComputer: Sendable {
     public var workDirectory: URL
     public var logsDirectory: URL
     public var admin: EgressAdminClient
+    /// Onde o container roda. Em `.remote`, `adminPort` é a porta LOCAL do Mac encaminhada ao `remoteAdminPort` do host.
+    public var host: ComputerHost
+    public var remoteAdminPort: Int?
 
     public init(labels: ComputerLabels, display: ComputerDisplay, containerID: String, containerName: String, adminPort: Int, profileVolume: String?,
-                workDirectory: URL, logsDirectory: URL, admin: EgressAdminClient) {
+                workDirectory: URL, logsDirectory: URL, admin: EgressAdminClient, host: ComputerHost = .local, remoteAdminPort: Int? = nil) {
         self.labels = labels; self.display = display; self.containerID = containerID; self.containerName = containerName; self.adminPort = adminPort
         self.profileVolume = profileVolume; self.workDirectory = workDirectory; self.logsDirectory = logsDirectory; self.admin = admin
+        self.host = host; self.remoteAdminPort = remoteAdminPort
     }
 }
 
@@ -83,9 +97,12 @@ public struct ComputerProvisioner: Sendable {
     static let agentUID = 10001
     static let egressUID = 10003
 
-    public let client: DockerClient
+    public let host: any ComputerHostAccess
+    public var client: DockerClient { host.client }
 
-    public init(client: DockerClient) { self.client = client }
+    /// Docker local (caminho de sempre).
+    public init(client: DockerClient) { host = LocalHostAccess(client: client) }
+    public init(host: any ComputerHostAccess) { self.host = host }
 
     /// Variáveis de proxy dos comandos do agente (CS-112). O iptables por uid garante que ignorá-las não adianta: falha, não vaza.
     public static func agentEnvironment(proxyPort: Int = EgressConfigFile.defaultProxyPort) -> [String] {
@@ -97,6 +114,10 @@ public struct ComputerProvisioner: Sendable {
 
     /// Especificação do container único (pública para os testes conferirem o hardening sem subir nada).
     public static func containerSpec(_ request: ComputerProvisionRequest, work: URL, logs: URL, taskSecrets: URL, volume: String?) -> ContainerSpec {
+        containerSpec(request, mounts: .hostPaths(work: work, logs: logs, taskSecrets: taskSecrets), volume: volume)
+    }
+
+    public static func containerSpec(_ request: ComputerProvisionRequest, mounts: ComputerMounts, volume: String?) -> ContainerSpec {
         let labels = request.labels
         var spec = ContainerSpec(name: labels.containerName, image: request.image)
         spec.labels = labels.labels(role: .computer).merging(request.extraLabels) { $1 }
@@ -111,8 +132,15 @@ public struct ComputerProvisioner: Sendable {
             // Segredos, token, config do proxy e reqlog: do usuário `egress`, 0700, fora do alcance do `agent`.
             "/run/agentbox": "rw,nosuid,noexec,size=64m,uid=\(egressUID),gid=\(egressUID),mode=0700",
         ]
-        spec.binds = ["\(work.path):/work", "\(taskSecrets.path):/run/abx-secrets:ro", "\(logs.path):/run/agentbox/logs"]
-        if let volume { spec.named = ["\(volume):/profile"] }
+        switch mounts {
+        case .hostPaths(let work, let logs, let taskSecrets):
+            spec.binds = ["\(work.path):/work", "\(taskSecrets.path):/run/abx-secrets:ro", "\(logs.path):/run/agentbox/logs"]
+            if let volume { spec.named = ["\(volume):/profile"] }
+        case .volumes(let volumes):
+            // Host remoto: não existe pasta do Mac lá; mesmos pontos de montagem, em volumes nomeados.
+            if let volume { spec.named = ["\(volume):/profile"] }
+            spec.named += ["\(volumes.work):/work", "\(volumes.secrets):/run/abx-secrets:ro", "\(volumes.logs):/run/agentbox/logs"]
+        }
         spec.network = ContainerNetworkAttachment(network: request.network)
         spec.publishedPorts = [PublishedPort(containerPort: "\(request.config.adminPort)/tcp", hostIP: "127.0.0.1", hostPort: "")]
         // `CapDrop ALL` + só o que o supervisor usa e os serviços largam por `setpriv`: NET_ADMIN (iptables por uid), SETUID/SETGID
@@ -135,26 +163,41 @@ public struct ComputerProvisioner: Sendable {
             // Segredos de tarefa (§3.3): arquivos 0400 numa pasta só leitura; o valor nunca vai por env nem argv.
             let taskSecrets = try request.secrets.ensureRoleDirectory(computerID, role: .work)
             var profileName: String?
+            var volumeLabels = labels.labels(role: .computer)
+            volumeLabels.merge(request.extraLabels) { $1 }
             if request.display != .http {
                 let volume = request.profileVolume ?? "ab-prof-\(computerID)"
                 profileName = volume
-                var volumeLabels = labels.labels(role: .computer)
-                volumeLabels.merge(request.extraLabels) { $1 }
                 _ = try await client.createVolume(name: volume, labels: volumeLabels)
             }
-            let spec = Self.containerSpec(request, work: work, logs: logs, taskSecrets: taskSecrets, volume: profileName)
+            let mounts: ComputerMounts
+            switch host.storage {
+            case .hostBinds:
+                mounts = .hostPaths(work: work, logs: logs, taskSecrets: taskSecrets)
+            case .volumes:
+                let volumes = RemoteStorageSeeder.Volumes(computerID: computerID)
+                for name in [volumes.work, volumes.logs, volumes.secrets] { _ = try await client.createVolume(name: name, labels: volumeLabels) }
+                try await RemoteStorageSeeder(client: client).seed(
+                    volumes: volumes, labels: labels, image: request.image, secretFiles: Self.secretFiles(in: taskSecrets),
+                    agentUID: Self.agentUID, egressUID: Self.egressUID, extraLabels: request.extraLabels)
+                mounts = .volumes(volumes)
+            }
+            let spec = Self.containerSpec(request, mounts: mounts, volume: profileName)
             let id = try await client.createContainer(spec)
             try await client.startContainer(id)
             let inspect = try await client.inspectContainer(id)
-            guard let port = inspect.publishedHostPort(for: "\(request.config.adminPort)/tcp") else { throw ComputerProvisionerError.noPublishedPort }
+            guard let hostPort = inspect.publishedHostPort(for: "\(request.config.adminPort)/tcp") else { throw ComputerProvisionerError.noPublishedPort }
+            let port = try await host.reach(publishedPort: hostPort, computerID: computerID)
             let computer = ProvisionedComputer(
                 labels: labels, display: request.display, containerID: id, containerName: spec.name, adminPort: port, profileVolume: profileName,
-                workDirectory: work, logsDirectory: logs, admin: EgressAdminClient(port: port, token: request.token))
+                workDirectory: work, logsDirectory: logs, admin: EgressAdminClient(port: port, token: request.token), host: host.host,
+                remoteAdminPort: host.host.isRemote ? hostPort : nil)
             try await deliver(config: request.config, proxyCA: request.proxyCA, token: request.token, to: id)
             try await computer.admin.waitUntilHealthy()
             if request.display != .http { try await waitRuntimeReady(computer.admin) }
             return computer
         } catch {
+            await host.releaseForwards(computerID: computerID)
             _ = try? await GarbageCollector(client: client).removeComputer(id: computerID)
             try? request.secrets.removeAll(computerID: computerID)
             throw error
@@ -195,8 +238,33 @@ public struct ComputerProvisioner: Sendable {
         throw ComputerProvisionerError.runtimeNotReady("o browser do runtime não ficou pronto em \(timeout)")
     }
 
+    /// Conteúdo atual dos segredos de tarefa (pasta 0700 do Mac), para semear o volume remoto.
+    static func secretFiles(in directory: URL) -> [String: Data] {
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: directory.path)) ?? []
+        return names.reduce(into: [:]) { result, name in
+            if let data = try? Data(contentsOf: directory.appendingPathComponent(name)) { result[name] = data }
+        }
+    }
+
+    /// Host remoto: traz `/work` e os logs para a pasta do run do Mac. No local não faz nada (a pasta já é a do Mac).
+    @discardableResult
+    public func syncBack(_ computer: ProvisionedComputer) async throws -> RunFileSync.Result? {
+        guard host.storage == .volumes else { return nil }
+        do {
+            return try await RunFileSync(client: client).pullRun(
+                container: computer.containerID, workDirectory: computer.workDirectory, logsDirectory: computer.logsDirectory)
+        } catch let error as DockerError where error.isNotFound {
+            return nil  // container já não existe (readoção após queda): nada a trazer
+        } catch {
+            throw ComputerProvisionerError.syncFailed("\(error)")
+        }
+    }
+
     /// Fim do run (07 CS-180): o container, o volume de perfil efêmero e os segredos de tarefa. A pasta do run no host fica.
+    /// Host remoto: ANTES de apagar, `/work` e os logs voltam ao Mac; se a volta falhar, lança `.syncFailed` e nada é apagado.
     public func teardown(_ computer: ProvisionedComputer, secrets: BoxSecretFiles) async throws -> [(ManagedResource, DockerError)] {
+        try await syncBack(computer)
+        await host.releaseForwards(computerID: computer.labels.computerID)
         let failures = try await GarbageCollector(client: client).removeComputer(id: computer.labels.computerID)
         try secrets.removeAll(computerID: computer.labels.computerID)
         return failures
