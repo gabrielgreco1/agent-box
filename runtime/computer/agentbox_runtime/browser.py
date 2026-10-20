@@ -33,6 +33,23 @@ CHROMIUM_WRAPPER = os.environ.get("AGENTBOX_CHROMIUM_WRAPPER", "/opt/agentbox/bi
 MAX_DOWNLOAD_BYTES = 24 * 1024 * 1024
 
 
+
+SCREEN = (1440, 900)  # o mesmo `-screen` do Xvfb (__main__.py)
+
+
+def launch_args(env: dict[str, str]) -> list[str]:
+    """Flags do Chromium que não denunciam automação (F42): sem `--disable-gpu` (WebGL some e isso marca bot), WebGL por
+    SwiftShader, janela do tamanho da tela, idioma do Mac (`AGENTBOX_LOCALE`). O fuso vem de `TZ` no ambiente do processo, não de
+    emulação por CDP (que os web workers não veem)."""
+    lang = env.get("AGENTBOX_LOCALE") or "en-US"
+    base = lang.split("-")[0]
+    accept = ",".join(dict.fromkeys([lang, base, "en-US", "en"]))
+    return ["--no-sandbox", "--disable-dev-shm-usage", "--no-first-run", "--no-default-browser-check",
+            "--disable-background-networking", "--disable-component-update", "--disable-sync", "--disable-default-apps",
+            "--disable-domain-reliability", "--no-pings", "--disable-features=Translate",
+            "--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader",
+            f"--window-size={SCREEN[0]},{SCREEN[1]}", "--window-position=0,0", f"--lang={lang}", f"--accept-lang={accept}"]
+
 class OpError(Exception):
     def __init__(self, code: str, message: str, status: int = 400, details: dict | None = None):
         super().__init__(message)
@@ -65,7 +82,13 @@ class BrowserSession:
 
     # ----- ciclo de vida ------------------------------------------------------------------------------------------------
     async def start(self) -> None:
-        from playwright.async_api import async_playwright  # import tardio: os testes de unidade não precisam do Playwright
+        # Patchright (Playwright corrigido): sem `--enable-automation`/`navigator.webdriver`, sem `Runtime.enable` do CDP e sem os
+        # vazamentos em web workers que o Cloudflare e o DataDome usam para marcar bot (F42). Import tardio: os testes de unidade não
+        # precisam de nenhum dos dois; sem o Patchright (imagem antiga), cai no Playwright.
+        try:
+            from patchright.async_api import async_playwright
+        except ImportError:  # pragma: no cover
+            from playwright.async_api import async_playwright
 
         self.profile.mkdir(parents=True, exist_ok=True)
         self.downloads_dir.mkdir(parents=True, exist_ok=True)
@@ -74,11 +97,10 @@ class BrowserSession:
         except OSError:
             pass
         self.pw = await async_playwright().start()
-        args = ["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--no-first-run", "--no-default-browser-check",
-                "--disable-background-networking", "--disable-component-update", "--disable-sync", "--disable-default-apps",
-                "--disable-domain-reliability", "--no-pings", "--disable-features=Translate"] + self.extra_args
         options: dict[str, Any] = dict(
-            user_data_dir=str(self.profile), headless=self.headless, args=args, viewport={"width": 1280, "height": 800},
+            user_data_dir=str(self.profile), headless=self.headless, args=launch_args(os.environ) + self.extra_args,
+            # Sem viewport emulada: a janela ocupa a tela do Xvfb e inner/outer/screen batem como num desktop de verdade.
+            no_viewport=True,
             accept_downloads=True, downloads_path=str(self.downloads_dir), env={**os.environ, "DISPLAY": os.environ.get("DISPLAY", ":99")})
         if self.proxy_server:
             options["proxy"] = {"server": self.proxy_server}
@@ -371,7 +393,11 @@ class BrowserSession:
         if not isinstance(js, str) or not js.strip():
             raise OpError("invalid_argument", "js is required")
         try:
-            result = await self._page().evaluate(js)
+            # O `eval` do agente lê variáveis da página (`window.__NEXT_DATA__`...): mundo principal, não o isolado do Patchright.
+            try:
+                result = await self._page().evaluate(js, isolated_context=False)
+            except TypeError:  # Playwright puro não tem o parâmetro
+                result = await self._page().evaluate(js)
         except Exception as exc:
             raise OpError("invalid_argument", str(exc).split("\n")[0][:400])
         text = json.dumps(result, ensure_ascii=False, default=str)

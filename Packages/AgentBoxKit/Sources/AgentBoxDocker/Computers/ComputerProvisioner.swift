@@ -54,6 +54,9 @@ public struct ComputerProvisionRequest: Sendable {
     public var extraLabels: [String: String]
     /// Volume do perfil do Chromium. `nil` = efêmero `ab-prof-<computerId>` (CS-170).
     public var profileVolume: String?
+    /// Fuso e idioma do navegador do computador: os do Mac, para baterem com o IP de saída (F42).
+    public var timeZone = TimeZone.current.identifier
+    public var locale = Locale.preferredLanguages.first ?? "en-US"
 
     public init(labels: ComputerLabels, image: String, display: ComputerDisplay, token: String, config: EgressConfigFile, proxyCA: String? = nil,
                 secrets: BoxSecretFiles, runDirectory: URL, network: String = ComputerProvisioner.defaultNetwork,
@@ -112,6 +115,17 @@ public struct ComputerProvisioner: Sendable {
                 "NO_PROXY=\(noProxy)", "no_proxy=\(noProxy)"]
     }
 
+    /// `TZ` e `AGENTBOX_LOCALE` só com caracteres de nome de fuso/BCP 47 (o valor vai para o ambiente do container).
+    static func regionalEnvironment(timeZone: String, locale: String) -> [String] {
+        func safe(_ value: String, _ allowed: String) -> Bool {
+            !value.isEmpty && value.count <= 64 && value.unicodeScalars.allSatisfy { CharacterSet.alphanumerics.contains($0) || allowed.unicodeScalars.contains($0) }
+        }
+        var env: [String] = []
+        if safe(timeZone, "/_+-") { env.append("TZ=\(timeZone)") }
+        if safe(locale, "-") { env.append("AGENTBOX_LOCALE=\(locale)") }
+        return env
+    }
+
     /// Especificação do container único (pública para os testes conferirem o hardening sem subir nada).
     public static func containerSpec(_ request: ComputerProvisionRequest, work: URL, logs: URL, taskSecrets: URL, volume: String?) -> ContainerSpec {
         containerSpec(request, mounts: .hostPaths(work: work, logs: logs, taskSecrets: taskSecrets), volume: volume)
@@ -124,6 +138,7 @@ public struct ComputerProvisioner: Sendable {
         spec.hostname = "computer"
         spec.workingDirectory = "/work"
         spec.environment = ["AGENTBOX_DISPLAY=\(request.display == .http ? "http" : "browser")", "HOME=/home/agent", "DISPLAY=:99"]
+            + Self.regionalEnvironment(timeZone: request.timeZone, locale: request.locale)
             + agentEnvironment(proxyPort: request.config.proxyPort)
         spec.resources = ContainerResources(memoryBytes: request.display.computerMemory, cpus: request.display.computerCPUs, pidsLimit: 1536)
         spec.tmpfs = [

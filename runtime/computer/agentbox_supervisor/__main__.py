@@ -51,6 +51,11 @@ def service_env(name: str) -> dict[str, str]:
     env = {"PATH": "/opt/agentbox/bin:/usr/local/bin:/usr/bin:/bin", "PYTHONPATH": "/opt/agentbox", "PYTHONUNBUFFERED": "1",
            "PYTHONDONTWRITEBYTECODE": "1", "HOME": SECRETS, "DISPLAY": os.environ.get("DISPLAY", ":99"),
            "PLAYWRIGHT_BROWSERS_PATH": os.environ.get("PLAYWRIGHT_BROWSERS_PATH", "/ms-playwright")}
+    # Fuso e idioma do Mac (F42): o Chromium herda `TZ` e lê `AGENTBOX_LOCALE`; um navegador em UTC/en-US num IP do Brasil é
+    # um sinal de bot.
+    for key in ("TZ", "AGENTBOX_LOCALE"):
+        if os.environ.get(key):
+            env[key] = os.environ[key]
     if name == "runtime":
         env["AGENTBOX_PROFILE_DIR"] = "/profile"
     return env
