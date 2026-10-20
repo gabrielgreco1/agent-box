@@ -1,0 +1,17 @@
+e2e-subagents 2026-10-20T06:05:17Z provider=codex model=gpt-6-luna mock=0 work=/tmp/abmp-RnxH95 owner=agent-box-7a254e70
+  PASS  app de teste isolado (dados em /tmp/abmp-RnxH95/h, owner agent-box-7a254e70, não é o do dono)
+  PASS  composer oferece Subagent computers para codex (full aceito)
+terminal 01A157EA-4084-7B9E-A1B4-73F264738A5A
+esperou 23 s (computador visto: 1, tudo removido: 1)
+  PASS  um computador foi reservado pelo pai
+  PASS  um slot de worker reivindicou o computador (orchestration_child.claimed_at preenchido)
+  PASS  result.json enviado com result_submit contém o título
+  PASS  resultado validado (verified >= 1, cited_missing = 0)
+  PASS  computador liberado e removido
+  PASS  nenhum container do teste sobrou
+  PASS  o pai mostra o título ao final
+
+--- limpeza
+sobrou do teste no Docker: containers=0
+o que é do dono segue idêntico (app, launchd, containers, configs globais)
+RESULTADO: OK (evidência: /Users/gabriel/orca/workspaces/agent-box/multi-provider-subagents/docs/evidence/subagents-multi-provider/codex-real-gpt-6-luna-run2)

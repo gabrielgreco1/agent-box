@@ -1,0 +1,52 @@
+                                                                                                  
+  ┃                                                                                               
+  ┃  Spawn one subagent with its own computer. It should open https://example.com and submit      
+  ┃  the page title with result_submit. When it finishes, tell me the title it submitted.         
+  ┃                                                                                               
+                                                                                                  
+     ⚙ agentbox_boxes_reserve [display=headless]                                                  
+                                                                                                  
+     ⠙ Agentbox-Worker-1 Task — Get example.com page title                                        
+       ↳ 4 toolcalls                                                                              
+                                                                                                  
+     ctrl+x down view subagents                                                                   
+                                                                                                  
+     ▣  Build · GLM-5.3-Flash Free                                                                
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+                                                                                                  
+  ┃                                                                                               
+  ┃                                                                                               
+  ┃                                                                                               
+  ┃  Build · GLM-5.3-Flash Free OpenCode                                                          
+  ╹▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀  
+   ⬝⬝⬝⬝⬝⬝■■  esc interrupt                                          40.4K (20%)  ctrl+p commands  
+                                                                                                  

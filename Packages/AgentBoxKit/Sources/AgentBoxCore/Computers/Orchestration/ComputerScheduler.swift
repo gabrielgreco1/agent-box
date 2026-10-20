@@ -112,10 +112,13 @@ public protocol ParentOrchestrating: Sendable {
     func drainParentMessages(for child: String) async -> [JSON]
     /// `box_claim` deu certo: o filho fica `claimed` no store (a adoção depois de reiniciar o app devolve o dono ao computador).
     func childClaimed(_ child: String, computer: String) async
+    /// Codex: o slot de worker (id do filho) a que o computador `name` foi reservado, se é deste pai.
+    func workerChild(ofComputer name: String, parent: String) async -> String?
 }
 
 extension ParentOrchestrating {
     public func childClaimed(_ child: String, computer: String) async {}
+    public func workerChild(ofComputer name: String, parent: String) async -> String? { nil }
 }
 
 public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
@@ -532,6 +535,11 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
     public var activeCount: Int { entries.values.filter { $0.phase == .creating || $0.phase == .active }.count }
     public func phase(of name: String) -> Phase? { entries[name]?.phase }
     public func childID(for name: String) -> String? { entries[name]?.childID }
+
+    public func workerChild(ofComputer name: String, parent: String) async -> String? {
+        guard let entry = entries[name], entry.spec.parent == parent else { return nil }
+        return entry.childID
+    }
     /// O pai (identidade MCP do lançamento) dono do computador.
     public func parent(of name: String) -> String? { entries[name]?.spec.parent }
     /// Nomes dos computadores que o pai tem agora (qualquer fase menos `failed`).

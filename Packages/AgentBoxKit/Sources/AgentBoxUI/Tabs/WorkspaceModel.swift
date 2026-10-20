@@ -251,21 +251,21 @@ final class WorkspaceModel {
         snapshot.tabs.first { $0.id == terminal.tabID }?.sessionID ?? locate(terminal: terminal.id)?.sid
     }
 
-    /// Modo "Subagent computers" da sessão do terminal, só para Claude (os outros agentes não recebem a injeção).
+    /// Modo "Subagent computers" da sessão do terminal (Claude, Codex e OpenCode; cada CLI recebe a sua injeção).
     func subagentLaunch(for terminal: Terminal) -> SubagentLaunch? {
-        guard terminal.provider == .claude, let sid = sessionID(of: terminal), let session = sessionLookup(sid) else { return nil }
+        guard terminal.provider.supportsSubagentComputers, let sid = sessionID(of: terminal), let session = sessionLookup(sid) else { return nil }
         return SubagentLaunch(sessionID: sid, sessionTitle: session.title, mode: session.subagentComputers)
     }
 
-    /// O que o header do pane precisa do "Subagent computers" da sessão (só Claude).
+    /// O que o header do pane precisa do "Subagent computers" da sessão.
     func subagentHeader(for terminal: Terminal) -> (session: UUID, mode: SubagentComputersMode, restart: Bool)? {
-        guard terminal.provider == .claude, let sid = sessionID(of: terminal), let session = sessionLookup(sid) else { return nil }
+        guard terminal.provider.supportsSubagentComputers, let sid = sessionID(of: terminal), let session = sessionLookup(sid) else { return nil }
         return (sid, session.subagentComputers, subagent?.restartPending(session: sid) ?? false)
     }
 
     /// `Restart to apply`: mata o Claude com calma e o relança com Resume, para o lançamento levar o modo novo.
     func relaunchApplyingSettings(_ id: UUID) async {
-        guard let t = terminal(id), t.provider == .claude else { return }
+        guard let t = terminal(id), t.provider.supportsSubagentComputers else { return }
         await runtime.kill(t, mode: .graceful)
         for _ in 0 ..< 80 {
             guard let current = terminal(id), current.state == .running || current.state == .launching else { break }
@@ -964,7 +964,7 @@ final class WorkspaceModel {
                 }
                 guard self.terminal(id) != nil else { return }
                 currentRuns[id] = result.runID
-                if current.provider == .claude { self.subagent?.noteLaunched(terminal: id, mode: subagent?.mode ?? .off) }
+                if current.provider.supportsSubagentComputers { self.subagent?.noteLaunched(terminal: id, mode: subagent?.mode ?? .off) }
                 launchDirectories[id] = result.plan.launchDirectory
                 update(terminal: id) { t in
                     t.state = .running

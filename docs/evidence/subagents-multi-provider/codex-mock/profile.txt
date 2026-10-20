@@ -1,0 +1,1 @@
+01A157E9-1550-7EDA-8446-F9756F3864AA|codex e2e gpt-6-luna|codex|gpt-6-luna||bypass|["-c","model_provider=\"mock\"","-c","model_providers.mock={name=\"mock\",base_url=\"http://127.0.0.1:23112/v1\",wire_api=\"responses\",requires_openai_auth=false}"]|{"CODEX_HOME":"/tmp/abmp-vn4K9P/chome"}

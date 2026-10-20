@@ -8,12 +8,21 @@ import SwiftTerm
 /// Observador de quadros já alimentados no emulador (medição: `scripts/bench.sh`). Chamado na thread de parse, depois
 /// do `feed`; sem observador o custo é uma leitura de lock por quadro.
 public nonisolated final class TerminalFrameObserver: Sendable {
-    private let handler = Mutex<(@Sendable (Data) -> Void)?>(nil)
+    /// A closure vai numa caixa (propriedade de função concreta, não um `Mutex<closure?>` genérico): com o genérico o build Release
+    /// gerava thunks de reabstração que chamavam a si mesmos (laço infinito na thread de parse: app travado ou "stack exceeded").
+    private final class Handler: Sendable {
+        let run: @Sendable (Data) -> Void
+        init(_ run: @escaping @Sendable (Data) -> Void) { self.run = run }
+    }
+    private let handler = Mutex<Handler?>(nil)
     public init() {}
-    public func set(_ handler: (@Sendable (Data) -> Void)?) { self.handler.withLock { $0 = handler } }
+    public func set(_ handler: (@Sendable (Data) -> Void)?) {
+        let box = handler.map { Handler($0) }
+        self.handler.withLock { $0 = box }
+    }
     func fed(_ bytes: Data) {
         let current = handler.withLock { $0 }
-        current?(bytes)
+        current?.run(bytes)
     }
 }
 

@@ -1,0 +1,12 @@
+{
+  "task": "Spawn one subagent with its own computer; it opens https://example.com and submits the page title with result_submit",
+  "harness": "scripts/e2e-subagents.sh (isolated app copy, AGENTBOX_HOME temp, own container owner label; Codex with a temp CODEX_HOME)",
+  "runs": {
+    "opencode-deepseek-v4.1-flash-free": {"provider": "opencode", "model": "opencode/deepseek-v4.1-flash-free (free)", "pass": true, "note": "reserve -> worker claim -> result_submit validated (verified 2, cited_missing 0) -> release -> container removed; parent printed the title"},
+    "opencode-glm-5.3-flash-free": {"provider": "opencode", "model": "opencode/glm-5.3-flash-free (free)", "pass": true, "note": "same flow; the model named the field page_title instead of title (the harness check was loosened to any field afterwards)"},
+    "codex-real-gpt-6-luna-run1": {"provider": "codex", "model": "gpt-6-luna, effort low", "pass": true, "note": "real run 1 of 2. Accepting the trust prompt made Codex append a [projects] entry for the temp folder to ~/.codex/config.toml (Codex itself, not the app); it was removed afterwards and size/mtime restored (8105 bytes, same mtime). Later runs use a temp CODEX_HOME"},
+    "codex-real-gpt-6-luna-run2": {"provider": "codex", "model": "gpt-6-luna, effort low", "pass": true, "note": "real run 2 of 2, temp CODEX_HOME with a copy of auth.json; ~/.codex untouched (owner snapshot identical)"},
+    "codex-mock": {"provider": "codex", "model": "scripted local model (scripts/e2e/mock_codex.py), no usage spent", "pass": true, "note": "same flow end to end with the real Codex CLI, real Docker computer"}
+  },
+  "other": {"frame-observer-crash.txt": "pre-existing Release-build hang/crash in the terminal frame observer that hit about half of the early runs; fixed in this branch"}
+}

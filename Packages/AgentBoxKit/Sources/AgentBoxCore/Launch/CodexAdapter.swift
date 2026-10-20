@@ -119,10 +119,11 @@ public struct CodexAdapter: ProviderAdapter {
         profile += filtered.kept.filter { !($0 == "--dangerously-bypass-approvals-and-sandbox" && profile.contains($0)) }
 
         // Fatia 2 (P18): hooks por `-c` com trust inline; nada gravado em `~/.codex`. `--no-daemon` já está em `profile`.
-        let injected = try context.injection?.codexInjection() ?? []
+        let injection = try context.injection?.codexInjection(launchDirectory: context.launchDirectory) ?? (injected: [], files: [])
+        let injected = injection.injected
 
         var prompt: [String] = []
-        var files: [LaunchFile] = []
+        var files: [LaunchFile] = injection.files
         if !resuming {
             let delivery = PromptDelivery.resolve(prompt: launch.initialPrompt, promptFile: launch.initialPromptFile, launchDirectory: context.launchDirectory)
             if let text = delivery.argumentText {
@@ -130,7 +131,7 @@ public struct CodexAdapter: ProviderAdapter {
                 if !filtered.kept.isEmpty { prompt.append("--") }
                 prompt.append(text)
             }
-            files = delivery.files
+            files += delivery.files
         }
 
         let capture: NativeIDCaptureStrategy = resuming && nativeID != nil ? .assigned(nativeID ?? "") : .codexRollout(cwd: context.cwd)

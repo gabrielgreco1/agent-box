@@ -80,22 +80,24 @@ public struct OpenCodeAdapter: ProviderAdapter {
         warnings += filtered.warnings
         profile += filtered.kept.filter { !($0 == "--auto" && profile.contains($0)) }
 
+        // Subagent computers: a config inline vai por env (`OPENCODE_CONFIG_CONTENT`), o texto de instruções por arquivo do lançamento.
+        let injection = try context.injection?.openCodeInjection(launchDirectory: context.launchDirectory) ?? (environment: [:], files: [])
         var prompt: [String] = []
-        var files: [LaunchFile] = []
+        var files: [LaunchFile] = injection.files
         if !resuming {
             let delivery = PromptDelivery.resolve(prompt: launch.initialPrompt, promptFile: launch.initialPromptFile, launchDirectory: context.launchDirectory)
             if let text = delivery.argumentText {
                 if capabilities.supports("--prompt") { prompt = ["--prompt", text] }
                 else { warnings.append(AdapterKit.unsupported("--prompt", adapter: self, field: "Initial prompt")) }
             }
-            files = delivery.files
+            files += delivery.files
         }
 
         let capture: NativeIDCaptureStrategy = nativeID.map { .assigned($0) } ?? .openCodeSessionList(cwd: context.cwd)
         let argv = ResolvedArgv(executable: [context.executablePath], identity: identity, profile: profile, injected: [], prompt: prompt)
         return AdapterOutput(
             argv: argv, nativeConversationID: nativeID, capture: capture,
-            skipsPermissions: AdapterKit.skipIndicator(in: profile, extra: ["--auto"]), warnings: warnings, files: files
+            skipsPermissions: AdapterKit.skipIndicator(in: profile, extra: ["--auto"]), warnings: warnings, files: files, environment: injection.environment
         )
     }
 }

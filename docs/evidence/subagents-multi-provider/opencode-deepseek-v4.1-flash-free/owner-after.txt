@@ -1,0 +1,11 @@
+app instalado:
+/Applications/Racky.app/Contents/MacOS/Racky
+job do launchd:
+	state = running
+containers do dono:
+09c6c3438b52
+arquivos globais:
+/Users/gabriel/.codex/config.toml 1792377526 8105
+/Users/gabriel/.codex/hooks.json 1791031349 8867
+/Users/gabriel/.config/opencode/opencode.jsonc 1785854315 50
+/Users/gabriel/.claude/settings.json 1791551302 42592

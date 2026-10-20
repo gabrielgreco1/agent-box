@@ -4,6 +4,8 @@ import Foundation
 public enum TerminalProvider: String, Codable, Sendable, CaseIterable {
     case claude, codex, opencode, shell, custom
     public var isAgent: Bool { self == .claude || self == .codex || self == .opencode }
+    /// "Subagent computers" (computador por subagente) vale para os três agentes; cada um recebe a injeção do seu CLI.
+    public var supportsSubagentComputers: Bool { isAgent }
 }
 
 /// Estado do processo do terminal (01 §6.2; nomes de 08 §0.4). `daemonUnavailable` é só estado de UI.

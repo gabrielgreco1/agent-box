@@ -121,9 +121,30 @@ public struct OrchestrationBundle: Sendable {
     public var unsetEnvironment: [String]
     /// Gatilho de spawn (F12): preenchido por quem conhece o modo da sessão (`ComputerOrchestrator.prepareParent`).
     public var spawnGuardMode: SubagentComputersMode?
+    /// CLI do pai. Claude usa os campos acima; Codex e OpenCode usam só `codex` / `openCode` (os campos do Claude ficam vazios).
+    public var provider: TerminalProvider = .claude
+    public var helperPath: String = ""
+    /// Codex: identidade do servidor MCP "pool" dos workers (a thread revela o slot), registrada no hub junto do pai.
+    public var poolID: String?
+    public var poolCapability: String?
+    public var codex: CodexOrchestration?
+    public var openCode: OpenCodeOrchestration?
+
+    /// Soma as peças do pai a uma injeção existente (hooks, etc.); sem base (Codex e OpenCode só injetam hooks com trust sondado), parte
+    /// de uma injeção vazia só com o helper.
+    public func applied(to base: LaunchInjection?) -> LaunchInjection {
+        var out = base ?? LaunchInjection(helperPath: helperPath, codexActivityHooks: false)
+        switch provider {
+        case .codex: out.codexOrchestration = codex
+        case .opencode: out.openCodeOrchestration = openCode
+        default: return apply(to: out)
+        }
+        return out
+    }
 
     /// Soma as peças do pai a uma injeção existente (hooks, etc.).
     public func apply(to injection: LaunchInjection) -> LaunchInjection {
+        if provider == .codex || provider == .opencode { return applied(to: injection) }
         var out = injection
         out.claudeMCPConfig = mcpConfig
         out.claudePluginFiles = pluginFiles
@@ -138,6 +159,9 @@ public struct OrchestrationBundle: Sendable {
 
 public enum OrchestrationInjectionBuilder {
     public static let defaultWorkerSlots = 20  // CS-325: filhos com computador por pai
+    /// Codex e OpenCode: cada slot é um agente/servidor MCP na config do lançamento (o Claude carrega os de `--agents` sob demanda).
+    /// 6 cobre os 4 computadores que cabem em 8 GB de VM com folga.
+    public static let defaultOtherWorkerSlots = 6
 
     public struct Options: Sendable {
         public var workerSlots: Int = OrchestrationInjectionBuilder.defaultWorkerSlots
@@ -147,6 +171,8 @@ public enum OrchestrationInjectionBuilder {
         public var workerModel: String?
         /// Regras `deny` extras além de `Skill(agentbox)`.
         public var extraDenyRules: [String] = []
+        /// OpenCode: pastas fora do projeto que o pai pode ler sem pedir permissão (as pastas dos runs, onde estão os `result.json`).
+        public var readableDirectories: [String] = []
         public init() {}
     }
 
@@ -164,7 +190,16 @@ public enum OrchestrationInjectionBuilder {
 
     /// Gera as peças do lançamento. Não registra nada: `ComputerScheduler.registerWorkers` + `hub.registerParent` fazem isso com o
     /// resultado (a capability é correlação de lançamento, nunca aparece em schema).
-    public static func make(parentID: String, helperPath: String, options: Options = Options(), parentCapability: String? = nil, workerCapability: (Int) -> String = { _ in randomToken() }) throws -> OrchestrationBundle {
+    public static func make(
+        parentID: String, helperPath: String, options: Options = Options(), parentCapability: String? = nil, workerCapability: (Int) -> String = { _ in randomToken() },
+        provider: TerminalProvider = .claude, poolCapability: String? = nil
+    ) throws -> OrchestrationBundle {
+        switch provider {
+        case .codex, .opencode: return makeNonClaude(
+            provider: provider, parentID: parentID, helperPath: helperPath, options: options, parentCapability: parentCapability, workerCapability: workerCapability,
+            poolCapability: poolCapability)
+        default: break
+        }
         let capability = parentCapability ?? randomToken()
         let workers = (1...max(1, options.workerSlots)).map { WorkerSlot(childID: childID(parent: parentID, slot: $0), slot: $0, capability: workerCapability($0)) }
 
@@ -207,9 +242,37 @@ public enum OrchestrationInjectionBuilder {
             unsetEnvironment: ["CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS"])
     }
 
+    /// Codex e OpenCode: sem `--agents`/plugin; as peças ficam estruturadas e viram argv/arquivos/env no plano do lançamento.
+    private static func makeNonClaude(
+        provider: TerminalProvider, parentID: String, helperPath: String, options: Options, parentCapability: String?, workerCapability: (Int) -> String,
+        poolCapability: String?
+    ) -> OrchestrationBundle {
+        let capability = parentCapability ?? randomToken()
+        let slots = options.workerSlots == defaultWorkerSlots ? defaultOtherWorkerSlots : options.workerSlots
+        let workers = (1...max(1, slots)).map { WorkerSlot(childID: childID(parent: parentID, slot: $0), slot: $0, capability: workerCapability($0)) }
+        var bundle = OrchestrationBundle(
+            parentID: parentID, parentCapability: capability, workers: workers, mcpConfig: Data(), pluginFiles: [], agentsJSON: Data(), denyRules: [],
+            environment: [:], unsetEnvironment: [])
+        bundle.provider = provider
+        bundle.helperPath = helperPath
+        if provider == .codex {
+            let poolID = OrchestrationText.poolID(parent: parentID)
+            let poolCapability = poolCapability ?? randomToken()
+            bundle.poolID = poolID
+            bundle.poolCapability = poolCapability
+            bundle.codex = CodexOrchestration(
+                helperPath: helperPath, parentID: parentID, parentCapability: capability, poolID: poolID, poolCapability: poolCapability, workers: workers)
+        } else {
+            bundle.openCode = OpenCodeOrchestration(
+                helperPath: helperPath, parentID: parentID, parentCapability: capability, workers: workers, readableDirectories: options.readableDirectories)
+        }
+        return bundle
+    }
+
     /// Cadastra o pai e os workers no hub e no scheduler (identidades válidas só enquanto o lançamento viver).
     public static func register(_ bundle: OrchestrationBundle, hub: ComputerHub, scheduler: ComputerScheduler, parentRunID: UUID? = nil) async {
         await hub.registerParent(id: bundle.parentID, capability: bundle.parentCapability)
+        if let pool = bundle.poolID, let capability = bundle.poolCapability { await hub.registerPool(id: pool, capability: capability, parent: bundle.parentID) }
         await scheduler.registerWorkers(parent: bundle.parentID, parentRunID: parentRunID, workers: bundle.workers)
     }
 }

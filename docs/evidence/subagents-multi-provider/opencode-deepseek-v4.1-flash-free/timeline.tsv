@@ -1,0 +1,19 @@
+0		
+3		
+6		
+10	example-com=provisioning 	01a157e0-w1:reserved:example-com 
+13	example-com=ready 	01a157e0-w1:reserved:example-com 
+16	example-com=ready 	01a157e0-w1:reserved:example-com 
+19	example-com=in_use 	01a157e0-w1:claimed:example-com 
+22	example-com=in_use 	01a157e0-w1:claimed:example-com 
+25	example-com=in_use 	01a157e0-w1:claimed:example-com 
+29	example-com=in_use 	01a157e0-w1:claimed:example-com 
+32	example-com=in_use 	01a157e0-w1:claimed:example-com 
+35	example-com=in_use 	01a157e0-w1:claimed:example-com 
+38	example-com=in_use 	01a157e0-w1:claimed:example-com 
+41	example-com=in_use 	01a157e0-w1:claimed:example-com 
+44	example-com=in_use 	01a157e0-w1:claimed:example-com 
+48	example-com=in_use 	01a157e0-w1:claimed:example-com 
+51	example-com=in_use 	01a157e0-w1:claimed:example-com 
+54	example-com=in_use 	01a157e0-w1:claimed:example-com 
+57	example-com=removed 	01a157e0-w1:released:example-com 

@@ -6,7 +6,8 @@ public protocol ComputerLifecycle: Sendable {
     func finish(_ computer: ManagedComputer, keep24h: Bool) async
 }
 
-public enum ChildRole: Sendable, Equatable { case worker, parent }
+/// `pool`: servidor MCP compartilhado pelos workers de um pai Codex (o MCP do Codex não é por agente); a thread que chama revela o slot.
+public enum ChildRole: Sendable, Equatable { case worker, parent, pool }
 
 /// Registro dos computadores e roteamento por filho (07 §3.1): a identidade vem da configuração por filho do processo MCP
 /// (`agentbox mcp --child <id> --capability <token>`), e um filho só opera o computador que reivindicou com `box_claim`.
@@ -19,6 +20,8 @@ public actor ComputerHub {
     private var roles: [String: ChildRole] = [:]
     private var parents: [String: String] = [:]  // filho -> pai que o criou (slot de worker, T3-04)
     private var childOrder: [String: [String]] = [:]  // pai -> filhos por ordem de slot
+    private var pools: [String: String] = [:]  // pool -> pai
+    private var threadBindings: [String: [String: String]] = [:]  // pool -> (thread do Codex -> slot de worker)
     private var lifecycle: (any ComputerLifecycle)?
     /// A UI acompanha a chegada e a saída de computadores (linhas filhas da sidebar, viewer).
     private var onRegister: (@Sendable (ManagedComputer) -> Void)?
@@ -63,7 +66,30 @@ public actor ComputerHub {
         roles[id] = .parent
     }
 
+    /// Codex: identidade do servidor MCP único dos workers de `parent`. Não é um slot (não entra em `children(of:)`).
+    public func registerPool(id: String, capability: String, parent: String) {
+        registerPool(id: id, capabilityHash: Self.fingerprint(capability), parent: parent)
+    }
+
+    public func registerPool(id: String, capabilityHash: String, parent: String) {
+        identities[id] = capabilityHash
+        roles[id] = .pool
+        pools[id] = parent
+    }
+
+    public func poolParent(of id: String) -> String? { pools[id] }
+
+    /// A thread (subagente do Codex) passa a falar como o slot `child` neste pool.
+    public func bind(thread: String, pool: String, to child: String) { threadBindings[pool, default: [:]][thread] = child }
+    public func boundChild(thread: String, pool: String) -> String? { threadBindings[pool]?[thread] }
+
+    /// O pai terminou: os pools dele saem junto.
+    public func unregisterPools(of parent: String) {
+        for (id, owner) in pools where owner == parent { unregisterChild(id: id) }
+    }
+
     public func unregisterChild(id: String) {
+        pools[id] = nil; threadBindings[id] = nil
         identities[id] = nil; claims[id] = nil; roles[id] = nil
         if let parent = parents[id] { childOrder[parent]?.removeAll { $0 == id } }
         parents[id] = nil

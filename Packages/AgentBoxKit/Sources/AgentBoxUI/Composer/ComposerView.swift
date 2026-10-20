@@ -53,7 +53,7 @@ struct ComposerView: View {
                             .id(model.focusPromptNonce)
                     }
                 }
-                if model.draft.provider == .claude { subagentComputers }
+                if model.draft.provider.supportsSubagentComputers { subagentComputers }
                 advanced
                 summary
                 if let issue = model.boxIssue { errorBox(issue) }

@@ -1,0 +1,20 @@
+{
+  "fields" : [
+    {
+      "citations" : [
+        {
+          "kind" : "request",
+          "ref" : "01M5BYMY18JHQ8JFDGBC7JK9KY",
+          "trust" : "observed"
+        }
+      ],
+      "pointer" : "/title",
+      "status" : "verified"
+    }
+  ],
+  "summary" : {
+    "cited_missing" : 0,
+    "not_verified" : 0,
+    "verified" : 1
+  }
+}
