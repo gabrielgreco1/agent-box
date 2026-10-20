@@ -254,6 +254,9 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
         do { try await provisioning.preflight() } catch {
             if let setup = error as? ComputerSetupError, setup == .cloudUnavailable {
                 preflightError = Self.describe(setup); preflightReason = "cloud_unavailable"  // nuvem pedida sem provedor: nunca vai para o Mac
+            } else if let setup = error as? ComputerSetupError, case .nativeRuntime = setup {
+                // Runtime nativo que não serve a este Mac: nada a ver com Docker, o pai não manda abri-lo.
+                preflightError = Self.describe(setup); preflightReason = "runtime_unavailable"
             } else { preflightError = "\(error)" }
         }
         var results: [JSON] = []

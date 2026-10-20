@@ -216,4 +216,68 @@ import Testing
         #expect(registry.availability(of: .conflictRestore) == .disabled(reason: "There's no backup to restore."))
         withExtendedLifetime(model) {}
     }
+
+    // MARK: Runtime nativo: sem Docker na checklist
+
+    private func nativeProbes(_ mode: ComputerRuntimeMode, dockerCalls: Counter) -> DiagnosticsProbes {
+        DiagnosticsProbes(
+            gh: { GitHubProbeResult(installed: true, version: "2.60.1", auth: GitHubAuthStatus(state: .connected, host: "github.com", user: "me", scopes: ["repo"])) },
+            docker: { dockerCalls.bump(); return .installedNotRunning(kind: .desktop) }, image: { _ in dockerCalls.bump(); return .missing },
+            conflicts: { ConflictScan() }, runtime: { mode })
+    }
+
+    @Test func withTheNativeRuntimeTheChecklistNeverMentionsDocker() async throws {
+        let dockerCalls = Counter()
+        let (model, _, _) = try make(nativeProbes(.native(assetsInstalled: false), dockerCalls: dockerCalls))
+        await model.runDiagnostics(force: false)
+        #expect(model.diagnosticItems.map(\.key) == [.gh, .runtime])
+        #expect(dockerCalls.value == 0)
+        #expect(model.diagnostics[.runtime]?.detail == "Downloads automatically on first use (~470 MB)")
+        for item in model.diagnosticItems {
+            #expect(!"\(item.title) \(item.detail)".localizedCaseInsensitiveContains("docker"))
+            if let fix = item.fix { #expect(fix != .startDocker) }
+        }
+    }
+
+    @Test func aMacThatCannotRunNativelyExplainsTheRequirement() async throws {
+        let mode = ComputerRuntimeMode.dockerOnly(reason: "The built-in computer runtime needs macOS 26 or later.")
+        let (model, _, _) = try make(DiagnosticsProbes(
+            gh: { GitHubProbeResult(installed: false) }, docker: { .notInstalled }, image: { _ in nil }, conflicts: { ConflictScan() }, runtime: { mode }))
+        await model.runDiagnostics(force: false)
+        #expect(model.diagnosticItems.map(\.key) == [.gh, .docker, .image])
+        #expect(model.diagnostics[.docker]?.detail == "Racky needs macOS 26 on Apple silicon, or Docker.")
+    }
+
+    @Test func forcedDockerShowsDockerAndImage() async throws {
+        let (model, _, _) = try make(nativeProbes(.dockerForced, dockerCalls: Counter()))
+        await model.runDiagnostics(force: false)
+        #expect(model.diagnosticItems.map(\.key) == [.gh, .docker, .image])
+    }
+
+    // MARK: ComputerRuntimeProbe (a decisão real, com Mac e ambiente injetados)
+
+    private let tahoe = OperatingSystemVersion(majorVersion: 26, minorVersion: 0, patchVersion: 0)
+    private let sequoia = OperatingSystemVersion(majorVersion: 15, minorVersion: 6, patchVersion: 0)
+    private let root = URL(fileURLWithPath: "/tmp/racky-runtime-probe-test")
+
+    @Test func runtimeProbeChoosesNativeOnASupportedMacAndReportsTheDownloadState() {
+        func mode(installed: Bool, force: Bool = false, env: [String: String] = [:]) -> ComputerRuntimeMode {
+            ComputerRuntimeProbe.mode(
+                environment: env, supportRoot: root, forceDocker: force, entitled: true, osVersion: tahoe, appleSilicon: true,
+                assetsInstalled: { $0.readyFile.path == root.appendingPathComponent("vz/assets/ready.json").path && installed })
+        }
+        #expect(mode(installed: false) == .native(assetsInstalled: false))
+        #expect(mode(installed: true) == .native(assetsInstalled: true))
+        #expect(mode(installed: true, force: true) == .dockerForced)
+        #expect(mode(installed: true, env: ["RACKY_COMPUTER_RUNTIME": "docker"]) == .dockerForced)
+    }
+
+    @Test func runtimeProbeFallsBackToDockerOnlyWhenTheMacCannotRunNatively() {
+        let old = ComputerRuntimeProbe.mode(environment: [:], supportRoot: root, forceDocker: false, entitled: true, osVersion: sequoia, appleSilicon: true, assetsInstalled: { _ in false })
+        let intel = ComputerRuntimeProbe.mode(environment: [:], supportRoot: root, forceDocker: false, entitled: true, osVersion: tahoe, appleSilicon: false, assetsInstalled: { _ in false })
+        let unsigned = ComputerRuntimeProbe.mode(environment: [:], supportRoot: root, forceDocker: false, entitled: false, osVersion: tahoe, appleSilicon: true, assetsInstalled: { _ in false })
+        for mode in [old, intel, unsigned] {
+            guard case .dockerOnly = mode else { Issue.record("esperava dockerOnly, veio \(mode)"); continue }
+        }
+    }
 }

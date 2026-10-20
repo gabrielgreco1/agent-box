@@ -2,19 +2,31 @@ import RackyDocker
 import RackyProtocol
 import Foundation
 
-/// Itens da checklist de diagnóstico além dos CLIs de agente (03 §15, R1.1): `gh`, Docker, imagem e conflitos.
+/// Itens da checklist de diagnóstico além dos CLIs de agente (03 §15, R1.1): `gh`, runtime dos computadores (nativo) ou Docker e
+/// imagem (só quando o Docker é o runtime), e conflitos.
 /// Os CLIs de agente seguem no `SettingsModel` (mesma sonda, mesmo cache).
 public nonisolated enum DiagnosticKey: String, CaseIterable, Sendable {
-    case gh, docker, image, conflicts
+    case gh, runtime, docker, image, conflicts
 
     public var title: String {
         switch self {
         case .gh: "GitHub CLI"
+        case .runtime: "Computer runtime"
         case .docker: "Docker"
         case .image: "Computer image"
         case .conflicts: "Conflicts"
         }
     }
+}
+
+/// Qual runtime serve os computadores neste Mac. Decide o que a checklist mostra: com o nativo, nada de Docker.
+public nonisolated enum ComputerRuntimeMode: Sendable, Equatable {
+    /// Runtime nativo (VMs do próprio app): nada a instalar; `assetsInstalled` = kernel e imagem já baixados.
+    case native(assetsInstalled: Bool)
+    /// O usuário forçou o Docker (Settings › Computers).
+    case dockerForced
+    /// Este Mac não roda o runtime nativo (macOS < 26, Intel, build sem entitlement): só o Docker serve.
+    case dockerOnly(reason: String)
 }
 
 public nonisolated enum DiagnosticState: Sendable, Equatable {

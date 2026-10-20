@@ -147,12 +147,16 @@ public final class DiagnosticsController {
         await refresh()
         var versions = Dictionary(uniqueKeysWithValues: versionRows.map { ($0.0, $0.1) })
         for info in settings.agents { versions[info.provider.rawValue] = info.version ?? "not installed" }
-        for (name, value) in await DiagnosticsExporter.cliVersions() { versions[name] = value }
+        let native = settings.usesNativeRuntime
+        let dockerSummary: @Sendable () async -> [String: String] = native
+            ? { @Sendable in [:] } : { @Sendable in await DiagnosticsExporter.liveDockerSummary() }
+        for (name, value) in await DiagnosticsExporter.cliVersions(names: native ? ["git", "gh"] : ["git", "gh", "docker"]) { versions[name] = value }
         var checks: [String: String] = [:]
         for item in onboarding.diagnosticItems { checks[item.key.rawValue] = "\(item.state): \(item.detail)" }
         let context = DiagnosticsExportContext(
             paths: paths, store: store, versions: versions, settingsJSON: settingsJSON(), daemonSessions: daemon.sessions, checks: checks,
-            crashReports: lastCrash?.reports.map(\.fileName) ?? [], reportsDirectory: reportsDirectory)
+            crashReports: lastCrash?.reports.map(\.fileName) ?? [], reportsDirectory: reportsDirectory,
+            dockerSummary: dockerSummary)
         do {
             let bundle = try await DiagnosticsExporter.prepare(context)
             pendingBundle = bundle

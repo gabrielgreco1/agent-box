@@ -37,11 +37,30 @@ public nonisolated enum DiagnosticsEvaluator {
         return DiagnosticItem(key: .gh, state: .ok, detail: prefix + user + scopes)
     }
 
+    // MARK: Runtime nativo
+
+    /// Tamanho aproximado do download do runtime nativo (kernel + init + imagem do computador), mostrado no onboarding.
+    public static let runtimeDownloadSize = "~470 MB"
+    /// Mensagem de um Mac que não roda o runtime nativo e não tem Docker.
+    public static let runtimeUnsupportedMessage = "Racky needs macOS 26 on Apple silicon, or Docker."
+
+    /// Item do runtime nativo; `nil` nos modos Docker (lá valem os itens Docker e imagem).
+    public static func runtime(_ mode: ComputerRuntimeMode) -> DiagnosticItem? {
+        guard case .native(let installed) = mode else { return nil }
+        return DiagnosticItem(
+            key: .runtime, state: .ok,
+            detail: installed ? "Installed" : "Downloads automatically on first use (\(runtimeDownloadSize))")
+    }
+
     // MARK: Docker e imagem
 
-    public static func docker(_ result: DockerProbeResult) -> DiagnosticItem {
+    public static func docker(_ result: DockerProbeResult, mode: ComputerRuntimeMode = .dockerForced) -> DiagnosticItem {
         switch result {
         case .notInstalled:
+            if case .dockerOnly = mode {
+                return DiagnosticItem(
+                    key: .docker, state: .warning, detail: runtimeUnsupportedMessage, fix: .openURL(title: "Install…", dockerInstallURL))
+            }
             return DiagnosticItem(
                 key: .docker, state: .warning, detail: "Not installed. Needed for subagent computers.",
                 fix: .openURL(title: "Install…", dockerInstallURL))

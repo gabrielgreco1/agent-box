@@ -16,6 +16,8 @@ public struct VZPaths: Sendable, Equatable {
     public var registryFile: URL { root.appendingPathComponent("registry.json") }
     public var assets: URL { root.appendingPathComponent("assets", isDirectory: true) }
     public var readyFile: URL { assets.appendingPathComponent("ready.json") }
+    /// O runtime já foi baixado e preparado (existe o `ready.json`): a próxima reserva não precisa da rede.
+    public var isInstalled: Bool { FileManager.default.fileExists(atPath: readyFile.path) }
     public var store: URL { root.appendingPathComponent("store", isDirectory: true) }
     /// Onde a `ContainerManager` guarda cada VM (`<store>/containers/<id>`): é o que o sweep apaga.
     public var containers: URL { store.appendingPathComponent("containers", isDirectory: true) }

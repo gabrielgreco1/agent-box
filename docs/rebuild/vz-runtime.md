@@ -80,8 +80,8 @@ daemon, and the app reads the port from the API. The scheduler would then adopt 
 
 ## Assets
 
-Three files, listed in a manifest (`runtime/vz-manifest.json`, baked into `Contents/Resources/runtime`; **placeholders until
-published**): `kernel` (Kata `vmlinux`), `vminit` (apple/containerization guest init, OCI tar), `computer` (the slim image, OCI tar). Each
+Three files, listed in a manifest (`runtime/vz-manifest.json`, baked into `Contents/Resources/runtime`; **real hashes and release URLs
+after `scripts/vz/stage-release.sh`, but the release itself is not published until the owner runs the printed command**): `kernel` (Kata `vmlinux`), `vminit` (apple/containerization guest init, OCI tar), `computer` (the slim image, OCI tar). Each
 has `url` + `sha256` (+ size). `AssetDownloader` is checksummed and resumable (`Range`, `.part`, sidecar `.verified`), supports
 `https` and `file://`. The first reservation shows "Downloading the computer runtime (X of Y MB)…" on the computer row and in
 Settings › Computers › Computer runtime, then "Preparing the computer runtime…" (OCI import + one-time unpack). State lives in
@@ -140,9 +140,14 @@ for Docker mode.
 
 ## What is left
 
-* Publish the three assets and replace the placeholders in `runtime/vz-manifest.json` (needs the owner's go-ahead).
+* Publish the runtime release: `scripts/vz/stage-release.sh` already copied the files, computed sha256/sizes and rewrote
+  `runtime/vz-manifest.json` to `https://github.com/gabrielgreco1/racky/releases/download/runtime-<version>/<file>`; it prints the
+  `gh release create` command (needs the owner's go-ahead). Then `scripts/release.sh <version>` builds the DMG (refuses placeholders).
 * Host VMs in `rackyd` if computers must survive the UI (plan above).
-* Onboarding/Diagnostics still probe and mention Docker/images; they should report "not needed" when the native runtime is active.
+* ~~Onboarding/Diagnostics probe Docker~~ Done: with the native runtime the checklist shows one "Computer runtime" row ("Downloads
+  automatically on first use (~470 MB)" / "Installed") and never touches the Docker socket (`DiagnosticsProbes.runtime`,
+  `ComputerRuntimeMode`); Docker rows only appear when forced or when this Mac can't run natively ("Racky needs macOS 26 on Apple
+  silicon, or Docker."). Settings, Computers, Insights, status bar and the diagnostics bundle follow the same rule.
 * seccomp/AF_VSOCK denial (ship runc), per-computer networks, persistent profiles.
 * Consume images straight from a registry (`ImageStore.pull`) instead of OCI tar files, so GHCR hosting is enough.
 * Soft/hard memory pressure policy (balloon) and an Intel/older-macOS story beyond "use Docker".

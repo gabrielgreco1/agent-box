@@ -29,7 +29,7 @@ enum StatusBarSegment: String, CaseIterable, Sendable {
         case .agents: String(localized: "Agents", bundle: .module)
         case .computers: String(localized: "Computers", bundle: .module)
         case .proxyUsage: String(localized: "Proxy usage", bundle: .module)
-        case .docker: String(localized: "Docker", bundle: .module)
+        case .docker: String(localized: "Computer runtime", bundle: .module)
         }
     }
 

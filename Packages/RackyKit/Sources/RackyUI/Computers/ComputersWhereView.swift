@@ -83,10 +83,10 @@ struct ComputersWhereView: View {
     private var chooser: some View {
         VStack(alignment: .leading, spacing: DS.Space.s6) {
             HStack(spacing: DS.Space.s3) {
-                WhereChoiceCard(target: .local, selected: target == .local, ring: ring) {
+                WhereChoiceCard(target: .local, selected: target == .local, ring: ring, usesDocker: !settings.usesNativeRuntime) {
                     LocalStatusLine(status: settings.dockerStatus)
                 }
-                WhereChoiceCard(target: .cloud, selected: target == .cloud, ring: ring) {
+                WhereChoiceCard(target: .cloud, selected: target == .cloud, ring: ring, usesDocker: false) {
                     CloudSummaryLine(settings: settings, selected: target == .cloud)
                 }
             }
@@ -111,6 +111,8 @@ private struct WhereChoiceCard<Status: View>: View {
     let target: AppSettings.ComputerRunTarget
     let selected: Bool
     let ring: Namespace.ID
+    /// Só o modo Docker mostra a marca e fala do Docker; o runtime nativo (padrão) não.
+    let usesDocker: Bool
     @ViewBuilder let status: () -> Status
     @State private var hovering = false
 
@@ -120,7 +122,7 @@ private struct WhereChoiceCard<Status: View>: View {
 
     private var detail: String {
         target == .local
-            ? String(localized: "Free. Computers run in Docker on this Mac.", bundle: .module)
+            ? (usesDocker ? String(localized: "Free. Computers run in Docker on this Mac.", bundle: .module) : String(localized: "Free. Computers run on this Mac.", bundle: .module))
             : String(localized: "More computers at once and more power, on your own account.", bundle: .module)
     }
 
@@ -177,7 +179,7 @@ private struct WhereChoiceCard<Status: View>: View {
             }
             .frame(width: WhereMetrics.choiceIcon, height: WhereMetrics.choiceIcon)
             if target == .local {
-                badge { DSBrandLogo("docker", size: WhereMetrics.miniLogo - 2, tint: DSRGBA(hex: 0x2496ED).color) }
+                if usesDocker { badge { DSBrandLogo("docker", size: WhereMetrics.miniLogo - 2, tint: DSRGBA(hex: 0x2496ED).color) } }
             } else {
                 ForEach(Array(CloudProviderCatalog.all.prefix(3).enumerated()), id: \.element.id) { index, provider in
                     badge { DSBrandLogo(provider.logo, size: WhereMetrics.miniLogo - 4, tint: DSRGBA(hex: provider.brandHex).color) }

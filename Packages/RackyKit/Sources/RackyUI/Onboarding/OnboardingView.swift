@@ -247,6 +247,7 @@ struct OnboardingDiagnosticRow: View {
     private var symbol: String {
         switch item.key {
         case .gh: "chevron.left.forwardslash.chevron.right"
+        case .runtime: "desktopcomputer"
         case .docker: "shippingbox"
         case .image: "externaldrive"
         case .conflicts: "exclamationmark.arrow.triangle.2.circlepath"

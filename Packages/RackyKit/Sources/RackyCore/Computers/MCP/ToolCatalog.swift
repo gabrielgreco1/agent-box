@@ -194,7 +194,7 @@ public enum ToolCatalog {
     private static let displayChoice = Schema.oneOf(["http", "headless", "desktop"], "Computer display; headless fits the VM memory best", def: "headless")
 
     public static let parentTools: [ToolDefinition] = [
-        def("boxes_reserve", "Reserve computers by name. Returns at once with provisioning, or queued with a position when the Docker VM has no memory left. "
+        def("boxes_reserve", "Reserve computers by name. Returns at once with provisioning, or queued with a position when the computer runtime has no memory left. "
             + "Idempotent by name. Each box answers with `worker` (the subagent_type to spawn) and `child_id`.", .neutral,
             ObjectSpec([("names", .array(.string(minLength: 1, maxLength: 100), "One computer per target", minItems: 1, maxItems: 100)), ("display", displayChoice),
                         ("profile", .string("Named browser profile")), ("proxy", proxyRef), ("proxies_allowed", .array(proxyRef)), ("batch", .string("Batch name")),

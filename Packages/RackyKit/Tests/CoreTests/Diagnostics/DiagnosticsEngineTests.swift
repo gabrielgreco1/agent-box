@@ -100,4 +100,67 @@ import Testing
         let runs = await engine.probeRuns
         #expect(runs[.gh] == 2 && runs[.docker] == 1 && runs[.conflicts] == 1)
     }
+
+    // MARK: Runtime nativo (sem Docker)
+
+    private final class Hits: Sendable {
+        private let state = Mutex(0)
+        func bump() { state.withLock { $0 += 1 } }
+        var value: Int { state.withLock { $0 } }
+    }
+
+    private func probes(mode: ComputerRuntimeMode, dockerCalls: Hits, imageCalls: Hits) -> DiagnosticsProbes {
+        DiagnosticsProbes(
+            gh: { GitHubProbeResult(installed: false) },
+            docker: { dockerCalls.bump(); return .notInstalled },
+            image: { _ in imageCalls.bump(); return .missing }, conflicts: { ConflictScan() },
+            runtime: { mode })
+    }
+
+    @Test func nativeRuntimeNeverProbesDockerAndShowsTheDownloadNote() async {
+        let dockerCalls = Hits(), imageCalls = Hits()
+        let collected = Collected()
+        await run(DiagnosticsEngine(probes: probes(mode: .native(assetsInstalled: false), dockerCalls: dockerCalls, imageCalls: imageCalls)), into: collected)
+        #expect(dockerCalls.value == 0 && imageCalls.value == 0, "nem o socket do Docker é tocado")
+        #expect(collected.last(.docker) == nil && collected.last(.image) == nil, "nenhum item Docker nem imagem")
+        let item = collected.last(.runtime)
+        #expect(item?.title == "Computer runtime" && item?.state == .ok && item?.fix == nil)
+        #expect(item?.detail == "Downloads automatically on first use (~470 MB)")
+        for key in DiagnosticKey.allCases {
+            if let text = collected.last(key).map({ "\($0.title) \($0.detail)" }) { #expect(!text.localizedCaseInsensitiveContains("docker"), "\(key): \(text)") }
+        }
+    }
+
+    @Test func nativeRuntimeAlreadyDownloadedSaysInstalled() async {
+        let collected = Collected()
+        await run(DiagnosticsEngine(probes: probes(mode: .native(assetsInstalled: true), dockerCalls: Hits(), imageCalls: Hits())), into: collected)
+        #expect(collected.last(.runtime)?.detail == "Installed")
+    }
+
+    @Test func forcedDockerKeepsTheDockerItemsAndHidesTheRuntimeItem() async {
+        let dockerCalls = Hits()
+        let collected = Collected()
+        await run(DiagnosticsEngine(probes: probes(mode: .dockerForced, dockerCalls: dockerCalls, imageCalls: Hits())), into: collected)
+        #expect(dockerCalls.value == 1)
+        #expect(collected.last(.runtime) == nil)
+        #expect(collected.last(.docker)?.detail == "Not installed. Needed for subagent computers.")
+    }
+
+    @Test func aMacThatCannotRunTheNativeRuntimeExplainsItAndOffersDocker() async {
+        let collected = Collected()
+        let mode = ComputerRuntimeMode.dockerOnly(reason: "The built-in computer runtime needs macOS 26 or later.")
+        await run(DiagnosticsEngine(probes: probes(mode: mode, dockerCalls: Hits(), imageCalls: Hits())), into: collected)
+        #expect(collected.last(.runtime) == nil)
+        #expect(collected.last(.docker)?.detail == "Racky needs macOS 26 on Apple silicon, or Docker.")
+        #expect(collected.last(.docker)?.fix == .openURL(title: "Install…", DiagnosticsEvaluator.dockerInstallURL))
+    }
+
+    @Test func aRuntimeProbeThatHangsFallsBackToTheDockerPath() async {
+        let hang = DiagnosticsProbes(
+            gh: { GitHubProbeResult(installed: false) }, docker: { .notInstalled }, image: { _ in .missing }, conflicts: { ConflictScan() },
+            runtime: { try? await Task.sleep(for: .seconds(30)); return .native(assetsInstalled: false) })
+        let collected = Collected()
+        await run(DiagnosticsEngine(probes: hang, configuration: .init(timeout: .milliseconds(100), cacheTTL: .seconds(60))), into: collected)
+        #expect(collected.last(.docker)?.state == .warning)
+    }
 }

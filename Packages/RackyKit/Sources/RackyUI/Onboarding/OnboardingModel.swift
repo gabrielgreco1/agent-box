@@ -123,7 +123,8 @@ public final class OnboardingModel {
         DiagnosticKey.allCases.compactMap { key in
             switch key {
             case .gh where !settings.flags.isEnabled(.slice2): return nil
-            case .docker where !settings.flags.isEnabled(.slice3), .image where !settings.flags.isEnabled(.slice3): return nil
+            case .runtime where !settings.flags.isEnabled(.slice3), .docker where !settings.flags.isEnabled(.slice3),
+                .image where !settings.flags.isEnabled(.slice3): return nil
             default: return diagnostics[key]
             }
         }

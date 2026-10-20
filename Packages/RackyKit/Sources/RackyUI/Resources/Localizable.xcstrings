@@ -1,6 +1,50 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "Show advanced options": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show advanced options"
+          }
+        }
+      }
+    },
+    "No computers to show right now.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No computers to show right now."
+          }
+        }
+      }
+    },
+    "Free. Computers run on this Mac.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Free. Computers run on this Mac."
+          }
+        }
+      }
+    },
+    "Each computer is a small virtual machine on this Mac. The first one downloads the runtime (about 470 MB), once.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Each computer is a small virtual machine on this Mac. The first one downloads the runtime (about 470 MB), once."
+          }
+        }
+      }
+    },
     "\"%@\" is still running. Closing ends it.": {
       "extractionState": "manual",
       "localizations": {

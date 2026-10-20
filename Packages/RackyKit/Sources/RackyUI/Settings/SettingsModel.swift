@@ -34,6 +34,8 @@ public final class SettingsModel {
     var dockerStatus = DockerStatusInfo()
     /// Runtime dos computadores: o nativo (VMs, sem Docker) serve a este Mac? (Settings › Computers › Computer runtime.)
     var runtimeInfo = ComputerRuntimeInfo()
+    /// O runtime nativo (VMs, sem Docker) é o que serve os computadores agora: este Mac o suporta e o usuário não forçou o Docker.
+    var usesNativeRuntime: Bool { runtimeInfo.nativeAvailable && !settings.computers.forceDocker }
     /// Página Computers com computadores na lista: a escolha local/nuvem fica recolhida numa faixa até "Change".
     var computersWhereOpen = false
     /// Abre os links do provedor (testes trocam).

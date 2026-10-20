@@ -104,7 +104,8 @@ public enum DiagnosticsBundleBuilder {
         for url in input.crashReports.prefix(5) { try put("crashes/\(url.lastPathComponent)", tail(of: url)) }
         try put("versions.json", try json(input.versions))
         try put("settings.json", input.settingsJSON)
-        try put("docker.json", try json(input.dockerSummary))
+        // Sem Docker em uso (runtime nativo) não há o que resumir: o arquivo nem entra na lista.
+        if !input.dockerSummary.isEmpty { try put("docker.json", try json(input.dockerSummary)) }
         try put("tables.json", try json(input.tableCounts))
         try put("checks.json", try json(input.checks))
         try put("recent-errors.txt", input.recentErrors.joined(separator: "\n"))

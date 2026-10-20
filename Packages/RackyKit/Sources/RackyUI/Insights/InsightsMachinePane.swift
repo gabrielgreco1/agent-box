@@ -213,7 +213,7 @@ struct InsightsMachinePane: View {
 
     @ViewBuilder private var computersBlock: some View {
         if !snapshot.dockerAvailable {
-            Text("Docker isn't running, so there are no computers to show.").dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+            Text("No computers to show right now.").dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
         } else if snapshot.computers.isEmpty {
             Text("No computers running.").dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
         } else {

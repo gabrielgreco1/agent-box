@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # publish-assets.sh - IMPRIME os comandos para publicar os arquivos do runtime sem Docker. Não executa nenhum deles.
+# (Substituído por scripts/vz/stage-release.sh para releases: ele copia, calcula sha256, reescreve o manifesto e imprime o comando.)
 #
 # Contrato
 #   Entrada : <OUT>/vz-manifest.json e os arquivos ao lado dele (scripts/vz/fetch-kernel.sh + scripts/vz/build-image.sh).

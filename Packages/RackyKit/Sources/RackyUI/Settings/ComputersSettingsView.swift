@@ -6,6 +6,8 @@ import SwiftUI
 /// Settings › Computers (03 §14.2, F12): o padrão de "Subagent computers" das sessões novas e o estado do runtime dos computadores.
 struct ComputersSettingsView: View {
     let model: SettingsModel
+    /// "Use Docker instead" fica recolhido: com o runtime nativo (o padrão) a página não fala de Docker.
+    @State private var showAdvanced = false
 
     private var mode: SubagentComputersMode { model.settings.computers.defaultSubagentMode }
 
@@ -27,7 +29,7 @@ struct ComputersSettingsView: View {
             ProxiesSettingsBlock(model: model)
             SettingsBlock(title: "Computer runtime") {
                 SettingsRow(title: "Status", help: usesNativeRuntime
-                    ? "Each computer is a small virtual machine on this Mac. The first one downloads the runtime."
+                    ? "Each computer is a small virtual machine on this Mac. The first one downloads the runtime (about 470 MB), once."
                     : "Computers run in containers. The first one builds its images in the background.") {
                     HStack(spacing: DS.Space.s2) {
                         Text(verbatim: model.dockerStatus.text)
@@ -40,15 +42,23 @@ struct ComputersSettingsView: View {
                     }
                 }
                 if model.runtimeInfo.nativeAvailable {
-                    SettingsRow(
-                        title: "Use Docker instead",
-                        help: "Run computers in Docker containers instead of the built-in runtime. Applies to the next computers you reserve."
-                    ) {
-                        DSSwitch(
-                            isOn: model.settings.computers.forceDocker, action: .settingsComputersForceDocker,
-                            id: .settings("computers", "forceDocker"), ""
-                        )
-                        .accessibilityLabel(Text("Use Docker instead", bundle: .module))
+                    if showAdvanced || model.settings.computers.forceDocker {
+                        SettingsRow(
+                            title: "Use Docker instead",
+                            help: "Run computers in Docker containers instead of the built-in runtime. Applies to the next computers you reserve."
+                        ) {
+                            DSSwitch(
+                                isOn: model.settings.computers.forceDocker, action: .settingsComputersForceDocker,
+                                id: .settings("computers", "forceDocker"), ""
+                            )
+                            .accessibilityLabel(Text("Use Docker instead", bundle: .module))
+                        }
+                    } else {
+                        // lint-ui: allow buttons revela a opção avançada na própria página (apresentação); a troca em si é uma ação do registro
+                        Button { showAdvanced = true } label: {
+                            Text("Show advanced options", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                        }
+                        .buttonStyle(.plain)
                     }
                 } else if let reason = model.runtimeInfo.unavailableReason {
                     Text(verbatim: reason)

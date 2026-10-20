@@ -4,7 +4,10 @@
 # Contrato
 #   Entrada : project.yml, Packages/RackyKit. Env: DEVELOPER_DIR, RACKY_SIGN_IDENTITY (nome do
 #             certificado; padrão "Racky Local Signing"; "-" força ad-hoc), RACKY_SIGN_KEYCHAIN (caminho de um
-#             keychain efêmero de CI: procura e assina por nome nele, sem confiança de usuário), RACKY_BUILD_DIR (padrão build/Racky).
+#             keychain efêmero de CI: procura e assina por nome nele, sem confiança de usuário), RACKY_BUILD_DIR (padrão build/Racky),
+#             RACKY_MARKETING_VERSION (CFBundleShortVersionString; padrão o MARKETING_VERSION do project.yml), RACKY_BUILD_NUMBER
+#             (CFBundleVersion; padrão a contagem de commits), RACKY_SIGN_TIMESTAMP=1 (carimbo de tempo seguro da Apple no codesign;
+#             necessário para notarizar com Developer ID; padrão --timestamp=none, funciona offline).
 #   Efeitos : embute o plist do LaunchAgent do daemon (Contents/Library/LaunchAgents); compila o app (xcodebuild Release, Swift 6 estrito, warnings como erro) e os executáveis SPM
 #             racky/rackyd (swift build -c release), embute-os em Contents/MacOS e Contents/Helpers e assina de dentro
 #             para fora (racky, rackyd, app), SEM --deep, com --options runtime. Só o APP leva entitlement
@@ -29,15 +32,19 @@ cd "$ROOT"
 
 "$ROOT/scripts/gen.sh"
 
-BUILD_NUMBER="$(git rev-list --count HEAD 2>/dev/null || echo 1)"
+BUILD_NUMBER="${RACKY_BUILD_NUMBER:-$(git rev-list --count HEAD 2>/dev/null || echo 1)}"
+VERSION_ARGS=()
+if [ -n "${RACKY_MARKETING_VERSION:-}" ]; then VERSION_ARGS=(MARKETING_VERSION="$RACKY_MARKETING_VERSION"); fi
+TS_FLAG="--timestamp=none"
+if [ "${RACKY_SIGN_TIMESTAMP:-0}" = 1 ]; then TS_FLAG="--timestamp"; fi
 mkdir -p "$OUT"
 
 # SWIFT_ENABLE_EXPLICIT_MODULES=NO: o RackyVZ importa a apple/containerization, cuja cadeia puxa o módulo `libzstd` (zstd 1.5.7); com módulos
 # explícitos o xcodebuild recusa o import ("definition of configuration macro ZSTD... has no effect"). Com implícitos compila.
 echo "build: xcodebuild Release (app)"
 xcodebuild -project Racky.xcodeproj -scheme Racky -configuration Release \
-  -derivedDataPath "$DD" -skipPackagePluginValidation -destination 'platform=macOS' \
-  CODE_SIGNING_ALLOWED=NO CURRENT_PROJECT_VERSION="$BUILD_NUMBER" SWIFT_ENABLE_EXPLICIT_MODULES=NO build \
+  -derivedDataPath "$DD" -skipPackagePluginValidation -destination 'platform=macOS,arch=arm64' ARCHS=arm64 ONLY_ACTIVE_ARCH=YES \
+  CODE_SIGNING_ALLOWED=NO CURRENT_PROJECT_VERSION="$BUILD_NUMBER" ${VERSION_ARGS[@]+"${VERSION_ARGS[@]}"} SWIFT_ENABLE_EXPLICIT_MODULES=NO build \
   | { if command -v xcbeautify >/dev/null 2>&1; then xcbeautify; else cat; fi; } \
   > "$OUT/xcodebuild.log" 2>&1 || { tail -40 "$OUT/xcodebuild.log" >&2; fail "xcodebuild falhou (log: $OUT/xcodebuild.log)"; }
 tail -3 "$OUT/xcodebuild.log"
@@ -108,7 +115,7 @@ sign() { # path identifier [entitlements.plist]
     codesign --force --options runtime --timestamp=none --sign - --identifier "$2" ${3:+--entitlements "$3"} "$1"
   else
     # Certificado efêmero/autoassinado sem confiança de usuário: o codesign só o acha por NOME + --keychain (S-03).
-    codesign --force --options runtime --timestamp=none --sign "$SIGN_REF" ${SIGN_KEYCHAIN:+--keychain "$SIGN_KEYCHAIN"} --identifier "$2" \
+    codesign --force --options runtime $TS_FLAG --sign "$SIGN_REF" ${SIGN_KEYCHAIN:+--keychain "$SIGN_KEYCHAIN"} --identifier "$2" \
       ${3:+--entitlements "$3"} -r="designated => identifier \"$2\" and certificate leaf = H\"$SHA\"" "$1"
   fi
 }

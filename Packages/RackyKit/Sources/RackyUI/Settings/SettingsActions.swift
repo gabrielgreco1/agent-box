@@ -288,6 +288,8 @@ extension SettingsModel {
             }
         ) { [unowned self] arg in
             change("Use Docker instead") { $0.computers.forceDocker = flag(arg, current: $0.computers.forceDocker) }
+            // A checklist (onboarding, Diagnostics) muda de runtime junto: refaz as sondas.
+            Task { [onDetectAll] in await onDetectAll?() }
             return settings.computers.forceDocker ? "on" : "off"
         }
         try registry.register(.settingsNotificationsSound) { [unowned self] arg in

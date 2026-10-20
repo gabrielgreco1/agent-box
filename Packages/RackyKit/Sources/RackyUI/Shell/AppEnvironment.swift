@@ -143,7 +143,9 @@ public final class AppEnvironment {
         let backup = Self.usesFakeDiagnostics(environment)
             ? GlobalSkillBackup(home: supportRoot.appendingPathComponent("fake-home", isDirectory: true), backupRoot: supportRoot)
             : GlobalSkillBackup(backupRoot: supportRoot)
-        let probes = Self.makeDiagnosticsProbes(environment: environment, backup: backup, choice: choice)
+        let probes = Self.makeDiagnosticsProbes(
+            environment: environment, backup: backup, choice: choice, supportRoot: supportRoot,
+            forceDocker: { await MainActor.run { settings.settings.computers.forceDocker } })
         self.onboarding = OnboardingModel(settings: settings, diagnostics: DiagnosticsEngine(probes: probes), conflictChoice: choice, backup: backup)
         let diagnostics = DiagnosticsController(paths: StorePaths(root: supportRoot), settings: settings, onboarding: onboarding, toasts: toasts)
         self.diagnostics = diagnostics
@@ -475,9 +477,14 @@ public final class AppEnvironment {
             || environment["RACKY_DIAGNOSTICS"] == "fake"
     }
 
-    private static func makeDiagnosticsProbes(environment: [String: String], backup: GlobalSkillBackup, choice: ConflictChoiceBox) -> DiagnosticsProbes {
+    private static func makeDiagnosticsProbes(
+        environment: [String: String], backup: GlobalSkillBackup, choice: ConflictChoiceBox, supportRoot: URL,
+        forceDocker: @escaping @Sendable () async -> Bool
+    ) -> DiagnosticsProbes {
         guard usesFakeDiagnostics(environment) else {
-            return LiveDiagnosticsProbes.make(backup: backup, choice: { choice.value })
+            var probes = LiveDiagnosticsProbes.make(backup: backup, choice: { choice.value })
+            probes.runtime = { ComputerRuntimeProbe.mode(environment: environment, supportRoot: supportRoot, forceDocker: await forceDocker()) }
+            return probes
         }
         return DiagnosticsProbes(
             gh: { GitHubProbeResult(installed: true, version: "2.60.1", auth: GitHubAuthStatus(state: .notLoggedIn, host: "github.com")) },

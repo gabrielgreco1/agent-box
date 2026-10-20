@@ -10,17 +10,21 @@ public struct DiagnosticsProbes: Sendable {
     /// Só roda com o Docker de pé; recebe o runtime detectado. `nil` = não conseguiu verificar.
     public var image: @Sendable (DockerRuntime) async -> ImageProbeResult?
     public var conflicts: @Sendable () async -> ConflictScan
+    /// Qual runtime serve os computadores. Com `.native` as sondas do Docker nem rodam. Padrão: Docker (comportamento anterior).
+    public var runtime: @Sendable () async -> ComputerRuntimeMode
 
     public init(
         gh: @escaping @Sendable () async -> GitHubProbeResult,
         docker: @escaping @Sendable () async -> DockerProbeResult,
         image: @escaping @Sendable (DockerRuntime) async -> ImageProbeResult?,
-        conflicts: @escaping @Sendable () async -> ConflictScan
+        conflicts: @escaping @Sendable () async -> ConflictScan,
+        runtime: @escaping @Sendable () async -> ComputerRuntimeMode = { .dockerForced }
     ) {
         self.gh = gh
         self.docker = docker
         self.image = image
         self.conflicts = conflicts
+        self.runtime = runtime
     }
 }
 
@@ -58,7 +62,7 @@ public actor DiagnosticsEngine {
     private static func group(of key: DiagnosticKey) -> Group {
         switch key {
         case .gh: .gh
-        case .docker, .image: .docker
+        case .runtime, .docker, .image: .docker
         case .conflicts: .conflicts
         }
     }
@@ -91,7 +95,7 @@ public actor DiagnosticsEngine {
     private static func keys(of group: Group) -> [DiagnosticKey] {
         switch group {
         case .gh: [.gh]
-        case .docker: [.docker, .image]
+        case .docker: [.runtime, .docker, .image]
         case .conflicts: [.conflicts]
         }
     }
@@ -117,9 +121,15 @@ public actor DiagnosticsEngine {
             }
             return [.conflicts: DiagnosticsEvaluator.conflicts(scan)]
         case .docker:
+            let mode = await Self.withTimeout(configuration.timeout, probes.runtime) ?? .dockerForced
+            if case .native = mode {
+                // Runtime nativo: nem o socket do Docker é tocado, e a checklist não menciona Docker nem imagem.
+                count(.runtime)
+                return [.runtime: DiagnosticsEvaluator.runtime(mode), .docker: nil, .image: nil]
+            }
             count(.docker)
             guard let docker = await Self.withTimeout(configuration.timeout, probes.docker) else {
-                return [.docker: DiagnosticsEvaluator.timedOut(.docker),
+                return [.runtime: nil, .docker: DiagnosticsEvaluator.timedOut(.docker),
                         .image: DiagnosticItem(key: .image, state: .neutral, detail: "Waiting for Docker.")]
             }
             var image: ImageProbeResult?
@@ -129,11 +139,11 @@ public actor DiagnosticsEngine {
                 let runtime = running.runtime
                 let timeout = configuration.timeout
                 guard let outcome = await Self.withTimeout(timeout, { await probe(runtime) }) else {
-                    return [.docker: DiagnosticsEvaluator.docker(docker), .image: DiagnosticsEvaluator.timedOut(.image)]
+                    return [.runtime: nil, .docker: DiagnosticsEvaluator.docker(docker, mode: mode), .image: DiagnosticsEvaluator.timedOut(.image)]
                 }
                 image = outcome
             }
-            return [.docker: DiagnosticsEvaluator.docker(docker), .image: DiagnosticsEvaluator.image(image, docker: docker)]
+            return [.runtime: nil, .docker: DiagnosticsEvaluator.docker(docker, mode: mode), .image: DiagnosticsEvaluator.image(image, docker: docker)]
         }
     }
 

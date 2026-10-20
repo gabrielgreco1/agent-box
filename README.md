@@ -1,5 +1,66 @@
 # Racky
 
+Racky is a Mac app that runs your coding agents (Claude Code, Codex, OpenCode) in organized sessions and gives their subagents
+their own isolated computers (a small Linux virtual machine with a browser), with nothing else to install.
+
+## Install (for users)
+
+**Requirements**
+
+- A Mac with Apple silicon (M1 or later) running **macOS 26 or later**. Racky then runs computers itself, **no Docker needed**.
+  On an older macOS or an Intel Mac, Racky still works if you install Docker (Docker Desktop or OrbStack) and it uses that instead.
+- At least one agent CLI installed and signed in: [Claude Code](https://claude.com/claude-code), Codex or OpenCode. Racky never
+  signs in for you; onboarding tells you what is missing.
+- About 2 GB of free disk space for the computer runtime (see below).
+
+**Steps**
+
+1. Download `Racky.dmg` from the [latest release](https://github.com/gabrielgreco1/racky/releases/latest).
+2. Open the DMG and drag **Racky** onto **Applications**. Eject the DMG.
+3. First open: Racky is not notarized yet, so macOS blocks it the first time.
+   - Open Racky from Applications (double-click). macOS says it can't verify the app: click **Done**.
+   - Open **System Settings > Privacy & Security**, scroll to the Security section and click **Open Anyway** next to "Racky".
+     Confirm with your password or Touch ID, then click **Open**. This is needed only once.
+   - (Terminal alternative: `xattr -dr com.apple.quarantine /Applications/Racky.app`.)
+4. Follow the onboarding checklist: agent CLIs found and signed in, **Login Items** approval for the Racky background agent
+   (System Settings > General > Login Items & Extensions, switch Racky on; it keeps your terminals alive when you close the window),
+   and the computer runtime.
+
+**What gets downloaded on first use.** The app itself is small. The first time an agent asks for a computer, Racky downloads the
+computer runtime once (about **475 MB**: a Linux kernel, the guest init and the computer image), checks every file against a
+SHA-256 baked into the app, prepares it (about a minute) and never needs the network for it again. Progress shows on the computer
+row and in Settings > Computers > Computer runtime. After that a computer starts in about two seconds. The runtime takes about
+1.4 GB on disk, under `~/Library/Application Support/Racky/vz`.
+
+**Good to know**
+
+- Computers are virtual machines hosted by the app: they stop when you quit Racky (Keep Running in the background keeps them).
+- Nothing leaves your Mac because of Racky itself; the only download is the runtime above, from this repository's releases.
+- Uninstall: quit Racky, drag it to the Trash, and delete `~/Library/Application Support/Racky` if you also want the data and
+  the runtime gone. Remove the Login Item in System Settings if it is still listed.
+
+## Releasing (for maintainers)
+
+Nothing below publishes by itself: each script prints the `gh` command for you to run.
+
+```sh
+# 1. Runtime files (once per runtime change). Needs Docker only here, to build the computer image.
+scripts/vz/fetch-kernel.sh                    # Kata kernel, ~650 MB download -> build/vz-assets
+scripts/vz/build-image.sh                     # computer image + vminit -> build/vz-assets
+scripts/vz/stage-release.sh                   # copies to build/release/runtime-<v>/, sha256, rewrites runtime/vz-manifest.json
+# commit runtime/vz-manifest.json, then publish with the command stage-release.sh prints:
+gh release create runtime-<v> ...
+
+# 2. The app. Builds Release (arm64), signs, verifies, creates build/release/Racky.dmg + Racky.dmg.sha256.
+scripts/release.sh <version>                  # ad-hoc by default
+RACKY_SIGN_IDENTITY="Developer ID Application: Name (TEAMID)" RACKY_NOTARY_PROFILE=<notarytool profile> scripts/release.sh <version>
+gh release create v<version> build/release/Racky.dmg build/release/Racky.dmg.sha256 ...   # printed by release.sh
+```
+
+Without `RACKY_NOTARY_PROFILE` the notarization step is skipped (users then need **Open Anyway**, as above).
+
+## Development
+
 > **Rebuild em andamento.** A UI e o core estão sendo refeitos do zero. Ponto de entrada: [docs/rebuild/README.md](docs/rebuild/README.md) (spec, roadmap, decisões). O app antigo foi movido, sem alterações, para `legacy/` e sai do repositório depois da release 1.0 (AR-202). O novo build nunca referencia `legacy/`.
 >
 > Build do app antigo: `cd legacy && DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift build` (ou `bash legacy/scripts/build_app.sh`). Versões fixadas do novo build: `scripts/tool-versions.txt`, conferidas por `scripts/bootstrap.sh`.
