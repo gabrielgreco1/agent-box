@@ -7744,6 +7744,17 @@
           }
         }
       }
+    },
+    "Copied — paste it into the agent": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copied — paste it into the agent"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

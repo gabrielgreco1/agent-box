@@ -275,6 +275,25 @@ extension WorkspaceModel {
             do { try await runtime.sendText(payload.text, to: t) } catch { throw ActionError.failed(.terminalSendText, message: "Terminal isn't running") }
             return String(payload.text.utf8.count)
         }
+        // "Paste into <Agent>" (03 §16.12, T11): clique explícito. `set {"terminal":"<uuid>","text":"..."}` ou o texto cru no terminal em foco.
+        try reg(.dialogPasteToAgentConfirm, enablement: hasTab) { [unowned self] arg in
+            struct Payload: Decodable { var terminal: String?; var text: String }
+            let raw = arg.value ?? ""
+            let payload = raw.data(using: .utf8).flatMap { try? JSONDecoder().decode(Payload.self, from: $0) } ?? Payload(terminal: nil, text: raw)
+            guard let id = payload.terminal.flatMap({ UUID(uuidString: $0) }) ?? focusedTerminalID, let t = terminal(id) else {
+                throw ActionError.failed(.dialogPasteToAgentConfirm, message: "Terminal not found")
+            }
+            guard t.provider.isAgent, paneState(id) == .running else {
+                throw ActionError.failed(.dialogPasteToAgentConfirm, message: "The agent isn't ready for input.")
+            }
+            do {
+                let outcome = try await runtime.pasteIntoAgent(payload.text, terminal: t)
+                if outcome == .copied { toasts?.show(kind: .info, title: String(localized: "Copied — paste it into the agent", bundle: .module)) }
+                return outcome == .pasted ? "pasted" : "copied"
+            } catch {
+                throw ActionError.failed(.dialogPasteToAgentConfirm, message: "The agent isn't ready for input.")
+            }
+        }
         try reg(.terminalScreen, enablement: hasTab) { [unowned self] arg in
             guard let id = uuid(arg) ?? focusedTerminalID, let t = terminal(id) else { throw ActionError.failed(.terminalScreen, message: "Terminal not found") }
             do { return try await runtime.screenText(of: t, lines: 200) } catch { throw ActionError.failed(.terminalScreen, message: "Terminal isn't running") }

@@ -28,3 +28,20 @@ public enum PasteSanitizer {
         return String(result)
     }
 }
+
+/// Enquadramento da colagem por clique no prompt de um agente (T11, 06 §5.7): `ESC[200~ texto ESC[201~`, **nunca** Enter.
+/// Só existe com bracketed paste ativo no programa; sem ele devolve `nil` (o chamador copia para o clipboard), porque
+/// texto cru com quebra de linha poderia enviar o prompt.
+public enum AgentPaste {
+    public static let start: [UInt8] = [0x1b, 0x5b, 0x32, 0x30, 0x30, 0x7e]
+    public static let end: [UInt8] = [0x1b, 0x5b, 0x32, 0x30, 0x31, 0x7e]
+
+    public static func frame(_ text: String, bracketedPasteActive: Bool) -> [UInt8]? {
+        guard bracketedPasteActive else { return nil }
+        // Sanitiza (ESC/controles saem; CR também, então nada vira Enter) e tira quebras finais: o texto termina no prompt.
+        var clean = PasteSanitizer.sanitize(text)
+        while clean.last == "\n" { clean.removeLast() }
+        guard !clean.isEmpty else { return nil }
+        return start + Array(clean.utf8) + end
+    }
+}

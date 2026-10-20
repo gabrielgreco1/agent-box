@@ -438,6 +438,24 @@ final class TerminalRuntime {
         try await client.sendInput(sessionID: session, origin: .ctl, bytes: Data(text.utf8))
     }
 
+    /// "Paste into <Agent>" (T11, R5.1): colagem por clique, bracketed paste sem Enter, origem `appPaste` (0x02).
+    /// Sem bracketed paste ativo no programa, copia para o clipboard (06 §5.7).
+    func pasteIntoAgent(_ text: String, terminal: Terminal) async throws -> AgentPasteOutcome {
+        guard let session = Self.session(of: terminal), let entry = entries[terminal.id] else { throw PTYClientError.notConnected }
+        let surface = entry.host.surface
+        let client = client
+        let sender = AgentPasteSender(
+            bracketedPasteActive: surface.terminalStateSnapshot().bracketedPasteMode,
+            send: { origin, data in try await client.sendInput(sessionID: session, origin: origin, bytes: data) },
+            copy: { text in
+                Task { @MainActor in
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(text, forType: .string)
+                }
+            })
+        return try await sender.paste(text, provider: terminal.provider)
+    }
+
     /// Automação (`ctl ui action terminal.screen`): texto da tela vindo do emulador headless do daemon.
     func screenText(of terminal: Terminal, lines: Int) async throws -> String {
         guard let session = Self.session(of: terminal) else { throw PTYClientError.notConnected }
