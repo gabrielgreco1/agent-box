@@ -196,7 +196,10 @@ final class MainSplitViewController: NSSplitViewController {
     func setSidebarCollapsed(_ collapsed: Bool) {
         guard sidebarItem.isCollapsed != collapsed else { return }
         let runtime = env.workspace.runtime
-        if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
+        // Sem animação também com a janela invisível (fora da tela, minimizada, tela apagada): sem ciclo de display a animação
+        // não avança, o completion nunca roda e o terminal ficava preso na largura antiga.
+        let visible = view.window?.occlusionState.contains(.visible) ?? false
+        if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion || !visible {
             sidebarItem.isCollapsed = collapsed
             splitView.layoutSubtreeIfNeeded()
             runtime.syncSizesToLayout()
