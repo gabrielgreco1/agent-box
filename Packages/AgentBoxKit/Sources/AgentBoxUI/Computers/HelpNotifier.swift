@@ -29,6 +29,19 @@ public final class RecordingHelpNotifier: HelpNotifying {
     public func notify(item: InboxItem, content: HelpNotificationContent) { delivered.append((item, content)) }
 }
 
+/// Política de permissão das notificações (AC-T18): o app só LÊ o estado do sistema; quem pede é o botão `Allow Notifications`
+/// (Settings › Notifications). Um pedido de ajuda ou de computador nunca abre o prompt do macOS por conta própria.
+public enum NotificationPromptPolicy {
+    /// Entrega só com permissão já concedida (inclusive provisória e efêmera).
+    public static func canDeliver(_ status: UNAuthorizationStatus) -> Bool {
+        switch status {
+        case .authorized, .provisional, .ephemeral: true
+        case .notDetermined, .denied: false
+        @unknown default: false
+        }
+    }
+}
+
 /// `UNUserNotificationCenter` com delegate: o clique abre o viewer (padrão) ou, na ação `Take Over`, já assume o controle.
 @MainActor
 public final class SystemHelpNotifier: NSObject, HelpNotifying, UNUserNotificationCenterDelegate {
@@ -40,7 +53,6 @@ public final class SystemHelpNotifier: NSObject, HelpNotifying, UNUserNotificati
     /// Decisão tomada na própria notificação (Allow / Deny).
     public var decide: @MainActor (String, ComputerApprovalDecision) -> Void = { _, _ in }
     private let open: @MainActor (String, Bool) -> Void
-    private var authorized: Bool?
 
     /// `open(computerName, takeOver)` é chamado no clique. Precisa de um app com bundle (não roda em `swift test`).
     public init?(open: @escaping @MainActor (String, Bool) -> Void) {
@@ -75,8 +87,8 @@ public final class SystemHelpNotifier: NSObject, HelpNotifying, UNUserNotificati
         payload.userInfo = ["computer": item.computer, "request": item.id]
         let request = UNNotificationRequest(identifier: "help-\(item.id)", content: payload, trigger: nil)  // id = request_id: uma vez
         Task {
-            if self.authorized == nil { self.authorized = (try? await center.requestAuthorization(options: [.alert, .sound, .badge])) ?? false }
-            guard self.authorized == true else { return }
+            // Só entrega se o usuário já permitiu; nunca abre o prompt do sistema aqui (AC-T18).
+            guard NotificationPromptPolicy.canDeliver(await center.notificationSettings().authorizationStatus) else { return }
             try? await center.add(request)
         }
     }
@@ -92,8 +104,8 @@ public final class SystemHelpNotifier: NSObject, HelpNotifying, UNUserNotificati
         payload.userInfo = ["approval": approval.id]
         let request = UNNotificationRequest(identifier: "approval-\(approval.id)", content: payload, trigger: nil)
         Task {
-            if self.authorized == nil { self.authorized = (try? await center.requestAuthorization(options: [.alert, .sound, .badge])) ?? false }
-            guard self.authorized == true else { return }
+            // Só entrega se o usuário já permitiu; nunca abre o prompt do sistema aqui (AC-T18).
+            guard NotificationPromptPolicy.canDeliver(await center.notificationSettings().authorizationStatus) else { return }
             try? await center.add(request)
         }
     }

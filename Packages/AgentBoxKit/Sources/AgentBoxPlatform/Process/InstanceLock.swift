@@ -8,7 +8,7 @@ public enum InstanceLock {
 
     /// `nil`: o lock é nosso. Senão, o pid de quem o tem (`-1` se ilegível).
     public static func acquire(runDirectory: URL) -> pid_t? {
-        try? FileManager.default.createDirectory(at: runDirectory, withIntermediateDirectories: true)
+        try? FileManager.default.createDirectory(at: runDirectory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         let fd = open(runDirectory.appendingPathComponent("app.lock").path, O_CREAT | O_RDWR | O_CLOEXEC, 0o600)
         guard fd >= 0 else { return nil }
         if flock(fd, LOCK_EX | LOCK_NB) == 0 {
