@@ -155,6 +155,8 @@ struct ComputersPanelView: View {
 struct PageHeader<Trailing: View>: View {
     let title: Text
     let trailing: Trailing
+    /// Canto dos botões Files · Insights · painel da janela (overlay): o header não passa por baixo deles.
+    @Environment(\.pageTrailingInset) private var trailingInset
 
     init(title: LocalizedStringKey, @ViewBuilder trailing: () -> Trailing) {
         self.title = Text(title, bundle: .module)
@@ -175,7 +177,8 @@ struct PageHeader<Trailing: View>: View {
             ActionButton(.pageClose, tooltip: String(localized: "Close", bundle: .module)) { Image(systemName: "xmark") }
                 .buttonStyle(DSIconButtonStyle(.header))
         }
-        .padding(.horizontal, DS.Space.s3)
+        .padding(.leading, DS.Space.s3)
+        .padding(.trailing, DS.Space.s3 + trailingInset)
         .frame(height: ComputersMetrics.pageHeader)
         .background(DS.Color.chrome)
         .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
@@ -194,13 +197,12 @@ struct ComputersPageView: View {
             }
             if controller.model.rows.isEmpty {
                 // Sem computadores: a página é a escolha de onde eles rodam (BK-12); o vazio vira uma linha embaixo.
-                ComputersWhereView(settings: settings, compact: false)
-                    .overlay(alignment: .bottom) {
+                ComputersWhereView(
+                    settings: settings, compact: false,
+                    emptyNote: AnyView(
                         Text("No computers yet. Agents create them when they need a browser.", bundle: .module)
                             .dsFont(DS.Font.small).foregroundStyle(DS.Color.textQuaternary)
-                            .padding(.bottom, DS.Space.s4)
-                            .a11y(.computersEmpty, kind: "text")
-                    }
+                            .a11y(.computersEmpty, kind: "text")))
             } else {
                 ComputersWhereView(settings: settings, compact: true)
                 header
@@ -281,3 +283,18 @@ struct ComputersRow: View {
     }
 }
 
+
+extension EnvironmentValues {
+    /// Largura reservada à direita do header de página para os botões da janela (com o painel direito fechado).
+    @Entry var pageTrailingInset: CGFloat = 0
+}
+
+/// Repassa a largura dos botões da janela às páginas enquanto o painel direito está fechado (com ele aberto os botões ficam sobre ele).
+struct PageInsetReader<Content: View>: View {
+    let rightPanel: RightPanelController?
+    let content: Content
+
+    var body: some View {
+        content.environment(\.pageTrailingInset, rightPanel.map { $0.isContentVisible ? 0 : RightPanelMetrics.stripButtons } ?? 0)
+    }
+}

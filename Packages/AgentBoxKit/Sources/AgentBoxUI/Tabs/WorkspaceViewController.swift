@@ -292,7 +292,8 @@ final class WorkspaceViewController: NSViewController {
                 showsStrip: !inSubTabs, showsHeader: !inSubTabs))
         }
         let host = ChromeHostingView(
-            content: content.environment(\.elementStore, env.elements).environment(\.actionRegistry, env.registry).environment(\.a11yParent, .windowMain))
+            content: PageInsetReader(rightPanel: env.rightPanel, content: content).environment(\.elementStore, env.elements)
+                .environment(\.actionRegistry, env.registry).environment(\.a11yParent, .windowMain))
         host.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
         return host
     }

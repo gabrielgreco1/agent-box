@@ -33,6 +33,8 @@ struct ComputersWhereView: View {
     let settings: SettingsModel
     /// Página já tem computadores: mostra a faixa compacta (a escolha abre por cima da tabela).
     let compact: Bool
+    /// Linha discreta no fim da página vazia ("No computers yet…").
+    var emptyNote: AnyView?
     @Namespace private var ring
 
     private var target: AppSettings.ComputerRunTarget { settings.settings.computers.runOn }
@@ -54,6 +56,7 @@ struct ComputersWhereView: View {
                 VStack(spacing: DS.Space.s8) {
                     hero
                     chooser
+                    emptyNote
                 }
                 .padding(.vertical, DS.Space.s10)
                 .frame(maxWidth: .infinity)
@@ -128,11 +131,12 @@ private struct WhereChoiceCard<Status: View>: View {
                     Spacer(minLength: 0)
                     check
                 }
-                Spacer(minLength: DS.Space.s2)
+                .padding(.bottom, DS.Space.s3)
                 Text(verbatim: title).dsFont(DS.Font.composerTitle).foregroundStyle(DS.Color.textPrimary)
                 Text(verbatim: detail).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary).lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
-                status().padding(.top, DS.Space.s1)
+                Spacer(minLength: DS.Space.s2)
+                status()
             }
             .padding(DS.Space.s4)
             .frame(maxWidth: .infinity, minHeight: WhereMetrics.choiceHeight, maxHeight: WhereMetrics.choiceHeight, alignment: .topLeading)

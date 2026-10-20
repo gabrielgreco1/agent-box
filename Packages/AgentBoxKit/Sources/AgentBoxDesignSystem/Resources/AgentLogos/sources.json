@@ -22,9 +22,9 @@
     },
     {
       "file": "docker.png",
-      "source": "https://www.docker.com/static/Docker-Logos-1.zip",
-      "member": "docker-logos/PNG/docker-mark-white.png",
-      "sha256": "c81cdb5fb94a62699bbdc409eda29adf4e1d65cb0f2e0b14297dc3fef374382e"
+      "source": "https://cdn.jsdelivr.net/npm/simple-icons@13.21.0/icons/docker.svg",
+      "member": "Simple Icons docker (CC0 icon data; mark belongs to Docker, Inc.), rasterized to @2x/@3x by NSImage; sha256 is of the SVG",
+      "sha256": "65571291c261ef869c31540a38f3ca0f0ee3bb73f179c172211c8860f19a6359"
     },
     {
       "file": "linkedin.png",
