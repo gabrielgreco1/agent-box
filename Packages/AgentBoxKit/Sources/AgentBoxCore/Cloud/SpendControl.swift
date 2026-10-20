@@ -17,7 +17,7 @@ public struct SpendDenial: Sendable, Equatable {
 }
 
 /// Um host que gastou (ou está gastando). `expiresAt` é o limite duro da VM (vida máxima): a projeção nunca passa dele.
-public struct SpendRecord: Sendable, Equatable {
+public struct SpendRecord: Sendable, Equatable, Codable {
     public var hostID: String
     public var startedAt: Date
     public var endedAt: Date?
@@ -29,9 +29,12 @@ public struct SpendRecord: Sendable, Equatable {
 }
 
 /// Livro-caixa local de gasto estimado (a conta real vem do Cost Explorer, atrasada, só para reconciliar).
-public struct SpendLedger: Sendable, Equatable {
+public struct SpendLedger: Sendable, Equatable, Codable {
     public private(set) var records: [SpendRecord] = []
     public init(records: [SpendRecord] = []) { self.records = records }
+
+    /// Descarta o que terminou antes de `date` (as janelas vão até um mês; o arquivo não cresce para sempre).
+    public mutating func prune(endedBefore date: Date) { records.removeAll { ($0.endedAt ?? .distantFuture) < date } }
 
     public mutating func open(_ record: SpendRecord) { records.removeAll { $0.hostID == record.hostID }; records.append(record) }
     public mutating func close(hostID: String, at date: Date) {

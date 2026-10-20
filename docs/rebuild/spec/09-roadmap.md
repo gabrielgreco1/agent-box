@@ -465,10 +465,10 @@ Pedidos do dono depois do primeiro uso real. Só tarefas anotadas; a ordem e o i
 | BK12-T07 | Segredos e volumes no host remoto (volumes nomeados, sementeira por archive) | Feito |
 | BK12-T08 | `AWSProvider` real: cliente EC2 (SigV4 ou SDK), AMI por região (SSM), security group, `RunInstances` com tags e `InstanceInitiatedShutdownBehavior=terminate` | Pendente (depende da Fase 0) |
 | BK12-T09 | Conectar a conta: `aws login`/SSO e CloudFormation quick-create (papel mínimo por tag + alarme de orçamento) | Pendente |
-| BK12-T10 | Ligar `ComputerScheduler` ao host remoto: aquisição de host, admissão por capacidade do host, desligar host vazio | Pendente |
-| BK12-T11 | Heartbeat em execução (timer no app, parada no quit, retomada ao reabrir) e reaper ao abrir e a cada N minutos | Pendente |
+| BK12-T10 | Ligar `ComputerScheduler` ao host remoto: aquisição de host, admissão por capacidade do host, desligar host vazio | Feito (provedor falso): `ComputerHostPool` (reuso, capacidade = min(vCPU/2, GiB/4), teto `maxComputers`, host vazio encerra após 15 min) atrás de `CloudComputerProvisioning`; `runOn == .cloud` sem provedor implementado falha com mensagem, nunca vai ao Mac. Falta o conector SSH real (depende de T08/T09) |
+| BK12-T11 | Heartbeat em execução (timer no app, parada no quit, retomada ao reabrir) e reaper ao abrir e a cada N minutos | Feito (provedor falso): `CloudHostSupervisor` (heartbeat por `SSHTunnel.runRemote`, reaper ao abrir e a cada 10 min, readoção por tag) e livro-caixa de gasto em JSON (`FileSpendLedgerStore`). Falta ligar ao app quando houver provedor real |
 | BK12-T12 | Reqlog e diário lidos do host remoto durante o run (hoje só voltam ao release) | Pendente |
-| BK12-T13 | UI Settings › Computers › Cloud: conta, região com latência e preço, tetos, proxy, custo do dia, órfãos | Pendente |
+| BK12-T13 | UI Settings › Computers › Cloud: conta, região com latência e preço, tetos, proxy, custo do dia, órfãos | Parcial: página Computers com escolha local/nuvem, provedor, região, tetos e máximo (F40); faltam conta, latência, proxy, custo do dia e órfãos |
 | BK12-T14 | Aviso de uso aceitável: confirmação inicial por conta/provedor, linha curta no card de aprovação e no viewer, reconfirmar em mudança de AUP | Pendente |
 | BK12-T15 | Testes de caos (matar o app, derrubar a rede), varredura de portas e evidências | Pendente |
 

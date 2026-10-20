@@ -65,6 +65,11 @@ extension AppEnvironment {
             return resolved
         }
         let provisioning = AppComputerProvisioning(config: config)
+        // BK-12: `runOn == .cloud` nunca cai no Mac. Sem provedor implementado (a AWS ainda é esqueleto) o pedido falha com mensagem clara.
+        let settingsForRoute = settings
+        await provisioning.setCloudRoute(CloudComputerRoute(
+            place: { await MainActor.run { settingsForRoute.settings.computers.runOn == .cloud ? .cloud : .local } },
+            provisioning: nil))
         let wait = environmentVariables["AGENTBOX_ASK_WAIT_S"].flatMap(TimeInterval.init) ?? 45
         let orchestrator = ComputerOrchestrator(
             helperPath: helper, store: store, provisioning: provisioning, runsRoot: root.appendingPathComponent("computers/runs", isDirectory: true),
@@ -93,6 +98,13 @@ extension AppEnvironment {
                 }
             },
             problem: { problem in
+                if problem == .cloudUnavailable {
+                    Task { @MainActor in
+                        toasts.show(kind: .error, title: String(localized: "Cloud computers aren't available yet", bundle: .module),
+                                    detail: String(localized: "Switch to This Mac in Computers.", bundle: .module))
+                    }
+                    return
+                }
                 Task { @MainActor in
                     settings.dockerStatus = DockerStatusInfo(text: problem.localizedDescription, stopped: true)
                     toasts.show(

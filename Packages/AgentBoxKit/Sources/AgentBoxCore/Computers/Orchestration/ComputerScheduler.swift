@@ -242,10 +242,15 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
 
     public func reserve(parent: String, _ request: ReserveRequest) async -> JSON {
         var preflightError: String?
-        do { try await provisioning.preflight() } catch { preflightError = "\(error)" }
+        var preflightReason = "docker_unavailable"
+        do { try await provisioning.preflight() } catch {
+            if let setup = error as? ComputerSetupError, setup == .cloudUnavailable {
+                preflightError = Self.describe(setup); preflightReason = "cloud_unavailable"  // nuvem pedida sem provedor: nunca vai para o Mac
+            } else { preflightError = "\(error)" }
+        }
         var results: [JSON] = []
         for name in request.names {
-            results.append(await reserveOne(parent: parent, name: name, request, preflightError: preflightError))
+            results.append(await reserveOne(parent: parent, name: name, request, preflightError: preflightError, preflightReason: preflightReason))
         }
         await drain()
         // O estado devolvido reflete a admissão já feita (provisioning ou queued com posição).
@@ -287,14 +292,14 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
         ["name": .string(name), "state": "unavailable", "reason": .string(reason), "message": .string(message)]
     }
 
-    private func reserveOne(parent: String, name: String, _ request: ReserveRequest, preflightError: String?) async -> JSON {
+    private func reserveOne(parent: String, name: String, _ request: ReserveRequest, preflightError: String?, preflightReason: String) async -> JSON {
         guard Self.validName(name) else { return unavailable(name, "invalid_name", "computer names use letters, digits, '.', '_' and '-' (max 100)") }
         if let existing = entries[name] {
             guard existing.spec.parent == parent else { return unavailable(name, "name_in_use", "another orchestrator already owns a computer named \(name)") }
             if existing.phase != .failed { return await boxJSON(existing, base: [:]) }  // idempotente pelo nome (CS-116, CS-301)
             await discard(name)  // falhou antes: reservar de novo tenta outra vez
         }
-        if let preflightError { return unavailable(name, "docker_unavailable", preflightError) }
+        if let preflightError { return unavailable(name, preflightReason, preflightError) }
         if let profile = request.profile, entries.values.contains(where: { $0.spec.profile == profile && $0.phase != .failed }) {
             return unavailable(name, "profile_busy", "browser profile \(profile) is in use by another computer")
         }

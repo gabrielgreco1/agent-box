@@ -26,11 +26,22 @@ public actor CloudHostManager {
     private let clock: @Sendable () -> Date
     private let acceptedAUP: @Sendable (CloudProviderID, String) async -> Bool
     private var hosts: [String: CloudHost] = [:]
+    private let ledgerStore: (any SpendLedgerStore)?
+    /// Registro encerrado há mais que isto sai do arquivo (a janela mensal é de 31 dias).
+    static let ledgerRetention: TimeInterval = 62 * 86_400
 
     /// `acceptedAUP(provider, versão)`: o usuário já confirmou este AUP? (P27.7)
     public init(provider: any CloudProvider, settings: Settings, clock: @escaping @Sendable () -> Date = { Date() },
-                acceptedAUP: @escaping @Sendable (CloudProviderID, String) async -> Bool) {
+                ledgerStore: (any SpendLedgerStore)? = nil, acceptedAUP: @escaping @Sendable (CloudProviderID, String) async -> Bool) {
         self.provider = provider; self.settings = settings; self.clock = clock; self.acceptedAUP = acceptedAUP
+        self.ledgerStore = ledgerStore
+        // O livro-caixa sobrevive ao reinício: o teto diário/mensal não zera ao fechar o app.
+        if let loaded = try? ledgerStore?.load() { ledger = loaded }
+    }
+
+    private func persistLedger() {
+        ledger.prune(endedBefore: clock().addingTimeInterval(-Self.ledgerRetention))
+        try? ledgerStore?.save(ledger)
     }
 
     public var activeHosts: [CloudHost] { hosts.values.filter { $0.state.isLive }.sorted { $0.id < $1.id } }
@@ -57,6 +68,7 @@ public actor CloudHostManager {
         var record = candidate
         record.hostID = host.id
         ledger.open(record)
+        persistLedger()
         hosts[host.id] = host
         return host
     }
@@ -65,7 +77,26 @@ public actor CloudHostManager {
         guard let host = hosts[id] else { throw CloudError.notFound(id) }
         try await provider.terminateHost(id: id, region: host.region)
         ledger.close(hostID: id, at: clock())
+        persistLedger()
         hosts[id]?.state = .terminated
+    }
+
+    /// Ao reabrir o app: acha PELAS TAGS do dono os hosts vivos que o provedor ainda tem e volta a gerenciá-los (heartbeat, teto, reaper).
+    /// Host que já venceu fica de fora (o reaper o encerra). Sem registro no livro-caixa, abre um a partir das tags.
+    @discardableResult
+    public func adoptExisting(regions: [String]) async throws -> [CloudHost] {
+        let now = clock()
+        let found = try await provider.listHosts(tags: RackyTags.filter(owner: settings.owner), regions: regions)
+        var adopted: [CloudHost] = []
+        for host in found where host.state.isLive {
+            guard let tags = RackyTags(host.tags), tags.owner == settings.owner, tags.expires > now else { continue }
+            if hosts[host.id] == nil { hosts[host.id] = host; adopted.append(host) }
+            if !ledger.records.contains(where: { $0.hostID == host.id && $0.endedAt == nil }) {
+                ledger.open(SpendRecord(hostID: host.id, startedAt: tags.created, expiresAt: tags.expires, hourlyUSD: host.hourlyUSD))
+            }
+        }
+        persistLedger()
+        return adopted
     }
 
     public struct CapEnforcement: Sendable, Equatable {
@@ -93,6 +124,7 @@ public actor CloudHostManager {
             ledger.close(hostID: id, at: clock())
             hosts[id]?.state = .terminated
         }
+        if !report.terminated.isEmpty { persistLedger() }
         return report
     }
 }
