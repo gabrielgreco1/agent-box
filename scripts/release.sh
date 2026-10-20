@@ -135,11 +135,14 @@ SIZE="$(stat -f %z "$DMG")"
 echo "release: OK -> $DMG ($SIZE bytes)"
 cat "$DMG.sha256"
 
+PRERELEASE=""
+case "$VERSION" in *-*) PRERELEASE=" --prerelease" ;; esac
+
 cat <<EOF
 
 # ---------------------------------------------------------------------------------------------------------
 # NADA DISTO FOI EXECUTADO. Antes: a release do runtime (runtime-*) precisa existir no GitHub (scripts/vz/stage-release.sh).
 # Para publicar o app (você roda):
 # ---------------------------------------------------------------------------------------------------------
-gh release create "v$VERSION" "$DMG" "$DMG.sha256" --repo "$REPO" --title "Racky $VERSION" --generate-notes$(case "$VERSION" in *-*) echo " --prerelease" ;; esac)
+gh release create "v$VERSION" "$DMG" "$DMG.sha256" --repo "$REPO" --title "Racky $VERSION" --generate-notes$PRERELEASE
 EOF

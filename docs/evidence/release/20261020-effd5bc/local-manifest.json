@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "version": "1-155dac8169cb",
+  "kernel": {
+    "url": "file:///Users/gabriel/orca/workspaces/agent-box/otter/build/release/runtime-1-155dac8169cb/vmlinux",
+    "sha256": "f437320bab94f19105d12b932aa29735f0d54d2588218872254367f312c1027c",
+    "size": 18815488,
+    "license": "GPL-2.0-only",
+    "sourceURL": "https://github.com/kata-containers/kata-containers/tree/3.32.0/tools/packaging/kernel"
+  },
+  "vminit": {
+    "url": "file:///Users/gabriel/orca/workspaces/agent-box/otter/build/release/runtime-1-155dac8169cb/vminit.oci.tar",
+    "sha256": "6f5f3c61c8b827f407c04b6ada6b53fb0bf392d99f46905067a3adc2f3e76bc3",
+    "size": 69424640,
+    "reference": "ghcr.io/apple/containerization/vminit:0.52.1"
+  },
+  "computer": {
+    "url": "file:///Users/gabriel/orca/workspaces/agent-box/otter/build/release/runtime-1-155dac8169cb/computer.oci.tar",
+    "sha256": "5f86f8658821ab58618ff8fa9a57533e5a252fdb2f0a9ad5d7fd98dd91a28f0f",
+    "size": 386905600,
+    "reference": "racky-computer:vz-155dac8169cb"
+  }
+}

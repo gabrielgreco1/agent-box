@@ -142,9 +142,12 @@ chmod +x "$FAKE_HOME/.local/bin/claude"
 # (NSHomeDirectory() ignora HOME, então o ~/.local/bin do dono continua nos diretórios conhecidos, mas só depois do PATH.)
 printf 'export PATH="%s/.local/bin:$PATH"\n' "$FAKE_HOME" > "$FAKE_HOME/.zshenv"
 ( cd "$REPO" && git init -q && echo "clean install repo" > README.md && git add . && git -c user.email=ci@racky.local -c user.name=ci commit -qm init )
+# RACKY_REAL_DOWNLOAD=1: usa o manifesto embutido (URLs reais das Releases), como um usuário de verdade.
+MANIFEST_ENV="RACKY_VZ_MANIFEST=file://$MANIFEST_DIR/vz-manifest.json"
+[ "${RACKY_REAL_DOWNLOAD:-0}" = "1" ] && MANIFEST_ENV="RACKY_REAL_DOWNLOAD=1"
 env -i HOME="$FAKE_HOME" PATH="/usr/bin:/bin:/usr/sbin:/sbin" USER="$USER" LOGNAME="$USER" TMPDIR="${TMPDIR:-/tmp}" \
   RACKY_HOME="$HOME_T" RACKY_LAUNCHD=0 RACKY_AUTOMATION=1 RACKY_APP_SOCK="$SOCK" RACKY_MCP_NO_LAUNCH=1 \
-  RACKY_VZ_MANIFEST="file://$MANIFEST_DIR/vz-manifest.json" DOCKER_HOST=unix:///nonexistent \
+  "$MANIFEST_ENV" DOCKER_HOST=unix:///nonexistent \
   "$APP/Contents/MacOS/Racky" > "$EVIDENCE_DIR/app-stdout.txt" 2>&1 &
 APP_PID=$!
 mark "app-lancado"

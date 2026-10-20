@@ -1,0 +1,2 @@
+sandbox_extension_issue_file_to_process failed for /tmp/rkci-6kQQDY/install/Racky.app: 1 (Operation not permitted)
+2026-10-20 18:51:47.251 Racky[41226:25406690] View <SwiftUI.KeyViewProxy: 0x7cd88ecc00> has 64 views pointing at it that can't be found.

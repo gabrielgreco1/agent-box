@@ -1,0 +1,15 @@
+Executable=/private/tmp/rkci-6kQQDY/install/Racky.app/Contents/MacOS/Racky
+Identifier=app.racky.mac
+Format=app bundle with Mach-O thin (arm64)
+CodeDirectory v=20500 size=195150 flags=0x10002(adhoc,runtime) hashes=6088+7 location=embedded
+Signature=adhoc
+Info.plist entries=24
+TeamIdentifier=not set
+Runtime Version=26.2.0
+Sealed Resources version=2 rules=13 files=154
+Internal requirements count=0 size=12
+Executable=/private/tmp/rkci-6kQQDY/install/Racky.app/Contents/MacOS/Racky
+[Dict]
+	[Key] com.apple.security.virtualization
+	[Value]
+		[Bool] true

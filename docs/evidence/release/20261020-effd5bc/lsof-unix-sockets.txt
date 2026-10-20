@@ -1,0 +1,9 @@
+COMMAND   PID    USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+Racky   41226 gabriel    3u  unix 0x6ab5256cfc78d8f4      0t0      ->0x1463928c45f57e7f
+Racky   41226 gabriel   20u  unix 0xb2936a11d4e146b5      0t0      /tmp/rkci-6kQQDY/app.sock
+Racky   41226 gabriel   41u  unix 0x21d66c2966ba1c71      0t0      ->0x2b5a015db1351b5e
+Racky   41226 gabriel   42u  unix 0x610e5f870875e135      0t0      ->0x288726631b5f1e53
+Racky   41226 gabriel  241u  unix 0xab8d52e0346a3d4e      0t0      ->0x774b145249cf3679
+COMMAND   PID    USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+rackyd  41497 gabriel    3u  unix 0x3c30ad52a5ae4d46      0t0      /tmp/rkci-6kQQDY/h/run/ptyd-v1.sock
+rackyd  41497 gabriel    4u  unix 0x774b145249cf3679      0t0      /tmp/rkci-6kQQDY/h/run/ptyd-v1.sock
