@@ -24,6 +24,8 @@ public final class AppLifecycleCoordinator {
         public var showWindow: () -> Void
         public var hideWindow: () -> Void
         public var terminate: () -> Void
+        /// Último recurso de um encerramento por sinal: o processo sai mesmo se o `terminate` do AppKit emperrar.
+        public var forceExit: () -> Void
 
         public init(
             countLive: @escaping () async -> LiveProcessCounts = { LiveProcessCounts() },
@@ -35,7 +37,8 @@ public final class AppLifecycleCoordinator {
             markCleanExit: @escaping () async -> Void = {},
             showWindow: @escaping () -> Void = {},
             hideWindow: @escaping () -> Void = {},
-            terminate: @escaping () -> Void = { AppLifecycleCoordinator.requestTermination() }
+            terminate: @escaping () -> Void = { AppLifecycleCoordinator.requestTermination() },
+            forceExit: @escaping () -> Void = { exit(0) }
         ) {
             self.countLive = countLive
             self.preferences = preferences
@@ -47,6 +50,7 @@ public final class AppLifecycleCoordinator {
             self.showWindow = showWindow
             self.hideWindow = hideWindow
             self.terminate = terminate
+            self.forceExit = forceExit
         }
     }
 
@@ -62,6 +66,12 @@ public final class AppLifecycleCoordinator {
     private var quittingCompletely = false
     private var pendingReason: QuitRequestReason?
     private var pending: Pending?
+    /// Quanto esperar a gravação da saída limpa (banco, métricas) antes de sair assim mesmo. O `busy_timeout` do banco é de 5 s por
+    /// consulta: sem este teto, várias consultas seguidas somavam ~30 s e o `kill` da instalação virava SIGKILL (sem marca de saída).
+    var cleanExitTimeout: Duration = .milliseconds(1500)
+    /// Depois deste prazo sem o processo sair, um encerramento por sinal força `exit`.
+    var forcedExitDelay: Duration = .seconds(3)
+    private var cleanExitMarked = false
     /// Aplica a política de activation do AppKit; trocado nos testes (não mexer na política do processo de teste).
     var applyActivationPolicy: (NSApplication.ActivationPolicy) -> Void = { NSApp.setActivationPolicy($0) }
 
@@ -124,11 +134,61 @@ public final class AppLifecycleCoordinator {
     }
 
     /// SIGTERM/SIGINT/SIGHUP ou logout por fora (F30): sai sem perguntar e sem parar nada; daemon e agentes continuam.
+    /// Rápido e sem depender de nada que possa travar: marca a saída limpa com teto de tempo, desfaz um overlay de confirmação que
+    /// esteja aberto (um segundo `terminate` com o primeiro em `terminateLater` fazia o AppKit sair sem gravar a marca) e, se o
+    /// AppKit não encerrar em `forcedExitDelay`, força a saída.
     public func externalTerminationRequested() {
         pendingReason = .system
         quittingCompletely = true
         refreshMenuBar()
-        dependencies.terminate()
+        // Fila global, não o main actor: o ponto é sair mesmo com a fila principal presa.
+        // SAFETY: o closure só é chamado uma vez, na fila global, e o padrão (`exit(0)`) não toca em estado do app.
+        nonisolated(unsafe) let forceExit = dependencies.forceExit
+        let parts = forcedExitDelay.components
+        let seconds = Double(parts.seconds) + Double(parts.attoseconds) / 1e18
+        DispatchQueue.global().asyncAfter(deadline: .now() + seconds) { forceExit() }
+        Task { @MainActor in
+            await markCleanExitBounded()
+            if let waiting = pending {
+                pending = nil
+                overlays.dismiss(.action)
+                waiting.reply(false)  // encerra o `terminateLater` em curso; o `terminate` abaixo começa um ciclo novo
+                pendingReason = .system
+            }
+            dependencies.terminate()
+        }
+    }
+
+    /// `markCleanExit` com teto: a saída não espera um banco ocupado além de `cleanExitTimeout`. Só grava uma vez por encerramento.
+    func markCleanExitBounded() async {
+        guard !cleanExitMarked else { return }
+        cleanExitMarked = true
+        let race = CleanExitRace()
+        let work = dependencies.markCleanExit
+        let timeout = cleanExitTimeout
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            race.continuation = continuation
+            Task { @MainActor in
+                await work()
+                race.finish()
+            }
+            Task { @MainActor in
+                try? await Task.sleep(for: timeout)
+                if !race.finished { log.error("clean-exit mark timed out after \(timeout): leaving anyway") }
+                race.finish()
+            }
+        }
+    }
+
+    @MainActor private final class CleanExitRace {
+        var continuation: CheckedContinuation<Void, Never>?
+        var finished = false
+        func finish() {
+            guard !finished else { return }
+            finished = true
+            continuation?.resume()
+            continuation = nil
+        }
     }
 
     /// `Stop All Agents…` da barra de menus: abre a janela com a segunda confirmação.
@@ -166,6 +226,11 @@ public final class AppLifecycleCoordinator {
         let reason = pendingReason ?? Self.reason(fromAppleEvent: NSAppleEventManager.shared().currentAppleEvent)
         pendingReason = nil
         Task { @MainActor in
+            // Sinal, logout ou "Quit Completely" nunca perguntam: não consulta o banco (cada consulta pode esperar o busy timeout).
+            if reason != .user {
+                await carryOut(.quitNow, reply: reply)
+                return
+            }
             let counts = await dependencies.countLive()
             let askedBefore = await dependencies.promptShownBefore()
             let decision = QuitPolicy.decide(reason: reason, counts: counts, preferences: dependencies.preferences(), askedBefore: askedBefore)
@@ -176,7 +241,7 @@ public final class AppLifecycleCoordinator {
     func carryOut(_ decision: QuitDecision, reply: @escaping (Bool) -> Void) async {
         switch decision {
         case .quitNow:
-            await dependencies.markCleanExit()
+            await markCleanExitBounded()
             reply(true)
         case .keepRunning:
             quittingCompletely = false
@@ -184,7 +249,7 @@ public final class AppLifecycleCoordinator {
             reply(false)
         case .stopAllAndQuit:
             await dependencies.stopAll()
-            await dependencies.markCleanExit()
+            await markCleanExitBounded()
             reply(true)
         case .askUser(let prompt):
             quittingCompletely = false
@@ -250,7 +315,7 @@ public final class AppLifecycleCoordinator {
         pending = nil
         Task { @MainActor in
             await dependencies.stopAll()
-            await dependencies.markCleanExit()
+            await markCleanExitBounded()
             if let reply {
                 reply(true)
             } else {

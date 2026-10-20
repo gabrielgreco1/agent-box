@@ -21,6 +21,8 @@ import Testing
         var shown = 0
         var hidden = 0
         var terminated = 0
+        var forcedExits = 0
+        var countLiveCalls = 0
         var policies: [NSApplication.ActivationPolicy] = []
         var replies: [Bool] = []
     }
@@ -30,10 +32,12 @@ import Testing
         let probe = Probe()
         let lifecycle = env.lifecycle!
         lifecycle.dependencies = AppLifecycleCoordinator.Dependencies(
-            countLive: { probe.counts }, preferences: { probe.preferences }, disableAsking: { probe.disabledAsking += 1 },
+            countLive: { probe.countLiveCalls += 1; return probe.counts }, preferences: { probe.preferences }, disableAsking: { probe.disabledAsking += 1 },
             promptShownBefore: { probe.shownBefore }, markPromptShown: { probe.promptMarked += 1 },
             stopAll: { probe.stopAllCalls += 1 }, markCleanExit: { probe.cleanExits += 1 },
-            showWindow: { probe.shown += 1 }, hideWindow: { probe.hidden += 1 }, terminate: { probe.terminated += 1 })
+            showWindow: { probe.shown += 1 }, hideWindow: { probe.hidden += 1 }, terminate: { probe.terminated += 1 },
+            forceExit: { probe.forcedExits += 1 })
+        lifecycle.forcedExitDelay = .seconds(600)  // nunca dispara no teste (o padrão chamaria `exit`)
         lifecycle.applyActivationPolicy = { probe.policies.append($0) }
         return (env, lifecycle, probe)
     }
@@ -56,14 +60,61 @@ import Testing
         // O mock do `terminate` do AppKit chama `shouldTerminate`, como o `NSApp.terminate` real.
         lifecycle.dependencies.terminate = { probe.terminated += 1 }
         lifecycle.externalTerminationRequested()
+        for _ in 0..<500 where probe.terminated == 0 { try await Task.sleep(for: .milliseconds(20)) }
         #expect(probe.terminated == 1)
+        #expect(probe.cleanExits == 1, "a marca de saída limpa sai antes do terminate")
         let reply: (Bool) -> Void = { probe.replies.append($0) }
         lifecycle.shouldTerminate(reply: reply)
         try await Task.sleep(for: .milliseconds(200))
         #expect(probe.replies == [true], "sai sem overlay")
         #expect(probe.stopAllCalls == 0, "SIGTERM no app nunca para os agentes")
-        #expect(probe.cleanExits == 1)
+        #expect(probe.cleanExits == 1, "uma só gravação por encerramento")
+        #expect(probe.countLiveCalls == 0, "sinal não consulta o banco: cada consulta pode esperar o busy timeout")
         #expect(!lifecycle.hasPendingPrompt)
+    }
+
+    @Test func externalTerminationDoesNotWaitForASlowCleanExitMark() async throws {
+        let (_, lifecycle, probe) = make()
+        lifecycle.cleanExitTimeout = .milliseconds(100)
+        var markFinished = false
+        lifecycle.dependencies.markCleanExit = { probe.cleanExits += 1; try? await Task.sleep(for: .seconds(30)); markFinished = true }
+        lifecycle.externalTerminationRequested()
+        for _ in 0..<500 where probe.terminated == 0 { try await Task.sleep(for: .milliseconds(20)) }
+        #expect(probe.terminated == 1, "o banco ocupado não segura o SIGTERM: sai pelo teto de tempo")
+        #expect(!markFinished)
+    }
+
+    @Test func externalTerminationWithOpenQuitOverlayCancelsItAndStillMarksCleanExit() async throws {
+        let (env, lifecycle, probe) = make()
+        await decide(lifecycle, probe: probe)  // ⌘Q com agentes: overlay aberto, AppKit em terminateLater
+        #expect(lifecycle.hasPendingPrompt)
+        lifecycle.externalTerminationRequested()
+        for _ in 0..<500 where probe.terminated == 0 { try await Task.sleep(for: .milliseconds(20)) }
+        #expect(probe.replies == [false], "o ciclo do ⌘Q pendente é encerrado antes de pedir outro terminate")
+        #expect(!lifecycle.hasPendingPrompt)
+        #expect(env.overlays.top == nil)
+        #expect(probe.cleanExits == 1)
+        #expect(probe.terminated == 1)
+        lifecycle.shouldTerminate { probe.replies.append($0) }
+        try await Task.sleep(for: .milliseconds(200))
+        #expect(probe.replies == [false, true], "o segundo ciclo sai sem perguntar")
+    }
+
+    @Test func externalTerminationForcesExitWhenAppKitNeverFinishes() async throws {
+        let (_, lifecycle, probe) = make()
+        lifecycle.forcedExitDelay = .milliseconds(100)
+        lifecycle.externalTerminationRequested()
+        for _ in 0..<500 where probe.forcedExits == 0 { try await Task.sleep(for: .milliseconds(20)) }
+        #expect(probe.forcedExits == 1)
+    }
+
+    @Test func userQuitStillCountsAndAsks() async throws {
+        let (_, lifecycle, probe) = make()
+        lifecycle.shouldTerminate { probe.replies.append($0) }
+        try await Task.sleep(for: .milliseconds(200))
+        #expect(probe.countLiveCalls == 1, "⌘Q (usuário) continua contando e perguntando")
+        #expect(lifecycle.hasPendingPrompt)
+        #expect(probe.replies.isEmpty)
     }
 
     @Test func sigtermSigintAndSighupReachTheHandlerAndDoNotKillTheProcess() async throws {
