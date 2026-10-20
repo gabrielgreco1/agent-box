@@ -370,7 +370,7 @@ struct ViewerModelTests {
         #expect(await rig.computer.returnIdleControl(now: start.addingTimeInterval(9999)) == false)
     }
 
-    @Test func humanInControlErrorIsClearAndPointsToHelpRequest() async throws {
+    @Test func humanInControlErrorTellsTheAgentToWaitNotToAskForHelp() async throws {
         let rig = try await Rig.make()
         defer { rig.cleanup() }
         await rig.claim()
@@ -378,11 +378,12 @@ struct ViewerModelTests {
         _ = try await rig.computer.requestTakeOver()
         let result = await rig.call("browser_click", ["x": 1, "y": 2])
         #expect(errorCode(result) == "human_in_control")
-        #expect(result.json["message"]?.string?.contains("ask the user via help_request") == true)
-        #expect(result.json["details"]?["hint"] == "ask the user via help_request")
-        #expect(result.json["retry_after_s"]?.int == 5)
+        // F43: o usuário já está na tela; mandar pedir ajuda fazia todo Take Over virar um help_request.
+        #expect(result.json["message"]?.string?.contains("do not open a help_request") == true)
+        #expect(result.json["details"]?["hint"] == "wait; poll box_status")
+        #expect(result.json["retry_after_s"]?.int == 20)
         // o erro que nasce no runtime (corrida) ganha a mesma dica
         let mapped = RuntimeErrorMapper.map(status: 409, body: ["error": "human_in_control", "message": "x", "details": ["retry_after_s": 5]])
-        #expect(mapped.code == .humanInControl && mapped.message.contains("help_request"))
+        #expect(mapped.code == .humanInControl && mapped.message.contains("do not open a help_request"))
     }
 }

@@ -296,14 +296,16 @@ public actor ManagedComputer {
         return nil
     }
 
-    /// F28: erro claro para o agente. Nada de ficar tentando em laço: avisar o usuário (help_request) ou esperar.
+    /// F28/F43: erro claro para o agente. O usuário já está na tela: o agente espera, sem laço e sem abrir `help_request` (antes a
+    /// mensagem mandava pedir ajuda, e todo Take Over virava um pedido de ajuda).
     static func humanInControlError() -> ToolError {
         ToolError(
             .humanInControl,
-            "The user has taken control of this computer (Take Over). Do not keep retrying: ask the user via help_request (kind=other) "
-                + "what to do, or wait. Control returns to you at Hand Back, or automatically after 3 minutes without user input.",
-            retryAfterS: 5,
-            details: ["hint": "ask the user via help_request", "idle_return_s": .int(Int(humanIdleTimeout))])
+            "The user is using this computer right now (Take Over). Wait: do not open a help_request and do not retry in a loop. "
+                + "Call box_status about every 20 s; control comes back to you when the user hands it back, or automatically after "
+                + "3 minutes without user input. Then look at the page again before continuing: the user may have changed it.",
+            retryAfterS: 20,
+            details: ["hint": "wait; poll box_status", "idle_return_s": .int(Int(humanIdleTimeout))])
     }
 
     func stateGate() -> ToolError? {

@@ -958,6 +958,9 @@ public final class AppEnvironment {
     /// ela pisca por meio segundo antes de a sessão selecionada voltar.
     @ObservationIgnored public var restorePending = false
     @ObservationIgnored var onRestored: () -> Void = {}
+    /// O AppDelegate pegou o lock da instância: vale esperar a anterior soltar `app.sock`. Ambientes de teste (sem o lock) desistem na
+    /// hora, como antes, em vez de esperar 30 s pelo app do dono.
+    @ObservationIgnored public var ownsInstanceLock = false
 
     /// O app já tem o lock da instância (AppDelegate), então quem ainda escuta em `app.sock` é a instância anterior saindo (relançar
     /// logo após o quit/SIGTERM). Espera ela soltar o socket em vez de ficar sem hub: sem ele os agentes perdem os computadores
@@ -996,7 +999,8 @@ public final class AppEnvironment {
             ]
             if let orchestrator = orchestratorHolder.value { providers.append(orchestrator.mcpProvider) }
             let server = AppSockHub(socketPath: socketPath, providers: providers)
-            if await Self.startRetryingWhileAnotherInstanceExits(socketPath: socketPath, start: { try await server.start() }, log: log) {
+            if await Self.startRetryingWhileAnotherInstanceExits(
+                socketPath: socketPath, start: { try await server.start() }, log: log, timeout: ownsInstanceLock ? .seconds(30) : .zero) {
                 hub = server
             }
             return

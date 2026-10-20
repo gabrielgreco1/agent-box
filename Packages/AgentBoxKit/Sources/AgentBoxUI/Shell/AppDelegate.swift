@@ -23,6 +23,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             log.publicInfo("another instance owns this data folder: yielding to it")
             exit(0)
         }
+        // Daqui em diante esta é a dona da pasta: quem ainda escuta em `app.sock` é a instância anterior saindo (F41).
+        env.ownsInstanceLock = true
         if env.headless { MainWindowController.invisibleForTests = true }
         NSApp.appearance = NSAppearance(named: .darkAqua)
         // Telas de fixture (dev e evidência) não leem nem gravam o frame salvo do usuário.
