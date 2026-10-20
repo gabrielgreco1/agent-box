@@ -5,6 +5,25 @@
 
 ---
 
+## Decisões do dono (2026-10-20)
+
+Respostas às perguntas da §10 (registradas como P27 em `spec/00-decisions.md`):
+
+1. **Para que serve a nuvem:** paralelismo e mais capacidade de computação do que o Mac aguenta. Não é "computadores 24 h".
+2. **O Mac continua sendo o controlador.** Um computador na nuvem só existe enquanto um subagente está mandando trabalho para ele. A chave morta na VM está certa; **não há controlador do lado da nuvem**.
+3. **Tetos de gasto:** o USUÁRIO define o teto diário e o mensal.
+4. **Região:** o USUÁRIO escolhe, com latência e preço visíveis.
+5. **Conta do usuário final, com acabamento:** login pelo navegador (`aws login`, credenciais de curta duração; Identity Center/SSO para empresas) + um clique de CloudFormation quick-create que cria um papel de privilégio mínimo restrito a recursos com a tag Racky e um alarme de orçamento. O app só opera com esse papel.
+6. **Proxy upstream:** o USUÁRIO decide se usa.
+7. **Aviso de uso aceitável:** aviso completo com confirmação na primeira conexão de cada conta/provedor; depois, uma linha curta sempre visível no card de aprovação e no viewer de todo computador na nuvem; reconfirmar quando o AUP do provedor mudar.
+8. **Portabilidade:** todos os provedores, o usuário escolhe. A interface de provedor é central desde o MVP (AWS primeiro; cada provedor é um adaptador depois do próprio spike).
+9. **Modo isolado (CLI do agente dentro do computador) na nuvem:** vai depois, em dois passos (máquina primeiro; depois máquina com o agente dentro). O desenho das credenciais do agente é pré-requisito do passo 2.
+10. **Arquivos do agente:** o que ele escreve em `/work` volta ao Mac automaticamente (mesma pasta do run, como no local) antes de a VM ser apagada.
+
+Consequências já implementadas na fundação (BK-12 Fase 1, T-01 a T-07): `ComputerHost` (`.local`/`.remote`), `CloudProvider` com provedor falso, transporte Docker por túnel SSH, política de chave morta/vida máxima/reaper/teto de gasto e volta dos arquivos por API de arquivo.
+
+---
+
 ## 0. Resumo executivo
 
 1. **É possível?** Sim, mas não "do jeito que está" em qualquer nuvem. O nosso container precisa de `NET_ADMIN` (firewall por usuário), Xvfb, Chromium e acesso de rede cru. Isso roda em **uma máquina virtual (VM) comum** com Docker e **não roda** em ECS Fargate nem em Cloud Run (a documentação proíbe a capacidade).

@@ -5,6 +5,8 @@ import Foundation
 /// `DockerComputerBackend` que as ferramentas MCP usam. Só toca recursos com os labels do computador.
 public struct DockerComputerProvisioning: ComputerProvisioning {
     public let client: DockerClient
+    /// Onde os computadores rodam: Docker local (padrão) ou VM remota por túnel (BK-12). `client` é sempre `host.client`.
+    public let host: any ComputerHostAccess
     /// Tag de `agentbox-computer`.
     public let image: String
     public let secrets: BoxSecretFiles
@@ -19,9 +21,11 @@ public struct DockerComputerProvisioning: ComputerProvisioning {
     public init(
         client: DockerClient, image: String, secrets: BoxSecretFiles, owner: String,
         network: String = ComputerProvisioner.defaultNetwork, allowCIDRs: [String] = [], extraLabels: [String: String] = [:],
-        isTest: Bool = false, resolver: ProxyConfigResolver? = nil
+        isTest: Bool = false, resolver: ProxyConfigResolver? = nil, host: (any ComputerHostAccess)? = nil
     ) {
-        self.client = client; self.image = image; self.secrets = secrets; self.owner = owner
+        let host = host ?? LocalHostAccess(client: client)
+        self.host = host
+        self.client = host.client; self.image = image; self.secrets = secrets; self.owner = owner
         self.network = network; self.allowCIDRs = allowCIDRs; self.extraLabels = extraLabels; self.isTest = isTest; self.resolver = resolver
     }
 
@@ -47,7 +51,7 @@ public struct DockerComputerProvisioning: ComputerProvisioning {
             config = merged
             proxyCA = resolved.caPEM
         }
-        let provisioner = ComputerProvisioner(client: client)
+        let provisioner = ComputerProvisioner(host: host)
         let provisioned = try await provisioner.provision(ComputerProvisionRequest(
             labels: labels, image: image, display: spec.display, token: token, config: config, proxyCA: proxyCA,
             secrets: secrets, runDirectory: spec.run.root, network: network, extraLabels: extraLabels))
@@ -82,16 +86,17 @@ public struct DockerComputerProvisioning: ComputerProvisioning {
         let parsed = configResult.exitCode == 0 ? Self.parseEgressConfig(configResult.stdout) : nil
         let config = parsed ?? EgressConfigFile.make(profile: nil, secret: nil, allowCIDRs: allowCIDRs, allowHosts: [])
         let inspect = try await client.inspectContainer(live.containerID)
-        guard let port = inspect.publishedHostPort(for: "\(config.adminPort)/tcp") else { throw ComputerProvisionerError.noPublishedPort }
+        guard let hostPort = inspect.publishedHostPort(for: "\(config.adminPort)/tcp") else { throw ComputerProvisionerError.noPublishedPort }
+        let port = try await host.reach(publishedPort: hostPort, computerID: live.computerID)
         let labels = ComputerLabels(
             owner: owner, computerID: live.computerID, computerName: live.name, batch: live.batch ?? spec.batch, ephemeral: true, isTest: isTest)
         let computer = ProvisionedComputer(
             labels: labels, display: spec.display, containerID: live.containerID, containerName: inspect.name, adminPort: port,
             profileVolume: spec.display == .http ? nil : "ab-prof-\(live.computerID)", workDirectory: spec.run.work, logsDirectory: spec.run.logs,
-            admin: EgressAdminClient(port: port, token: token))
+            admin: EgressAdminClient(port: port, token: token), host: host.host, remoteAdminPort: host.host.isRemote ? hostPort : nil)
         try await computer.admin.waitUntilHealthy(timeout: .seconds(8))
         let backend = DockerComputerBackend(client: client, computer: computer, secrets: secrets, baseConfig: config, resolver: resolver)
-        let provisioner = ComputerProvisioner(client: client)
+        let provisioner = ComputerProvisioner(host: host)
         let secrets = secrets
         let handle = ProvisionedHandle(backend: backend) { _ = try? await provisioner.teardown(computer, secrets: secrets) }
         return AdoptedComputer(handle: handle, proxy: config.via, allowHosts: config.allowHosts)

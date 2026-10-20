@@ -88,7 +88,7 @@ enum TarArchive {
         return out
     }
 
-    private static func header(path: String, size: Int, mode: Int, type: Character) throws -> Data {
+    static func header(path: String, size: Int, mode: Int, type: Character, uid: Int = 0, gid: Int = 0) throws -> Data {
         var name = path
         var prefix = ""
         let bytes = Array(path.utf8)
@@ -112,8 +112,8 @@ enum TarArchive {
         }
         put(name, at: 0, length: 100)
         put(octal(mode, length: 8), at: 100, length: 7)
-        put(octal(0, length: 8), at: 108, length: 7)
-        put(octal(0, length: 8), at: 116, length: 7)
+        put(octal(uid, length: 8), at: 108, length: 7)
+        put(octal(gid, length: 8), at: 116, length: 7)
         put(octal(size, length: 12), at: 124, length: 11)
         put(octal(0, length: 12), at: 136, length: 11)
         for i in 148 ..< 156 { block[i] = 0x20 }  // checksum calculado com espaços

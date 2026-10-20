@@ -444,6 +444,36 @@ Pedidos do dono depois do primeiro uso real. Só tarefas anotadas; a ordem e o i
 | BK-12 Computadores na nuvem | Rodar os computadores fora do Mac: conta AWS, Cloudflare e outros provedores ligados por uma UI simples (login, região, limite como "no máximo 5 na AWS"); o mesmo container/compose sobe lá em vez do Docker local; viewer, egress e ferramentas iguais; custo visível | T3-01, T3-09 |
 
 
+#### 4.4c Plano de fases do BK-12 (P27; estudo em `study/cloud-computers.md` §9.3)
+
+**Fase 0 · Spike (3 dias): aguardando OK do dono.** Nada é criado na nuvem antes dele (custa dinheiro e usa a conta do dono). Critério: exec sequestrado e iptables por uid passam numa VM real; só então a Fase 1.
+
+| Item | Escopo | Estado |
+|---|---|---|
+| BK12-S0 | Spike AWS (`c7g.large`): imagem real, `firewall.py` fail-closed, VNC e exec pelo túnel, latência sa-east-1 vs us-east-1, cota | Aguarda OK do dono |
+
+**Fase 1 · MVP AWS (~30 dias).** Fundação local (sem nuvem) já feita na branch `cloud-foundation`: T-01 a T-07.
+
+| Tarefa | Escopo | Estado |
+|---|---|---|
+| BK12-T01 | `ComputerHost` (`.local`/`.remote`) atrás do provisionador, sem mudar o caminho local | Feito |
+| BK12-T02 | `CloudProvider` + provedor falso + tipos de região, cota, estimativa e AUP; `AWSProvider` só com stub e lista de chamadas | Feito |
+| BK12-T03 | Transporte Docker por túnel SSH (socket encaminhado, reconexão, forwards por computador, known_hosts/chave) | Feito |
+| BK12-T04 | Chave morta na VM (cloud-init), vida máxima, tags, reaper por tag | Feito |
+| BK12-T05 | Teto de gasto diário/mensal aplicado antes de criar e durante | Feito |
+| BK12-T06 | Volta de `/work` e logs ao Mac pela API de arquivo antes de apagar a VM | Feito |
+| BK12-T07 | Segredos e volumes no host remoto (volumes nomeados, sementeira por archive) | Feito |
+| BK12-T08 | `AWSProvider` real: cliente EC2 (SigV4 ou SDK), AMI por região (SSM), security group, `RunInstances` com tags e `InstanceInitiatedShutdownBehavior=terminate` | Pendente (depende da Fase 0) |
+| BK12-T09 | Conectar a conta: `aws login`/SSO e CloudFormation quick-create (papel mínimo por tag + alarme de orçamento) | Pendente |
+| BK12-T10 | Ligar `ComputerScheduler` ao host remoto: aquisição de host, admissão por capacidade do host, desligar host vazio | Pendente |
+| BK12-T11 | Heartbeat em execução (timer no app, parada no quit, retomada ao reabrir) e reaper ao abrir e a cada N minutos | Pendente |
+| BK12-T12 | Reqlog e diário lidos do host remoto durante o run (hoje só voltam ao release) | Pendente |
+| BK12-T13 | UI Settings › Computers › Cloud: conta, região com latência e preço, tetos, proxy, custo do dia, órfãos | Pendente |
+| BK12-T14 | Aviso de uso aceitável: confirmação inicial por conta/provedor, linha curta no card de aprovação e no viewer, reconfirmar em mudança de AUP | Pendente |
+| BK12-T15 | Testes de caos (matar o app, derrubar a rede), varredura de portas e evidências | Pendente |
+
+**Fase 2 (~12 dias):** SSM/Instance Connect sem porta de entrada, Budgets com ação, Spot, AMI por região, custo real por Cost Explorer. **Fase 3:** um adaptador por provedor (Hetzner, Fly.io...), cada um após o próprio spike. **Fase 4:** modo isolado na nuvem em dois passos (P27.9).
+
 ### 4.5 Verificações, evidências e spikes de 07
 
 #### 4.5.1 Verificações de contrato dos CLIs
