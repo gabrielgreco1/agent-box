@@ -40,6 +40,7 @@ final class PaneChromeModel {
     var subagentSession: UUID?
     var subagentMode: SubagentComputersMode = .off
     var subagentRestart = false
+    @ObservationIgnored var onFloatingResize: ((CGSize) -> Void)?
     /// Arrasto do cabeçalho (F11): vira tab ou muda de lugar sobre outro pane.
     var drag: PaneDragController?
 
@@ -145,6 +146,9 @@ struct PaneFloatingButtons: View {
             PaneButtons(model: model)
                 .opacity(model.hovering ? 1 : 0)
         }
+        .fixedSize()
+        // O quadro da hosting view é do pai (AppKit): avisa quando o conteúdo muda de tamanho ("Restart to apply" entrando, F38).
+        .onGeometryChange(for: CGSize.self, of: \.size) { model.onFloatingResize?($0) }
         .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: model.hovering)
     }
 }

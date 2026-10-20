@@ -68,6 +68,7 @@ final class PaneContainerView: NSView {
         self.registry = registry
         elementStore = elements
         super.init(frame: .zero)
+        chrome.onFloatingResize = { [weak self] _ in self?.needsLayout = true }
         chrome.terminalID = entry.terminalID
         chrome.drag = drag
         wantsLayer = true
@@ -186,7 +187,7 @@ final class PaneContainerView: NSView {
         case .card: content = AnyView(PaneCardView(model: chrome))
         case .ignition: content = AnyView(PaneIgnitionView(model: chrome))
         }
-        let h = NSHostingView(
+        let h = ChromeSizingHostingView(
             rootView: AnyView(content.environment(\.actionRegistry, registry).environment(\.elementStore, elementStore).environment(\.a11yParent, nil)))
         h.safeAreaRegions = []
         return h
@@ -684,5 +685,21 @@ final class PaneAreaView: NSView {
             readyNotified.insert(id)
             model.paneReady(id)
         }
+    }
+}
+
+/// Chrome do pane que muda de tamanho sozinho (o "Restart to apply" que aparece, os botões do hover): o pai refaz o layout, senão o
+/// quadro calculado antes corta o conteúdo novo (F38).
+final class ChromeSizingHostingView: NSHostingView<AnyView> {
+    required init(rootView: AnyView) {
+        super.init(rootView: rootView)
+        sizingOptions = [.intrinsicContentSize]
+    }
+
+    @available(*, unavailable) required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }  // required init?(coder:) não usado
+
+    override func invalidateIntrinsicContentSize() {
+        super.invalidateIntrinsicContentSize()
+        superview?.needsLayout = true
     }
 }

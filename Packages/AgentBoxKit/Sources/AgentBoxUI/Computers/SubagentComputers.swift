@@ -253,13 +253,32 @@ struct SubagentToggleButton: View {
 }
 
 /// "Restart to apply" no card e no header: a sessão está rodando com outro modo.
+/// Em amarelo (a mesma cor do ponto do ícone): o modo novo só vale depois de reiniciar o agente, e isso tem que saltar aos olhos (F38).
 struct RestartToApplyPill: View {
     let sessionID: UUID
     var id: A11yID?
+    @State private var hovering = false
 
     var body: some View {
-        DSButton(.sessionRestartToApply, id: id, "Restart to apply", variant: .outline, size: .xs, symbol: "arrow.clockwise", argument: .select(sessionID.uuidString))
-            .transition(MotionPolicy.shared.reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: MotionTokens.Scale.menuFrom, anchor: .leading)))
+        ActionButton(
+            .sessionRestartToApply, id: id, argument: .select(sessionID.uuidString),
+            tooltip: String(localized: "Subagent computers change when the agent restarts. The conversation continues.", bundle: .module)
+        ) {
+            HStack(spacing: DS.Space.s1) {
+                Image(systemName: "arrow.clockwise").font(.system(size: 10, weight: .semibold))
+                Text("Restart to apply", bundle: .module).dsFont(DS.Font.label).lineLimit(1).fixedSize()
+            }
+            .foregroundStyle(DS.Color.warning)
+            .padding(.horizontal, DS.Space.s2)
+            .frame(height: DSButtonSize.xs.height)
+            .background(Capsule().fill(DS.Color.warning.opacity(hovering ? 0.2 : 0.12)))
+            .overlay(Capsule().strokeBorder(DS.Color.warningBorder))
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .fixedSize()
+        .transition(MotionPolicy.shared.reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: MotionTokens.Scale.menuFrom, anchor: .trailing)))
     }
 }
 
