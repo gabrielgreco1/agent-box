@@ -41,6 +41,8 @@ public final class AppEnvironment {
     /// Settings em página inteira e onboarding mínimo (T1-26): detecção de CLIs, perfis de lançamento e configuração.
     public let settings: SettingsModel
     public let onboarding: OnboardingModel
+    /// Settings › Diagnostics, log em disco, métricas, crash e pacote exportável (T4-04).
+    public let diagnostics: DiagnosticsController
     let projects: ProjectsController
     public let keyBindings: KeyBindingRegistry
     /// Atenção, Inbox e notificações (Fatia 2). `nil` na Fatia 1: sem hooks o agente vivo é `Status unavailable`.
@@ -142,6 +144,9 @@ public final class AppEnvironment {
             : GlobalSkillBackup(backupRoot: supportRoot)
         let probes = Self.makeDiagnosticsProbes(environment: environment, backup: backup, choice: choice)
         self.onboarding = OnboardingModel(settings: settings, diagnostics: DiagnosticsEngine(probes: probes), conflictChoice: choice, backup: backup)
+        let diagnostics = DiagnosticsController(paths: StorePaths(root: supportRoot), settings: settings, onboarding: onboarding, toasts: toasts)
+        self.diagnostics = diagnostics
+        settings.diagnostics = diagnostics
         let screen = environment["AGENTBOX_SCREEN"]
         autoOnboarding = environment["AGENTBOX_SKIP_ONBOARDING"] != "1" && (screen == nil || screen == Self.setupDemoFixture)
         self.projects = ProjectsController(sidebar: sidebar, overlays: overlays, toasts: toasts, automationEnabled: automationEnabled)
@@ -217,6 +222,7 @@ public final class AppEnvironment {
         if fixture == SidebarFixtures.screenID { registerSidebarDemo() }
         do { try terminalRouter.register(in: registry) } catch { log.publicError("duplicate terminal action registration") }
         wireSettings()
+        wireDiagnostics()
         wireAttention(environment: environment)
         wireComputers()
         wireLibrary()
@@ -478,6 +484,26 @@ public final class AppEnvironment {
             // Abrir o Settings (Review Profiles, ⌘,) tira o onboarding da frente sem registrá-lo como concluído.
             if open { onboarding.hide() }
         }
+    }
+
+    /// Diagnostics (T4-04): estado do daemon, versão e modos do app, e as ações `app.checkProblems`, `help.exportDiagnostics` etc.
+    /// No fixture do overlay (`overlay-demo`) o `app.checkProblems` de exemplo continua sendo o dele.
+    private func wireDiagnostics() {
+        let flags = flags, automation = automationEnabled, headless = headless, fixture = fixture
+        diagnostics.daemonProbe = { [workspace] in await workspace.runtime.diagnosticsStatus() }
+        diagnostics.appInfo = {
+            let info = Bundle.main.infoDictionary
+            let version = info?["CFBundleShortVersionString"] as? String ?? "dev"
+            let build = info?["CFBundleVersion"] as? String ?? "dev"
+            var modes = [flags.restricted ? "slice \(flags.current.rawValue)" : "all slices"]
+            if automation { modes.append("automation on") }
+            if headless { modes.append("headless") }
+            if fixture != nil { modes.append("fixture") }
+            modes.append(Bundle.main.bundleURL.pathExtension == "app" ? "app bundle" : "development build")
+            return [("Racky version", version), ("Build", build), ("Modes", modes.joined(separator: ", ")), ("macOS", ProcessInfo.processInfo.operatingSystemVersionString)]
+        }
+        if fixture == Self.overlayDemoFixture { return }
+        do { try diagnostics.registerActions(in: registry) } catch { log.publicError("duplicate diagnostics registration") }
     }
 
     /// Fixture de dev e evidência (`AGENTBOX_SCREEN=workspace-demo`): uma sessão limpa com uma tab de shell, selecionada.
@@ -788,6 +814,7 @@ public final class AppEnvironment {
         do {
             let opened = try await AgentBoxStore.open(paths: .default(environment: environmentVariables))
             store = opened
+            await diagnostics.attach(store: opened)
             subagentComputers.attach(store: opened)
             await startOrchestrator(store: opened)
             if fixture == Self.workspaceDemoFixture { try await seedWorkspaceDemo(into: opened) }
@@ -898,6 +925,9 @@ public final class AppEnvironment {
 
     /// Sobe o servidor `ctl` se a automação estiver ligada. Chamado uma vez, no primeiro `.task` da janela.
     public func start() async {
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1.0 (dev)"
+        // Log em disco, sentinela de crash e (só no produto) MetricKit; depois do lock da instância (AppDelegate).
+        diagnostics.start(build: build, systemHooks: Bundle.main.bundleURL.pathExtension == "app" && !headless && !automationEnabled && fixture == nil)
         await startStore()
         computers.startRefreshing()
         computers.startDemo(environment: environmentVariables)
@@ -934,6 +964,7 @@ public final class AppEnvironment {
 
     /// Saída limpa (T1-23): a próxima abertura distingue "parou com o app fechado" de "parou sem aviso".
     public func markCleanExit() async {
+        await diagnostics.stop()
         if let store { await SessionReconciler.markCleanExit(store: store) }
     }
 

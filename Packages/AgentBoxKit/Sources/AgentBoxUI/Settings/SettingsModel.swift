@@ -45,6 +45,9 @@ public final class SettingsModel {
     }
     @ObservationIgnored var cliEnvFile: URL = ProxyService.defaultCLIEnvFile()
 
+    /// Página Settings › Diagnostics (T4-04): o controlador é do `AppEnvironment`; aqui só a referência fraca.
+    @ObservationIgnored weak var diagnostics: DiagnosticsController?
+
     public let flags: SliceFlags
     @ObservationIgnored let sections: [SettingsSectionSpec]
     @ObservationIgnored public var onPresentationChange: @MainActor (Bool) -> Void = { _ in }

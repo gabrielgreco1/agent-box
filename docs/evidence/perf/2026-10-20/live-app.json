@@ -1,0 +1,38 @@
+[
+  {
+    "label": "first-scan",
+    "settleSeconds": 15,
+    "peakRSSMiB": 205,
+    "settledFootprintMiB": 133
+  },
+  {
+    "label": "baseline-no-sessions",
+    "appCPUPercentOfOneCore": 5.57,
+    "daemonCPUPercentOfOneCore": 0.0,
+    "appRSSMiB": 198.3,
+    "daemonRSSMiB": 0.0,
+    "appFootprintMiB": 123.0,
+    "daemonFootprintMiB": 0.0,
+    "windowSeconds": 15.1
+  },
+  {
+    "label": "10-idle-sessions",
+    "appCPUPercentOfOneCore": 3.08,
+    "daemonCPUPercentOfOneCore": 0.08,
+    "appRSSMiB": 284.1,
+    "daemonRSSMiB": 22.5,
+    "appFootprintMiB": 253.0,
+    "daemonFootprintMiB": 9.0,
+    "windowSeconds": 60.1
+  },
+  {
+    "label": "10-idle+10-flood-sessions",
+    "appCPUPercentOfOneCore": 32.69,
+    "daemonCPUPercentOfOneCore": 797.39,
+    "appRSSMiB": 419.9,
+    "daemonRSSMiB": 184.1,
+    "appFootprintMiB": 400.0,
+    "daemonFootprintMiB": 170.0,
+    "windowSeconds": 30.1
+  }
+]

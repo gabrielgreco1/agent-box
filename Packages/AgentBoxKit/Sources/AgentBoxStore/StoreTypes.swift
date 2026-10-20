@@ -17,6 +17,10 @@ public struct StorePaths: Sendable, Equatable {
     public var dbDirectory: URL { root.appendingPathComponent("db", isDirectory: true) }
     public var databaseFile: URL { dbDirectory.appendingPathComponent("agentbox.sqlite") }
     public var backupsDirectory: URL { root.appendingPathComponent("backups", isDirectory: true) }
+    /// Logs JSONL redigidos de cada processo (08 AR-602), a sentinela de crash (`run/app.alive`, AR-604) e os pacotes exportados (AR-603).
+    public var logsDirectory: URL { root.appendingPathComponent("logs", isDirectory: true) }
+    public var runDirectory: URL { root.appendingPathComponent("run", isDirectory: true) }
+    public var diagnosticsDirectory: URL { root.appendingPathComponent("diagnostics", isDirectory: true) }
 
     func corruptDirectory(stamp: String) -> URL { dbDirectory.appendingPathComponent("corrupt-\(stamp)", isDirectory: true) }
 

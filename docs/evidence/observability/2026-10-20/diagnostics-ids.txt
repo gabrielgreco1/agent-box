@@ -1,0 +1,6 @@
+('settings.diagnostics.content', 'None', 'Diagnostics')
+('settings.diagnostics.errors', 'none', 'Recent errors')
+('settings.diagnostics.export', 'None', 'Export Diagnostics…')
+('settings.diagnostics.revealLogs', 'None', 'Reveal Logs in Finder')
+('settings.diagnostics.runAll', 'None', 'Check for Problems')
+('settings.diagnostics.service', 'Not running', 'Background service')

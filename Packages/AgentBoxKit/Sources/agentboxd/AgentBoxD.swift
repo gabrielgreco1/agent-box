@@ -66,6 +66,13 @@ struct AgentBoxD {
             }
         }
         let paths = DaemonPaths.resolve(environment: ProcessInfo.processInfo.environment, socketOverride: socket, homeOverride: home)
+        // Log em disco do daemon (08 AR-602): `logs/ptyd.jsonl`, redigido antes de gravar; as métricas do daemon vão para o mesmo arquivo.
+        let disk = DiskLog(.init(directory: paths.home.appendingPathComponent("logs", isDirectory: true), process: "ptyd"))
+        DiskLog.install(disk)
+        MetricRecorder.shared.install { sample in
+            disk.write(level: .metric, subsystem: LogFacade.Subsystem.ptyd.rawValue, category: "perf", message: sample.name,
+                       fields: sample.tags.merging(["value": String(sample.value), "unit": sample.unit]) { a, _ in a })
+        }
         let policy = PeerAuthPolicy.resolve(daemon: CodeIdentity.ofCurrentProcess(), allowAdhocDevelopment: allowAdhocPeersBuild)
         let configuration = DaemonConfiguration(
             paths: paths, listen: listen, build: build, idleExit: idleExit > 0 ? .seconds(idleExit) : nil,

@@ -66,6 +66,17 @@ bash design/source/build.sh
 
 A saída local é `design/Agent Box Preview.app`. Binários, credenciais, diretórios de runtime e arquivos `.env` não são versionados. O manifest SwiftTerm preparatório, que referenciava arquivos ausentes, foi preservado em `docs/archive/` e não é o build do app.
 
+## Modelo de segurança (resumo)
+
+O texto completo e a tabela de ameaças estão em `docs/rebuild/spec/08-architecture-quality.md` (AR-501 a AR-504).
+
+- Um agente rodando no Mac (modo leve) tem **os mesmos poderes do usuário**: shell, arquivos e socket do Docker. O app não o isola nem diz que isola.
+- O container (computador) isola o **navegador**, a rede e as ferramentas de trabalho; no modo isolado (v1.1) também o agente, com limites declarados na UI.
+- Os sockets locais são `0600` com `getpeereid`; o daemon aceita só o app assinado. O canal `ctl` de automação vem desligado.
+- Segredos ficam no cofre do app (um item no Keychain); nada de token em `argv`, em `docker inspect`, em log ou no pacote de diagnóstico (redação na escrita e na exportação).
+- O app nunca pede Gravação de Tela e só pede notificações quando você aperta `Allow Notifications`.
+- Nada sai da máquina por conta do app. Planos de nuvem, conta e telemetria estão fora do escopo da v1.
+
 ## Direção de implementação
 
 1. Sessões persistentes, múltiplos PTYs reais e interface compacta.

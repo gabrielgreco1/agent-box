@@ -38,6 +38,8 @@ public final class ComputerViewerController {
     @ObservationIgnored private var started = false
     /// Cada `connect()` pede o próprio ticket; só a tentativa mais nova conecta (a velha, que voltou tarde, é descartada).
     @ObservationIgnored private var attempt = 0
+    /// Ticket -> WebSocket -> stream vivo (AR-605).
+    @ObservationIgnored private var vncPerf: PerfInterval?
     @ObservationIgnored private var lastAttemptAt = Date.distantPast
     @ObservationIgnored private var pageReady = false
     /// Quedas seguidas sem nenhum quadro: o ticket de uso único (60 s) já foi gasto, então toda tentativa pede um novo.
@@ -89,6 +91,8 @@ public final class ComputerViewerController {
         attempt += 1
         let mine = attempt
         lastAttemptAt = Date()
+        vncPerf?.end(tags: ["result": "superseded"])
+        vncPerf = Perf.begin(.vncConnect)
         do {
             ticketsRequested += 1
             let url = try await model.computer.vncEndpoint()
@@ -134,7 +138,11 @@ public final class ComputerViewerController {
         case .state(let value, let detail):
             model.streamState(value, detail: detail)
             if value == "disconnected" { retryIfNeeded() }
-            if value == "live" { syncInput() }
+            if value == "live" {
+                vncPerf?.end(tags: ["result": "live"])
+                vncPerf = nil
+                syncInput()
+            }
         case .stats(let fps, let frames, let silentMs, _):
             model.streamStats(fps: fps, frames: frames, silentMs: silentMs)
             if model.connection == .live { fpsHistory.append(fps) }

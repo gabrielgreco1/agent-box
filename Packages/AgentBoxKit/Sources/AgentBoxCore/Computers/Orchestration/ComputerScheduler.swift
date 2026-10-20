@@ -386,11 +386,17 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
     }
 
     private func create(_ name: String) async {
+        // fila (permissão) -> container -> saudável (AR-605); o intervalo fecha ao ficar pronto ou falhar
+        let perf = Perf.begin(.computerProvision, tags: ["display": entries[name]?.spec.display.rawValue ?? "unknown"])
         await acquirePermit()
         defer { releasePermit() }
-        guard let entry = entries[name], entry.phase == .creating else { return }
+        guard let entry = entries[name], entry.phase == .creating else {
+            perf.end(tags: ["result": "skipped"])
+            return
+        }
         do {
             let handle = try await provisioning.provision(entry.spec)
+            perf.end(tags: ["result": "ready"])
             guard var current = entries[name], current.phase == .creating else {
                 await handle.teardown()  // liberado enquanto subia
                 return
@@ -402,6 +408,7 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
             await current.computer.setState(.ready)
             await persist(name)
         } catch {
+            perf.end(tags: ["result": "failed"])
             log.error("computer \(name) failed to start: \(error)")
             guard var current = entries[name] else { return }
             current.phase = .failed

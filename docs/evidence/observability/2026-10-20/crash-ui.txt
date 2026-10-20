@@ -1,0 +1,4 @@
+settings.diagnostics.crash Racky quit unexpectedly. None
+toast.warning Racky quit unexpectedly. None
+toast.warning.action Copy Details (região com erro) None
+toast.success Details copied. None

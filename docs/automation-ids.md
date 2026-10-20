@@ -595,6 +595,9 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `help.revealLogs` | Reveal Logs in Finder | — | slice1 |
 | `help.exportDiagnostics` | Export Diagnostics… | — | slice1 |
 | `app.openDiagnostics` | Open Diagnostics | — | slice1 |
+| `diagnostics.saveExport` | Save Diagnostics | — | slice1 |
+| `diagnostics.cancelExport` | Cancel Export | — | slice1 |
+| `diagnostics.dismissCrash` | Dismiss Crash | — | slice1 |
 | `app.restartBackgroundService` | Restart Background Service | — | slice1 |
 | `app.errorTryAgain` | Try Again | — | slice1 |
 | `app.copyDetails` | Copy Details (região com erro) | — | slice1 |

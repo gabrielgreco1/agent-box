@@ -144,8 +144,8 @@ final class TerminalRuntime {
 
     /// Depois da conexão: compara os builds e, se o daemon do LaunchAgent for mais antigo, pede `drainWhenIdle` (06 §1.10).
     private func checkDaemonUpgrade(build: String?) async {
+        daemonBuild = build ?? daemonBuild
         guard hostMode.isLaunchAgent, let build else { return }
-        daemonBuild = build
         guard DaemonUpgradePolicy.decide(appBuild: configuration.build, daemonBuild: build) == .drainWhenIdle else { return }
         guard !daemonUpdatePending else { return }
         daemonUpdatePending = (try? await client.drainWhenIdle()) != nil
@@ -182,6 +182,21 @@ final class TerminalRuntime {
         setConnection(.connected)
         startMonitor()
         return try? await client.list()
+    }
+
+    /// Estado do daemon para Settings › Diagnostics: conexão, build, onde roda e as sessões (id, estado, idade, `endSeq`).
+    func diagnosticsStatus() async -> DiagnosticsController.DaemonStatus {
+        var status = DiagnosticsController.DaemonStatus()
+        status.mode = hostMode.isLaunchAgent ? "launch agent" : "child process"
+        status.build = daemonBuild
+        status.updatePending = daemonUpdatePending
+        guard connection == .connected, let list = try? await client.list() else { return status }
+        status.running = true
+        let now = Date()
+        status.sessions = list.map {
+            DiagnosticsBundleInput.DaemonSession(id: "\($0.sessionID)", state: "\($0.state)", ageSeconds: Int(now.timeIntervalSince($0.startedAt)), endSeq: $0.endSeq)
+        }
+        return status
     }
 
     /// Acompanha a conexão: depois de uma queda espera 2 s pela reconexão automática e, se o daemon não voltou, sobe outro
@@ -365,12 +380,19 @@ final class TerminalRuntime {
     ) async throws -> LaunchResult {
         let entry = entry(for: terminal.id)
         let dims = entry.host.surface.terminalDimensions
+        // Pedido -> processo -> primeiro output (08 AR-605): o intervalo fecha no primeiro byte do PTY.
+        let perf = Perf.begin(.launch, tags: ["provider": terminal.provider.rawValue])
         let job = LaunchJob(
             terminalID: terminal.id, spec: terminal.launchSpec, cwd: terminal.cwd, addDirs: terminal.addDirs, coldLog: terminal.coldLog,
             cols: UInt16(clamping: dims.cols), rows: UInt16(clamping: dims.rows), catalog: catalog, mode: mode, subagent: subagent, sessionID: sessionID)
-        return try await coordinator.launch(
-            job, onEvent: onEvent,
-            attach: { [weak self] summary, runID in try await self?.attach(entry, session: summary.sessionID, mode: .snapshot, runID: runID) })
+        do {
+            return try await coordinator.launch(
+                job, onEvent: onEvent,
+                attach: { [weak self] summary, runID in try await self?.attach(entry, session: summary.sessionID, mode: .snapshot, runID: runID, launchPerf: perf) })
+        } catch {
+            perf.end(tags: ["result": "failed"])
+            throw error
+        }
     }
 
     /// Religa um terminal cuja sessão o daemon manteve viva (reabrir o app).
@@ -405,21 +427,26 @@ final class TerminalRuntime {
         return true
     }
 
-    private func attach(_ entry: TerminalEntry, session: SessionID, mode: AttachMode, runID: UUID? = nil) async throws {
+    private func attach(_ entry: TerminalEntry, session: SessionID, mode: AttachMode, runID: UUID? = nil, launchPerf: PerfInterval? = nil) async throws {
         entry.unbind()
+        // Attach + replay do snapshot no emulador, e o tempo até o primeiro byte depois do attach (AR-605).
+        let attachPerf = Perf.begin(.attach, tags: ["mode": "\(mode)"])
+        let firstByte = Perf.begin(.firstByte)
+        let firstByteSeen = Mutex(false)
         let binding = TerminalSessionBinding(client: client, sessionID: session, host: entry.host)
         let terminalID = entry.terminalID
         binding.onEvent = { [weak self] event in self?.onEvent?(terminalID, event) }
-        if let runID {
-            // Primeiro byte do PTY: fecha a ignição (M-504). Uma vez só; o observador roda na thread de parse.
-            let coordinator = coordinator
-            let fired = Mutex(false)
-            binding.frameObserver.set { _ in
-                guard fired.withLock({ let was = $0; $0 = true; return !was }) else { return }
-                Task { await coordinator.noteFirstOutput(runID: runID) }
-            }
+        let coordinator = coordinator
+        // Primeiro byte do PTY: fecha a ignição (M-504) e os intervalos de lançamento e primeiro byte. Uma vez só; o observador roda
+        // na thread de parse.
+        binding.frameObserver.set { _ in
+            guard firstByteSeen.withLock({ let was = $0; $0 = true; return !was }) else { return }
+            firstByte.end()
+            launchPerf?.end()
+            if let runID { Task { await coordinator.noteFirstOutput(runID: runID) } }
         }
         try await binding.start(mode: mode)
+        attachPerf.end()
         entry.bind(binding, session: session)
     }
 

@@ -37,38 +37,43 @@ public enum JSONLReader {
         var carry = Data()
         var consumed: UInt64 = 0
         var skipping = false
-        while true {
-            let chunk: Data
-            do { chunk = try handle.read(upToCount: chunkBytes) ?? Data() } catch { break }
-            if chunk.isEmpty { break }
-            var buffer = carry
-            buffer.append(chunk)
-            carry = Data()
-            var lineStart = 0
-            buffer.withUnsafeBytes { raw in
-                let total = raw.count
-                var pos = 0
-                while pos < total {
-                    guard let nl = memchr(raw.baseAddress! + pos, 0x0A, total - pos) else { break }
-                    let end = raw.baseAddress!.distance(to: UnsafeRawPointer(nl))
-                    if skipping {
-                        skipping = false
-                    } else if end > lineStart {
-                        body(UnsafeRawBufferPointer(rebasing: raw[lineStart..<end]))
+        var finished = false
+        while !finished {
+            // Um pool por bloco: o parse de JSON cria objetos Foundation autoreleased; numa `Task` desanexada eles só saem no fim
+            // da varredura. Com GBs de transcript isso chegava a mais de 1 GB de RSS na primeira leitura (T2-11).
+            autoreleasepool {
+                let chunk: Data
+                do { chunk = try handle.read(upToCount: chunkBytes) ?? Data() } catch { finished = true; return }
+                if chunk.isEmpty { finished = true; return }
+                var buffer = carry
+                buffer.append(chunk)
+                carry = Data()
+                var lineStart = 0
+                buffer.withUnsafeBytes { raw in
+                    let total = raw.count
+                    var pos = 0
+                    while pos < total {
+                        guard let nl = memchr(raw.baseAddress! + pos, 0x0A, total - pos) else { break }
+                        let end = raw.baseAddress!.distance(to: UnsafeRawPointer(nl))
+                        if skipping {
+                            skipping = false
+                        } else if end > lineStart {
+                            body(UnsafeRawBufferPointer(rebasing: raw[lineStart..<end]))
+                        }
+                        pos = end + 1
+                        lineStart = pos
                     }
-                    pos = end + 1
-                    lineStart = pos
                 }
-            }
-            consumed += UInt64(lineStart)
-            if lineStart < buffer.count {
-                let tail = buffer.count - lineStart
-                if tail > maxLineBytes {
-                    // Linha gigante: descarta o que tem e pula até o próximo `\n`. O offset avança para não relê-la.
-                    consumed += UInt64(tail)
-                    skipping = true
-                } else {
-                    carry = buffer.subdata(in: lineStart..<buffer.count)
+                consumed += UInt64(lineStart)
+                if lineStart < buffer.count {
+                    let tail = buffer.count - lineStart
+                    if tail > maxLineBytes {
+                        // Linha gigante: descarta o que tem e pula até o próximo `\n`. O offset avança para não relê-la.
+                        consumed += UInt64(tail)
+                        skipping = true
+                    } else {
+                        carry = buffer.subdata(in: lineStart..<buffer.count)
+                    }
                 }
             }
         }
