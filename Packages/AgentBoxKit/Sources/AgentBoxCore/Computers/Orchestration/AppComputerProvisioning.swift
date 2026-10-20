@@ -8,6 +8,10 @@ import Foundation
 public enum ComputerSetupError: Error, LocalizedError, Equatable, Sendable {
     case dockerNotRunning
     case runtimeFilesMissing(String)
+    /// `runOn == .cloud` sem um provedor implementado (BK-12): o computador falha, não cai para o Mac.
+    case cloudUnavailable
+
+    public static let cloudUnavailableMessage = "Cloud computers aren't available yet. Switch to This Mac in Computers."
 
     /// Prefixo estável: a UI mostra o botão "Open Docker" quando o detalhe do computador começa por ele.
     public static let dockerNotRunningMessage = "Docker isn't running"
@@ -16,6 +20,7 @@ public enum ComputerSetupError: Error, LocalizedError, Equatable, Sendable {
         switch self {
         case .dockerNotRunning: "\(Self.dockerNotRunningMessage). Open Docker, then reserve the computer again."
         case .runtimeFilesMissing(let path): "The computer image files are missing (\(path))."
+        case .cloudUnavailable: Self.cloudUnavailableMessage
         }
     }
 }
@@ -77,6 +82,8 @@ public actor AppComputerProvisioning: ComputerProvisioning {
     public private(set) var state: ComputerSetupState = .idle
     private var observer: (@Sendable (ComputerSetupState) -> Void)?
     private var problem: (@Sendable (ComputerSetupError) -> Void)?
+    /// Rota de nuvem (BK-12). `nil` = só Mac, como sempre.
+    private var cloudRoute: CloudComputerRoute?
 
     public init(config: Config) {
         self.config = config
@@ -87,6 +94,14 @@ public actor AppComputerProvisioning: ComputerProvisioning {
         observer = state
         self.problem = problem
         state?(self.state)
+    }
+
+    public func setCloudRoute(_ route: CloudComputerRoute?) { cloudRoute = route }
+
+    /// A rota de nuvem quando a setting pede nuvem; `nil` = caminho local (nada abaixo muda).
+    private func cloudTarget() async -> (any ComputerProvisioning)? {
+        guard let route = cloudRoute, await route.place() == .cloud else { return nil }
+        return route.effective
     }
 
     private func set(_ new: ComputerSetupState) {
@@ -110,6 +125,13 @@ public actor AppComputerProvisioning: ComputerProvisioning {
     }
 
     public func preflight() async throws {
+        if let cloud = await cloudTarget() {
+            do { try await cloud.preflight() } catch {
+                if let setup = error as? ComputerSetupError { problem?(setup) }
+                throw error
+            }
+            return
+        }
         do {
             try await client().ping()
         } catch {
@@ -121,6 +143,8 @@ public actor AppComputerProvisioning: ComputerProvisioning {
 
     /// `M` e CPUs da VM; sem Docker, 8 GB (a admissão não trava, o preflight já avisou).
     public func vmCapacity() async -> VMCapacity {
+        // Nuvem: a admissão é do pool (capacidade do host e `maxComputers`); a memória do Mac não conta, o scheduler não a limita.
+        if await cloudTarget() != nil { return VMCapacity(memTotalBytes: 1 << 50, cpuCount: 1024) }
         if let client = try? await client(), let info = try? await client.info() { return VMCapacity(memTotalBytes: info.memTotal, cpuCount: info.cpuCount) }
         return VMCapacity(memTotalBytes: 8 << 30, cpuCount: 4)
     }
@@ -168,6 +192,7 @@ public actor AppComputerProvisioning: ComputerProvisioning {
     // MARK: ComputerProvisioning
 
     public func provision(_ spec: ComputerSpec) async throws -> ProvisionedHandle {
+        if let cloud = await cloudTarget() { return try await cloud.provision(spec) }
         observer?(state)
         let tag = try await ensureImages()
         let client = try await client()
@@ -180,6 +205,7 @@ public actor AppComputerProvisioning: ComputerProvisioning {
 
     /// Adoção ao abrir o app: só olha o Docker se ele já estiver de pé (nada de aviso "Docker isn't running" nem de abrir o Docker).
     public func liveComputers() async -> [LiveComputer]? {
+        if await cloudTarget() != nil { return nil }  // adoção de computadores em hosts remotos: BK-12 fase seguinte
         guard let client = try? await client() else { return nil }
         return await dockerProvisioning(client: client, image: "").liveComputers()
     }

@@ -9752,6 +9752,28 @@
           }
         }
       }
+    },
+    "Cloud computers aren't available yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cloud computers aren't available yet"
+          }
+        }
+      }
+    },
+    "Switch to This Mac in Computers.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch to This Mac in Computers."
+          }
+        }
+      }
     }
   },
   "version": "1.0"
