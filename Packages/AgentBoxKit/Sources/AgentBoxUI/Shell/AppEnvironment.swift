@@ -295,6 +295,11 @@ public final class AppEnvironment {
     /// Liga a status bar: ações `view.toggleStatusBar` e `statusBar.*`, Docker parado vindo do Settings e `Start Docker`.
     private func wireStatusBar() {
         statusBar.dockerStopped = { [settings] in settings.dockerStatus.stopped }
+        // Agents (03 §5): mesma fila e mesma contagem do badge do Inbox.
+        statusBar.agentsSource = { [attention, computers] in
+            guard let attention else { return nil }
+            return StatusBarAgents.summary(center: attention.center, contexts: attention.contexts(), extraNeedYou: computers.model.attentionCount)
+        }
         do { try statusBar.register(in: registry) } catch { log.publicError("duplicate status bar registration") }
         do { try computers.registerStop(in: registry) } catch { log.publicError("duplicate stop computer registration") }
     }

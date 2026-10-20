@@ -130,6 +130,48 @@ struct StatusBarContentTests {
     }
 }
 
+/// Segmento `Agents` (03 §5): contagem pura a partir do estado de atenção.
+struct StatusBarAgentsTests {
+    private let claude = UUID(), codex = UUID(), shell = UUID(), blocked = UUID()
+    private var providers: [UUID: TerminalProvider] { [claude: .claude, codex: .codex, shell: .shell, blocked: .opencode] }
+
+    @Test func countsOnlyWorkingAgentTerminals() throws {
+        let statuses: [UUID: AgentActivity] = [claude: .working, codex: .working, shell: .working, blocked: .idle]
+        let summary = try #require(StatusBarAgents.summary(statuses: statuses, providers: providers, needYou: 0))
+        #expect(summary.working == 2 && summary.needYou == 0, "shell não é agente; idle não trabalha")
+        #expect(summary.text == "2 working")
+        #expect(summary.glyph == .working)
+    }
+
+    @Test func needYouWinsTheGlyphAndOnlyNonZeroPartsShow() throws {
+        let both = try #require(StatusBarAgents.summary(statuses: [claude: .working], providers: providers, needYou: 2))
+        #expect(both.text == "1 working · 2 need you" && both.glyph == .needsInput)
+        let onlyNeed = try #require(StatusBarAgents.summary(statuses: [claude: .idle], providers: providers, needYou: 3))
+        #expect(onlyNeed.text == "3 need you" && onlyNeed.glyph == .needsInput)
+    }
+
+    @Test func hiddenWhenNothingWorksAndNothingNeedsYou() {
+        #expect(StatusBarAgents.summary(statuses: [:], providers: [:], needYou: 0) == nil)
+        #expect(StatusBarAgents.summary(statuses: [claude: .done, codex: .waitingOnSubagents], providers: providers, needYou: 0) == nil)
+        #expect(StatusBarAgents.summary(statuses: [shell: .working], providers: providers, needYou: 0) == nil)
+        #expect(StatusBarAgents.summary(statuses: [unknownTerminal: .working], providers: providers, needYou: 0) == nil, "sem contexto, não é agente conhecido")
+    }
+
+    private let unknownTerminal = UUID()
+
+    /// A contagem de `need you` é a do badge do Inbox: itens 1–2 abertos da fila mais os pedidos de ajuda de computador.
+    @Test func needYouMatchesTheInboxBadge() throws {
+        var center = AttentionCenter()
+        let context = AttentionContext(sessionID: UUID(), sessionTitle: "S", projectName: "P", provider: .claude)
+        let now = Date()
+        _ = center.apply(
+            TerminalActivity(terminalID: claude, activity: .needsInput(.permission), changedAt: now), context: context, now: now)
+        _ = center.apply(TerminalActivity(terminalID: codex, activity: .working, changedAt: now), context: context, now: now)
+        let summary = try #require(StatusBarAgents.summary(center: center, contexts: [claude: context, codex: AttentionContext(sessionID: UUID(), sessionTitle: "T", projectName: nil, provider: .codex)], extraNeedYou: 1))
+        #expect(summary.needYou == center.badgeCount + 1 && summary.working == 1)
+    }
+}
+
 @MainActor
 @Suite("T4-01 - status bar", .serialized, .offscreenAppKit)
 struct StatusBarUITests {
@@ -228,10 +270,37 @@ struct StatusBarUITests {
         #expect(overlays.popover?.spec.id == .statusBarPopover("computers"))
     }
 
+    @Test func agentsSegmentAppearsOnlyWithDataAndFollowsTheToggle() async throws {
+        let (controller, _, _) = controller(StatusBarContent())
+        #expect(!controller.shows(.agents), "sem agente trabalhando nem pedindo você, o segmento some")
+        controller.agentsSource = { StatusBarAgents(working: 4, needYou: 2) }
+        #expect(controller.shows(.agents) && controller.agents?.text == "4 working · 2 need you")
+        controller.toggle(.agents)
+        #expect(!controller.shows(.agents))
+    }
+
+    @Test func agentsSegmentHasNoPopoverAndPerformsTheInboxAction() async throws {
+        let (controller, registry, overlays) = controller(StatusBarContent())
+        controller.agentsSource = { StatusBarAgents(working: 1, needYou: 0) }
+        var opened = 0
+        try registry.register(.pageInbox) { _ in opened += 1; return "opened" }
+        await #expect(throws: ActionError.self) { _ = try await registry.perform(.statusBarOpenSegment, .select("agents")) }
+        #expect(overlays.popover == nil)
+
+        let store = UIElementStore()
+        let host = NSHostingView(rootView: StatusBarView(controller: controller).environment(\.actionRegistry, registry).environment(\.elementStore, store).frame(width: 800, height: DS.Layout.statusBarHeight))
+        host.frame = NSRect(x: 0, y: 0, width: 800, height: DS.Layout.statusBarHeight)
+        host.layoutSubtreeIfNeeded()
+        let node = try #require(store.snapshot().find(.statusBarAgents))
+        #expect(node.action == .pageInbox && node.kind == "button")
+        _ = try await registry.perform(try #require(node.action), .press)
+        #expect(opened == 1)
+    }
+
     @Test func contextMenuListsEverySegmentAndHide() {
         let (controller, _, _) = controller(full())
         let ids = controller.contextEntries().compactMap { $0.item?.id }
-        #expect(ids == ["segment.claude", "segment.codex", "segment.computers", "segment.proxyUsage", "segment.docker", "hide"])
+        #expect(ids == ["segment.claude", "segment.codex", "segment.agents", "segment.computers", "segment.proxyUsage", "segment.docker", "hide"])
         controller.toggle(.codex)
         #expect(controller.contextEntries().compactMap(\.item).first { $0.id == "segment.codex" }?.checked == false)
     }

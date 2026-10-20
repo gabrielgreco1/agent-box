@@ -9719,6 +9719,39 @@
           }
         }
       }
+    },
+    "%lld working": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld working"
+          }
+        }
+      }
+    },
+    "%lld need you": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld need you"
+          }
+        }
+      }
+    },
+    "Agents opens the Inbox.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agents opens the Inbox."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

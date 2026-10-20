@@ -32,7 +32,11 @@ struct StatusBarView: View {
     }
 
     @ViewBuilder private func segment(_ segment: StatusBarSegment) -> some View {
-        if controller.shows(segment) {
+        if controller.shows(segment), segment == .agents {
+            // Clique abre o Inbox (03 §5).
+            ActionButton(.pageInbox, id: segment.a11yID) { StatusBarSegmentLabel(controller: controller, segment: segment) }
+                .buttonStyle(.plain)
+        } else if controller.shows(segment) {
             ActionButton(.statusBarOpenSegment, id: segment.a11yID, argument: .select(segment.rawValue)) {
                 StatusBarSegmentLabel(controller: controller, segment: segment)
             }
@@ -53,6 +57,11 @@ struct StatusBarSegmentLabel: View {
                 if let usage = segment == .claude ? controller.content.claude : controller.content.codex {
                     DSAgentLogo(usage.provider.agentKind, size: StatusBarMetrics.logo)
                     usageText(usage)
+                }
+            case .agents:
+                if let agents = controller.agents {
+                    DSAgentIndicator(agents.glyph, size: .sm)
+                    Text(verbatim: agents.text).dsFont(DS.Font.label).foregroundStyle(DS.Color.textSecondary)
                 }
             case .computers:
                 Image(systemName: "display").font(.system(size: StatusBarMetrics.logo)).foregroundStyle(DS.Color.textSecondary)
@@ -117,6 +126,7 @@ struct StatusBarPopoverContent: View {
             switch segment {
             case .claude: usage(controller.content.claude)
             case .codex: usage(controller.content.codex)
+            case .agents: EmptyView()
             case .computers: StatusBarComputersPopover(content: controller.content.computers, dismiss: dismiss)
             case .proxyUsage: StatusBarProxyPopover(content: controller.content.proxy, dismiss: dismiss)
             case .docker: StatusBarDockerPopover(dismiss: dismiss)
