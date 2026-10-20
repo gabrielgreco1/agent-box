@@ -205,6 +205,19 @@ import Testing
         #expect(filtered.empty == .filtersNoResults)
     }
 
+    /// Tudo arquivado (F36): a sidebar mostra o começo ("No projects yet." + oferta de mostrar as arquivadas), não "nenhum
+    /// resultado para os filtros".
+    @Test func onlyArchivedSessionsShowTheStartNotFiltersEmpty() {
+        var cast = SidebarFixtures.minimal(now: Self.now, home: Self.home)
+        for i in cast.sessions.indices { cast.sessions[i].lifecycle = .archived; cast.sessions[i].archivedAt = Self.now }
+        let live = SidebarProjector.build(input(cast) { $0.selectedSession = nil })
+        #expect(live.empty == .none && live.projects.first?.hasNoSessions == true, "projeto ativo aparece oferecendo uma sessão nova")
+        for i in cast.projects.indices { cast.projects[i].archivedAt = Self.now }
+        let all = SidebarProjector.build(input(cast) { $0.selectedSession = nil })
+        #expect(all.empty == .workspace)
+        #expect(all.archivedHidden == cast.sessions.filter { $0.projectID == nil }.count, "só as que apareceriam (projeto arquivado não volta)")
+    }
+
     // MARK: Pendentes (03 §2.9)
 
     @Test func pendingRowsSitOnTopOfTheirProjectAndHideWhileSearching() {

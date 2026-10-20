@@ -85,7 +85,7 @@ struct SidebarView: View {
     @ViewBuilder private func sessionsContent(_ projection: SidebarProjection) -> some View {
         switch projection.empty {
         case .workspace:
-            emptyWorkspace
+            emptyWorkspace(archived: projection.archivedHidden)
         default:
             Section {
                 if projection.empty == .searchNoResults {
@@ -214,7 +214,7 @@ struct SidebarView: View {
 
     // MARK: Estados vazios (03 §2.13, M-902)
 
-    private var emptyWorkspace: some View {
+    private func emptyWorkspace(archived: Int) -> some View {
         DSEmptyState(String(localized: "No projects yet.", bundle: .module)) {
             VStack(spacing: DS.Space.s2) {
                 if let registry, registry.isOffered(.projectAdd) {
@@ -225,6 +225,9 @@ struct SidebarView: View {
                 }
                 if let registry, registry.isOffered(.sessionNewClean) {
                     DSButton(.sessionNewClean, id: nil, "New Clean Session", variant: .ghost, size: .sm)
+                }
+                if archived > 0 {
+                    DSButton(.sidebarSortFilter, id: nil, "Show \(archived) Archived", variant: .ghost, size: .xs, argument: .set("archived=on"))
                 }
             }
         }

@@ -9317,6 +9317,16 @@
           }
         }
       }
+    },
+    "Show %lld Archived": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show %lld Archived"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

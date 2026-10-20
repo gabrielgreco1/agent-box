@@ -193,6 +193,13 @@ final class SidebarModel {
         snapshot = snap
         onSnapshot?(snap)
         if let s = selectedSession, !snap.sessions.contains(where: { $0.id == s }) { selectedSession = nil }
+        // Sessão arquivada escondida pelo filtro (ex.: a seleção salva ao relançar): a landing volta em vez de uma sessão que a
+        // sidebar não mostra.
+        if let s = selectedSession, !filters.archived,
+           let session = snap.sessions.first(where: { $0.id == s }), session.archivedAt != nil || session.lifecycle == .archived {
+            selectedSession = nil
+            persist()
+        }
         if let r = renamingSession, !snap.sessions.contains(where: { $0.id == r }) { renamingSession = nil }
         if let r = renamingProject, !snap.projects.contains(where: { $0.id == r }) { renamingProject = nil }
     }

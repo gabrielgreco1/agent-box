@@ -59,6 +59,25 @@ import Testing
         env.sidebar.detach()
     }
 
+    /// F36: a seleção salva aponta para uma sessão que foi arquivada; ao relançar a seleção cai (a landing aparece) em vez de
+    /// abrir uma sessão que a sidebar esconde.
+    @Test func restoredSelectionOfAnArchivedSessionFallsBackToTheLanding() async throws {
+        let (env, store, cast, paths) = try await make()
+        defer { try? FileManager.default.removeItem(at: paths.root) }
+        var session = cast.sessions.first { $0.archivedAt == nil && $0.lifecycle != .archived }!
+        _ = try await env.registry.perform(.sessionSelect, .select(session.id.uuidString))
+        session.lifecycle = .archived
+        session.archivedAt = Date()
+        try await store.save(session)
+        try await store.flush()
+        env.sidebar.detach()
+        let again = SidebarModel()
+        await again.attach(store: store)
+        for _ in 0..<100 where again.snapshot.sessions.isEmpty { try await Task.sleep(for: .milliseconds(20)) }
+        #expect(again.selectedSession == nil)
+        again.detach()
+    }
+
     @Test func selectingAnUnknownSessionFails() async throws {
         let env = AppEnvironment(environment: [:])
         await #expect(throws: ActionError.self) { _ = try await env.registry.perform(.sessionSelect, .select(UUID().uuidString)) }

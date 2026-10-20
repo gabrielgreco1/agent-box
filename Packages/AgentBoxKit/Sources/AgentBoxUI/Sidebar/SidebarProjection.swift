@@ -244,6 +244,8 @@ struct SidebarProjection: Equatable {
     var cleanPending: [PendingRowData] = []
     var showSessionsSection: Bool { !cleanSessions.isEmpty || !cleanPending.isEmpty }
     var empty: SidebarEmptyState = .none
+    /// Sessões arquivadas que o filtro esconde e que apareceriam com "Archived Sessions" ligado (o vazio oferece mostrá-las).
+    var archivedHidden = 0
     /// Itens navegáveis na ordem visual (teclado).
     var items: [SidebarItemID] = []
     /// Cards de sessão na ordem visual (⌘1…9, ⇧⌘↑/↓).
@@ -416,8 +418,10 @@ enum SidebarProjector {
 
         func activity(_ s: Session) -> Date { s.lastActiveAt ?? s.createdAt }
 
+        func isArchived(_ s: Session) -> Bool { s.archivedAt != nil || s.lifecycle == .archived }
+
         func visibleByFilters(_ s: Session) -> Bool {
-            if s.archivedAt != nil || s.lifecycle == .archived { return input.filters.archived }
+            if isArchived(s) { return input.filters.archived }
             if s.kind == .checkout, !input.filters.mainCheckouts, s.id != input.selectedSession { return false }
             if !input.filters.idleOverWeek, activity(s) < cutoff, s.id != input.selectedSession { return false }
             return true
@@ -556,7 +560,8 @@ enum SidebarProjector {
                 id: p.id, name: p.name, kind: p.kind, collapsed: collapsed, sessionCount: cards.count,
                 pending: pendingRows(p.id), sessions: visible, hiddenCount: cards.count - visible.count,
                 showMoreExpanded: showMoreOpen && cards.count > SidebarMetrics.sessionsBeforeShowMore,
-                hasNoSessions: mine.isEmpty && input.pending.allSatisfy { $0.projectID != p.id })
+                // Só arquivadas (filtro desligado) contam como "sem sessões": o projeto oferece começar uma, não "nenhum resultado".
+                hasNoSessions: mine.allSatisfy { isArchived($0) && !input.filters.archived } && input.pending.allSatisfy { $0.projectID != p.id })
             let recent = mine.map(activity).max() ?? p.createdAt
             projectSections.append((section, recent, p.sortIndex))
         }
@@ -574,7 +579,13 @@ enum SidebarProjector {
         out.cleanPending = pendingRows(nil)
 
         // Vazio
-        let nothingStored = snap.projects.filter { $0.archivedAt == nil }.isEmpty && liveSessions.isEmpty && input.pending.isEmpty
+        // Só arquivadas não contam como "algo guardado": com tudo arquivado a sidebar mostra o começo, não "nenhum resultado".
+        let activeProjects = Set(snap.projects.filter { $0.archivedAt == nil }.map(\.id))
+        let archived = liveSessions.filter(isArchived)
+        let nothingStored = activeProjects.isEmpty && liveSessions.count == archived.count && input.pending.isEmpty
+        if !input.filters.archived {
+            out.archivedHidden = archived.filter { $0.projectID.map(activeProjects.contains) ?? true }.count
+        }
         let nothingShown = out.projects.allSatisfy { $0.sessions.isEmpty && $0.pending.isEmpty } && !out.showSessionsSection
         if nothingStored {
             out.empty = .workspace
