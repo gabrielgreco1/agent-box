@@ -1,0 +1,18 @@
+2	0	1	removed=1 
+5	0	1	removed=1 
+8	4	11	queued=6 ready=4 removed=1 
+13	4	11	in_use=2 queued=6 ready=2 removed=1 
+16	4	11	in_use=4 queued=6 removed=1 
+19	4	11	in_use=4 queued=6 removed=1 
+24	4	11	in_use=4 queued=6 removed=1 
+27	4	11	in_use=4 queued=6 removed=1 
+30	3	11	in_use=3 provisioning=1 queued=3 removed=4 
+34	4	11	in_use=4 queued=2 removed=5 
+37	4	11	in_use=4 queued=2 removed=5 
+41	4	11	in_use=4 queued=2 removed=5 
+45	4	11	in_use=3 provisioning=1 removed=7 
+48	2	11	in_use=2 removed=9 
+51	2	11	in_use=2 removed=9 
+56	2	11	in_use=2 removed=9 
+59	2	11	in_use=2 removed=9 
+62	0	11	removed=11 

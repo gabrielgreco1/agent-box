@@ -1,0 +1,54 @@
+⏺ wiki-05 (Peru) has finished. Its title "Peru" and first paragraph are verified against the
+  page-load request, with no citations missing, and the box is released. /url is not_verified
+  again because it has no citation.
+
+  Five workers are still running (wiki-06 to wiki-10). I'll send E2E-BATCH-DONE once all ten have
+  reported.
+
+✻ Waiting for 5 background agents to finish
+ 
+⏺ Agent "Crawl Wikipedia Iceland (wiki-06)" finished · 32s
+
+⏺ wiki-06 (Iceland) has finished. Its title "Iceland" and first paragraph are verified against the
+  page-load request, with no citations missing, and the box is released. /url is not_verified
+  because it has no citation, as with the others.
+
+  Four workers are still running (wiki-07 to wiki-10).
+ 
+✻ Waiting for 4 background agents to finish
+ 
+⏺ Agent "Crawl Wikipedia Vietnam (wiki-07)" finished · 34s
+
+⏺ wiki-07 (Vietnam) has finished. Its title "Vietnam" is verified against the page-load request,
+  with no citations missing, and the box is released. The first <p> on that page was a
+  17-character fragment, so the worker used the lead paragraph instead (615 characters, citation
+  markers removed). The other workers kept their markers, so this result is formatted differently
+  from the rest. /url is not_verified, as with the others.
+ 
+  Three workers are still running (wiki-08 to wiki-10).
+ 
+✻ Waiting for 3 background agents to finish
+ 
+⏺ Agent "Crawl Wikipedia Portugal (wiki-08)" finished · 34s
+
+⏺ wiki-08 (Portugal) has finished. Its title "Portugal" and first paragraph are verified against
+  the page-load request, with no citations missing, and the box is released. /url is not_verified,
+  as with the others.
+
+  Two workers are still running (wiki-09 and wiki-10).
+ 
+✻ Waiting for 2 background agents to finish
+ 
+⏺ Agent "Crawl Wikipedia Morocco (wiki-09)" finished · 44s
+
+✽ Nucleating… 
+  ⎿  Tip: Use /memory to view and manage Claude memory
+
+──────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+──────────────────────────────────────────────────────────────────────────────────────────────────
+  tmp/abe2e-eYUOiE/repo | main | 1h8m [█░░░░░░░░░] 12% | Haiku 5.5 | 7d:16%
+  ⏵⏵ bypass permissions on (shift+tab to cycle) · /tasks to see subagents · ← 3 agents
+
+  ⏺ main
+                                                                             3

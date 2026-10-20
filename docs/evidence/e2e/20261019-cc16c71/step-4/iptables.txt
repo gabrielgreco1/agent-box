@@ -1,0 +1,5 @@
+-P OUTPUT ACCEPT
+-A OUTPUT -p tcp -m owner --uid-owner 10001 -m multiport --dports 8790,8765,5900 -j REJECT --reject-with tcp-reset
+-A OUTPUT -d 127.0.0.11/32 -m owner --uid-owner 10001 -j REJECT --reject-with icmp-port-unreachable
+-A OUTPUT -d 127.0.0.0/8 -o lo -m owner --uid-owner 10001 -j ACCEPT
+-A OUTPUT -m owner --uid-owner 10001 -j REJECT --reject-with icmp-port-unreachable

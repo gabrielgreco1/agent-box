@@ -1,0 +1,321 @@
+[
+    {
+        "Id": "e915410042f49bdbedda6f9fd8f93bcfb3151a8250ab372e41517477a25dcf70",
+        "Created": "2026-10-20T01:52:44.811878001Z",
+        "Path": "python",
+        "Args": [
+            "-m",
+            "agentbox_supervisor"
+        ],
+        "State": {
+            "Status": "running",
+            "Running": true,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 85555,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2026-10-20T01:52:44.859204459Z",
+            "FinishedAt": "0001-01-01T00:00:00Z",
+            "Health": {
+                "Status": "healthy",
+                "FailingStreak": 0,
+                "Log": [
+                    {
+                        "Start": "2026-10-20T01:52:49.926351378Z",
+                        "End": "2026-10-20T01:52:49.997962378Z",
+                        "ExitCode": 0,
+                        "Output": ""
+                    }
+                ]
+            }
+        },
+        "Image": "sha256:32bee7b62a0b06b1fda901eec598f50ae8eba03016905ccaf3d4e1b712b4bf4b",
+        "ResolvConfPath": "/var/lib/docker/containers/e915410042f49bdbedda6f9fd8f93bcfb3151a8250ab372e41517477a25dcf70/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/e915410042f49bdbedda6f9fd8f93bcfb3151a8250ab372e41517477a25dcf70/hostname",
+        "HostsPath": "/var/lib/docker/containers/e915410042f49bdbedda6f9fd8f93bcfb3151a8250ab372e41517477a25dcf70/hosts",
+        "LogPath": "/var/lib/docker/containers/e915410042f49bdbedda6f9fd8f93bcfb3151a8250ab372e41517477a25dcf70/e915410042f49bdbedda6f9fd8f93bcfb3151a8250ab372e41517477a25dcf70-json.log",
+        "Name": "/ab-97ce44d0",
+        "RestartCount": 0,
+        "Driver": "overlayfs",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": [
+                "/tmp/abe2e-eYUOiE/h/computers/runs/01a15702/e2e-light/work:/work",
+                "/tmp/abe2e-eYUOiE/h/computers/boxes/97ce44d0-b257-40e0-bf00-5d602e1b369b/work:/run/abx-secrets:ro",
+                "/tmp/abe2e-eYUOiE/h/computers/runs/01a15702/e2e-light/logs:/run/agentbox/logs",
+                "ab-prof-97ce44d0-b257-40e0-bf00-5d602e1b369b:/profile"
+            ],
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
+            "NetworkMode": "bridge",
+            "PortBindings": {
+                "8790/tcp": [
+                    {
+                        "HostIp": "127.0.0.1",
+                        "HostPort": ""
+                    }
+                ]
+            },
+            "RestartPolicy": {
+                "Name": "no",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "CapAdd": [
+                "NET_ADMIN",
+                "SETUID",
+                "SETGID",
+                "SETPCAP",
+                "KILL"
+            ],
+            "CapDrop": [
+                "ALL"
+            ],
+            "CgroupnsMode": "private",
+            "Dns": null,
+            "DnsOptions": null,
+            "DnsSearch": null,
+            "ExtraHosts": null,
+            "GroupAdd": null,
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": true,
+            "SecurityOpt": [
+                "no-new-privileges"
+            ],
+            "Tmpfs": {
+                "/home/agent": "rw,nosuid,size=256m,uid=10001,gid=10001,mode=0755",
+                "/run/agentbox": "rw,nosuid,noexec,size=64m,uid=10003,gid=10003,mode=0700",
+                "/tmp": "rw,nosuid,size=1g,mode=1777"
+            },
+            "UTSMode": "",
+            "UsernsMode": "",
+            "ShmSize": 67108864,
+            "Runtime": "runc",
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 2684354560,
+            "NanoCpus": 1750000000,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": null,
+            "BlkioDeviceReadBps": null,
+            "BlkioDeviceWriteBps": null,
+            "BlkioDeviceReadIOps": null,
+            "BlkioDeviceWriteIOps": null,
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": null,
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "MemoryReservation": 0,
+            "MemorySwap": 2684354560,
+            "MemorySwappiness": null,
+            "OomKillDisable": null,
+            "PidsLimit": 1536,
+            "Ulimits": null,
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "MaskedPaths": [
+                "/proc/acpi",
+                "/proc/asound",
+                "/proc/interrupts",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/sys/devices/virtual/powercap",
+                "/sys/firmware"
+            ],
+            "ReadonlyPaths": [
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ],
+            "Init": true
+        },
+        "Storage": {
+            "RootFS": {
+                "Snapshot": {
+                    "Name": "overlayfs"
+                }
+            }
+        },
+        "Mounts": [
+            {
+                "Type": "bind",
+                "Source": "/tmp/abe2e-eYUOiE/h/computers/runs/01a15702/e2e-light/work",
+                "Destination": "/work",
+                "Mode": "",
+                "RW": true,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "bind",
+                "Source": "/tmp/abe2e-eYUOiE/h/computers/boxes/97ce44d0-b257-40e0-bf00-5d602e1b369b/work",
+                "Destination": "/run/abx-secrets",
+                "Mode": "ro",
+                "RW": false,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "bind",
+                "Source": "/tmp/abe2e-eYUOiE/h/computers/runs/01a15702/e2e-light/logs",
+                "Destination": "/run/agentbox/logs",
+                "Mode": "",
+                "RW": true,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "volume",
+                "Name": "ab-prof-97ce44d0-b257-40e0-bf00-5d602e1b369b",
+                "Source": "/var/lib/docker/volumes/ab-prof-97ce44d0-b257-40e0-bf00-5d602e1b369b/_data",
+                "Destination": "/profile",
+                "Driver": "local",
+                "Mode": "z",
+                "RW": true,
+                "Propagation": ""
+            }
+        ],
+        "Config": {
+            "Hostname": "computer",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "ExposedPorts": {
+                "8790/tcp": {}
+            },
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "AGENTBOX_DISPLAY=browser",
+                "HOME=/home/agent",
+                "DISPLAY=:99",
+                "HTTP_PROXY=http://127.0.0.1:3128",
+                "HTTPS_PROXY=http://127.0.0.1:3128",
+                "ALL_PROXY=http://127.0.0.1:3128",
+                "http_proxy=http://127.0.0.1:3128",
+                "https_proxy=http://127.0.0.1:3128",
+                "all_proxy=http://127.0.0.1:3128",
+                "NO_PROXY=localhost,127.0.0.1,::1",
+                "no_proxy=localhost,127.0.0.1,::1",
+                "PATH=/opt/agentbox/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "LANG=C.UTF-8",
+                "LC_ALL=C.UTF-8",
+                "PLAYWRIGHT_BROWSERS_PATH=/ms-playwright",
+                "DEBIAN_FRONTEND=noninteractive",
+                "PYTHONUNBUFFERED=1",
+                "PIP_NO_CACHE_DIR=1",
+                "PIP_DISABLE_PIP_VERSION_CHECK=1",
+                "PYTHONPATH=/opt/agentbox"
+            ],
+            "Cmd": null,
+            "Healthcheck": {
+                "Test": [
+                    "CMD",
+                    "python",
+                    "-m",
+                    "agentbox_egress.healthcheck"
+                ],
+                "Interval": 5000000000,
+                "Timeout": 3000000000,
+                "StartPeriod": 3000000000,
+                "Retries": 5
+            },
+            "Image": "agentbox-computer:ctx-d374b4c1af35",
+            "Volumes": null,
+            "WorkingDir": "/work",
+            "Entrypoint": [
+                "python",
+                "-m",
+                "agentbox_supervisor"
+            ],
+            "Labels": {
+                "agentbox.batch": "e2e",
+                "agentbox.computer": "97ce44d0-b257-40e0-bf00-5d602e1b369b",
+                "agentbox.computer_name": "e2e-light",
+                "agentbox.context_hash": "d374b4c1af355f8b565e4847039f748c03f6ee3bcd336bb2e14ffc1977a20102",
+                "agentbox.ephemeral": "true",
+                "agentbox.owner": "agent-box-e455c8b1",
+                "agentbox.role": "computer",
+                "org.opencontainers.image.version": "24.04"
+            },
+            "StopTimeout": 5
+        },
+        "NetworkSettings": {
+            "SandboxID": "a7f56397a2b954092edef4269843455f8768898aa26667a9c4f336dda8624272",
+            "SandboxKey": "/var/run/docker/netns/a7f56397a2b9",
+            "Ports": {
+                "8790/tcp": [
+                    {
+                        "HostIp": "127.0.0.1",
+                        "HostPort": "57842"
+                    }
+                ]
+            },
+            "Networks": {
+                "bridge": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": null,
+                    "DriverOpts": null,
+                    "GwPriority": 0,
+                    "NetworkID": "485a14503d44e48c17ac42be54e8c2b675838dcf44ff4edccb71f85d14390557",
+                    "EndpointID": "f3666bf359b54537692515029e7e93347890928b6fa0c01c8c50dcf0b11bde7c",
+                    "Gateway": "172.17.0.1",
+                    "IPAddress": "172.17.0.2",
+                    "MacAddress": "e6:e9:e9:7b:f0:8a",
+                    "IPPrefixLen": 16,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": null
+                }
+            }
+        },
+        "ImageManifestDescriptor": {
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "digest": "sha256:32bee7b62a0b06b1fda901eec598f50ae8eba03016905ccaf3d4e1b712b4bf4b",
+            "size": 2949,
+            "platform": {
+                "architecture": "arm64",
+                "os": "linux"
+            }
+        }
+    }
+]

@@ -1,0 +1,4 @@
+gabriel@gabriel-MacBook-Pro repo % echo E2E_SHELL_30906; cd /tmp/abe2e-eYUOiE/repo && pwd
+E2E_SHELL_30906
+/tmp/abe2e-eYUOiE/repo
+gabriel@gabriel-MacBook-Pro repo % 

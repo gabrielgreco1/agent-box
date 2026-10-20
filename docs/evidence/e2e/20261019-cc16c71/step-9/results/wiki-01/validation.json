@@ -1,0 +1,38 @@
+{
+  "fields" : [
+    {
+      "citations" : [
+        {
+          "kind" : "request",
+          "ref" : "01M5BGKHDBJQ0AZYEH1VP2W3XC",
+          "trust" : "observed"
+        }
+      ],
+      "pointer" : "/first_paragraph",
+      "status" : "verified"
+    },
+    {
+      "citations" : [
+        {
+          "kind" : "request",
+          "ref" : "01M5BGKHDBJQ0AZYEH1VP2W3XC",
+          "trust" : "observed"
+        }
+      ],
+      "pointer" : "/title",
+      "status" : "verified"
+    },
+    {
+      "citations" : [
+
+      ],
+      "pointer" : "/url",
+      "status" : "not_verified"
+    }
+  ],
+  "summary" : {
+    "cited_missing" : 0,
+    "not_verified" : 1,
+    "verified" : 2
+  }
+}

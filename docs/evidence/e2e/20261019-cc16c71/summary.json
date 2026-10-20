@@ -1,0 +1,342 @@
+{
+  "date": "2026-10-19T23:01:23",
+  "sha": "cc16c71",
+  "steps_requested": "1,2,3,4,5,6,7,8,9",
+  "pass": true,
+  "steps": {
+    "1": {
+      "checks": [
+        {
+          "pass": true,
+          "check": "scripts/build.sh e instala\u00e7\u00e3o tempor\u00e1ria (/tmp/abe2e-eYUOiE/install) sem tocar em /Applications"
+        },
+        {
+          "pass": true,
+          "check": "assinatura do bundle copiado v\u00e1lida"
+        },
+        {
+          "pass": true,
+          "check": "app de teste no ar, respondendo ao ctl (pid 86442)"
+        },
+        {
+          "pass": true,
+          "check": "dados isolados em AGENTBOX_HOME tempor\u00e1rio (banco em /tmp/abe2e-eYUOiE/h/db/agentbox.sqlite)"
+        },
+        {
+          "pass": true,
+          "check": "o app de teste n\u00e3o \u00e9 o do dono (processo vem do diret\u00f3rio tempor\u00e1rio)"
+        },
+        {
+          "pass": true,
+          "check": "daemon filho pr\u00f3prio (--home do teste), n\u00e3o o launchd do dono"
+        },
+        {
+          "pass": true,
+          "check": "owner dos containers do teste difere do do dono"
+        },
+        {
+          "pass": true,
+          "check": "projeto criado (reposit\u00f3rio git tempor\u00e1rio) e perfil Claude com modelo 'haiku'"
+        }
+      ],
+      "seconds": 26,
+      "pass": true
+    },
+    "2": {
+      "checks": [
+        {
+          "pass": true,
+          "check": "shell e Claude abertos pela UI (sess\u00e3o no projeto tempor\u00e1rio)"
+        },
+        {
+          "pass": true,
+          "check": "shell responde (marca E2E_SHELL_30906 na tela)"
+        },
+        {
+          "pass": true,
+          "check": "Claude responde (modelo haiku)"
+        },
+        {
+          "pass": true,
+          "check": "terminais 'running' no banco"
+        },
+        {
+          "pass": true,
+          "check": "PTYs s\u00e3o filhos do daemon do teste (pid 86623; shell 86625, Claude 86687)"
+        },
+        {
+          "pass": true,
+          "check": "o daemon do teste n\u00e3o \u00e9 o do dono (ptyd.v1 do launchd)"
+        }
+      ],
+      "seconds": 8,
+      "pass": true
+    },
+    "3": {
+      "checks": [
+        {
+          "pass": true,
+          "check": "\u2318Q com agente vivo abre o overlay de sa\u00edda (sem NSAlert)"
+        },
+        {
+          "pass": true,
+          "check": "Keep Running: o app segue vivo (mesmo pid 86442)"
+        },
+        {
+          "pass": true,
+          "check": "Keep Running: o daemon e os PTYs seguem (mesmos pids)"
+        },
+        {
+          "pass": true,
+          "check": "Keep Running: sem \u00edcone no Dock (accessory)"
+        },
+        {
+          "pass": true,
+          "check": "o ctl segue respondendo em segundo plano"
+        },
+        {
+          "pass": true,
+          "check": "reabrir: mesmo processo do app, daemon e PTYs (shell 86625, Claude 86687)"
+        },
+        {
+          "pass": true,
+          "check": "reabrir: o pane do shell voltou na \u00e1rvore"
+        },
+        {
+          "pass": true,
+          "check": "buffer do shell restaurado (marca E2E_SHELL_30906 ainda na tela)"
+        },
+        {
+          "pass": true,
+          "check": "buffer do Claude restaurado (PONG ainda na tela)"
+        },
+        {
+          "pass": true,
+          "check": "tela do shell id\u00eantica antes e depois"
+        }
+      ],
+      "seconds": 11,
+      "pass": true
+    },
+    "4": {
+      "checks": [
+        {
+          "pass": true,
+          "check": "Claude pediu o computador e2e-light (Ask aprovado) e o subagente fez box_claim (estado in_use)"
+        },
+        {
+          "pass": true,
+          "check": "1 container 'agentbox-computer' em execu\u00e7\u00e3o, com os labels do teste (owner agent-box-e455c8b1, role computer, ef\u00eamero)"
+        },
+        {
+          "pass": true,
+          "check": "saud\u00e1vel (healthcheck)"
+        },
+        {
+          "pass": true,
+          "check": "rede: s\u00f3 a bridge padr\u00e3o, sem rede extra por computador (P24; n\u00e3o existe rede 'internal' por computador)"
+        },
+        {
+          "pass": true,
+          "check": "portas publicadas s\u00f3 em 127.0.0.1"
+        },
+        {
+          "pass": true,
+          "check": "container sem privil\u00e9gios (n\u00e3o privileged)"
+        },
+        {
+          "pass": true,
+          "check": "iptables por uid: o agente s\u00f3 sai pelo proxy local"
+        },
+        {
+          "pass": true,
+          "check": "API do computador (porta publicada em loopback): /v1/health ok"
+        },
+        {
+          "pass": true,
+          "check": "VNC: handshake RFB e um quadro de verdade ({\"width\": 1440, \"height\": 900, \"name\": \"computer:99\", \"rfb\": \"RFB 003.008\", \"sampled_colors\": 5})"
+        },
+        {
+          "pass": true,
+          "check": "egress: example.com abre pelo proxy do computador"
+        },
+        {
+          "pass": true,
+          "check": "egress: o usu\u00e1rio agent n\u00e3o sai direto, a regra por uid bloqueia"
+        },
+        {
+          "pass": true,
+          "check": "o subagente navegou (example.com no log de requisi\u00e7\u00f5es do computador)"
+        }
+      ],
+      "seconds": 12,
+      "pass": true
+    },
+    "5": {
+      "checks": [
+        {
+          "pass": true,
+          "check": "viewer do e2e-light aberto (viewer.e2e-light na \u00e1rvore)"
+        },
+        {
+          "pass": true,
+          "check": "controle come\u00e7a com o agente (controlFrame=agent)"
+        },
+        {
+          "pass": true,
+          "check": "Take Over \u00e9 imediato (< 3 s) e o controle passa ao humano"
+        },
+        {
+          "pass": true,
+          "check": "o bot\u00e3o vira Hand Back"
+        },
+        {
+          "pass": true,
+          "check": "Hand Back abre o painel da nota (viewer.e2e-light.handBack.confirm)"
+        },
+        {
+          "pass": true,
+          "check": "Hand Back devolve o controle ao agente (controlFrame=agent)"
+        }
+      ],
+      "seconds": 7,
+      "pass": true
+    },
+    "6": {
+      "checks": [
+        {
+          "pass": true,
+          "check": "antes: o volume de perfil existe"
+        },
+        {
+          "pass": true,
+          "check": "container removido depois do subagente soltar (box_release / SubagentStop)"
+        },
+        {
+          "pass": true,
+          "check": "estado 'removed' no banco"
+        },
+        {
+          "pass": true,
+          "check": "volume de perfil ef\u00eamero removido"
+        },
+        {
+          "pass": true,
+          "check": "nenhum container nem volume do teste sobrou"
+        }
+      ],
+      "seconds": 419,
+      "pass": true
+    },
+    "7": {
+      "checks": [
+        {
+          "pass": true,
+          "check": "terminais viram 'interrupted' no banco"
+        },
+        {
+          "pass": true,
+          "check": "banner da janela 'Background agents stopped unexpectedly' (window.daemonBanner)"
+        },
+        {
+          "pass": true,
+          "check": "o pane do Claude mostra 'interrupted' e [Resume]"
+        },
+        {
+          "pass": true,
+          "check": "Resume relan\u00e7a o Claude (terminal 'running')"
+        },
+        {
+          "pass": true,
+          "check": "o daemon voltou por ativa\u00e7\u00e3o (pid novo, diferente de 86623)"
+        },
+        {
+          "pass": true,
+          "check": "a conversa anterior aparece no Claude retomado (PONG)"
+        }
+      ],
+      "seconds": 6,
+      "pass": true
+    },
+    "8": {
+      "checks": [
+        {
+          "pass": true,
+          "check": "h\u00e1 segredos para procurar e containers capturados"
+        },
+        {
+          "pass": true,
+          "check": "nenhum segredo em docker inspect nem nos logs do container"
+        },
+        {
+          "pass": true,
+          "check": "nenhum segredo no os_log do app e do daemon"
+        },
+        {
+          "pass": true,
+          "check": "nenhum segredo nos logs em arquivo (terminais, logs do computador)"
+        }
+      ],
+      "seconds": 4,
+      "pass": true
+    },
+    "9": {
+      "checks": [
+        {
+          "pass": true,
+          "check": "sess\u00e3o do lote criada pelo composer (Subagent computers = full, modelo haiku)"
+        },
+        {
+          "pass": true,
+          "check": "10 computadores criados (escalonados pela mem\u00f3ria da VM do Docker; pico de 4 rodando ao mesmo tempo)"
+        },
+        {
+          "pass": true,
+          "check": "o lote terminou dentro do limite de 2400 s (levou 62 s)"
+        },
+        {
+          "pass": true,
+          "check": "10 resultados enviados com result_submit e validados (t\u00edtulo + 1\u00ba par\u00e1grafo; verified >= 2, cited_missing = 0): 10 de 10"
+        },
+        {
+          "pass": true,
+          "check": "todos os computadores liberados (estado removed)"
+        },
+        {
+          "pass": true,
+          "check": "nenhum container do teste sobrou"
+        },
+        {
+          "pass": true,
+          "check": "nenhum volume de perfil do teste sobrou"
+        },
+        {
+          "pass": true,
+          "check": "nenhuma rede do teste sobrou (label agentbox.owner=agent-box-e455c8b1)"
+        },
+        {
+          "pass": true,
+          "check": "custo do lote dentro do or\u00e7amento (US$ 2, estimado)"
+        },
+        {
+          "pass": true,
+          "check": "h\u00e1 segredos para procurar e containers capturados"
+        },
+        {
+          "pass": true,
+          "check": "nenhum segredo em docker inspect nem nos logs do container"
+        },
+        {
+          "pass": true,
+          "check": "nenhum segredo no os_log do app e do daemon"
+        },
+        {
+          "pass": true,
+          "check": "nenhum segredo nos logs em arquivo (terminais, logs do computador)"
+        }
+      ],
+      "seconds": 72,
+      "pass": true
+    }
+  }
+}

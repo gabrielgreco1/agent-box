@@ -1,0 +1,54 @@
+
+ ▐▛███▛█   Claude Code v2.1.304
+▝▜██████▀  Haiku 5.5 · Claude Team
+ ▝▝   ▝▝   /private/tmp/abe2e-eYUOiE/repo
+
+
+⏺ Remote Control is disabled by your organization's policy. Contact your organization 
+  admin for access.
+
+❯ Reply with exactly the two letters PO immediately followed by NG, uppercase, and nothing else. 
+
+⏺ PONG
+
+✻ Churned for 1s · done 10:52 PM
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+─────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+─────────────────────────────────────────────────────────────────────────────────────────────────
+  tmp/abe2e-eYUOiE/repo | main | 1h17m [█░░░░░░░░░] 11% | Haiku 5.5 | 7d:16%
+  ⏵⏵ bypass permissions on (shift+tab to cycle) · ← 3 agents

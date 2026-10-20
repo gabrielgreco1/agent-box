@@ -1,0 +1,114 @@
+e2e 2026-10-20T01:51:53Z sha=cc16c71 passos=1,2,3,4,5,6,7,8,9 work=/tmp/abe2e-eYUOiE
+macOS 27.0.1 (arm64); docker VM: 14 CPUs, 8320954368 bytes
+owner dos containers do teste: agent-box-e455c8b1 (o do dono é agent-box)
+
+== 1. build, instalação temporária e isolamento
+build: scripts/build.sh (AGENTBOX_BUILD_DIR=/Users/gabriel/orca/workspaces/agent-box/e2e-full/build/e2e)
+  PASS  scripts/build.sh e instalação temporária (/tmp/abe2e-eYUOiE/install) sem tocar em /Applications
+  PASS  assinatura do bundle copiado válida
+  PASS  app de teste no ar, respondendo ao ctl (pid 86442)
+  PASS  dados isolados em AGENTBOX_HOME temporário (banco em /tmp/abe2e-eYUOiE/h/db/agentbox.sqlite)
+  PASS  o app de teste não é o do dono (processo vem do diretório temporário)
+  PASS  daemon filho próprio (--home do teste), não o launchd do dono
+  PASS  owner dos containers do teste difere do do dono
+  PASS  projeto criado (repositório git temporário) e perfil Claude com modelo 'haiku'
+  (26 s)
+
+== 2. projeto, shell e Claude
+  PASS  shell e Claude abertos pela UI (sessão no projeto temporário)
+  PASS  shell responde (marca E2E_SHELL_30906 na tela)
+  PASS  Claude responde (modelo haiku)
+  PASS  terminais 'running' no banco
+  PASS  PTYs são filhos do daemon do teste (pid 86623; shell 86625, Claude 86687)
+  PASS  o daemon do teste não é o do dono (ptyd.v1 do launchd)
+  (8 s)
+
+== 3. Keep Running e reabrir: mesmos PTYs e buffer
+  PASS  ⌘Q com agente vivo abre o overlay de saída (sem NSAlert)
+  PASS  Keep Running: o app segue vivo (mesmo pid 86442)
+  PASS  Keep Running: o daemon e os PTYs seguem (mesmos pids)
+  PASS  Keep Running: sem ícone no Dock (accessory)
+  PASS  o ctl segue respondendo em segundo plano
+  PASS  reabrir: mesmo processo do app, daemon e PTYs (shell 86625, Claude 86687)
+  PASS  reabrir: o pane do shell voltou na árvore
+  PASS  buffer do shell restaurado (marca E2E_SHELL_30906 ainda na tela)
+  PASS  buffer do Claude restaurado (PONG ainda na tela)
+  PASS  tela do shell idêntica antes e depois
+  (11 s)
+
+== 4. subagente leve com box_claim: container, rede, iptables, VNC, um quadro
+  PASS  Claude pediu o computador e2e-light (Ask aprovado) e o subagente fez box_claim (estado in_use)
+  PASS  1 container 'agentbox-computer' em execução, com os labels do teste (owner agent-box-e455c8b1, role computer, efêmero)
+  PASS  saudável (healthcheck)
+  PASS  rede: só a bridge padrão, sem rede extra por computador (P24; não existe rede 'internal' por computador)
+  PASS  portas publicadas só em 127.0.0.1
+  PASS  container sem privilégios (não privileged)
+  PASS  iptables por uid: o agente só sai pelo proxy local
+  PASS  API do computador (porta publicada em loopback): /v1/health ok
+  PASS  VNC: handshake RFB e um quadro de verdade ({"width": 1440, "height": 900, "name": "computer:99", "rfb": "RFB 003.008", "sampled_colors": 5})
+  PASS  egress: example.com abre pelo proxy do computador
+  PASS  egress: o usuário agent não sai direto, a regra por uid bloqueia
+  PASS  o subagente navegou (example.com no log de requisições do computador)
+  (12 s)
+
+== 5. Take Over (imediato) e Hand Back
+  PASS  viewer do e2e-light aberto (viewer.e2e-light na árvore)
+  PASS  controle começa com o agente (controlFrame=agent)
+  note  Take Over levou 0.12 s
+  PASS  Take Over é imediato (< 3 s) e o controle passa ao humano
+  PASS  o botão vira Hand Back
+  PASS  Hand Back abre o painel da nota (viewer.e2e-light.handBack.confirm)
+  PASS  Hand Back devolve o controle ao agente (controlFrame=agent)
+  (7 s)
+
+== 6. computador efêmero removido (container e volume)
+  note  container e915410042f4, computador 97ce44d0-b257-40e0-bf00-5d602e1b369b, volume ab-prof-97ce44d0-b257-40e0-bf00-5d602e1b369b
+  PASS  antes: o volume de perfil existe
+  PASS  container removido depois do subagente soltar (box_release / SubagentStop)
+  PASS  estado 'removed' no banco
+  PASS  volume de perfil efêmero removido
+  PASS  nenhum container nem volume do teste sobrou
+  (419 s)
+
+== 7. daemon morto (kill -9): banner, interrupted e Resume
+  note  matando o daemon do teste 86623 (kill -9; o daemon do dono é outro processo)
+  PASS  terminais viram 'interrupted' no banco
+  PASS  banner da janela 'Background agents stopped unexpectedly' (window.daemonBanner)
+  PASS  o pane do Claude mostra 'interrupted' e [Resume]
+  PASS  Resume relança o Claude (terminal 'running')
+  PASS  o daemon voltou por ativação (pid novo, diferente de 86623)
+  PASS  a conversa anterior aparece no Claude retomado (PONG)
+  (6 s)
+
+== 8. nenhum segredo em docker inspect nem nos logs
+  note  3 segredos conhecidos (token e egress.json dos computadores, capabilities dos MCP)
+  escaneado: docker inspect+logs (2 capturas, 330 linhas), os_log do app e do daemon (117119 linhas), logs em arquivo (6370 linhas)
+  PASS  há segredos para procurar e containers capturados
+  PASS  nenhum segredo em docker inspect nem nos logs do container
+  PASS  nenhum segredo no os_log do app e do daemon
+  PASS  nenhum segredo nos logs em arquivo (terminais, logs do computador)
+  (4 s)
+
+== 9. lote de 10 crawlers (Subagent computers = full)
+  PASS  sessão do lote criada pelo composer (Subagent computers = full, modelo haiku)
+  PASS  10 computadores criados (escalonados pela memória da VM do Docker; pico de 4 rodando ao mesmo tempo)
+  PASS  o lote terminou dentro do limite de 2400 s (levou 62 s)
+  PASS  10 resultados enviados com result_submit e validados (título + 1º parágrafo; verified >= 2, cited_missing = 0): 10 de 10
+  PASS  todos os computadores liberados (estado removed)
+  PASS  nenhum container do teste sobrou
+  PASS  nenhum volume de perfil do teste sobrou
+  PASS  nenhuma rede do teste sobrou (label agentbox.owner=agent-box-e455c8b1)
+  note  lote: 62 s de relógio, pico de 4 computadores simultâneos, custo estimado US$ 0.808 ({"input":236,"output":27475,"cache_write":333867,"cache_read":2534987})
+  PASS  custo do lote dentro do orçamento (US$ 2, estimado)
+  note  14 segredos conhecidos (token e egress.json dos computadores, capabilities dos MCP)
+  escaneado: docker inspect+logs (22 capturas, 3605 linhas), os_log do app e do daemon (136320 linhas), logs em arquivo (68746 linhas)
+  PASS  há segredos para procurar e containers capturados
+  PASS  nenhum segredo em docker inspect nem nos logs do container
+  PASS  nenhum segredo no os_log do app e do daemon
+  PASS  nenhum segredo nos logs em arquivo (terminais, logs do computador)
+  (72 s)
+
+--- limpeza
+sobrou do teste no Docker: containers=0 volumes=0
+o que é do dono segue lá (nenhum processo, job, container ou volume de antes sumiu)
+RESULTADO: OK (evidência: /Users/gabriel/orca/workspaces/agent-box/e2e-full/docs/evidence/e2e/20261019-cc16c71)
