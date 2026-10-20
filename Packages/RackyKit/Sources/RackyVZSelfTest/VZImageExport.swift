@@ -6,8 +6,8 @@ import Foundation
 /// Ferramenta de build dos arquivos do runtime (não roda no app): baixa uma imagem OCI de um registro com o cliente da própria
 /// apple/containerization e a exporta como um OCI tar que `VZAssetStore` sabe importar. É assim que sai o `vminit.oci.tar`: o `docker
 /// pull` recusa a imagem publicada do vminit (o diff id das camadas é o do arquivo comprimido, ver `InitImage.create`).
-public enum VZImageExport {
-    public static func pullAndArchive(reference: String, to archive: URL) async throws {
+enum VZImageExport {
+    static func pullAndArchive(reference: String, to archive: URL) async throws {
         let fm = FileManager.default
         let scratch = fm.temporaryDirectory.appendingPathComponent("racky-vz-export-\(UUID().uuidString)", isDirectory: true)
         try fm.createDirectory(at: scratch, withIntermediateDirectories: true)

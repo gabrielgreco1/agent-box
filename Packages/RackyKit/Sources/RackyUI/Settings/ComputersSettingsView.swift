@@ -3,7 +3,7 @@ import RackyDesignSystem
 import RackyProtocol
 import SwiftUI
 
-/// Settings › Computers (03 §14.2, F12): o padrão de "Subagent computers" das sessões novas e o estado do Docker e das imagens.
+/// Settings › Computers (03 §14.2, F12): o padrão de "Subagent computers" das sessões novas e o estado do runtime dos computadores.
 struct ComputersSettingsView: View {
     let model: SettingsModel
 
@@ -25,8 +25,10 @@ struct ComputersSettingsView: View {
                     .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.base), value: mode)
             }
             ProxiesSettingsBlock(model: model)
-            SettingsBlock(title: "Docker") {
-                SettingsRow(title: "Status", help: "Computers run in containers. The first one builds its images in the background.") {
+            SettingsBlock(title: "Computer runtime") {
+                SettingsRow(title: "Status", help: usesNativeRuntime
+                    ? "Each computer is a small virtual machine on this Mac. The first one downloads the runtime."
+                    : "Computers run in containers. The first one builds its images in the background.") {
                     HStack(spacing: DS.Space.s2) {
                         Text(verbatim: model.dockerStatus.text)
                             .dsFont(DS.Font.small)
@@ -37,12 +39,37 @@ struct ComputersSettingsView: View {
                         }
                     }
                 }
+                if model.runtimeInfo.nativeAvailable {
+                    SettingsRow(
+                        title: "Use Docker instead",
+                        help: "Run computers in Docker containers instead of the built-in runtime. Applies to the next computers you reserve."
+                    ) {
+                        DSSwitch(
+                            isOn: model.settings.computers.forceDocker, action: .settingsComputersForceDocker,
+                            id: .settings("computers", "forceDocker"), ""
+                        )
+                        .accessibilityLabel(Text("Use Docker instead", bundle: .module))
+                    }
+                } else if let reason = model.runtimeInfo.unavailableReason {
+                    Text(verbatim: reason)
+                        .dsFont(DS.Font.small)
+                        .foregroundStyle(DS.Color.textTertiary)
+                }
             }
         }
     }
+
+    /// O runtime nativo está em uso (serve a este Mac e o usuário não forçou o Docker).
+    private var usesNativeRuntime: Bool { model.runtimeInfo.nativeAvailable && !model.settings.computers.forceDocker }
 }
 
-/// O que o Settings mostra do Docker e das imagens (alimentado pelo orquestrador).
+/// O runtime nativo (sem Docker) serve a este Mac? Alimentado na abertura do app; `unavailableReason` explica o porquê quando não.
+struct ComputerRuntimeInfo: Equatable {
+    var nativeAvailable = false
+    var unavailableReason: String?
+}
+
+/// O que o Settings mostra do runtime e das imagens do computador (alimentado pelo orquestrador).
 struct DockerStatusInfo: Equatable {
     var text = String(localized: "Starts when a subagent needs a computer.", bundle: .module)
     var stopped = false

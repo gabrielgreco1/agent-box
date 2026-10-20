@@ -1,7 +1,7 @@
 import Containerization
-import ContainerizationArchive
 import ContainerizationOCI
 import Foundation
+import RackyPlatform
 
 /// Progresso do preparo do runtime (download dos três arquivos e desempacotamento das imagens).
 public enum VZSetupProgress: Sendable, Equatable {
@@ -156,20 +156,14 @@ public actor VZAssetStore {
         let scratch = paths.scratch.appendingPathComponent("oci-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: scratch, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: scratch) }
-        try await Self.blocking { _ = try ArchiveReader(file: archive).extractContents(to: scratch) }
+        // `tar` do sistema (bsdtar): ler OCI tars não justifica linkar o ContainerizationArchive (o módulo libzstd dele não compila no xcodebuild).
+        let result = try await ProcessRunner.run(ProcessRequest(
+            executable: URL(fileURLWithPath: "/usr/bin/tar"), arguments: ["-xf", archive.path, "-C", scratch.path], timeout: .seconds(300)))
+        guard result.exitCode == 0 else { throw VZAssetError.importFailed("tar: \(result.stderrString.prefix(200))") }
         let images: [Containerization.Image]
         do { images = try await store.load(from: scratch) } catch { throw VZAssetError.importFailed("\(archive.lastPathComponent): \(error)") }
         guard let image = images.first else { throw VZAssetError.importFailed("\(archive.lastPathComponent) has no image") }
         return image
-    }
-
-    /// Roda trabalho bloqueante (extração de tar) fora do pool cooperativo.
-    private static func blocking(_ work: @escaping @Sendable () throws -> Void) async throws {
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
-            DispatchQueue.global(qos: .utility).async {
-                do { try work(); continuation.resume() } catch { continuation.resume(throwing: error) }
-            }
-        }
     }
 
     /// Apaga templates e downloads de versões antigas (só o que não é o conjunto atual).

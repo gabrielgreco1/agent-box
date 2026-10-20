@@ -281,6 +281,15 @@ extension SettingsModel {
             change("Subagent computers") { $0.computers.defaultSubagentMode = mode }
             return mode.rawValue
         }
+        try registry.register(
+            .settingsComputersForceDocker,
+            enablement: { [unowned self] in
+                runtimeInfo.nativeAvailable ? .enabled : .disabled(reason: runtimeInfo.unavailableReason ?? "Computers already use Docker on this Mac.")
+            }
+        ) { [unowned self] arg in
+            change("Use Docker instead") { $0.computers.forceDocker = flag(arg, current: $0.computers.forceDocker) }
+            return settings.computers.forceDocker ? "on" : "off"
+        }
         try registry.register(.settingsNotificationsSound) { [unowned self] arg in
             guard let raw = arg.value, let sound = AppSettings.NotificationSound(rawValue: raw) else {
                 throw ActionError.failed(.settingsNotificationsSound, message: "expected system or none")

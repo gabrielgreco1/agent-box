@@ -7,7 +7,8 @@
 #             keychain efêmero de CI: procura e assina por nome nele, sem confiança de usuário), RACKY_BUILD_DIR (padrão build/Racky).
 #   Efeitos : embute o plist do LaunchAgent do daemon (Contents/Library/LaunchAgents); compila o app (xcodebuild Release, Swift 6 estrito, warnings como erro) e os executáveis SPM
 #             racky/rackyd (swift build -c release), embute-os em Contents/MacOS e Contents/Helpers e assina de dentro
-#             para fora (racky, rackyd, app), SEM --deep, com --options runtime e sem entitlements.
+#             para fora (racky, rackyd, app), SEM --deep, com --options runtime. Só o APP leva entitlement
+#             (App/Racky.entitlements: com.apple.security.virtualization, as VMs do runtime sem Docker vivem no app); os helpers não.
 #   Assinatura: com a identidade local, designated requirement = identifier "<id>" and certificate leaf = H"<sha1>".
 #             Sem a identidade (make-dev-cert.sh ainda não rodado) cai para ad-hoc ("-"), com AVISO; o DR é
 #             então cdhash e muda a cada build (perde ACL do Keychain/TCC; ver 08 AR-530).
@@ -31,10 +32,12 @@ cd "$ROOT"
 BUILD_NUMBER="$(git rev-list --count HEAD 2>/dev/null || echo 1)"
 mkdir -p "$OUT"
 
+# SWIFT_ENABLE_EXPLICIT_MODULES=NO: o RackyVZ importa a apple/containerization, cuja cadeia puxa o módulo `libzstd` (zstd 1.5.7); com módulos
+# explícitos o xcodebuild recusa o import ("definition of configuration macro ZSTD... has no effect"). Com implícitos compila.
 echo "build: xcodebuild Release (app)"
 xcodebuild -project Racky.xcodeproj -scheme Racky -configuration Release \
   -derivedDataPath "$DD" -skipPackagePluginValidation -destination 'platform=macOS' \
-  CODE_SIGNING_ALLOWED=NO CURRENT_PROJECT_VERSION="$BUILD_NUMBER" build \
+  CODE_SIGNING_ALLOWED=NO CURRENT_PROJECT_VERSION="$BUILD_NUMBER" SWIFT_ENABLE_EXPLICIT_MODULES=NO build \
   | { if command -v xcbeautify >/dev/null 2>&1; then xcbeautify; else cat; fi; } \
   > "$OUT/xcodebuild.log" 2>&1 || { tail -40 "$OUT/xcodebuild.log" >&2; fail "xcodebuild falhou (log: $OUT/xcodebuild.log)"; }
 tail -3 "$OUT/xcodebuild.log"
@@ -95,22 +98,24 @@ for ctx in computer; do
   rm -rf "$APP/Contents/Resources/runtime/$ctx"
   ditto "$ROOT/runtime/$ctx" "$APP/Contents/Resources/runtime/$ctx"
 done
+# Manifesto dos arquivos do runtime sem Docker (kernel, vminit, imagem): URLs e sha256 (placeholders até a publicação).
+cp "$ROOT/runtime/vz-manifest.json" "$APP/Contents/Resources/runtime/vz-manifest.json"
 find "$APP/Contents/Resources/runtime" \( -name .DS_Store -o -name '*.pyc' -o -name __pycache__ \) -prune -exec rm -rf {} + 2>/dev/null || true
 
 SIGN_REF="$IDENT"; [ -z "$SIGN_KEYCHAIN" ] || SIGN_REF="$IDENT_NAME"
-sign() { # path identifier
+sign() { # path identifier [entitlements.plist]
   if [ "$IDENT" = "-" ]; then
-    codesign --force --options runtime --timestamp=none --sign - --identifier "$2" "$1"
+    codesign --force --options runtime --timestamp=none --sign - --identifier "$2" ${3:+--entitlements "$3"} "$1"
   else
     # Certificado efêmero/autoassinado sem confiança de usuário: o codesign só o acha por NOME + --keychain (S-03).
     codesign --force --options runtime --timestamp=none --sign "$SIGN_REF" ${SIGN_KEYCHAIN:+--keychain "$SIGN_KEYCHAIN"} --identifier "$2" \
-      -r="designated => identifier \"$2\" and certificate leaf = H\"$SHA\"" "$1"
+      ${3:+--entitlements "$3"} -r="designated => identifier \"$2\" and certificate leaf = H\"$SHA\"" "$1"
   fi
 }
 sign "$APP/Contents/Helpers/racky" app.racky.cli
 sign "$APP/Contents/MacOS/rackyd" app.racky.ptyd
 sign "$APP/Contents/MacOS/rackyd-launch" app.racky.ptyd.launch
-sign "$APP" app.racky.mac
+sign "$APP" app.racky.mac "$ROOT/App/Racky.entitlements"
 
 echo "build: verificando assinatura"
 codesign --verify --strict --verbose=2 "$APP"

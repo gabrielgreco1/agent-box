@@ -67,7 +67,7 @@ let package = Package(
         lib("RackyDocker", ["RackyPlatform", "RackyProtocol"]),
         lib("RackyCore", ["RackyProtocol", "RackyPlatform", "RackyStore", "RackyDocker"]),
         // Backend de computadores sem Docker (VMs via apple/containerization). Isolado: RackyDocker e RackyCore não o importam.
-        lib("RackyVZ", ["RackyProtocol", "RackyPlatform", "RackyDocker", "RackyCore", containerization, containerizationOCI, containerizationExtras, containerizationOS, containerizationEXT4, containerizationArchive]),
+        lib("RackyVZ", ["RackyProtocol", "RackyPlatform", "RackyDocker", "RackyCore", containerization, containerizationOCI, containerizationExtras, containerizationOS, containerizationEXT4]),
         lib("RackyDesignSystem", ["RackyProtocol"], ui: true, resources: [.copy("Resources/Fonts"), .copy("Resources/AgentLogos")]),
         // T3-05: viewer noVNC (vendorizado, v1.6.0) num WKWebView isolado, servido por esquema local (07 CS-401, 00 T8).
         lib("RackyViewerKit", [], ui: true, resources: [.copy("Resources/Viewer")]),
@@ -90,7 +90,7 @@ let package = Package(
             swiftSettings: nonisolatedSettings
         ),
         // Autoteste/CLI do backend VZ (precisa do entitlement de virtualização: scripts/vz/selftest.sh compila e assina).
-        .executableTarget(name: "RackyVZSelfTest", dependencies: ["RackyVZ", "RackyDocker", "RackyPlatform", "RackyProtocol"], swiftSettings: nonisolatedSettings),
+        .executableTarget(name: "RackyVZSelfTest", dependencies: ["RackyVZ", "RackyCore", "RackyDocker", "RackyPlatform", "RackyProtocol", containerization, containerizationOCI, containerizationArchive], swiftSettings: nonisolatedSettings),
         // Cliente de teste do peer auth (T1-07); fora de `products`, só os testes o usam.
         .executableTarget(name: "peerprobe", dependencies: ["RackyProtocol", "RackyPlatform"], swiftSettings: nonisolatedSettings),
         .executableTarget(
