@@ -26,6 +26,12 @@ public struct DockerRuntime: Sendable, Equatable {
     public var kind: DockerRuntimeKind
     public var socketPath: String
     public var source: DockerRuntimeSource
+
+    public init(kind: DockerRuntimeKind, socketPath: String, source: DockerRuntimeSource) {
+        self.kind = kind
+        self.socketPath = socketPath
+        self.source = source
+    }
 }
 
 /// Runtime validado com `_ping`, `/version` e `/info`.

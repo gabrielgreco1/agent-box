@@ -3,7 +3,7 @@ import AgentBoxDesignSystem
 import AgentBoxProtocol
 import SwiftUI
 
-/// Onboarding mínimo da Fatia 1 (03 §15): overlay de 560 com a checklist de agentes, o agente padrão e o aviso de permissões.
+/// Onboarding (03 §15): overlay de 560 com a checklist (agentes, `gh`, Docker, imagem, conflitos), o agente padrão e o aviso de permissões.
 struct OnboardingView: View {
     let model: OnboardingModel
     private var settings: SettingsModel { model.settings }
@@ -24,21 +24,31 @@ struct OnboardingView: View {
                     .foregroundStyle(DS.Color.textSecondary)
             }
             .overlayGroup(0)
+            // A lista rola só quando a janela é baixa; cabeçalho e rodapé (Skip, Done) ficam sempre à vista.
+            ViewThatFits(in: .vertical) {
+                checklist
+                ScrollView(.vertical) { checklist }.scrollIndicators(.never)
+            }
+            .overlayGroup(1)
+            footer.overlayGroup(2)
+        }
+        .padding(DSMetrics.overlayPadding)
+        .a11y(.onboardingStep("checklist"), kind: "container", label: "Checklist")
+    }
+
+    private var checklist: some View {
+        VStack(alignment: .leading, spacing: DS.Space.s3) {
             VStack(spacing: DS.Space.s1) {
                 ForEach(model.items) { info in
                     OnboardingItemRow(model: model, info: info)
                 }
+                ForEach(model.diagnosticItems) { item in
+                    OnboardingDiagnosticRow(model: model, item: item)
+                }
             }
-            .overlayGroup(1)
-            VStack(alignment: .leading, spacing: DS.Space.s3) {
-                defaultAgentRow
-                permissionsNotice
-                footer
-            }
-            .overlayGroup(2)
+            defaultAgentRow
+            permissionsNotice
         }
-        .padding(DSMetrics.overlayPadding)
-        .a11y(.onboardingStep("checklist"), kind: "container", label: "Checklist")
     }
 
     private var defaultAgentRow: some View {
@@ -160,10 +170,133 @@ private struct OnboardingItemRow: View {
     }
 }
 
+/// Linha de diagnóstico (gh, Docker, imagem, conflitos): estado, motivo em uma linha, no máximo uma ação primária e, se houver,
+/// as secundárias numa segunda linha (03 §15, AC-103).
+private struct OnboardingDiagnosticRow: View {
+    let model: OnboardingModel
+    let item: DiagnosticItem
+
+    private var key: String { item.key.rawValue }
+    private var secondaryFixes: [DiagnosticFix] { model.secondaryFixes(of: item) }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DS.Space.s1_5) {
+            HStack(spacing: DS.Space.s3) {
+                stateIcon.frame(width: SettingsMetrics.rowIcon, height: SettingsMetrics.rowIcon)
+                Image(systemName: symbol).font(.system(size: SettingsMetrics.rowIcon)).foregroundStyle(DS.Color.textSecondary)
+                    .frame(width: SettingsMetrics.rowIcon, height: SettingsMetrics.rowIcon)
+                VStack(alignment: .leading, spacing: .zero) {
+                    Text(verbatim: item.title).dsFont(DS.Font.label).fontWeight(.medium).foregroundStyle(DS.Color.textPrimary)
+                    Text(verbatim: item.detail)
+                        .dsFont(DS.Font.small)
+                        .foregroundStyle(item.state == .warning || item.state == .problem ? DS.Color.warning : DS.Color.textSecondary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .dsTooltip(item.detail)
+                }
+                Spacer(minLength: DS.Space.s2)
+                if model.confirmingDisable, item.key == .conflicts {
+                    EmptyView()
+                } else if let fix = item.fix {
+                    OnboardingFixButton(model: model, item: item, fix: fix, slot: "Fix", primary: true)
+                }
+            }
+            if item.key == .conflicts, model.confirmingDisable {
+                disableConfirmation
+            } else if !item.notes.isEmpty || !secondaryFixes.isEmpty {
+                details
+            }
+        }
+        .padding(.horizontal, DS.Space.s3)
+        .padding(.vertical, DS.Space.s2)
+        .frame(minHeight: OnboardingMetrics.rowHeight, alignment: .center)
+        .background(RoundedRectangle(cornerRadius: DS.Radius.card).fill(DS.Color.fg5))
+        .a11y(.onboardingItem(key), kind: "row", label: item.title, value: item.detail)
+    }
+
+    private var details: some View {
+        VStack(alignment: .leading, spacing: DS.Space.s1) {
+            ForEach(item.notes, id: \.self) { note in
+                HStack(alignment: .firstTextBaseline, spacing: DS.Space.s1_5) {
+                    Image(systemName: "info.circle").font(.system(size: SettingsMetrics.rowIcon - 4)).foregroundStyle(DS.Color.textTertiary)
+                    Text(verbatim: note).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary).fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            if !secondaryFixes.isEmpty {
+                HStack(spacing: DS.Space.s1) {
+                    ForEach(Array(secondaryFixes.enumerated()), id: \.offset) { index, fix in
+                        OnboardingFixButton(model: model, item: item, fix: fix, slot: "Fix\(index + 2)", primary: false)
+                    }
+                }
+            }
+        }
+        .padding(.leading, OnboardingMetrics.detailIndent)
+    }
+
+    private var disableConfirmation: some View {
+        HStack(spacing: DS.Space.s2) {
+            Text("Move the global skill to a backup? Restore Skill undoes it.", bundle: .module)
+                .dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary).lineLimit(2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            DSButton(.conflictDisableGlobal, id: .onboardingItem("conflictsCancelDisable"), "Cancel", variant: .ghost, argument: .select("cancel"))
+            DSButton(.conflictDisableGlobal, id: .onboardingItem("conflictsConfirmDisable"), "Disable", variant: .outline, argument: .select("confirm"))
+        }
+        .padding(.leading, OnboardingMetrics.detailIndent)
+    }
+
+    private var symbol: String {
+        switch item.key {
+        case .gh: "chevron.left.forwardslash.chevron.right"
+        case .docker: "shippingbox"
+        case .image: "externaldrive"
+        case .conflicts: "exclamationmark.arrow.triangle.2.circlepath"
+        }
+    }
+
+    @ViewBuilder private var stateIcon: some View {
+        switch item.state {
+        case .checking: DSSpinner(size: SettingsMetrics.rowIcon, delayed: false)
+        case .ok: Image(systemName: "checkmark.circle.fill").foregroundStyle(DS.Color.success)
+        case .warning, .problem: Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(DS.Color.warning)
+        case .neutral: Image(systemName: "circle").foregroundStyle(DS.Color.textTertiary)
+        }
+    }
+}
+
+/// Mapeia cada correção para uma ação do registro (03 §24.6). Nenhuma escreve em config global dos CLIs.
+private struct OnboardingFixButton: View {
+    let model: OnboardingModel
+    let item: DiagnosticItem
+    let fix: DiagnosticFix
+    let slot: String
+    let primary: Bool
+
+    private var key: String { item.key.rawValue }
+    private var id: A11yID { .onboardingItem(key + slot) }
+    private var variant: DSButtonVariant { primary ? .outline : .ghost }
+
+    var body: some View {
+        switch model.effective(fix) {
+        case .openURL: DSButton(.agentInstallHelp, id: id, "Install…", variant: variant, argument: .select(key == "gh" ? "gh" : "docker"))
+        case .copyCommand: DSButton(.onboardingCopyCommand, id: id, "Copy Command", variant: variant, argument: .select(key))
+        case .logIn: DSButton(.accountLogIn, id: id, "Log In", variant: variant, argument: .select("gh"))
+        case .retry: DSButton(.onboardingRetry, id: id, "Try Again", variant: variant, argument: .select(key))
+        case .openSettings(let section): DSButton(.settingsOpenSection, id: id, "Open Settings", variant: variant, argument: .select(section))
+        case .startDocker: DSButton(.dockerStart, id: id, "Start Docker", variant: variant)
+        case .blockSkill: DSButton(.conflictBlock, id: id, "Block in Racky", variant: variant)
+        case .disableSkill: DSButton(.conflictDisableGlobal, id: id, "Disable Globally…", variant: variant)
+        case .keepSkill: DSButton(.conflictKeep, id: id, "Keep", variant: variant)
+        case .restoreSkill: DSButton(.conflictRestore, id: id, "Restore Skill", variant: variant)
+        }
+    }
+}
+
 enum OnboardingMetrics {
     static let width: CGFloat = 560
     static let rowHeight: CGFloat = 56
     static let agentControlWidth: CGFloat = 200
+    /// Alinha notas e botões secundários com o texto da linha (ícone de estado + ícone do item + espaços).
+    static let detailIndent: CGFloat = SettingsMetrics.rowIcon * 2 + DS.Space.s3 * 2
 }
 
 extension OnboardingModel {

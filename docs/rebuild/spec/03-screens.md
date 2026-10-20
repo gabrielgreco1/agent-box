@@ -1844,6 +1844,8 @@ Chaves da Fatia 1 (T1-26). Todas gravam pela regra de §14.1 (switch, segmented,
 | Notification sound | `settings.notifications.sound` | — | `select(system/none)` | — | v1 (Fatia 2) | `testAction_settings_notifications_sound` |
 | Detect Again / Check Again | `agent.detect` | — | Refaz a detecção de instalação, versão e login (somente leitura, nunca roda `login`); `select(<provider>)` ou todos | — | v1 | `testAction_agent_detect` |
 | Install… | `agent.installHelp` | — | `select(<provider>)`: abre a página de instalação no navegador | — | v1 | `testAction_agent_installHelp` |
+| Try Again | `onboarding.retry` | — | `select(<gh/docker/image/conflicts>)`: refaz só a sonda daquele item, ignorando o cache | — | v1 | `testAction_onboarding_retry` |
+| Copy Command | `onboarding.copyCommand` | — | `select(<gh/docker/image/conflicts>)`: copia o comando de correção do item (ex.: `brew install gh`, `gh auth login`) | Item sem comando: `Nothing to copy.` | v1 | `testAction_onboarding_copyCommand` |
 | Keep Setting Up / Skip (confirmação do onboarding) | `onboarding.keepSettingUp` / `onboarding.confirmSkip` | — | Fecha a confirmação inline / fecha o onboarding sem perder o já feito | — | v1 | `testAction_onboarding_keepSettingUp` · `testAction_onboarding_confirmSkip` |
 | Skip for Now / Done | `onboarding.skip` / `onboarding.done` | — | Abre `Skip setup?` inline / fecha o onboarding e o marca como visto | — | v1 | `testAction_onboarding_skip` · `testAction_onboarding_done` |
 

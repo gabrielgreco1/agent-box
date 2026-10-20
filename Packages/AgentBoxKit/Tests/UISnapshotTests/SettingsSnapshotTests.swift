@@ -98,6 +98,22 @@ import Testing
         snap(OnboardingView(model: env.onboarding).frame(width: 640).background(DS.Color.overlaySolid), env: env, size: CGSize(width: 640, height: 560), name: "onboarding-skip")
     }
 
+    /// Checklist completa (T2-09): CLIs + gh deslogado, Docker parado, imagem à espera e conflitos com a skill global.
+    @Test func onboardingWithDiagnostics() async {
+        let env = Self.demoEnv()
+        await env.settings.refreshAgents(force: false)
+        await env.onboarding.runDiagnostics(force: false)
+        snap(OnboardingView(model: env.onboarding).frame(width: 640).background(DS.Color.overlaySolid), env: env, size: CGSize(width: 640, height: 820), name: "onboarding-diagnostics")
+    }
+
+    @Test func onboardingConfirmsDisablingTheGlobalSkillInline() async throws {
+        let env = Self.demoEnv()
+        await env.settings.refreshAgents(force: false)
+        await env.onboarding.runDiagnostics(force: false)
+        _ = try await env.registry.perform(.conflictDisableGlobal, .press)
+        snap(OnboardingView(model: env.onboarding).frame(width: 640).background(DS.Color.overlaySolid), env: env, size: CGSize(width: 640, height: 820), name: "onboarding-disable-confirm")
+    }
+
     // MARK: Medidas na janela
 
     /// Sem scroll horizontal: a página rola na vertical, então só a largura precisa caber (AC-T27).
@@ -155,14 +171,25 @@ import Testing
             let controller = await EmptyWindowTreeTests.host(env, size: NSSize(width: size.width, height: size.height))
             defer { controller.window?.close() }
             env.onboarding.show()
-            try await Task.sleep(for: .milliseconds(600))
+            // As sondas são falsas, mas rodam fora da main: espera os quatro itens extras e os três agentes (sem depender de 600 ms fixos).
+            for _ in 0 ..< 200 where env.onboarding.diagnosticItems.count < 4 || env.onboarding.items.contains(where: { $0.phase == .checking }) {
+                try await Task.sleep(for: .milliseconds(25))
+            }
+            try await Task.sleep(for: .milliseconds(300))
             let tree = await env.registry.uiTree(root: nil)
             let overlay = try #require(tree.find(.onboarding)?.frame, "overlay do onboarding em \(size)")
             #expect(overlay.width <= min(640, Double(size.width) - 32) + 0.5)
             #expect(overlay.x >= 0 && overlay.x + overlay.width <= Double(size.width) + 0.5)
             #expect(tree.find(.onboardingItem("claude")) != nil && tree.find(.onboardingItem("codex")) != nil && tree.find(.onboardingItem("opencode")) != nil)
             #expect(tree.find(.onboardingSkip) != nil && tree.find(.onboardingDone) != nil)
-            #expect(tree.find(.onboardingItem("gh")) == nil, "gh, Docker e imagem são de fatias futuras")
+            for key in ["gh", "docker", "image", "conflicts"] {
+                #expect(tree.find(.onboardingItem(key)) != nil, "item \(key) da checklist")
+            }
+            #expect(tree.find(.onboardingItem("ghFix2")) == nil, "sem terminal, o Log In do gh vira Copy Command, sem botão repetido")
+            let card = overlay.y + overlay.height
+            #expect(overlay.y >= 0 && card <= Double(size.height) + 0.5, "o overlay cabe na janela: a lista rola, Skip e Done ficam à vista")
+            let done = try #require(tree.find(.onboardingDone)?.frame)
+            #expect(done.y + done.height <= Double(size.height) + 0.5)
             env.overlays.dismissAll()
         }
     }

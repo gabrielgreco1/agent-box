@@ -119,7 +119,14 @@ public final class AppEnvironment {
         self.keyBindings = bindings
         let settings = SettingsModel(flags: flags, probe: Self.makeProbe(fixture: environment["AGENTBOX_SCREEN"]))
         self.settings = settings
-        self.onboarding = OnboardingModel(settings: settings)
+        let choice = ConflictChoiceBox()
+        let supportRoot = StorePaths.default(environment: environment).root
+        // Com sondas de mentira, "Disable Globally…" mexe numa home de mentira dentro do AGENTBOX_HOME, nunca na do usuário.
+        let backup = Self.usesFakeDiagnostics(environment)
+            ? GlobalSkillBackup(home: supportRoot.appendingPathComponent("fake-home", isDirectory: true), backupRoot: supportRoot)
+            : GlobalSkillBackup(backupRoot: supportRoot)
+        let probes = Self.makeDiagnosticsProbes(environment: environment, backup: backup, choice: choice)
+        self.onboarding = OnboardingModel(settings: settings, diagnostics: DiagnosticsEngine(probes: probes), conflictChoice: choice, backup: backup)
         let screen = environment["AGENTBOX_SCREEN"]
         autoOnboarding = environment["AGENTBOX_SKIP_ONBOARDING"] != "1" && (screen == nil || screen == Self.setupDemoFixture)
         self.projects = ProjectsController(sidebar: sidebar, overlays: overlays, toasts: toasts, automationEnabled: automationEnabled)
@@ -322,6 +329,34 @@ public final class AppEnvironment {
         let loginEnv = LoginShellEnvProvider()
         let prober = CLIProber(environment: { await loginEnv.environment().captured.variables })
         return { provider, force in await prober.probe(ProviderAdapters.adapter(for: provider), checkLogin: true, force: force) }
+    }
+
+    /// Sondas da checklist (gh, Docker, imagem, conflitos). Testes headless, `AGENTBOX_DIAGNOSTICS=fake` e a tela `setup-demo`
+    /// usam respostas de mentira: nada de `gh`, Docker nem configs do Mac na evidência nem nos testes.
+    private static func usesFakeDiagnostics(_ environment: [String: String]) -> Bool {
+        environment["AGENTBOX_SCREEN"] == setupDemoFixture || environment["AGENTBOX_TEST_HEADLESS"] == "1"
+            || environment["AGENTBOX_DIAGNOSTICS"] == "fake"
+    }
+
+    private static func makeDiagnosticsProbes(environment: [String: String], backup: GlobalSkillBackup, choice: ConflictChoiceBox) -> DiagnosticsProbes {
+        guard usesFakeDiagnostics(environment) else {
+            return LiveDiagnosticsProbes.make(backup: backup, choice: { choice.value })
+        }
+        return DiagnosticsProbes(
+            gh: { GitHubProbeResult(installed: true, version: "2.60.1", auth: GitHubAuthStatus(state: .notLoggedIn, host: "github.com")) },
+            docker: { .installedNotRunning(kind: .desktop) },
+            image: { _ in .missing },
+            conflicts: {
+                ConflictScan(
+                    findings: [
+                        ConflictFinding(
+                            kind: .globalSkill, provider: .claude, path: "~/.claude/skills/agentbox",
+                            message: "A global \"agentbox\" skill is installed and may compete with Racky tools."),
+                        ConflictFinding(
+                            kind: .notify, provider: .codex, path: "~/.codex/config.toml",
+                            message: "Codex notify is used by another app (left untouched)."),
+                    ], choice: choice.value)
+            })
     }
 
     /// Liga Settings e onboarding ao registro de ações, aos overlays e aos toasts.

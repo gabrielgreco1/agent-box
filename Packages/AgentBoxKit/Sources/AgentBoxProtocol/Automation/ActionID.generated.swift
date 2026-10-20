@@ -317,6 +317,8 @@ extension ActionID {
     public static let settingsNotificationsSound = ActionID(unchecked: "settings.notifications.sound")
     public static let agentDetect = ActionID(unchecked: "agent.detect")
     public static let agentInstallHelp = ActionID(unchecked: "agent.installHelp")
+    public static let onboardingRetry = ActionID(unchecked: "onboarding.retry")
+    public static let onboardingCopyCommand = ActionID(unchecked: "onboarding.copyCommand")
     public static let onboardingKeepSettingUp = ActionID(unchecked: "onboarding.keepSettingUp")
     public static let onboardingConfirmSkip = ActionID(unchecked: "onboarding.confirmSkip")
     public static let onboardingSkip = ActionID(unchecked: "onboarding.skip")
@@ -743,6 +745,8 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "settings.notifications.sound"), label: "Notification sound", shortcut: "", slice: .slice2),
         ActionSpec(id: ActionID(unchecked: "agent.detect"), label: "Detect Again / Check Again", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "agent.installHelp"), label: "Install…", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "onboarding.retry"), label: "Try Again", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "onboarding.copyCommand"), label: "Copy Command", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "onboarding.keepSettingUp"), label: "Keep Setting Up", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "onboarding.confirmSkip"), label: "Skip (confirmação do onboarding)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "onboarding.skip"), label: "Skip for Now", shortcut: "", slice: .slice1),

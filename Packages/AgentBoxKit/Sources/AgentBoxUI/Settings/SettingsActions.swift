@@ -240,10 +240,17 @@ extension SettingsModel {
                 await refreshAgents(force: true, only: p)
             } else {
                 await refreshAgents(force: true)
+                await onDetectAll?()
             }
             return agents.map { "\($0.provider.rawValue)=\($0.statusText)" }.joined(separator: ", ")
         }
         try registry.register(.agentInstallHelp) { [unowned self] arg in
+            // `gh` e Docker usam a mesma ação do onboarding (03 §24.6).
+            if arg.value == "gh" || arg.value == "docker" {
+                let url = arg.value == "gh" ? DiagnosticsEvaluator.ghInstallURL : DiagnosticsEvaluator.dockerInstallURL
+                system.openURL(url)
+                return url.absoluteString
+            }
             let p = try provider(arg, .agentInstallHelp)
             guard let url = AgentInfo(provider: p).installURL else { throw ActionError.failed(.agentInstallHelp, message: "no install page") }
             system.openURL(url)

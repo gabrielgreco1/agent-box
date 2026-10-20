@@ -835,6 +835,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `settings.notifications.sound` | Notification sound | — | slice2 |
 | `agent.detect` | Detect Again / Check Again | — | slice1 |
 | `agent.installHelp` | Install… | — | slice1 |
+| `onboarding.retry` | Try Again | — | slice1 |
+| `onboarding.copyCommand` | Copy Command | — | slice1 |
 | `onboarding.keepSettingUp` | Keep Setting Up | — | slice1 |
 | `onboarding.confirmSkip` | Skip (confirmação do onboarding) | — | slice1 |
 | `onboarding.skip` | Skip for Now | — | slice1 |

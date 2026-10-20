@@ -58,6 +58,8 @@ public final class SettingsModel {
     @ObservationIgnored public var attention: AttentionCoordinator?
 
     @ObservationIgnored var store: AgentBoxStore?
+    /// `Check Again` do onboarding (todos os agentes): refaz também as sondas de `gh`, Docker e conflitos.
+    @ObservationIgnored var onDetectAll: (@MainActor () async -> Void)?
     @ObservationIgnored private var persisted = AppSettings()
     @ObservationIgnored private var pending: [Task<Void, Never>] = []
     @ObservationIgnored private var detecting: [TerminalProvider: Task<Void, Never>] = [:]
