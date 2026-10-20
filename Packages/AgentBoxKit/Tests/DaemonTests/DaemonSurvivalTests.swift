@@ -23,13 +23,13 @@ import Testing
         let harness = try DaemonHarness()
         defer { harness.terminateNow() }
         try await harness.start()
-        let appA = harness.makeClient(build: "1.0 (10) /Applications/Agent Box.app")
+        let appA = harness.makeClient(build: "1.0 (10) /Applications/Racky.app")
         try await appA.start()
         let create = makeCreate(["/bin/sh", "-c", "echo ALIVE-$$; exec cat"])
         _ = try await appA.create(create)
         let daemon = try #require(harness.pid)
 
-        let appB = harness.makeClient(build: "1.0 (99) /private/tmp/otter/build/Agent Box.app")
+        let appB = harness.makeClient(build: "1.0 (99) /private/tmp/otter/build/Racky.app")
         try await appB.start()
         let seenByB = try await appB.list()
         #expect(seenByB.contains { $0.sessionID == create.sessionID && $0.state == .running }, "o app de outra pasta se conecta, não substitui")

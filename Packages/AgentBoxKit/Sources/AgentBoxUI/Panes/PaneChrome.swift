@@ -200,7 +200,7 @@ struct PaneBannerView: View {
         case .interrupted:
             switch model.interruption {
             case .macRestarted: String(localized: "This terminal stopped when your Mac restarted.", bundle: .module)
-            case .appClosed: String(localized: "This terminal stopped while Agent Box was closed.", bundle: .module)
+            case .appClosed: String(localized: "This terminal stopped while Racky was closed.", bundle: .module)
             case .unexpected: String(localized: "This terminal stopped unexpectedly.", bundle: .module)
             }
         default:
@@ -323,8 +323,8 @@ struct StoppedAgentsBanner: View {
             Text(verbatim: lost
                 ? String(localized: "Background agents stopped unexpectedly.", bundle: .module)
                 : count == 1
-                ? String(localized: "1 agent stopped while Agent Box was closed", bundle: .module)
-                : String(localized: "\(count) agents stopped while Agent Box was closed", bundle: .module))
+                ? String(localized: "1 agent stopped while Racky was closed", bundle: .module)
+                : String(localized: "\(count) agents stopped while Racky was closed", bundle: .module))
                 .dsFont(DS.Font.small)
                 .foregroundStyle(DS.Color.textSecondary)
                 .lineLimit(1)

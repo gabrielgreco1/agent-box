@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# e2e.sh - o Agent Box de verdade, de ponta a ponta (08 AR-810): app construído, daemon, Docker e Claude Code reais.
+# e2e.sh - o Racky de verdade, de ponta a ponta (08 AR-810): app construído, daemon, Docker e Claude Code reais.
 #
 # Contrato
 #   Entrada : Docker rodando, `claude` logado, Xcode (build.sh). Nada é instalado em /Applications: o app é construído por
 #             scripts/build.sh (AGENTBOX_BUILD_DIR, padrão build/e2e) e COPIADO para um diretório temporário curto (/tmp/abe2e-XXXXXX,
 #             o limite do sun_path é 104 bytes) com dados num AGENTBOX_HOME temporário. Sem AGENTBOX_LAUNCHD: o app sobe um daemon filho
-#             e nunca toca no job do launchd do dono. AGENTBOX_E2E_APP=<Agent Box.app> pula o build e usa esse bundle.
+#             e nunca toca no job do launchd do dono. AGENTBOX_E2E_APP=<Racky.app> pula o build e usa esse bundle.
 #   Passos  : 1 build, instalação temporária e isolamento (home, socket, owner dos containers) · 2 projeto, shell e Claude
 #             3 ⌘Q com Keep Running, reabrir: mesmos PIDs de PTY e buffer restaurado · 4 subagente leve com box_claim: container,
 #             rede, iptables, VNC, um quadro · 5 Take Over (imediato) e Hand Back · 6 computador efêmero removido (container e
@@ -45,7 +45,7 @@ mkdir -p "$EVIDENCE_DIR"
 BUILD_DIR="${AGENTBOX_BUILD_DIR:-$ROOT/build/e2e}"
 MODEL="${AGENTBOX_E2E_MODEL:-haiku}"
 WORK="$(mktemp -d /tmp/abe2e-XXXXXX)" || exit 2
-HOME_T="$WORK/h"; SOCK="$WORK/app.sock"; INSTALL="$WORK/install"; APP="$INSTALL/Agent Box.app"; MACOS="$APP/Contents/MacOS"
+HOME_T="$WORK/h"; SOCK="$WORK/app.sock"; INSTALL="$WORK/install"; APP="$INSTALL/Racky.app"; MACOS="$APP/Contents/MacOS"
 REPO="$WORK/repo"; DB="$HOME_T/db/agentbox.sqlite"
 mkdir -p "$HOME_T" "$INSTALL" "$REPO"; chmod 700 "$HOME_T"
 REPORT="$EVIDENCE_DIR/report.txt"; RESULTS="$WORK/results.tsv"
@@ -102,7 +102,7 @@ term_wait() { # id regex segundos
 terminal_state() { db "SELECT state FROM terminal WHERE id='$1';"; }
 
 # --- processos e Docker: só o que é nosso ----------------------------------------------------------------------------------
-app_pid() { pgrep -f "$(basename "$WORK")/install/Agent Box.app/Contents/MacOS/Agent Box" | head -1; }
+app_pid() { pgrep -f "$(basename "$WORK")/install/Racky.app/Contents/MacOS/Racky" | head -1; }
 daemon_pid() { pgrep -f "agentboxd .*--home $HOME_T" | head -1; }
 child_pids() { pgrep -P "$1" 2>/dev/null; }
 docker_mine() { docker ps -a --filter "label=agentbox.owner=$OWNER" "$@"; }
@@ -115,7 +115,7 @@ volumes_clean() { [ -z "$(profile_volumes)" ]; }
 profile_volumes() { local id; for id in $(computer_ids); do docker volume ls -q --filter "name=ab-prof-$id"; done; }
 owner_snapshot() { # o que é do dono, só leitura
   {
-    echo "app instalado:"; pgrep -fl "/Applications/Agent Box.app/Contents/MacOS" | sed -E "s/^[0-9]+ //" | sort -u
+    echo "app instalado:"; pgrep -fl "/Applications/Racky.app/Contents/MacOS" | sed -E "s/^[0-9]+ //" | sort -u
     echo "daemons fora do teste:"; pgrep -fl "agentboxd" | grep -v -- "--home $HOME_T" | sed -E "s/^[0-9]+ //" | sort -u
     echo "job do launchd:"; launchctl print "gui/$(id -u)/app.agentbox.ptyd.v1" 2>/dev/null | grep -E "^\s(state|program) = " | sort
     echo "containers:"; docker ps -a --format '{{.ID}} {{.Names}} {{.Status}}' | grep -v "$(mine_ids | head -50 | tr '\n' '|' | sed 's/|$//;s/^$/__none__/')" | awk '{print $1, $2}' | sort
@@ -130,7 +130,7 @@ cleanup() {
   local pid; pid="$(app_pid)"; [ -z "$pid" ] || { kill "$pid" 2>/dev/null; sleep 1; }
   for pid in $(pgrep -f "agentboxd .*--home $HOME_T"); do kill "$pid" 2>/dev/null; done
   sleep 1
-  for pid in $(pgrep -f "$(basename "$WORK")/install/Agent Box.app"; pgrep -f "agentboxd .*--home $HOME_T"); do kill -9 "$pid" 2>/dev/null; done
+  for pid in $(pgrep -f "$(basename "$WORK")/install/Racky.app"; pgrep -f "agentboxd .*--home $HOME_T"); do kill -9 "$pid" 2>/dev/null; done
   # Docker: containers com o owner do teste e os volumes dos computadores do banco do teste (nada além disso).
   if [ -n "$OWNER" ]; then
     local ids vols; ids="$(mine_ids)"
@@ -197,7 +197,7 @@ ensure_app() { # constrói, instala em diretório temporário e abre o app de te
   if [ -z "$src" ]; then
     say "build: scripts/build.sh (AGENTBOX_BUILD_DIR=$BUILD_DIR)"
     AGENTBOX_BUILD_DIR="$BUILD_DIR" "$ROOT/scripts/build.sh" > "$EVIDENCE_DIR/build.log" 2>&1 || { tail -20 "$EVIDENCE_DIR/build.log" | tee -a "$REPORT"; return 1; }
-    src="$BUILD_DIR/Agent Box.app"
+    src="$BUILD_DIR/Racky.app"
   fi
   [ -d "$src" ] || { say "ERRO: app não encontrado em $src"; return 1; }
   ditto "$src" "$APP" || return 1

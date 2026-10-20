@@ -2,7 +2,7 @@
 # e2e-launchd.sh - T1-24: o daemon como LaunchAgent do launchd, ⌘Q que mantém agentes e reabertura, com o app REAL.
 #
 # Contrato
-#   Entrada : app construído por scripts/build.sh (build/AgentBox/Agent Box.app ou AGENTBOX_BUILD_DIR). Sem argumentos.
+#   Entrada : app construído por scripts/build.sh (build/AgentBox/Racky.app ou AGENTBOX_BUILD_DIR). Sem argumentos.
 #   Efeitos : copia o app para /tmp, troca o bundle id e o plist do LaunchAgent por versões de TESTE
 #             (bundle app.agentbox.mac.test<N>, label app.agentbox.ptyd.test-<N>, AGENTBOX_HOME próprio em /tmp),
 #             assina ad-hoc a cópia, abre-a com `open -g` e a conduz por `agentbox ctl`. Nunca toca no app instalado,
@@ -21,14 +21,14 @@ usage() { sed -n '2,/^set -uo/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; }
 case "${1:-}" in -h|--help) usage; exit 0 ;; esac
 
 export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
-SRC="${AGENTBOX_BUILD_DIR:-$ROOT/build/AgentBox}/Agent Box.app"
+SRC="${AGENTBOX_BUILD_DIR:-$ROOT/build/AgentBox}/Racky.app"
 [ -d "$SRC" ] || { echo "ERRO: app não encontrado em $SRC (rode scripts/build.sh)" >&2; exit 2; }
 EVIDENCE_DIR="${EVIDENCE_DIR:-$ROOT/docs/evidence/slice1/T1-24/e2e-launchd}"
 mkdir -p "$EVIDENCE_DIR"
 N="e$(printf '%04x' $((RANDOM % 65536)))"
 MARK="600$((10000 + RANDOM))"   # argumento numérico de `sleep`, único por execução (identifica o processo do agente)
 WORK="/tmp/abe-$N"
-APP="$WORK/Agent Box.app"
+APP="$WORK/Racky.app"
 HOME_T="$WORK/h"
 SOCK_APP="$WORK/app.sock"
 LABEL="app.agentbox.ptyd.test-$N"
@@ -50,7 +50,7 @@ ctl() { "$MACOS/agentbox" ctl "$@" --sock "$SOCK_APP"; }
 job_field() { launchctl print "gui/$UIDN/$LABEL" 2>/dev/null | sed -n "s/^[[:space:]]$1 = //p" | head -1; }
 job_state() { launchctl print "gui/$UIDN/$LABEL" 2>/dev/null | grep -E "^	state = " | head -1 | sed 's/.*= //'; }
 daemon_pid() { launchctl print "gui/$UIDN/$LABEL" 2>/dev/null | sed -n 's/^	pid = //p' | head -1; }
-app_pid() { pgrep -f "$APP/Contents/MacOS/Agent Box" | head -1; }
+app_pid() { pgrep -f "$APP/Contents/MacOS/Racky" | head -1; }
 wait_for() { # segundos comando...
   local t="$1"; shift; local i=0
   while ! "$@" >/dev/null 2>&1; do i=$((i + 1)); [ "$i" -lt $((t * 4)) ] || return 1; sleep 0.25; done
@@ -178,7 +178,7 @@ ctl screenshot --size 1440x900 --out "$EVIDENCE_DIR/after-reopen-1440x900.png" >
 # --- 4. upgrade do daemon --------------------------------------------------------------------------------------------------
 say; say "== 4. daemon novo (S-01: o launchd prende o job ao cdhash do BundleProgram, por isso o job usa o launcher estável)"
 ctl ui action app.quitCompletely >/dev/null 2>&1
-wait_for 15 sh -c "! pgrep -f '$APP/Contents/MacOS/Agent Box' >/dev/null"
+wait_for 15 sh -c "! pgrep -f '$APP/Contents/MacOS/Racky' >/dev/null"
 LAUNCHER_BEFORE="$(codesign -dvvv "$MACOS/agentboxd-launch" 2>&1 | sed -n 's/^CDHash=//p')"
 say "daemon em execução: $(codesign -dvvv "$D1" 2>&1 | sed -n 's/^Identifier=//p') (PID $D1)"
 # Daemon "novo": mesmo código com outro identificador de assinatura (muda o cdhash do agentboxd; o do launcher não muda).

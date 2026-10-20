@@ -5,20 +5,20 @@
 #   Entrada : <tela> (screenId de 03 §0, também passado ao app como AGENTBOX_SCREEN = fixture da tela).
 #             Referência: --reference <png> ou docs/rebuild/reference/<pacote>/screens/<tela>-<W>x<H>.png (depois <tela>.png).
 #   Efeitos : usa 'agentbox ctl screenshot --size' (ScreenCaptureKit da própria janela) em cada tamanho e grava em
-#             docs/evidence/ui/<tarefa>/ (ou --out): <tela>-<WxH>-app.png, -side-by-side.png (referência | Agent Box),
+#             docs/evidence/ui/<tarefa>/ (ou --out): <tela>-<WxH>-app.png, -side-by-side.png (referência | Racky),
 #             -overlay50.png (sobreposição 50%), -diff.png (diferença absoluta) e -metrics.json. Tamanhos padrão:
 #             1440x900 e 760x480. Se o app não estiver rodando com o canal ctl, abre o .app (em segundo plano, sem ativar)
 #             com AGENTBOX_AUTOMATION=1 num socket privado e o fecha ao terminar.
 #   Saída   : exit 0 em sucesso; exit 1 em falha (sem referência, sem app, captura falhou); exit 2 uso inválido.
 #   Gate    : a comparação NÃO aprova nada sozinha; a tarefa visual só fecha com o OK do dono (P14/P19).
-# Uso: scripts/compare-ui.sh <tela> [--task <id>] [--reference <png>] [--sizes 1440x900,760x480] [--app <Agent Box.app>]
+# Uso: scripts/compare-ui.sh <tela> [--task <id>] [--reference <png>] [--sizes 1440x900,760x480] [--app <Racky.app>]
 #                            [--bin <agentbox>] [--out <dir>] [--help]
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 usage() { sed -n '2,/^set -euo/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; }
 fail() { echo "ERRO: $*" >&2; exit 1; }
 
-SCREEN=""; TASK="adhoc"; REF=""; SIZES="1440x900,760x480"; APP="${AGENTBOX_APP:-$ROOT/build/AgentBox/Agent Box.app}"
+SCREEN=""; TASK="adhoc"; REF=""; SIZES="1440x900,760x480"; APP="${AGENTBOX_APP:-$ROOT/build/AgentBox/Racky.app}"
 BIN="${AGENTBOX_BIN:-}"; OUT=""
 while [ $# -gt 0 ]; do
   case "$1" in

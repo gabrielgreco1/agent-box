@@ -131,7 +131,7 @@ public final class SystemHelpNotifier: NSObject, HelpNotifying, UNUserNotificati
 }
 
 /// Janela própria do viewer (03 §11, `WindowGroup(for: ComputerID.self)` no desenho; aqui uma `NSWindow`): mesmo layout sem a
-/// sidebar, título `<computer> — Agent Box`, mínimo 640×420.
+/// sidebar, título `<computer> — Racky`, mínimo 640×420.
 @MainActor
 final class ViewerPopOut: NSObject, NSWindowDelegate {
     let controller: ComputerViewerController
@@ -147,7 +147,7 @@ final class ViewerPopOut: NSObject, NSWindowDelegate {
             backing: .buffered, defer: false)
         super.init()
         window.isReleasedWhenClosed = false
-        window.title = "\(controller.name) — Agent Box"
+        window.title = "\(controller.name) — Racky"
         window.contentMinSize = NSSize(width: 640, height: 420)
         window.appearance = NSAppearance(named: .darkAqua)
         window.contentView = content

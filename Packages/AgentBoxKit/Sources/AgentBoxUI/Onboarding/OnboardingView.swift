@@ -12,14 +12,14 @@ struct OnboardingView: View {
         VStack(alignment: .leading, spacing: DSMetrics.overlayGap) {
             VStack(alignment: .leading, spacing: DS.Space.s1) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text("Set Up Agent Box", bundle: .module)
+                    Text("Set Up Racky", bundle: .module)
                         .dsFont(DS.Font.composerTitle)
                         .foregroundStyle(DS.Color.textPrimary)
                         .accessibilityAddTraits(.isHeader)
                     Spacer(minLength: DS.Space.s2)
                     DSButton(.agentDetect, id: .onboardingItem("check"), "Check Again", variant: .ghost, symbol: "arrow.clockwise")
                 }
-                Text("Agent Box checks what's on this Mac. Fix what you need now; the rest can wait.", bundle: .module)
+                Text("Racky checks what's on this Mac. Fix what you need now; the rest can wait.", bundle: .module)
                     .dsFont(DS.Font.body)
                     .foregroundStyle(DS.Color.textSecondary)
             }
@@ -87,7 +87,7 @@ struct OnboardingView: View {
     private var footer: some View {
         HStack(spacing: DS.Space.s2) {
             if model.confirmingSkip {
-                Text("Skip setup? You can finish it from Agent Box › Set Up Agent Box…", bundle: .module)
+                Text("Skip setup? You can finish it from Racky › Set Up Racky…", bundle: .module)
                     .dsFont(DS.Font.small)
                     .foregroundStyle(DS.Color.textSecondary)
                     .lineLimit(2)

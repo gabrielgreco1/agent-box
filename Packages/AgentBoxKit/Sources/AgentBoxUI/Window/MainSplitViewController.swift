@@ -224,7 +224,7 @@ struct LandingView: View {
 
     var body: some View {
         VStack(spacing: DS.Space.s2) {
-            Text("Agent Box", bundle: .module)
+            Text("Racky", bundle: .module)
                 .font(DS.Font.display.font)
                 .foregroundStyle(DS.Color.textPrimary)
             Text("Run Claude Code, Codex and OpenCode side by side, each in its own folder.", bundle: .module)

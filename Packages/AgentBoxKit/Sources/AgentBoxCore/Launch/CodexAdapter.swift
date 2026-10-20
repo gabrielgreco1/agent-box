@@ -101,7 +101,7 @@ public struct CodexAdapter: ProviderAdapter {
         for token in launch.extraArgs {
             let name = token.split(separator: "=", maxSplits: 1).first.map(String.init) ?? token
             if Self.forbidden.contains(name) {
-                warnings.append(LaunchWarning(.unsupportedFlag, "\(name) is never used by Agent Box and was removed from the extra arguments"))
+                warnings.append(LaunchWarning(.unsupportedFlag, "\(name) is never used by Racky and was removed from the extra arguments"))
             } else { extras.append(token) }
         }
         let structured: [String: Bool] = [

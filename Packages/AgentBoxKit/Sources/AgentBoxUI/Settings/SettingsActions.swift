@@ -293,13 +293,13 @@ extension SettingsModel {
         try registry.register(
             .settingsTestNotification,
             enablement: { [unowned self] in
-                notificationAuthorization == .authorized ? .enabled : .disabled(reason: "Notifications are off for Agent Box.")
+                notificationAuthorization == .authorized ? .enabled : .disabled(reason: "Notifications are off for Racky.")
             }
         ) { [unowned self] _ in
             let result = await attention?.sendTest() ?? .notDetermined
             await refreshNotificationAuthorization()
             guard result == .authorized else {
-                throw ActionError.failed(.settingsTestNotification, message: "Notifications are off for Agent Box.")
+                throw ActionError.failed(.settingsTestNotification, message: "Notifications are off for Racky.")
             }
             return "sent"
         }

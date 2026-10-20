@@ -80,7 +80,7 @@ public actor BackgroundAgentHost {
     }
 
     /// - Parameters:
-    ///   - bundleURL: `Agent Box.app` (procura o plist em `Contents/Library/LaunchAgents/`).
+    ///   - bundleURL: `Racky.app` (procura o plist em `Contents/Library/LaunchAgents/`).
     ///   - stateFile: onde guardar o registro (`AB/run/ptyd-registration.json`).
     public init(
         identity: BackgroundAgentIdentity, service: any BackgroundAgentService, launchd: any LaunchdQuerying = SystemLaunchd(),

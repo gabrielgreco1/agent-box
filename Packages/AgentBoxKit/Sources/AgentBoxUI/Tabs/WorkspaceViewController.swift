@@ -18,7 +18,7 @@ final class WorkspaceRootView: NSView {
     /// Cards de aprovação do modo Ask (F12): sobre o topo do pane da sessão, sem modal. Só ocupa a faixa dos cards.
     let approvals: NSView
     private var approvalCount = 0
-    /// P25: "N agents stopped while Agent Box was closed · Resume All", no topo da sessão (só com a retomada automática desligada).
+    /// P25: "N agents stopped while Racky was closed · Resume All", no topo da sessão (só com a retomada automática desligada).
     var stoppedBanner: NSView?
     private var stoppedBannerVisible = false
     /// Sub-tabs da sessão (terminal + computadores dos subagentes), logo abaixo da tab row. Só com computadores na sessão.

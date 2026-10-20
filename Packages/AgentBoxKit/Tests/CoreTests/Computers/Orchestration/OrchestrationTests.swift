@@ -216,7 +216,7 @@ import Testing
 }
 
 @Suite("T3-04 injeção por lançamento") struct OrchestrationInjectionTests {
-    static let helper = "/Applications/Agent Box.app/Contents/MacOS/agentbox"
+    static let helper = "/Applications/Racky.app/Contents/MacOS/agentbox"
 
     func bundle(slots: Int = 4) throws -> OrchestrationBundle {
         var options = OrchestrationInjectionBuilder.Options()

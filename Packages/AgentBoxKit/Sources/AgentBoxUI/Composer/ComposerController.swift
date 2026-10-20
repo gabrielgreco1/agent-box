@@ -227,7 +227,7 @@ final class ComposerController {
             }
             guard let url = await picker.chooseFolder(
                 title: String(localized: "Choose a Folder", bundle: .module),
-                message: String(localized: "The session runs in this folder. Agent Box doesn't create or delete anything in it.", bundle: .module),
+                message: String(localized: "The session runs in this folder. Racky doesn't create or delete anything in it.", bundle: .module),
                 prompt: String(localized: "Select", bundle: .module))
             else { return "cancelled" }
             model.draft.folderPath = url.path

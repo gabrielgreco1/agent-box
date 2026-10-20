@@ -37,7 +37,7 @@ import Testing
 
     @Test func topLevelMenusFollowTheSpecOrder() throws {
         let (menu, _, _) = try make()
-        #expect(menu.items.map(\.title) == ["Agent Box", "File", "Edit", "View", "Session", "Terminal", "Computer", "Window", "Help"])
+        #expect(menu.items.map(\.title) == ["Racky", "File", "Edit", "View", "Session", "Terminal", "Computer", "Window", "Help"])
     }
 
     /// Para cada atalho da tabela com escopo de menu: o item existe, aponta para o ActionID certo e mostra o chord.

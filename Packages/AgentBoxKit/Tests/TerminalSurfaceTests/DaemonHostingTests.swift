@@ -31,7 +31,7 @@ private struct StubLaunchd: LaunchdQuerying {
     private func makeHost(
         home: URL, after: BackgroundAgentStatus, socket: String?
     ) throws -> (BackgroundAgentHost, StubAgentService) {
-        let bundle = home.appendingPathComponent("Agent Box.app")
+        let bundle = home.appendingPathComponent("Racky.app")
         let agents = bundle.appendingPathComponent("Contents/Library/LaunchAgents")
         try FileManager.default.createDirectory(at: agents, withIntermediateDirectories: true)
         let identity = BackgroundAgentIdentity.test(suffix: "surface")

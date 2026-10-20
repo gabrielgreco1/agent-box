@@ -421,7 +421,7 @@ import Testing
         let registry2 = ActionRegistry(flags: SliceFlags(), surface: FakeSurface())
         try second.registerActions(in: registry2)
         _ = try await registry2.perform(.appSetup, .press)
-        #expect(secondPresents == 1, "Set Up Agent Box… reabre quando o usuário pede")
+        #expect(secondPresents == 1, "Set Up Racky… reabre quando o usuário pede")
         try await again.close()
         try? FileManager.default.removeItem(at: home)
     }

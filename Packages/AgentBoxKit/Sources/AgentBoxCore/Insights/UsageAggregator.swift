@@ -27,7 +27,7 @@ public enum UsageAggregator {
         public var reported: ReportedLimits
         public var plan: PlanInfo?
         public var sessionLabels: [String: String]
-        /// Preferência do usuário: rótulo exibido por sessão (título da sessão do Agent Box etc.).
+        /// Preferência do usuário: rótulo exibido por sessão (título da sessão do Racky etc.).
         public var sessionTitles: [String: String]
 
         public init(provider: InsightsProvider, buckets: [UsageBucket], now: Date, calendar: Calendar = .current,

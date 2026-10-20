@@ -172,8 +172,8 @@ public final class AttentionCoordinator {
         guard auth == .authorized else { return auth }
         let preferences = preferences()
         await notifier.post(SystemNotification(
-            id: "test.\(UUID().uuidString.lowercased())", title: "Agent Box — test notification",
-            body: "This is how Agent Box will tell you an agent needs you.", threadID: "test",
+            id: "test.\(UUID().uuidString.lowercased())", title: "Racky — test notification",
+            body: "This is how Racky will tell you an agent needs you.", threadID: "test",
             target: NotificationTarget(terminalID: UUID(), sessionID: UUID()), kind: .done, sound: preferences.sound == .system))
         return auth
     }

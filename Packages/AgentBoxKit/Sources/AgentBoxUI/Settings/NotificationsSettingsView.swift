@@ -21,7 +21,7 @@ struct NotificationsSettingsView: View {
             }
             SettingsBlock(title: "Behavior") {
                 switchRow(
-                    "Suppress when the session is visible", help: "No alert while Agent Box is in front and the pane is on screen.",
+                    "Suppress when the session is visible", help: "No alert while Racky is in front and the pane is on screen.",
                     key: "suppressWhenVisible", isOn: prefs.suppressWhenVisible, action: .settingsNotificationsSuppressWhenVisible)
                 SettingsRow(title: "Sound", help: "Played for alerts that need you.") {
                     DSSegmented(
@@ -41,7 +41,7 @@ struct NotificationsSettingsView: View {
     private var permissionCard: some View {
         HStack(alignment: .center, spacing: DS.Space.s4) {
             VStack(alignment: .leading, spacing: DS.Space.s0_5) {
-                Text("Notifications are off for Agent Box.", bundle: .module)
+                Text("Notifications are off for Racky.", bundle: .module)
                     .dsFont(DS.Font.label)
                     .fontWeight(.medium)
                     .foregroundStyle(DS.Color.textPrimary)
@@ -65,7 +65,7 @@ struct NotificationsSettingsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: DS.Radius.card).fill(DS.Color.warningBackground))
         .overlay(RoundedRectangle(cornerRadius: DS.Radius.card).strokeBorder(DS.Color.warningBorder, lineWidth: DSMetrics.hairline))
-        .a11y(.settings("notifications", "permission"), kind: "container", label: "Notifications are off for Agent Box.")
+        .a11y(.settings("notifications", "permission"), kind: "container", label: "Notifications are off for Racky.")
     }
 
     private func switchRow(_ title: LocalizedStringKey, help: LocalizedStringKey?, key: String, isOn: Bool, action: ActionID) -> some View {

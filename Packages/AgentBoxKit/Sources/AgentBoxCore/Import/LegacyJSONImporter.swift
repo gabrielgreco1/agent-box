@@ -5,7 +5,7 @@ import CryptoKit
 import Foundation
 import Security
 
-// Importador dos JSONs do Agent Box antigo (08 AR-340/341). Regras comuns: dry-run mostra contagens e conflitos antes
+// Importador dos JSONs do Racky antigo (08 AR-340/341). Regras comuns: dry-run mostra contagens e conflitos antes
 // de gravar; idempotente (`source_fingerprint` + ids legados reaproveitados); lê CÓPIAS (`legacy-import-<ts>/`); nunca
 // escreve na origem; registra `import_run`; campo desconhecido é ignorado e contado.
 
@@ -294,7 +294,7 @@ public struct LegacyJSONImporter: Sendable {
                 rootRunID: parent.flatMap { roots[$0] } ?? id, kind: (r["kind"] as? String) == "nativeSubagent" ? .nativeSubagent : .main,
                 harness: provider, agentType: r["nativeAgentType"] as? String, providerSessionID: r["nativeSessionID"] as? String,
                 providerAgentID: r["nativeAgentID"] as? String, activity: finished ? .done : .unknown,
-                statusReason: "Imported from the previous Agent Box", startedAt: started,
+                statusReason: "Imported from the previous Racky", startedAt: started,
                 endedAt: finished ? (Self.date(r["endedAt"]) ?? started) : nil)
             counts["agentRuns.new", default: 0] += 1
             roots[id] = run.rootRunID
@@ -307,7 +307,7 @@ public struct LegacyJSONImporter: Sendable {
     private func importLibrary(_ root: [String: Any], dryRun: Bool, counts: inout [String: Int], at now: Date) async throws -> (agents: String, memories: String) {
         let allowed: Set<String> = ["schemaVersion", "agents", "memories", "skills", "history", "agentRevisions", "memoryRevisions"]
         counts["unknownFields", default: 0] += Set(root.keys).subtracting(allowed).count
-        var agentsMD = "# Saved agents from the previous Agent Box\n\n"
+        var agentsMD = "# Saved agents from the previous Racky\n\n"
         for a in root["agents"] as? [[String: Any]] ?? [] {
             guard let id = (a["id"] as? String).flatMap(UUID.init(uuidString:)), let name = a["name"] as? String else { counts["profiles.invalid", default: 0] += 1; continue }
             agentsMD += "## \(name)\n\n\((a["summary"] as? String) ?? "")\n\n```\n\((a["instructions"] as? String) ?? "")\n```\n\n"
@@ -316,7 +316,7 @@ public struct LegacyJSONImporter: Sendable {
             counts["profiles.new", default: 0] += 1
             if !dryRun { try await store.save(LaunchProfile(id: id, name: name, provider: provider, source: .manual, createdAt: now, updatedAt: now)) }
         }
-        var memoriesMD = "# Memories from the previous Agent Box\n\n"
+        var memoriesMD = "# Memories from the previous Racky\n\n"
         for m in root["memories"] as? [[String: Any]] ?? [] {
             counts["memories.exported", default: 0] += 1
             memoriesMD += "## \((m["title"] as? String) ?? "Untitled")\n\n_scope: \((m["scope"] as? String) ?? "?")_\n\n\((m["content"] as? String) ?? "")\n\n"

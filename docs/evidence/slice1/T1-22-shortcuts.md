@@ -7,10 +7,10 @@ Coluna Terminal: `PTY` = a tecla é reservada ao terminal (03 §21) e o app não
 
 | Atalho | Escopo | Ação | ActionID | Menu | Terminal |
 |---|---|---|---|---|---|
-| ⌘, | global | Settings | `app.settings` | Agent Box ▸ Settings… | - |
+| ⌘, | global | Settings | `app.settings` | Racky ▸ Settings… | - |
 | ⌘/ | global | Keyboard Shortcuts | `help.shortcuts` | Help ▸ Keyboard Shortcuts | - |
-| ⌘Q | global | Quit | `app.quit` | Agent Box ▸ Quit Agent Box | - |
-| ⌘H | global | Hide | `app.hideAppName` | Agent Box ▸ Hide Agent Box | - |
+| ⌘Q | global | Quit | `app.quit` | Racky ▸ Quit Racky | - |
+| ⌘H | global | Hide | `app.hideAppName` | Racky ▸ Hide Racky | - |
 | ⌥⌘H | global | Hide Others | `-` | sistema | - |
 | ⌘N | global | New Session | `session.new` | File ▸ New Session… | - |
 | ⇧⌘N | global | New Clean Session | `session.newClean` | File ▸ New Clean Session | - |

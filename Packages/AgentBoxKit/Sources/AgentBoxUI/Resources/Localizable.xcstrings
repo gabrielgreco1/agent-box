@@ -12,13 +12,13 @@
         }
       }
     },
-    "%@ Everything keeps running in the background and comes back when you reopen Agent Box.": {
+    "%@ Everything keeps running in the background and comes back when you reopen Racky.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ Everything keeps running in the background and comes back when you reopen Agent Box."
+            "value": "%@ Everything keeps running in the background and comes back when you reopen Racky."
           }
         }
       }
@@ -507,13 +507,13 @@
         }
       }
     },
-    "About Agent Box": {
+    "About Racky": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "About Agent Box"
+            "value": "About Racky"
           }
         }
       }
@@ -639,24 +639,24 @@
         }
       }
     },
-    "Agent Box": {
+    "Racky": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Agent Box"
+            "value": "Racky"
           }
         }
       }
     },
-    "Agent Box checks what's on this Mac. Fix what you need now; the rest can wait.": {
+    "Racky checks what's on this Mac. Fix what you need now; the rest can wait.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Agent Box checks what's on this Mac. Fix what you need now; the rest can wait."
+            "value": "Racky checks what's on this Mac. Fix what you need now; the rest can wait."
           }
         }
       }
@@ -760,13 +760,13 @@
         }
       }
     },
-    "Allow Agent Box in Login Items so your agents keep running after you quit. Until then they keep running only while this Mac session lasts.": {
+    "Allow Racky in Login Items so your agents keep running after you quit. Until then they keep running only while this Mac session lasts.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Allow Agent Box in Login Items so your agents keep running after you quit. Until then they keep running only while this Mac session lasts."
+            "value": "Allow Racky in Login Items so your agents keep running after you quit. Until then they keep running only while this Mac session lasts."
           }
         }
       }
@@ -2707,13 +2707,13 @@
         }
       }
     },
-    "Exact limits come from your Claude Code sign-in. Agent Box reads it only after you click.": {
+    "Exact limits come from your Claude Code sign-in. Racky reads it only after you click.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Exact limits come from your Claude Code sign-in. Agent Box reads it only after you click."
+            "value": "Exact limits come from your Claude Code sign-in. Racky reads it only after you click."
           }
         }
       }
@@ -4093,13 +4093,13 @@
         }
       }
     },
-    "No alert while Agent Box is in front and the pane is on screen.": {
+    "No alert while Racky is in front and the pane is on screen.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No alert while Agent Box is in front and the pane is on screen."
+            "value": "No alert while Racky is in front and the pane is on screen."
           }
         }
       }
@@ -4467,13 +4467,13 @@
         }
       }
     },
-    "Notifications are off for Agent Box.": {
+    "Notifications are off for Racky.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Notifications are off for Agent Box."
+            "value": "Notifications are off for Racky."
           }
         }
       }
@@ -4511,13 +4511,13 @@
         }
       }
     },
-    "Open Agent Box": {
+    "Open Racky": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Open Agent Box"
+            "value": "Open Racky"
           }
         }
       }
@@ -4775,13 +4775,13 @@
         }
       }
     },
-    "Pick the folder the session works in. Agent Box won't create or delete anything in it.": {
+    "Pick the folder the session works in. Racky won't create or delete anything in it.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pick the folder the session works in. Agent Box won't create or delete anything in it."
+            "value": "Pick the folder the session works in. Racky won't create or delete anything in it."
           }
         }
       }
@@ -5061,24 +5061,24 @@
         }
       }
     },
-    "Quit Agent Box Completely": {
+    "Quit Racky Completely": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quit Agent Box Completely"
+            "value": "Quit Racky Completely"
           }
         }
       }
     },
-    "Quit Agent Box?": {
+    "Quit Racky?": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Quit Agent Box?"
+            "value": "Quit Racky?"
           }
         }
       }
@@ -5215,13 +5215,13 @@
         }
       }
     },
-    "Remove \"%@\" from Agent Box?": {
+    "Remove \"%@\" from Racky?": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Remove \"%@\" from Agent Box?"
+            "value": "Remove \"%@\" from Racky?"
           }
         }
       }
@@ -5754,13 +5754,13 @@
         }
       }
     },
-    "Set Up Agent Box": {
+    "Set Up Racky": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Set Up Agent Box"
+            "value": "Set Up Racky"
           }
         }
       }
@@ -5963,13 +5963,13 @@
         }
       }
     },
-    "Skip setup? You can finish it from Agent Box › Set Up Agent Box…": {
+    "Skip setup? You can finish it from Racky › Set Up Racky…": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Skip setup? You can finish it from Agent Box › Set Up Agent Box…"
+            "value": "Skip setup? You can finish it from Racky › Set Up Racky…"
           }
         }
       }
@@ -6403,13 +6403,13 @@
         }
       }
     },
-    "Terminals keep running and come back when you reopen Agent Box.": {
+    "Terminals keep running and come back when you reopen Racky.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Terminals keep running and come back when you reopen Agent Box."
+            "value": "Terminals keep running and come back when you reopen Racky."
           }
         }
       }
@@ -6579,13 +6579,13 @@
         }
       }
     },
-    "The session runs in this folder. Agent Box doesn't create or delete anything in it.": {
+    "The session runs in this folder. Racky doesn't create or delete anything in it.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The session runs in this folder. Agent Box doesn't create or delete anything in it."
+            "value": "The session runs in this folder. Racky doesn't create or delete anything in it."
           }
         }
       }
@@ -6744,13 +6744,13 @@
         }
       }
     },
-    "This terminal stopped while Agent Box was closed.": {
+    "This terminal stopped while Racky was closed.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "This terminal stopped while Agent Box was closed."
+            "value": "This terminal stopped while Racky was closed."
           }
         }
       }

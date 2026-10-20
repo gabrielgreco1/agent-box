@@ -68,12 +68,12 @@ public enum InsightsPreviewData {
             network: NetworkSample(downBytesPerSec: 2_350_000, upBytesPerSec: 410_000, totalDownBytes: 2_486_000_000, totalUpBytes: 2_166_000_000),
             topByCPU: [AppUsage(name: "Google Chrome", cpuPercent: 118, memoryBytes: 5 * gib, processCount: 21),
                        AppUsage(name: "Docker Desktop", cpuPercent: 64, memoryBytes: 7 * gib, processCount: 6),
-                       AppUsage(name: "Agent Box", cpuPercent: 22, memoryBytes: 1 * gib, processCount: 3),
+                       AppUsage(name: "Racky", cpuPercent: 22, memoryBytes: 1 * gib, processCount: 3),
                        AppUsage(name: "Xcode", cpuPercent: 14, memoryBytes: 3 * gib, processCount: 4)],
             topByMemory: [AppUsage(name: "Docker Desktop", cpuPercent: 64, memoryBytes: 7 * gib, processCount: 6),
                           AppUsage(name: "Google Chrome", cpuPercent: 118, memoryBytes: 5 * gib, processCount: 21),
                           AppUsage(name: "Xcode", cpuPercent: 14, memoryBytes: 3 * gib, processCount: 4),
-                          AppUsage(name: "Agent Box", cpuPercent: 22, memoryBytes: 1 * gib, processCount: 3)],
+                          AppUsage(name: "Racky", cpuPercent: 22, memoryBytes: 1 * gib, processCount: 3)],
             thermal: "nominal", uptimeSeconds: 3 * 86_400, coreCount: 14)
     }
 

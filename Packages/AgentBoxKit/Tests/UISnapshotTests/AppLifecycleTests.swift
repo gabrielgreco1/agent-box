@@ -252,7 +252,7 @@ import Testing
         #expect(menu.items.first?.title == "2 agents running")
         #expect(menu.items.first?.isEnabled == false)
         let titles = menu.items.map(\.title).filter { !$0.isEmpty }
-        #expect(titles == ["2 agents running", "Open Agent Box", "Stop All Agents…", "Quit Agent Box Completely"])
+        #expect(titles == ["2 agents running", "Open Racky", "Stop All Agents…", "Quit Racky Completely"])
         let ids = menu.items.compactMap { $0.accessibilityIdentifier() }.filter { !$0.isEmpty }
         #expect(ids == ["menuBar.open", "menuBar.stopAll", "menuBar.quitCompletely"])
         #expect(menu.items.filter { $0.title == "Stop All Agents…" }.first?.isEnabled == true)

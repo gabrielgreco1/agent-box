@@ -186,7 +186,7 @@ struct InsightsProviderPane: View {
     private func showButton(compact: Bool) -> some View {
         VStack(alignment: .leading, spacing: DS.Space.s1_5) {
             if !compact {
-                Text("Exact limits come from your Claude Code sign-in. Agent Box reads it only after you click.", bundle: .module)
+                Text("Exact limits come from your Claude Code sign-in. Racky reads it only after you click.", bundle: .module)
                     .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).fixedSize(horizontal: false, vertical: true)
             }
             ActionButton(.insightsShowExactLimits, id: .rightPanelInsightsShowExactLimits) {

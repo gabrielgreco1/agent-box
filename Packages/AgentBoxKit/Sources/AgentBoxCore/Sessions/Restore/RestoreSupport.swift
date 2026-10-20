@@ -15,7 +15,7 @@ public enum InterruptionReason: String, Codable, Sendable, Equatable, CaseIterab
     public var bannerText: String {
         switch self {
         case .macRestarted: "This terminal stopped when your Mac restarted."
-        case .appClosed: "This terminal stopped while Agent Box was closed."
+        case .appClosed: "This terminal stopped while Racky was closed."
         case .unexpected: "This terminal stopped unexpectedly."
         }
     }

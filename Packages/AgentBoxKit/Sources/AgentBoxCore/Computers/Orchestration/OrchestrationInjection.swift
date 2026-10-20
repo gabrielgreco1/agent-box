@@ -13,7 +13,7 @@ public enum OrchestrationText {
     public static let denyGlobalSkill = "Skill(agentbox)"
 
     public static let skillDescription = """
-        Agent Box built-in computers. USE THIS WHENEVER A SUBAGENT WILL STUDY, BROWSE OR SCRAPE A WEBSITE, PORTAL OR ENDPOINT, FIND HIDDEN API \
+        Racky built-in computers. USE THIS WHENEVER A SUBAGENT WILL STUDY, BROWSE OR SCRAPE A WEBSITE, PORTAL OR ENDPOINT, FIND HIDDEN API \
         ENDPOINTS, VALIDATE DATA SOURCES OR BUILD CRAWLERS (for example "spawn a sub agent to study the permits site of Houston", "spawn 2 subagents \
         for Phoenix and Austin"): reserve a computer with boxes_reserve and give it to an agentbox-worker subagent, instead of a plain subagent \
         with WebFetch or curl. Any other subagent task stays a normal subagent. Prefer this over any "agentbox" CLI skill or Docker commands.
@@ -27,7 +27,7 @@ public enum OrchestrationText {
         description: \(skillDescription.replacingOccurrences(of: "\n", with: " "))
         ---
 
-        # Agent Box computers
+        # Racky computers
 
         Each target gets its own isolated computer (a headless browser, a shell, a request log, an egress proxy) and its own background
         subagent. You orchestrate; the subagents operate. Do NOT use the `agentbox` CLI, Docker, or any other skill for this.
@@ -46,7 +46,7 @@ public enum OrchestrationText {
            once. Every box comes back with `worker` (the `subagent_type` to spawn) and `child_id`. Do not pass `allow_hosts` just to name the
            target: it RESTRICTS the computer to those hostnames; leave it out unless the user asked for a restriction. A box can be `queued` (the Docker VM is
            out of memory; the position is shown): that is fine, its worker waits. `unavailable` means it cannot be created: read `reason`
-           (`docker_unavailable`: tell the user to open Docker, Agent Box shows an Open Docker button, then reserve again). If the answer is
+           (`docker_unavailable`: tell the user to open Docker, Racky shows an Open Docker button, then reserve again). If the answer is
            `{"status":"pending"}` the user is deciding whether to allow computers for this session: call `boxes_reserve` again with the same
            arguments until it answers. If it is denied, do not retry: continue without a computer or tell the user.
         3. **Write one brief per target** (template below), with the computer name.
@@ -85,7 +85,7 @@ public enum OrchestrationText {
 
     /// Prompt de sistema do `agentbox-worker-N` (CS-331): diário, evidência, `/work` limpo e as regras de conduta.
     public static let workerPrompt = """
-        You are an Agent Box worker. You operate exactly ONE computer, through your agentbox tools only.
+        You are an Racky worker. You operate exactly ONE computer, through your agentbox tools only.
         1. Your brief names the computer. Call box_claim(name) first; if it says queued or provisioning, call it again (each call waits up \
         to 45 s). Keep the work_path_host it returns.
         2. Journal as you go: PLAN once, DOING before each step, FOUND with evidence (request ids from the browser or http_request results, \
@@ -103,7 +103,7 @@ public enum OrchestrationText {
         """
 
     public static func workerDescription(slot: Int) -> String {
-        "Agent Box worker \(slot): operates ONE reserved computer (browser, shell, HTTP, request log) for one target and submits a validated result. "
+        "Racky worker \(slot): operates ONE reserved computer (browser, shell, HTTP, request log) for one target and submits a validated result. "
             + "Spawn one per computer returned by boxes_reserve, in the background, with the computer name and the three-part brief."
     }
 }
@@ -175,7 +175,7 @@ public enum OrchestrationInjectionBuilder {
         // Plugin com a skill: o nome da skill fica `agentbox-app:agentbox-boxes`, distinto do `agentbox` global que o deny bloqueia.
         let manifest: [String: Any] = [
             "name": OrchestrationText.pluginName, "version": "1.0.0",
-            "description": "Agent Box built-in computers and subagent orchestration (generated per launch).",
+            "description": "Racky built-in computers and subagent orchestration (generated per launch).",
         ]
         let pluginFiles = [
             LaunchFile(name: "plugin/.claude-plugin/plugin.json", contents: try JSONSerialization.data(withJSONObject: manifest, options: [.sortedKeys, .prettyPrinted])),

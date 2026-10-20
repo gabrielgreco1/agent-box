@@ -27,7 +27,7 @@ public final class WindowAutomation: AutomationSurface {
     public func appState(registeredActions: [ActionID]) -> AppStateSnapshot {
         let info = Bundle.main.infoDictionary
         return AppStateSnapshot(
-            app: (info?["CFBundleName"] as? String) ?? "Agent Box",
+            app: (info?["CFBundleName"] as? String) ?? "Racky",
             version: (info?["CFBundleShortVersionString"] as? String) ?? "dev",
             pid: ProcessInfo.processInfo.processIdentifier,
             slice: flags.current,

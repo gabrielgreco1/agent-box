@@ -17,7 +17,7 @@ import Testing
         #expect(InterruptionClassifier.reason(startedAt: after, bootTime: boot, previousRunWasClean: false) == .unexpected)
         #expect(InterruptionClassifier.reason(startedAt: nil, bootTime: boot, previousRunWasClean: nil) == .unexpected)
         #expect(InterruptionReason.macRestarted.bannerText == "This terminal stopped when your Mac restarted.")
-        #expect(InterruptionReason.appClosed.bannerText == "This terminal stopped while Agent Box was closed.")
+        #expect(InterruptionReason.appClosed.bannerText == "This terminal stopped while Racky was closed.")
         #expect(InterruptionReason.unexpected.bannerText == "This terminal stopped unexpectedly.")
     }
 

@@ -50,7 +50,7 @@ struct SpawnGuardRunner: Sendable {
             do {
                 if let reason = try await askApp(input) { return SubagentSpawnGuard.denyOutput(reason: reason) }
             } catch {
-                FileHandle.standardError.write(Data("agentbox hook-guard: no answer from Agent Box (\(error)); letting the subagent run\n".utf8))
+                FileHandle.standardError.write(Data("agentbox hook-guard: no answer from Racky (\(error)); letting the subagent run\n".utf8))
             }
             return "{}"
         }

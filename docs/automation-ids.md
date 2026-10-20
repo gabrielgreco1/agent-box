@@ -513,14 +513,14 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 
 | ActionID | Rótulo | Atalho | Fatia |
 |---|---|---|---|
-| `app.about` | About Agent Box | — | slice1 |
+| `app.about` | About Racky | — | slice1 |
 | `app.settings` | Settings… | ⌘, | slice1 |
-| `app.setup` | Set Up Agent Box… / Run Diagnostics | — | slice1 |
+| `app.setup` | Set Up Racky… / Run Diagnostics | — | slice1 |
 | `app.checkProblems` | Check for Problems | — | slice1 |
 | `app.hideAppName` | Hide App Name | — | slice1 |
-| `app.quit` | Quit Agent Box | ⌘Q | slice1 |
-| `app.quitCompletely` | Quit Agent Box Completely | — | slice1 |
-| `app.openMainWindow` | Open Agent Box (barra de menus) | — | slice1 |
+| `app.quit` | Quit Racky | ⌘Q | slice1 |
+| `app.quitCompletely` | Quit Racky Completely | — | slice1 |
+| `app.openMainWindow` | Open Racky (barra de menus) | — | slice1 |
 | `app.stopAllAgents` | Stop All Agents… (barra de menus) | — | slice1 |
 | `view.toggleSidebar` | Toggle Sidebar | ⌘B | slice1 |
 | `view.toggleRightPanel` | Right Panel | ⌘L (Fatia 2) | slice2 |
@@ -531,7 +531,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `terminal.fontSmaller` | Smaller | ⌘- | slice1 |
 | `terminal.fontReset` | Actual Size | ⌘0 | slice1 |
 | `sidebar.hideNavItem` | Hide from Sidebar | — | slice1 |
-| `help.open` | Agent Box Help | — | slice1 |
+| `help.open` | Racky Help | — | slice1 |
 | `help.shortcuts` | Keyboard Shortcuts | ⌘/ | slice1 |
 | `help.revealLogs` | Reveal Logs in Finder | — | slice1 |
 | `help.exportDiagnostics` | Export Diagnostics… | — | slice1 |
@@ -734,7 +734,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `library.newAgent` | Library: New Agent… | — | v11 |
 | `library.importSkill` | Import Skill Folder… | — | v11 |
 | `library.edit` | Edit | — | v11 |
-| `conflict.block` | Block in Agent Box | — | slice2 |
+| `conflict.block` | Block in Racky | — | slice2 |
 | `conflict.disableGlobal` | Disable Globally… | — | slice2 |
 | `conflict.keep` | Keep | — | slice2 |
 | `conflict.restore` | Restore Skill | — | slice2 |
@@ -787,7 +787,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `settings.general.keepAgentsRunning` | Keep agents running when you quit | — | slice1 |
 | `settings.general.allowLoginItems` | Allow in Login Items | — | slice1 |
 | `settings.general.askBeforeQuit` | Ask before quitting with running agents | — | slice1 |
-| `settings.general.resumeAgentsOnOpen` | Resume agents automatically when Agent Box opens | — | slice1 |
+| `settings.general.resumeAgentsOnOpen` | Resume agents automatically when Racky opens | — | slice1 |
 | `settings.general.confirmCloseTerminal` | Confirm before closing a running terminal | — | slice1 |
 | `settings.general.confirmDeleteSession` | Confirm before deleting a session | — | slice1 |
 | `settings.general.branchPrefix` | Branch prefix | — | slice1 |

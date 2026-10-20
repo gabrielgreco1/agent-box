@@ -7,7 +7,7 @@ import Testing
 @testable import AgentBoxCore
 
 /// T2-02/T2-03: injeções por lançamento da Fatia 2 (06 §2.8). Os golden files da Fatia 1 continuam em `slice1/`.
-private let helper = "/Applications/Agent Box.app/Contents/MacOS/agentbox"
+private let helper = "/Applications/Racky.app/Contents/MacOS/agentbox"
 
 private func hashes() throws -> [HookEventName: String] {
     CodexHookConfig.parseCurrentHashes(hooksList: try RealHooks.data("S-05/codex-hooks-list-sessionflags.json"))

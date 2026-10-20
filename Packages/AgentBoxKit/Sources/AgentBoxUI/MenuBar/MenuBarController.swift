@@ -2,8 +2,8 @@ import AgentBoxCore
 import AgentBoxProtocol
 import AppKit
 
-/// Item da barra de menus (03 §17, 06 §1.9): contagem de agentes vivos, "Open Agent Box", "Stop All Agents…" e
-/// "Quit Agent Box Completely". Servido pelo próprio processo do app (sem helper de login, R1 D-03). `NSStatusItem` porque
+/// Item da barra de menus (03 §17, 06 §1.9): contagem de agentes vivos, "Open Racky", "Stop All Agents…" e
+/// "Quit Racky Completely". Servido pelo próprio processo do app (sem helper de login, R1 D-03). `NSStatusItem` porque
 /// a casca é AppKit puro (00 T5). Os itens disparam ações do registro, as mesmas de `ctl`.
 @MainActor
 public protocol StatusItemHosting: AnyObject {
@@ -86,7 +86,7 @@ public final class MenuBarController: NSObject, NSMenuDelegate {
         item.button?.image = Self.icon
         item.button?.imagePosition = .imageLeading
         item.button?.setAccessibilityIdentifier(A11yID.menuBarIcon.rawValue)
-        item.button?.setAccessibilityLabel(String(localized: "Agent Box", bundle: .module))
+        item.button?.setAccessibilityLabel(String(localized: "Racky", bundle: .module))
         let menu = NSMenu()
         menu.delegate = self
         menu.autoenablesItems = false
@@ -122,10 +122,10 @@ public final class MenuBarController: NSObject, NSMenuDelegate {
         header.isEnabled = false
         menu.addItem(header)
         menu.addItem(.separator())
-        menu.addItem(item(String(localized: "Open Agent Box", bundle: .module), .appOpenMainWindow, .menuBarOpen))
+        menu.addItem(item(String(localized: "Open Racky", bundle: .module), .appOpenMainWindow, .menuBarOpen))
         menu.addItem(.separator())
         menu.addItem(item(String(localized: "Stop All Agents…", bundle: .module), .appStopAllAgents, .menuBarStopAll))
-        menu.addItem(item(String(localized: "Quit Agent Box Completely", bundle: .module), .appQuitCompletely, .menuBarQuitCompletely))
+        menu.addItem(item(String(localized: "Quit Racky Completely", bundle: .module), .appQuitCompletely, .menuBarQuitCompletely))
     }
 
     /// Cada item dispara a ação do registro (as mesmas de `ctl ui action`); o estado vem de `availability`.

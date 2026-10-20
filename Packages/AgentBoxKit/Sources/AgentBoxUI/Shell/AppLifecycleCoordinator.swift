@@ -115,7 +115,7 @@ public final class AppLifecycleCoordinator {
 
     // MARK: Encerrar
 
-    /// `Quit Agent Box Completely`: encerra o processo e tira o ícone; os agentes seguem no daemon.
+    /// `Quit Racky Completely`: encerra o processo e tira o ícone; os agentes seguem no daemon.
     public func quitCompletely() {
         pendingReason = .completely
         quittingCompletely = true

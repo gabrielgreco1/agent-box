@@ -254,7 +254,7 @@ extension OverlayHostTests {
 
     @Test func appNameMenuListsTheSpecItems() {
         let titles = AppMenuEntries.entries.compactMap(\.item).map(\.title)
-        #expect(titles == ["About Agent Box", "Settings…", "Check for Problems", "Hide App Name"])
+        #expect(titles == ["About Racky", "Settings…", "Check for Problems", "Hide App Name"])
         #expect(AppMenuEntries.entries.compactMap(\.item).first { $0.id == "settings" }?.shortcut == "⌘,")
     }
 

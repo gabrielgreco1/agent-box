@@ -89,7 +89,7 @@ private struct AppNameButton: View {
         Button { open() } label: {
             HStack(spacing: DS.Space.s1_5) {
                 BrandMark(size: StripMetrics.brandSize)
-                Text("Agent Box", bundle: .module)
+                Text("Racky", bundle: .module)
                     .font(DS.Font.sectionLabel.font)
                     .foregroundStyle(DS.Color.textSecondary)
             }
@@ -107,7 +107,7 @@ private struct AppNameButton: View {
         .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { anchor = $0 }
         .padding(.leading, StripMetrics.nameMarginLeading)
         .padding(.trailing, StripMetrics.nameMarginTrailing)
-        .a11y(.windowAppName, kind: "button", label: "Agent Box")
+        .a11y(.windowAppName, kind: "button", label: "Racky")
         .dsContextMenu(name: "appNameContext", groups: {
             [[MenuEntry(action: .appHideAppName, title: String(localized: "Hide App Name", bundle: .module))]]
         })
@@ -124,7 +124,7 @@ private struct AppNameButton: View {
 enum AppMenuEntries {
     static var entries: [DSMenuEntry] {
         [
-            .item(DSMenuItem("about", String(localized: "About Agent Box", bundle: .module), action: .appAbout)),
+            .item(DSMenuItem("about", String(localized: "About Racky", bundle: .module), action: .appAbout)),
             .item(DSMenuItem("settings", String(localized: "settings.menu", defaultValue: "Settings…", bundle: .module), shortcut: ActionID.appSettings.spec.shortcut, action: .appSettings)),
             .separator("checks"),
             .item(DSMenuItem("checkProblems", String(localized: "Check for Problems", bundle: .module), action: .appCheckProblems)),

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # install.sh - instala o app em /Applications com rollback (08 AR-902).
 #
-# CAMINHO RECOMENDADO (F30): use sempre este script para trocar de build. O app fica em /Applications/Agent Box.app (local fixo,
+# CAMINHO RECOMENDADO (F30): use sempre este script para trocar de build. O app fica em /Applications/Racky.app (local fixo,
 # com backup em previous/ e --rollback). Abrir o app direto de build/ ou de /private/tmp/... funciona (ele se conecta ao daemon
 # que já está vivo e não re-registra o LaunchAgent), mas o launchd prende o job ao bundle que o registrou: só o app em
 # /Applications dá um registro estável. Trocar de build nunca mata o daemon nem os agentes: o novo app se conecta ao daemon vivo
@@ -25,8 +25,8 @@ fail() { echo "ERRO: $*" >&2; exit 1; }
 INSTALL_DIR="${AGENTBOX_INSTALL_DIR:-/Applications}"
 AB="${AGENTBOX_HOME:-$HOME/Library/Application Support/AgentBox}"
 PREV_DIR="$AB/previous"
-BUILD_APP="${AGENTBOX_BUILD_DIR:-$ROOT/build/AgentBox}/Agent Box.app"
-TARGET="$INSTALL_DIR/Agent Box.app"
+BUILD_APP="${AGENTBOX_BUILD_DIR:-$ROOT/build/AgentBox}/Racky.app"
+TARGET="$INSTALL_DIR/Racky.app"
 BUNDLE_ID=app.agentbox.mac
 OPEN=1; ROLLBACK=0
 for a in "$@"; do
@@ -39,11 +39,11 @@ for a in "$@"; do
 done
 
 quit_app() {
-  if pgrep -f "$TARGET/Contents/MacOS/Agent Box" >/dev/null 2>&1; then
+  if pgrep -f "$TARGET/Contents/MacOS/Racky" >/dev/null 2>&1; then
     echo "install: encerrando o app (o daemon continua vivo)"
     osascript -e "tell application id \"$BUNDLE_ID\" to quit" >/dev/null 2>&1 || true
     for _ in $(seq 1 60); do
-      pgrep -f "$TARGET/Contents/MacOS/Agent Box" >/dev/null 2>&1 || return 0
+      pgrep -f "$TARGET/Contents/MacOS/Racky" >/dev/null 2>&1 || return 0
       sleep 0.5
     done
     fail "o app não encerrou em 30 s; feche-o e rode de novo (o daemon não é morto)"
@@ -51,7 +51,7 @@ quit_app() {
 }
 
 swap_in() { # source_bundle ; guarda a instalada em previous/ e troca por rename atômico
-  local src="$1" tmp="$INSTALL_DIR/.Agent Box.app.new.$$" keep="$PREV_DIR/Agent Box.app.keep.$$"
+  local src="$1" tmp="$INSTALL_DIR/.Racky.app.new.$$" keep="$PREV_DIR/Racky.app.keep.$$"
   mkdir -p "$PREV_DIR"; chmod 700 "$AB" 2>/dev/null || true
   rm -rf "$tmp"; ditto "$src" "$tmp"
   codesign --verify --strict "$tmp" || { rm -rf "$tmp"; fail "bundle novo não passa em codesign --verify --strict"; }
@@ -69,17 +69,17 @@ PY
       rm -rf "$tmp" "$keep"; fail "troca atômica falhou; instalação anterior intacta"
     fi
     rm -rf "$tmp"
-    rm -rf "$PREV_DIR/Agent Box.app"; mv "$keep" "$PREV_DIR/Agent Box.app"
+    rm -rf "$PREV_DIR/Racky.app"; mv "$keep" "$PREV_DIR/Racky.app"
   else
     mv "$tmp" "$TARGET"
   fi
 }
 
 if [ "$ROLLBACK" = 1 ]; then
-  [ -d "$PREV_DIR/Agent Box.app" ] || fail "nenhuma versão anterior em $PREV_DIR"
+  [ -d "$PREV_DIR/Racky.app" ] || fail "nenhuma versão anterior em $PREV_DIR"
   quit_app
-  ROLL_SRC="$PREV_DIR/Agent Box.app.rollback.$$"
-  mv "$PREV_DIR/Agent Box.app" "$ROLL_SRC"
+  ROLL_SRC="$PREV_DIR/Racky.app.rollback.$$"
+  mv "$PREV_DIR/Racky.app" "$ROLL_SRC"
   swap_in "$ROLL_SRC"
   rm -rf "$ROLL_SRC"
   echo "install: rollback concluído -> $TARGET"

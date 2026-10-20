@@ -11,7 +11,7 @@ import Testing
 // F12 ("Subagent computers"): injeção por modo (golden de argv com mcp/plugin/agents), o fluxo Ask (Allow, Allow for this session, Deny,
 // `pending` sem bloquear) e o Full direto. Provisionador falso: o Docker real fica em `LiveSubagentComputersTests`.
 
-private let helper = "/Applications/Agent Box.app/Contents/MacOS/agentbox"
+private let helper = "/Applications/Racky.app/Contents/MacOS/agentbox"
 
 /// Pacote de injeção determinístico (capabilities fixas, 2 slots) para o golden.
 private func fixedBundle(parent: String = "parent-aaaaaaaa") throws -> OrchestrationBundle {

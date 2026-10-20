@@ -69,7 +69,7 @@ private struct FakeComputers: InsightsComputerSource {
         #expect(snap.claude.plan?.plan == "max")
         #expect(snap.claude.fiveHour?.source == .reported)
         #expect(snap.claude.fiveHour?.usedFraction == 0.55)
-        #expect(snap.claude.topSessions.first?.label == "Fix pagination")  // título do Agent Box vence a pasta
+        #expect(snap.claude.topSessions.first?.label == "Fix pagination")  // título do Racky vence a pasta
         #expect(snap.codex.hasData)
         #expect(snap.codex.fiveHour?.source == .reported)
         #expect(snap.codex.fiveHour?.usedFraction == 0.33)

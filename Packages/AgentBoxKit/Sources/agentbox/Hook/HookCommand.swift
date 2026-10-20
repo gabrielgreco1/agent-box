@@ -13,7 +13,7 @@ import Foundation
 struct HookCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "hook",
-        abstract: "Forward an agent hook event to Agent Box (never blocks the agent).")
+        abstract: "Forward an agent hook event to Racky (never blocks the agent).")
 
     @Option(name: .long, help: "claude or codex.")
     var provider: String = "claude"

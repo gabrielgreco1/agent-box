@@ -119,7 +119,7 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
         window.appearance = NSAppearance(named: .darkAqua)
         window.backgroundColor = DS.ColorSpec.canvas.nsColor
         window.contentMinSize = NSSize(width: DS.Layout.windowMinWidth, height: DS.Layout.windowMinHeight)
-        window.title = "Agent Box"
+        window.title = "Racky"
         window.contentView = container
         window.contentViewController = nil
         super.init(window: window)
@@ -136,7 +136,7 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
         overlayFocus.hostView = overlayHost
         env.overlays.focus = overlayFocus
         overlayFocus.fallbackFocus = { [weak env] in env?.workspace.focusTerminalOfActiveTab() }
-        env.elements.register(mainToken, id: .windowMain, kind: "window", label: "Agent Box", value: nil, action: nil, parent: nil)
+        env.elements.register(mainToken, id: .windowMain, kind: "window", label: "Racky", value: nil, action: nil, parent: nil)
         registerActions()
         observeSettings()
         observeLayout()

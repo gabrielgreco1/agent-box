@@ -13,7 +13,7 @@ public struct MenuBarState: Sendable, Equatable {
     public var visibility: MenuBarVisibility
     /// O app está em modo accessory (sem janela nem Dock): o ícone é obrigatório.
     public var isBackgroundOnly: Bool
-    /// "Quit Agent Box Completely" foi usado: o ícone some até reabrir (o processo termina).
+    /// "Quit Racky Completely" foi usado: o ícone some até reabrir (o processo termina).
     public var quittingCompletely: Bool
 
     public init(

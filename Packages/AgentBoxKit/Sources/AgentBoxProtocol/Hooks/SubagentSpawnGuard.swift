@@ -73,7 +73,7 @@ public enum SubagentSpawnGuard {
     }
 
     public static let blockReason = """
-        Agent Box: Subagent computers is on for this session, and this subagent will work on a website, portal, URL or API. Do not spawn a plain \
+        Racky: Subagent computers is on for this session, and this subagent will work on a website, portal, URL or API. Do not spawn a plain \
         subagent for it (it would fetch from the Mac). First call boxes_reserve(names: ["<short target name>"]) to get a computer, then spawn the \
         subagent again with subagent_type set to the `worker` returned for that computer (agentbox-worker-N), and put the computer name and your \
         brief in its prompt. If boxes_reserve says the user denied it, spawn the plain subagent again.

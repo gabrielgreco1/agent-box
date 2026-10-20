@@ -47,7 +47,7 @@ public enum CleanSessionFolders {
 
         public var errorDescription: String? {
             switch self {
-            case .notManaged: "The folder wasn't created by Agent Box."
+            case .notManaged: "The folder wasn't created by Racky."
             case .unsafePath(let p): "Refusing to touch \(p)."
             }
         }

@@ -28,7 +28,7 @@ public enum QuitRequestReason: Sendable, Equatable {
     case user
     /// Logout, reinício ou desligamento do Mac: nunca bloqueia nem pergunta.
     case system
-    /// "Quit Agent Box Completely" (barra de menus, `ctl app quit --completely`): sai do processo e deixa o daemon.
+    /// "Quit Racky Completely" (barra de menus, `ctl app quit --completely`): sai do processo e deixa o daemon.
     case completely
 }
 
@@ -45,7 +45,7 @@ public struct QuitPreferences: Sendable, Equatable {
     }
 }
 
-/// O que o overlay "Quit Agent Box?" mostra.
+/// O que o overlay "Quit Racky?" mostra.
 public struct QuitPrompt: Sendable, Equatable {
     public var counts: LiveProcessCounts
     /// `false`: Settings › "Keep agents running" desligado; o texto vira "Quitting stops them" e o padrão (↵) é Cancel.

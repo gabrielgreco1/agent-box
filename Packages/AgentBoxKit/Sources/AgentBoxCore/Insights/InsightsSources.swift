@@ -6,7 +6,7 @@ import Foundation
 
 // MARK: - Limites reportados pelo Claude (status line)
 
-/// Snapshot dos limites que o Claude Code entrega à status line (`rate_limits.five_hour|seven_day`). O Agent Box grava
+/// Snapshot dos limites que o Claude Code entrega à status line (`rate_limits.five_hour|seven_day`). O Racky grava
 /// este arquivo a partir do JSON da status line; o `InsightsService` só lê. Só números: nunca o resto do JSON.
 public struct ClaudeRateLimitSnapshot: Codable, Sendable, Equatable {
     public struct Window: Codable, Sendable, Equatable {
@@ -154,7 +154,7 @@ public enum CLIAuthProbe {
     }
 }
 
-// MARK: - Fontes do Agent Box (Store, Docker)
+// MARK: - Fontes do Racky (Store, Docker)
 
 public struct AgentSessionRef: Sendable, Equatable {
     public var sessionID: String
@@ -261,7 +261,7 @@ public struct StoreProxySource: InsightsProxySource {
     }
 }
 
-/// Containers do Agent Box (label `agentbox.owner`) com uma amostra de `stats` cada.
+/// Containers do Racky (label `agentbox.owner`) com uma amostra de `stats` cada.
 public struct DockerComputerSource: InsightsComputerSource {
     private let client: DockerClient
     public init(client: DockerClient) { self.client = client }

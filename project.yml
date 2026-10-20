@@ -45,9 +45,9 @@ targets:
     info:
       path: App/Info.plist
       properties:
-        CFBundleName: Agent Box
-        CFBundleDisplayName: Agent Box
-        CFBundleExecutable: Agent Box
+        CFBundleName: Racky
+        CFBundleDisplayName: Racky
+        CFBundleExecutable: Racky
         CFBundleIconFile: AgentBox
         CFBundlePackageType: APPL
         CFBundleShortVersionString: $(MARKETING_VERSION)
@@ -59,10 +59,10 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.agentbox.mac
-        PRODUCT_NAME: Agent Box
-        # Executável 'Agent Box' (com espaço): 'AgentBox' colidiria com o helper Contents/MacOS/agentbox
+        PRODUCT_NAME: Racky
+        # Executável 'Racky' (antes 'Agent Box'): 'AgentBox' colidiria com o helper Contents/MacOS/agentbox
         # em volumes case-insensitive (APFS padrão).
-        EXECUTABLE_NAME: Agent Box
+        EXECUTABLE_NAME: Racky
         PRODUCT_MODULE_NAME: AgentBox
         GENERATE_INFOPLIST_FILE: NO
         ENABLE_APP_SANDBOX: NO

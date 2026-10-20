@@ -21,8 +21,8 @@ final class EphemeralSigning: @unchecked Sendable {  // SAFETY: imutável depois
     init() throws {
         directory = URL(fileURLWithPath: "/tmp/abs-\(UInt32.random(in: 0 ... 0xFFFFFF))", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
-        identityA = try Self.makeIdentity(name: "Agent Box Test Signing A", in: directory)
-        identityB = try Self.makeIdentity(name: "Agent Box Test Signing B", in: directory)
+        identityA = try Self.makeIdentity(name: "Racky Test Signing A", in: directory)
+        identityB = try Self.makeIdentity(name: "Racky Test Signing B", in: directory)
     }
 
     deinit {

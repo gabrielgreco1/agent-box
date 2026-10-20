@@ -104,7 +104,7 @@ import Testing
         let store = try await home.openStore(day: 1)  // app "antigo": só conhece v1_initial
         #expect(await store.mode == .readOnly)
         guard case .newerDatabase = store.openNotices.first else { Issue.record("expected newerDatabase"); return }
-        #expect(store.openNotices.first?.bannerText == "Database was created by a newer Agent Box")
+        #expect(store.openNotices.first?.bannerText == "Database was created by a newer Racky")
         #expect(try await store.projects().count == 1, "leitura funciona")
         await #expect(throws: StoreError.readOnly) { try await store.save(Fixture.project(2)) }
         await #expect(throws: StoreError.readOnly) { try await store.setSetting("k", 1) }

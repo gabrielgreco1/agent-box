@@ -16,7 +16,7 @@ import Testing
     @Test func provenanceFileTravelsWithTheLogos() throws {
         let url = try #require(DSAgentLogoImages.provenanceURL, "sources.json ausente em Resources/AgentLogos")
         let text = try String(contentsOf: url, encoding: .utf8)
-        #expect(text.contains("Logos identify third-party integrations, not Agent Box ownership."))
+        #expect(text.contains("Logos identify third-party integrations, not Racky ownership."))
         #expect(text.contains("\"file\": \"claude.png\""))
         #expect(text.contains("\"file\": \"opencode.png\""))
     }

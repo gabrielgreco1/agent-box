@@ -100,7 +100,7 @@ public struct MachineSnapshot: Codable, Sendable, Equatable {
     }
 }
 
-/// Um computador (container Docker) do Agent Box.
+/// Um computador (container Docker) do Racky.
 public struct ComputerUsage: Codable, Sendable, Equatable, Identifiable {
     public var id: String
     public var name: String
@@ -109,7 +109,7 @@ public struct ComputerUsage: Codable, Sendable, Equatable, Identifiable {
     public var memoryBytes: Int64
     public var memoryLimitBytes: Int64
     public var pids: Int
-    /// Sessão do Agent Box a que o computador pertence (label `agentbox.session`), quando existe.
+    /// Sessão do Racky a que o computador pertence (label `agentbox.session`), quando existe.
     public var sessionID: String?
 
     public var memoryFraction: Double { memoryLimitBytes <= 0 ? 0 : min(1, Double(memoryBytes) / Double(memoryLimitBytes)) }
@@ -120,7 +120,7 @@ public struct ComputerUsage: Codable, Sendable, Equatable, Identifiable {
     }
 }
 
-/// Uso de IA por sessão do Agent Box (agentes e subagentes), juntando transcripts e o Store.
+/// Uso de IA por sessão do Racky (agentes e subagentes), juntando transcripts e o Store.
 public struct AgentSessionUsage: Codable, Sendable, Equatable, Identifiable {
     public var sessionID: String
     public var title: String

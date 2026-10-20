@@ -24,7 +24,7 @@ private struct SlowHookProvider: AppSockServiceProvider {
 /// Prazo folgado para os testes funcionais: com a suíte inteira rodando em paralelo o app de teste pode demorar mais que 200 ms.
 private let generous = 5_000
 
-private let emptyTree = UITreeSnapshot(window: UIWindowInfo(title: "Agent Box", width: 100, height: 100, scale: 2, isKey: true), roots: [])
+private let emptyTree = UITreeSnapshot(window: UIWindowInfo(title: "Racky", width: 100, height: 100, scale: 2, isKey: true), roots: [])
 
 private func sampleEnvelope(run: UUID = UUID(), id: String = UUID().uuidString.lowercased()) -> HookEnvelope {
     HookEnvelope(id: id, provider: .claude, event: "Stop", runID: run.uuidString, atNs: HookTransport.realtimeNs(), payload: .init(lastAssistantMessage: "DONE"))

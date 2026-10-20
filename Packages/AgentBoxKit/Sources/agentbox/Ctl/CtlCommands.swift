@@ -22,7 +22,7 @@ private func a11y(_ raw: String) throws -> A11yID {
 struct CtlCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "ctl",
-        abstract: "Drive the running Agent Box app (opt-in: the app must run with the automation channel on).",
+        abstract: "Drive the running Racky app (opt-in: the app must run with the automation channel on).",
         subcommands: [StateCommand.self, UICommand.self, ScreenshotCommand.self, RecordCommand.self, CompareCommand.self]
     )
 }
@@ -162,7 +162,7 @@ struct CompareCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "compare",
         abstract: "Offline: side-by-side, 50% overlay and absolute difference of two PNGs (used by scripts/compare-ui.sh).")
-    @Argument(help: "Agent Box screenshot.") var app: String
+    @Argument(help: "Racky screenshot.") var app: String
     @Argument(help: "Reference PNG (scaled to the screenshot size when they differ).") var reference: String
     @Option(name: .long, help: "Directory for the outputs.") var outDir: String
     @Option(name: .long, help: "File name prefix.") var name: String

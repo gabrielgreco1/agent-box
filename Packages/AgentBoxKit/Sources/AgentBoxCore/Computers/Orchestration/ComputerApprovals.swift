@@ -334,7 +334,7 @@ public struct SubagentComputersGate: ReserveGating {
         case .pending(let id):
             return .pending([
                 "status": "pending", "request_id": .string(id), "retry_after_s": 5,
-                "message": "Waiting for the user to approve computer access in Agent Box. Call boxes_reserve again with the same arguments to keep waiting.",
+                "message": "Waiting for the user to approve computer access in Racky. Call boxes_reserve again with the same arguments to keep waiting.",
             ])
         }
     }

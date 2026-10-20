@@ -64,7 +64,7 @@ func makeSummary(_ id: SessionID = sid1) -> SessionSummary {
         lastOutputAt: t1, title: "zsh", endSeq: 4096, inputBytesByOrigin: counts)
 }
 
-let daemonInfo = DaemonInfo(build: "1.0 (41)", pid: 812, startedAt: t0, binary: "/Applications/Agent Box.app/Contents/MacOS/agentboxd")
+let daemonInfo = DaemonInfo(build: "1.0 (41)", pid: 812, startedAt: t0, binary: "/Applications/Racky.app/Contents/MacOS/agentboxd")
 
 func clientInfo() -> ClientInfo { ClientInfo(kind: .app, build: "1.0 (42)") }
 

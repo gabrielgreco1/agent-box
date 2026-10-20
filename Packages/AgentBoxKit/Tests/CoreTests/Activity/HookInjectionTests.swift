@@ -4,7 +4,7 @@ import Testing
 
 @testable import AgentBoxCore
 
-private let helper = "/Applications/Agent Box.app/Contents/MacOS/agentbox"
+private let helper = "/Applications/Racky.app/Contents/MacOS/agentbox"
 
 @Suite struct ClaudeHookSettingsTests {
     private func parse(_ data: Data) throws -> [String: Any] { try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any]) }

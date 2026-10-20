@@ -20,7 +20,7 @@
 #include <unistd.h>
 
 // F30: o job do launchd é um só por label e fica preso ao bundle que o registrou. Para apps de pastas diferentes (otter/build,
-// /Applications...) não brigarem pelo daemon, o launcher consulta primeiro o ponteiro `bin/agentboxd-current` do home do Agent Box
+// /Applications...) não brigarem pelo daemon, o launcher consulta primeiro o ponteiro `bin/agentboxd-current` do home do Racky
 // (linha 1: caminho absoluto do `agentboxd` da versão instalada mais nova; linha 2: build), mantido pelo app. Sem ponteiro
 // válido, usa o `agentboxd` ao lado (comportamento anterior).
 static int pointer_target(char *out, size_t size) {

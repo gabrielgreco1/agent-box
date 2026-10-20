@@ -83,7 +83,7 @@ public struct ConfirmationModel {
             dontAsk: DontAsk(action: .dialogCloseTerminalDontAsk, id: .overlayConfirmCloseDontAsk), symbol: "xmark.octagon")
     }
 
-    /// "Quit Agent Box?" (03 §16.10). Com "Keep agents running" ligado: Keep Running é o primário (↵) e `Stop All and Quit…`
+    /// "Quit Racky?" (03 §16.10). Com "Keep agents running" ligado: Keep Running é o primário (↵) e `Stop All and Quit…`
     /// abre a segunda confirmação. Desligado: o texto diz que sair para tudo, o primário é `Stop All and Quit` (destructive)
     /// e o padrão (↵) é Cancel.
     public static func quitWithAgents(prompt: QuitPrompt) -> ConfirmationModel {
@@ -91,12 +91,12 @@ public struct ConfirmationModel {
         let message: String
         if prompt.keepAgentsRunning {
             message = String(
-                localized: "\(QuitText.running(counts)) Everything keeps running in the background and comes back when you reopen Agent Box.",
+                localized: "\(QuitText.running(counts)) Everything keeps running in the background and comes back when you reopen Racky.",
                 bundle: .module)
         } else {
             message = String(localized: "\(QuitText.running(counts)) Quitting stops them.", bundle: .module)
         }
-        let title = String(localized: "Quit Agent Box?", bundle: .module)
+        let title = String(localized: "Quit Racky?", bundle: .module)
         if prompt.keepAgentsRunning {
             var model = ConfirmationModel(
                 name: "confirmQuit", rootID: .overlayConfirmQuit, title: title, message: message, confirmTitle: "Keep Running",
@@ -123,11 +123,11 @@ public struct ConfirmationModel {
             cancelID: .overlayConfirmQuitCancel, defaultsToCancel: true, symbol: "power")
     }
 
-    /// "Remove "<project>" from Agent Box?" (03 §16.6): arquiva as sessões; nenhum arquivo é apagado.
+    /// "Remove "<project>" from Racky?" (03 §16.6): arquiva as sessões; nenhum arquivo é apagado.
     public static func removeProject(name: String, sessionCount: Int) -> ConfirmationModel {
         ConfirmationModel(
             name: "confirmRemoveProject", rootID: .overlayConfirmRemoveProject,
-            title: String(localized: "Remove \"\(name)\" from Agent Box?", bundle: .module),
+            title: String(localized: "Remove \"\(name)\" from Racky?", bundle: .module),
             message: String(localized: "Its \(sessionCount) sessions are archived. No files, worktrees or branches are deleted.", bundle: .module),
             confirmTitle: "Remove", confirmAction: .dialogRemoveProjectConfirm, confirmID: .overlayConfirmRemoveProjectConfirm,
             cancelAction: .dialogRemoveProjectCancel, cancelID: .overlayConfirmRemoveProjectCancel, symbol: "trash")

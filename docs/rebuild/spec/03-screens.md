@@ -19,7 +19,7 @@ Modelo que as telas assumem (de `audit/10 §1` e P10): **Project → Session →
 
 ```
 Main window (single, "workspace")
-├─ Titlebar strip (36) — over sidebar: traffic lights · "Agent Box" · sidebar toggle · ←/→
+├─ Titlebar strip (36) — over sidebar: traffic lights · "Racky" · sidebar toggle · ←/→
 ├─ Left sidebar (280)
 │  ├─ Search
 │  ├─ Nav: Inbox · Computers · Library
@@ -58,11 +58,11 @@ Histórico de navegação (⌥⌘← / ⌥⌘→): registra troca de sessão, de
 
 | Item | Valor |
 |---|---|
-| Cena | `Window("Agent Box", id: "workspace")` única; reabrir pelo Dock usa `openWindow(id:)` (`audit/07 #14`) |
+| Cena | `Window("Racky", id: "workspace")` única; reabrir pelo Dock usa `openWindow(id:)` (`audit/07 #14`) |
 | Estilo | `fullSizeContentView`, `titlebarAppearsTransparent = true`, `titleVisibility = .hidden`, **sem `NSToolbar`**, `isMovableByWindowBackground = false`, `acceptsFirstMouse` nos controles da faixa |
 | Fundo | `canvas #0a0a0a`; `NSApp.appearance = .darkAqua` (DS13) |
 | Tamanho | mínimo **760×480**; primeira abertura **1440×900** centralizada; depois restaura frame (`NSWindow.setFrameAutosaveName("workspace")`) |
-| Título acessível | `window.title = "Agent Box — <session name>"` (não visível; usado por Mission Control, VoiceOver e Window menu) |
+| Título acessível | `window.title = "Racky — <session name>"` (não visível; usado por Mission Control, VoiceOver e Window menu) |
 | Responsividade | largura < 1100 → painel direito recolhe sozinho (reabre ao alargar se estava aberto); largura < 980 com sidebar aberta e painel aberto → painel vira flutuante sobre o centro; nunca esconder panes em silêncio (`audit/03 bug 6`): um pane com menos de 240 de largura mostra só o título e `[Expand]` (⇧⌘↵), ver §4.6 "Pane estreito". Regras de largura mínima em §1.5 |
 | `accessibilityIdentifier` | `window.main` |
 
@@ -81,7 +81,7 @@ Histórico de navegação (⌥⌘← / ⌥⌘→): registra troca de sessão, de
 | # | Elemento | Medidas | Ação | Tooltip | ID |
 |---|---|---|---|---|---|
 | 1 | Pad dos semáforos | 80 (0 em tela cheia) | — | — | — |
-| 2 | Nome `"Agent Box"` | 12/600, altura 24, padding 0×6, margem esq. 2, dir. 4, raio 4, cor `textSecondary`, hover `accent` | Clique: `DSMenuPanel` com `About Agent Box` · `Settings…` · `Check for Problems` · `Hide App Name` (ações em §24). Clique direito: `Hide App Name` | — | `window.appName` |
+| 2 | Nome `"Racky"` | 12/600, altura 24, padding 0×6, margem esq. 2, dir. 4, raio 4, cor `textSecondary`, hover `accent` | Clique: `DSMenuPanel` com `About Racky` · `Settings…` · `Check for Problems` · `Hide App Name` (ações em §24). Clique direito: `Hide App Name` | — | `window.appName` |
 | 3 | Toggle da sidebar | DS §12.2 `titlebar`, `PanelLeft` 16 | Recolhe/expande a sidebar (M-201) | `Toggle Sidebar ⌘B` | `window.sidebarToggle` |
 | 4 | Espaço flexível | — | arrastar | — | — |
 | 4b | Selo `Automation on` | pílula `neutral` 16, só com o canal de automação ligado (AR-806) | Abre Settings › Advanced | `Automation channel is on` | `window.automationBadge` |
@@ -94,15 +94,15 @@ Histórico de navegação (⌥⌘← / ⌥⌘→): registra troca de sessão, de
 ### 1.4 Regiões de erro
 
 Cada região (sidebar, centro, painel direito, status bar) tem um limite de erro: se a view falhar ao montar ou o store dela entrar em erro, a região mostra, centralizado:
-- `"This part of Agent Box hit an error."` (13/500)
+- `"This part of Racky hit an error."` (13/500)
 - `"<one-line error>"` (`small`, `textSecondary`)
 - `[Try Again]` (`outline sm`) `[Copy Details]` (`ghost sm`)
 
 O resto da janela continua funcionando (substitui `.disabled(loadError != nil)` do app atual). `[Try Again]` remonta a região; `[Copy Details]` copia erro, região e versão.
 
 Banner de banco (T2, AR-331), no topo do centro (`window.databaseBanner`, M-904):
-- `Agent Box couldn't read its database. Your terminals are still running.` `[Open Diagnostics]` (abre Settings › Diagnostics na linha Database);
-- `Database was created by a newer Agent Box.` `[Open Diagnostics]`;
+- `Racky couldn't read its database. Your terminals are still running.` `[Open Diagnostics]` (abre Settings › Diagnostics na linha Database);
+- `Database was created by a newer Racky.` `[Open Diagnostics]`;
 - `Restored from the backup of <date>.` `[Reveal Corrupt File]` (✕ dispensa).
 
 IDs: `<region>.errorBoundary`, `<region>.errorBoundary.retry`, `<region>.errorBoundary.copy`.
@@ -517,7 +517,7 @@ Com link sob o cursor, no topo: `Open Link` · `Copy Link`; com caminho de arqui
 | **Exited with error** (código ≠ 0 ou sinal) | Overlay no pane (M-312): escurece 35%, cartão `chrome` 360 centralizado: título `Terminal exited` (16/600), texto `The process ended with exit code <n>. Its output is preserved.` (sinal: `The process was killed (<SIGNAME>). Its output is preserved.`) | `[Close]` (outline) · `[Restart]` (primary) · `[Resume Conversation]` (agentes com ID) — agente com ID: primário = `[Resume Conversation]`, secundários `[Start Fresh]` e `[Close]`; `[Restart]` só aparece sem ID (F30) | `pane.<id>.exitOverlay`, `.restart`, `.close`, `.resume` |
 | **Couldn't start** | Sem terminal. Centro: `AlertCircle` 20 `destructive`, `Couldn't start Claude Code` (16/600), erro em SF Mono 12 `textSecondary` (máx. 6 linhas, rola), M-313 / M-505 | `[Try Again]` · `[Open Agent Settings]` · `[Copy Details]` | `pane.<id>.startError` |
 | **Reattached** (daemon manteve vivo) | Terminal com scrollback; nenhum aviso. Uma vez por abertura do app, toast `Reconnected to <n> running terminals.` | — | — |
-| **Interrupted** (Mac reiniciou / processo morreu fora do app; M-002) | Último scrollback a 50% de opacidade + banner no topo: `This terminal stopped when your Mac restarted.` (ou `This terminal stopped while Agent Box was closed.`, ou `This terminal stopped unexpectedly.`) | Agente com ID: `[Resume]` (primary xs) · `[Start Fresh]`; shell: `[Restart]`; ambos `[Close]` | `pane.<id>.interrupted`, `.resume` |
+| **Interrupted** (Mac reiniciou / processo morreu fora do app; M-002) | Último scrollback a 50% de opacidade + banner no topo: `This terminal stopped when your Mac restarted.` (ou `This terminal stopped while Racky was closed.`, ou `This terminal stopped unexpectedly.`) | Agente com ID: `[Resume]` (primary xs) · `[Start Fresh]`; shell: `[Restart]`; ambos `[Close]` | `pane.<id>.interrupted`, `.resume` |
 | **Background service unavailable** | Terminal congelado + banner `warning`: `Lost connection to the background service. Reconnecting…` (spinner, M-003) | Após 10 s: `[Restart Background Service]` · `[Open Diagnostics]` | `pane.<id>.daemonBanner` |
 | **Background agents stopped** (o serviço caiu e os PTYs morreram, AC-810) | Banner na janela `Background agents stopped unexpectedly.` + cada pane em **Interrupted** | `[Resume Agents…]` (§16.7) · `[Open Diagnostics]` | `window.daemonBanner` |
 | **Closing** (depois de confirmar o fechamento) | Se o processo não sai em 5 s: banner `warning` `The process didn't exit.` | `[Force Quit]` (SIGKILL no grupo) · `[Cancel]` | `pane.<id>.closing.forceQuit` |
@@ -549,7 +549,7 @@ Acontece quando o usuário fecha a última tab, ou quando a sessão foi restaura
 | Dir. | Computers | `Monitor` 12 + `3 computers · 6.1 GB` | Popover 320: lista (nome, sessão, estado, memória) com `Stop` por linha (abre §16.3) + `[Open Computers]` (página §12.3) | `statusBar.computers` |
 | Dir. | Proxy usage | `Proxy $0.42 today` (P13): só aparece quando algum proxy configurado informa uso; sem limites nem cor de alerta (não há teto de orçamento) | Popover: uso por proxy, por sessão e por computador, conforme o provedor informa + `[Proxy Settings]` (Settings › Computers › Proxies) | `statusBar.proxyUsage` |
 | Dir. | Docker | só quando há problema: `Docker isn't running` (`warning`) | `[Start Docker]` no popover | `statusBar.docker` |
-| Dir. | Background | ponto `success` 6 + `Background on`; só aparece quando o app abriu e reencontrou processos vivos no background service (some após 1 h ou no clique) | Popover: `Agents keep running when you quit Agent Box.` + `[Settings]` (Settings › General) | `statusBar.background` |
+| Dir. | Background | ponto `success` 6 + `Background on`; só aparece quando o app abriu e reencontrou processos vivos no background service (some após 1 h ou no clique) | Popover: `Agents keep running when you quit Racky.` + `[Settings]` (Settings › General) | `statusBar.background` |
 
 Segmentos sem dados não aparecem (ex.: sem Codex instalado, sem proxy que informe uso).
 
@@ -794,7 +794,7 @@ Decisão P22 (spec `10-right-panel.md`): o painel direito é um contêiner de m�
 
 ## 11. Viewer de computador
 
-Abre como **tab** (`computer`) na sessão dona; pode ir para janela própria (`Open in New Window`, `WindowGroup(for: ComputerID.self)`, `audit/07 #21`). Uma janela pop-out tem o mesmo layout sem a sidebar, título da janela `<computer> — Agent Box`, mínimo 640×420. Viewer: noVNC em `WKWebView` (T8).
+Abre como **tab** (`computer`) na sessão dona; pode ir para janela própria (`Open in New Window`, `WindowGroup(for: ComputerID.self)`, `audit/07 #21`). Uma janela pop-out tem o mesmo layout sem a sidebar, título da janela `<computer> — Racky`, mínimo 640×420. Viewer: noVNC em `WKWebView` (T8).
 
 ### 11.1 Anatomia
 
@@ -923,7 +923,7 @@ Página do centro. Título `"Library"`. Fonte da verdade são os arquivos nativo
 └────────────────────────────┴───────────────────────────────────────────────┘
 ```
 
-Segmented no header: `Agents` · `Skills` · `Profiles` (lembrado). Lista: busca 28 (`Search agents` / `Search skills` / `Search profiles`) + filtro de fonte `DSCombobox xs` (`All Sources`, `~/.claude`, `~/.codex`, `~/.agents`, `Plugins`, `This Project`, `Agent Box`) com contagem. Linhas 48 (DS §12.8 genérico): ícone/logo 16 + nome 13/500 + descrição `small` (1 linha) + chips de harness (logos 10 dos CLIs que entendem o item).
+Segmented no header: `Agents` · `Skills` · `Profiles` (lembrado). Lista: busca 28 (`Search agents` / `Search skills` / `Search profiles`) + filtro de fonte `DSCombobox xs` (`All Sources`, `~/.claude`, `~/.codex`, `~/.agents`, `Plugins`, `This Project`, `Racky`) com contagem. Linhas 48 (DS §12.8 genérico): ícone/logo 16 + nome 13/500 + descrição `small` (1 linha) + chips de harness (logos 10 dos CLIs que entendem o item).
 
 ### 13.2 Agents
 
@@ -938,7 +938,7 @@ Detalhe:
 
 Detalhe: título, descrição, `Source`, `Files` (lista de arquivos da pasta da skill com tamanho; scripts marcados com `TriangleAlert` `warning` e tooltip `Contains executable scripts`), `Activation` (`Always on (global)` / `On in this session` / `Off`), `Used by`. Ações: `[Enable in This Session]` / `[Disable in This Session]` (só para skills não globais; para globais o botão não aparece e há a linha `Global skills load in every Claude Code session.`), `[Insert in Prompt]` (§8), `[Open in Editor]`, `[Reveal in Finder]`. Conteúdo do `SKILL.md`.
 
-Conflito detectado (R1.6): a skill global `agentbox` aparece com badge `warning` `Conflicts with Agent Box` e ações `[Block in Agent Box]` (padrão; `permissions.deny` por lançamento, nada global muda) · `[Disable Globally…]` (move para backup, confirmação) · `[Keep]`. Texto: `A global "agentbox" skill is installed and may compete with Agent Box tools.`
+Conflito detectado (R1.6): a skill global `agentbox` aparece com badge `warning` `Conflicts with Racky` e ações `[Block in Racky]` (padrão; `permissions.deny` por lançamento, nada global muda) · `[Disable Globally…]` (move para backup, confirmação) · `[Keep]`. Texto: `A global "agentbox" skill is installed and may compete with Racky tools.`
 
 ### 13.4 Profiles
 
@@ -999,7 +999,7 @@ Página da janela inteira (sidebar, centro e painel dão lugar ao Settings; a fa
   - `Status hooks` — `Installed for each launch` (`success`) + `[Show Details]` (popover com eventos suportados pela versão, T10).
   - Ações: `[Log In]` (abre tab com `claude /login` ou `codex login`), `[Check Again]` (refaz a detecção de versão e login).
 - `Watch Claude subagents` — switch, on.
-- `Agent Box skill` — linha de conflito (R1.6) quando aplicável: `A global "agentbox" skill is installed and may compete with Agent Box tools.` `[Block in Agent Box]` (padrão) · `[Disable Globally…]` · `[Keep]`. Depois de `Disable Globally…`: `[Restore Skill]` desfaz a partir do backup.
+- `Racky skill` — linha de conflito (R1.6) quando aplicável: `A global "agentbox" skill is installed and may compete with Racky tools.` `[Block in Racky]` (padrão) · `[Disable Globally…]` · `[Keep]`. Depois de `Disable Globally…`: `[Restore Skill]` desfaz a partir do backup.
 
 `Accounts` (`settings.nav.accounts`)
 - `Claude Code` — `Logged in with Claude.ai (Team)`; sem `[Log Out]` (gerido pelo CLI); `[Open Login in Terminal]`.
@@ -1016,7 +1016,7 @@ Página da janela inteira (sidebar, centro e painel dão lugar ao Settings; a fa
 **WORKSPACE**
 
 `General` (`settings.nav.general`)
-- `Keep agents running when you quit` — switch, on (P4). Ajuda: `Terminals keep running in the background and reappear when you reopen Agent Box.` Se o item de login não foi aprovado: `warning` + `[Allow in Login Items]`.
+- `Keep agents running when you quit` — switch, on (P4). Ajuda: `Terminals keep running in the background and reappear when you reopen Racky.` Se o item de login não foi aprovado: `warning` + `[Allow in Login Items]`.
 - `Show menu bar icon` — `Always` · `When agents are running` (padrão). Não existe `Never` (P4: com o app em modo accessory, o ícone é a única porta de volta).
 - `Ask before quitting with running agents` — switch, on (é o "Don't ask again" do §16.10).
 - `Worktree folder` — caminho + `[Change…]`; padrão `~/AgentBox/worktrees` (P21).
@@ -1075,7 +1075,7 @@ Subseção **Proxies** de `Computers` (P13; `ProxyProfile` de 07 CS-160; deep li
 `Terminal` (`settings.nav.terminal`) — todos os itens de DS §3 com os mesmos padrões: `Font`, `Size`, `Weight`, `Line height`, `Cursor` (`Block` · `Bar` · `Underline` + `Blink`), `Inactive pane opacity`, `Padding`, `Scrollback`, `Option key as Meta` (`Auto`…), `Copy on select`, `Trim trailing whitespace on copy`, `Allow apps to copy to the clipboard (OSC 52)`, `Ask before closing a running terminal`, `Renderer` (`Metal` · `Compatibility`). Preview de 6 linhas com o tema aplicado. `[Reload Shell Environment]` (recaptura o ambiente do shell de login, 06 §1.7; vale para terminais novos).
 
 `Notifications` (`settings.nav.notifications`)
-- Cartão de permissão (quando negada ou não pedida): `Notifications are off for Agent Box.` + `[Open System Settings]` (`audit/07 #39`).
+- Cartão de permissão (quando negada ou não pedida): `Notifications are off for Racky.` + `[Open System Settings]` (`audit/07 #39`).
 - Switches: `Agent needs input` (on) · `Agent finished` (on) · `Agent failed` (on) · `Computer needs you` (on) · `Pull request and checks` (v1.1, on) · `Terminal bell` (off).
 - `Suppress when the session is visible` (on).
 - `Sound` — combobox (`System`, sons do macOS, `None`).
@@ -1095,20 +1095,20 @@ Subseção **Proxies** de `Computers` (P13; `ProxyProfile` de 07 CS-160; deep li
 - `[Run All Checks Again]`.
 
 `Advanced` (`settings.nav.advanced`)
-- `Automation channel (agentbox ctl)` — switch, off (T13); ajuda `Lets scripts and agents drive Agent Box. Off by default.` Enquanto ligado, a faixa da titlebar mostra `Automation on` (AR-806).
+- `Automation channel (agentbox ctl)` — switch, off (T13); ajuda `Lets scripts and agents drive Racky. Off by default.` Enquanto ligado, a faixa da titlebar mostra `Automation on` (AR-806).
 - `Security model` — linha com `[Read]` que abre o texto publicado (AR-501).
 - `Data location` — caminho read-only + `[Reveal]`.
 - `Database` — `[Export Database…]` · `[Restore from Backup…]` (lista de backups com data; confirmação; AR-332).
 - `Show technical details in menus` — switch off (mostra itens ⌥ sem precisar segurar ⌥).
-- `Reset Agent Box…` — destrutivo, confirmação digitando `reset` (apaga banco e configurações do app; nunca pastas de sessão, worktrees nem run folders).
+- `Reset Racky…` — destrutivo, confirmação digitando `reset` (apaga banco e configurações do app; nunca pastas de sessão, worktrees nem run folders).
 
 ---
 
 ## 15. Onboarding (primeira abertura)
 
-Overlay sobre a janela já no visual final (sidebar vazia), **640** de largura (máx. janela − 32), raio 14, padding 24. Não bloqueia: pode ser fechado e reaberto em Settings › Diagnostics ou no menu `Agent Box › Set Up Agent Box…`. Todas as detecções rodam em paralelo ao abrir (R1.1). Motion: M-004.
+Overlay sobre a janela já no visual final (sidebar vazia), **640** de largura (máx. janela − 32), raio 14, padding 24. Não bloqueia: pode ser fechado e reaberto em Settings › Diagnostics ou no menu `Racky › Set Up Racky…`. Todas as detecções rodam em paralelo ao abrir (R1.1). Motion: M-004.
 
-Título `"Set Up Agent Box"` (18/600). Descrição: `Agent Box checks what's on this Mac. Fix what you need now; the rest can wait.`
+Título `"Set Up Racky"` (18/600). Descrição: `Racky checks what's on this Mac. Fix what you need now; the rest can wait.`
 
 **Checklist** (linhas 56, cada uma: ícone de estado 16 [spinner / `CircleCheck` emerald / `TriangleAlert` warning / círculo vazio] + título 13/500 + detalhe `small` + ação à direita):
 
@@ -1121,8 +1121,8 @@ Título `"Set Up Agent Box"` (18/600). Descrição: `Agent Box checks what's on 
 | 5 | `Docker` | `Docker Desktop is installed but not running` / `Running · 16 GB · ≈ 14 headless computers` | `[Start Docker]` (espera o socket, spinner) | `onboarding.item.docker` |
 | 6 | `Computer image` | `Not downloaded · 1.2 GB` / barra com bytes / `Ready` | `[Download]` (continua em segundo plano) | `onboarding.item.image` |
 | 7 | `Notifications` | `So you know when an agent needs you.` | `[Allow]` | `onboarding.item.notifications` |
-| 8 | `Keep agents running` | `Terminals survive quitting Agent Box.` | `[Allow in Login Items]` | `onboarding.item.background` |
-| 9 | `Conflicts` (só se houver) | `A global "agentbox" skill may compete with Agent Box.` · `Codex notify is used by another app (left untouched).` | `[Block in Agent Box]` · `[Disable Globally…]` · `[Keep]` | `onboarding.item.conflicts` |
+| 8 | `Keep agents running` | `Terminals survive quitting Racky.` | `[Allow in Login Items]` | `onboarding.item.background` |
+| 9 | `Conflicts` (só se houver) | `A global "agentbox" skill may compete with Racky.` · `Codex notify is used by another app (left untouched).` | `[Block in Racky]` · `[Disable Globally…]` · `[Keep]` | `onboarding.item.conflicts` |
 
 Itens 5 e 6 são da Fatia 3: antes dela, não renderizam.
 
@@ -1181,7 +1181,7 @@ Fechar vários (Close Other Tabs, fechar sessão com 3 rodando): `Close 3 termin
 
 ### 16.6 Remove project
 
-- Título: `Remove "<project>" from Agent Box?`
+- Título: `Remove "<project>" from Racky?`
 - Texto: `Its <n> sessions are archived. No files, worktrees or branches are deleted.`
 - Botões: `[Cancel]` · `[Remove Project]` (destructive).
 - IDs: `overlay.confirmRemoveProject`, `.cancel`, `.confirm`.
@@ -1240,12 +1240,12 @@ Largura 480. Abre por `Create Pull Request…` (Source Control, menu da sessão,
 ### 16.10 Quit with running agents (⌘Q)
 
 Overlay de confirmação na janela (T5, P15, K-90). **Nunca `NSAlert`.** Se nenhuma janela está aberta (quit pelo Dock ou pela barra de menus), o app abre a janela principal e mostra o overlay nela. Só aparece se há processos de agente vivos e `Ask before quitting with running agents` está ligado.
-- Título: `Quit Agent Box?`
-- Texto: `4 agents are working and 2 computers are running. They keep running in the background and come back when you reopen Agent Box.`
+- Título: `Quit Racky?`
+- Texto: `4 agents are working and 2 computers are running. They keep running in the background and come back when you reopen Racky.`
 - Botões: `[Cancel]` (Esc) · `[Stop All and Quit…]` (abre segunda confirmação: `Stop 4 agents and 2 computers? Unsaved work in those terminals is lost.` `[Cancel]` `[Stop All and Quit]`) · `[Keep Running]` (primary, ↵; fecha a janela e deixa o app em modo accessory, AR-108).
 - Checkbox de supressão: `Don't ask again` (desliga `Ask before quitting with running agents`). Com a opção desligada, ⌘Q faz direto o `Keep Running`.
 - Com `Keep agents running when you quit` desligado, o texto vira `4 agents are working. Quitting stops them.`, o primário vira `[Stop All and Quit]` (destructive) e o padrão (↵) é `Cancel`.
-- `Quit Agent Box Completely` (menu bar, §17) encerra o app e tira o ícone; os agentes seguem no background service.
+- `Quit Racky Completely` (menu bar, §17) encerra o app e tira o ícone; os agentes seguem no background service.
 - IDs: `overlay.confirmQuit`, `.keepRunning`, `.stopAll`, `.cancel`, `.dontAsk`.
 
 ### 16.11 Skip permissions (primeiro uso de um perfil `Skip Permissions` não importado)
@@ -1263,9 +1263,9 @@ Popover ancorado ao botão que disparou (Send Failures, Ask Parent to Relaunch, 
 
 Overlay 448: título `Rename branch "<branch>"?`, input mono com o nome atual, texto `Renames the local branch. The remote branch isn't changed.`, `[Cancel]` · `[Rename Branch]`. Desabilitado (no menu) quando a branch já tem upstream: tooltip `This branch is already pushed.` IDs: `overlay.renameBranch`, `.name`, `.submit`.
 
-### 16.14 About Agent Box
+### 16.14 About Racky
 
-Overlay 448: tile do logo 64, `Agent Box`, versão e build (mono `small`), `Protocol v1 · Schema v<n>`, `[Licenses…]` (lista com Geist/OFL, SwiftTerm, GRDB, noVNC), `[Copy Version Info]`. IDs: `overlay.about`, `.licenses`, `.copy`.
+Overlay 448: tile do logo 64, `Racky`, versão e build (mono `small`), `Protocol v1 · Schema v<n>`, `[Licenses…]` (lista com Geist/OFL, SwiftTerm, GRDB, noVNC), `[Copy Version Info]`. IDs: `overlay.about`, `.licenses`, `.copy`.
 
 ### 16.15 New Batch… (07 CS-324)
 
@@ -1281,7 +1281,7 @@ Overlay 560 aberto pelo menu `File › New Batch…`, pela palette ou pelo `+` d
 
 ## 17. Menu bar extra
 
-Ícone na barra de menus enquanto o app roda (P4; Settings › General › `Show menu bar icon`: `Always` ou `When agents are running`). Depois do ⌘Q (`Keep Running`) o app fica em modo accessory e o ícone continua (AR-108); não há helper de login. `Quit Agent Box Completely` tira o ícone até reabrir. Motion: M-704.
+Ícone na barra de menus enquanto o app roda (P4; Settings › General › `Show menu bar icon`: `Always` ou `When agents are running`). Depois do ⌘Q (`Keep Running`) o app fica em modo accessory e o ícone continua (AR-108); não há helper de login. `Quit Racky Completely` tira o ícone até reabrir. Motion: M-704.
 
 - **Ícone:** template 18×18 (glifo da marca simplificado, monocromático, DS §9.2). Com AttentionItems de prioridade 1–2: número ao lado (`2`, 12/500 monoespaçado, via `button.title`). Com só não lidos: ponto âmbar 4 no canto. Trabalhando sem pendências: glifo normal (sem animação na barra de menus).
 - **Menu** (`NSMenu`):
@@ -1290,10 +1290,10 @@ Overlay 560 aberto pelo menu `File › New Batch…`, pela palette ou pelo `+` d
   - `Working` → até 8 itens; `+3 more…` abre a Inbox.
   - `Computers ▸` submenu com cada computador e estado; `Stop` por computador: v1.1.
   - separador
-  - `Open Agent Box` · `New Session…` (abre a janela e o composer) · `New Clean Session`
+  - `Open Racky` · `New Session…` (abre a janela e o composer) · `New Clean Session`
   - `Pause Notifications for 1 Hour` / `Resume Notifications` (v1.1)
   - separador
-  - `Stop All Agents…` (abre a janela com a confirmação `Stop <n> agents and <m> computers?`) · `Quit Agent Box Completely` (os agentes continuam; o ícone some até reabrir)
+  - `Stop All Agents…` (abre a janela com a confirmação `Stop <n> agents and <m> computers?`) · `Quit Racky Completely` (os agentes continuam; o ícone some até reabrir)
 - IDs: `menuBar.icon`, `menuBar.item.<sessionId>`, `menuBar.open`, `menuBar.newSession`, `menuBar.newCleanSession`, `menuBar.stopAll`, `menuBar.quitCompletely`.
 
 ---
@@ -1302,13 +1302,13 @@ Overlay 560 aberto pelo menu `File › New Batch…`, pela palette ou pelo `+` d
 
 Gerados do `KeyBindingRegistry` e do registro de ações (§24; `audit/07 #13`). Itens da versão atual que não se aplicam ficam desabilitados (nunca escondidos), com o motivo no Help do item; itens de versão futura não aparecem. Cada item tem efeito definido em §24.
 
-**Agent Box**
-- `About Agent Box`
+**Racky**
+- `About Racky`
 - `Settings…` ⌘,
-- `Set Up Agent Box…`
+- `Set Up Racky…`
 - separador · `Services ▸` · separador
-- `Hide Agent Box` ⌘H · `Hide Others` ⌥⌘H · `Show All`
-- `Quit Agent Box` ⌘Q (§16.10)
+- `Hide Racky` ⌘H · `Hide Others` ⌥⌘H · `Show All`
+- `Quit Racky` ⌘Q (§16.10)
 
 **File**
 - `New Session…` ⌘N
@@ -1379,7 +1379,7 @@ Gerados do `KeyBindingRegistry` e do registro de ações (§24; `audit/07 #13`).
 - `Minimize` ⌘M · `Zoom` · separador · `Bring All to Front` · lista de janelas (principal + pop-outs de computador)
 
 **Help**
-- `Agent Box Help` · `Keyboard Shortcuts` ⌘/ · `Run Diagnostics` · `Reveal Logs in Finder` · `Export Diagnostics…`
+- `Racky Help` · `Keyboard Shortcuts` ⌘/ · `Run Diagnostics` · `Reveal Logs in Finder` · `Export Diagnostics…`
 
 Builds de desenvolvimento têm ainda o menu **Debug** com `Motion Lab` ⌃⌥⌘M (04); não existe em release.
 
@@ -1391,7 +1391,7 @@ IDs: os itens de menu recebem `accessibilityIdentifier` `menu.<group>.<action>` 
 
 Quando não há projetos nem sessões (primeiro uso, depois do onboarding pulado). Centro `canvas`, coluna de 400 centralizada vertical e horizontalmente (M-901, só fade):
 1. Tile do logo 64×64, raio 18, fundo `secondary`, glifo da marca 32 `textPrimary`.
-2. `"Agent Box"` (`display` 28/600), margem superior 16.
+2. `"Racky"` (`display` 28/600), margem superior 16.
 3. `Run Claude Code, Codex and OpenCode side by side, each in its own folder.` (`dialogBody` 14 `textSecondary`), margem 8.
 4. Botões (margem 24, gap 8): `[Add Project…]` (primary default) · `[New Clean Session]` (secondary default).
 5. Lista de atalhos (320, margem 32), linhas 24 com label `small` à esquerda e keycaps à direita: `New session` ⌘N · `New clean session` ⇧⌘N · `Jump to…` ⌘J · `Settings` ⌘,.
@@ -1543,7 +1543,7 @@ Atalhos reservados para o terminal (nunca capturados pelo app): ⌃ + letra, ⌥
 ## 23. Checklist de fidelidade visual com o Orca
 
 Gate de toda tarefa visual (P14; citada por 05 AC-T26/AC-T27 e por DS §15). Base: `audit/04 §8`, ampliada. Procedimento:
-1. Capturar o Agent Box com `ctl screenshot` e o Orca 1.4.219 do pacote `docs/rebuild/reference/orca-1.4.219/` com os mesmos fixtures, tema escuro, nos **dois tamanhos: 760×480 e 1440×900**.
+1. Capturar o Racky com `ctl screenshot` e o Orca 1.4.219 do pacote `docs/rebuild/reference/orca-1.4.219/` com os mesmos fixtures, tema escuro, nos **dois tamanhos: 760×480 e 1440×900**.
 2. `scripts/compare-ui.sh <tela>` monta o lado a lado e o diff de sobreposição em `docs/evidence/ui/<tarefa>/`.
 3. Cada item abaixo passa, ou a divergência fica justificada nesta spec (motivo de produto escrito). Os itens de geometria também viram `LayoutConformanceTests` (medição de frames via `ctl ui tree`).
 4. O dono dá o OK explícito no lado a lado. Sem OK, a tarefa não fecha.
@@ -1596,21 +1596,21 @@ Toda interação da UI é uma ação do registro (`ActionRegistry`: `ActionID` �
 
 | Ação | ActionID | Atalho | Efeito | Desabilitado (tooltip) | Versão | Teste (XCUITest) |
 |---|---|---|---|---|---|---|
-| About Agent Box | `app.about` | — | Overlay §16.14 | — | v1 | `testAction_app_about` |
+| About Racky | `app.about` | — | Overlay §16.14 | — | v1 | `testAction_app_about` |
 | Settings… | `app.settings` | ⌘, | Abre Settings na última seção | — | v1 | `testAction_app_settings` |
-| Set Up Agent Box… / Run Diagnostics | `app.setup` | — | Abre o onboarding (§15); `Run Diagnostics` abre Settings › Diagnostics e roda as checagens | — | v1 | `testAction_app_setup` |
+| Set Up Racky… / Run Diagnostics | `app.setup` | — | Abre o onboarding (§15); `Run Diagnostics` abre Settings › Diagnostics e roda as checagens | — | v1 | `testAction_app_setup` |
 | Check for Problems | `app.checkProblems` | — | Abre Settings › Diagnostics e roda `Run All Checks Again` | — | v1 | `testAction_app_checkProblems` |
 | Hide App Name | `app.hideAppName` | — | Esconde o nome na faixa da titlebar; volta em Settings › Appearance | — | v1 | `testAction_app_hideAppName` |
-| Quit Agent Box | `app.quit` | ⌘Q | §16.10 | — | v1 | `testAction_app_quit` |
-| Quit Agent Box Completely | `app.quitCompletely` | — | Encerra o app e o ícone; agentes seguem no background service | — | v1 | `testAction_app_quitCompletely` |
-| Open Agent Box (barra de menus) | `app.openMainWindow` | — | Sai do modo accessory e traz a janela principal (T1-24) | — | v1 | `testAction_app_openMainWindow` |
+| Quit Racky | `app.quit` | ⌘Q | §16.10 | — | v1 | `testAction_app_quit` |
+| Quit Racky Completely | `app.quitCompletely` | — | Encerra o app e o ícone; agentes seguem no background service | — | v1 | `testAction_app_quitCompletely` |
+| Open Racky (barra de menus) | `app.openMainWindow` | — | Sai do modo accessory e traz a janela principal (T1-24) | — | v1 | `testAction_app_openMainWindow` |
 | Stop All Agents… (barra de menus) | `app.stopAllAgents` | — | Abre a janela com a confirmação `Stop <n> agents?` (§16.10, segunda confirmação) | Sem agentes vivos: `No agents are running.` | v1 | `testAction_app_stopAllAgents` |
 | Toggle Sidebar / Right Panel | `view.toggleSidebar` / `view.toggleRightPanel` | ⌘B / ⌘L (Fatia 2) | Recolhe/expande (M-201 / M-108) | Right Panel com página aberta: `Close the page first.` | v1 (Toggle Sidebar: Fatia 1; Toggle Right Panel: Fatia 2, o painel direito é oculto na Fatia 1 e o controle não existe) | `testAction_view_toggleSidebar` · `testAction_view_toggleRightPanel` |
 | Show Status Bar | `view.toggleStatusBar` | — | Mostra/esconde a status bar (também `Hide Status Bar` no menu dela) | — | v1 | `testAction_view_toggleStatusBar` |
 | Back / Forward | `nav.back` / `nav.forward` | ⌥⌘← / ⌥⌘→ | Navega no histórico (§0) | `No earlier page` / `No later page` | v1 | `testAction_nav_back` · `testAction_nav_forward` |
 | Bigger / Smaller / Actual Size | `terminal.fontBigger` / `.fontSmaller` / `.fontReset` | ⌘= / ⌘- / ⌘0 | Fonte do pane focado | Sem terminal focado: `Interface zoom isn't available yet.` | v1 | `testAction_terminal_fontBigger` · `testAction_terminal_fontSmaller` · `testAction_terminal_fontReset` |
 | Hide from Sidebar | `sidebar.hideNavItem` | — | Esconde o item de nav | — | v1 | `testAction_sidebar_hideNavItem` |
-| Agent Box Help | `help.open` | — | Abre no navegador a página de ajuda empacotada (`Help/index.html`: atalhos, modelo de segurança, links) | — | v1 | `testAction_help_open` |
+| Racky Help | `help.open` | — | Abre no navegador a página de ajuda empacotada (`Help/index.html`: atalhos, modelo de segurança, links) | — | v1 | `testAction_help_open` |
 | Keyboard Shortcuts | `help.shortcuts` | ⌘/ | Settings › Shortcuts | — | v1 | `testAction_help_shortcuts` |
 | Reveal Logs in Finder | `help.revealLogs` | — | Mostra a pasta de logs | — | v1 | `testAction_help_revealLogs` |
 | Export Diagnostics… | `help.exportDiagnostics` | — | Lista de arquivos e salva o .zip redigido (AR-603) | — | v1 | `testAction_help_exportDiagnostics` |
@@ -1760,14 +1760,14 @@ Toda interação da UI é uma ação do registro (`ActionRegistry`: `ActionID` �
 | Allow Notifications | `notifications.request` | — | Pede a permissão de notificações ao sistema (só por este clique; Settings › Notifications e onboarding) | Já concedida: `Notifications are on.` | v1 (Fatia 2) | `testAction_notifications_request` |
 | Open System Settings | `app.openSystemSettings` | — | `select(notifications)`: abre System Settings › Notifications | — | v1 (Fatia 2) | `testAction_app_openSystemSettings` |
 | Open (notificação) | `notification.open` | — | Ativa o app e seleciona sessão/pane/viewer com rim flash | — | v1 | `testAction_notification_open` |
-| Send Test Notification | `settings.testNotification` | — | Envia uma notificação de exemplo | Permissão negada: `Notifications are off for Agent Box.` | v1 | `testAction_settings_testNotification` |
+| Send Test Notification | `settings.testNotification` | — | Envia uma notificação de exemplo | Permissão negada: `Notifications are off for Racky.` | v1 | `testAction_settings_testNotification` |
 | Pause / Resume Notifications for 1 Hour | `notifications.pause` | — | Silencia notificações do sistema por 1 h | — | v1.1 | `testAction_notifications_pause` |
 | Library: New Session with Agent / Profile | `library.newSessionWith` | — | Composer com agente (`--agent`) ou perfil | — | v1 (Fatia 4) | `testAction_library_newSessionWith` |
 | Library: Enable / Disable in This Session | `library.toggleInSession` | — | Ativação aditiva, vale no próximo lançamento | Sem sessão: `Select a session first.` | v1 (Fatia 4) | `testAction_library_toggleInSession` |
 | Library: Open in Editor / Reveal in Finder | `library.openInEditor` / `library.reveal` | — | Abre o arquivo | — | v1 | `testAction_library_openInEditor` · `testAction_library_reveal` |
 | Library: New Profile / Duplicate / Delete… | `profile.new` / `.duplicate` / `.delete` | — | Cria / copia / apaga perfil | Último perfil: `An agent needs at least one profile.` | v1 | `testAction_profile_new` · `testAction_profile_duplicate` · `testAction_profile_delete` |
 | Library: New Agent… / Import Skill Folder… / Edit | `library.newAgent` / `.importSkill` / `.edit` | — | Criar e editar com backup | — | v1.1 | `testAction_library_newAgent` · `testAction_library_importSkill` · `testAction_library_edit` |
-| Block in Agent Box / Disable Globally… / Keep / Restore Skill | `conflict.block` / `.disableGlobal` / `.keep` / `.restore` | — | Deny por lançamento / move a skill global para backup com confirmação / nada / desfaz | — | v1 | `testAction_conflict_block` · `testAction_conflict_disableGlobal` · `testAction_conflict_keep` · `testAction_conflict_restore` |
+| Block in Racky / Disable Globally… / Keep / Restore Skill | `conflict.block` / `.disableGlobal` / `.keep` / `.restore` | — | Deny por lançamento / move a skill global para backup com confirmação / nada / desfaz | — | v1 | `testAction_conflict_block` · `testAction_conflict_disableGlobal` · `testAction_conflict_keep` · `testAction_conflict_restore` |
 
 ### 24.5 Computadores e lotes
 
@@ -1802,7 +1802,7 @@ Toda interação da UI é uma ação do registro (`ActionRegistry`: `ActionID` �
 
 ### 24.6 Settings e onboarding
 
-Cada controle de §14 é uma ação `settings.<section>.<key>` que grava o valor (regra de §14.1). Botões próprios: `Change…` (`settings.pickPath`), `Detect Again` / `Check Again` (`agent.detect`), `Edit Profiles…` (`library.profiles`), `Show Details` (`agent.hookDetails`), `Allow in Login Items` (`app.allowLoginItem`, abre System Settings › Login Items), `Open System Settings` (`app.openSystemSettings`), `Reset` "Don't ask again" (`settings.resetConfirmations`), `Reveal Keybindings File` (`settings.revealKeybindings`), `Back Up Now` (`db.backup`), `Export Database…` (`db.export`), `Restore from Backup…` (`db.restore`), `Reload Shell Environment` (`terminal.reloadEnv`), `Read` security model (`help.securityModel`), `Reset Agent Box…` (`app.reset`, confirmação digitando `reset`), `Add Credential` / `Import .env File…` / `Reveal` / `Edit` / `Delete…` (`credential.*`, Reveal pede Touch ID). Onboarding: `Log In` (`account.logIn`), `Install…` (`agent.installHelp`), `Start Docker`, `Download`, `Allow` (`notifications.request`), `Skip for Now` / `Done` (`onboarding.skip` / `onboarding.done`). Nenhum desses fica sem efeito: quando a pré-condição falta, o botão fica desabilitado com o motivo em uma linha.
+Cada controle de §14 é uma ação `settings.<section>.<key>` que grava o valor (regra de §14.1). Botões próprios: `Change…` (`settings.pickPath`), `Detect Again` / `Check Again` (`agent.detect`), `Edit Profiles…` (`library.profiles`), `Show Details` (`agent.hookDetails`), `Allow in Login Items` (`app.allowLoginItem`, abre System Settings › Login Items), `Open System Settings` (`app.openSystemSettings`), `Reset` "Don't ask again" (`settings.resetConfirmations`), `Reveal Keybindings File` (`settings.revealKeybindings`), `Back Up Now` (`db.backup`), `Export Database…` (`db.export`), `Restore from Backup…` (`db.restore`), `Reload Shell Environment` (`terminal.reloadEnv`), `Read` security model (`help.securityModel`), `Reset Racky…` (`app.reset`, confirmação digitando `reset`), `Add Credential` / `Import .env File…` / `Reveal` / `Edit` / `Delete…` (`credential.*`, Reveal pede Touch ID). Onboarding: `Log In` (`account.logIn`), `Install…` (`agent.installHelp`), `Start Docker`, `Download`, `Allow` (`notifications.request`), `Skip for Now` / `Done` (`onboarding.skip` / `onboarding.done`). Nenhum desses fica sem efeito: quando a pré-condição falta, o botão fica desabilitado com o motivo em uma linha.
 
 Chaves da Fatia 1 (T1-26). Todas gravam pela regra de §14.1 (switch, segmented, combobox e stepper na hora; texto no ↵ ou blur; debounce de 300 ms no Store). `set(on/off)` liga e desliga; `select(<valor>)` escolhe; `set(<texto>)` grava texto. Controles de seções de fatias futuras não existem na UI da Fatia 1 (AC-T28).
 
@@ -1813,7 +1813,7 @@ Chaves da Fatia 1 (T1-26). Todas gravam pela regra de §14.1 (switch, segmented,
 | Keep agents running when you quit | `settings.general.keepAgentsRunning` | — | `set(on/off)` | — | v1 | `testAction_settings_general_keepAgentsRunning` |
 | Allow in Login Items | `settings.general.allowLoginItems` | — | Abre Ajustes do Sistema › Itens de Início (só por clique; só visível com `Background agents need approval`) | — | v1 | `testAction_settings_general_allowLoginItems` |
 | Ask before quitting with running agents | `settings.general.askBeforeQuit` | — | `set(on/off)` | — | v1 | `testAction_settings_general_askBeforeQuit` |
-| Resume agents automatically when Agent Box opens | `settings.general.resumeAgentsOnOpen` | — | `set(on/off)` (padrão ligado, P25) | — | v1 | `testAction_settings_general_resumeAgentsOnOpen` |
+| Resume agents automatically when Racky opens | `settings.general.resumeAgentsOnOpen` | — | `set(on/off)` (padrão ligado, P25) | — | v1 | `testAction_settings_general_resumeAgentsOnOpen` |
 | Confirm before closing a running terminal | `settings.general.confirmCloseTerminal` | — | `set(on/off)` | — | v1 | `testAction_settings_general_confirmCloseTerminal` |
 | Confirm before deleting a session | `settings.general.confirmDeleteSession` | — | `set(on/off)` | — | v1 | `testAction_settings_general_confirmDeleteSession` |
 | Branch prefix | `settings.general.branchPrefix` / `settings.general.branchPrefixCustom` | — | `select(gitUser/custom/none)` / `set(<texto>)` | Custom: só com `Custom` escolhido | v1 | `testAction_settings_general_branchPrefix` · `testAction_settings_general_branchPrefixCustom` |

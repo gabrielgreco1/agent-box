@@ -12,20 +12,20 @@ struct GeneralSettingsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: SettingsMetrics.sectionGap) {
             SettingsBlock(title: "Background") {
-                switchRow("Keep agents running when you quit", help: "Terminals keep running and come back when you reopen Agent Box.",
+                switchRow("Keep agents running when you quit", help: "Terminals keep running and come back when you reopen Racky.",
                           key: "keepAgentsRunning", isOn: general.keepAgentsRunning, action: .settingsGeneralKeepAgentsRunning)
                 if model.backgroundNeedsApproval {
                     SettingsRow(
                         title: "Background agents need approval",
-                        help: "Allow Agent Box in Login Items so your agents keep running after you quit. Until then they keep running only while this Mac session lasts.") {
+                        help: "Allow Racky in Login Items so your agents keep running after you quit. Until then they keep running only while this Mac session lasts.") {
                         DSButton(
                             .settingsGeneralAllowLoginItems, id: .settings("general", "allowLoginItems"), "Allow in Login Items", variant: .outline)
                     }
                 }
                 switchRow("Ask before quitting with running agents", help: nil,
                           key: "askBeforeQuit", isOn: general.askBeforeQuit, action: .settingsGeneralAskBeforeQuit)
-                switchRow("Resume agents automatically when Agent Box opens",
-                          help: "Agents that stopped while Agent Box was closed or your Mac restarted continue their conversation.",
+                switchRow("Resume agents automatically when Racky opens",
+                          help: "Agents that stopped while Racky was closed or your Mac restarted continue their conversation.",
                           key: "resumeAgentsOnOpen", isOn: general.resumeAgentsOnOpen, action: .settingsGeneralResumeAgentsOnOpen)
             }
             SettingsBlock(title: "Folders") {

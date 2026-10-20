@@ -80,7 +80,7 @@ final class FakeBundle {
     let state: URL
 
     init(withPlist: Bool = true, identity: BackgroundAgentIdentity = .production()) throws {
-        root = URL(fileURLWithPath: "/tmp/abb-\(UInt32.random(in: 0 ... 0xFFFFFF))/Agent Box.app", isDirectory: true)
+        root = URL(fileURLWithPath: "/tmp/abb-\(UInt32.random(in: 0 ... 0xFFFFFF))/Racky.app", isDirectory: true)
         let macOS = root.appendingPathComponent("Contents/MacOS")
         let agents = root.appendingPathComponent("Contents/Library/LaunchAgents")
         try FileManager.default.createDirectory(at: macOS, withIntermediateDirectories: true)

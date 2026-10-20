@@ -15,7 +15,7 @@ struct CleanFolderPicker: FolderPicking {
     func chooseFolder() async -> URL? {
         await base().chooseFolder(
             title: String(localized: "New Clean Session in Folder", bundle: .module),
-            message: String(localized: "Pick the folder the session works in. Agent Box won't create or delete anything in it.", bundle: .module),
+            message: String(localized: "Pick the folder the session works in. Racky won't create or delete anything in it.", bundle: .module),
             prompt: String(localized: "Start Session", bundle: .module))
     }
 }

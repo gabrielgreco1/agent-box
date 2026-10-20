@@ -274,7 +274,7 @@ import Testing
         #expect(env.settings.section == "notifications" && env.settings.notificationAuthorization == .notDetermined)
         #expect(notifier.requestCount == 0, "abrir a seção só lê o estado")
         // Teste de notificação desabilitado até a permissão, com o motivo exato.
-        #expect(env.registry.availability(of: .settingsTestNotification) == .disabled(reason: "Notifications are off for Agent Box."))
+        #expect(env.registry.availability(of: .settingsTestNotification) == .disabled(reason: "Notifications are off for Racky."))
         _ = try await env.registry.perform(.settingsNotificationsTerminalBell, .set("on"))
         _ = try await env.registry.perform(.settingsNotificationsNeedsInput, .set("off"))
         _ = try await env.registry.perform(.settingsNotificationsSound, .select("none"))

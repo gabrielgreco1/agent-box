@@ -12,7 +12,7 @@ import Foundation
 /// (`app_unavailable`) em vez de sair com código de erro.
 struct McpCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
-        commandName: "mcp", abstract: "MCP stdio server for a child agent's computer tools (talks to the Agent Box app).")
+        commandName: "mcp", abstract: "MCP stdio server for a child agent's computer tools (talks to the Racky app).")
 
     @Option(name: .long, help: "Child id registered by the app at launch.")
     var child: String
@@ -102,7 +102,7 @@ struct McpHelper: Sendable {
             } catch let error as McpHelperError {
                 return expectsReply ? Self.failure(object, message: error.message) : nil
             } catch {
-                return expectsReply ? Self.failure(object, message: "Agent Box connection failed: \(error)") : nil
+                return expectsReply ? Self.failure(object, message: "Racky connection failed: \(error)") : nil
             }
         }
         return expectsReply ? Self.unavailable(for: object) : nil
@@ -147,9 +147,9 @@ struct McpHelper: Sendable {
 
     /// Erro de FERRAMENTA legível (não deixa o CLI marcar o servidor como quebrado): `{error, message, retry_after_s}`.
     static func unavailable(for object: [String: Any]?) -> Data {
-        let body: [String: Any] = ["error": "app_unavailable", "message": "Agent Box is not running; retrying", "retry_after_s": 5]
+        let body: [String: Any] = ["error": "app_unavailable", "message": "Racky is not running; retrying", "retry_after_s": 5]
         guard (object?["method"] as? String) == "tools/call" else {
-            return encode(["jsonrpc": "2.0", "id": requestID(object), "error": ["code": -32000, "message": "Agent Box is not running; retrying"]])
+            return encode(["jsonrpc": "2.0", "id": requestID(object), "error": ["code": -32000, "message": "Racky is not running; retrying"]])
         }
         let text = String(decoding: encode(body), as: UTF8.self)
         return encode(["jsonrpc": "2.0", "id": requestID(object), "result": ["isError": true, "content": [["type": "text", "text": text]]]])
@@ -172,10 +172,10 @@ enum McpHelperError: Error, Equatable {
 
     var message: String {
         switch self {
-        case .appNotListening: "Agent Box is not running; retrying"
-        case .refused(let m): "Agent Box refused the connection: \(m)"
-        case .timeout: "Agent Box did not answer in time"
-        case .interrupted: "Agent Box restarted during this call; check the computer's state (box_status) and retry"
+        case .appNotListening: "Racky is not running; retrying"
+        case .refused(let m): "Racky refused the connection: \(m)"
+        case .timeout: "Racky did not answer in time"
+        case .interrupted: "Racky restarted during this call; check the computer's state (box_status) and retry"
         }
     }
 }

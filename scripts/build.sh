@@ -11,7 +11,7 @@
 #   Assinatura: com a identidade local, designated requirement = identifier "<id>" and certificate leaf = H"<sha1>".
 #             Sem a identidade (make-dev-cert.sh ainda não rodado) cai para ad-hoc ("-"), com AVISO; o DR é
 #             então cdhash e muda a cada build (perde ACL do Keychain/TCC; ver 08 AR-530).
-#   Saída   : "<AGENTBOX_BUILD_DIR>/Agent Box.app" verificado com codesign --verify --strict; exit != 0 em falha.
+#   Saída   : "<AGENTBOX_BUILD_DIR>/Racky.app" verificado com codesign --verify --strict; exit != 0 em falha.
 # Uso: scripts/build.sh [--help]
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -21,7 +21,7 @@ fail() { echo "ERRO: $*" >&2; exit 1; }
 
 export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
 OUT="${AGENTBOX_BUILD_DIR:-$ROOT/build/AgentBox}"
-APP="$OUT/Agent Box.app"
+APP="$OUT/Racky.app"
 DD="$OUT/DerivedData"
 IDENT_NAME="${AGENTBOX_SIGN_IDENTITY:-Agent Box Local Signing}"
 cd "$ROOT"
@@ -71,8 +71,8 @@ done
 BIN="$(swift build -c release --package-path Packages/AgentBoxKit --show-bin-path)"
 
 rm -rf "$APP"
-ditto "$DD/Build/Products/Release/Agent Box.app" "$APP"
-# APFS é case-insensitive: o executável do app ("Agent Box") não pode colidir com o helper "agentbox".
+ditto "$DD/Build/Products/Release/Racky.app" "$APP"
+# APFS é case-insensitive: o executável do app ("Racky") não pode colidir com o helper "agentbox".
 [ ! -e "$APP/Contents/MacOS/agentbox" ] || fail "Contents/MacOS/agentbox já existe antes de embutir o helper (colisão de nome com o executável do app)"
 install -m 755 "$BIN/agentbox" "$APP/Contents/MacOS/agentbox"
 install -m 755 "$BIN/agentboxd" "$APP/Contents/MacOS/agentboxd"
@@ -131,5 +131,5 @@ LSREG=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchService
 "$LSREG" -f "$APP" >/dev/null 2>&1 || true
 # A cópia intermediária do xcodebuild tem o mesmo bundle id: sem tirá-la do LaunchServices, o Dock pode abrir ela (fora do lugar,
 # sem achar o daemon: "The background service isn't running").
-"$LSREG" -u "$DD/Build/Products/Release/Agent Box.app" >/dev/null 2>&1 || true
+"$LSREG" -u "$DD/Build/Products/Release/Racky.app" >/dev/null 2>&1 || true
 echo "build: OK -> $APP"

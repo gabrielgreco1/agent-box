@@ -160,7 +160,7 @@ import Testing
 
     @Test func responseRoundTripWithTreeAndScreenshot() throws {
         let node = UITreeNode(
-            id: .windowMain, kind: "window", label: "Agent Box", enabled: false, disabledReason: "why", action: .appQuit,
+            id: .windowMain, kind: "window", label: "Racky", enabled: false, disabledReason: "why", action: .appQuit,
             frame: UIFrame(x: 0, y: 0, width: 10, height: 20),
             children: [UITreeNode(id: .windowTitlebar, kind: "container")])
         let res = CtlResponse(

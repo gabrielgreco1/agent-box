@@ -59,18 +59,18 @@ actor FakeDispatcher: ActionDispatching {
 
     func appState() async -> AppStateSnapshot {
         AppStateSnapshot(
-            app: "Agent Box", version: "test", pid: 1, slice: .slice1, fixture: nil, automation: true, window: tree.window,
+            app: "Racky", version: "test", pid: 1, slice: .slice1, fixture: nil, automation: true, window: tree.window,
             registeredActions: [.sessionNew], visibleControls: tree.flattened().count)
     }
 }
 
 private let sampleTree = UITreeSnapshot(
-    window: UIWindowInfo(title: "Agent Box", width: 1440, height: 900, scale: 2, isKey: true),
+    window: UIWindowInfo(title: "Racky", width: 1440, height: 900, scale: 2, isKey: true),
     roots: [
         UITreeNode(
             id: .windowMain, kind: "window", children: [
                 UITreeNode(id: .windowTitlebar, kind: "container", children: [
-                    UITreeNode(id: .windowAppName, kind: "text", label: "Agent Box"),
+                    UITreeNode(id: .windowAppName, kind: "text", label: "Racky"),
                     UITreeNode(id: .tabsNew, kind: "button", label: "New Tab", action: .sessionNew),
                 ])
             ])
@@ -113,7 +113,7 @@ private func ctl(_ path: String, _ request: CtlRequest, service: AppSockService 
         try await withServer { path, _ in
             let (hello, res) = try await ctl(path, CtlRequest(command: .state))
             #expect(hello.ok)
-            #expect(res?.state?.app == "Agent Box")
+            #expect(res?.state?.app == "Racky")
             #expect(res?.state?.registeredActions == [.sessionNew])
         }
     }
@@ -156,7 +156,7 @@ private func ctl(_ path: String, _ request: CtlRequest, service: AppSockService 
     @Test func uiTreeWholeAndSubtree() async throws {
         try await withServer { path, _ in
             let whole = try await ctl(path, CtlRequest(command: .uiTree)).response
-            #expect(whole?.tree?.find(.windowAppName)?.label == "Agent Box")
+            #expect(whole?.tree?.find(.windowAppName)?.label == "Racky")
             #expect(whole?.tree?.window?.width == 1440)
             let sub = try await ctl(path, CtlRequest(command: .uiTree, root: .windowTitlebar)).response
             #expect(sub?.tree?.roots.first?.id == .windowTitlebar)

@@ -1,6 +1,6 @@
 import Foundation
 
-/// Ponteiro `bin/agentboxd-current` do home do Agent Box (F30): diz ao launcher (`agentboxd-launch`) qual `agentboxd` executar.
+/// Ponteiro `bin/agentboxd-current` do home do Racky (F30): diz ao launcher (`agentboxd-launch`) qual `agentboxd` executar.
 /// O launcher registrado no launchd é um só; o app instalado mais novo (maior build) atualiza o ponteiro, e abrir um app de
 /// outra pasta com build menor ou igual nunca troca o daemon que o launchd sobe.
 public struct DaemonPointer: Equatable, Sendable {

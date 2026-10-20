@@ -19,7 +19,7 @@ struct AppMenuSpec {
 /// Quais menus existem e o que há em cada um (03 §18). O atalho de cada item vem do `KeyBindingRegistry`,
 /// nunca daqui: a tabela canônica (§21) é a fonte única.
 enum MenuLayout {
-    static let appMenu = "Agent Box"
+    static let appMenu = "Racky"
 
     static func menus() -> [AppMenuSpec] {
         let sessionSelect: [ActionID] = [
@@ -33,18 +33,18 @@ enum MenuLayout {
             AppMenuSpec(
                 title: appMenu,
                 entries: [
-                    .action(.appAbout, title: "About Agent Box"),
+                    .action(.appAbout, title: "About Racky"),
                     .separator,
                     .action(.appSettings, title: "Settings…"),
-                    .action(.appSetup, title: "Set Up Agent Box…"),
+                    .action(.appSetup, title: "Set Up Racky…"),
                     .separator,
                     .system(title: "Services", selector: "services"),
                     .separator,
-                    .action(.appHideAppName, title: "Hide Agent Box"),
+                    .action(.appHideAppName, title: "Hide Racky"),
                     .system(title: "Hide Others", selector: "hideOtherApplications:", chord: "⌥⌘H"),
                     .system(title: "Show All", selector: "unhideAllApplications:"),
                     .separator,
-                    .action(.appQuit, title: "Quit Agent Box"),
+                    .action(.appQuit, title: "Quit Racky"),
                 ]),
             AppMenuSpec(
                 title: "File",
@@ -189,7 +189,7 @@ enum MenuLayout {
             AppMenuSpec(
                 title: "Help",
                 entries: [
-                    .action(.helpOpen, title: "Agent Box Help"),
+                    .action(.helpOpen, title: "Racky Help"),
                     .action(.helpShortcuts, title: "Keyboard Shortcuts"),
                     .action(.appSetup, title: "Run Diagnostics"),
                     .action(.helpRevealLogs, title: "Reveal Logs in Finder"),

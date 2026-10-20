@@ -47,8 +47,8 @@ public enum StoreNotice: Sendable, Equatable {
         case .restoredFromBackup(let date, _):
             "Restored from the backup of \(date.formatted(.dateTime.year().month(.wide).day().locale(Locale(identifier: "en_US"))))."
         case .recoveredEmpty: "The database was damaged and no backup was available. Started with an empty workspace."
-        case .newerDatabase: "Database was created by a newer Agent Box"
-        case .migrationFailed: "The database could not be upgraded. Agent Box is running in read-only mode."
+        case .newerDatabase: "Database was created by a newer Racky"
+        case .migrationFailed: "The database could not be upgraded. Racky is running in read-only mode."
         case .runtimeCorruption: "The database was damaged while running. Changes are not being saved."
         }
     }

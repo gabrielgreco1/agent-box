@@ -673,7 +673,7 @@ public final class AppEnvironment {
         }
     }
 
-    /// P25: com "Resume agents automatically when Agent Box opens" ligado (padrão), relança em silêncio os agentes que morreram
+    /// P25: com "Resume agents automatically when Racky opens" ligado (padrão), relança em silêncio os agentes que morreram
     /// com o app fechado ou no reinício do Mac, e avisa com um toast. Desligado: o banner da sessão oferece "Resume All".
     private func resumeAfterRestore() async {
         guard let report = restoreReport else { return }
