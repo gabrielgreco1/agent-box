@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "version": "unpublished",
+  "comment": "Manifesto dos arquivos do runtime sem Docker (docs/rebuild/vz-runtime.md). Os valores abaixo sao PLACEHOLDERS: nada foi publicado ainda. Depois de publicar (scripts/vz/publish-assets.sh imprime os comandos), troque cada url e sha256 pelos reais. Em desenvolvimento, aponte RACKY_VZ_MANIFEST para o manifesto local gerado por scripts/vz/build-image.sh.",
+  "kernel": {
+    "url": "https://PLACEHOLDER.invalid/racky-vz/vmlinux",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "size": null,
+    "license": "GPL-2.0-only",
+    "sourceURL": "https://github.com/kata-containers/kata-containers/tree/3.32.0/tools/packaging/kernel"
+  },
+  "vminit": {
+    "url": "https://PLACEHOLDER.invalid/racky-vz/vminit.oci.tar",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "size": null,
+    "reference": "ghcr.io/apple/containerization/vminit:0.52.1"
+  },
+  "computer": {
+    "url": "https://PLACEHOLDER.invalid/racky-vz/computer.oci.tar",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "size": null,
+    "reference": "racky-computer:vz"
+  }
+}
