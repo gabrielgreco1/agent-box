@@ -6,15 +6,16 @@ import Foundation
 import Observation
 import SwiftUI
 
-/// Segmentos da status bar que o usuário pode ligar e desligar (03 §5). `agents` e `background` entram quando o Inbox e o
-/// background service chegarem à barra; aqui ficam os que a Fatia 4 entrega.
+/// Segmentos da status bar que o usuário pode ligar e desligar (03 §5). `background` entra quando o background service
+/// chegar à barra; `agents` abre o Inbox em vez de um popover.
 enum StatusBarSegment: String, CaseIterable, Sendable {
-    case claude, codex, computers, proxyUsage, docker
+    case claude, codex, agents, computers, proxyUsage, docker
 
     var a11yID: A11yID {
         switch self {
         case .claude: .statusBarUsageClaude
         case .codex: .statusBarUsageCodex
+        case .agents: .statusBarAgents
         case .computers: .statusBarComputers
         case .proxyUsage: .statusBarProxyUsage
         case .docker: .statusBarDocker
@@ -25,6 +26,7 @@ enum StatusBarSegment: String, CaseIterable, Sendable {
         switch self {
         case .claude: String(localized: "Claude usage", bundle: .module)
         case .codex: String(localized: "Codex usage", bundle: .module)
+        case .agents: String(localized: "Agents", bundle: .module)
         case .computers: String(localized: "Computers", bundle: .module)
         case .proxyUsage: String(localized: "Proxy usage", bundle: .module)
         case .docker: String(localized: "Docker", bundle: .module)
@@ -56,6 +58,8 @@ final class StatusBarController {
     @ObservationIgnored private let elements: UIElementStore
     @ObservationIgnored private let flags: SliceFlags
     @ObservationIgnored var dockerStopped: @MainActor () -> Bool = { false }
+    /// Resumo dos agentes (trabalhando / pedindo você), calculado na leitura a partir da fila de atenção; ligado no `AppEnvironment`.
+    @ObservationIgnored var agentsSource: @MainActor () -> StatusBarAgents? = { nil }
     @ObservationIgnored var startDocker: @MainActor () -> Void = {}
     @ObservationIgnored var now: @MainActor () -> Date = { Date() }
     @ObservationIgnored var calendar = Calendar.current
@@ -89,12 +93,16 @@ final class StatusBarController {
     var availableInSlice: Bool { flags.isEnabled(.slice4) || !flags.restricted }
     var isShown: Bool { availableInSlice && !hidden }
 
+    /// Lido direto da fila de atenção (observável), sem cópia: a barra acompanha o Inbox.
+    var agents: StatusBarAgents? { agentsSource() }
+
     func isOn(_ segment: StatusBarSegment) -> Bool { !hiddenSegments.contains(segment.rawValue) }
 
     func hasData(_ segment: StatusBarSegment) -> Bool {
         switch segment {
         case .claude: content.claude != nil
         case .codex: content.codex != nil
+        case .agents: agents != nil
         case .computers: content.computers != nil
         case .proxyUsage: content.proxy != nil
         case .docker: content.dockerProblem
@@ -195,7 +203,7 @@ final class StatusBarController {
         }
         func segment(_ arg: ActionArgument, _ id: ActionID) throws -> StatusBarSegment {
             guard arg.kind == .select, let raw = arg.value, let seg = StatusBarSegment(rawValue: raw) else {
-                throw ActionError.failed(id, message: "expected select(claude|codex|computers|proxyUsage|docker)")
+                throw ActionError.failed(id, message: "expected select(claude|codex|agents|computers|proxyUsage|docker)")
             }
             return seg
         }
@@ -204,6 +212,8 @@ final class StatusBarController {
             enablement: { [unowned self] in isShown ? .enabled : .disabled(reason: String(localized: "The status bar is hidden.", bundle: .module)) }
         ) { [unowned self] arg in
             let seg = try segment(arg, .statusBarOpenSegment)
+            // `Agents` não tem popover: o clique é a ação do Inbox.
+            guard seg != .agents else { throw ActionError.failed(.statusBarOpenSegment, message: String(localized: "Agents opens the Inbox.", bundle: .module)) }
             guard shows(seg) else { throw ActionError.failed(.statusBarOpenSegment, message: String(localized: "Nothing to show yet.", bundle: .module)) }
             if seg == .computers { requestComputerSample() }
             return present(popover: seg) ? seg.rawValue : "busy"
