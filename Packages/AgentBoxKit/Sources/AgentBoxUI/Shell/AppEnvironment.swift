@@ -954,6 +954,26 @@ public final class AppEnvironment {
     @ObservationIgnored public var restorePending = false
     @ObservationIgnored var onRestored: () -> Void = {}
 
+    /// O app já tem o lock da instância (AppDelegate), então quem ainda escuta em `app.sock` é a instância anterior saindo (relançar
+    /// logo após o quit/SIGTERM). Espera ela soltar o socket em vez de ficar sem hub: sem ele os agentes perdem os computadores
+    /// ("Racky is not running"), F41.
+    static func startRetryingWhileAnotherInstanceExits(
+        socketPath: String, start: () async throws -> Void, log: LogFacade, timeout: Duration = .seconds(30), interval: Duration = .milliseconds(250)
+    ) async -> Bool {
+        let deadline = ContinuousClock.now + timeout
+        while true {
+            do {
+                try await start()
+                return true
+            } catch AppSockError.alreadyRunning where ContinuousClock.now < deadline {
+                try? await Task.sleep(for: interval)
+            } catch {
+                log.error("app.sock hub failed to start: \(error)")
+                return false
+            }
+        }
+    }
+
     public func start() async {
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1.0 (dev)"
         // Log em disco, sentinela de crash e (só no produto) MetricKit; depois do lock da instância (AppDelegate).
@@ -971,11 +991,8 @@ public final class AppEnvironment {
             ]
             if let orchestrator = orchestratorHolder.value { providers.append(orchestrator.mcpProvider) }
             let server = AppSockHub(socketPath: socketPath, providers: providers)
-            do {
-                try await server.start()
+            if await Self.startRetryingWhileAnotherInstanceExits(socketPath: socketPath, start: { try await server.start() }, log: log) {
                 hub = server
-            } catch {
-                log.error("app.sock hub failed to start: \(error)")
             }
             return
         }
