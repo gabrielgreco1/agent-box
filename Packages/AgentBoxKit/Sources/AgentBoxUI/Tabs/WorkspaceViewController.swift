@@ -279,7 +279,7 @@ final class WorkspaceViewController: NSViewController {
         let content: AnyView
         switch page {
         case .workspace: return nil
-        case .computers: content = AnyView(ComputersPageView(controller: controller))
+        case .computers: content = AnyView(ComputersPageView(controller: controller, settings: env.settings))
         case .batch(let id): content = AnyView(BatchPageView(controller: controller, batchID: id))
         case .library: content = AnyView(LibraryPageView(controller: env.library))
         case .viewer(let name):

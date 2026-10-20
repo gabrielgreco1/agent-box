@@ -273,6 +273,7 @@ extension SettingsModel {
         try notificationFlag(.settingsNotificationsSuppressWhenVisible, \.suppressWhenVisible, name: "Suppress when visible")
         try notificationFlag(.settingsNotificationsDockBadge, \.dockBadge, name: "Dock badge")
         try registerProxyActions(in: registry)
+        try registerCloudActions(in: registry)
         try registry.register(.settingsComputersDefaultSubagentMode) { [unowned self] arg in
             guard let raw = arg.value, let mode = SubagentComputersMode(rawValue: raw) else {
                 throw ActionError.failed(.settingsComputersDefaultSubagentMode, message: "expected off, ask or full")

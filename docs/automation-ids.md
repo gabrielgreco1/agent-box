@@ -386,6 +386,18 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 ### Páginas
 
 - `computers.page`
+- `computers.where`
+- `computers.where.local`
+- `computers.where.cloud`
+- `computers.where.change`
+- `computers.newSessions`
+- `computers.cloud.provider.<providerId>`
+- `computers.cloud.region.<regionId>`
+- `computers.cloud.dailyCap`
+- `computers.cloud.monthlyCap`
+- `computers.cloud.maxComputers`
+- `computers.cloud.connect`
+- `computers.cloud.link.<kind>`
 - `computers.newBatch`
 - `computers.cleanUp`
 - `computers.dockerBanner`
@@ -848,6 +860,13 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `image.buildLocal` | Build Locally | — | slice3 |
 | `image.download` | Download (imagem) | — | slice3 |
 | `computers.cleanUp` | Clean Up… | — | v11 |
+| `computers.runOn` | Where computers run | — | slice4 |
+| `computers.where.toggle` | Show where computers run | — | slice4 |
+| `computers.cloud.provider` | Cloud provider | — | slice4 |
+| `computers.cloud.region` | Cloud region | — | slice4 |
+| `computers.cloud.limits` | Cloud limits | — | slice4 |
+| `computers.cloud.connect` | Connect cloud account | — | slice4 |
+| `computers.cloud.openLink` | Open provider link | — | slice4 |
 | `batch.new` | New Batch… | — | slice3 |
 | `batch.open` | Open Batch | — | slice3 |
 | `batch.filter` | Filter | — | slice3 |

@@ -26,16 +26,48 @@ public struct AppSettings: Codable, Equatable, Sendable {
     /// Settings › Computers (F12): padrão de "Subagent computers" das novas sessões. Sessões existentes não mudam.
     public struct Computers: Codable, Equatable, Sendable {
         public var defaultSubagentMode = SubagentComputersMode.off
+        /// Onde os computadores sobem (BK-12, P27): no Mac (Docker) ou na conta de nuvem do próprio usuário.
+        public var runOn = ComputerRunTarget.local
+        public var cloud = Cloud()
 
         public init() {}
 
         public init(from decoder: any Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
             defaultSubagentMode = try c.decodeIfPresent(SubagentComputersMode.self, forKey: .defaultSubagentMode) ?? .off
+            runOn = try c.decodeIfPresent(ComputerRunTarget.self, forKey: .runOn) ?? .local
+            cloud = try c.decodeIfPresent(Cloud.self, forKey: .cloud) ?? Cloud()
+        }
+    }
+
+    /// Nuvem própria (P27): provedor, região e tetos são do usuário; o app só aplica.
+    public struct Cloud: Codable, Equatable, Sendable {
+        public static let dailyCapRange = 1...500
+        public static let monthlyCapRange = 5...5000
+        public static let maxComputersRange = 1...50
+
+        public var provider = CloudProviderCatalog.aws.id
+        public var region = "us-east-1"
+        public var dailyCapUSD = 5
+        public var monthlyCapUSD = 50
+        public var maxComputers = 3
+
+        public init() {}
+
+        public init(from decoder: any Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            let d = Cloud()
+            provider = try c.decodeIfPresent(String.self, forKey: .provider) ?? d.provider
+            region = try c.decodeIfPresent(String.self, forKey: .region) ?? d.region
+            dailyCapUSD = (try c.decodeIfPresent(Int.self, forKey: .dailyCapUSD) ?? d.dailyCapUSD).clamped(to: Self.dailyCapRange)
+            monthlyCapUSD = (try c.decodeIfPresent(Int.self, forKey: .monthlyCapUSD) ?? d.monthlyCapUSD).clamped(to: Self.monthlyCapRange)
+            maxComputers = (try c.decodeIfPresent(Int.self, forKey: .maxComputers) ?? d.maxComputers).clamped(to: Self.maxComputersRange)
         }
     }
 
     public enum BranchPrefixMode: String, Codable, Sendable, CaseIterable { case gitUser, custom, none }
+
+    public enum ComputerRunTarget: String, Codable, Sendable, CaseIterable { case local, cloud }
 
     public struct General: Codable, Equatable, Sendable {
         public var keepAgentsRunning = true
@@ -166,4 +198,9 @@ public enum SettingsValidation {
 public struct SettingsValidationError: Error, Equatable, Sendable {
     public let message: String
     public init(_ message: String) { self.message = message }
+}
+
+extension Int {
+    /// Valor dentro do intervalo (settings vindos de arquivo antigo ou editado à mão).
+    func clamped(to range: ClosedRange<Int>) -> Int { Swift.min(Swift.max(self, range.lowerBound), range.upperBound) }
 }

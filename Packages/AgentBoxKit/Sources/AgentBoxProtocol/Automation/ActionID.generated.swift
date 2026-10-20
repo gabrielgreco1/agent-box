@@ -277,6 +277,13 @@ extension ActionID {
     public static let imageBuildLocal = ActionID(unchecked: "image.buildLocal")
     public static let imageDownload = ActionID(unchecked: "image.download")
     public static let computersCleanUp = ActionID(unchecked: "computers.cleanUp")
+    public static let computersRunOn = ActionID(unchecked: "computers.runOn")
+    public static let computersWhereToggle = ActionID(unchecked: "computers.where.toggle")
+    public static let computersCloudProvider = ActionID(unchecked: "computers.cloud.provider")
+    public static let computersCloudRegion = ActionID(unchecked: "computers.cloud.region")
+    public static let computersCloudLimits = ActionID(unchecked: "computers.cloud.limits")
+    public static let computersCloudConnect = ActionID(unchecked: "computers.cloud.connect")
+    public static let computersCloudOpenLink = ActionID(unchecked: "computers.cloud.openLink")
     public static let batchNew = ActionID(unchecked: "batch.new")
     public static let batchOpen = ActionID(unchecked: "batch.open")
     public static let batchFilter = ActionID(unchecked: "batch.filter")
@@ -734,6 +741,13 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "image.buildLocal"), label: "Build Locally", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "image.download"), label: "Download (imagem)", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "computers.cleanUp"), label: "Clean Up…", shortcut: "", slice: .v11),
+        ActionSpec(id: ActionID(unchecked: "computers.runOn"), label: "Where computers run", shortcut: "", slice: .slice4),
+        ActionSpec(id: ActionID(unchecked: "computers.where.toggle"), label: "Show where computers run", shortcut: "", slice: .slice4),
+        ActionSpec(id: ActionID(unchecked: "computers.cloud.provider"), label: "Cloud provider", shortcut: "", slice: .slice4),
+        ActionSpec(id: ActionID(unchecked: "computers.cloud.region"), label: "Cloud region", shortcut: "", slice: .slice4),
+        ActionSpec(id: ActionID(unchecked: "computers.cloud.limits"), label: "Cloud limits", shortcut: "", slice: .slice4),
+        ActionSpec(id: ActionID(unchecked: "computers.cloud.connect"), label: "Connect cloud account", shortcut: "", slice: .slice4),
+        ActionSpec(id: ActionID(unchecked: "computers.cloud.openLink"), label: "Open provider link", shortcut: "", slice: .slice4),
         ActionSpec(id: ActionID(unchecked: "batch.new"), label: "New Batch…", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "batch.open"), label: "Open Batch", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "batch.filter"), label: "Filter", shortcut: "", slice: .slice3),

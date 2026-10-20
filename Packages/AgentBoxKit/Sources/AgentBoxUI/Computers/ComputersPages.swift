@@ -184,6 +184,7 @@ struct PageHeader<Trailing: View>: View {
 
 struct ComputersPageView: View {
     let controller: ComputersController
+    let settings: SettingsModel
 
     var body: some View {
         VStack(spacing: 0) {
@@ -192,11 +193,16 @@ struct ComputersPageView: View {
                 DSIconButton(.batchNew, id: .computersNewBatch, symbol: "plus", name: String(localized: "Start a new batch", bundle: .module), variant: .header)
             }
             if controller.model.rows.isEmpty {
-                Text("No computers yet. Agents create them when they need a browser.", bundle: .module)
-                    .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .a11y(.computersEmpty, kind: "text")
+                // Sem computadores: a página é a escolha de onde eles rodam (BK-12); o vazio vira uma linha embaixo.
+                ComputersWhereView(settings: settings, compact: false)
+                    .overlay(alignment: .bottom) {
+                        Text("No computers yet. Agents create them when they need a browser.", bundle: .module)
+                            .dsFont(DS.Font.small).foregroundStyle(DS.Color.textQuaternary)
+                            .padding(.bottom, DS.Space.s4)
+                            .a11y(.computersEmpty, kind: "text")
+                    }
             } else {
+                ComputersWhereView(settings: settings, compact: true)
                 header
                 ScrollView {
                     LazyVStack(spacing: 0) {

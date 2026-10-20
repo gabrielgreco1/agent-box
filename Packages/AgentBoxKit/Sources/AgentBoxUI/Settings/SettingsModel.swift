@@ -2,6 +2,7 @@ import AgentBoxCore
 import AgentBoxPlatform
 import AgentBoxProtocol
 import AgentBoxStore
+import AppKit
 import Foundation
 import Observation
 
@@ -28,6 +29,10 @@ public final class SettingsModel {
 
     /// Estado do Docker e das imagens do computador (Settings › Computers).
     var dockerStatus = DockerStatusInfo()
+    /// Página Computers com computadores na lista: a escolha local/nuvem fica recolhida numa faixa até "Change".
+    var computersWhereOpen = false
+    /// Abre os links do provedor (testes trocam).
+    var openURL: @MainActor (URL) -> Void = { NSWorkspace.shared.open($0) }
 
     /// Proxies de Settings › Computers › Proxies (P13): lista, padrão global, formulário aberto e teste em andamento.
     public internal(set) var proxies: [ProxyProfile] = []

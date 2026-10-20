@@ -61,6 +61,36 @@
       "source": "https://cdn.jsdelivr.net/npm/@primer/octicons@19.15.0/build/svg/mark-github-24.svg",
       "member": "Octicons mark-github (MIT, GitHub Inc.), rasterized to @2x/@3x by NSImage; sha256 is of the SVG",
       "sha256": "0c5e839c440504f3b0d06e6d15421cb7c4aef55f60ccac43ed45a08efeb6809e"
+    },
+    {
+      "file": "aws.png",
+      "source": "https://cdn.jsdelivr.net/npm/simple-icons@13.21.0/icons/amazonwebservices.svg",
+      "member": "Simple Icons (CC0 icon data; marks belong to their owners, used to identify the provider), rasterized to @2x/@3x by NSImage; sha256 is of the SVG",
+      "sha256": "f67734a0f5a7f925c84b6a9ea6e5489fe7af96e4ae167da6b71506a5d6afcab4"
+    },
+    {
+      "file": "cloudflare.png",
+      "source": "https://cdn.jsdelivr.net/npm/simple-icons@13.21.0/icons/cloudflare.svg",
+      "member": "Simple Icons (CC0 icon data; marks belong to their owners, used to identify the provider), rasterized to @2x/@3x by NSImage; sha256 is of the SVG",
+      "sha256": "408096d99907fd99e0863cb5d73f77a72537c6a85fd8d5e2704178a83a891f08"
+    },
+    {
+      "file": "gcp.png",
+      "source": "https://cdn.jsdelivr.net/npm/simple-icons@13.21.0/icons/googlecloud.svg",
+      "member": "Simple Icons (CC0 icon data; marks belong to their owners, used to identify the provider), rasterized to @2x/@3x by NSImage; sha256 is of the SVG",
+      "sha256": "534a0359c2784e152f5c88ce64a56976036d7336c7831775c995977fd3432713"
+    },
+    {
+      "file": "hetzner.png",
+      "source": "https://cdn.jsdelivr.net/npm/simple-icons@13.21.0/icons/hetzner.svg",
+      "member": "Simple Icons (CC0 icon data; marks belong to their owners, used to identify the provider), rasterized to @2x/@3x by NSImage; sha256 is of the SVG",
+      "sha256": "df276671b4076812a5a4b46f4113b0c38f56109f6bd368d1a6f09915b67961b4"
+    },
+    {
+      "file": "digitalocean.png",
+      "source": "https://cdn.jsdelivr.net/npm/simple-icons@13.21.0/icons/digitalocean.svg",
+      "member": "Simple Icons (CC0 icon data; marks belong to their owners, used to identify the provider), rasterized to @2x/@3x by NSImage; sha256 is of the SVG",
+      "sha256": "21c374a43a70f8a833ea6c84c904e64f5a20586714b1e0a16b34cb1d9cf29998"
     }
   ]
 }

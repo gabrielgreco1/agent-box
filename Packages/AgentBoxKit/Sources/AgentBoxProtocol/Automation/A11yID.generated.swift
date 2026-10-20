@@ -314,6 +314,24 @@ extension A11yID {
     public static let rightPanelFilesViewerEmpty = A11yID(unchecked: "rightPanel.files.viewer.empty")
     /// `computers.page`
     public static let computersPage = A11yID(unchecked: "computers.page")
+    /// `computers.where`
+    public static let computersWhere = A11yID(unchecked: "computers.where")
+    /// `computers.where.local`
+    public static let computersWhereLocal = A11yID(unchecked: "computers.where.local")
+    /// `computers.where.cloud`
+    public static let computersWhereCloud = A11yID(unchecked: "computers.where.cloud")
+    /// `computers.where.change`
+    public static let computersWhereChange = A11yID(unchecked: "computers.where.change")
+    /// `computers.newSessions`
+    public static let computersNewSessions = A11yID(unchecked: "computers.newSessions")
+    /// `computers.cloud.dailyCap`
+    public static let computersCloudDailyCap = A11yID(unchecked: "computers.cloud.dailyCap")
+    /// `computers.cloud.monthlyCap`
+    public static let computersCloudMonthlyCap = A11yID(unchecked: "computers.cloud.monthlyCap")
+    /// `computers.cloud.maxComputers`
+    public static let computersCloudMaxComputers = A11yID(unchecked: "computers.cloud.maxComputers")
+    /// `computers.cloud.connect`
+    public static let computersCloudConnect = A11yID(unchecked: "computers.cloud.connect")
     /// `computers.newBatch`
     public static let computersNewBatch = A11yID(unchecked: "computers.newBatch")
     /// `computers.cleanUp`
@@ -1402,6 +1420,21 @@ extension A11yID {
         A11yID(unchecked: "viewer.\(A11yID.segment(computerId)).exit.keep")
     }
 
+    /// `computers.cloud.provider.<providerId>`
+    public static func computersCloudProvider(_ providerId: String) -> A11yID {
+        A11yID(unchecked: "computers.cloud.provider.\(A11yID.segment(providerId))")
+    }
+
+    /// `computers.cloud.region.<regionId>`
+    public static func computersCloudRegion(_ regionId: String) -> A11yID {
+        A11yID(unchecked: "computers.cloud.region.\(A11yID.segment(regionId))")
+    }
+
+    /// `computers.cloud.link.<kind>`
+    public static func computersCloudLink(_ kind: String) -> A11yID {
+        A11yID(unchecked: "computers.cloud.link.\(A11yID.segment(kind))")
+    }
+
     /// `computers.row.<id>`
     public static func computersRow(_ id: String) -> A11yID {
         A11yID(unchecked: "computers.row.\(A11yID.segment(id))")
@@ -1877,6 +1910,18 @@ extension A11yID {
         A11yIDSpec(pattern: "viewer.<computerId>.exit.handBack", surface: "Viewer"),
         A11yIDSpec(pattern: "viewer.<computerId>.exit.keep", surface: "Viewer"),
         A11yIDSpec(pattern: "computers.page", surface: "Páginas"),
+        A11yIDSpec(pattern: "computers.where", surface: "Páginas"),
+        A11yIDSpec(pattern: "computers.where.local", surface: "Páginas"),
+        A11yIDSpec(pattern: "computers.where.cloud", surface: "Páginas"),
+        A11yIDSpec(pattern: "computers.where.change", surface: "Páginas"),
+        A11yIDSpec(pattern: "computers.newSessions", surface: "Páginas"),
+        A11yIDSpec(pattern: "computers.cloud.provider.<providerId>", surface: "Páginas"),
+        A11yIDSpec(pattern: "computers.cloud.region.<regionId>", surface: "Páginas"),
+        A11yIDSpec(pattern: "computers.cloud.dailyCap", surface: "Páginas"),
+        A11yIDSpec(pattern: "computers.cloud.monthlyCap", surface: "Páginas"),
+        A11yIDSpec(pattern: "computers.cloud.maxComputers", surface: "Páginas"),
+        A11yIDSpec(pattern: "computers.cloud.connect", surface: "Páginas"),
+        A11yIDSpec(pattern: "computers.cloud.link.<kind>", surface: "Páginas"),
         A11yIDSpec(pattern: "computers.newBatch", surface: "Páginas"),
         A11yIDSpec(pattern: "computers.cleanUp", surface: "Páginas"),
         A11yIDSpec(pattern: "computers.dockerBanner", surface: "Páginas"),

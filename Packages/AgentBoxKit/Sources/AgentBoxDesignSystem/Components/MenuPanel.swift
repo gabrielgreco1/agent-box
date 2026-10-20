@@ -72,6 +72,32 @@ public struct DSGitHubMark: View {
     }
 }
 
+/// Logo de provedor ou serviço (`AgentLogos/<name>`) em template, tingido com a cor da marca.
+public struct DSBrandLogo: View {
+    private let name: String
+    private let size: CGFloat
+    private let tint: Color
+
+    public init(_ name: String, size: CGFloat, tint: Color) {
+        self.name = name
+        self.size = size
+        self.tint = tint
+    }
+
+    public var body: some View {
+        Group {
+            if let nsImage = DSAgentLogoImages.image(named: name) {
+                Image(nsImage: nsImage).renderingMode(.template).resizable().interpolation(.high).aspectRatio(contentMode: .fit)
+                    .foregroundStyle(tint)
+            } else {
+                Image(systemName: "cloud").font(.system(size: size * 0.8)).foregroundStyle(tint)
+            }
+        }
+        .frame(width: size, height: size)
+        .accessibilityHidden(true)
+    }
+}
+
 /// Carrega os PNGs oficiais (`@3x`, 60 px, cobre até 20 pt) do bundle do módulo.
 @MainActor
 enum DSAgentLogoImages {
