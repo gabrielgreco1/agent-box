@@ -126,6 +126,12 @@ extension A11yID {
     public static let statusBarDocker = A11yID(unchecked: "statusBar.docker")
     /// `statusBar.background`
     public static let statusBarBackground = A11yID(unchecked: "statusBar.background")
+    /// `statusBar.popover.openComputers`
+    public static let statusBarPopoverOpenComputers = A11yID(unchecked: "statusBar.popover.openComputers")
+    /// `statusBar.popover.proxySettings`
+    public static let statusBarPopoverProxySettings = A11yID(unchecked: "statusBar.popover.proxySettings")
+    /// `statusBar.popover.startDocker`
+    public static let statusBarPopoverStartDocker = A11yID(unchecked: "statusBar.popover.startDocker")
     /// `overlay.scrim`
     public static let overlayScrim = A11yID(unchecked: "overlay.scrim")
     /// `overlay.composer`
@@ -380,6 +386,10 @@ extension A11yID {
     public static let overlayConfirmArchiveBatchCancel = A11yID(unchecked: "overlay.confirmArchiveBatch.cancel")
     /// `overlay.confirmArchiveBatch.confirm`
     public static let overlayConfirmArchiveBatchConfirm = A11yID(unchecked: "overlay.confirmArchiveBatch.confirm")
+    /// `overlay.confirmStopComputer`
+    public static let overlayConfirmStopComputer = A11yID(unchecked: "overlay.confirmStopComputer")
+    /// `overlay.confirmStopComputer.cancel`
+    public static let overlayConfirmStopComputerCancel = A11yID(unchecked: "overlay.confirmStopComputer.cancel")
     /// `overlay.confirmStopComputer.confirm`
     public static let overlayConfirmStopComputerConfirm = A11yID(unchecked: "overlay.confirmStopComputer.confirm")
     /// `overlay.confirmDeleteComputer.confirm`
@@ -1034,6 +1044,16 @@ extension A11yID {
         A11yID(unchecked: "pane.dropZone.\(A11yID.segment(zone))")
     }
 
+    /// `statusBar.popover.<segment>`
+    public static func statusBarPopover(_ segment: String) -> A11yID {
+        A11yID(unchecked: "statusBar.popover.\(A11yID.segment(segment))")
+    }
+
+    /// `statusBar.popover.computers.stop.<computer>`
+    public static func statusBarPopoverComputersStop(_ computer: String) -> A11yID {
+        A11yID(unchecked: "statusBar.popover.computers.stop.\(A11yID.segment(computer))")
+    }
+
     /// `overlay.<name>`
     public static func overlay(_ name: String) -> A11yID {
         A11yID(unchecked: "overlay.\(A11yID.segment(name))")
@@ -1657,6 +1677,11 @@ extension A11yID {
         A11yIDSpec(pattern: "statusBar.proxyUsage", surface: "Status bar"),
         A11yIDSpec(pattern: "statusBar.docker", surface: "Status bar"),
         A11yIDSpec(pattern: "statusBar.background", surface: "Status bar"),
+        A11yIDSpec(pattern: "statusBar.popover.<segment>", surface: "Status bar"),
+        A11yIDSpec(pattern: "statusBar.popover.computers.stop.<computer>", surface: "Status bar"),
+        A11yIDSpec(pattern: "statusBar.popover.openComputers", surface: "Status bar"),
+        A11yIDSpec(pattern: "statusBar.popover.proxySettings", surface: "Status bar"),
+        A11yIDSpec(pattern: "statusBar.popover.startDocker", surface: "Status bar"),
         A11yIDSpec(pattern: "overlay.scrim", surface: "Overlays (geral)"),
         A11yIDSpec(pattern: "overlay.<name>", surface: "Overlays (geral)"),
         A11yIDSpec(pattern: "overlay.<name>.advanced", surface: "Overlays (geral)"),
@@ -1869,6 +1894,8 @@ extension A11yID {
         A11yIDSpec(pattern: "overlay.confirmArchiveBatch", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmArchiveBatch.cancel", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmArchiveBatch.confirm", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmStopComputer", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmStopComputer.cancel", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmStopComputer.confirm", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmDeleteComputer.confirm", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmDelete", surface: "Dialogs"),

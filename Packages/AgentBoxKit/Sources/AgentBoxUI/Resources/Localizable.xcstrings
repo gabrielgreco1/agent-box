@@ -8283,6 +8283,182 @@
           }
         }
       }
+    },
+    "Claude usage": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude usage"
+          }
+        }
+      }
+    },
+    "Codex usage": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codex usage"
+          }
+        }
+      }
+    },
+    "Proxy usage": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proxy usage"
+          }
+        }
+      }
+    },
+    "The status bar is hidden.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The status bar is hidden."
+          }
+        }
+      }
+    },
+    "Nothing to show yet.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing to show yet."
+          }
+        }
+      }
+    },
+    "Hide Status Bar": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide Status Bar"
+          }
+        }
+      }
+    },
+    "Usage unavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usage unavailable"
+          }
+        }
+      }
+    },
+    "Subagent computers need Docker. Start it and they come back.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subagent computers need Docker. Start it and they come back."
+          }
+        }
+      }
+    },
+    "Open Computers": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Computers"
+          }
+        }
+      }
+    },
+    "Stop": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop"
+          }
+        }
+      }
+    },
+    "Proxy Settings": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proxy Settings"
+          }
+        }
+      }
+    },
+    "Stop \"%@\"?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop \"%@\"?"
+          }
+        }
+      }
+    },
+    "No such computer.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No such computer."
+          }
+        }
+      }
+    },
+    "Claude Code is using it right now.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Code is using it right now."
+          }
+        }
+      }
+    },
+    "Claude Code keeps running on your Mac. The browser session is saved in the computer's profile.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Code keeps running on your Mac. The browser session is saved in the computer's profile."
+          }
+        }
+      }
+    },
+    "Stop Computer": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop Computer"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

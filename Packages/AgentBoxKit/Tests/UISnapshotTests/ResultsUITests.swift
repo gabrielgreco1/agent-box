@@ -104,7 +104,7 @@ struct ResultsUITests {
         defer { f.remove() }
         let computer = try ManagedComputer(name: "phoenix-az", display: .headless, run: f.run, backend: LazyComputerBackend())
         await f.controller.add(computer)
-        await #expect(throws: ActionError.failed(.computerOpenEvidence, message: "Cited request not found.")) {
+        await #expect(throws: ActionError.failed(.computerOpenEvidence, message: "Cited request not found")) {
             _ = try await f.registry.perform(.computerOpenEvidence, .select("phoenix-az|\(ResultsFixture.ids[3])"))
         }
         await #expect(throws: ActionError.self) { _ = try await f.registry.perform(.computerOpenEvidence, .select("ghost|\(ResultsFixture.ids[0])")) }

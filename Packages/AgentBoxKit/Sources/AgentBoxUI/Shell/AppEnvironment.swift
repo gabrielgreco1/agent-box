@@ -61,6 +61,8 @@ public final class AppEnvironment {
     let github: GitHubController
     /// Módulo Insights: uso de IA (transcripts do Claude/Codex) e máquina; só amostra enquanto a view está em cena.
     let insights: InsightsModel
+    /// Status bar (03 §5): lê o Insights e os computadores; nada de polling próprio.
+    let statusBar: StatusBarController
     /// "Subagent computers" por sessão (F12): ícone, menu, `Restart to apply`.
     private(set) var subagentComputers: SubagentComputersController!
     /// Hover card do computador de um subagente (pré-visualização ao vivo).
@@ -180,12 +182,13 @@ public final class AppEnvironment {
         // Limites exatos (Keychain + rede) só no produto; testes e execuções fora do bundle ficam offline.
         let limits: ClaudeLimitsClient = Bundle.main.bundleURL.pathExtension == "app" ? ClaudeLimitsClient() : .offline
         insights = InsightsModel(service: InsightsService(config: .standard(supportDirectory: storeRoot), limitsClient: limits))
+        statusBar = StatusBarController(insights: insights, computers: computers, overlays: overlays, elements: elements, flags: flags)
         // Ícone real na barra de menus só no produto (`.app`): testes e execuções fora do bundle usam o item de mentira.
-        let statusBar: any StatusBarProviding = Bundle.main.bundleURL.pathExtension == "app" ? SystemStatusBar() : InMemoryStatusBar()
+        let menuBarItem: any StatusBarProviding = Bundle.main.bundleURL.pathExtension == "app" ? SystemStatusBar() : InMemoryStatusBar()
         subagentComputers = SubagentComputersController(sidebar: sidebar, workspace: workspace, overlays: overlays, elements: elements)
         workspace.subagent = subagentComputers
         sidebar.subagent = subagentComputers
-        lifecycle = AppLifecycleCoordinator(registry: registry, overlays: overlays, statusBar: statusBar)
+        lifecycle = AppLifecycleCoordinator(registry: registry, overlays: overlays, statusBar: menuBarItem)
         registerShellActions()
         wireLifecycle()
         do { try sidebar.registerActions(in: registry) } catch { log.publicError("duplicate sidebar action registration") }
@@ -199,7 +202,15 @@ public final class AppEnvironment {
         wireAttention(environment: environment)
         wireComputers()
         wireRightPanel()
+        wireStatusBar()
         wireGitHub(slice2: slice2, environment: environment)
+    }
+
+    /// Liga a status bar: ações `view.toggleStatusBar` e `statusBar.*`, Docker parado vindo do Settings e `Start Docker`.
+    private func wireStatusBar() {
+        statusBar.dockerStopped = { [settings] in settings.dockerStatus.stopped }
+        do { try statusBar.register(in: registry) } catch { log.publicError("duplicate status bar registration") }
+        do { try computers.registerStop(in: registry) } catch { log.publicError("duplicate stop computer registration") }
     }
 
     /// Sessões da sidebar como o `GitHubController` as lê: pasta, branch do worktree e o último status Git.
@@ -711,6 +722,11 @@ public final class AppEnvironment {
                 }
             }
             await rightPanel.attach(store: opened)
+            await statusBar.attach(store: opened)
+            await insights.service?.attach(
+                agents: StoreAgentSource(store: opened), proxies: StoreProxySource(store: opened),
+                computers: Self.computerSource(environment: environmentVariables))
+            if !headless, fixture == nil { statusBar.start() }
             await files.attach(store: opened)
             launcher?.attach(store: opened)
             cleanSessions?.attach(store: opened)

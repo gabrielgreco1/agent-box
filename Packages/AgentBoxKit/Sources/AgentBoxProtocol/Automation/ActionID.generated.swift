@@ -14,6 +14,8 @@ extension ActionID {
     public static let viewToggleSidebar = ActionID(unchecked: "view.toggleSidebar")
     public static let viewToggleRightPanel = ActionID(unchecked: "view.toggleRightPanel")
     public static let viewToggleStatusBar = ActionID(unchecked: "view.toggleStatusBar")
+    public static let statusBarOpenSegment = ActionID(unchecked: "statusBar.openSegment")
+    public static let statusBarToggleSegment = ActionID(unchecked: "statusBar.toggleSegment")
     public static let navBack = ActionID(unchecked: "nav.back")
     public static let navForward = ActionID(unchecked: "nav.forward")
     public static let terminalFontBigger = ActionID(unchecked: "terminal.fontBigger")
@@ -366,6 +368,7 @@ extension ActionID {
     public static let dialogArchiveBatchConfirm = ActionID(unchecked: "dialog.archiveBatch.confirm")
     public static let dialogArchiveBatchCancel = ActionID(unchecked: "dialog.archiveBatch.cancel")
     public static let dialogStopComputerConfirm = ActionID(unchecked: "dialog.stopComputer.confirm")
+    public static let dialogStopComputerCancel = ActionID(unchecked: "dialog.stopComputer.cancel")
     public static let dialogDeleteComputerConfirm = ActionID(unchecked: "dialog.deleteComputer.confirm")
     public static let dialogDeleteSessionConfirm = ActionID(unchecked: "dialog.deleteSession.confirm")
     public static let dialogDeleteSessionCancel = ActionID(unchecked: "dialog.deleteSession.cancel")
@@ -458,6 +461,8 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "view.toggleSidebar"), label: "Toggle Sidebar", shortcut: "⌘B", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "view.toggleRightPanel"), label: "Right Panel", shortcut: "⌘L (Fatia 2)", slice: .slice2),
         ActionSpec(id: ActionID(unchecked: "view.toggleStatusBar"), label: "Show Status Bar", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "statusBar.openSegment"), label: "Status bar: abrir", shortcut: "", slice: .slice4),
+        ActionSpec(id: ActionID(unchecked: "statusBar.toggleSegment"), label: "mostrar-esconder segmento", shortcut: "", slice: .slice4),
         ActionSpec(id: ActionID(unchecked: "nav.back"), label: "Back", shortcut: "⌥⌘←", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "nav.forward"), label: "Forward", shortcut: "⌥⌘→", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "terminal.fontBigger"), label: "Bigger", shortcut: "⌘=", slice: .slice1),
@@ -809,7 +814,8 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "dialog.archive.cancel"), label: "Cancel (§16.2)", shortcut: "Esc", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.archiveBatch.confirm"), label: "Archive Batch", shortcut: "Esc", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dialog.archiveBatch.cancel"), label: "Cancel (confirmação com filhos rodando: `Stop <n> running subagents?`)", shortcut: "Esc", slice: .slice3),
-        ActionSpec(id: ActionID(unchecked: "dialog.stopComputer.confirm"), label: "Stop Computer (§16.3)", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dialog.stopComputer.confirm"), label: "Stop Computer", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dialog.stopComputer.cancel"), label: "Cancel (§16.3)", shortcut: "Esc", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dialog.deleteComputer.confirm"), label: "Delete Computer (§16.4)", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dialog.deleteSession.confirm"), label: "Delete Session (§16.5)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.deleteSession.cancel"), label: "Cancel (§16.5)", shortcut: "Esc", slice: .slice1),

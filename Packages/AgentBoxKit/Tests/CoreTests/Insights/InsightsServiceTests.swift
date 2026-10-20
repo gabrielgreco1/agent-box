@@ -41,6 +41,27 @@ private struct FakeComputers: InsightsComputerSource {
         return (config, root)
     }
 
+    /// T4-01: o app liga as fontes depois do Store; a status bar pede uma leitura avulsa dos computadores sem ligar a amostragem da máquina.
+    @Test func attachedSourcesFeedASingleComputerSampleWithoutStartingTheMachineLoop() async throws {
+        let (config, root) = try makeConfig()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let service = InsightsService(config: config, runner: FakeRunner())
+        await service.start()
+        defer { Task { await service.stop() } }
+        let before = await service.current
+        #expect(before.computers.isEmpty && before.proxies.isEmpty)
+        let sample = ContainerSample(id: "c1", name: "phoenix-az", state: "running", memoryBytes: 512 << 20, memoryLimitBytes: 4 << 30, cpuTotalNanos: 0, pids: 9, sessionID: nil)
+        await service.attach(proxies: FakeProxies(), computers: FakeComputers(value: [sample]))
+        await service.refreshComputers()
+        let snap = await service.current
+        #expect(snap.dockerAvailable && snap.computers.map(\.name) == ["phoenix-az"] && snap.computers.first?.memoryBytes == 512 << 20)
+        #expect(snap.machine == nil, "a leitura avulsa não liga a amostragem da máquina")
+        await service.attach(computers: FakeComputers(value: nil))
+        await service.refreshComputers()
+        let after = await service.current
+        #expect(after.dockerAvailable == false && after.computers.isEmpty)
+    }
+
     @Test func scanPublishesBothProvidersPlansAgentsAndProxies() async throws {
         let (config, root) = try makeConfig()
         defer { try? FileManager.default.removeItem(at: root) }

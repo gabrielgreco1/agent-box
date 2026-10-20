@@ -46,6 +46,7 @@ extension SettingsModel {
         try registry.register(.settingsOpenSection) { [unowned self] arg in
             let id = try value(arg, .settingsOpenSection)
             guard select(id) else { throw ActionError.failed(.settingsOpenSection, message: "Unknown section \(id)") }
+            open(section: id)  // fora de Settings (popover da status bar), abre a página já na seção
             return id
         }
         try registry.register(.settingsBack) { [unowned self] _ in

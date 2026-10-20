@@ -46,7 +46,7 @@ public final class InsightsModel {
     public var appsSortedByMemory = false
     public private(set) var now: Date
 
-    private let service: InsightsService?
+    let service: InsightsService?
     private var task: Task<Void, Never>?
     private let clock: @Sendable () -> Date
 

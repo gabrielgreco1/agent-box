@@ -17,9 +17,13 @@ final class ChromeContainerView: NSView {
     let settings: NSView
     /// Botões Files · Insights · painel no canto superior direito (10-right-panel §1): fixos sobre a tab row ou a barra do painel.
     let panelButtons: NSView
+    /// Status bar (03 §5): 24 pt no rodapé, largura da janela; o split e o Settings ocupam o que sobra.
+    let statusBar: NSView
+    var statusBarHeight: () -> CGFloat = { 0 }
     var stripWidth: () -> CGFloat = { 0 }
 
-    init(split: NSView, strip: NSView, overlay: NSView, settings: NSView, panelButtons: NSView) {
+    init(split: NSView, strip: NSView, overlay: NSView, settings: NSView, panelButtons: NSView, statusBar: NSView) {
+        self.statusBar = statusBar
         self.split = split
         self.strip = strip
         self.overlay = overlay
@@ -28,6 +32,7 @@ final class ChromeContainerView: NSView {
         super.init(frame: .zero)
         settings.isHidden = true
         addSubview(split)
+        addSubview(statusBar)
         addSubview(settings)
         addSubview(strip)
         addSubview(panelButtons)
@@ -38,8 +43,12 @@ final class ChromeContainerView: NSView {
 
     override func layout() {
         super.layout()
-        split.frame = bounds
-        settings.frame = bounds
+        let bar = min(statusBarHeight(), bounds.height)
+        statusBar.isHidden = bar == 0
+        statusBar.frame = NSRect(x: 0, y: 0, width: bounds.width, height: bar)
+        let content = NSRect(x: 0, y: bar, width: bounds.width, height: bounds.height - bar)
+        split.frame = content
+        settings.frame = bounds  // Settings cobre a janela inteira, status bar incluída (03 §14)
         overlay.frame = bounds
         let h = DS.Layout.titlebarHeight
         strip.frame = NSRect(x: 0, y: bounds.height - h, width: min(stripWidth(), bounds.width), height: h)
@@ -78,6 +87,7 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
     private let container: ChromeContainerView
     private let strip: ChromeHostingView
     private let panelButtons: ChromeHostingView
+    private let statusBarHost: ChromeHostingView
     private let overlayHost: OverlayHostingView
     private let settingsHost: ChromeHostingView
     private let overlayFocus = OverlayFocusCoordinator()
@@ -98,6 +108,11 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
                 .environment(\.actionRegistry, env.registry).environment(\.a11yParent, .windowMain))
         panelButtons.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
         self.panelButtons = panelButtons
+        let statusBarHost = ChromeHostingView(
+            content: StatusBarView(controller: env.statusBar).environment(\.elementStore, env.elements).environment(\.actionRegistry, env.registry)
+                .environment(\.overlayRouter, env.overlays).environment(\.a11yParent, .windowMain))
+        statusBarHost.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
+        self.statusBarHost = statusBarHost
         let overlayHost = OverlayHostingView(router: env.overlays, toasts: env.toasts, registry: env.registry, elements: env.elements)
         self.overlayHost = overlayHost
         let settingsHost = ChromeHostingView(
@@ -105,7 +120,9 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
                 .environment(\.overlayRouter, env.overlays).environment(\.a11yParent, .windowMain))
         settingsHost.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
         self.settingsHost = settingsHost
-        container = ChromeContainerView(split: split.view, strip: strip, overlay: overlayHost, settings: settingsHost, panelButtons: panelButtons)
+        container = ChromeContainerView(
+            split: split.view, strip: strip, overlay: overlayHost, settings: settingsHost, panelButtons: panelButtons, statusBar: statusBarHost)
+        container.statusBarHeight = { [statusBar = env.statusBar] in statusBar.isShown ? DS.Layout.statusBarHeight : 0 }
 
         let window = AgentBoxWindow(
             contentRect: NSRect(x: 0, y: 0, width: DS.Layout.windowDefaultWidth, height: DS.Layout.windowDefaultHeight),
@@ -139,6 +156,7 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
         env.elements.register(mainToken, id: .windowMain, kind: "window", label: "Racky", value: nil, action: nil, parent: nil)
         registerActions()
         observeSettings()
+        observeStatusBar()
         observeLayout()
         window.layoutIfNeeded()
         container.needsLayout = true
@@ -274,6 +292,21 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
                 self.window?.makeFirstResponder(self.settingsHost)
             } else {
                 self.env.workspace.focusTerminalOfActiveTab()
+            }
+        }
+    }
+
+    /// Mostrar/esconder a barra (View › Show Status Bar, menu dela) refaz o layout; o split encolhe e o terminal reajusta o PTY uma vez.
+    private func observeStatusBar() {
+        withObservationTracking {
+            _ = env.statusBar.isShown
+        } onChange: { [weak self] in
+            Task { @MainActor in
+                guard let self else { return }
+                self.container.needsLayout = true
+                self.container.layoutSubtreeIfNeeded()
+                self.env.workspace.runtime.syncSizesToLayout()
+                self.observeStatusBar()
             }
         }
     }

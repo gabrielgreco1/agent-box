@@ -246,6 +246,7 @@ public struct StoreProxySource: InsightsProxySource {
         for proxy in proxies {
             let rows = (try? await store.proxyUsage(proxyID: proxy.id, since: since)) ?? []
             var byDay: [Date: ProxyDay] = [:]
+            let reportsCost = rows.contains { $0.costMicros != nil }
             for row in rows {
                 let day = calendar.startOfDay(for: row.periodStart)
                 var d = byDay[day] ?? ProxyDay(dayStart: day, requests: 0, bytes: 0, costMicros: 0)
@@ -255,7 +256,7 @@ public struct StoreProxySource: InsightsProxySource {
             let daily = byDay.values.sorted { $0.dayStart < $1.dayStart }
             out.append(ProxyUsageSummary(id: proxy.id.uuidString, name: proxy.name, isDefault: proxy.isDefault,
                                          requests: daily.reduce(0) { $0 + $1.requests }, bytes: daily.reduce(0) { $0 + $1.bytes },
-                                         costMicros: daily.reduce(0) { $0 + $1.costMicros }, daily: daily))
+                                         costMicros: daily.reduce(0) { $0 + $1.costMicros }, daily: daily, reportsCost: reportsCost))
         }
         return out
     }
@@ -264,10 +265,13 @@ public struct StoreProxySource: InsightsProxySource {
 /// Containers do Racky (label `agentbox.owner`) com uma amostra de `stats` cada.
 public struct DockerComputerSource: InsightsComputerSource {
     private let client: DockerClient
-    public init(client: DockerClient) { self.client = client }
+    private let owner: String?
+    /// `owner`: valor do label `agentbox.owner` desta instância (um app isolado nunca lê os computadores de outro). `nil` = qualquer dono.
+    public init(client: DockerClient, owner: String? = nil) { self.client = client; self.owner = owner }
 
     public func computerSamples() async -> [ContainerSample]? {
-        guard let list = try? await client.listContainers(all: false, filters: ["label": [AgentBoxLabel.owner]]) else { return nil }
+        let label = owner.map { "\(AgentBoxLabel.owner)=\($0)" } ?? AgentBoxLabel.owner
+        guard let list = try? await client.listContainers(all: false, filters: ["label": [label]]) else { return nil }
         var out: [ContainerSample] = []
         for c in list where c.labels[AgentBoxLabel.test] != "1" {
             let stats = try? await client.statsSnapshot(c.id)

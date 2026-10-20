@@ -59,6 +59,8 @@ public final class ComputersController {
     @ObservationIgnored weak var overlays: OverlayRouter?
     /// Lote cujo `Archive Batch` espera a confirmação.
     var pendingArchive: String?
+    /// Computador cujo `Stop` espera a confirmação (03 §16.3).
+    var pendingStop: String?
     /// F28: um lease humano ocioso voltou sozinho ao agente (o app mostra o toast `Control returned to <Agent>`).
     /// F29: nomes dos proxies salvos (Settings › Computers › Proxies) e o menu do card de aprovação; ligados pelo app.
     @ObservationIgnored public var proxyNames: () async -> [String] = { [] }

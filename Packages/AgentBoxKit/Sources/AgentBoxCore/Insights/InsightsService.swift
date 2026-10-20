@@ -48,9 +48,9 @@ public actor InsightsService {
     }
 
     private let config: InsightsConfig
-    private let agents: (any InsightsAgentSource)?
-    private let proxies: (any InsightsProxySource)?
-    private let computers: (any InsightsComputerSource)?
+    private var agents: (any InsightsAgentSource)?
+    private var proxies: (any InsightsProxySource)?
+    private var computers: (any InsightsComputerSource)?
     private let runner: any InsightsCommandRunner
     private let calendar: Calendar
     private let clock: @Sendable () -> Date
@@ -87,6 +87,14 @@ public actor InsightsService {
         self.runner = runner; self.calendar = calendar; self.clock = clock
         self.limitsClient = limitsClient
         self.sampler = MachineSampler()
+    }
+
+    /// O app liga as fontes do Racky (Store, Docker) depois que o Store abre: o serviço nasce antes dele. Só preenche o que veio.
+    public func attach(agents: (any InsightsAgentSource)? = nil, proxies: (any InsightsProxySource)? = nil,
+                       computers: (any InsightsComputerSource)? = nil) {
+        if let agents { self.agents = agents }
+        if let proxies { self.proxies = proxies }
+        if let computers { self.computers = computers }
     }
 
     // MARK: Assinatura
@@ -244,15 +252,27 @@ public actor InsightsService {
         guard !Task.isCancelled else { return }
         snapshot.machine = sample
         machineTicks += 1
-        if let computers, machineTicks % 3 == 1 {
-            if let samples = await computers.computerSamples() {
-                dockerAvailable = true
-                computerUsage = computerRows(samples, now: now)
-            } else {
-                dockerAvailable = false
-                computerUsage = []
-            }
+        if machineTicks % 3 == 1 { await sampleComputers(now: now) }
+        snapshot.computers = computerUsage
+        snapshot.dockerAvailable = dockerAvailable
+        publish()
+    }
+
+    private func sampleComputers(now: Date) async {
+        guard let computers else { return }
+        if let samples = await computers.computerSamples() {
+            dockerAvailable = true
+            computerUsage = computerRows(samples, now: now)
+        } else {
+            dockerAvailable = false
+            computerUsage = []
         }
+    }
+
+    /// Uma leitura avulsa dos computadores (RAM, CPU) sem ligar a amostragem da máquina: a status bar a pede quando a lista de
+    /// computadores muda e ao abrir o popover. Não agenda nada.
+    public func refreshComputers() async {
+        await sampleComputers(now: clock())
         snapshot.computers = computerUsage
         snapshot.dockerAvailable = dockerAvailable
         publish()

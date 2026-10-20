@@ -115,3 +115,21 @@ extension AppEnvironment {
         }
     }
 }
+
+/// Amostras dos computadores desta instância (label `agentbox.owner` próprio) para o Insights e a status bar. Detecta o Docker a cada
+/// leitura avulsa (só sonda o socket; nunca inicia o Docker) e devolve `nil` quando ele não responde.
+struct LazyDockerComputerSource: InsightsComputerSource {
+    let owner: String
+
+    func computerSamples() async -> [ContainerSample]? {
+        guard let detected = try? await RuntimeDetector().detect() else { return nil }
+        let client = DockerClient(runtime: detected.runtime, defaultTimeout: .seconds(5))
+        return await DockerComputerSource(client: client, owner: owner).computerSamples()
+    }
+}
+
+extension AppEnvironment {
+    nonisolated static func computerSource(environment: [String: String]) -> LazyDockerComputerSource {
+        LazyDockerComputerSource(owner: computerOwner(environment))
+    }
+}

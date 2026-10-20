@@ -1,3 +1,4 @@
+import AgentBoxDesignSystem
 import AgentBoxProtocol
 import AppKit
 import SwiftUI
@@ -88,6 +89,23 @@ import Testing
         #expect(tree.window?.width == 760)
         for node in tree.flattened() { #expect(A11yID.isCanonical(node.id.rawValue)) }
         #expect(env.elements.duplicateIDs.isEmpty)
+    }
+
+    /// T4-01: a status bar (24 pt) fica no rodapé da janela e some com `view.toggleStatusBar`; o split ocupa o resto.
+    @Test func statusBarSitsAtTheBottomAndFollowsTheToggle() async throws {
+        let env = AppEnvironment(environment: [:])
+        let controller = await Self.host(env)
+        defer { controller.window?.close() }
+        let bar = try #require(env.elements.snapshot().find(.statusBar)?.frame)
+        let window = try #require(controller.window?.contentView?.bounds)
+        #expect(bar.height == DS.Layout.statusBarHeight && abs(bar.y + bar.height - window.height) < 1 && bar.width == window.width)
+        #expect(controller.splitView.window != nil && controller.splitView.superview?.frame.height == window.height - DS.Layout.statusBarHeight)
+        _ = try await env.registry.perform(.viewToggleStatusBar, .press)
+        controller.window?.contentView?.layoutSubtreeIfNeeded()
+        #expect(controller.splitView.superview?.frame.height == window.height)
+        _ = try await env.registry.perform(.viewToggleStatusBar, .press)
+        controller.window?.contentView?.layoutSubtreeIfNeeded()
+        #expect(controller.splitView.superview?.frame.height == window.height - DS.Layout.statusBarHeight)
     }
 
     @Test func historyControlsAreDisabledWithAReason() async {

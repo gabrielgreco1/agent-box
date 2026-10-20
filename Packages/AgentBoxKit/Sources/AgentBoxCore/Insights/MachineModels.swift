@@ -158,9 +158,11 @@ public struct ProxyUsageSummary: Codable, Sendable, Equatable, Identifiable {
     public var bytes: Int
     public var costMicros: Int64
     public var daily: [ProxyDay]
-    public init(id: String, name: String, isDefault: Bool, requests: Int, bytes: Int, costMicros: Int64, daily: [ProxyDay]) {
+    /// O provedor informa custo (alguma linha de uso com `cost_micros`). `false` = "Usage unavailable": nada é estimado (P13).
+    public var reportsCost: Bool
+    public init(id: String, name: String, isDefault: Bool, requests: Int, bytes: Int, costMicros: Int64, daily: [ProxyDay], reportsCost: Bool = false) {
         self.id = id; self.name = name; self.isDefault = isDefault; self.requests = requests; self.bytes = bytes
-        self.costMicros = costMicros; self.daily = daily
+        self.costMicros = costMicros; self.daily = daily; self.reportsCost = reportsCost
     }
 }
 

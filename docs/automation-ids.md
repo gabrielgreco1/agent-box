@@ -194,6 +194,11 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `statusBar.proxyUsage`
 - `statusBar.docker`
 - `statusBar.background`
+- `statusBar.popover.<segment>`
+- `statusBar.popover.computers.stop.<computer>`
+- `statusBar.popover.openComputers`
+- `statusBar.popover.proxySettings`
+- `statusBar.popover.startDocker`
 
 ### Overlays (geral)
 
@@ -445,6 +450,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `overlay.confirmArchiveBatch`
 - `overlay.confirmArchiveBatch.cancel`
 - `overlay.confirmArchiveBatch.confirm`
+- `overlay.confirmStopComputer`
+- `overlay.confirmStopComputer.cancel`
 - `overlay.confirmStopComputer.confirm`
 - `overlay.confirmDeleteComputer.confirm`
 - `overlay.confirmDelete`
@@ -565,6 +572,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `view.toggleSidebar` | Toggle Sidebar | ⌘B | slice1 |
 | `view.toggleRightPanel` | Right Panel | ⌘L (Fatia 2) | slice2 |
 | `view.toggleStatusBar` | Show Status Bar | — | slice1 |
+| `statusBar.openSegment` | Status bar: abrir | — | slice4 |
+| `statusBar.toggleSegment` | mostrar-esconder segmento | — | slice4 |
 | `nav.back` | Back | ⌥⌘← | slice1 |
 | `nav.forward` | Forward | ⌥⌘→ | slice1 |
 | `terminal.fontBigger` | Bigger | ⌘= | slice1 |
@@ -916,7 +925,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `dialog.archive.cancel` | Cancel (§16.2) | Esc | slice1 |
 | `dialog.archiveBatch.confirm` | Archive Batch | Esc | slice3 |
 | `dialog.archiveBatch.cancel` | Cancel (confirmação com filhos rodando: `Stop <n> running subagents?`) | Esc | slice3 |
-| `dialog.stopComputer.confirm` | Stop Computer (§16.3) | — | slice3 |
+| `dialog.stopComputer.confirm` | Stop Computer | — | slice3 |
+| `dialog.stopComputer.cancel` | Cancel (§16.3) | Esc | slice3 |
 | `dialog.deleteComputer.confirm` | Delete Computer (§16.4) | — | slice3 |
 | `dialog.deleteSession.confirm` | Delete Session (§16.5) | — | slice1 |
 | `dialog.deleteSession.cancel` | Cancel (§16.5) | Esc | slice1 |

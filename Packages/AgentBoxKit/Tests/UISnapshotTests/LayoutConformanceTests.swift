@@ -170,7 +170,9 @@ import Testing
             #expect(pending.y == otterRow.y + otterRow.height, "pendente é a primeira linha do projeto \(note)")
 
             let reveal = try #require(tree.find(.sidebarFooterReveal)?.frame, "footer \(note)")
-            #expect(reveal.y + reveal.height <= Double(size.height) && reveal.y >= Double(size.height) - 32 - 1, "rodapé de 32 \(note): \(reveal)")
+            // A status bar (24 pt, T4-01) ocupa o rodapé da janela inteira: o rodapé da sidebar termina logo acima dela.
+            let floor = Double(size.height) - (env.statusBar.isShown ? Double(DS.Layout.statusBarHeight) : 0)
+            #expect(reveal.y + reveal.height <= floor && reveal.y >= floor - 32 - 1, "rodapé de 32 \(note): \(reveal)")
         }
     }
 }
