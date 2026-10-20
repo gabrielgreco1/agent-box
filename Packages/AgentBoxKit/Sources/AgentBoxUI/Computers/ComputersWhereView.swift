@@ -90,6 +90,7 @@ struct ComputersWhereView: View {
                     CloudSummaryLine(settings: settings, selected: target == .cloud)
                 }
             }
+            .fixedSize(horizontal: false, vertical: true)
             .animation(MotionPolicy.shared.animation(MotionTokens.Springs.lively), value: target)
             if target == .cloud {
                 CloudSetupView(settings: settings)
@@ -139,7 +140,7 @@ private struct WhereChoiceCard<Status: View>: View {
                 status()
             }
             .padding(DS.Space.s4)
-            .frame(maxWidth: .infinity, minHeight: WhereMetrics.choiceHeight, maxHeight: WhereMetrics.choiceHeight, alignment: .topLeading)
+            .frame(maxWidth: .infinity, minHeight: WhereMetrics.choiceHeight, maxHeight: .infinity, alignment: .topLeading)
             .background(background)
             .overlay {
                 if selected {
@@ -604,6 +605,7 @@ private struct CompactWhereBar: View {
         }
         .padding(.horizontal, DS.Space.s3)
         .frame(height: WhereMetrics.compactBar)
+        .background(DS.Color.canvas)
         .overlay(alignment: .bottom) { DS.Color.border.frame(height: DSMetrics.hairline) }
     }
 }

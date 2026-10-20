@@ -79,7 +79,7 @@ extension SettingsModel {
         }
         switch key {
         case "daily": cloud.dailyCapUSD = value(cloud.dailyCapUSD, step(cloud.dailyCapUSD)).clamped(AppSettings.Cloud.dailyCapRange)
-        case "monthly": cloud.monthlyCapUSD = value(cloud.monthlyCapUSD, step(cloud.monthlyCapUSD) * 5).clamped(AppSettings.Cloud.monthlyCapRange)
+        case "monthly": cloud.monthlyCapUSD = value(cloud.monthlyCapUSD, monthlyStep(cloud.monthlyCapUSD)).clamped(AppSettings.Cloud.monthlyCapRange)
         case "max": cloud.maxComputers = value(cloud.maxComputers, 1).clamped(AppSettings.Cloud.maxComputersRange)
         default: return nil
         }
@@ -88,6 +88,8 @@ extension SettingsModel {
 
     /// Passo do teto: 1 até 10, 5 até 50, 10 depois (um clique sempre muda algo que importa).
     private static func step(_ value: Int) -> Int { value < 10 ? 1 : value < 50 ? 5 : 10 }
+    /// Mensal: 5 até 50, 10 até 200, 50 depois.
+    private static func monthlyStep(_ value: Int) -> Int { value <= 50 ? 5 : value <= 200 ? 10 : 50 }
 }
 
 private extension Int {

@@ -9709,6 +9709,16 @@
           }
         }
       }
+    },
+    "Subagent computers change when the agent restarts. The conversation continues.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subagent computers change when the agent restarts. The conversation continues."
+          }
+        }
+      }
     }
   },
   "version": "1.0"
