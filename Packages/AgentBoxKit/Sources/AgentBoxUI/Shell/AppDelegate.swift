@@ -41,27 +41,10 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         termination = signals
     }
 
-    /// fd do lock da pasta de dados; fica aberto a vida toda do processo (o `flock` some com ele).
-    private nonisolated(unsafe) static var instanceLock: Int32 = -1  // SAFETY: gravado uma vez no main thread, no launch.
-
-    /// `flock` em `<dados>/run/app.lock` com o pid dentro. `nil`: o lock é nosso; senão, o pid de quem o tem.
+    /// `nil`: esta instância é a dona da pasta de dados; senão, o pid da dona.
     static func acquireInstanceLock(environment: [String: String]) -> pid_t? {
         guard Bundle.main.bundleURL.pathExtension == "app", environment["AGENTBOX_SCREEN"] == nil else { return nil }
-        let run = StorePaths.default(environment: environment).root.appendingPathComponent("run", isDirectory: true)
-        try? FileManager.default.createDirectory(at: run, withIntermediateDirectories: true)
-        let fd = open(run.appendingPathComponent("app.lock").path, O_CREAT | O_RDWR | O_CLOEXEC, 0o600)
-        guard fd >= 0 else { return nil }
-        if flock(fd, LOCK_EX | LOCK_NB) == 0 {
-            instanceLock = fd
-            _ = ftruncate(fd, 0)
-            let pid = "\(ProcessInfo.processInfo.processIdentifier)"
-            _ = pid.withCString { write(fd, $0, strlen($0)) }
-            return nil
-        }
-        var buffer = [UInt8](repeating: 0, count: 32)
-        let count = pread(fd, &buffer, buffer.count, 0)
-        close(fd)
-        return count > 0 ? pid_t(String(decoding: buffer.prefix(count), as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)) ?? -1 : -1
+        return InstanceLock.acquire(runDirectory: StorePaths.default(environment: environment).root.appendingPathComponent("run", isDirectory: true))
     }
 
     /// ⌘Q (T1-24): a política decide entre sair, manter os agentes em segundo plano ou perguntar no overlay da janela.
