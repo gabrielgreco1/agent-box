@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Racky Cloud: spec v2</title>
+<style>
+  :root { --bg:#ffffff; --fg:#171717; --muted:#6b6b6b; --line:#d9d9d9; --soft:#f5f5f5; --bar:#c7c7c7; --accent:#2563eb; --accent-bg:rgba(37,99,235,.10); --warn:#b45309; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0a0a0a; --fg:#fafafa; --muted:#a1a1a1; --line:#333; --soft:#161616; --bar:#4a4a4a; --accent:#60a5fa; --accent-bg:rgba(96,165,250,.14); --warn:#f59e0b; } }
+  html,body { background:var(--bg); color:var(--fg); }
+  body { font:16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin:0; }
+  main { max-width:860px; margin:0 auto; padding:48px 24px 96px; }
+  h1 { font-size:30px; line-height:1.2; margin:0 0 6px; letter-spacing:-.01em; }
+  .byline { color:var(--muted); font-size:14px; margin-bottom:28px; }
+  h2 { font-size:21px; margin:44px 0 12px; padding-top:14px; border-top:1px solid var(--line); }
+  h3 { font-size:16px; margin:22px 0 8px; }
+  p { margin:10px 0; } ul,ol { padding-left:22px; } li { margin:4px 0; }
+  table { width:100%; border-collapse:collapse; margin:14px 0; font-size:14px; }
+  th,td { text-align:left; vertical-align:top; padding:7px 9px; border-bottom:1px solid var(--line); }
+  th { color:var(--muted); font-weight:600; }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  tr.pick td { background:var(--accent-bg); }
+  tr.total td { font-weight:700; }
+  figure { margin:18px 0; } figure svg { width:100%; height:auto; display:block; }
+  figcaption { color:var(--muted); font-size:13px; margin-top:6px; }
+  nav { background:var(--soft); border-radius:10px; padding:12px 18px; font-size:14px; } nav a { color:var(--fg); } nav ol { margin:6px 0; }
+  .callout { background:var(--accent-bg); border-radius:10px; padding:14px 18px; margin:16px 0; }
+  .q li { list-style:"☐  "; }
+  code { background:var(--soft); padding:1px 5px; border-radius:5px; font-size:13.5px; }
+  pre { background:var(--soft); padding:14px 16px; border-radius:10px; overflow:auto; font-size:13px; line-height:1.5; }
+  .src { color:var(--muted); font-size:13px; }
+  svg text { font-family:inherit; }
+  .t-ink { fill:var(--fg); } .t-quiet { fill:var(--muted); } .f-bar { fill:var(--bar); } .f-acc { fill:var(--accent); } .s-ref { stroke:var(--warn); } .t-ref { fill:var(--warn); }
+  .s-edge { stroke:var(--line); } .s-accent { stroke:var(--accent); } .f-accent { fill:var(--accent-bg); } .f-edge { fill:var(--line); }
+</style>
+</head>
+<body>
+<main>
+<h1>Racky Cloud: máquinas gerenciadas, provedor e custos</h1>
+<div class="byline">20 de outubro de 2026 · spec v2, com preços verificados hoje · substitui a v1</div>
+
+<div class="callout"><strong>Decisão proposta:</strong> rodar as máquinas em <strong>servidores dedicados da Hetzner</strong> (Alemanha/Finlândia), cada computador numa <strong>micro-VM Firecracker</strong>, e vender a <strong>US$ 0,15 por computador-hora</strong> (1 crédito = 1 minuto = US$ 0,0025). Nosso custo fica em ~US$ 0,05/h com tudo incluso: margem bruta ~65%. A AWS sai 4 a 5 vezes mais cara para esse uso por causa do tráfego de saída, e fica só como reserva para picos. O backend vive num repositório <strong>privado</strong> separado, <code>racky-cloud</code>.</div>
+
+<nav><strong>Seções</strong><ol>
+<li><a href="#mercado">Como os concorrentes fazem</a></li>
+<li><a href="#custos">Provedores e custo por computador-hora</a></li>
+<li><a href="#escolha">Escolha de provedor</a></li>
+<li><a href="#arquitetura">Arquitetura</a></li>
+<li><a href="#isolamento">Isolamento e segurança</a></li>
+<li><a href="#contas">Contas, login e cobrança</a></li>
+<li><a href="#precos">Preços, planos e margem</a></li>
+<li><a href="#repo">Repositório e infraestrutura</a></li>
+<li><a href="#abuso">Abuso e termos</a></li>
+<li><a href="#fases">Fases e perguntas</a></li>
+</ol></nav>
+
+<h2 id="mercado">1. Como os concorrentes fazem</h2>
+<p>Quem vende "computador para agente" usa micro-VMs com retomada por snapshot e cobra por segundo de uso. Ninguém entrega o que o Racky entrega: o computador de cada subagente dentro do app do agente, com Take Over do desktop inteiro e log de requisições.</p>
+<table>
+<tr><th>Produto</th><th>Isolamento</th><th>Onde roda</th><th class="num">US$/h (2 vCPU/4 GB)</th><th>Cobrança</th><th>Ver e assumir</th></tr>
+<tr><td>E2B</td><td>Firecracker</td><td>GCP; infra aberta (Apache-2.0)</td><td class="num">0,166</td><td>assinatura + por segundo</td><td>stream da tela (SDK)</td></tr>
+<tr><td>Daytona</td><td>containers</td><td>runners próprios</td><td class="num">0,166</td><td>créditos por segundo</td><td>não</td></tr>
+<tr><td>Modal</td><td>gVisor</td><td>multi-cloud</td><td class="num">0,238</td><td>por segundo + plano</td><td>não</td></tr>
+<tr><td>Vercel Sandbox</td><td>Firecracker</td><td>Vercel</td><td class="num">0,11–0,34</td><td>CPU ativa + memória</td><td>não</td></tr>
+<tr><td>Fly Machines</td><td>Firecracker</td><td>bare metal próprio</td><td class="num">0,035–0,092</td><td>por segundo</td><td>não</td></tr>
+<tr><td>Browserbase</td><td>Chrome gerenciado</td><td>próprio</td><td class="num">0,10–0,12 (navegador)</td><td>US$ 20/99 + excedente + proxy</td><td>sim, iframe interativo</td></tr>
+<tr><td>Kernel</td><td>unikernel</td><td>Unikraft</td><td class="num">0,06 headless / 0,48 visível</td><td>por segundo</td><td>sim, noVNC/WebRTC</td></tr>
+<tr><td>Steel / Hyperbrowser / Anchor</td><td>Chrome em container</td><td>próprios</td><td class="num">0,08–0,10 (navegador)</td><td>assinatura + créditos</td><td>visualizador</td></tr>
+</table>
+<p>O que o mercado aceita: crédito grátis de US$ 5 a 200 sem cartão, planos de US$ 20 a 250/mês mais uso, limites por plano em sessões simultâneas e duração. Navegador visível (com tela) custa 3 a 5 vezes o headless. O lucro dos navegadores na nuvem está no proxy (US$ 5–12/GB).</p>
+<p>O que aprendemos: a infraestrutura do E2B é aberta e é a referência de arquitetura (API de controle, orquestrador por nó com um Firecracker por sandbox, disco copy-on-write, proxy de borda, agente dentro da VM). Podemos copiar o desenho e, se valer a pena, partes do código.</p>
+<p class="src">Fonte: pesquisa de 20/10/2026 em páginas públicas de cada produto (relatório em <code>scratchpad/competitors-research.md</code>). Preços dos concorrentes são os anunciados, não testados.</p>
+
+<h2 id="custos">2. Provedores e custo por computador-hora</h2>
+<p>O que decide a conta é o <strong>tráfego de saída</strong>, não a CPU. Raspagem gasta 0,5 a 2 GB por hora de computador. AWS cobra US$ 0,09/GB (US$ 0,15 em São Paulo) e Google US$ 0,12/GB; dedicados da Hetzner e da OVH incluem tráfego ilimitado na porta de 1–3 Gbit.</p>
+<figure>
+<svg viewBox="0 0 760 452" role="img" aria-label="Custo por computador-hora usado, 0,5 GB de tráfego por hora, sem overcommit">
+<text x="24" y="30" font-size="15" font-weight="600" class="t-ink">Dedicado sai 4 a 9 vezes mais barato que AWS e Google</text>
+<text x="24" y="50" font-size="12" class="t-quiet">US$ por computador-hora usado · 2 vCPU/4 GB · 70% de ocupação · 0,5 GB/h de saída · sem overcommit de CPU</text>
+<g font-size="12.5">
+<!-- scale: x = 300 + v/0.30*400 -->
+<line x1="300" y1="66" x2="300" y2="414" class="s-edge"/>
+<line x1="500" y1="66" x2="500" y2="414" class="s-ref" stroke-dasharray="4 4"/>
+<text x="504" y="80" font-size="11.5" class="t-ref">nosso preço: 0,15</text>
+<text x="290" y="106" text-anchor="end" class="t-ink" font-weight="600">Hetzner dedicado AX42</text><rect x="300" y="92" width="40" height="18" rx="3" class="f-acc"/><text x="346" y="106" class="t-ink" font-weight="600">0,030</text>
+<text x="290" y="136" text-anchor="end" class="t-ink" font-weight="600">Hetzner dedicado AX102</text><rect x="300" y="122" width="52" height="18" rx="3" class="f-acc"/><text x="358" y="136" class="t-ink" font-weight="600">0,039</text>
+<text x="290" y="166" text-anchor="end" class="t-ink">Vultr São Paulo (VM por computador)</text><rect x="300" y="152" width="52" height="18" rx="3" class="f-bar"/><text x="358" y="166" class="t-quiet">0,039</text>
+<text x="290" y="196" text-anchor="end" class="t-ink">DigitalOcean (VM por computador)</text><rect x="300" y="182" width="68" height="18" rx="3" class="f-bar"/><text x="374" y="196" class="t-quiet">0,051</text>
+<text x="290" y="226" text-anchor="end" class="t-ink">OVH dedicado Advance-2</text><rect x="300" y="212" width="78" height="18" rx="3" class="f-bar"/><text x="384" y="226" class="t-quiet">0,058</text>
+<text x="290" y="256" text-anchor="end" class="t-ink">Vultr São Paulo dedicado 8c</text><rect x="300" y="242" width="119" height="18" rx="3" class="f-bar"/><text x="425" y="256" class="t-quiet">0,089</text>
+<text x="290" y="286" text-anchor="end" class="t-ink">Hetzner Cloud CCX33</text><rect x="300" y="272" width="125" height="18" rx="3" class="f-bar"/><text x="431" y="286" class="t-quiet">0,094</text>
+<text x="290" y="316" text-anchor="end" class="t-ink">Fly performance-2x</text><rect x="300" y="302" width="188" height="18" rx="3" class="f-bar"/><text x="494" y="316" class="t-quiet">0,141</text>
+<text x="290" y="346" text-anchor="end" class="t-ink">AWS us-east-1 (Graviton, agrupado)</text><rect x="300" y="332" width="215" height="18" rx="3" class="f-bar"/><text x="521" y="346" class="t-quiet">0,161</text>
+<text x="290" y="376" text-anchor="end" class="t-ink">Google us-east1 (agrupado)</text><rect x="300" y="362" width="252" height="18" rx="3" class="f-bar"/><text x="558" y="376" class="t-quiet">0,189</text>
+<text x="290" y="406" text-anchor="end" class="t-ink">AWS São Paulo (agrupado)</text><rect x="300" y="392" width="347" height="18" rx="3" class="f-bar"/><text x="653" y="406" class="t-quiet">0,260</text>
+</g>
+<text x="300" y="440" font-size="11.5" class="t-quiet">Com 2 GB/h de saída, AWS e Google vão a 0,30–0,49; dedicados não mudam.</text>
+</svg>
+<figcaption>Fonte: tabelas oficiais de preço vistas em 20/10/2026 (AWS price file, Hetzner, OVH, Vultr API, DigitalOcean, Fly). Google veio de agregador; Vultr São Paulo tem uma fonte terceira com preço 50% maior. Conta completa em <code>scratchpad/cloud-pricing-research.md</code> e <code>calc.py</code>.</figcaption>
+</figure>
+<h3>Como a conta é feita (exemplo Hetzner AX102)</h3>
+<ul>
+<li>Servidor: 16 núcleos / 32 threads, 128 GB, € 259/mês + € 129 de instalação (diluída em 12 meses) = US$ 0,436/h.</li>
+<li>Cabem 16 computadores de 2 vCPU sem dividir CPU (31 dividindo 2:1). Com 70% de ocupação média: 0,436 ÷ (16 × 0,7) = <strong>US$ 0,039 por computador-hora</strong>.</li>
+<li>Tráfego: ilimitado na porta de 1 Gbit. 16 × 0,7 × 2 GB/h = 22 GB/h ≈ 50 Mbit/s, bem abaixo do limite.</li>
+</ul>
+<h3>O custo que pode explodir: proxy residencial</h3>
+<p>Proxy residencial custa US$ 2–8/GB (Bright Data, Oxylabs, IPRoyal, Decodo). A 0,5 GB/h isso é US$ 1,50–3,00 por hora de computador, 10 a 100 vezes a infraestrutura. Por isso proxy é sempre <strong>opcional, medido por GB e cobrado à parte</strong>, nunca incluso no preço por hora.</p>
+
+<h2 id="escolha">3. Escolha de provedor</h2>
+<table>
+<tr><th>Papel</th><th>Provedor</th><th>Por quê</th><th>Contra</th></tr>
+<tr class="pick"><td>Lançamento</td><td>Hetzner dedicado AX102 (Falkenstein/Helsinki)</td><td>US$ 0,039/h, tráfego ilimitado, bare metal com KVM (Firecracker roda direto), um token de API</td><td>mensal com taxa de instalação; sem região no Brasil (~200 ms de latência daqui); só x86; pode desligar servidor em queixa de abuso</td></tr>
+<tr><td>Brasil (latência)</td><td>Vultr São Paulo (dedicado 8c/64 GB, US$ 365/mês)</td><td>~US$ 0,05–0,09/h, 10 TB inclusos, latência baixa para o viewer</td><td>preço e política de uso não verificados na página (veio da API pública)</td></tr>
+<tr><td>Pico e reserva</td><td>AWS us-east-1 (C8i/M8i com virtualização aninhada)</td><td>liga por hora, sem compromisso; desde fev/2026 roda Firecracker em VM Intel comum</td><td>US$ 0,10–0,30/h por causa do tráfego; usar só quando os dedicados lotarem</td></tr>
+<tr><td>Segundo dedicado</td><td>OVH Advance</td><td>3 Gbps sem limite, US$ 0,03–0,06/h</td><td>instalação = 1 mês; termos de uso não verificados</td></tr>
+</table>
+<p><strong>Evitar:</strong> DigitalOcean (termos mais restritivos sobre crawling, sem Brasil), Google e Azure (preço), Hetzner Cloud (os planos baratos estão indisponíveis hoje e não rodam KVM).</p>
+<p><strong>Capacidade inicial:</strong> 2 × AX102 = ~32 computadores simultâneos sem dividir CPU (~60 dividindo 2:1), custo fixo ~€ 520/mês + € 258 de instalação. Dá para o beta e os primeiros clientes pagantes; um terceiro servidor entra quando a ocupação média passar de 60%.</p>
+
+<h2 id="arquitetura">4. Arquitetura</h2>
+<figure>
+<svg viewBox="0 0 760 556" role="img" aria-label="O Mac pede computadores ao control plane; eles rodam em micro-VMs nos dedicados" font-size="13">
+<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="f-edge"/></marker></defs>
+<text x="24" y="34" font-size="15" font-weight="600" class="t-ink">O Mac pede computadores ao control plane; eles rodam em micro-VMs</text>
+<g fill="none" class="s-edge" stroke-width="1.25">
+<path d="M174 100H300" marker-end="url(#arr)"/><path d="M120 184V348H316" marker-end="url(#arr)"/><path d="M600 100H624" marker-end="url(#arr)"/>
+<path d="M590 204V300" marker-end="url(#arr)"/><path d="M560 300V204" marker-end="url(#arr)"/><path d="M420 348H436" marker-end="url(#arr)"/><path d="M578 464V496" marker-end="url(#arr)"/>
+<rect x="24" y="64" width="150" height="120" rx="8"/><rect x="624" y="64" width="112" height="72" rx="8"/>
+<rect x="300" y="260" width="436" height="220" rx="8"/><rect x="316" y="320" width="104" height="56" rx="8"/>
+<rect x="436" y="300" width="284" height="164" rx="8"/><rect x="452" y="340" width="72" height="104" rx="8"/><rect x="536" y="340" width="72" height="104" rx="8"/><rect x="620" y="340" width="72" height="104" rx="8"/>
+<rect x="436" y="496" width="284" height="40" rx="8"/>
+</g>
+<rect x="300" y="64" width="300" height="140" rx="8" class="f-accent s-accent" stroke-width="2"/>
+<g fill="none" class="s-edge" stroke-width="1.25"><rect x="316" y="104" width="128" height="36" rx="8"/><rect x="460" y="104" width="128" height="36" rx="8"/><rect x="316" y="152" width="128" height="36" rx="8"/><rect x="460" y="152" width="128" height="36" rx="8"/></g>
+<text x="99" y="88" text-anchor="middle" font-weight="600" class="t-ink">Seu Mac</text>
+<text x="99" y="112" text-anchor="middle" font-size="11.5" class="t-ink">App Racky</text>
+<text x="99" y="130" text-anchor="middle" font-size="11.5" class="t-ink">orquestra agentes</text>
+<text x="99" y="148" text-anchor="middle" font-size="11.5" class="t-quiet">This Mac grátis</text>
+<text x="316" y="88" font-weight="600" class="t-ink">Control plane (Go)</text>
+<text x="380" y="126" text-anchor="middle" font-size="11.5" class="t-ink">Contas e login</text>
+<text x="524" y="126" text-anchor="middle" font-size="11.5" class="t-ink">Agendador</text>
+<text x="380" y="174" text-anchor="middle" font-size="11.5" class="t-ink">Saldo e extrato</text>
+<text x="524" y="174" text-anchor="middle" font-size="11.5" class="t-ink">Postgres</text>
+<text x="680" y="88" text-anchor="middle" font-weight="600" class="t-ink">Stripe</text>
+<text x="680" y="106" text-anchor="middle" font-size="11.5" class="t-ink">pagamentos</text>
+<text x="680" y="122" text-anchor="middle" font-size="11.5" class="t-quiet">webhooks</text>
+<text x="316" y="284" font-weight="600" class="t-ink">Data plane · Hetzner dedicado</text>
+<text x="368" y="344" text-anchor="middle" font-weight="600" class="t-ink">Gateway</text>
+<text x="368" y="362" text-anchor="middle" font-size="11.5" class="t-quiet">túnel TLS</text>
+<text x="452" y="322" font-weight="600" class="t-ink">AX102 · agente do host</text>
+<g font-size="11.5" text-anchor="middle">
+<text x="488" y="364" font-weight="600" class="t-ink">Conta A</text><text x="488" y="384" class="t-quiet">Firecracker</text><text x="488" y="402" class="t-quiet">browser</text><text x="488" y="420" class="t-quiet">egress</text>
+<text x="572" y="364" font-weight="600" class="t-ink">Conta B</text><text x="572" y="384" class="t-quiet">Firecracker</text><text x="572" y="402" class="t-quiet">browser</text><text x="572" y="420" class="t-quiet">egress</text>
+<text x="656" y="364" font-weight="600" class="t-ink">Conta C</text><text x="656" y="384" class="t-quiet">Firecracker</text><text x="656" y="402" class="t-quiet">browser</text><text x="656" y="420" class="t-quiet">egress</text>
+</g>
+<text x="578" y="520" text-anchor="middle" class="t-ink">Internet (sites)</text>
+<g font-size="11.5" class="t-quiet">
+<text x="237" y="90" text-anchor="middle">conta e pedidos</text>
+<text x="128" y="272">túnel por computador</text><text x="128" y="288">MCP, viewer, /work</text>
+<text x="598" y="236">cria e apaga</text><text x="552" y="236" text-anchor="end">batimento e uso</text>
+<text x="586" y="486">egress filtrado</text>
+</g>
+</svg>
+<figcaption>Arquitetura proposta. O mesmo desenho do E2B: control plane pequeno, um agente por servidor, uma micro-VM por computador.</figcaption>
+</figure>
+<ul>
+<li><strong>App no Mac:</strong> continua orquestrando. Pede computadores ao control plane e fala com cada um por um túnel no gateway. Ferramentas do agente, viewer e Take Over funcionam igual ao local.</li>
+<li><strong>Control plane (Go):</strong> API HTTPS, contas, saldo, agendamento, webhooks do Stripe, Postgres. Pequeno, roda num serviço gerenciado (Fly ou Railway, ~US$ 15–40/mês).</li>
+<li><strong>Agente do host (Go, binário único):</strong> em cada dedicado. Cria e apaga micro-VMs Firecracker, guarda a imagem em cache, manda batimento e uso por minuto, aplica limites de tráfego.</li>
+<li><strong>Gateway (Go):</strong> recebe o túnel do app (WebSocket/TLS), autentica a credencial curta do computador e encaminha ao host certo. Nenhum host aceita conexão direta da internet.</li>
+<li><strong>Mesma imagem local e na nuvem:</strong> a imagem do computador (a versão enxuta, ~390 MB comprimida) roda no Mac pela virtualização da Apple e na nuvem pelo Firecracker. Um build, dois destinos.</li>
+<li><strong>Boot rápido:</strong> snapshot de uma micro-VM já com Chromium aberto; restaurar leva ~1 s (o E2B e o Fly fazem assim).</li>
+</ul>
+
+<h2 id="isolamento">5. Isolamento e segurança</h2>
+<table>
+<tr><th>Camada</th><th>Medida</th></tr>
+<tr><td>Execução</td><td>Uma micro-VM Firecracker por computador, rodando no <code>jailer</code> (chroot, cgroups, seccomp, usuário sem privilégio). Kernel separado por cliente: um cliente não alcança o outro nem com root dentro da VM.</td></tr>
+<tr><td>Rede</td><td>Uma interface TAP por VM numa rede própria; o host bloqueia tráfego entre VMs e para faixas internas; saída só pelo proxy de egress da própria VM (o que já existe: filtro SSRF, log de requisições).</td></tr>
+<tr><td>Credenciais</td><td>Credencial curta por computador, só para o túnel dele. O host nunca guarda token do usuário.</td></tr>
+<tr><td>Dados</td><td>/work e logs voltam ao Mac no fim; na nuvem ficam no máximo 7 dias. Disco de cada VM é apagado com ela. Guardamos só metadados de uso (minutos, bytes, domínios) por 90 dias.</td></tr>
+<tr><td>Servidores</td><td>Sem SSH aberto à internet (acesso por WireGuard só nosso); atualização semanal; disco cifrado.</td></tr>
+</table>
+
+<h2 id="contas">6. Contas, login e cobrança</h2>
+<table>
+<tr><th>Peça</th><th>Escolha</th><th>Custo</th></tr>
+<tr><td>Login</td><td>WorkOS AuthKit (Google, GitHub, e-mail com código) no navegador, volta ao app por deep link; token no Keychain</td><td>grátis até 1 milhão de usuários ativos/mês</td></tr>
+<tr><td>Pagamento</td><td>Stripe Billing (assinatura) + Checkout (pacotes); o app só abre a página no navegador</td><td>~2,9% + US$ 0,30 por cartão nos EUA (não verificado hoje) + 0,7% do Billing</td></tr>
+<tr><td>Saldo</td><td>Ledger de créditos no nosso Postgres, só de inclusão (compra, renovação, consumo, estorno); saldo = soma</td><td>Neon: ~US$ 0,11 por hora de CPU do banco</td></tr>
+<tr><td>Medição</td><td>Batimento por minuto do agente do host; débito por minuto iniciado; reserva de 10 min antes de criar</td><td>—</td></tr>
+</table>
+<ul>
+<li><strong>Sem saldo:</strong> não cria computador e o agente recebe "saldo insuficiente" com o link de recarga. Saldo acabando com computador ligado: aviso aos 15 min; no zero, pausa (arquivos salvos), não apaga.</li>
+<li><strong>Teto de gasto</strong> mensal opcional, definido pelo usuário.</li>
+<li><strong>Brasil:</strong> se uma empresa brasileira receber em reais pelo Stripe Brasil, o cartão sai 3,99% + R$ 0,39 e o Pix 1,19% (verificado hoje). Decisão do dono.</li>
+</ul>
+
+<h2 id="precos">7. Preços, planos e margem</h2>
+<p>Preço proposto: <strong>US$ 0,15 por computador-hora</strong> (1 crédito = 1 minuto = US$ 0,0025). Fica abaixo de E2B e Daytona (US$ 0,166) e muito abaixo de navegador visível na nuvem (Kernel, US$ 0,48), com mais coisa dentro.</p>
+<h3>Custo de um computador-hora no lançamento</h3>
+<table>
+<tr><th>Parte</th><th class="num">US$/h</th><th>Base</th></tr>
+<tr><td>Servidor (AX102, sem dividir CPU, 70% ocupado)</td><td class="num">0,039</td><td>seção 2</td></tr>
+<tr><td>Ocupação real menor no começo (50%)</td><td class="num">+0,016</td><td>0,039 × 1,4</td></tr>
+<tr><td>Control plane, banco, gateway, logs</td><td class="num">0,005</td><td>~US$ 60/mês ÷ ~12 mil horas</td></tr>
+<tr><td>Taxas de pagamento (~5% da receita)</td><td class="num">0,008</td><td>Stripe em plano de US$ 15</td></tr>
+<tr class="total"><td>Total</td><td class="num">0,068</td><td>margem bruta ~55% no começo, ~70% com ocupação de 70%</td></tr>
+</table>
+<h3>Planos</h3>
+<table>
+<tr><th>Plano</th><th class="num">Preço/mês</th><th class="num">Créditos</th><th class="num">Horas</th><th class="num">Ao mesmo tempo</th><th>Extras</th></tr>
+<tr><td>Grátis</td><td class="num">0</td><td class="num">300 (uma vez)</td><td class="num">5 h</td><td class="num">1</td><td>cartão validado</td></tr>
+<tr><td>Starter</td><td class="num">US$ 15</td><td class="num">6.000</td><td class="num">100 h</td><td class="num">3</td><td>arquivos por 7 dias</td></tr>
+<tr><td>Pro</td><td class="num">US$ 39</td><td class="num">18.000</td><td class="num">300 h</td><td class="num">8</td><td>máquina grande</td></tr>
+<tr><td>Team</td><td class="num">US$ 119</td><td class="num">60.000</td><td class="num">1.000 h</td><td class="num">25</td><td>saldo compartilhado</td></tr>
+<tr><td>Pacote</td><td class="num">US$ 10</td><td class="num">4.000</td><td class="num">~66 h</td><td class="num">do plano</td><td>vale 12 meses</td></tr>
+</table>
+<ul>
+<li><strong>Máquina grande</strong> (4 vCPU, 8 GB): 2 créditos por minuto.</li>
+<li><strong>Proxy residencial:</strong> repasse do custo do fornecedor + 30%, por GB, só quando ligado.</li>
+<li><strong>Tráfego:</strong> sem cobrança extra (os dedicados incluem); limite de taxa contra abuso.</li>
+</ul>
+<p><strong>Ponto de equilíbrio:</strong> os 2 servidores iniciais custam ~US$ 660/mês (com a instalação diluída). Cobrem-se com ~45 assinaturas Starter, ou ~4.400 horas vendidas por mês.</p>
+
+<h2 id="repo">8. Repositório e infraestrutura</h2>
+<p>Sim, repositório separado e <strong>privado</strong>: <code>gabrielgreco1/racky-cloud</code>. O app (<code>racky</code>, público) só conhece a API pública do control plane; nada de chave, preço interno ou infraestrutura vaza no app.</p>
+<pre>racky-cloud/
+  controlplane/   API, contas (WorkOS), ledger, agendador, webhooks Stripe   (Go)
+  hostagent/      roda em cada dedicado: Firecracker + jailer, cache de imagem, snapshots, batimento   (Go)
+  gateway/        túnel WebSocket/TLS app ↔ computador   (Go)
+  images/         converte a imagem do computador (OCI) em rootfs + snapshot para Firecracker
+  infra/          Terraform (Hetzner, Cloudflare DNS, Neon) + Ansible (prepara os dedicados)
+  ops/            painéis, alertas, runbooks
+  docs/</pre>
+<ul>
+<li><strong>Linguagem:</strong> Go em tudo no servidor (binário único, o ecossistema do Firecracker é Go). O app continua Swift.</li>
+<li><strong>Deploy:</strong> GitHub Actions; control plane e gateway em Fly ou Railway; agente do host instalado por Ansible nos dedicados.</li>
+<li><strong>Contrato com o app:</strong> uma API versionada (<code>/v1/computers</code>, <code>/v1/balance</code>) publicada como OpenAPI. No app, vira mais uma implementação do <code>CloudProvider</code> que já existe.</li>
+<li><strong>Segredos:</strong> tokens da Hetzner, Stripe e WorkOS nos segredos do GitHub e do Fly; nunca no repositório.</li>
+</ul>
+
+<h2 id="abuso">9. Abuso e termos</h2>
+<p>Nenhum termo de uso verificado (AWS, Google, Hetzner) proíbe raspagem em si, mas todos desligam servidor em queixa de abuso. A Hetzner faz isso sem aviso. Por isso as regras rodam em código desde o dia 1:</p>
+<ul>
+<li>Limite de requisições por segundo e de conexões por computador e por conta; SMTP bloqueado; saída só 80/443.</li>
+<li>Captcha só resolvido por humano (Take Over); nada de quebra automática.</li>
+<li>Cartão validado até no plano grátis; contas novas com limite baixo.</li>
+<li>Canal de abuso (e-mail) respondido em 24 h; queixa repetida pausa a conta.</li>
+<li>Termos de Uso, Política de Uso Aceitável e Privacidade (LGPD/GDPR) escritos com advogado antes de abrir ao público.</li>
+</ul>
+
+<h2 id="fases">10. Fases e perguntas</h2>
+<ol>
+<li><strong>Fase 0, prova (1 semana):</strong> um AX102. Imagem do computador em Firecracker, boot por snapshot, viewer pelo túnel, latência daqui do Brasil. <em>Passa se:</em> boot &lt; 2 s, Take Over fluido, firewall sem vazamento.</li>
+<li><strong>Fase 1, base (4 semanas):</strong> control plane, login, Stripe, ledger, gateway, agente do host; app com "Racky Cloud". <em>Passa se:</em> compra → computador → débito funciona ponta a ponta.</li>
+<li><strong>Fase 2, beta (3 semanas):</strong> 10–20 usuários, 2 servidores, painel de custo e abuso. <em>Passa se:</em> custo ≤ US$ 0,07/h e zero computador órfão.</li>
+<li><strong>Fase 3, lançamento (2 semanas):</strong> planos públicos, termos, página de status, Brasil (Vultr São Paulo) se houver demanda.</li>
+</ol>
+<p>Antes de tudo isso vem o que você pediu primeiro: o app baixável e sem Docker. A nuvem começa depois.</p>
+<h3>Perguntas para você</h3>
+<ul class="q">
+<li>Preço de US$ 0,15/h e os planos de US$ 15 / 39 / 119 fazem sentido?</li>
+<li>Começamos na Hetzner (Alemanha/Finlândia, ~200 ms do Brasil) ou já com Vultr São Paulo (mais caro, mais perto)?</li>
+<li>Quem recebe: empresa nos EUA (dólar) ou no Brasil (real, Pix)?</li>
+<li>Posso criar o repositório privado <code>racky-cloud</code> no seu GitHub?</li>
+<li>OK para a Fase 0 (um AX102: € 259/mês + € 129 de instalação)?</li>
+</ul>
+</main>
+</body>
+</html>
