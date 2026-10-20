@@ -79,7 +79,7 @@ extension ComputersController {
             let parts = (arg.value ?? "").split(separator: "|", maxSplits: 1).map(String.init)
             guard parts.count == 2, let url = runURL(forComputer: parts[0]) else { throw noRun() }
             guard let target = await loader.evidenceTarget(run: url, ref: parts[1]) else {
-                throw ActionError.failed(.computerOpenEvidence, message: String(localized: "Cited request not found.", bundle: .module))
+                throw ActionError.failed(.computerOpenEvidence, message: String(localized: "Cited request not found", bundle: .module))
             }
             NSWorkspace.shared.activateFileViewerSelecting([target])
             return target.path

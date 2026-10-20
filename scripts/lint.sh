@@ -196,7 +196,7 @@ import json, re, sys
 keys = json.load(open(sys.argv[1], encoding="utf-8"))["strings"].keys()
 seen, bad = {}, []
 for k in keys:
-    sym = re.sub(r"(…|\.\.\.)$", "", k.strip()).lower()
+    sym = re.sub(r"[\s.…!?:]+$", "", k.strip()).lower()
     if sym and sym in seen and seen[sym] != k:
         bad.append(f"  {seen[sym]!r} x {k!r}")
     seen.setdefault(sym, k)

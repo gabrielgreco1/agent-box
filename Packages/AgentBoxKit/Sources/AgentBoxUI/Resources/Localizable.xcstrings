@@ -7943,17 +7943,6 @@
         }
       }
     },
-    "Cited request not found.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cited request not found."
-          }
-        }
-      }
-    },
     "Collect All": {
       "extractionState": "manual",
       "localizations": {
