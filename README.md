@@ -15,14 +15,18 @@ their own isolated computers (a small Linux virtual machine with a browser), wit
 
 **Steps**
 
-1. Download `Racky.dmg` from the [latest release](https://github.com/gabrielgreco1/racky/releases/latest).
-2. Open the DMG and drag **Racky** onto **Applications**. Eject the DMG.
-3. First open: Racky is not notarized yet, so macOS blocks it the first time.
-   - Open Racky from Applications (double-click). macOS says it can't verify the app: click **Done**.
-   - Open **System Settings > Privacy & Security**, scroll to the Security section and click **Open Anyway** next to "Racky".
-     Confirm with your password or Touch ID, then click **Open**. This is needed only once.
-   - (Terminal alternative: `xattr -dr com.apple.quarantine /Applications/Racky.app`.)
-4. Follow the onboarding checklist: agent CLIs found and signed in, **Login Items** approval for the Racky background agent
+1. Open Terminal (Cmd+Space, type "Terminal", Return) and paste:
+
+   ```sh
+   curl -fsSL https://github.com/gabrielgreco1/racky/releases/latest/download/install.sh | bash
+   ```
+
+   It checks your Mac, downloads the latest `Racky.dmg`, verifies its SHA-256, installs Racky into Applications and opens it.
+   Downloaded this way, macOS opens Racky right away with no "can't verify the developer" prompt. Run it again to update.
+2. Prefer the DMG? Download it from the [latest release](https://github.com/gabrielgreco1/racky/releases/latest) and drag
+   Racky to Applications. Until Racky is notarized, macOS blocks that first open: click **Done**, then
+   **System Settings > Privacy & Security > Open Anyway** (once).
+3. Follow the onboarding checklist: agent CLIs found and signed in, **Login Items** approval for the Racky background agent
    (System Settings > General > Login Items & Extensions, switch Racky on; it keeps your terminals alive when you close the window),
    and the computer runtime.
 

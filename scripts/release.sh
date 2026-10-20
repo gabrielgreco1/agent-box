@@ -144,5 +144,5 @@ cat <<EOF
 # NADA DISTO FOI EXECUTADO. Antes: a release do runtime (runtime-*) precisa existir no GitHub (scripts/vz/stage-release.sh).
 # Para publicar o app (você roda):
 # ---------------------------------------------------------------------------------------------------------
-gh release create "v$VERSION" "$DMG" "$DMG.sha256" --repo "$REPO" --title "Racky $VERSION" --generate-notes$PRERELEASE
+gh release create "v$VERSION" "$DMG" "$DMG.sha256" "$ROOT/site/install.sh" --repo "$REPO" --title "Racky $VERSION" --generate-notes$PRERELEASE
 EOF
