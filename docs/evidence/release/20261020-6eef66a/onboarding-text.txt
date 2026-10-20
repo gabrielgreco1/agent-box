@@ -1,0 +1,98 @@
+Racky
+Reveal Current Session
+Settings…
+Open Library / Library
+Computers (página)
+Inbox
+
+Insights
+Minimize Module
+Insights
+Files
+Minimize Module
+Files
+Settings
+Agents
+OpenCode
+OpenCode · Default
+Duplicate
+New Profile
+Detect Again / Check Again
+Not logged in
+Default profile
+opencode:A0000000-0000-4000-8000-000000000004
+Log In (gh, Claude, Codex)
+Codex
+Codex · Bypass approvals
+Duplicate
+Skip permissions (--dangerously-bypass-approvals-and-sandbox)
+Codex · Default
+Duplicate
+Skip permissions (--dangerously-bypass-approvals-and-sandbox)
+New Profile
+Detect Again / Check Again
+Not logged in
+Default profile
+codex:A0000000-0000-4000-8000-000000000003
+Log In (gh, Claude, Codex)
+Claude Code
+Claude · Skip permissions
+Duplicate
+Skip permissions (--dangerously-skip-permissions)
+Claude · Plan
+Duplicate
+Claude · Default
+Duplicate
+Skip permissions (--dangerously-skip-permissions)
+New Profile
+Detect Again / Check Again
+Logged in
+Default profile
+claude:A0000000-0000-4000-8000-000000000001
+Default agent
+claude
+Seção do Settings (nav)
+Seção do Settings (nav)
+Seção do Settings (nav)
+Seção do Settings (nav)
+Seção do Settings (nav)
+Seção do Settings (nav)
+Back to App
+Forward
+Back
+Toggle Sidebar
+Racky
+Toggle Right Panel
+Toggle Insights
+Toggle Files
+Checklist
+Done
+Skip for Now
+Detect Again / Check Again
+Agents run without permission prompts. You can change this per profile.
+Open Agent Settings
+Default agent
+claude
+OpenCode
+Not logged in
+Codex
+Not logged in
+Log In (gh, Claude, Codex)
+Claude Code
+Logged in
+GitHub CLI
+2.93.0 · Not logged in
+Copy Command
+Computer runtime
+Downloads automatically on first use (~470 MB)
+Conflicts
+A global "agentbox" skill is installed and may compete with Racky tools.
+Keep
+Disable Globally…
+Block in Racky
+Clone from GitHub…
+Add Project…
+New Clean Session
+New Clean Session
+New Clean Session
+Automation on

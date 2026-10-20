@@ -1,0 +1,39 @@
+{"category":"ui","level":"info","msg":"restore: 0 alive, 0 exited, 0 interrupted","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:18.285Z"}
+{"category":"ctl","level":"info","msg":"ctl state","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:18.315Z"}
+{"category":"login-shell-env","level":"info","msg":"login env source=interactive keys=9 secretLike=0 duration=0.041965125 seconds","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:18.375Z"}
+{"category":"ctl","level":"info","msg":"ctl state","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:18.410Z"}
+{"category":"ctl","level":"info","msg":"ctl uiTree","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:18.448Z"}
+{"category":"ctl","level":"info","msg":"ctl uiTree","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:22.514Z"}
+{"category":"ctl","level":"info","msg":"ctl uiTree","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:22.552Z"}
+{"category":"ctl","level":"info","msg":"ctl screenshot","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:22.588Z"}
+{"category":"ctl","level":"info","msg":"ctl uiTree","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:32.583Z"}
+{"category":"ctl","level":"info","msg":"ctl uiAction","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:32.783Z"}
+{"category":"ctl","level":"info","msg":"ctl uiTree","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:32.812Z"}
+{"category":"ctl","level":"info","msg":"ctl uiTree","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:33.396Z"}
+{"category":"ctl","level":"info","msg":"ctl uiAction","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:33.466Z"}
+{"category":"ctl","level":"info","msg":"ctl uiAction","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:33.809Z"}
+{"category":"ctl","level":"info","msg":"ctl uiTree","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:33.827Z"}
+{"category":"ctl","level":"info","msg":"ctl uiAction","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:33.898Z"}
+{"category":"ctl","level":"info","msg":"ctl uiAction","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:33.921Z"}
+{"category":"ctl","level":"info","msg":"ctl uiAction","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:33.938Z"}
+{"category":"ctl","level":"info","msg":"ctl uiAction","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:33.952Z"}
+{"category":"ctl","level":"info","msg":"ctl screenshot","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:33.969Z"}
+{"category":"ctl","level":"info","msg":"ctl uiAction","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:42.199Z"}
+{"category":"login-shell-env","level":"info","msg":"login env source=interactive keys=9 secretLike=0 duration=0.050303666 seconds","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:42.366Z"}
+{"category":"ctl","level":"info","msg":"ctl uiTree","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:43.470Z"}
+{"category":"ctl","level":"info","msg":"ctl uiTree","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:44.056Z"}
+{"category":"ctl","level":"info","msg":"ctl uiTree","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:44.634Z"}
+{"category":"ctl","level":"info","msg":"ctl uiTree","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:45.210Z"}
+{"category":"ctl","level":"info","msg":"ctl uiTree","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:45.790Z"}
+{"category":"ctl","level":"info","msg":"ctl uiTree","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:46.375Z"}
+{"category":"ctl","level":"info","msg":"ctl uiTree","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:46.966Z"}
+{"category":"ctl","level":"info","msg":"ctl uiTree","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:47.550Z"}
+{"category":"ctl","level":"info","msg":"ctl uiTree","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:48.130Z"}
+{"category":"ctl","level":"info","msg":"ctl uiTree","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:48.735Z"}
+{"category":"ctl","level":"info","msg":"ctl screenshot","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:51.468Z"}
+{"category":"ctl","level":"info","msg":"ctl uiAction","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:52.035Z"}
+{"category":"ctl","level":"info","msg":"ctl uiTree","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:53.580Z"}
+{"category":"ctl","level":"info","msg":"ctl screenshot","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:53.619Z"}
+{"category":"ctl","level":"info","msg":"ctl uiAction","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:53.910Z"}
+{"category":"ctl","level":"info","msg":"ctl uiTree","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:56.994Z"}
+{"category":"ctl","level":"info","msg":"ctl screenshot","process":"app","subsystem":"app.racky","t":"2026-10-20T21:35:57.043Z"}

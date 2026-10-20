@@ -9,8 +9,13 @@ import Foundation
 public enum HookHelperLocator {
     public static func path(environment: [String: String], bundleURL: URL) -> String? {
         if let path = environment["RACKY_HELPER"], !path.isEmpty { return path }
-        let bundled = bundleURL.appendingPathComponent("Contents/MacOS/racky").path
-        return FileManager.default.isExecutableFile(atPath: bundled) ? bundled : nil
+        // scripts/build.sh embute o helper em Contents/Helpers: em Contents/MacOS "racky" é o MESMO arquivo que o executável do app
+        // ("Racky") num volume case-insensitive, e rodá-lo abriria o app em vez do helper (hooks e MCP morreriam no ato).
+        for relative in ["Contents/Helpers/racky", "Contents/MacOS/racky"] {
+            let candidate = bundleURL.appendingPathComponent(relative).path
+            if FileManager.default.isExecutableFile(atPath: candidate) { return candidate }
+        }
+        return nil
     }
 }
 

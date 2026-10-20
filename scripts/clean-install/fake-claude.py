@@ -9,8 +9,11 @@ Env: FAKE_CLAUDE_LOG (arquivo), FAKE_APP_SOCK (socket do app de teste), FAKE_COM
 import json, os, subprocess, sys, time
 
 args = sys.argv[1:]
+if args[:1] in (["--version"], ["--help"]) or args[:2] == ["auth", "status"]:
+    with open(os.environ.get("FAKE_CLAUDE_LOG", "/dev/null"), "a") as f:  # prova de que o Racky achou ESTE claude
+        f.write("probe %s\n" % " ".join(args))
 if args[:1] == ["--version"]:
-    print("2.1.302 (Claude Code)")
+    print("9.9.9 (fake-claude)")
     sys.exit(0)
 if args[:1] == ["--help"]:
     sys.exit(1)  # sem --help o Racky usa a tabela por versão
@@ -42,7 +45,8 @@ env = dict(os.environ)
 env["RACKY_MCP_NO_LAUNCH"] = "1"  # nunca reabrir "o" app: o do dono tem o mesmo bundle id
 if os.environ.get("FAKE_APP_SOCK"):
     env["RACKY_APP_SOCK"] = os.environ["FAKE_APP_SOCK"]
-proc = subprocess.Popen([server["command"]] + server["args"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, env=env, text=True, bufsize=1)
+log('mcp command: %s exists=%s' % (json.dumps([server['command']] + server['args'])[:300], os.path.exists(server['command'])))
+proc = subprocess.Popen([server["command"]] + server["args"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=open(LOG, 'a'), env=env, text=True, bufsize=1)
 seq = [0]
 
 
@@ -70,7 +74,8 @@ def call(tool, arguments):
 
 
 init = rpc("initialize", {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "fake-claude", "version": "0"}})
-log("initialize -> %s" % json.dumps(init)[:300])
+time.sleep(0.5)
+log("initialize -> %s (helper rc=%s)" % (json.dumps(init)[:300], proc.poll()))
 rpc("notifications/initialized", notify=True)
 t0 = time.time()
 for attempt in range(40):  # "pending" = o usuário ainda decide; repete com os mesmos argumentos

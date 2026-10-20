@@ -1,0 +1,2 @@
+{"category":"server","level":"info","msg":"rackyd listening","process":"ptyd","subsystem":"app.racky.ptyd","t":"2026-10-20T21:35:42.436Z"}
+{"category":"auth","level":"info","msg":"peer auth: ad-hoc development mode (uid only)","process":"ptyd","subsystem":"app.racky.ptyd","t":"2026-10-20T21:35:42.436Z"}

@@ -138,6 +138,9 @@ export FAKE_CLAUDE_LOG='$FAKE_LOG' FAKE_APP_SOCK='$SOCK' FAKE_COMPUTER=ci1
 exec /usr/bin/python3 '$ROOT/scripts/clean-install/fake-claude.py' "\$@"
 EOF
 chmod +x "$FAKE_HOME/.local/bin/claude"
+# O shell de login do app lê $HOME/.zshenv (HOME é o temporário): o "claude" de mentira tem que vir ANTES de qualquer outro no PATH.
+# (NSHomeDirectory() ignora HOME, então o ~/.local/bin do dono continua nos diretórios conhecidos, mas só depois do PATH.)
+printf 'export PATH="%s/.local/bin:$PATH"\n' "$FAKE_HOME" > "$FAKE_HOME/.zshenv"
 ( cd "$REPO" && git init -q && echo "clean install repo" > README.md && git add . && git -c user.email=ci@racky.local -c user.name=ci commit -qm init )
 env -i HOME="$FAKE_HOME" PATH="/usr/bin:/bin:/usr/sbin:/sbin" USER="$USER" LOGNAME="$USER" TMPDIR="${TMPDIR:-/tmp}" \
   RACKY_HOME="$HOME_T" RACKY_LAUNCHD=0 RACKY_AUTOMATION=1 RACKY_APP_SOCK="$SOCK" RACKY_MCP_NO_LAUNCH=1 \
@@ -162,6 +165,9 @@ check "nenhuma linha Docker nem imagem no onboarding" sh -c "! tree | jq -e '[..
 check "nenhum texto do onboarding menciona Docker" sh -c "! grep -qi docker '$EVIDENCE_DIR/onboarding-text.txt'"
 check "Claude (de mentira) achado e logado no onboarding" grep -qiE "claude|logged in" "$EVIDENCE_DIR/onboarding-text.txt"
 mark "onboarding-verificado"
+# TRAVA: nunca lançar sessão se o Claude que o app achou não for o de mentira (o log dele registra a sondagem `auth status`). O de verdade gastaria cota do dono.
+if ! grep -q "^probe auth status" "$FAKE_LOG"; then say "ABORTADO: o app não achou o claude de mentira (ele não foi sondado); nenhuma sessão foi lançada"; FAILS=$((FAILS + 1)); exit 3; fi
+say "  PASS  o app achou o claude de mentira (sondado), nenhuma sessão real será lançada"
 act_ok onboarding.done; check "Done fecha o onboarding" wait_for 10 sh -c "! '$APP/Contents/Helpers/racky' ctl ui tree --sock '$SOCK' | jq -e '[.. | objects | select(.id == \"onboarding\")] | length > 0' >/dev/null"
 
 # 5. sessão limpa com o agente de mentira ---------------------------------------------------------------------------------------------
@@ -180,6 +186,7 @@ mark "sessao-lancada"
 check "o agente de mentira subiu" wait_for 30 grep -q "session start" "$FAKE_LOG"
 check "ele reservou o computador pelo MCP" wait_for 60 grep -q "boxes_reserve" "$FAKE_LOG"
 mark "computador-reservado"
+if ! grep -q "boxes_reserve" "$FAKE_LOG"; then say "ABORTADO: a reserva não aconteceu (veja fake-claude.log)"; exit 3; fi
 
 # 6. o computador sobe no runtime nativo ------------------------------------------------------------------------------------------------
 say; say "== 6. download file://, preparo e VM"
@@ -207,7 +214,7 @@ say "  VMs novas (Virtualization.framework): ${NEW_VMS:-nenhuma}"
 check "uma VM nova do Virtualization.framework está rodando" test -n "$NEW_VMS"
 du -sh "$HOME_T/vz" 2>/dev/null | tee -a "$REPORT"
 # Docker: nada de socket do Docker aberto pelo app nem pelo daemon filho, nada criado.
-{ lsof -U -p "$APP_PID" 2>/dev/null; for p in $(pgrep -P "$APP_PID"); do lsof -U -p "$p" 2>/dev/null; done; } > "$EVIDENCE_DIR/lsof-unix-sockets.txt"
+{ lsof -U -a -p "$APP_PID" 2>/dev/null; for p in $(pgrep -P "$APP_PID"); do lsof -U -a -p "$p" 2>/dev/null; done; } > "$EVIDENCE_DIR/lsof-unix-sockets.txt"
 check "nenhum socket do Docker aberto pelo app nem pelos filhos" sh -c "! grep -qi docker '$EVIDENCE_DIR/lsof-unix-sockets.txt'"
 check "nenhum evento do Docker durante o teste" sh -c "[ ! -s '$EVIDENCE_DIR/docker-events.txt' ] || ! grep -q . '$EVIDENCE_DIR/docker-events.txt'"
 

@@ -1,0 +1,105 @@
+Racky
+Reveal Current Session
+Settings…
+Open Library / Library
+Computers (página)
+Inbox
+
+New Session…
+Clone from GitHub…
+Add Project…
+Sort and Filter
+Expand / Collapse Project (clique na linha)
+off
+Show Pane
+Claude Code
+Status unavailable
+Select Session (clique no card)
+Status unavailable
+Subagent computers (card, header do pane)
+main
+Open Viewer
+Ready
+Insights
+Minimize Module
+Insights
+Files
+repo
+/private/tmp/rkci-yYiwig/repo
+Refresh (Files)
+Show / Hide Ignored Files
+1
+Open File or Folder
+Minimize Module
+Files
+Pin Folder / Follow Terminal
+Status bar: abrir
+Status bar: abrir
+Settings
+Seção do Settings (nav)
+Seção do Settings (nav)
+Seção do Settings (nav)
+Seção do Settings (nav)
+Seção do Settings (nav)
+Seção do Settings (nav)
+Back to App
+Diagnostics
+Recent errors
+none
+Background service
+Running · protocol v1.0 · build 1.0 (dev) · 1 terminals · child process
+Check for Problems
+Conflicts
+A global "agentbox" skill is installed and may compete with Racky tools.
+Keep
+Disable Globally…
+Block in Racky
+Computer runtime
+Downloads automatically on first use (~470 MB)
+GitHub CLI
+2.93.0 · Not logged in
+Copy Command
+OpenCode
+Not logged in
+Codex
+Not logged in
+Log In (gh, Claude, Codex)
+Claude Code
+Logged in
+Export Diagnostics…
+Reveal Logs in Finder
+terminal.resize
+p50 0.4 p95 0.4
+terminal.first_byte
+p50 254 p95 254
+launch.agent
+p50 389 p95 389
+computer.provision
+p50 4331 p95 4331
+boot.first_window
+p50 189 p95 189
+attach.replay
+p50 0.5 p95 0.5
+Racky
+Toggle Right Panel
+Toggle Insights
+Toggle Files
+New Tab… (Quick Launch)
+Claude Code
+selected
+Close Tab
+Claude Code
+selected
+Close
+Next
+Previous
+Regex (busca no terminal)
+Case Sensitive (busca no terminal)
+
+Search
+
+Close Pane
+Expand / Collapse Pane
+Down
+Split Right
+Subagent computers (card, header do pane)

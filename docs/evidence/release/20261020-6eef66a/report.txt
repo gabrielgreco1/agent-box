@@ -1,0 +1,68 @@
+clean-install 2026-10-20T21:35:14Z sha=6eef66a macOS 27.0.1 arm64 work=/tmp/rkci-yYiwig
+DMG: /Users/gabriel/orca/agent-box/.claude/worktrees/agent-ab1c29171b728a2f1/build/release/Racky.dmg (35319285 bytes); runtime: /Users/gabriel/orca/agent-box/.claude/worktrees/agent-ab1c29171b728a2f1/build/release/runtime-1-155dac8169cb
+
+== 1. montar o DMG e copiar o app (fora de /Applications)
+  PASS  o DMG tem Racky.app e o atalho Applications -> /Applications
+  PASS  app copiado para /tmp/rkci-yYiwig/install
+  PASS  codesign --verify --deep --strict na cópia
+  [t+2.08s] dmg-copiado
+
+== 2. manifesto local (file://) a partir do manifesto embutido
+  PASS  sha256 e tamanhos do manifesto embutido batem com os arquivos de /Users/gabriel/orca/agent-box/.claude/worktrees/agent-ab1c29171b728a2f1/build/release/runtime-1-155dac8169cb
+
+== 3. abrir o app (RACKY_HOME e HOME temporários, sem launchd, DOCKER_HOST inexistente)
+  [t+2.63s] app-lancado
+  PASS  o app de teste respondeu ao ctl (pid 5243)
+  [t+3.8s] app-pronto
+
+== 4. onboarding
+  PASS  o onboarding abre sozinho na primeira execução
+  PASS  linha 'Computer runtime' presente
+  PASS  'Computer runtime' diz que baixa sozinho no primeiro uso (~470 MB)
+  PASS  nenhuma linha Docker nem imagem no onboarding
+  PASS  nenhum texto do onboarding menciona Docker
+  PASS  Claude (de mentira) achado e logado no onboarding
+  [t+18.16s] onboarding-verificado
+  PASS  o app achou o claude de mentira (sondado), nenhuma sessão real será lançada
+  PASS  Done fecha o onboarding
+
+== 5. projeto, sessão limpa e reserva de um computador (MCP real)
+  PASS  projeto criado
+  PASS  sessão no banco
+  PASS  composer abre
+  PASS  terminal 'claude' (de mentira) criado
+  [t+28.22s] sessao-lancada
+  PASS  o agente de mentira subiu
+  PASS  ele reservou o computador pelo MCP
+  [t+28.81s] computador-reservado
+
+== 6. download file://, preparo e VM
+  PASS  o computador ficou pronto (READY no log do agente)
+  [t+34.81s] computador-pronto
+18:35:49 READY after 6.0s
+  note  a linha de download não foi vista pelo polling (arquivos locais baixam rápido)
+  PASS  linha do computador no banco
+  PASS  o runtime ficou instalado (vz/assets/ready.json)
+  VMs novas (Virtualization.framework): 5853 
+  PASS  uma VM nova do Virtualization.framework está rodando
+2.5G	/tmp/rkci-yYiwig/h/vz
+  PASS  nenhum socket do Docker aberto pelo app nem pelos filhos
+  PASS  nenhum evento do Docker durante o teste
+
+== 7. Settings > Computers e Diagnostics
+  PASS  Settings > Computers não menciona Docker
+  PASS  Diagnostics não menciona Docker
+  PASS  o log do app não menciona Docker
+
+== 8. sair: nenhuma VM pode sobrar
+  PASS  o app saiu
+  [t+43.45s] app-encerrado
+  PASS  nenhuma VM nova sobrou
+  PASS  nenhum processo do teste sobrou
+  PASS  registry sem VMs
+  PASS  nenhum clone de rootfs sobrou
+  [t+45.74s] fim
+
+--- limpeza
+o que é do dono segue igual (app, launchd, dados, containers)
+RESULTADO: OK (evidência: /Users/gabriel/orca/agent-box/.claude/worktrees/agent-ab1c29171b728a2f1/docs/evidence/release/20261020-6eef66a)

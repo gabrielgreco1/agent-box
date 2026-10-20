@@ -1,0 +1,13 @@
+{
+  "entries" : [
+    {
+      "computerID" : "ea10611b-cfa8-40ed-98de-1b1d3aa8e3c9",
+      "createdAt" : "2026-10-20T21:35:46Z",
+      "hostPID" : 5243,
+      "name" : "ci1",
+      "owner" : "racky-1011a497",
+      "vmID" : "ab-ea10611b-7b7e"
+    }
+  ],
+  "version" : 1
+}

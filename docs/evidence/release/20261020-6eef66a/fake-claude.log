@@ -1,0 +1,13 @@
+probe --help
+probe --version
+probe auth status --json
+18:35:42 session start argv=["--session-id", "a176cdab-45fa-4e98-9348-4860342ff082", "--dangerously-skip-permissions", "--settings", "/tmp/rkci-yYiwig/h/run/launch/01a15b3d-d8eb-7008-8314-4a9d4e4ecebd/settings.json", "--mcp-config", "/tmp/rkci-yYiwig/h/run/launch/01a15b3d-d8eb-7008-8314-4a9d4e4ecebd/mcp.json", "--plugin-dir", "/tmp/rkci-yYiwig/h/run/launch/01a15b3d-d8eb-7008-8314-4a9d4e4ecebd/plugin", "--agents", "{\"racky-w
+18:35:42 mcp command: ["/tmp/rkci-yYiwig/install/Racky.app/Contents/Helpers/racky", "mcp", "--child", "01a15b3d-d8eb-7008-8314-4a9d4e4ecebd", "--capability", "0d9f13f7fd5b0962a956c7380772d0d7a3e7841f5cef0ddc"] exists=True
+18:35:43 initialize -> {"id": 1, "jsonrpc": "2.0", "result": {"capabilities": {"tools": {"listChanged": false}}, "instructions": "Racky orchestration tools. WHEN A SUBAGENT WILL STUDY, BROWSE OR SCRAPE A WEBSITE, PORTAL OR ENDPOINT, OR VALIDATE A DATA SOURCE, do not use a plain subagent (WebFetch, curl): reserve a compute (helper rc=None)
+18:35:43 boxes_reserve -> {"boxes": [{"child_id": "01a15b3d-w1", "display": "headless", "name": "ci1", "position": 1, "reason": "memory", "state": "provisioning", "worker": "racky-worker-1"}], "took_ms": 13}
+18:35:43 boxes_status +0.0s -> {"boxes": [{"child_id": "01a15b3d-w1", "display": "headless", "lease": "agent", "name": "ci1", "proxy": "direct", "runtime_s": 0, "started_at": "2026-10-20T21:35:43Z", "state": "provisioning", "usage": {"bytes": 0, "renders": 0, "requests": 0, "tunnels": 0}, "worker": "racky-worker-1"}], "queue": {"length": 0}, "took_ms": 0}
+18:35:45 boxes_status +2.0s -> {"boxes": [{"child_id": "01a15b3d-w1", "display": "headless", "lease": "agent", "name": "ci1", "proxy": "direct", "runtime_s": 2, "started_at": "2026-10-20T21:35:43Z", "state": "provisioning", "usage": {"bytes": 0, "renders": 0, "requests": 0, "tunnels": 0}, "worker": "racky-worker-1"}], "queue": {"length": 0}, "took_ms": 0}
+18:35:47 boxes_status +4.0s -> {"boxes": [{"child_id": "01a15b3d-w1", "display": "headless", "lease": "agent", "name": "ci1", "proxy": "direct", "runtime_s": 4, "started_at": "2026-10-20T21:35:43Z", "state": "provisioning", "usage": {"bytes": 0, "renders": 0, "requests": 0, "tunnels": 0}, "worker": "racky-worker-1"}], "queue": {"length": 0}, "took_ms": 0}
+18:35:49 boxes_status +6.0s -> {"boxes": [{"child_id": "01a15b3d-w1", "display": "headless", "lease": "agent", "name": "ci1", "proxy": "direct", "runtime_s": 6, "started_at": "2026-10-20T21:35:43Z", "state": "ready", "usage": {"bytes": 0, "renders": 0, "requests": 0, "tunnels": 0}, "worker": "racky-worker-1"}], "queue": {"length": 0}, "took_ms": 6}
+18:35:49 READY after 6.0s
+probe auth status --json

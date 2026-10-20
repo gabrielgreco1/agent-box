@@ -1,0 +1,74 @@
+Racky
+Reveal Current Session
+Settings…
+Open Library / Library
+Computers (página)
+Inbox
+
+New Session…
+Clone from GitHub…
+Add Project…
+Sort and Filter
+Expand / Collapse Project (clique na linha)
+off
+Show Pane
+Claude Code
+Status unavailable
+Select Session (clique no card)
+Status unavailable
+Subagent computers (card, header do pane)
+main
+Open Viewer
+Ready
+Insights
+Minimize Module
+Insights
+Files
+repo
+/private/tmp/rkci-yYiwig/repo
+Refresh (Files)
+Show / Hide Ignored Files
+1
+Open File or Folder
+Minimize Module
+Files
+Pin Folder / Follow Terminal
+Status bar: abrir
+Status bar: abrir
+Settings
+Seção do Settings (nav)
+Seção do Settings (nav)
+Seção do Settings (nav)
+Seção do Settings (nav)
+Seção do Settings (nav)
+Seção do Settings (nav)
+Back to App
+Computers
+Add Proxy
+No proxies. Computers connect directly.
+Default proxy (proxy)
+none
+off
+Racky
+Toggle Right Panel
+Toggle Insights
+Toggle Files
+New Tab… (Quick Launch)
+Claude Code
+selected
+Close Tab
+Claude Code
+selected
+Close
+Next
+Previous
+Regex (busca no terminal)
+Case Sensitive (busca no terminal)
+
+Search
+
+Close Pane
+Expand / Collapse Pane
+Down
+Split Right
+Subagent computers (card, header do pane)

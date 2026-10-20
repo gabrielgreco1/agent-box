@@ -1,0 +1,5 @@
+total 8
+drwx------@  4 gabriel  staff  204 Oct 20 18:32 .
+drwx------@ 10 gabriel  wheel  320 Oct 20 18:35 ..
+lrwxr-xr-x@  1 gabriel  staff   13 Oct 20 18:32 Applications -> /Applications
+drwxr-xr-x@  3 gabriel  staff  102 Oct 20 18:32 Racky.app

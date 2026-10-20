@@ -40,13 +40,18 @@ private func manifestJSON(kernelSHA: String = abcd, url: String = "https://examp
         #expect(throws: VZManifestError.notPublished("kernel")) { try hosted.requirePublished() }
     }
 
-    @Test func theBundledManifestIsAValidPlaceholder() throws {
+    @Test func theBundledManifestPointsAtReleaseURLsWithRealHashes() throws {
         var root = URL(fileURLWithPath: #filePath)
         while root.path != "/", !FileManager.default.fileExists(atPath: root.appendingPathComponent("runtime/vz-manifest.json").path) { root.deleteLastPathComponent() }
         let manifest = try VZManifest.decode(Data(contentsOf: root.appendingPathComponent("runtime/vz-manifest.json")))
         #expect(manifest.kernel.license == "GPL-2.0-only")
         #expect(manifest.kernel.sourceURL?.contains("kata-containers") == true)
-        #expect(throws: VZManifestError.self) { try manifest.requirePublished() }
+        // scripts/vz/stage-release.sh: URLs de release do GitHub e sha256 reais (nada de placeholder, nada de zeros).
+        try manifest.requirePublished()
+        for spec in [manifest.kernel, manifest.vminit, manifest.computer] {
+            #expect(spec.url.hasPrefix("https://github.com/gabrielgreco1/racky/releases/download/runtime-\(manifest.version)/"))
+            #expect(spec.sha256.count == 64 && (spec.size ?? 0) > 0)
+        }
     }
 
     @Test func relativeURLsResolveAgainstTheManifestLocation() throws {
