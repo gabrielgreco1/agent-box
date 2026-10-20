@@ -313,16 +313,23 @@ struct StoppedAgentsBanner: View {
     let model: WorkspaceModel
 
     var body: some View {
+        if model.showsDaemonLossBanner { row.a11y(.windowDaemonBanner, kind: "container") } else { row }
+    }
+
+    @ViewBuilder private var row: some View {
         let count = model.stoppedAgentsInCurrentSession.count
+        let lost = model.showsDaemonLossBanner
         HStack(spacing: DS.Space.s2) {
-            Text(verbatim: count == 1
+            Text(verbatim: lost
+                ? String(localized: "Background agents stopped unexpectedly.", bundle: .module)
+                : count == 1
                 ? String(localized: "1 agent stopped while Agent Box was closed", bundle: .module)
                 : String(localized: "\(count) agents stopped while Agent Box was closed", bundle: .module))
                 .dsFont(DS.Font.small)
                 .foregroundStyle(DS.Color.textSecondary)
                 .lineLimit(1)
             Spacer(minLength: DS.Space.s2)
-            DSButton(.sessionResumeStopped, "Resume All", variant: .primary, size: .xs)
+            DSButton(.sessionResumeStopped, lost ? "Resume Agents" : "Resume All", variant: .primary, size: .xs)
         }
         .padding(.horizontal, DS.Space.s3)
         .frame(height: PaneMetrics.banner)

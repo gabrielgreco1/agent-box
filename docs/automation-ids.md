@@ -661,6 +661,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `pane.copyId` | Pane ID (⌥) | ⌥ | slice1 |
 | `terminal.showHookLog` | Show Hook Log (⌥) | ⌥ | slice2 |
 | `terminal.sendInterrupt` | Send Interrupt (⌃C) | ⌃C | slice1 |
+| `terminal.sendText` | Send Text | — | slice1 |
+| `terminal.screen` | Screen (automação, sem UI) | — | slice1 |
 | `terminal.forceQuit` | Force Quit Process… / Force Quit | — | slice1 |
 | `find.open` | Find… | ⌘F / ⌘G / ↵ / ⇧⌘G / ⇧↵ / Esc | slice1 |
 | `find.next` | Next | ⌘F / ⌘G / ↵ / ⇧⌘G / ⇧↵ / Esc | slice1 |

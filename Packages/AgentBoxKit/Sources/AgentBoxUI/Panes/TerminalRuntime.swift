@@ -432,6 +432,18 @@ final class TerminalRuntime {
         try? await client.signal(sessionID: session, signal: SIGINT, target: .group)
     }
 
+    /// Automação (`ctl ui action terminal.sendText`): escreve no PTY com origem `ctl` (aparece em `inputBytesByOrigin`).
+    func sendText(_ text: String, to terminal: Terminal) async throws {
+        guard let session = Self.session(of: terminal) else { throw PTYClientError.notConnected }
+        try await client.sendInput(sessionID: session, origin: .ctl, bytes: Data(text.utf8))
+    }
+
+    /// Automação (`ctl ui action terminal.screen`): texto da tela vindo do emulador headless do daemon.
+    func screenText(of terminal: Terminal, lines: Int) async throws -> String {
+        guard let session = Self.session(of: terminal) else { throw PTYClientError.notConnected }
+        return try await client.textSnapshot(sessionID: session, lines: lines)
+    }
+
     func summary(of terminal: Terminal) async -> SessionSummary? {
         guard let session = Self.session(of: terminal) else { return nil }
         return (try? await client.list())?.first { $0.sessionID == session }

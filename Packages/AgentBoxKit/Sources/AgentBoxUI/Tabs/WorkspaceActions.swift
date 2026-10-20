@@ -264,6 +264,21 @@ extension WorkspaceModel {
             await runtime.sendInterrupt(t)
             return nil
         }
+        // Automação (08 AR-806 `terminal send|screen`). `set {"terminal":"<uuid>","text":"..."}`; sem `terminal`, o terminal em foco.
+        try reg(.terminalSendText, enablement: hasTab) { [unowned self] arg in
+            struct Payload: Decodable { var terminal: String?; var text: String }
+            let payload = try arg.value.flatMap { try? JSONDecoder().decode(Payload.self, from: Data($0.utf8)) }
+                ?? { throw ActionError.failed(.terminalSendText, message: "expected {\"terminal\":\"<uuid>\",\"text\":\"...\"}") }()
+            guard let id = payload.terminal.flatMap({ UUID(uuidString: $0) }) ?? focusedTerminalID, let t = terminal(id) else {
+                throw ActionError.failed(.terminalSendText, message: "Terminal not found")
+            }
+            do { try await runtime.sendText(payload.text, to: t) } catch { throw ActionError.failed(.terminalSendText, message: "Terminal isn't running") }
+            return String(payload.text.utf8.count)
+        }
+        try reg(.terminalScreen, enablement: hasTab) { [unowned self] arg in
+            guard let id = uuid(arg) ?? focusedTerminalID, let t = terminal(id) else { throw ActionError.failed(.terminalScreen, message: "Terminal not found") }
+            do { return try await runtime.screenText(of: t, lines: 200) } catch { throw ActionError.failed(.terminalScreen, message: "Terminal isn't running") }
+        }
         try reg(.terminalForceQuit, enablement: hasTab) { [unowned self] arg in
             guard let id = uuid(arg) ?? focusedTerminalID else { return nil }
             forceQuit(id)

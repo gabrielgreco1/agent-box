@@ -1057,6 +1057,7 @@ final class WorkspaceModel {
         let why = reason ?? InterruptionClassifier.reason(
             startedAt: t.startedAt, bootTime: InterruptionClassifier.bootTime(), previousRunWasClean: nil)
         interruptionReasons[id] = why
+        if why == .unexpected, t.provider.isAgent { daemonLossAgentCount += 1 }   // AC-810: o banner da janela
         update(terminal: id) { $0.state = .interrupted; $0.endedAt = $0.endedAt ?? Date() }
         runStates[id] = .interrupted
         save(terminal: id)
@@ -1085,6 +1086,12 @@ final class WorkspaceModel {
         }
     }
 
+    /// AC-810: o daemon morreu e levou os PTYs dos agentes. A faixa da janela fica enquanto houver agente `interrupted`.
+    private(set) var daemonLossAgentCount = 0
+    var showsDaemonLossBanner: Bool {
+        daemonLossAgentCount > 0 && states.values.contains { $0.terminals.values.contains { $0.state == .interrupted && $0.provider.isAgent } }
+    }
+
     /// Resume (06 §2.6): relança com o ID nativo e flags regeneradas, sem o prompt inicial. Sem ID: "Continue Last".
     func resume(_ terminalID: UUID) {
         guard let t = terminal(terminalID), t.provider.isAgent, !launching.contains(terminalID) else { return }
@@ -1103,7 +1110,7 @@ final class WorkspaceModel {
     @ObservationIgnored var autoResumeEnabled: () -> Bool = { true }
     /// Conversas vivas na máquina (F32). Os testes trocam por uma lista fixa.
     @ObservationIgnored var liveConversations: @Sendable () async -> Set<String> = { await LiveConversations.current() }
-    var showsStoppedAgentsBanner: Bool { !autoResumeEnabled() && !stoppedAgentsInCurrentSession.isEmpty }
+    var showsStoppedAgentsBanner: Bool { showsDaemonLossBanner || (!autoResumeEnabled() && !stoppedAgentsInCurrentSession.isEmpty) }
 
     /// `Resume All` do banner: todos os agentes parados da sessão atual voltam com `--resume`, escalonados.
     @discardableResult

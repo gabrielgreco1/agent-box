@@ -150,6 +150,8 @@ extension ActionID {
     public static let paneCopyId = ActionID(unchecked: "pane.copyId")
     public static let terminalShowHookLog = ActionID(unchecked: "terminal.showHookLog")
     public static let terminalSendInterrupt = ActionID(unchecked: "terminal.sendInterrupt")
+    public static let terminalSendText = ActionID(unchecked: "terminal.sendText")
+    public static let terminalScreen = ActionID(unchecked: "terminal.screen")
     public static let terminalForceQuit = ActionID(unchecked: "terminal.forceQuit")
     public static let findOpen = ActionID(unchecked: "find.open")
     public static let findNext = ActionID(unchecked: "find.next")
@@ -568,6 +570,8 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "pane.copyId"), label: "Pane ID (⌥)", shortcut: "⌥", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "terminal.showHookLog"), label: "Show Hook Log (⌥)", shortcut: "⌥", slice: .slice2),
         ActionSpec(id: ActionID(unchecked: "terminal.sendInterrupt"), label: "Send Interrupt (⌃C)", shortcut: "⌃C", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "terminal.sendText"), label: "Send Text", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "terminal.screen"), label: "Screen (automação, sem UI)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "terminal.forceQuit"), label: "Force Quit Process… / Force Quit", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "find.open"), label: "Find…", shortcut: "⌘F / ⌘G / ↵ / ⇧⌘G / ⇧↵ / Esc", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "find.next"), label: "Next", shortcut: "⌘F / ⌘G / ↵ / ⇧⌘G / ⇧↵ / Esc", slice: .slice1),
