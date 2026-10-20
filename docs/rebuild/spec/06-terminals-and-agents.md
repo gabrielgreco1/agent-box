@@ -282,7 +282,7 @@ struct LaunchRequest: Codable, Sendable {      // persistido em terminal.launch_
   var initialPrompt: String?                    // só no primeiro start
   var mainAgent: CatalogRef?                    // --agent (Claude) / --agent (OpenCode)
   var sessionActivations: [CatalogRef]          // skills, agentes e plugins ativados para esta sessão
-  var injections: Set<Injection>                // .activityHooks, .agentBoxMCP, .orchestrationSkill, .usageStatusLine
+  var injections: Set<Injection>                // .activityHooks, .rackyMCP, .orchestrationSkill, .usageStatusLine
   var nativeConversation: NativeConversation?   // provider, id, capturedBy, capturedAt
 }
 ```
