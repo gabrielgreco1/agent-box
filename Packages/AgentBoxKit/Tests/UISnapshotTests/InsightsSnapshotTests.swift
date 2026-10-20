@@ -190,10 +190,15 @@ import Testing
         for _ in 0..<60 where model.snapshot.machine == nil { try await Task.sleep(for: .milliseconds(50)) }
         #expect(model.snapshot.machine != nil)
         model.viewDidDisappear()
-        try await Task.sleep(for: .milliseconds(300))
-        let stamp = await service.current.machine?.at
-        try await Task.sleep(for: .milliseconds(300))
-        #expect(await service.current.machine?.at == stamp)
+        // Fora de vista a amostragem para: espera duas leituras seguidas iguais (sob carga o `setVisible(false)` assíncrono
+        // pode levar mais que um intervalo fixo).
+        var stopped = false
+        for _ in 0..<20 where !stopped {
+            let stamp = await service.current.machine?.at
+            try await Task.sleep(for: .milliseconds(300))
+            stopped = await service.current.machine?.at == stamp
+        }
+        #expect(stopped, "machine sampling kept running after the panel hid")
         await service.stop()
     }
 }
