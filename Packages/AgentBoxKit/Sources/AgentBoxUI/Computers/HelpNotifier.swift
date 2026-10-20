@@ -84,7 +84,7 @@ public final class SystemHelpNotifier: NSObject, HelpNotifying, UNUserNotificati
     public func notify(approval: ComputerApprovalRequest) {
         let center = UNUserNotificationCenter.current()
         let payload = UNMutableNotificationContent()
-        payload.title = "\(approval.sessionTitle) — \(approval.kind == .spawn ? "give this subagent a computer?" : "Claude wants a computer")"
+        payload.title = "\(approval.sessionTitle) — \(approval.kind == .spawn ? "give this subagent a computer?" : "\(approval.agentName) wants a computer")"
         payload.body = approval.kind == .spawn ? (approval.subject ?? "") : "\(approval.computerName) · \(approval.displayLabel) · \(approval.proxyLabel)"
         payload.sound = .default
         payload.threadIdentifier = approval.sessionTitle
@@ -158,6 +158,9 @@ final class ViewerPopOut: NSObject, NSWindowDelegate {
         window.center()
         window.makeKeyAndOrderFront(nil)
     }
+
+    /// O computador sumiu: fecha a janela (o `windowWillClose` esquece o pop-out e para o viewer).
+    func close() { window.close() }
 
     func windowWillClose(_ notification: Notification) { onClose() }
 }

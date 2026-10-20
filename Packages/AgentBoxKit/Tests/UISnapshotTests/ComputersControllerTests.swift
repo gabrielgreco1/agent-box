@@ -181,6 +181,41 @@ struct ComputersControllerTests {
         #expect(calls.filter { $0.hasPrefix("lease") } == ["lease:force_take", "lease:give"])
     }
 
+    @Test func removingTheComputerDismissesTheViewerChromeAndClosesThePage() async throws {
+        let f = try await make()
+        defer { try? FileManager.default.removeItem(at: f.folder) }
+        await f.controller.add(f.computer)
+        _ = try await f.registry.perform(.computerTakeOver, .select("phoenix-az"))
+        f.controller.show(.workspace)  // pergunta `Hand back to <Agent>?`
+        #expect(f.controller.pendingExit?.computer == "phoenix-az")
+        // O subagente liberou o computador com o humano no controle: nada de diálogo por cima de outra aba.
+        f.controller.computerRemoved("phoenix-az")
+        #expect(f.controller.pendingExit == nil && f.controller.page == .workspace && f.controller.viewers["phoenix-az"] == nil)
+        // Saída pendente para outro destino, estando o viewer aberto: o pedido some e a página fecha.
+        await f.controller.add(f.computer)
+        _ = try await f.registry.perform(.computerTakeOver, .select("phoenix-az"))
+        f.controller.show(.computers)
+        #expect(f.controller.pendingExit?.target == .computers)
+        f.controller.computerRemoved("phoenix-az")
+        #expect(f.controller.pendingExit == nil && f.controller.page == .workspace)
+        // Outro computador removido não mexe na página aberta.
+        await f.controller.add(f.computer)
+        f.controller.openViewer("phoenix-az")
+        f.controller.computerRemoved("other")
+        #expect(f.controller.page == .viewer("phoenix-az"))
+    }
+
+    @Test func theViewerNamesTheParentAgent() async throws {
+        let f = try await make()
+        defer { try? FileManager.default.removeItem(at: f.folder) }
+        await f.controller.add(f.computer)
+        #expect(f.controller.agentName(forComputer: "phoenix-az") == "Claude")
+        f.controller.model.agentNames["phoenix-az"] = "Codex"
+        #expect(f.controller.agentName(forComputer: "phoenix-az") == "Codex")
+        f.controller.openViewer("phoenix-az")
+        #expect(f.controller.viewers["phoenix-az"]?.model.agentName == "Codex")
+    }
+
     @Test func leavingWithTheAgentInControlNeverAsks() async throws {
         let f = try await make()
         defer { try? FileManager.default.removeItem(at: f.folder) }

@@ -1139,6 +1139,16 @@ final class WorkspaceModel {
         }
     }
 
+    /// Sessão com agente interrompido mais recente (banner de perda do daemon, AC-810): quando a atual não tem nenhum, o
+    /// "Resume Agents…" abre para a sessão do agente que parou por último.
+    func mostRecentSessionWithInterruptedAgents() -> UUID? {
+        let tabSession = Dictionary(snapshot.tabs.filter { $0.closedAt == nil }.map { ($0.id, $0.sessionID) }, uniquingKeysWith: { a, _ in a })
+        return snapshot.terminals
+            .filter { $0.state == .interrupted && $0.provider.isAgent && RestorePlanner.hasExactResume($0) && tabSession[$0.tabID] != nil }
+            .max { ($0.endedAt ?? $0.startedAt ?? .distantPast) < ($1.endedAt ?? $1.startedAt ?? .distantPast) }
+            .flatMap { tabSession[$0.tabID] }
+    }
+
     /// Retoma os terminais escolhidos com `--resume`, escalonados. Nunca relança uma conversa que já roda em outro processo
     /// (F32): essas ficam de fora e voltam em `skippedLive`.
     func resumeSelected(_ ids: [UUID], stagger: Duration = .milliseconds(300)) async -> (resumed: Int, skippedLive: Int) {

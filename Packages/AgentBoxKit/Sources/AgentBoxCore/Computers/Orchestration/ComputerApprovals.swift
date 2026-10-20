@@ -26,11 +26,14 @@ public struct ComputerApprovalRequest: Identifiable, Sendable, Equatable {
     /// Nome do proxy pedido (`direct` quando não há).
     public var proxy: String
     public var createdAt: Date
+    /// CLI do agente pai: o card diz `Claude`, `Codex` ou `OpenCode` wants a computer.
+    public var provider: TerminalProvider
 
     public init(
         id: String = UUID().uuidString.lowercased(), kind: Kind = .computer, subject: String? = nil, parentID: String, sessionID: UUID?,
-        sessionTitle: String, names: [String], display: ComputerDisplay, proxy: String, createdAt: Date = Date()
+        sessionTitle: String, names: [String], display: ComputerDisplay, proxy: String, createdAt: Date = Date(), provider: TerminalProvider = .claude
     ) {
+        self.provider = provider
         self.kind = kind; self.subject = subject
         self.id = id; self.parentID = parentID; self.sessionID = sessionID; self.sessionTitle = sessionTitle; self.names = names
         self.display = display; self.proxy = proxy; self.createdAt = createdAt
@@ -46,11 +49,13 @@ public struct ComputerApprovalRequest: Identifiable, Sendable, Equatable {
         }
     }
     public var proxyLabel: String { proxy == "direct" ? "Direct" : proxy }
+    /// Nome do agente pai na UI (`Claude`, `Codex`, `OpenCode`).
+    public var agentName: String { provider.computerAgentName }
     /// `Claude wants a computer · phoenix-az · Headless · Direct` (03 §16, F12).
     public var summary: String {
         if kind == .spawn { return "Give this subagent a computer?" + (subject.map { " · \($0)" } ?? "") }
         let noun = names.count == 1 ? "a computer" : "\(names.count) computers"
-        return "Claude wants \(noun) · \(computerName) · \(displayLabel) · \(proxyLabel)"
+        return "\(agentName) wants \(noun) · \(computerName) · \(displayLabel) · \(proxyLabel)"
     }
 }
 
@@ -299,7 +304,7 @@ public struct SubagentComputersGate: ReserveGating {
             let subject = input.description.isEmpty ? String(input.prompt.prefix(80)) : input.description
             let asked = ComputerApprovalRequest(
                 kind: .spawn, subject: subject, parentID: parent, sessionID: info.sessionID, sessionTitle: info.sessionTitle, names: [subject],
-                display: .headless, proxy: "direct")
+                display: .headless, proxy: "direct", provider: info.provider)
             switch await approvals.authorize(asked, waitS: spawnWaitSeconds) {
             case .allowed:
                 await approvals.grant(parent: parent)
@@ -321,7 +326,7 @@ public struct SubagentComputersGate: ReserveGating {
         let shown = await effectiveProxy?(parent, request.proxy) ?? request.proxy ?? "direct"
         let asked = ComputerApprovalRequest(
             parentID: parent, sessionID: info.sessionID, sessionTitle: info.sessionTitle, names: request.names, display: request.display,
-            proxy: shown)
+            proxy: shown, provider: info.provider)
         switch await approvals.authorize(asked, waitS: waitSeconds) {
         case .allowed:
             if let chosen = await approvals.takeChosenProxy(parent: parent) {
@@ -338,6 +343,17 @@ public struct SubagentComputersGate: ReserveGating {
                 "status": "pending", "request_id": .string(id), "retry_after_s": 5,
                 "message": "Waiting for the user to approve computer access in Racky. Call boxes_reserve again with the same arguments to keep waiting.",
             ])
+        }
+    }
+}
+
+extension TerminalProvider {
+    /// Como o agente se chama nos textos de computadores ("Claude is using", "Hand back to Codex?"); não é o nome do produto.
+    public var computerAgentName: String {
+        switch self {
+        case .codex: "Codex"
+        case .opencode: "OpenCode"
+        default: "Claude"
         }
     }
 }

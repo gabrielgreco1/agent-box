@@ -80,7 +80,15 @@ public actor ComputerHub {
     public func poolParent(of id: String) -> String? { pools[id] }
 
     /// A thread (subagente do Codex) passa a falar como o slot `child` neste pool.
-    public func bind(thread: String, pool: String, to child: String) { threadBindings[pool, default: [:]][thread] = child }
+    public func bind(thread: String, pool: String, to child: String) {
+        threadBindings[pool, default: [:]][thread] = child
+        onBind?(thread, child)
+    }
+    /// O app persiste a ligação thread -> slot (só ids, nenhum segredo) para valer depois de reiniciar.
+    private var onBind: (@Sendable (_ thread: String, _ child: String) -> Void)?
+    public func setBindObserver(_ observer: (@Sendable (_ thread: String, _ child: String) -> Void)?) { onBind = observer }
+    /// Restauração depois de reiniciar o app: não notifica o observador.
+    public func restoreBinding(thread: String, pool: String, to child: String) { threadBindings[pool, default: [:]][thread] = child }
     public func boundChild(thread: String, pool: String) -> String? { threadBindings[pool]?[thread] }
 
     /// O pai terminou: os pools dele saem junto.

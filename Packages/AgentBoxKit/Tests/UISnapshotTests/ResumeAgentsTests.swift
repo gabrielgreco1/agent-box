@@ -1,6 +1,7 @@
 import AgentBoxCore
 import AgentBoxDesignSystem
 import AgentBoxProtocol
+import AgentBoxStore
 import AppKit
 import Foundation
 import SnapshotTesting
@@ -94,6 +95,44 @@ import Testing
         #expect(reason == "No interrupted agents in this session.")
         await #expect(throws: (any Error).self) { _ = try await rig.env.registry.perform(.sessionResumeAgents, .select(UUID().uuidString)) }
         await #expect(throws: (any Error).self) { _ = try await rig.env.registry.perform(.dialogResumeAgentsToggleRow, .select(UUID().uuidString)) }
+    }
+
+    /// Banner "Background agents stopped unexpectedly" (AC-810): o botão `Resume Agents…` abre o overlay da sessão atual; se ela não tem
+    /// agente parado, o da sessão que parou por último.
+    @Test func daemonLossBannerResumeOpensTheOverlayForTheRightSession() async throws {
+        let rig = try Rig()
+        defer { rig.remove() }
+        func seed(_ title: String, endedAt: Date) -> (Session, AgentBoxProtocol.Tab, Terminal) {
+            let session = Session(kind: .folder, folderPath: "/tmp/\(title)", title: title)
+            let tabID = UUID()
+            var t = Terminal(
+                tabID: tabID, provider: .claude, title: "Claude Code", cwd: "/tmp", launchSpec: LaunchSpec(provider: .claude),
+                nativeConversationID: UUID().uuidString, state: .interrupted, endedAt: endedAt)
+            t.lastMessage = title
+            let tab = AgentBoxProtocol.Tab(id: tabID, sessionID: session.id, title: "t", layout: .leaf(Pane(content: .terminal(t.id))))
+            return (session, tab, t)
+        }
+        let older = seed("older", endedAt: Self.now.addingTimeInterval(-600)), newer = seed("newer", endedAt: Self.now)
+        let idle = Session(kind: .folder, folderPath: "/tmp/idle", title: "idle")
+        rig.env.workspace.ingest(
+            StoreSnapshot(sessions: [older.0, newer.0, idle], tabs: [older.1, newer.1], terminals: [older.2, newer.2]))
+        let registry = rig.env.registry
+
+        // Sessão atual sem agente parado (ou nenhuma): vai para a que parou por último.
+        rig.env.workspace.setSession(idle.id)
+        #expect(rig.env.workspace.mostRecentSessionWithInterruptedAgents() == newer.0.id)
+        #expect(rig.resume.defaultTarget() == newer.0.id)
+        #expect(registry.availability(of: .sessionResumeAgents) == .enabled)
+        _ = try await registry.perform(.sessionResumeAgents, .press)
+        #expect(rig.resume.isOpen && rig.resume.model?.sessionID == newer.0.id)
+        _ = try await registry.perform(.dialogResumeAgentsCancel, nil)
+        #expect(!rig.resume.isOpen)
+
+        // Sessão atual com agente parado: ela mesma, mesmo havendo outra mais recente.
+        rig.env.workspace.setSession(older.0.id)
+        #expect(rig.resume.defaultTarget() == older.0.id)
+        _ = try await registry.perform(.sessionResumeAgents, .press)
+        #expect(rig.resume.model?.sessionID == older.0.id)
     }
 
     @Test func conversationsListFiltersAndCopiesTheRightText() async throws {

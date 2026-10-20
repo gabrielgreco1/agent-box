@@ -329,7 +329,11 @@ struct StoppedAgentsBanner: View {
                 .foregroundStyle(DS.Color.textSecondary)
                 .lineLimit(1)
             Spacer(minLength: DS.Space.s2)
-            DSButton(.sessionResumeStopped, lost ? "Resume Agents" : "Resume All", variant: .primary, size: .xs)
+            if lost {
+                DSButton(.sessionResumeAgents, "Resume Agents…", variant: .primary, size: .xs)   // abre o overlay §16.7
+            } else {
+                DSButton(.sessionResumeStopped, "Resume All", variant: .primary, size: .xs)
+            }
         }
         .padding(.horizontal, DS.Space.s3)
         .frame(height: PaneMetrics.banner)

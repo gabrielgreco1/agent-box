@@ -426,8 +426,8 @@ struct ComputerApprovalCard: View {
 
     private var headline: String {
         request.names.count == 1
-            ? String(localized: "Claude wants a computer", bundle: .module)
-            : String(localized: "Claude wants \(request.names.count) computers", bundle: .module)
+            ? String(localized: "\(request.agentName) wants a computer", bundle: .module)
+            : String(localized: "\(request.agentName) wants \(request.names.count) computers", bundle: .module)
     }
 
     /// `phoenix-az · Headless · Direct` (ou, no gatilho de spawn, o que o subagente vai fazer).

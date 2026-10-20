@@ -50,6 +50,7 @@ public final class ComputerOrchestrator: Sendable {
         server = ComputerMCPServer(tools: tools)
         if let store {
             Task { await parents.observeProxyChanges { id, proxy in Task { try? await store.updateOrchestrationParentProxy(id: id, proxy: proxy) } } }
+            Task { await hub.setBindObserver { thread, child in Task { try? await store.bindOrchestrationThread(childID: child, thread: thread) } } }
         }
     }
 
@@ -79,10 +80,12 @@ public final class ComputerOrchestrator: Sendable {
         var bundle = try OrchestrationInjectionBuilder.make(parentID: info.parentID, helperPath: helperPath, options: options, provider: info.provider)
         bundle.spawnGuardMode = info.mode
         await parents.register(info)
+        await observeBindings()
         // A identidade (só o hash da capability) e o que o pai sabe da sessão sobrevivem a um reinício do app (adoção).
         try? await store?.saveOrchestrationParent(OrchestrationParentRecord(
             id: info.parentID, parentRunID: UUID(uuidString: info.parentID), sessionID: info.sessionID, sessionTitle: info.sessionTitle,
-            mode: info.mode.rawValue, proxy: info.proxy, capabilityHash: ComputerHub.fingerprint(bundle.parentCapability)))
+            mode: info.mode.rawValue, proxy: info.proxy, capabilityHash: ComputerHub.fingerprint(bundle.parentCapability), provider: info.provider.rawValue,
+            poolID: bundle.poolID, poolCapabilityHash: bundle.poolCapability.map(ComputerHub.fingerprint)))
         await OrchestrationInjectionBuilder.register(bundle, hub: hub, scheduler: scheduler, parentRunID: UUID(uuidString: info.parentID))
         return bundle
     }
@@ -105,7 +108,16 @@ public final class ComputerOrchestrator: Sendable {
     /// App reiniciado: o Claude pai e os subagentes seguiram vivos (o daemon os manteve) com as capabilities do lançamento antigo nos
     /// argumentos. Devolve ao hub e ao diretório de pais o que foi persistido, para o `agentbox mcp` deles voltar a ser aceito. Só lê o
     /// Store (rápido); chamar antes de aceitar conexões MCP.
-    public func restoreIdentities() async { await Self.restoreIdentities(store: store, hub: hub, parents: parents) }
+    public func restoreIdentities() async {
+        await Self.restoreIdentities(store: store, hub: hub, parents: parents)
+        await observeBindings()
+    }
+
+    /// Persiste a ligação thread -> slot dos workers do Codex (síncrono com o chamador, sem corrida com o primeiro `bind`).
+    private func observeBindings() async {
+        guard let store else { return }
+        await hub.setBindObserver { thread, child in Task { try? await store.bindOrchestrationThread(childID: child, thread: thread) } }
+    }
 
     static func restoreIdentities(store: AgentBoxStore?, hub: ComputerHub, parents: ParentDirectory) async {
         guard let store else { return }
@@ -115,11 +127,16 @@ public final class ComputerOrchestrator: Sendable {
             await hub.registerParent(id: record.id, capabilityHash: record.capabilityHash)
             await parents.register(ParentInfo(
                 parentID: record.id, sessionID: record.sessionID, sessionTitle: record.sessionTitle, mode: SubagentComputersMode(rawValue: record.mode) ?? .ask,
-                proxy: record.proxy))
+                proxy: record.proxy, provider: TerminalProvider(rawValue: record.provider) ?? .claude))
+            // Codex: os workers falam pelo servidor `agentbox_worker`; sem o pool de volta eles seriam recusados.
+            if let pool = record.poolID, let hash = record.poolCapabilityHash, await hub.role(of: pool) == nil {
+                await hub.registerPool(id: pool, capabilityHash: hash, parent: record.id)
+            }
             if record.proxy != nil { await parents.setProxy(record.proxy, for: record.id) }
             for child in (try? await store.orchestrationChildren(parentID: record.id)) ?? [] {
                 guard let hash = child.capabilityHash, await hub.role(of: child.id) == nil else { continue }
                 await hub.registerChild(id: child.id, capabilityHash: hash, parent: record.id)
+                if let pool = record.poolID, let thread = child.boundThread { await hub.restoreBinding(thread: thread, pool: pool, to: child.id) }
             }
         }
     }
@@ -130,6 +147,12 @@ public final class ComputerOrchestrator: Sendable {
     public func adoptRunning() async -> [String] {
         await restoreIdentities()
         return await scheduler.adoptRunning()
+    }
+
+    /// Agente pai do computador (`Claude`, `Codex`, `OpenCode`), para "<Agent> is using" e "Hand back to <Agent>?".
+    public func agentName(ofComputer name: String) async -> String {
+        guard let parent = await scheduler.parent(of: name) else { return TerminalProvider.claude.computerAgentName }
+        return (await parents.info(parent)?.provider ?? .claude).computerAgentName
     }
 
     /// Qual sessão do app é dona do computador (linha filha, título do Inbox).

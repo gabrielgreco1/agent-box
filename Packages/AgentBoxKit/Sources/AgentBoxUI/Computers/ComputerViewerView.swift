@@ -179,7 +179,7 @@ struct ComputerViewerView: View {
     }
 
     private var blockedTip: some View {
-        Text("Claude is using this computer. Take over to interact.", bundle: .module)
+        Text(verbatim: String(localized: "\(computers.agentName(forComputer: id)) is using this computer. Take over to interact.", bundle: .module))
             .dsFont(DS.Font.label)
             .foregroundStyle(DS.Color.textPrimary)
             .padding(.horizontal, DS.Space.s3)
@@ -380,7 +380,7 @@ struct ViewerHeader: View {
     @ViewBuilder private var trailing: some View {
             addressBar
             Spacer(minLength: DS.Space.s2)
-            ControlPill(model: model, id: id)
+            ControlPill(model: model, id: id, agent: model.agentName)
             controls
             ActionButton(.computerPaste, tooltip: String(localized: "Paste to Computer", bundle: .module)) { Image(systemName: "doc.on.clipboard") }
                 .buttonStyle(DSIconButtonStyle(.header))
@@ -421,6 +421,8 @@ struct ViewerHeader: View {
 struct ControlPill: View {
     let model: ComputerViewerModel
     let id: String
+    /// Agente pai (`Claude`, `Codex`, `OpenCode`).
+    var agent = "Claude"
 
     var body: some View {
         HStack(spacing: DS.Space.s1_5) {
@@ -438,7 +440,7 @@ struct ControlPill: View {
         if model.control == .revoking { return String(localized: "Requesting control…", bundle: .module) }
         if model.help != nil { return String(localized: "Needs You", bundle: .module) }
         if model.connection == .stopped { return String(localized: "Idle", bundle: .module) }
-        return String(localized: "Claude is using", bundle: .module)
+        return String(localized: "\(agent) is using", bundle: .module)
     }
 
     private var foreground: Color {

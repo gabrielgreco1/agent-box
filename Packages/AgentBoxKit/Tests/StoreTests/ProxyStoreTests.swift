@@ -16,7 +16,7 @@ import Testing
 
     @Test func v4IsChainedAfterV3AndOlderMigrationsAreUntouched() {
         let ids = StoreMigrations.all.map(\.id)
-        #expect(ids == ["v1_initial", "v2_activity", "v3_computers", "v4_vault_catalog", "v5_proxy_ext", "v6_agent_tree", "v7_subagent_computers", "v8_orchestration_identity"])
+        #expect(ids == ["v1_initial", "v2_activity", "v3_computers", "v4_vault_catalog", "v5_proxy_ext", "v6_agent_tree", "v7_subagent_computers", "v8_orchestration_identity", "v9_orchestration_pool"])
     }
 
     @Test func migratesFromV3KeepingDataAndBackingUpFirst() async throws {

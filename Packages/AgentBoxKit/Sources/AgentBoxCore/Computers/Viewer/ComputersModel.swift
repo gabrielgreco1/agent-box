@@ -53,6 +53,8 @@ public final class ComputersModel {
     public private(set) var approvals: [ComputerApprovalRequest] = []
     /// Qual sessão do app é dona de cada computador (linha filha da sidebar).
     public var sessionIDs: [String: UUID] = [:]
+    /// Agente pai de cada computador (`Claude`, `Codex`, `OpenCode`).
+    public var agentNames: [String: String] = [:]
     /// Computador de cada subagente nativo (`agent_id` dos hooks -> nome), ligado quando o filho chama a primeira ferramenta.
     public var agentComputers: [String: String] = [:]
     /// Pedidos de ajuda abertos e pedidos de computador sem decisão: o número do badge do Dock (03 §9.3).
@@ -101,6 +103,7 @@ public final class ComputersModel {
     public func detach(name: String) {
         computers[name] = nil
         sessionIDs[name] = nil
+        agentNames[name] = nil
         rows.removeAll { $0.id == name }
     }
 

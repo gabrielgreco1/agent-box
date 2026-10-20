@@ -36,6 +36,8 @@ public struct OrchestrationChild: Sendable, Equatable, Identifiable {
     public var providerAgentID: String?
     /// SHA-256 (hex) da capability do lançamento; permite a um app reiniciado voltar a aceitar o filho que seguiu vivo.
     public var capabilityHash: String?
+    /// Codex: thread do worker ligada a este slot no pool (sobrevive ao app para o worker não precisar de novo `box_claim`).
+    public var boundThread: String?
     public var state: OrchestrationChildState
     public var createdAt: Date
     public var reservedAt: Date?
@@ -46,8 +48,10 @@ public struct OrchestrationChild: Sendable, Equatable, Identifiable {
     public init(
         id: String, parentID: String, parentRunID: UUID? = nil, slot: Int, agentType: String, computerName: String? = nil, batchID: String? = nil,
         runID: UUID? = nil, providerAgentID: String? = nil, state: OrchestrationChildState = .idle, createdAt: Date = Date(),
-        reservedAt: Date? = nil, claimedAt: Date? = nil, releasedAt: Date? = nil, endedAt: Date? = nil, capabilityHash: String? = nil
+        reservedAt: Date? = nil, claimedAt: Date? = nil, releasedAt: Date? = nil, endedAt: Date? = nil, capabilityHash: String? = nil,
+        boundThread: String? = nil
     ) {
+        self.boundThread = boundThread
         self.id = id; self.parentID = parentID; self.parentRunID = parentRunID; self.slot = slot; self.agentType = agentType
         self.computerName = computerName; self.batchID = batchID; self.runID = runID; self.providerAgentID = providerAgentID
         self.state = state; self.createdAt = createdAt; self.reservedAt = reservedAt; self.claimedAt = claimedAt
@@ -66,10 +70,19 @@ public struct OrchestrationParentRecord: Sendable, Equatable {
     public var proxy: String?
     public var capabilityHash: String
     public var createdAt: Date
+    /// CLI do pai (`claude`/`codex`/`opencode`).
+    public var provider: String
+    /// Codex: identidade do servidor MCP dos workers (só o hash da capability).
+    public var poolID: String?
+    public var poolCapabilityHash: String?
 
-    public init(id: String, parentRunID: UUID? = nil, sessionID: UUID? = nil, sessionTitle: String = "", mode: String, proxy: String? = nil, capabilityHash: String, createdAt: Date = Date()) {
+    public init(
+        id: String, parentRunID: UUID? = nil, sessionID: UUID? = nil, sessionTitle: String = "", mode: String, proxy: String? = nil, capabilityHash: String,
+        createdAt: Date = Date(), provider: String = "claude", poolID: String? = nil, poolCapabilityHash: String? = nil
+    ) {
         self.id = id; self.parentRunID = parentRunID; self.sessionID = sessionID; self.sessionTitle = sessionTitle; self.mode = mode
         self.proxy = proxy; self.capabilityHash = capabilityHash; self.createdAt = createdAt
+        self.provider = provider; self.poolID = poolID; self.poolCapabilityHash = poolCapabilityHash
     }
 }
 
@@ -130,7 +143,7 @@ extension OrchestrationChild {
             runID: (row["run_id"] as String?).flatMap(UUID.init(uuidString:)), providerAgentID: row["provider_agent_id"], state: parsed,
             createdAt: RowCodec.date(row["created_at"] as Int64), reservedAt: RowCodec.date(row["reserved_at"] as Int64?),
             claimedAt: RowCodec.date(row["claimed_at"] as Int64?), releasedAt: RowCodec.date(row["released_at"] as Int64?),
-            endedAt: RowCodec.date(row["ended_at"] as Int64?), capabilityHash: row["capability_hash"])
+            endedAt: RowCodec.date(row["ended_at"] as Int64?), capabilityHash: row["capability_hash"], boundThread: row["bound_thread"])
     }
 }
 
@@ -195,16 +208,22 @@ extension AgentBoxStore {
         try await write { db in
             try db.execute(
                 sql: """
-                INSERT INTO orchestration_parent (id, parent_run_id, session_id, session_title, mode, proxy, capability_hash, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO orchestration_parent (id, parent_run_id, session_id, session_title, mode, proxy, capability_hash, created_at, provider, pool_id, pool_capability_hash)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET parent_run_id = excluded.parent_run_id, session_id = excluded.session_id, session_title = excluded.session_title,
-                    mode = excluded.mode, proxy = excluded.proxy, capability_hash = excluded.capability_hash
+                    mode = excluded.mode, proxy = excluded.proxy, capability_hash = excluded.capability_hash, provider = excluded.provider,
+                    pool_id = excluded.pool_id, pool_capability_hash = excluded.pool_capability_hash
                 """,
                 arguments: [
                     parent.id, parent.parentRunID?.uuidString, parent.sessionID?.uuidString, parent.sessionTitle, parent.mode, parent.proxy,
-                    parent.capabilityHash, RowCodec.ms(parent.createdAt) as Int64,
+                    parent.capabilityHash, RowCodec.ms(parent.createdAt) as Int64, parent.provider, parent.poolID, parent.poolCapabilityHash,
                 ])
         }
+    }
+
+    /// Codex: a thread do worker passou a falar como o slot `childID` no pool.
+    public func bindOrchestrationThread(childID: String, thread: String) async throws {
+        try await write { db in try db.execute(sql: "UPDATE orchestration_child SET bound_thread = ? WHERE id = ?", arguments: [thread, childID]) }
     }
 
     public func updateOrchestrationParentProxy(id: String, proxy: String?) async throws {
@@ -217,7 +236,8 @@ extension AgentBoxStore {
                 OrchestrationParentRecord(
                     id: row["id"], parentRunID: (row["parent_run_id"] as String?).flatMap(UUID.init(uuidString:)),
                     sessionID: (row["session_id"] as String?).flatMap(UUID.init(uuidString:)), sessionTitle: row["session_title"], mode: row["mode"],
-                    proxy: row["proxy"], capabilityHash: row["capability_hash"], createdAt: RowCodec.date(row["created_at"] as Int64))
+                    proxy: row["proxy"], capabilityHash: row["capability_hash"], createdAt: RowCodec.date(row["created_at"] as Int64),
+                    provider: row["provider"], poolID: row["pool_id"], poolCapabilityHash: row["pool_capability_hash"])
             }
         }
     }
@@ -226,7 +246,7 @@ extension AgentBoxStore {
     public func deleteOrchestrationParent(id: String) async throws {
         try await write { db in
             try db.execute(sql: "DELETE FROM orchestration_parent WHERE id = ?", arguments: [id])
-            try db.execute(sql: "UPDATE orchestration_child SET capability_hash = NULL WHERE parent_id = ?", arguments: [id])
+            try db.execute(sql: "UPDATE orchestration_child SET capability_hash = NULL, bound_thread = NULL WHERE parent_id = ?", arguments: [id])
         }
     }
 
@@ -234,7 +254,7 @@ extension AgentBoxStore {
     public func pruneOrchestrationParents(olderThan date: Date) async throws {
         let ms = RowCodec.ms(date) as Int64
         try await write { db in
-            try db.execute(sql: "UPDATE orchestration_child SET capability_hash = NULL WHERE parent_id IN (SELECT id FROM orchestration_parent WHERE created_at < ?)", arguments: [ms])
+            try db.execute(sql: "UPDATE orchestration_child SET capability_hash = NULL, bound_thread = NULL WHERE parent_id IN (SELECT id FROM orchestration_parent WHERE created_at < ?)", arguments: [ms])
             try db.execute(sql: "DELETE FROM orchestration_parent WHERE created_at < ?", arguments: [ms])
         }
     }

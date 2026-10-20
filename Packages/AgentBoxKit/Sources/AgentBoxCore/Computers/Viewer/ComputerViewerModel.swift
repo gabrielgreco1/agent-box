@@ -96,6 +96,8 @@ public final class ComputerViewerModel {
     public private(set) var control: ControlPhase = .agent
     public private(set) var help: HelpSummary?
     public private(set) var snapshot: ViewerSnapshot?
+    /// Agente pai (`Claude`, `Codex`, `OpenCode`): "<Agent> is using", "Hand back to <Agent>?".
+    public var agentName = "Claude"
     public private(set) var keyboardCaptured = false
     public private(set) var stats = ViewerStatsSample(fps: 0, frames: 0, silentMs: 0)
     /// `"Force Take Over"` aparece depois de 10 s sem ACK (CS-410).

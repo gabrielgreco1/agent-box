@@ -173,7 +173,7 @@ private struct AskRig {
     let root: URL
     let parent = "parent-aaaaaaaa"
 
-    static func make(mode: SubagentComputersMode?, wait: TimeInterval = 0.4, spawnWait: TimeInterval = 10, sessionID: UUID? = UUID()) async throws -> AskRig {
+    static func make(mode: SubagentComputersMode?, wait: TimeInterval = 0.4, spawnWait: TimeInterval = 10, sessionID: UUID? = UUID(), provider: TerminalProvider = .claude) async throws -> AskRig {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("abx-ask-\(UUID().uuidString.lowercased())", isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         let hub = ComputerHub()
@@ -187,7 +187,7 @@ private struct AskRig {
         let service = ComputerToolService(hub: hub, orchestrator: scheduler, gate: SubagentComputersGate(parents: parents, approvals: approvals, waitSeconds: wait, spawnWaitSeconds: spawnWait))
         let bundle = try fixedBundle()
         await OrchestrationInjectionBuilder.register(bundle, hub: hub, scheduler: scheduler)
-        if let mode { await parents.register(ParentInfo(parentID: "parent-aaaaaaaa", sessionID: sessionID, sessionTitle: "houston-permits", mode: mode)) }
+        if let mode { await parents.register(ParentInfo(parentID: "parent-aaaaaaaa", sessionID: sessionID, sessionTitle: "houston-permits", mode: mode, provider: provider)) }
         return AskRig(hub: hub, scheduler: scheduler, provisioning: provisioning, approvals: approvals, parents: parents, service: service, root: root)
     }
 
@@ -229,6 +229,19 @@ struct TestFailure: Error, CustomStringConvertible {
         #expect(!done.isError && rig.states(done.json) == ["provisioning"] || rig.states(done.json) == ["ready"])
         #expect(await rig.approvals.open.isEmpty)
         #expect(await rig.waitProvisioned("houston-permits"))
+    }
+
+    @Test func theCardNamesTheParentAgentProvider() async throws {
+        for (provider, agent) in [(TerminalProvider.codex, "Codex"), (.opencode, "OpenCode")] {
+            let rig = try await AskRig.make(mode: .ask, wait: 10, provider: provider)
+            defer { rig.cleanup() }
+            async let reply = rig.reserve(["houston-permits", "austin-tx"], display: "headless")
+            let request = try await rig.waitForRequest()
+            #expect(request.agentName == agent)
+            #expect(request.summary == "\(agent) wants 2 computers · houston-permits, austin-tx · Headless · Direct")
+            _ = await rig.approvals.decide(id: request.id, .deny)
+            _ = await reply
+        }
     }
 
     @Test func denyReturnsAClearErrorAndCreatesNothing() async throws {

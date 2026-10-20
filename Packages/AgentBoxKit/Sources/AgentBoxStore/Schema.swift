@@ -475,7 +475,20 @@ enum StoreMigrations {
         """)
     }
 
-    static let all: [StoreMigration] = [v1Initial, v2Activity, v3Computers, v4VaultCatalog, v5ProxyExt, v6AgentTree, v7SubagentComputers, v8OrchestrationIdentity]
+    /// `v9_orchestration_pool`: o que falta para um Codex pai cujos workers compartilham o servidor `agentbox_worker` (identidade por thread)
+    /// seguir valendo depois de reiniciar o app: CLI do pai, id + hash (só o hash) da capability do pool e a thread já ligada a cada slot.
+    static let v9OrchestrationPool = StoreMigration(id: "v9_orchestration_pool") { db in
+        try db.execute(sql: """
+        ALTER TABLE orchestration_parent ADD COLUMN provider TEXT NOT NULL DEFAULT 'claude';
+        ALTER TABLE orchestration_parent ADD COLUMN pool_id TEXT;
+        ALTER TABLE orchestration_parent ADD COLUMN pool_capability_hash TEXT;
+        ALTER TABLE orchestration_child ADD COLUMN bound_thread TEXT;
+        """)
+    }
+
+    static let all: [StoreMigration] = [
+        v1Initial, v2Activity, v3Computers, v4VaultCatalog, v5ProxyExt, v6AgentTree, v7SubagentComputers, v8OrchestrationIdentity, v9OrchestrationPool,
+    ]
 
     static func migrator(_ migrations: [StoreMigration]) -> DatabaseMigrator {
         var m = DatabaseMigrator()

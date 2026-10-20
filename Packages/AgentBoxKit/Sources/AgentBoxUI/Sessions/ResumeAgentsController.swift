@@ -33,6 +33,13 @@ final class ResumeAgentsController {
 
     var isOpen: Bool { overlays.top?.spec.name == "resume" && model != nil }
 
+    /// Sessão atual; se ela não tem agente parado (banner da janela depois de perder o daemon), a do que parou por último.
+    func defaultTarget() -> UUID? {
+        let current = workspace.currentSessionID ?? selectedSession()
+        if workspace.hasInterruptedAgents(in: current) { return current }
+        return workspace.mostRecentSessionWithInterruptedAgents() ?? current
+    }
+
     // MARK: Abrir
 
     func open(session sid: UUID, from origin: A11yID?) async -> Bool {
@@ -97,12 +104,12 @@ final class ResumeAgentsController {
     func register(in registry: ActionRegistry) throws {
         func target(_ arg: ActionArgument) -> UUID? {
             if arg.kind == .select, let raw = arg.value, let id = UUID(uuidString: raw) { return id }
-            return workspace.currentSessionID ?? selectedSession()
+            return defaultTarget()
         }
         try registry.register(
             .sessionResumeAgents,
             enablement: { [unowned self] in
-                workspace.hasInterruptedAgents(in: workspace.currentSessionID ?? selectedSession())
+                workspace.hasInterruptedAgents(in: defaultTarget())
                     ? .enabled : .disabled(reason: String(localized: "No interrupted agents in this session.", bundle: .module))
             }
         ) { [unowned self] arg in

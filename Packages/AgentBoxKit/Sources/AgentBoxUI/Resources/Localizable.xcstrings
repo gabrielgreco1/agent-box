@@ -1431,35 +1431,35 @@
         }
       }
     },
-    "Claude is using this computer. Take over to interact.": {
+    "%@ is using this computer. Take over to interact.": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Claude is using this computer. Take over to interact."
+            "value": "%@ is using this computer. Take over to interact."
           }
         }
       }
     },
-    "Claude wants %lld computers": {
+    "%@ wants %lld computers": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Claude wants %lld computers"
+            "value": "%@ wants %lld computers"
           }
         }
       }
     },
-    "Claude wants a computer": {
+    "%@ wants a computer": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Claude wants a computer"
+            "value": "%@ wants a computer"
           }
         }
       }
@@ -3132,6 +3132,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hand Back"
+          }
+        }
+      }
+    },
+    "%@ is using": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is using"
           }
         }
       }

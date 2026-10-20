@@ -83,13 +83,17 @@ public final class ComputersController {
         hub = orchestrator.hub
         let model = model
         await hub.setObservers(
-            onRegister: { computer in
+            onRegister: { [weak self] computer in
                 Task { @MainActor in
                     await model.attach(computer)
                     model.sessionIDs[computer.name] = await orchestrator.sessionID(ofComputer: computer.name)
+                    let agent = await orchestrator.agentName(ofComputer: computer.name)
+                    model.agentNames[computer.name] = agent
+                    self?.viewers[computer.name]?.model.agentName = agent
+                    self?.popOuts[computer.name]?.controller.model.agentName = agent
                 }
             },
-            onRemove: { name in Task { @MainActor in model.detach(name: name) } })
+            onRemove: { [weak self] name in Task { @MainActor in self?.computerRemoved(name) } })
         await orchestrator.approvals.setObserver { requests in Task { @MainActor in model.setApprovals(requests) } }
         model.decide = { id, decision in Task { await orchestrator.approvals.decide(id: id, decision) } }
         model.chooseProxy = { id, proxy in Task { await orchestrator.approvals.setProxy(id: id, proxy: proxy) } }
@@ -119,7 +123,20 @@ public final class ComputersController {
     // MARK: Centro
 
     /// Nome do agente dono do computador, para os textos `Hand back to <Agent>?` e `Control returned to <Agent>`.
-    public func agentName(forComputer name: String) -> String { "Claude" }
+    public func agentName(forComputer name: String) -> String { model.agentNames[name] ?? "Claude" }
+
+    /// O computador foi liberado/removido: o chrome do viewer dele (banner de ajuda, `Hand back to <Agent>?`, saída pendente) não pode
+    /// ficar por cima de outra aba. Fecha a página se ela mostrava esse computador (sem perguntar: não há mais a quem devolver).
+    func computerRemoved(_ name: String) {
+        model.detach(name: name)
+        if pendingExit?.computer == name { pendingExit = nil }
+        if case .viewer(let current) = page, current == name {
+            forceShow(.workspace)
+        } else if viewers[name] != nil {
+            closeViewer(name)
+        }
+        popOuts[name]?.close()
+    }
 
     /// O humano tem o controle (ou o pediu) do computador do viewer aberto.
     func humanHasControl(_ name: String) -> Bool {
@@ -177,6 +194,7 @@ public final class ComputersController {
         if let existing = viewers[name] { return existing }
         guard let computer = model.computer(named: name) else { return nil }
         let controller = ComputerViewerController(computer: computer)
+        controller.model.agentName = agentName(forComputer: name)
         controller.onClose = { [weak self] in self?.closePage() }
         viewers[name] = controller
         return controller
