@@ -363,8 +363,9 @@ public actor InsightsService {
         ingest(claudeFiles) { $0.ingestClaude(path: $1, cutoff: cutoff) }
         ingest(codexFiles) { $0.ingestCodex(path: $1, cutoff: cutoff) }
         ledger.prune(before: cutoff, existingPaths: existing)
-        // Devolve ao sistema as páginas liberadas pela varredura (o malloc as segura; o app ficava com centenas de MB a mais).
-        malloc_zone_pressure_relief(nil, 0)
+        // Devolve ao sistema as páginas liberadas por uma varredura grande (o malloc as segura; o app ficava com centenas de MB a mais).
+        // Só depois de ler muitos arquivos: o relief percorre todas as zonas e custa caro para as varreduras incrementais de todo minuto.
+        if report.filesRead >= 50 { malloc_zone_pressure_relief(nil, 0) }
         report.seconds = Date().timeIntervalSince(started)
         return (ledger, report)
     }
