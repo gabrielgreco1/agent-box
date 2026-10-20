@@ -1,5 +1,5 @@
 {
-  "schema": "agentbox.tokens.radii",
+  "schema": "racky.tokens.radii",
   "version": 1,
   "_nota": "02 §6 + errata P17 (sm 6, md 8). full = 9999 como no Orca (pilulas); raio de foco = raio do controle + focusRingOutset.",
   "radius": {

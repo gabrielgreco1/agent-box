@@ -2,14 +2,14 @@
 # lint-ui.sh - proibições de UI do rebuild (08 AR-131/AR-805, 09 §2.4, 02 DS). Implementado em T1-02.
 #
 # Contrato
-#   Entrada : código SwiftUI novo em Packages/*/Sources/AgentBoxUI, Packages/*/Sources/AgentBoxDesignSystem e App/ (nunca legacy/).
+#   Entrada : código SwiftUI novo em Packages/*/Sources/RackyUI, Packages/*/Sources/RackyDesignSystem e App/ (nunca legacy/).
 #             Env: LINT_ROOT (raiz; padrão = repositório).
-#   Falha em : .sheet( / NSAlert (T5: modais são overlays); List( ; Form( ; Color(hex: fora de AgentBoxDesignSystem/Tokens;
+#   Falha em : .sheet( / NSAlert (T5: modais são overlays); List( ; Form( ; Color(hex: fora de RackyDesignSystem/Tokens;
 #              literais numéricos em .padding( / .frame( (use DS.Space); LocalProcessTerminalView; emojis;
 #              Button( / .onTapGesture / NSButton( / NSMenuItem( cujo gatilho não chame ...perform( do ActionRegistry
 #              NSMenu / .contextMenu / Menu { } fora de MenuBar/ e Shell/MainMenu.swift (menus de contexto usam DSMenuPanel, F17);
 #              (use ActionButton); accessibilityIdentifier("literal") (use .a11y(A11yID)); strings de Text( / Label( / TextField(
-#              ausentes do String Catalog (AgentBoxUI/Resources/Localizable.xcstrings); A11yID/ActionID defasados da spec
+#              ausentes do String Catalog (RackyUI/Resources/Localizable.xcstrings); A11yID/ActionID defasados da spec
 #              (scripts/gen-automation-ids.py --check).
 #   Exceção  : comentário `// lint-ui: allow <regra> <motivo>` na mesma linha ou na anterior.
 #   Self-test: --self-test roda um caso que DEVE falhar e um que DEVE passar para cada regra.
@@ -31,7 +31,7 @@ done
 
 command -v rg >/dev/null 2>&1 || { echo "ERRO: rg (ripgrep) não encontrado" >&2; exit 1; }
 
-CATALOG_REL="Packages/AgentBoxKit/Sources/AgentBoxUI/Resources/Localizable.xcstrings"
+CATALOG_REL="Packages/RackyKit/Sources/RackyUI/Resources/Localizable.xcstrings"
 VIOLATIONS=0
 SCAN=""
 
@@ -100,13 +100,13 @@ catalog_rule() {
 }
 
 run_rules() {
-  SCAN="$(cd "$ROOT" && ls -d Packages/*/Sources/AgentBoxUI Packages/*/Sources/AgentBoxDesignSystem App 2>/dev/null | tr '\n' ' ' || true)"
-  local TOK='!**/AgentBoxDesignSystem/Tokens/**'
+  SCAN="$(cd "$ROOT" && ls -d Packages/*/Sources/RackyUI Packages/*/Sources/RackyDesignSystem App 2>/dev/null | tr '\n' ' ' || true)"
+  local TOK='!**/RackyDesignSystem/Tokens/**'
 
   rule sheet ".sheet( / NSAlert em fluxo normal (modais são overlays, 00 T5)" '\.sheet\(|\bNSAlert\b'
   rule list "List( (use LazyVStack/ScrollView desenhado à mão)" '(?<![\w.])List\s*[({]'
   rule form "Form( (use componentes do DesignSystem)" '(?<![\w.])Form\s*[({]'
-  rule color-hex "Color(hex: fora de AgentBoxDesignSystem/Tokens (use DS.Color)" '\bColor\(\s*hex:' "$TOK"
+  rule color-hex "Color(hex: fora de RackyDesignSystem/Tokens (use DS.Color)" '\bColor\(\s*hex:' "$TOK"
   rule literals "literal numérico em .padding( / .frame( (use DS.Space)" '\.(?:padding|frame)\([^)\n]*(?<![\w.])\d+(?:\.\d+)?(?![\w.])' "$TOK"
   rule terminal-view "LocalProcessTerminalView (T6)" '\bLocalProcessTerminalView\b'
   rule emoji "emoji em código de UI (use SF Symbols/ícones do DS)" '[\x{1F000}-\x{1FAFF}\x{2600}-\x{26FF}\x{2700}-\x{27BF}\x{FE0F}]'
@@ -138,8 +138,8 @@ if [ "$SELF_TEST" = 1 ]; then
     local got=pass; [ "$rc" -ne 0 ] && got=fail
     if [ "$got" = "$want" ]; then echo "ok: $name ($want)"; else echo "FALHOU: $name esperado=$want obtido=$got" >&2; fails=$((fails+1)); fi
   }
-  U=Packages/AgentBoxKit/Sources/AgentBoxUI/V.swift
-  TK=Packages/AgentBoxKit/Sources/AgentBoxDesignSystem/Tokens/C.swift
+  U=Packages/RackyKit/Sources/RackyUI/V.swift
+  TK=Packages/RackyKit/Sources/RackyDesignSystem/Tokens/C.swift
   expect sheet-bad $U 'Text("Hello").sheet(isPresented: b) {}' fail
   expect nsalert-bad $U 'let a = NSAlert()' fail
   expect list-bad $U 'List { Text("Hello") }' fail
@@ -170,7 +170,7 @@ if [ "$SELF_TEST" = 1 ]; then
   expect nsmenu-bad $U 'let m = NSMenu()' fail
   expect context-menu-bad $U 'Text("Hello").contextMenu { Text("Hello") }' fail
   expect swiftui-menu-bad $U 'Menu { Text("Hello") } label: { Text("Hello") }' fail
-  expect menubar-nsmenu-ok Packages/AgentBoxKit/Sources/AgentBoxUI/MenuBar/M.swift 'let m = NSMenu()' pass
+  expect menubar-nsmenu-ok Packages/RackyKit/Sources/RackyUI/MenuBar/M.swift 'let m = NSMenu()' pass
   expect dscontext-ok $U 'Text("Hello").dsContextMenu(name: "x", groups: { [] })' pass
   expect string-missing-bad $U 'Text("Not in catalog")' fail
   expect string-in-catalog-ok $U 'Text("Hello", bundle: .module)' pass

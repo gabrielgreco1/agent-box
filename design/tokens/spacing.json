@@ -1,5 +1,5 @@
 {
-  "schema": "agentbox.tokens.spacing",
+  "schema": "racky.tokens.spacing",
   "version": 1,
   "_nota": "02 §5. Escala = grade de 4 pt com meios-passos do Orca (spacing.json extraido). 'layout' = constantes de 02 §5.2/§7/§10.",
   "space": {

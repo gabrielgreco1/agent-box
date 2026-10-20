@@ -1,4 +1,4 @@
-"""Authenticated loopback-published Agent Box runtime API."""
+"""Authenticated loopback-published Racky runtime API."""
 from __future__ import annotations
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -65,9 +65,9 @@ class ComputerHandler(BaseHTTPRequestHandler):
     def _write_allowed(self, path):
         lease = self.server.engine.lease
         if lease is None or path not in lease['paths']: return False
-        actor = self.headers.get('X-AgentBox-Actor-ID', '')
-        epoch = self.headers.get('X-AgentBox-Lease-Epoch', '')
-        token = self.headers.get('X-AgentBox-Control-Token', '')
+        actor = self.headers.get('X-Racky-Actor-ID', '')
+        epoch = self.headers.get('X-Racky-Lease-Epoch', '')
+        token = self.headers.get('X-Racky-Control-Token', '')
         return actor == lease['actor_id'] and epoch == str(lease['epoch']) and hmac.compare_digest(token, lease['control_token'])
 
     def do_GET(self):
@@ -89,7 +89,7 @@ class ComputerHandler(BaseHTTPRequestHandler):
         if self.path == '/v1/frame':
             try: frame, source = self.server.engine.frame()
             except RuntimeFailure as exc: return self._error(409, str(exc))
-            return self._send(200, frame, 'image/jpeg', {'X-AgentBox-Frame-Source': source})
+            return self._send(200, frame, 'image/jpeg', {'X-Racky-Frame-Source': source})
         if self.path == '/v1/stream': return self._stream()
         return self._error(404, 'not found')
 
@@ -97,15 +97,15 @@ class ComputerHandler(BaseHTTPRequestHandler):
         if self.server.engine.health()['frame_source'] != 'desktop':
             return self._error(409, 'full desktop stream requires desktop mode')
         self.send_response(200)
-        self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=agentboxframe')
+        self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=rackyframe')
         self.send_header('Cache-Control', 'no-store')
-        self.send_header('X-AgentBox-Frame-Source', 'desktop')
+        self.send_header('X-Racky-Frame-Source', 'desktop')
         self.end_headers()
         try:
             while self.server.engine.health()['frame_source'] == 'desktop':
                 frame, source = self.server.engine.frame()
                 if source != 'desktop': break
-                self.wfile.write(b'--agentboxframe\r\nContent-Type: image/jpeg\r\nContent-Length: ' + str(len(frame)).encode() + b'\r\n\r\n')
+                self.wfile.write(b'--rackyframe\r\nContent-Type: image/jpeg\r\nContent-Length: ' + str(len(frame)).encode() + b'\r\n\r\n')
                 self.wfile.write(frame + b'\r\n')
                 self.wfile.flush()
                 time.sleep(.25)

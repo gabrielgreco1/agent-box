@@ -1,5 +1,5 @@
 {
-  "schema": "agentbox.tokens.shadows",
+  "schema": "racky.tokens.shadows",
   "version": 1,
   "_nota": "02 §8. Camadas CSS (x y blur color); 'inset' = sombra interna. SwiftUI radius = blur/2. Cards, linhas, tabs, botoes, paineis e terminal: nenhuma sombra.",
   "shadows": {

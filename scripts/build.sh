@@ -2,16 +2,16 @@
 # build.sh - gen + build Release + embute helpers + assina + verifica (08 AR-901).
 #
 # Contrato
-#   Entrada : project.yml, Packages/AgentBoxKit. Env: DEVELOPER_DIR, AGENTBOX_SIGN_IDENTITY (nome do
-#             certificado; padrão "Agent Box Local Signing"; "-" força ad-hoc), AGENTBOX_SIGN_KEYCHAIN (caminho de um
-#             keychain efêmero de CI: procura e assina por nome nele, sem confiança de usuário), AGENTBOX_BUILD_DIR (padrão build/AgentBox).
+#   Entrada : project.yml, Packages/RackyKit. Env: DEVELOPER_DIR, RACKY_SIGN_IDENTITY (nome do
+#             certificado; padrão "Racky Local Signing"; "-" força ad-hoc), RACKY_SIGN_KEYCHAIN (caminho de um
+#             keychain efêmero de CI: procura e assina por nome nele, sem confiança de usuário), RACKY_BUILD_DIR (padrão build/Racky).
 #   Efeitos : embute o plist do LaunchAgent do daemon (Contents/Library/LaunchAgents); compila o app (xcodebuild Release, Swift 6 estrito, warnings como erro) e os executáveis SPM
-#             agentbox/agentboxd (swift build -c release), embute-os em Contents/MacOS e assina de dentro
-#             para fora (agentbox, agentboxd, app), SEM --deep, com --options runtime e sem entitlements.
+#             racky/rackyd (swift build -c release), embute-os em Contents/MacOS e Contents/Helpers e assina de dentro
+#             para fora (racky, rackyd, app), SEM --deep, com --options runtime e sem entitlements.
 #   Assinatura: com a identidade local, designated requirement = identifier "<id>" and certificate leaf = H"<sha1>".
 #             Sem a identidade (make-dev-cert.sh ainda não rodado) cai para ad-hoc ("-"), com AVISO; o DR é
 #             então cdhash e muda a cada build (perde ACL do Keychain/TCC; ver 08 AR-530).
-#   Saída   : "<AGENTBOX_BUILD_DIR>/Racky.app" verificado com codesign --verify --strict; exit != 0 em falha.
+#   Saída   : "<RACKY_BUILD_DIR>/Racky.app" verificado com codesign --verify --strict; exit != 0 em falha.
 # Uso: scripts/build.sh [--help]
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -20,10 +20,10 @@ case "${1:-}" in -h|--help) usage; exit 0 ;; esac
 fail() { echo "ERRO: $*" >&2; exit 1; }
 
 export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
-OUT="${AGENTBOX_BUILD_DIR:-$ROOT/build/AgentBox}"
+OUT="${RACKY_BUILD_DIR:-$ROOT/build/Racky}"
 APP="$OUT/Racky.app"
 DD="$OUT/DerivedData"
-IDENT_NAME="${AGENTBOX_SIGN_IDENTITY:-Agent Box Local Signing}"
+IDENT_NAME="${RACKY_SIGN_IDENTITY:-Racky Local Signing}"
 cd "$ROOT"
 
 "$ROOT/scripts/gen.sh"
@@ -32,7 +32,7 @@ BUILD_NUMBER="$(git rev-list --count HEAD 2>/dev/null || echo 1)"
 mkdir -p "$OUT"
 
 echo "build: xcodebuild Release (app)"
-xcodebuild -project AgentBox.xcodeproj -scheme AgentBox -configuration Release \
+xcodebuild -project Racky.xcodeproj -scheme Racky -configuration Release \
   -derivedDataPath "$DD" -skipPackagePluginValidation -destination 'platform=macOS' \
   CODE_SIGNING_ALLOWED=NO CURRENT_PROJECT_VERSION="$BUILD_NUMBER" build \
   | { if command -v xcbeautify >/dev/null 2>&1; then xcbeautify; else cat; fi; } \
@@ -40,12 +40,12 @@ xcodebuild -project AgentBox.xcodeproj -scheme AgentBox -configuration Release \
 tail -3 "$OUT/xcodebuild.log"
 
 # Identidade de assinatura
-IDENT="-"; SHA=""; SIGN_KEYCHAIN="${AGENTBOX_SIGN_KEYCHAIN:-}"
+IDENT="-"; SHA=""; SIGN_KEYCHAIN="${RACKY_SIGN_KEYCHAIN:-}"
 if [ "$IDENT_NAME" != "-" ]; then
   SHA="$(security find-certificate -c "$IDENT_NAME" -Z ${SIGN_KEYCHAIN:+"$SIGN_KEYCHAIN"} 2>/dev/null | awk '/^SHA-1 hash:/{print $3; exit}' || true)"
   if [ -n "$SHA" ]; then IDENT="$SHA"; fi
   # Sem o certificado local e sem identidade explícita: usa a primeira "Apple Development" válida do Keychain do dono.
-  if [ -z "$SHA" ] && [ -z "${AGENTBOX_SIGN_IDENTITY:-}" ] && [ -z "$SIGN_KEYCHAIN" ]; then
+  if [ -z "$SHA" ] && [ -z "${RACKY_SIGN_IDENTITY:-}" ] && [ -z "$SIGN_KEYCHAIN" ]; then
     DEV_LINE="$(security find-identity -v -p codesigning 2>/dev/null | grep -m1 '"Apple Development:' || true)"
     if [ -n "$DEV_LINE" ]; then
       SHA="$(echo "$DEV_LINE" | awk '{print $2}')"; IDENT="$SHA"
@@ -62,30 +62,31 @@ fi
 # Peer auth (S-03/T1-07): o daemon ad-hoc só aceita peers do mesmo uid se o build o permitir explicitamente
 # (flag de compilação; o daemon ainda confere que ele próprio é ad-hoc). Com certificado, a flag não é passada.
 SWIFT_EXTRA=()
-if [ "$IDENT" = "-" ]; then SWIFT_EXTRA=(-Xswiftc -DAGENTBOX_ALLOW_ADHOC_PEERS); fi
+if [ "$IDENT" = "-" ]; then SWIFT_EXTRA=(-Xswiftc -DRACKY_ALLOW_ADHOC_PEERS); fi
 
-echo "build: swift build -c release (agentbox, agentboxd, agentboxd-launch)"
-for prod in agentbox agentboxd agentboxd-launch; do
-  swift build -c release --package-path Packages/AgentBoxKit --product "$prod" ${SWIFT_EXTRA[@]+"${SWIFT_EXTRA[@]}"}
+echo "build: swift build -c release (racky, rackyd, rackyd-launch)"
+for prod in racky rackyd rackyd-launch; do
+  swift build -c release --package-path Packages/RackyKit --product "$prod" ${SWIFT_EXTRA[@]+"${SWIFT_EXTRA[@]}"}
 done
-BIN="$(swift build -c release --package-path Packages/AgentBoxKit --show-bin-path)"
+BIN="$(swift build -c release --package-path Packages/RackyKit --show-bin-path)"
 
 rm -rf "$APP"
 ditto "$DD/Build/Products/Release/Racky.app" "$APP"
-# APFS é case-insensitive: o executável do app ("Racky") não pode colidir com o helper "agentbox".
-[ ! -e "$APP/Contents/MacOS/agentbox" ] || fail "Contents/MacOS/agentbox já existe antes de embutir o helper (colisão de nome com o executável do app)"
-install -m 755 "$BIN/agentbox" "$APP/Contents/MacOS/agentbox"
-install -m 755 "$BIN/agentboxd" "$APP/Contents/MacOS/agentboxd"
+# APFS é case-insensitive: o executável do app ("Racky") colidiria com o helper "racky" em Contents/MacOS; o helper vive em Contents/Helpers.
+mkdir -p "$APP/Contents/Helpers"
+[ ! -e "$APP/Contents/Helpers/racky" ] || fail "Contents/Helpers/racky já existe antes de embutir o helper"
+install -m 755 "$BIN/racky" "$APP/Contents/Helpers/racky"
+install -m 755 "$BIN/rackyd" "$APP/Contents/MacOS/rackyd"
 # Launcher estável do LaunchAgent (T1-24/S-01): o launchd prende o job ao cdhash do BundleProgram, então o job é registrado com
-# este binário minúsculo (só faz exec do agentboxd) e as atualizações do daemon não exigem novo registro. Símbolos removidos
+# este binário minúsculo (só faz exec do rackyd) e as atualizações do daemon não exigem novo registro. Símbolos removidos
 # (strip -S -x) para o cdhash não depender de caminhos de build; o identificador de assinatura é fixo.
-install -m 755 "$BIN/agentboxd-launch" "$APP/Contents/MacOS/agentboxd-launch"
-strip -S -x "$APP/Contents/MacOS/agentboxd-launch"
+install -m 755 "$BIN/rackyd-launch" "$APP/Contents/MacOS/rackyd-launch"
+strip -S -x "$APP/Contents/MacOS/rackyd-launch"
 # LaunchAgent do daemon (T1-24, 08 §0.1): plist em Contents/Library/LaunchAgents, __BUILD__ = CFBundleVersion. Selado pela
 # assinatura do app (assinar o app por último).
 mkdir -p "$APP/Contents/Library/LaunchAgents"
-sed "s/__BUILD__/$BUILD_NUMBER/g" "$ROOT/App/LaunchAgents/app.agentbox.ptyd.v1.plist" > "$APP/Contents/Library/LaunchAgents/app.agentbox.ptyd.v1.plist"
-plutil -lint "$APP/Contents/Library/LaunchAgents/app.agentbox.ptyd.v1.plist" >/dev/null || fail "plist do LaunchAgent inválido"
+sed "s/__BUILD__/$BUILD_NUMBER/g" "$ROOT/App/LaunchAgents/app.racky.ptyd.v1.plist" > "$APP/Contents/Library/LaunchAgents/app.racky.ptyd.v1.plist"
+plutil -lint "$APP/Contents/Library/LaunchAgents/app.racky.ptyd.v1.plist" >/dev/null || fail "plist do LaunchAgent inválido"
 
 # Contexto de build da imagem única do computador (F12, P24): a primeira reserva de um computador constrói as imagens a partir daqui
 # (`RuntimeContextLocator`). Dados dentro de Contents/Resources: selados pela assinatura do app.
@@ -106,14 +107,14 @@ sign() { # path identifier
       -r="designated => identifier \"$2\" and certificate leaf = H\"$SHA\"" "$1"
   fi
 }
-sign "$APP/Contents/MacOS/agentbox" app.agentbox.cli
-sign "$APP/Contents/MacOS/agentboxd" app.agentbox.ptyd
-sign "$APP/Contents/MacOS/agentboxd-launch" app.agentbox.ptyd.launch
-sign "$APP" app.agentbox.mac
+sign "$APP/Contents/Helpers/racky" app.racky.cli
+sign "$APP/Contents/MacOS/rackyd" app.racky.ptyd
+sign "$APP/Contents/MacOS/rackyd-launch" app.racky.ptyd.launch
+sign "$APP" app.racky.mac
 
 echo "build: verificando assinatura"
 codesign --verify --strict --verbose=2 "$APP"
-for pair in "$APP/Contents/MacOS/agentbox:app.agentbox.cli" "$APP/Contents/MacOS/agentboxd:app.agentbox.ptyd" "$APP/Contents/MacOS/agentboxd-launch:app.agentbox.ptyd.launch" "$APP:app.agentbox.mac"; do
+for pair in "$APP/Contents/Helpers/racky:app.racky.cli" "$APP/Contents/MacOS/rackyd:app.racky.ptyd" "$APP/Contents/MacOS/rackyd-launch:app.racky.ptyd.launch" "$APP:app.racky.mac"; do
   p="${pair%%:*}"; id="${pair##*:}"
   codesign --verify --strict "$p"
   dr="$(codesign -dr - "$p" 2>&1 | grep 'designated =>' || true)"

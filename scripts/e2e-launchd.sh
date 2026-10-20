@@ -2,16 +2,16 @@
 # e2e-launchd.sh - T1-24: o daemon como LaunchAgent do launchd, ⌘Q que mantém agentes e reabertura, com o app REAL.
 #
 # Contrato
-#   Entrada : app construído por scripts/build.sh (build/AgentBox/Racky.app ou AGENTBOX_BUILD_DIR). Sem argumentos.
+#   Entrada : app construído por scripts/build.sh (build/Racky/Racky.app ou RACKY_BUILD_DIR). Sem argumentos.
 #   Efeitos : copia o app para /tmp, troca o bundle id e o plist do LaunchAgent por versões de TESTE
-#             (bundle app.agentbox.mac.test<N>, label app.agentbox.ptyd.test-<N>, AGENTBOX_HOME próprio em /tmp),
-#             assina ad-hoc a cópia, abre-a com `open -g` e a conduz por `agentbox ctl`. Nunca toca no app instalado,
+#             (bundle app.racky.mac.test<N>, label app.racky.ptyd.test-<N>, RACKY_HOME próprio em /tmp),
+#             assina ad-hoc a cópia, abre-a com `open -g` e a conduz por `racky ctl`. Nunca toca no app instalado,
 #             no label de produção nem em LaunchAgents de outros apps. Nunca abre Ajustes do Sistema nem pede senha.
 #             No fim (sempre) fecha a cópia, desregistra o LaunchAgent de teste e apaga /tmp/abe-<N>.
 #   Passos  : 1 registra e usa o socket do launchd; 2 ⌘Q com agente vivo (overlay, Keep Running) deixa app e daemon vivos;
 #             3 Quit Completely e reabrir: mesmo PID do daemon e do processo do agente; 4 upgrade: binário novo do daemon com
 #             sessão viva não derruba nada; ao terminar a última sessão o daemon antigo sai e o novo sobe na próxima conexão,
-#             sem novo registro (o job está preso ao launcher estável `agentboxd-launch`, S-01).
+#             sem novo registro (o job está preso ao launcher estável `rackyd-launch`, S-01).
 #   Saída   : exit 0 se tudo passou; relatório e saídas brutas em $EVIDENCE_DIR (padrão docs/evidence/slice1/T1-24/e2e-launchd).
 #             Se o LaunchAgent exigir aprovação (requiresApproval) o script termina com exit 3 e o relatório diz o que o dono deve fazer.
 # Uso: scripts/e2e-launchd.sh [--help]
@@ -21,7 +21,7 @@ usage() { sed -n '2,/^set -uo/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; }
 case "${1:-}" in -h|--help) usage; exit 0 ;; esac
 
 export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
-SRC="${AGENTBOX_BUILD_DIR:-$ROOT/build/AgentBox}/Racky.app"
+SRC="${RACKY_BUILD_DIR:-$ROOT/build/Racky}/Racky.app"
 [ -d "$SRC" ] || { echo "ERRO: app não encontrado em $SRC (rode scripts/build.sh)" >&2; exit 2; }
 EVIDENCE_DIR="${EVIDENCE_DIR:-$ROOT/docs/evidence/slice1/T1-24/e2e-launchd}"
 mkdir -p "$EVIDENCE_DIR"
@@ -31,9 +31,9 @@ WORK="/tmp/abe-$N"
 APP="$WORK/Racky.app"
 HOME_T="$WORK/h"
 SOCK_APP="$WORK/app.sock"
-LABEL="app.agentbox.ptyd.test-$N"
-KEY="AGENTBOX_PTYD_SOCK_TEST_$(echo "$N" | tr '[:lower:]' '[:upper:]')"
-BID="app.agentbox.mac.test$N"
+LABEL="app.racky.ptyd.test-$N"
+KEY="RACKY_PTYD_SOCK_TEST_$(echo "$N" | tr '[:lower:]' '[:upper:]')"
+BID="app.racky.mac.test$N"
 UIDN="$(id -u)"
 MACOS="$APP/Contents/MacOS"
 REPORT="$EVIDENCE_DIR/report.txt"
@@ -46,7 +46,7 @@ check() { # descricao comando...
   local d="$1"; shift
   if "$@" >/dev/null 2>&1; then say "PASS  $d"; else say "FAIL  $d"; FAILS=$((FAILS + 1)); fi
 }
-ctl() { "$MACOS/agentbox" ctl "$@" --sock "$SOCK_APP"; }
+ctl() { "$APP/Contents/Helpers/racky" ctl "$@" --sock "$SOCK_APP"; }
 job_field() { launchctl print "gui/$UIDN/$LABEL" 2>/dev/null | sed -n "s/^[[:space:]]$1 = //p" | head -1; }
 job_state() { launchctl print "gui/$UIDN/$LABEL" 2>/dev/null | grep -E "^	state = " | head -1 | sed 's/.*= //'; }
 daemon_pid() { launchctl print "gui/$UIDN/$LABEL" 2>/dev/null | sed -n 's/^	pid = //p' | head -1; }
@@ -85,10 +85,10 @@ cat > "$APP/Contents/Library/LaunchAgents/$LABEL.plist" <<PLIST
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
 <key>Label</key><string>$LABEL</string>
-<key>BundleProgram</key><string>Contents/MacOS/agentboxd-launch</string>
-<key>ProgramArguments</key><array><string>Contents/MacOS/agentboxd-launch</string><string>--launchd</string><string>Listeners</string><string>--build</string><string>1</string><string>--idle-exit</string><string>8</string></array>
+<key>BundleProgram</key><string>Contents/MacOS/rackyd-launch</string>
+<key>ProgramArguments</key><array><string>Contents/MacOS/rackyd-launch</string><string>--launchd</string><string>Listeners</string><string>--build</string><string>1</string><string>--idle-exit</string><string>8</string></array>
 <key>AssociatedBundleIdentifiers</key><array><string>$BID</string></array>
-<key>EnvironmentVariables</key><dict><key>AGENTBOX_HOME</key><string>$HOME_T</string></dict>
+<key>EnvironmentVariables</key><dict><key>RACKY_HOME</key><string>$HOME_T</string></dict>
 <key>ProcessType</key><string>Interactive</string>
 <key>AbandonProcessGroup</key><true/>
 <key>KeepAlive</key><false/>
@@ -99,14 +99,14 @@ plutil -lint "$APP/Contents/Library/LaunchAgents/$LABEL.plist" >/dev/null || { s
 swiftc -O -target arm64-apple-macos15.0 "$ROOT/scripts/e2e-launchd/registrar.swift" -o "$MACOS/registrar" 2>>"$EVIDENCE_DIR/registrar-build.txt" \
   || { say "ERRO: não compilou o registrar (ver registrar-build.txt)"; exit 2; }
 sign() { codesign --force --options runtime --timestamp=none --sign - --identifier "$2" "$1" >/dev/null 2>&1; }
-sign "$MACOS/agentboxd" app.agentbox.ptyd; sign "$MACOS/agentboxd-launch" app.agentbox.ptyd.launch; sign "$MACOS/agentbox" app.agentbox.cli; sign "$MACOS/registrar" app.agentbox.e2e-registrar
+sign "$MACOS/rackyd" app.racky.ptyd; sign "$MACOS/rackyd-launch" app.racky.ptyd.launch; sign "$APP/Contents/Helpers/racky" app.racky.cli; sign "$MACOS/registrar" app.racky.e2e-registrar
 sign "$APP" "$BID"
 codesign --verify --strict "$APP" 2>&1 | tee -a "$EVIDENCE_DIR/codesign.txt" >/dev/null
 say "assinatura da cópia: $(codesign -dv "$APP" 2>&1 | grep -E 'Signature|flags' | tr '\n' ' ')"
 
 launch_app() {
-  open -n -g --env "AGENTBOX_HOME=$HOME_T" --env "AGENTBOX_APP_SOCK=$SOCK_APP" --env AGENTBOX_AUTOMATION=1 --env AGENTBOX_LAUNCHD=1 \
-    --env "AGENTBOX_TEST_N=$N" --env AGENTBOX_SKIP_ONBOARDING=1 "$APP"
+  open -n -g --env "RACKY_HOME=$HOME_T" --env "RACKY_APP_SOCK=$SOCK_APP" --env RACKY_AUTOMATION=1 --env RACKY_LAUNCHD=1 \
+    --env "RACKY_TEST_N=$N" --env RACKY_SKIP_ONBOARDING=1 "$APP"
 }
 
 # --- 1. registro, socket do launchd, sessão ---------------------------------------------------------------------------------
@@ -143,10 +143,10 @@ check "o daemon não fez bind em AB/run (modo launchd)" test ! -e "$HOME_T/run/p
 say; say "== 2. ⌘Q com agente vivo: overlay, Keep Running, accessory"
 APP1="$(app_pid)"
 # O e2e não executa agentes reais: o terminal custom `sleep` é marcado como agente (claude) no banco, que é de onde o ⌘Q conta.
-sqlite3 "$HOME_T/db/agentbox.sqlite" "UPDATE terminal SET provider='claude' WHERE state='running';" 2>&1 | tee -a "$EVIDENCE_DIR/fixture.txt" >/dev/null
-say "fixture: terminais running marcados como claude no banco ($(sqlite3 "$HOME_T/db/agentbox.sqlite" "SELECT count(*) FROM terminal WHERE provider='claude' AND state='running';"))"
+sqlite3 "$HOME_T/db/racky.sqlite" "UPDATE terminal SET provider='claude' WHERE state='running';" 2>&1 | tee -a "$EVIDENCE_DIR/fixture.txt" >/dev/null
+say "fixture: terminais running marcados como claude no banco ($(sqlite3 "$HOME_T/db/racky.sqlite" "SELECT count(*) FROM terminal WHERE provider='claude' AND state='running';"))"
 ctl ui action app.quit > "$EVIDENCE_DIR/quit-1.json" 2>&1
-wait_for 10 sh -c "'$MACOS/agentbox' ctl ui tree --sock '$SOCK_APP' | grep -q overlay.confirmQuit" \
+wait_for 10 sh -c "'$APP/Contents/Helpers/racky' ctl ui tree --sock '$SOCK_APP' | grep -q overlay.confirmQuit" \
   && say "PASS  overlay overlay.confirmQuit apareceu na janela (sem NSAlert)" || { say "FAIL  overlay de quit não apareceu"; FAILS=$((FAILS + 1)); }
 ctl screenshot --size 1440x900 --out "$EVIDENCE_DIR/quit-overlay-1440x900.png" >/dev/null 2>&1 || true
 ctl ui tree > "$EVIDENCE_DIR/ui-tree-overlay.json" 2>&1
@@ -179,12 +179,12 @@ ctl screenshot --size 1440x900 --out "$EVIDENCE_DIR/after-reopen-1440x900.png" >
 say; say "== 4. daemon novo (S-01: o launchd prende o job ao cdhash do BundleProgram, por isso o job usa o launcher estável)"
 ctl ui action app.quitCompletely >/dev/null 2>&1
 wait_for 15 sh -c "! pgrep -f '$APP/Contents/MacOS/Racky' >/dev/null"
-LAUNCHER_BEFORE="$(codesign -dvvv "$MACOS/agentboxd-launch" 2>&1 | sed -n 's/^CDHash=//p')"
+LAUNCHER_BEFORE="$(codesign -dvvv "$MACOS/rackyd-launch" 2>&1 | sed -n 's/^CDHash=//p')"
 say "daemon em execução: $(codesign -dvvv "$D1" 2>&1 | sed -n 's/^Identifier=//p') (PID $D1)"
-# Daemon "novo": mesmo código com outro identificador de assinatura (muda o cdhash do agentboxd; o do launcher não muda).
-sign "$MACOS/agentboxd" "app.agentbox.ptyd.upgrade$N"; sign "$APP" "$BID"
+# Daemon "novo": mesmo código com outro identificador de assinatura (muda o cdhash do rackyd; o do launcher não muda).
+sign "$MACOS/rackyd" "app.racky.ptyd.upgrade$N"; sign "$APP" "$BID"
 check "bundle válido com o daemon novo" codesign --verify --strict "$APP"
-check "o cdhash do launcher não mudou" test "$(codesign -dvvv "$MACOS/agentboxd-launch" 2>&1 | sed -n 's/^CDHash=//p')" = "$LAUNCHER_BEFORE"
+check "o cdhash do launcher não mudou" test "$(codesign -dvvv "$MACOS/rackyd-launch" 2>&1 | sed -n 's/^CDHash=//p')" = "$LAUNCHER_BEFORE"
 launch_app
 wait_for 20 sock_up || say "FAIL  o app não voltou depois da troca do daemon"
 sleep 3
@@ -198,11 +198,11 @@ wait_for 30 pgrep -f "^sleep $MARK$" && say "PASS  nova sessão sobe depois do u
 D3="$(daemon_pid)"
 say "daemon novo: PID ${D3:-?} $(codesign -dvvv "${D3:-0}" 2>&1 | sed -n 's/^Identifier=//p')"
 check "o daemon novo é outro processo" test -n "$D3" -a "$D3" != "$D1"
-check "o daemon novo é o binário novo (identificador de assinatura novo)" sh -c "codesign -dvvv '$D3' 2>&1 | grep -q 'Identifier=app.agentbox.ptyd.upgrade$N'"
+check "o daemon novo é o binário novo (identificador de assinatura novo)" sh -c "codesign -dvvv '$D3' 2>&1 | grep -q 'Identifier=app.racky.ptyd.upgrade$N'"
 check "o daemon novo é filho do launchd" test "$(ps -o ppid= -p "${D3:-0}" | tr -d ' ')" = 1
 launchctl print "gui/$UIDN/$LABEL" > "$EVIDENCE_DIR/launchctl-print-after-upgrade.txt" 2>&1
 check "job sem spawn failed nem pendência de LWCR" sh -c "! grep -q 'spawn failed\\|needs LWCR update' '$EVIDENCE_DIR/launchctl-print-after-upgrade.txt'"
-check "nenhum novo registro foi necessário (runs do job só contam spawns, sem recriação)" sh -c "grep -q 'program identifier = Contents/MacOS/agentboxd-launch' '$EVIDENCE_DIR/launchctl-print-after-upgrade.txt'"
+check "nenhum novo registro foi necessário (runs do job só contam spawns, sem recriação)" sh -c "grep -q 'program identifier = Contents/MacOS/rackyd-launch' '$EVIDENCE_DIR/launchctl-print-after-upgrade.txt'"
 
 say; say "fim dos passos"
 [ "$FAILS" -eq 0 ]

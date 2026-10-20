@@ -2,8 +2,8 @@
 # bench.sh - orçamentos de terminal AR-702/703/704 (08 AR-720). Implementado em T1-09.
 #
 # Contrato
-#   Entrada : Packages/AgentBoxKit (alvos agentbox-bench e agentboxd, build Release). Env: DEVELOPER_DIR.
-#   Efeitos : sobe um agentboxd real em /tmp (AGENTBOX_HOME isolado), abre TerminalHostView reais (Metal) anexados
+#   Entrada : Packages/RackyKit (alvos racky-bench e rackyd, build Release). Env: DEVELOPER_DIR.
+#   Efeitos : sobe um rackyd real em /tmp (RACKY_HOME isolado), abre TerminalHostView reais (Metal) anexados
 #             por TerminalSessionBinding e mede:
 #               AR-702 latência de eco, tecla -> emulador alimentado e tecla -> quadro apresentado (p95 <= 16 ms em
 #                      repouso; <= 33 ms com 4 panes, 3 deles com `yes`);
@@ -41,15 +41,15 @@ DATE="$(date +%Y-%m-%d)"
 [ -n "$OUT" ] || OUT="$ROOT/docs/evidence/bench/${DATE}-${SHA}.json"
 mkdir -p "$(dirname "$OUT")"
 
-PKG=Packages/AgentBoxKit
-# O bench é ad-hoc: o agentboxd de Release só aceita o cliente com o modo ad-hoc de desenvolvimento (S-03, só vale se o próprio daemon for ad-hoc).
-swift build -c release --package-path "$PKG" --product agentboxd -Xswiftc -DAGENTBOX_ALLOW_ADHOC_PEERS 2>&1 | tail -1
-swift build -c release --package-path "$PKG" --product agentbox-bench 2>&1 | tail -1
+PKG=Packages/RackyKit
+# O bench é ad-hoc: o rackyd de Release só aceita o cliente com o modo ad-hoc de desenvolvimento (S-03, só vale se o próprio daemon for ad-hoc).
+swift build -c release --package-path "$PKG" --product rackyd -Xswiftc -DRACKY_ALLOW_ADHOC_PEERS 2>&1 | tail -1
+swift build -c release --package-path "$PKG" --product racky-bench 2>&1 | tail -1
 BIN="$(swift build -c release --package-path "$PKG" --show-bin-path)"
 
 echo "bench: executando (alguns minutos)" >&2
 rc=0
-"$BIN/agentbox-bench" --out "$OUT" ${EXTRA[@]+"${EXTRA[@]}"} >/dev/null || rc=$?
+"$BIN/racky-bench" --out "$OUT" ${EXTRA[@]+"${EXTRA[@]}"} >/dev/null || rc=$?
 case "$rc" in
   0) echo "bench: OK -> $OUT" ;;
   1) echo "bench: orçamento estourado (veja failures em $OUT)" >&2 ;;

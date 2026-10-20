@@ -1,4 +1,4 @@
-"""One persistent Agent Box computer. No Docker or host control lives here."""
+"""One persistent Racky computer. No Docker or host control lives here."""
 from __future__ import annotations
 
 import fcntl

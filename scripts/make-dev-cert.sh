@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# make-dev-cert.sh - cria a identidade local "Agent Box Local Signing" (08 AR-530).
+# make-dev-cert.sh - cria a identidade local "Racky Local Signing" (08 AR-530).
 #
 # Contrato
 #   Efeitos : gera certificado autoassinado de code signing (RSA 2048, 10 anos), importa no keychain
@@ -8,11 +8,11 @@
 #   Saída   : imprime o SHA-1 do certificado (usado no designated requirement por build.sh).
 #   Idempotente: se a identidade já existe, só imprime o SHA-1.
 #   --ephemeral : keychain temporário (CI), sem confiança de usuário nem prompt; imprime o caminho do keychain
-#                 em AGENTBOX_EPHEMERAL_KEYCHAIN=... e o SHA-1.
+#                 em RACKY_EPHEMERAL_KEYCHAIN=... e o SHA-1.
 #   Sem esta identidade, build.sh assina ad-hoc ("-") e avisa (fallback documentado).
 # Uso: scripts/make-dev-cert.sh [--ephemeral] [--help]
 set -euo pipefail
-NAME="Agent Box Local Signing"
+NAME="Racky Local Signing"
 usage() { sed -n '2,/^set -euo/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; }
 EPHEMERAL=0
 for a in "$@"; do
@@ -25,7 +25,7 @@ if [ "$EPHEMERAL" = 0 ]; then
   KC="$HOME/Library/Keychains/login.keychain-db"
   if [ -n "$(sha_of "$KC")" ]; then echo "ok: identidade já existe"; sha_of "$KC"; exit 0; fi
 else
-  KC="${TMPDIR:-/tmp}/agentbox-ci-$$.keychain-db"
+  KC="${TMPDIR:-/tmp}/racky-ci-$$.keychain-db"
   PW="$(uuidgen)"
   security create-keychain -p "$PW" "$KC"
   security set-keychain-settings -lut 3600 "$KC"
@@ -54,7 +54,7 @@ openssl pkcs12 -export -inkey "$WORK/key.pem" -in "$WORK/cert.pem" -out "$WORK/i
 security import "$WORK/id.p12" -k "$KC" -P "$P12PW" -T /usr/bin/codesign
 if [ "$EPHEMERAL" = 1 ]; then
   security set-key-partition-list -S apple-tool:,apple: -s -k "$PW" "$KC" >/dev/null
-  echo "AGENTBOX_EPHEMERAL_KEYCHAIN=$KC"
+  echo "RACKY_EPHEMERAL_KEYCHAIN=$KC"
 else
   # Pede a senha do usuário (janela do macOS). Marca o certificado como confiável só para code signing.
   security add-trusted-cert -r trustRoot -p codeSign -k "$KC" "$WORK/cert.pem"

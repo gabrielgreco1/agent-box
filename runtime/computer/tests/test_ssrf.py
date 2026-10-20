@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from agentbox_egress.ssrf import (  # noqa: E402
+from racky_egress.ssrf import (  # noqa: E402
     Blocked, SSRFPolicy, host_block_reason, ip_block_reason, noise_host, parse_ip_literal, split_host_port, strip_userinfo,
 )
 

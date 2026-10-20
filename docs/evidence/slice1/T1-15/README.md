@@ -2,7 +2,7 @@
 
 Código: `Packages/RackyKit/Sources/RackyCore/Launch/`. Testes: `Packages/RackyKit/Tests/CoreTests/Launch/`.
 
-- Golden files de argv (32 casos, Fatia 1): `Tests/CoreTests/Launch/Golden/slice1/` (regravar com `AB_UPDATE_GOLDEN=1`, revisar o diff).
+- Golden files de argv (32 casos, Fatia 1): `Tests/CoreTests/Launch/Golden/slice1/` (regravar com `RACKY_UPDATE_GOLDEN=1`, revisar o diff).
 - Fixtures reais (`--version`, `--help`, `codex resume --help`, status de login redigido, `opencode session list`, `session_meta` do rollout): `Tests/CoreTests/Launch/Fixtures/`, gravados em 2026-10-17 de Claude 2.1.302, Codex 0.163.0, OpenCode 1.18.34.
 - `real-cli-probe.json`: saída de `AB_REAL_CLI=1 AB_EVIDENCE_OUT=... swift test --filter RealCLIProbeTests` (só `--version`, `--help` e comandos de status; nenhum agente com prompt). Confirma que o `--help` instalado é igual ao fixture.
 

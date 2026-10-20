@@ -11,7 +11,7 @@ import unittest
 
 SCRIPT = Path(__file__).with_name("claude_event.py")
 TOKEN = "ab" * 32
-TOOL = "mcp__agentbox__computer_input"
+TOOL = "mcp__racky__computer_input"
 
 
 class ClaudeHookRouteTests(unittest.TestCase):
@@ -21,9 +21,9 @@ class ClaudeHookRouteTests(unittest.TestCase):
         self.inbox = Path(self.directory.name) / "events.jsonl"
         self.inbox.write_bytes(b"")
         self.inbox.chmod(0o600)
-        self.environment = dict(os.environ, AGENT_BOX_HOOK_RUN_ID="run-1",
-                                AGENT_BOX_HOOK_TOKEN=TOKEN,
-                                AGENT_BOX_HOOK_INBOX=str(self.inbox))
+        self.environment = dict(os.environ, RACKY_HOOK_RUN_ID="run-1",
+                                RACKY_HOOK_TOKEN=TOKEN,
+                                RACKY_HOOK_INBOX=str(self.inbox))
 
     def emit(self, event, environment=None, arguments=()):
         return subprocess.run([str(SCRIPT), *arguments], input=json.dumps(event).encode(),
@@ -55,7 +55,7 @@ class ClaudeHookRouteTests(unittest.TestCase):
         event = {"hook_event_name": "PreToolUse", "tool_name": TOOL,
                  "session_id": "s", "tool_use_id": "t", "tool_input": {}}
         environment = dict(self.environment)
-        environment.pop("AGENT_BOX_HOOK_TOKEN")
+        environment.pop("RACKY_HOOK_TOKEN")
         process = self.emit(event, environment)
         self.assertEqual(json.loads(process.stdout)["hookSpecificOutput"]["permissionDecision"], "deny")
         event["tool_input"] = {"text": "x" * 25_000}

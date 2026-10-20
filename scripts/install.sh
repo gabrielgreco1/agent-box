@@ -5,29 +5,29 @@
 # com backup em previous/ e --rollback). Abrir o app direto de build/ ou de /private/tmp/... funciona (ele se conecta ao daemon
 # que já está vivo e não re-registra o LaunchAgent), mas o launchd prende o job ao bundle que o registrou: só o app em
 # /Applications dá um registro estável. Trocar de build nunca mata o daemon nem os agentes: o novo app se conecta ao daemon vivo
-# e, se ele for mais antigo, pede drainWhenIdle (sessões antigas ficam nele até acabarem; o ponteiro bin/agentboxd-current
-# faz o launcher subir o agentboxd novo na próxima conexão).
+# e, se ele for mais antigo, pede drainWhenIdle (sessões antigas ficam nele até acabarem; o ponteiro bin/rackyd-current
+# faz o launcher subir o rackyd novo na próxima conexão).
 #
 # Contrato
 #   Padrão   : roda build.sh; se o app estiver aberto, pede encerramento (osascript quit) e espera; NUNCA mata
-#              o daemon; guarda a versão instalada em ~/Library/Application Support/AgentBox/previous/;
+#              o daemon; guarda a versão instalada em ~/Library/Application Support/Racky/previous/;
 #              copia o novo bundle para um temporário em /Applications e troca por rename atômico; abre o app
 #              (a menos que --no-open).
 #   --rollback : restaura a versão guardada em previous/ (a atual vira previous/ para permitir desfazer).
-#   Env      : AGENTBOX_INSTALL_DIR (padrão /Applications), AGENTBOX_HOME (padrão ~/Library/Application Support/AgentBox),
-#              AGENTBOX_BUILD_DIR (saída do build.sh).
+#   Env      : RACKY_INSTALL_DIR (padrão /Applications), RACKY_HOME (padrão ~/Library/Application Support/Racky),
+#              RACKY_BUILD_DIR (saída do build.sh).
 # Uso: scripts/install.sh [--no-open] [--rollback] [--help]
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 usage() { sed -n '2,/^set -euo/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; }
 fail() { echo "ERRO: $*" >&2; exit 1; }
 
-INSTALL_DIR="${AGENTBOX_INSTALL_DIR:-/Applications}"
-AB="${AGENTBOX_HOME:-$HOME/Library/Application Support/AgentBox}"
+INSTALL_DIR="${RACKY_INSTALL_DIR:-/Applications}"
+AB="${RACKY_HOME:-$HOME/Library/Application Support/Racky}"
 PREV_DIR="$AB/previous"
-BUILD_APP="${AGENTBOX_BUILD_DIR:-$ROOT/build/AgentBox}/Racky.app"
+BUILD_APP="${RACKY_BUILD_DIR:-$ROOT/build/Racky}/Racky.app"
 TARGET="$INSTALL_DIR/Racky.app"
-BUNDLE_ID=app.agentbox.mac
+BUNDLE_ID=app.racky.mac
 OPEN=1; ROLLBACK=0
 for a in "$@"; do
   case "$a" in

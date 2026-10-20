@@ -54,9 +54,9 @@ class RuntimeTests(unittest.TestCase):
         headers = {'Authorization': 'Bearer ' + (self.token if token else 'wrong')}
         if body is not None: headers['Content-Type'] = 'application/json'
         if lease:
-            headers.update({'X-AgentBox-Actor-ID': lease['actor_id'],
-                            'X-AgentBox-Lease-Epoch': str(lease['epoch']),
-                            'X-AgentBox-Control-Token': lease['control_token']})
+            headers.update({'X-Racky-Actor-ID': lease['actor_id'],
+                            'X-Racky-Lease-Epoch': str(lease['epoch']),
+                            'X-Racky-Control-Token': lease['control_token']})
         request = urllib.request.Request(self.base + path, data=None if body is None else json.dumps(body).encode(), headers=headers)
         try:
             with urllib.request.urlopen(request, timeout=3) as response:
@@ -87,10 +87,10 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(self.request('/v1/mode', {'mode': 'desktop'}, lease=bad)[0], 403)
         self.assertEqual(self.request('/v1/mode', {'mode': 'desktop'}, lease=lease)[0], 200)
         code, headers, frame = self.request('/v1/frame')
-        self.assertEqual((code, headers['X-AgentBox-Frame-Source'], frame), (200, 'desktop', b'fake-whole-display-jpeg'))
+        self.assertEqual((code, headers['X-Racky-Frame-Source'], frame), (200, 'desktop', b'fake-whole-display-jpeg'))
         stream_request = urllib.request.Request(self.base + '/v1/stream', headers={'Authorization': 'Bearer ' + self.token})
         with urllib.request.urlopen(stream_request, timeout=3) as stream:
-            self.assertEqual(stream.headers['X-AgentBox-Frame-Source'], 'desktop')
+            self.assertEqual(stream.headers['X-Racky-Frame-Source'], 'desktop')
             self.assertIn(b'fake-whole-display-jpeg', stream.read(150))
         self.assertEqual(self.request('/v1/input', {'kind': 'click', 'button': 1}, lease=lease)[0], 200)
         self.assertEqual(self.request('/v1/input', {'kind': 'button', 'button': 1, 'pressed': True}, lease=lease)[0], 200)
@@ -112,7 +112,7 @@ class RuntimeTests(unittest.TestCase):
         self.request('/v1/mode', {'mode': 'headless'}, lease=lease)
         self.request('/v1/navigate', {'url': 'https://example.com/'}, lease=lease)
         _, headers, frame = self.request('/v1/frame')
-        self.assertEqual(headers['X-AgentBox-Frame-Source'], 'browser')
+        self.assertEqual(headers['X-Racky-Frame-Source'], 'browser')
         self.assertEqual(frame, b'fake-browser-jpeg')
         self.assertEqual(self.request('/v1/stream')[0], 409)
         _, _, health = self.request('/v1/mode', {'mode': 'desktop'}, lease=lease)

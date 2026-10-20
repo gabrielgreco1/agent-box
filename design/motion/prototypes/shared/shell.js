@@ -1,4 +1,4 @@
-// shared/shell.js: constroi a janela do Agent Box (sidebar 280, tab bar, workspace, status bar) em HTML,
+// shared/shell.js: constroi a janela do Racky (sidebar 280, tab bar, workspace, status bar) em HTML,
 // e o contrato de timeline com o renderizador (window.DUR, window.MARK, window.seek(t), window.ready).
 // Nenhum valor de tempo/curva aqui: tudo vem de MOTION/Motion.
 (function () {

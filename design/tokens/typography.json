@@ -1,5 +1,5 @@
 {
-  "schema": "agentbox.tokens.typography",
+  "schema": "racky.tokens.typography",
   "version": 1,
   "_nota": "02 §4. Tamanhos em pt; tracking em em (global +0.01; nav -0.025). Pesos: 400, 450 (eixo wght), 500, 600. lineHeightSource 'spec' = line-height que o CSS extraido nao usa (so 02); os demais batem com o Orca.",
   "families": {

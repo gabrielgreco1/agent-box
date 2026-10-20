@@ -1,52 +1,52 @@
 #!/bin/bash
 set -euo pipefail
-AGENTBOX_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-cd "$AGENTBOX_ROOT"
+RACKY_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$RACKY_ROOT"
 if [[ -d /Applications/Xcode.app/Contents/Developer ]]; then
   export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
 fi
-AGENTBOX_RUNNING="$AGENTBOX_ROOT/build/Agent Box.app/Contents/MacOS/AgentBox"
-AGENTBOX_BUILD_KEY="$(printf '%s' "$AGENTBOX_ROOT" | shasum -a 256 | cut -c1-16)"
-AGENTBOX_CACHE_ROOT="$HOME/Library/Caches/AgentBox/Builds/$AGENTBOX_BUILD_KEY"
-AGENTBOX_CACHED_APP="$AGENTBOX_CACHE_ROOT/Agent Box.app"
-if pgrep -f "^${AGENTBOX_RUNNING}$" >/dev/null || pgrep -f "^${AGENTBOX_CACHED_APP}/Contents/MacOS/AgentBox$" >/dev/null; then
-  printf 'Feche o Agent Box antes de substituir o build em execução.\n' >&2
+RACKY_RUNNING="$RACKY_ROOT/build/Racky.app/Contents/MacOS/Racky"
+RACKY_BUILD_KEY="$(printf '%s' "$RACKY_ROOT" | shasum -a 256 | cut -c1-16)"
+RACKY_CACHE_ROOT="$HOME/Library/Caches/Racky/Builds/$RACKY_BUILD_KEY"
+RACKY_CACHED_APP="$RACKY_CACHE_ROOT/Racky.app"
+if pgrep -f "^${RACKY_RUNNING}$" >/dev/null || pgrep -f "^${RACKY_CACHED_APP}/Contents/MacOS/Racky$" >/dev/null; then
+  printf 'Feche o Racky antes de substituir o build em execução.\n' >&2
   exit 1
 fi
 swift build -c release
-AGENTBOX_BIN="$(swift build -c release --show-bin-path)"
-AGENTBOX_OUTPUT="$AGENTBOX_ROOT/build/Agent Box.app"
+RACKY_BIN="$(swift build -c release --show-bin-path)"
+RACKY_OUTPUT="$RACKY_ROOT/build/Racky.app"
 # Stage outside file-provider folders; otherwise Finder metadata can reappear during signing.
-AGENTBOX_STAGE="$(mktemp -d /private/tmp/agentbox-package.XXXXXX)"
-trap 'rm -rf "$AGENTBOX_STAGE"' EXIT
-AGENTBOX_APP="$AGENTBOX_STAGE/Agent Box.app"
-mkdir -p "$AGENTBOX_APP/Contents/MacOS" "$AGENTBOX_APP/Contents/Resources"
-mkdir -p "$AGENTBOX_APP/Contents/Resources/Hooks"
-cp "$AGENTBOX_BIN/AgentBox" "$AGENTBOX_APP/Contents/MacOS/AgentBox"
-cp "$AGENTBOX_BIN/AgentBoxMCP" "$AGENTBOX_APP/Contents/MacOS/AgentBoxMCP"
-install -m 755 "$AGENTBOX_ROOT/runtime/hooks/claude_event.py" "$AGENTBOX_APP/Contents/Resources/Hooks/claude_event.py"
-for AGENTBOX_RESOURCE in "$AGENTBOX_BIN"/*.bundle; do
-  [[ -d "$AGENTBOX_RESOURCE" ]] || continue
+RACKY_STAGE="$(mktemp -d /private/tmp/racky-package.XXXXXX)"
+trap 'rm -rf "$RACKY_STAGE"' EXIT
+RACKY_APP="$RACKY_STAGE/Racky.app"
+mkdir -p "$RACKY_APP/Contents/MacOS" "$RACKY_APP/Contents/Resources"
+mkdir -p "$RACKY_APP/Contents/Resources/Hooks"
+cp "$RACKY_BIN/Racky" "$RACKY_APP/Contents/MacOS/Racky"
+cp "$RACKY_BIN/RackyMCP" "$RACKY_APP/Contents/MacOS/RackyMCP"
+install -m 755 "$RACKY_ROOT/runtime/hooks/claude_event.py" "$RACKY_APP/Contents/Resources/Hooks/claude_event.py"
+for RACKY_RESOURCE in "$RACKY_BIN"/*.bundle; do
+  [[ -d "$RACKY_RESOURCE" ]] || continue
   # SwiftPM resources can be read-only. Replace the generated bundle instead of overwriting its files.
-  AGENTBOX_RESOURCE_NAME="$(basename "$AGENTBOX_RESOURCE")"
-  rm -rf "$AGENTBOX_APP/Contents/Resources/$AGENTBOX_RESOURCE_NAME"
-  cp -R "$AGENTBOX_RESOURCE" "$AGENTBOX_APP/Contents/Resources/"
+  RACKY_RESOURCE_NAME="$(basename "$RACKY_RESOURCE")"
+  rm -rf "$RACKY_APP/Contents/Resources/$RACKY_RESOURCE_NAME"
+  cp -R "$RACKY_RESOURCE" "$RACKY_APP/Contents/Resources/"
 done
-cp "$AGENTBOX_ROOT/Sources/AgentBox/Resources/Brands/AgentBox.icns" "$AGENTBOX_APP/Contents/Resources/AgentBox.icns"
-cat > "$AGENTBOX_APP/Contents/Info.plist" <<'PLIST'
+cp "$RACKY_ROOT/Sources/Racky/Resources/Brands/Racky.icns" "$RACKY_APP/Contents/Resources/Racky.icns"
+cat > "$RACKY_APP/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-<key>CFBundleExecutable</key><string>AgentBox</string>
-<key>CFBundleIdentifier</key><string>local.agentbox.app</string>
-<key>CFBundleName</key><string>Agent Box</string>
-<key>CFBundleDisplayName</key><string>Agent Box</string>
+<key>CFBundleExecutable</key><string>Racky</string>
+<key>CFBundleIdentifier</key><string>local.racky.app</string>
+<key>CFBundleName</key><string>Racky</string>
+<key>CFBundleDisplayName</key><string>Racky</string>
 <key>CFBundleVersion</key><string>5</string>
 <key>CFBundleShortVersionString</key><string>0.5.0</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>LSMinimumSystemVersion</key><string>14.0</string>
 <key>NSHighResolutionCapable</key><true/>
-<key>CFBundleIconFile</key><string>AgentBox</string>
+<key>CFBundleIconFile</key><string>Racky</string>
 <key>LSMultipleInstancesProhibited</key><true/>
 <key>NSDocumentsFolderUsageDescription</key><string>Abrir projetos e executar os terminais nas pastas que você escolher.</string>
 <key>NSDesktopFolderUsageDescription</key><string>Abrir projetos selecionados na Mesa.</string>
@@ -56,19 +56,19 @@ cat > "$AGENTBOX_APP/Contents/Info.plist" <<'PLIST'
 PLIST
 # Finder may attach presentation metadata after the previous local launch.
 # Remove only those two generated-bundle attributes; preserve other attributes.
-xattr -rd com.apple.FinderInfo "$AGENTBOX_APP" 2>/dev/null || true
-xattr -rd com.apple.ResourceFork "$AGENTBOX_APP" 2>/dev/null || true
-codesign --force --deep --sign - "$AGENTBOX_APP"
-codesign --verify --deep --strict "$AGENTBOX_APP"
-mkdir -p "$AGENTBOX_ROOT/build"
+xattr -rd com.apple.FinderInfo "$RACKY_APP" 2>/dev/null || true
+xattr -rd com.apple.ResourceFork "$RACKY_APP" 2>/dev/null || true
+codesign --force --deep --sign - "$RACKY_APP"
+codesign --verify --deep --strict "$RACKY_APP"
+mkdir -p "$RACKY_ROOT/build"
 # A File Provider may immediately reattach FinderInfo to a bundle in Documents,
 # even after signing in /private/tmp. Keep the executable development bundle in
 # the local cache; the checkout exposes a link, not another synchronized copy.
-mkdir -p "$AGENTBOX_CACHE_ROOT"
-rm -rf "$AGENTBOX_CACHED_APP"
-mv "$AGENTBOX_APP" "$AGENTBOX_CACHED_APP"
-codesign --verify --deep --strict "$AGENTBOX_CACHED_APP"
-rm -rf "$AGENTBOX_OUTPUT"
-ln -s "$AGENTBOX_CACHED_APP" "$AGENTBOX_OUTPUT"
-codesign --verify --deep --strict "$AGENTBOX_OUTPUT"
-printf 'App: %s\n' "$AGENTBOX_OUTPUT"
+mkdir -p "$RACKY_CACHE_ROOT"
+rm -rf "$RACKY_CACHED_APP"
+mv "$RACKY_APP" "$RACKY_CACHED_APP"
+codesign --verify --deep --strict "$RACKY_CACHED_APP"
+rm -rf "$RACKY_OUTPUT"
+ln -s "$RACKY_CACHED_APP" "$RACKY_OUTPUT"
+codesign --verify --deep --strict "$RACKY_OUTPUT"
+printf 'App: %s\n' "$RACKY_OUTPUT"

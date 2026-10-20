@@ -73,25 +73,25 @@ annotated() {
 run_rules() {
   SCAN_EXPANDED="$(cd "$ROOT" && ls -d Packages/*/Sources App 2>/dev/null | tr '\n' ' ' || true)"
 
-  rule blocking "DispatchSemaphore/Thread.sleep/usleep/sleep(/DispatchGroup.wait fora de Platform/Blocking* e agentboxd" \
+  rule blocking "DispatchSemaphore/Thread.sleep/usleep/sleep(/DispatchGroup.wait fora de Platform/Blocking* e rackyd" \
     '\bDispatchSemaphore\b|\bThread\.sleep\b|\busleep\(|(?<![.\w])sleep\(' \
-    '!**/AgentBoxPlatform/Blocking*' '!**/agentboxd/**'
+    '!**/RackyPlatform/Blocking*' '!**/rackyd/**'
   rule dispatchgroup "DispatchGroup.wait" '\bDispatchGroup\b[^\n]*\.wait\(|\.wait\((timeout|wallTimeout):' \
-    '!**/AgentBoxPlatform/Blocking*' '!**/agentboxd/**'
+    '!**/RackyPlatform/Blocking*' '!**/rackyd/**'
   rule locks-global "locks fora de Platform e TerminalCore" \
     '\b(NSLock|NSRecursiveLock|os_unfair_lock|OSAllocatedUnfairLock)\b' \
-    '!**/AgentBoxPlatform/**' '!**/AgentBoxTerminalCore/**'
+    '!**/RackyPlatform/**' '!**/RackyTerminalCore/**'
   annotated locks-note "lock em Platform/TerminalCore sem comentário '// LOCK:'" \
     '\b(NSLock|NSRecursiveLock|os_unfair_lock|OSAllocatedUnfairLock)\b' '// LOCK:' \
-    '**/AgentBoxPlatform/**' '**/AgentBoxTerminalCore/**'
-  rule process "Process(/posix_spawn/forkpty fora de Platform/ProcessRunner* e agentboxd" \
+    '**/RackyPlatform/**' '**/RackyTerminalCore/**'
+  rule process "Process(/posix_spawn/forkpty fora de Platform/ProcessRunner* e rackyd" \
     '(?<![.\w])Process\(|\bposix_spawn\b|\bforkpty\b' \
-    '!**/AgentBoxPlatform/ProcessRunner*' '!**/agentboxd/**'
-  rule grdb "import GRDB fora de AgentBoxStore" '^\s*(@\w+\s+)?import\s+GRDB\b' '!**/AgentBoxStore/**'
+    '!**/RackyPlatform/ProcessRunner*' '!**/rackyd/**'
+  rule grdb "import GRDB fora de RackyStore" '^\s*(@\w+\s+)?import\s+GRDB\b' '!**/RackyStore/**'
   rule ui-system "FileManager/URLSession/Process na UI e DesignSystem" '\b(FileManager|URLSession|Process)\b' \
-    '**/AgentBoxUI/**' '**/AgentBoxDesignSystem/**'
+    '**/RackyUI/**' '**/RackyDesignSystem/**'
   rule ui-chrome ".sheet(/NSToolbar/.toolbar { (00 T5)" '\.sheet\(|\bNSToolbar\b|\.toolbar\s*\{' \
-    '**/AgentBoxUI/**' '**/AgentBoxDesignSystem/**' 'App/**'
+    '**/RackyUI/**' '**/RackyDesignSystem/**' 'App/**'
   rule print "print(/NSLog(/debugPrint(" '\bprint\(|\bNSLog\(|\bdebugPrint\('
   annotated unchecked "@unchecked Sendable/nonisolated(unsafe) sem '// SAFETY:'" \
     '@unchecked\s+Sendable|nonisolated\(unsafe\)' '// SAFETY:'
@@ -99,9 +99,9 @@ run_rules() {
   rule main-sync "DispatchQueue.main.sync" '\bDispatchQueue\.main\.sync\b'
   rule try-bang "try!" '\btry!'
   annotated fatal "fatalError( fora de required init?(coder:)" '\bfatalError\(' 'required init\?\(coder'
-  rule userdefaults "UserDefaults fora de AgentBoxStore/LegacyDefaults" '\bUserDefaults\b' '!**/AgentBoxStore/LegacyDefaults*'
-  rule banned-strings "strings proibidas (audit/02)" 'webscraping-expert|colima-agentbox-dev|ab019'
-  rule metal "setUseMetal(false)" '\bsetUseMetal\(false\)' '**/AgentBoxUI/**'
+  rule userdefaults "UserDefaults fora de RackyStore/LegacyDefaults" '\bUserDefaults\b' '!**/RackyStore/LegacyDefaults*'
+  rule banned-strings "strings proibidas (audit/02)" 'webscraping-expert|colima-racky-dev|ab019'
+  rule metal "setUseMetal(false)" '\bsetUseMetal\(false\)' '**/RackyUI/**'
   rule swiftterm-local "LocalProcessTerminalView/LocalProcess(/TerminalFindBarView/performFindPanelAction (T6, AR-122)" \
     '\bLocalProcessTerminalView\b|\bLocalProcess\(|\bTerminalFindBarView\b|\bperformFindPanelAction\b'
 }
@@ -117,25 +117,25 @@ if [ "$SELF_TEST" = 1 ]; then
     local got=pass; [ "$rc" -ne 0 ] && got=fail
     if [ "$got" = "$want" ]; then echo "ok: $name ($want)"; else echo "FALHOU: $name esperado=$want obtido=$got" >&2; fails=$((fails+1)); fi
   }
-  C=Packages/AgentBoxKit/Sources/AgentBoxCore/X.swift
-  P=Packages/AgentBoxKit/Sources/AgentBoxPlatform/X.swift
-  U=Packages/AgentBoxKit/Sources/AgentBoxUI/X.swift
+  C=Packages/RackyKit/Sources/RackyCore/X.swift
+  P=Packages/RackyKit/Sources/RackyPlatform/X.swift
+  U=Packages/RackyKit/Sources/RackyUI/X.swift
   expect blocking-bad $C 'let s = DispatchSemaphore(value: 0)' fail
   expect blocking-ok $C 'try await Task.sleep(for: .seconds(1))' pass
   expect sleep-bad $C 'sleep(1)' fail
   expect usleep-bad $C 'usleep(10)' fail
   expect thread-sleep-bad $C 'Thread.sleep(forTimeInterval: 1)' fail
-  expect blocking-platform-blocking-ok Packages/AgentBoxKit/Sources/AgentBoxPlatform/BlockingIOExecutor.swift 'let s = DispatchSemaphore(value: 0)' pass
+  expect blocking-platform-blocking-ok Packages/RackyKit/Sources/RackyPlatform/BlockingIOExecutor.swift 'let s = DispatchSemaphore(value: 0)' pass
   expect lock-core-bad $C 'let l = NSLock()' fail
   expect lock-platform-bad $P 'let l = NSLock()' fail
   expect lock-platform-ok $P $'// LOCK: sem I/O sob o lock\nlet l = NSLock()' pass
   expect process-bad $C 'let p = Process()' fail
   expect processinfo-ok $C 'let p = ProcessInfo.processInfo' pass
   expect grdb-bad $C 'import GRDB' fail
-  expect grdb-store-ok Packages/AgentBoxKit/Sources/AgentBoxStore/X.swift 'import GRDB' pass
+  expect grdb-store-ok Packages/RackyKit/Sources/RackyStore/X.swift 'import GRDB' pass
   expect ui-filemanager-bad $U 'let f = FileManager.default' fail
   expect ui-filemanager-core-ok $C 'let f = FileManager.default' pass
-  expect ui-filemanager-store-ok Packages/AgentBoxKit/Sources/AgentBoxStore/X.swift 'let f = FileManager.default' pass
+  expect ui-filemanager-store-ok Packages/RackyKit/Sources/RackyStore/X.swift 'let f = FileManager.default' pass
   expect sheet-bad $U 'Text("x").sheet(isPresented: b) {}' fail
   expect print-bad $C 'print("x")' fail
   expect fingerprint-ok $C 'let x = fingerprint(a)' pass
@@ -160,7 +160,7 @@ fi
 if [ "$NO_BUILD" = 0 ]; then
   export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
   echo "lint: swift build (Swift 6 estrito, warnings como erro)"
-  if ! OUT="$(cd "$ROOT" && swift build --package-path Packages/AgentBoxKit --build-tests -Xswiftc -warnings-as-errors 2>&1)"; then
+  if ! OUT="$(cd "$ROOT" && swift build --package-path Packages/RackyKit --build-tests -Xswiftc -warnings-as-errors 2>&1)"; then
     echo "$OUT" | tail -40 >&2
     echo "lint: FALHOU (build)" >&2; exit 1
   fi
@@ -175,13 +175,13 @@ run_rules
 # Testes nunca põem janela na tela do dono nem ativam o app: só o helper (`OffscreenAppKit.swift`) pode ordenar/ativar.
 TEST_WINDOW="$(cd "$ROOT" && rg -nP --no-heading --type swift -g '!**/OffscreenAppKit.swift' \
   -e '\b(makeKeyAndOrderFront|orderFront(Regardless)?|orderFrontRegardless)\s*\(|\bNSApp(lication\.shared)?\??\.activate\(|activate\(ignoringOtherApps' \
-  Packages/AgentBoxKit/Tests 2>/dev/null | grep -vE '^[^:]+:[0-9]+:[[:space:]]*//' || true)"
+  Packages/RackyKit/Tests 2>/dev/null | grep -vE '^[^:]+:[0-9]+:[[:space:]]*//' || true)"
 STATUS_BAR="$(cd "$ROOT" && rg -nP --no-heading --type swift -g '!**/MenuBarController.swift' -e 'NSStatusBar\.system' \
   Packages App 2>/dev/null | grep -vE '^[^:]+:[0-9]+:[[:space:]]*//' || true)"
 report status-bar "NSStatusBar.system só em MenuBarController.swift (testes usam InMemoryStatusBar)" "$STATUS_BAR"
 SCREEN_CAPTURE="$(cd "$ROOT" && { rg -nP --no-heading --type swift -e 'CGRequestScreenCaptureAccess' Packages App 2>/dev/null; \
-  rg -nP --no-heading --type swift -e 'SCShareableContent|import ScreenCaptureKit|CGRequestScreenCaptureAccess' Packages/AgentBoxKit/Tests 2>/dev/null; \
-  rg -nP --no-heading --type swift -g '!**/Automation/WindowCapture.swift' -g '!**/Automation/WindowRecorder.swift' -e 'SCShareableContent' Packages/AgentBoxKit/Sources 2>/dev/null; } \
+  rg -nP --no-heading --type swift -e 'SCShareableContent|import ScreenCaptureKit|CGRequestScreenCaptureAccess' Packages/RackyKit/Tests 2>/dev/null; \
+  rg -nP --no-heading --type swift -g '!**/Automation/WindowCapture.swift' -g '!**/Automation/WindowRecorder.swift' -e 'SCShareableContent' Packages/RackyKit/Sources 2>/dev/null; } \
   | grep -vE '^[^:]+:[0-9]+:[[:space:]]*//' || true)"
 report screen-capture "Gravação de Tela: nada pede a permissão (CGRequestScreenCaptureAccess proibido; só preflight) e testes não usam ScreenCaptureKit" "$SCREEN_CAPTURE"
 report test-window "Tests/ não pode usar makeKeyAndOrderFront/orderFront/activate (use OffscreenAppKit.makeWindow e window.makeKey())" "$TEST_WINDOW"
@@ -191,7 +191,7 @@ if [ "$VIOLATIONS" -gt 0 ]; then
 fi
 # String Catalog: o xcodebuild gera um símbolo por chave e falha quando duas viram o mesmo nome ("main"/"Main",
 # "Create Pull Request"/"Create Pull Request…"). O `swift build` não pega; este lint pega antes.
-python3 -I - "$ROOT/Packages/AgentBoxKit/Sources/AgentBoxUI/Resources/Localizable.xcstrings" <<'PY' || { echo "lint: FALHOU (String Catalog)" >&2; exit 1; }
+python3 -I - "$ROOT/Packages/RackyKit/Sources/RackyUI/Resources/Localizable.xcstrings" <<'PY' || { echo "lint: FALHOU (String Catalog)" >&2; exit 1; }
 import json, re, sys
 keys = json.load(open(sys.argv[1], encoding="utf-8"))["strings"].keys()
 seen, bad = {}, []

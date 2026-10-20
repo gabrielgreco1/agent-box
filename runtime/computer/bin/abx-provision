@@ -2,14 +2,14 @@
 """Entrega de segredos ao computador (P24). O app roda isto com `docker exec -i -u egress <container> abx-provision`.
 
 Lê UM objeto JSON do stdin: {"files": {"token": "...", "egress.json": "...", "proxy-ca.pem": "..."}} e grava cada arquivo em
-/run/agentbox (tmpfs 0700 do usuário `egress`, fora do alcance do `agent`) com modo 0400, de forma atômica (rename). Nada vai
+/run/racky (tmpfs 0700 do usuário `egress`, fora do alcance do `agent`) com modo 0400, de forma atômica (rename). Nada vai
 por env, argv, `inspect` ou disco do host. Também serve à troca de proxy (reescreve egress.json e o app chama o reload).
 """
 import json
 import os
 import sys
 
-DIRECTORY = os.environ.get("AGENTBOX_SECRETS_DIR", "/run/agentbox")
+DIRECTORY = os.environ.get("RACKY_SECRETS_DIR", "/run/racky")
 
 
 def main() -> int:

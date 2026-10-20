@@ -8,11 +8,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from agentbox_runtime import API_VERSION  # noqa: E402
-from agentbox_runtime.browser import OpError  # noqa: E402
-from agentbox_runtime.ingest import Ingestor, post_json  # noqa: E402
-from agentbox_runtime.server import OPS, READS, RuntimeServer  # noqa: E402
-from agentbox_runtime.ulid import new_ulid  # noqa: E402
+from racky_runtime import API_VERSION  # noqa: E402
+from racky_runtime.browser import OpError  # noqa: E402
+from racky_runtime.ingest import Ingestor, post_json  # noqa: E402
+from racky_runtime.server import OPS, READS, RuntimeServer  # noqa: E402
+from racky_runtime.ulid import new_ulid  # noqa: E402
 
 TOKEN = "runtime-token-0123456789abcdef"
 
@@ -100,7 +100,7 @@ class ServerTests(unittest.TestCase):
             status, head, payload = await call(port, "GET", "/v1/health", token=None)
             self.assertEqual(status, 200)
             self.assertTrue(payload["ready"] and payload["api"] == API_VERSION == "2")
-            self.assertIn(f"X-AgentBox-Runtime: {API_VERSION}".encode(), head)
+            self.assertIn(f"X-Racky-Runtime: {API_VERSION}".encode(), head)
 
         self.run_server(fn)
 

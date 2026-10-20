@@ -2,24 +2,24 @@
 # compare-ui.sh - comparação visual mecânica com a referência (08 AR-808, P14). Implementado em T1-02.
 #
 # Contrato
-#   Entrada : <tela> (screenId de 03 §0, também passado ao app como AGENTBOX_SCREEN = fixture da tela).
+#   Entrada : <tela> (screenId de 03 §0, também passado ao app como RACKY_SCREEN = fixture da tela).
 #             Referência: --reference <png> ou docs/rebuild/reference/<pacote>/screens/<tela>-<W>x<H>.png (depois <tela>.png).
-#   Efeitos : usa 'agentbox ctl screenshot --size' (ScreenCaptureKit da própria janela) em cada tamanho e grava em
+#   Efeitos : usa 'racky ctl screenshot --size' (ScreenCaptureKit da própria janela) em cada tamanho e grava em
 #             docs/evidence/ui/<tarefa>/ (ou --out): <tela>-<WxH>-app.png, -side-by-side.png (referência | Racky),
 #             -overlay50.png (sobreposição 50%), -diff.png (diferença absoluta) e -metrics.json. Tamanhos padrão:
 #             1440x900 e 760x480. Se o app não estiver rodando com o canal ctl, abre o .app (em segundo plano, sem ativar)
-#             com AGENTBOX_AUTOMATION=1 num socket privado e o fecha ao terminar.
+#             com RACKY_AUTOMATION=1 num socket privado e o fecha ao terminar.
 #   Saída   : exit 0 em sucesso; exit 1 em falha (sem referência, sem app, captura falhou); exit 2 uso inválido.
 #   Gate    : a comparação NÃO aprova nada sozinha; a tarefa visual só fecha com o OK do dono (P14/P19).
 # Uso: scripts/compare-ui.sh <tela> [--task <id>] [--reference <png>] [--sizes 1440x900,760x480] [--app <Racky.app>]
-#                            [--bin <agentbox>] [--out <dir>] [--help]
+#                            [--bin <racky>] [--out <dir>] [--help]
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 usage() { sed -n '2,/^set -euo/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; }
 fail() { echo "ERRO: $*" >&2; exit 1; }
 
-SCREEN=""; TASK="adhoc"; REF=""; SIZES="1440x900,760x480"; APP="${AGENTBOX_APP:-$ROOT/build/AgentBox/Racky.app}"
-BIN="${AGENTBOX_BIN:-}"; OUT=""
+SCREEN=""; TASK="adhoc"; REF=""; SIZES="1440x900,760x480"; APP="${RACKY_APP:-$ROOT/build/Racky/Racky.app}"
+BIN="${RACKY_BIN:-}"; OUT=""
 while [ $# -gt 0 ]; do
   case "$1" in
     -h|--help) usage; exit 0 ;;
@@ -38,15 +38,15 @@ case "$SCREEN" in *[!A-Za-z0-9._-]*) echo "ERRO: <tela> só aceita letras, núme
 OUT="${OUT:-$ROOT/docs/evidence/ui/$TASK}"
 mkdir -p "$OUT"
 
-# Binário agentbox: --bin, $AGENTBOX_BIN, dentro do .app, ou build de desenvolvimento.
+# Binário racky: --bin, $RACKY_BIN, dentro do .app, ou build de desenvolvimento.
 if [ -z "$BIN" ]; then
-  for c in "$APP/Contents/MacOS/agentbox" "$ROOT/Packages/AgentBoxKit/.build/debug/agentbox" "$ROOT/Packages/AgentBoxKit/.build/release/agentbox"; do
+  for c in "$APP/Contents/MacOS/racky" "$ROOT/Packages/RackyKit/.build/debug/racky" "$ROOT/Packages/RackyKit/.build/release/racky"; do
     [ -x "$c" ] && { BIN="$c"; break; }
   done
 fi
-[ -n "$BIN" ] && [ -x "$BIN" ] || fail "binário agentbox não encontrado (rode scripts/build.sh ou passe --bin)"
+[ -n "$BIN" ] && [ -x "$BIN" ] || fail "binário racky não encontrado (rode scripts/build.sh ou passe --bin)"
 
-# App: usa o que já roda com ctl (AGENTBOX_APP_SOCK ou padrão); senão abre o .app com socket privado.
+# App: usa o que já roda com ctl (RACKY_APP_SOCK ou padrão); senão abre o .app com socket privado.
 LAUNCHED_PID=""; PRIVATE_DIR=""
 cleanup() {
   if [ -n "$LAUNCHED_PID" ]; then kill "$LAUNCHED_PID" 2>/dev/null || true; fi
@@ -57,9 +57,9 @@ trap cleanup EXIT
 if ! "$BIN" ctl state >/dev/null 2>&1; then
   [ -d "$APP" ] || fail "app não está rodando com ctl e '$APP' não existe (rode scripts/build.sh ou passe --app)"
   PRIVATE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/abx-cmp.XXXXXX")"
-  export AGENTBOX_APP_SOCK="$PRIVATE_DIR/app.sock"
+  export RACKY_APP_SOCK="$PRIVATE_DIR/app.sock"
   # -g: não traz para frente; -j: abre oculto; -n: instância nova (não mexe numa já aberta pelo usuário).
-  open -g -j -n --env AGENTBOX_AUTOMATION=1 --env AGENTBOX_SCREEN="$SCREEN" --env "AGENTBOX_APP_SOCK=$AGENTBOX_APP_SOCK" "$APP" \
+  open -g -j -n --env RACKY_AUTOMATION=1 --env RACKY_SCREEN="$SCREEN" --env "RACKY_APP_SOCK=$RACKY_APP_SOCK" "$APP" \
     || fail "falha ao abrir $APP"
   for _ in $(seq 1 100); do
     "$BIN" ctl state >/dev/null 2>&1 && break

@@ -3,7 +3,7 @@
 set -euo pipefail
 MOTION_DIR="$(cd "$(dirname "$0")" && pwd)"
 RENDERER="${1:-/Users/gabrielgreco/.codex/skills/motion-designer/scripts/render.py}"
-FRAME_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/agentbox-motion.XXXXXX")"
+FRAME_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/racky-motion.XXXXXX")"
 trap 'rm -rf "$FRAME_ROOT"' EXIT
 render_asset() {
   local page="$1" size="$2" name="$3"
@@ -14,4 +14,4 @@ render_asset() {
     -c:v libx264 -preset slow -crf 17 -movflags +faststart -an "$MOTION_DIR/$name.mp4"
 }
 render_asset box-loop.html 512x512 box-loop
-render_asset timeline.html 1920x1200 agentbox-walkthrough
+render_asset timeline.html 1920x1200 racky-walkthrough

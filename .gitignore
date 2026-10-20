@@ -23,4 +23,4 @@ DerivedData/
 *.xcodeproj/
 
 # Geist (T1-03): a fonte variavel vem de scripts/bootstrap.sh --fonts; OFL.txt e versionado.
-Packages/AgentBoxKit/Sources/AgentBoxDesignSystem/Resources/Fonts/*.ttf
+Packages/RackyKit/Sources/RackyDesignSystem/Resources/Fonts/*.ttf

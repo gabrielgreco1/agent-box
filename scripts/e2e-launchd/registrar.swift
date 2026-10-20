@@ -10,8 +10,8 @@ guard arguments.count >= 3 else {
     exit(64)
 }
 let plistName = arguments[2]
-guard plistName.hasPrefix("app.agentbox.ptyd.test-") else {
-    print("refusing: only test labels (app.agentbox.ptyd.test-*)")
+guard plistName.hasPrefix("app.racky.ptyd.test-") else {
+    print("refusing: only test labels (app.racky.ptyd.test-*)")
     exit(65)
 }
 let service = SMAppService.agent(plistName: plistName)

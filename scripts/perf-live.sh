@@ -4,7 +4,7 @@
 #
 # Contrato
 #   Entrada : <Racky.app já construído por scripts/build.sh> <saída.json> [segundos da carga, padrão 30] [segundos ocioso, padrão 60].
-#   Isolamento: copia o app para /tmp/abperf-XXXXXX com AGENTBOX_HOME próprio e `open -g -n` (automação ligada, GitHub desligado); nunca toca
+#   Isolamento: copia o app para /tmp/abperf-XXXXXX com RACKY_HOME próprio e `open -g -n` (automação ligada, GitHub desligado); nunca toca
 #             no app, no daemon, no launchd nem nos dados do dono. Lê (somente leitura) ~/.claude e ~/.codex como o app faria.
 #   Efeitos : espera a primeira varredura do Insights acalmar, mede sem sessões, com 10 ociosas e com +10 de saída alta; ao sair (sempre)
 #             encerra só o que subiu e apaga o diretório temporário. `GROWTH=1` mede a RSS a cada sessão aberta.
@@ -14,21 +14,21 @@ set -uo pipefail
 SRC="${1:?app}"; OUT="${2:?json}"; SECS="${3:-30}"; IDLE_SECS="${4:-60}"
 WORK="$(mktemp -d /tmp/abperf-XXXXXX)"; HOME_T="$WORK/h"; SOCK="$WORK/app.sock"; APP="$WORK/install/Racky.app"; MACOS="$APP/Contents/MacOS"; CWD="$WORK/cwd"
 mkdir -p "$HOME_T" "$WORK/install" "$CWD"; chmod 700 "$HOME_T"; ditto "$SRC" "$APP"
-ctl() { "$MACOS/agentbox" ctl "$@" --sock "$SOCK"; }
+ctl() { "$APP/Contents/Helpers/racky" ctl "$@" --sock "$SOCK"; }
 act() { ctl ui action "$@"; }
 app_pid() { pgrep -f "$(basename "$WORK")/install/Racky.app/Contents/MacOS/Racky" | head -1; }
-daemon_pid() { pgrep -f "agentboxd .*--home $HOME_T" | head -1; }
+daemon_pid() { pgrep -f "rackyd .*--home $HOME_T" | head -1; }
 cleanup() {
   [ -S "$SOCK" ] && ctl ui action app.quitCompletely >/dev/null 2>&1; sleep 2
   for p in $(pgrep -f "$(basename "$WORK")/install/Racky.app"); do kill "$p" 2>/dev/null; done
-  for p in $(pgrep -f "agentboxd .*--home $HOME_T"); do kill -9 "$p" 2>/dev/null; done
+  for p in $(pgrep -f "rackyd .*--home $HOME_T"); do kill -9 "$p" 2>/dev/null; done
   # filhos dos shells de teste (yes/sleep) cujo cwd e o nosso
   for p in $(pgrep -f "$WORK" 2>/dev/null); do kill -9 "$p" 2>/dev/null; done
   sleep 1; rm -rf "$WORK"
 }
 trap cleanup EXIT
-open -g -n --env "AGENTBOX_HOME=$HOME_T" --env "AGENTBOX_APP_SOCK=$SOCK" --env AGENTBOX_AUTOMATION=1 --env AGENTBOX_SKIP_ONBOARDING=1 --env AGENTBOX_GITHUB=off "$APP"
-for i in $(seq 1 60); do [ -S "$SOCK" ] && "$MACOS/agentbox" ctl state --sock "$SOCK" >/dev/null 2>&1 && break; sleep 0.5; done
+open -g -n --env "RACKY_HOME=$HOME_T" --env "RACKY_APP_SOCK=$SOCK" --env RACKY_AUTOMATION=1 --env RACKY_SKIP_ONBOARDING=1 --env RACKY_GITHUB=off "$APP"
+for i in $(seq 1 60); do [ -S "$SOCK" ] && "$APP/Contents/Helpers/racky" ctl state --sock "$SOCK" >/dev/null 2>&1 && break; sleep 0.5; done
 APID="$(app_pid)"; echo "app $APID"
 cpu_ms() { # pid -> ms de CPU acumulada (usuario+sistema)
   [ -n "${1:-}" ] || { echo 0; return; }

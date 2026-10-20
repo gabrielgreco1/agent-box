@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
-# test.sh - roda a suíte do AgentBoxKit sem travar: unit em paralelo, integração em série.
+# test.sh - roda a suíte do RackyKit sem travar: unit em paralelo, integração em série.
 #
 # Contrato
 #   Entrada : modo `unit` ou `all`; `--no-build` pula o `swift build --build-tests`.
 #   Modos   : unit = tudo que NÃO está marcado `.tags(.integration)`, em paralelo (rápido, sem daemon, zsh, Docker, launchd).
 #             all  = unit em paralelo e depois as suítes `integration`, uma de cada vez (`--no-parallel`).
 #             integration = só as suítes `integration`, em série.
-#   Efeitos : grava o log completo em Packages/AgentBoxKit/.build/test-logs/; no fim mata só os daemons que ESTE run subiu.
+#   Efeitos : grava o log completo em Packages/RackyKit/.build/test-logs/; no fim mata só os daemons que ESTE run subiu.
 #   Saída   : resumo curto (contagem, tempos, falhas); exit 0 se tudo passou, 1 se algo falhou ou estourou o limite, 2 uso inválido.
 #   Limites : cada fase tem um teto de relógio (AB_TEST_UNIT_LIMIT, AB_TEST_INTEGRATION_LIMIT, em segundos; 240 e 480), e cada
 #             teste de integração tem `.timeLimit` próprio. Nada fica pendurado.
 # Uso: scripts/test.sh unit|all|integration [--no-build] [--help]
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-PKG="$ROOT/Packages/AgentBoxKit"
+PKG="$ROOT/Packages/RackyKit"
 usage() { sed -n '2,/^set -uo/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; }
 
 MODE=""
@@ -90,10 +90,10 @@ run_phase() {
 }
 
 # Daemons deste checkout (binário em $PKG/.build): nunca olha os de outras worktrees nem os do app instalado.
-daemon_pids() { pgrep -f "$PKG/.build/.*/agentboxd" 2>/dev/null | sort -n || true; }
+daemon_pids() { pgrep -f "$PKG/.build/.*/rackyd" 2>/dev/null | sort -n || true; }
 DAEMONS_BEFORE="$(daemon_pids)"
 
-# check_daemons: falha (e mata) qualquer agentboxd que ESTE run subiu e continua vivo ~8 s depois do fim da fase.
+# check_daemons: falha (e mata) qualquer rackyd que ESTE run subiu e continua vivo ~8 s depois do fim da fase.
 check_daemons() {
   local deadline=$((SECONDS + 8)) leaked=""
   while :; do
@@ -102,7 +102,7 @@ check_daemons() {
     [ "$SECONDS" -ge "$deadline" ] && break
     sleep 1
   done
-  echo "  DAEMON(S) VAZADO(S) por este run (agentboxd vivo no fim): $leaked" >&2
+  echo "  DAEMON(S) VAZADO(S) por este run (rackyd vivo no fim): $leaked" >&2
   for pid in $leaked; do kill -9 "$pid" 2>/dev/null; done
   return 1
 }

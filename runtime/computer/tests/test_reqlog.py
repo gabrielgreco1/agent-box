@@ -6,7 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from agentbox_egress import reqlog as rl  # noqa: E402
+from racky_egress import reqlog as rl  # noqa: E402
 
 
 def make(tmp, secrets=(), quota=rl.DEFAULT_BODY_QUOTA):

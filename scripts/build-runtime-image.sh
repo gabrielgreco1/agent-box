@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# build-runtime-image.sh - build local da imagem `agentbox-computer` com tag por hash de conteúdo (T3-01, 07 CS-120/121).
+# build-runtime-image.sh - build local da imagem `racky-computer` com tag por hash de conteúdo (T3-01, 07 CS-120/121).
 #
 # Contrato
-#   Entrada : contexto em runtime/computer (Dockerfile, requirements.txt, agentbox_*).
-#   Tag     : agentbox-computer:ctx-<sha12 do hash do contexto>. O hash é o mesmo de `BuildContext.contentHash` (Swift):
+#   Entrada : contexto em runtime/computer (Dockerfile, requirements.txt, racky_*).
+#   Tag     : racky-computer:ctx-<sha12 do hash do contexto>. O hash é o mesmo de `BuildContext.contentHash` (Swift):
 #             sha256 das linhas "<caminho>\0<755|644>\0<sha256 do arquivo>\n" em ordem bytewise; sem .DS_Store.
 #   Saída   : imprime a tag na última linha. Com --print-hash/--print-tag só calcula, sem chamar o Docker.
-#   Rótulos : agentbox.context_hash=<hash completo>; --label k=v adiciona outros (testes: --label agentbox.test=1).
+#   Rótulos : racky.context_hash=<hash completo>; --label k=v adiciona outros (testes: --label racky.test=1).
 #   Requer  : docker no PATH (ampliado com os caminhos dos runtimes) só para o build; shasum e find.
 # Uso: scripts/build-runtime-image.sh [--context DIR] [--repository NOME] [--label k=v]... [--no-cache] [--print-hash|--print-tag]
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CONTEXT="$ROOT/runtime/computer"
-REPOSITORY="agentbox-computer"
+REPOSITORY="racky-computer"
 LABELS=()
 NO_CACHE=()
 MODE=build
@@ -55,5 +55,5 @@ export PATH="$PATH:/usr/local/bin:/opt/homebrew/bin:$HOME/.orbstack/bin:/Applica
 command -v docker >/dev/null 2>&1 || { echo "docker não encontrado no PATH" >&2; exit 1; }
 
 echo "build: $TAG (contexto $CONTEXT, hash $HASH)"
-docker build ${NO_CACHE[@]+"${NO_CACHE[@]}"} --label "agentbox.context_hash=$HASH" ${LABELS[@]+"${LABELS[@]}"} -t "$TAG" "$CONTEXT"
+docker build ${NO_CACHE[@]+"${NO_CACHE[@]}"} --label "racky.context_hash=$HASH" ${LABELS[@]+"${LABELS[@]}"} -t "$TAG" "$CONTEXT"
 echo "$TAG"

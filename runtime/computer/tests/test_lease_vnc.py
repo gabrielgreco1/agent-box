@@ -10,10 +10,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from agentbox_runtime.browser import OpError  # noqa: E402
-from agentbox_runtime.lease import Lease  # noqa: E402
-from agentbox_runtime.server import RuntimeServer  # noqa: E402
-from agentbox_runtime.vnc import RfbClientFilter, Reject, Tickets, VncBridge, accept_key, encode_frame, read_frame  # noqa: E402
+from racky_runtime.browser import OpError  # noqa: E402
+from racky_runtime.lease import Lease  # noqa: E402
+from racky_runtime.server import RuntimeServer  # noqa: E402
+from racky_runtime.vnc import RfbClientFilter, Reject, Tickets, VncBridge, accept_key, encode_frame, read_frame  # noqa: E402
 
 TOKEN = "runtime-token-0123456789abcdef"
 

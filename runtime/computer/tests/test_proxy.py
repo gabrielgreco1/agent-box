@@ -9,9 +9,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from agentbox_egress import reqlog as rl  # noqa: E402
-from agentbox_egress.config import Config  # noqa: E402
-from agentbox_egress.proxy import EgressProxy  # noqa: E402
+from racky_egress import reqlog as rl  # noqa: E402
+from racky_egress.config import Config  # noqa: E402
+from racky_egress.proxy import EgressProxy  # noqa: E402
 
 LOCAL = ["127.0.0.0/8"]
 
@@ -216,7 +216,7 @@ class DirectMode(unittest.TestCase):
                                "192.168.1.1:80", "100.64.0.1:80", "[::1]:80"]:
                     data = await raw_request(h.port, f"CONNECT {target} HTTP/1.1\r\nHost: x\r\n\r\n".encode())
                     self.assertTrue(data.startswith(b"HTTP/1.1 403"), f"{target}: {data[:60]!r}")
-                    self.assertIn(b"X-AgentBox-Blocked", data)
+                    self.assertIn(b"X-Racky-Blocked", data)
                 data = await raw_request(h.port, b"GET http://169.254.169.254/latest/meta-data/ HTTP/1.1\r\nHost: a\r\n\r\n")
                 self.assertTrue(data.startswith(b"HTTP/1.1 403"))
                 data = await raw_request(h.port, b"GET http://93.184.216.34@127.0.0.1:1/ HTTP/1.1\r\nHost: a\r\n\r\n")

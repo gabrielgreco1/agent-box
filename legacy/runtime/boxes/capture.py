@@ -114,7 +114,7 @@ class CaptureStore:
             return self.snapshot(0)
 
     def _status(self):
-        return {'schema_version': 1, 'coverage_version': 'agentbox-capture/1',
+        return {'schema_version': 1, 'coverage_version': 'racky-capture/1',
                 'computer_id': self.computer_id, 'capture_id': self.capture_id,
                 'enabled': self.enabled, 'coverage': COVERAGE, 'gaps': GAPS,
                 'next_cursor': self.sequence, 'dropped': self.dropped}

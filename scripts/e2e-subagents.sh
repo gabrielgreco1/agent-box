@@ -2,8 +2,8 @@
 # e2e-subagents.sh - "Subagent computers" com Codex ou OpenCode como pai, de ponta a ponta (app construído, daemon, Docker reais).
 #
 # Contrato
-#   Entrada : Docker rodando, o CLI do agente instalado e logado, um Racky.app construído (AGENTBOX_E2E_APP, padrão build/mp/Racky.app).
-#             O app é COPIADO para /tmp/abmp-XXXXXX e abre com AGENTBOX_HOME temporário (outro dono de containers, outro socket, sem tocar no
+#   Entrada : Docker rodando, o CLI do agente instalado e logado, um Racky.app construído (RACKY_E2E_APP, padrão build/mp/Racky.app).
+#             O app é COPIADO para /tmp/abmp-XXXXXX e abre com RACKY_HOME temporário (outro dono de containers, outro socket, sem tocar no
 #             launchd nem no app instalado). Nada é escrito em ~/.codex, ~/.config/opencode ou ~/.claude: tudo entra por lançamento.
 #   Passos  : projeto + perfil com o modelo pedido, sessão pelo composer (Subagent computers = full), prompt "um subagente com computador
 #             próprio abre https://example.com e envia o título com result_submit"; espera o computador ser reservado, reivindicado pelo
@@ -32,18 +32,18 @@ case "$PROVIDER" in codex) BASE_PROFILE=A0000000-0000-4000-8000-000000000003 ;; 
 [ -n "$MODEL" ] || { echo "ERRO: --model é obrigatório" >&2; exit 64; }
 for t in jq python3 sqlite3 docker ditto codesign open; do command -v "$t" >/dev/null 2>&1 || { echo "ERRO: falta '$t'" >&2; exit 2; }; done
 
-APP_SRC="${AGENTBOX_E2E_APP:-$ROOT/build/mp/Racky.app}"
+APP_SRC="${RACKY_E2E_APP:-$ROOT/build/mp/Racky.app}"
 EVIDENCE_DIR="${EVIDENCE_DIR:-$ROOT/docs/evidence/subagents-multi-provider/$PROVIDER-$LABEL}"
 mkdir -p "$EVIDENCE_DIR"
 WORK="$(mktemp -d /tmp/abmp-XXXXXX)" || exit 2
-HOME_T="$WORK/h"; SOCK="$WORK/app.sock"; APP="$WORK/install/Racky.app"; MACOS="$APP/Contents/MacOS"; REPO="$WORK/repo"; DB="$HOME_T/db/agentbox.sqlite"
+HOME_T="$WORK/h"; SOCK="$WORK/app.sock"; APP="$WORK/install/Racky.app"; MACOS="$APP/Contents/MacOS"; REPO="$WORK/repo"; DB="$HOME_T/db/racky.sqlite"
 [ -z "$REPO_BASE" ] || REPO="$REPO_BASE/$(basename "$WORK")/repo"
 mkdir -p "$HOME_T" "$WORK/install" "$REPO" "$WORK/chome"; chmod 700 "$HOME_T"
 REPORT="$EVIDENCE_DIR/report.txt"; : > "$REPORT"
 FAILS=0; MOCK_PID=""
 say() { echo "$*" | tee -a "$REPORT"; }
 check() { local d="$1"; shift; if "$@" >/dev/null 2>&1; then say "  PASS  $d"; else say "  FAIL  $d"; FAILS=$((FAILS + 1)); fi; }
-ctl() { "$MACOS/agentbox" ctl "$@" --sock "$SOCK"; }
+ctl() { "$APP/Contents/Helpers/racky" ctl "$@" --sock "$SOCK"; }
 act() { ctl ui action "$@"; }
 act_ok() { act "$@" 2>/dev/null | jq -e '.ok == true' >/dev/null 2>&1; }
 db() { sqlite3 -cmd ".timeout 5000" "$DB" "$1" 2>/dev/null; }
@@ -52,7 +52,7 @@ tree_has() { ctl ui tree 2>/dev/null | jq -e --arg id "$1" '[.. | objects | sele
 term_screen() { act terminal.screen select "$1" 2>/dev/null | jq -r '.action.message // empty'; }
 term_send() { act terminal.sendText set "$(jq -cn --arg t "$1" --arg x "$2" '{terminal:$t,text:$x}')" >/dev/null 2>&1; }
 app_pid() { pgrep -f "$(basename "$WORK")/install/Racky.app/Contents/MacOS/Racky" | head -1; }
-OWNER="agent-box-$(python3 -I - "$HOME_T" <<'PY'
+OWNER="racky-$(python3 -I - "$HOME_T" <<'PY'
 import sys
 h = 2166136261
 for b in sys.argv[1].encode():
@@ -60,11 +60,11 @@ for b in sys.argv[1].encode():
 print("%08x" % h)
 PY
 )"
-mine_ids() { docker ps -a -q --filter "label=agentbox.owner=$OWNER"; }
+mine_ids() { docker ps -a -q --filter "label=racky.owner=$OWNER"; }
 owner_snapshot() {
   echo "app instalado:"; pgrep -fl "/Applications/Racky.app/Contents/MacOS" | sed -E "s/^[0-9]+ //" | sort -u
-  echo "job do launchd:"; launchctl print "gui/$(id -u)/app.agentbox.ptyd.v1" 2>/dev/null | grep -E "^\s(state|program) = " | sort
-  echo "containers do dono:"; docker ps -a -q --filter "label=agentbox.owner=agent-box" | sort
+  echo "job do launchd:"; launchctl print "gui/$(id -u)/app.racky.ptyd.v1" 2>/dev/null | grep -E "^\s(state|program) = " | sort
+  echo "containers do dono:"; docker ps -a -q --filter "label=racky.owner=racky" | sort
   echo "arquivos globais:"; for f in "$HOME/.codex/config.toml" "$HOME/.codex/hooks.json" "$HOME/.config/opencode/opencode.json" "$HOME/.config/opencode/opencode.jsonc" "$HOME/.claude/settings.json"; do [ -e "$f" ] && stat -f '%N %m %z' "$f"; done
 }
 
@@ -73,9 +73,9 @@ cleanup() {
   say; say "--- limpeza"
   if [ -S "$SOCK" ]; then ctl ui action app.quitCompletely >/dev/null 2>&1; sleep 2; fi
   local pid; pid="$(app_pid)"; [ -z "$pid" ] || { kill "$pid" 2>/dev/null; sleep 1; }
-  for pid in $(pgrep -f "agentboxd .*--home $HOME_T"); do kill "$pid" 2>/dev/null; done
+  for pid in $(pgrep -f "rackyd .*--home $HOME_T"); do kill "$pid" 2>/dev/null; done
   sleep 1
-  for pid in $(pgrep -f "$(basename "$WORK")/install/Racky.app"; pgrep -f "agentboxd .*--home $HOME_T"); do kill -9 "$pid" 2>/dev/null; done
+  for pid in $(pgrep -f "$(basename "$WORK")/install/Racky.app"; pgrep -f "rackyd .*--home $HOME_T"); do kill -9 "$pid" 2>/dev/null; done
   [ -z "$MOCK_PID" ] || { cp "$WORK/mock.out" "$EVIDENCE_DIR/mock.out" 2>/dev/null; kill "$MOCK_PID" 2>/dev/null; }
   local ids vols; ids="$(mine_ids)"
   [ -z "$ids" ] || { say "removendo containers do teste: $(echo $ids)"; docker rm -f $ids >/dev/null 2>&1; }
@@ -102,14 +102,14 @@ owner_snapshot > "$EVIDENCE_DIR/owner-before.txt" 2>&1
 
 # --- app isolado ---
 ditto "$APP_SRC" "$APP" || exit 2
-open -g -n --env "AGENTBOX_HOME=$HOME_T" --env "AGENTBOX_APP_SOCK=$SOCK" --env AGENTBOX_AUTOMATION=1 --env AGENTBOX_SKIP_ONBOARDING=1 "$APP"
-wait_for 40 sh -c "[ -S '$SOCK' ] && '$MACOS/agentbox' ctl state --sock '$SOCK' >/dev/null 2>&1" || { say "ERRO: o app de teste não subiu"; exit 2; }
+open -g -n --env "RACKY_HOME=$HOME_T" --env "RACKY_APP_SOCK=$SOCK" --env RACKY_AUTOMATION=1 --env RACKY_SKIP_ONBOARDING=1 "$APP"
+wait_for 40 sh -c "[ -S '$SOCK' ] && '$APP/Contents/Helpers/racky' ctl state --sock '$SOCK' >/dev/null 2>&1" || { say "ERRO: o app de teste não subiu"; exit 2; }
 sleep 2
-check "app de teste isolado (dados em $HOME_T, owner $OWNER, não é o do dono)" test "$OWNER" != "agent-box" -a -n "$(app_pid)"
+check "app de teste isolado (dados em $HOME_T, owner $OWNER, não é o do dono)" test "$OWNER" != "racky" -a -n "$(app_pid)"
 ctl state > "$EVIDENCE_DIR/state.json" 2>&1
 
 # --- projeto e perfil ---
-( cd "$REPO" && git init -q && echo "e2e repo" > README.md && git add . && git -c user.email=e2e@agentbox.local -c user.name=e2e commit -qm init ) || exit 2
+( cd "$REPO" && git init -q && echo "e2e repo" > README.md && git add . && git -c user.email=e2e@racky.local -c user.name=e2e commit -qm init ) || exit 2
 act_ok project.add set "$REPO" || { say "ERRO: project.add"; exit 2; }
 wait_for 15 sh -c "[ -n \"\$(sqlite3 '$DB' 'SELECT id FROM session LIMIT 1')\" ]" || exit 2
 PROFILE="$(act settings.agents.profileDuplicate select "$BASE_PROFILE" | jq -r '.action.message // empty')"
@@ -206,6 +206,6 @@ check "um slot de worker reivindicou o computador (orchestration_child.claimed_a
 check "result.json enviado com result_submit contém o título (qualquer campo)" jq -e '[.. | strings] | any(test("Example Domain"))' "$EVIDENCE_DIR/results/result.json"
 check "resultado validado (verified >= 1, cited_missing = 0)" jq -e '.summary.verified >= 1 and .summary.cited_missing == 0' "$EVIDENCE_DIR/results/validation.json"
 check "computador liberado e removido" test "$DONE" = 1
-check "nenhum container do teste sobrou" wait_for 60 sh -c "[ -z \"\$(docker ps -a -q --filter label=agentbox.owner=$OWNER)\" ]"
+check "nenhum container do teste sobrou" wait_for 60 sh -c "[ -z \"\$(docker ps -a -q --filter label=racky.owner=$OWNER)\" ]"
 check "o pai mostra o título ao final" grep -q "Example Domain" "$EVIDENCE_DIR/final-screen.txt"
 exit 0

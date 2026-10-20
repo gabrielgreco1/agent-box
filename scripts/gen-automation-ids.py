@@ -3,8 +3,8 @@
 
 Contrato
   Entrada : docs/rebuild/spec/03-screens.md  (§22 índice de accessibilityIdentifier; §24 tabela de ações).
-  Saída   : Packages/AgentBoxKit/Sources/AgentBoxProtocol/Automation/A11yID.generated.swift
-            Packages/AgentBoxKit/Sources/AgentBoxProtocol/Automation/ActionID.generated.swift
+  Saída   : Packages/RackyKit/Sources/RackyProtocol/Automation/A11yID.generated.swift
+            Packages/RackyKit/Sources/RackyProtocol/Automation/ActionID.generated.swift
             docs/automation-ids.md   (AR-805)
             Determinístico. --check falha (exit 1) se os arquivos gerados estão defasados da spec.
   Exit    : 0 sucesso; 1 --check defasado; 2 erro de parsing/uso.
@@ -16,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SPEC = ROOT / "docs/rebuild/spec/03-screens.md"
-OUT_DIR = ROOT / "Packages/AgentBoxKit/Sources/AgentBoxProtocol/Automation"
+OUT_DIR = ROOT / "Packages/RackyKit/Sources/RackyProtocol/Automation"
 OUT_A11Y = OUT_DIR / "A11yID.generated.swift"
 OUT_ACTION = OUT_DIR / "ActionID.generated.swift"
 OUT_DOC = ROOT / "docs/automation-ids.md"

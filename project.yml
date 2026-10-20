@@ -1,9 +1,9 @@
 # XcodeGen 2.46.0 (instalado por scripts/bootstrap.sh em .tools/). O .xcodeproj gerado não é versionado (AR-120).
-# O app só contém @main, Info.plist e assets; todo o código vive em Packages/AgentBoxKit (AR-121).
-# agentboxd e agentbox (executáveis SPM) são compilados por scripts/build.sh e embutidos em Contents/MacOS.
-name: AgentBox
+# O app só contém @main, Info.plist e assets; todo o código vive em Packages/RackyKit (AR-121).
+# rackyd e racky (executáveis SPM) são compilados por scripts/build.sh e embutidos em Contents/MacOS.
+name: Racky
 options:
-  bundleIdPrefix: app.agentbox
+  bundleIdPrefix: app.racky
   deploymentTarget:
     macOS: "15.0"
   createIntermediateGroups: true
@@ -26,10 +26,10 @@ settings:
     ENABLE_USER_SCRIPT_SANDBOXING: NO
     ALWAYS_SEARCH_USER_PATHS: NO
 packages:
-  AgentBoxKit:
-    path: Packages/AgentBoxKit
+  RackyKit:
+    path: Packages/RackyKit
 targets:
-  AgentBox:
+  Racky:
     type: application
     platform: macOS
     sources:
@@ -37,18 +37,18 @@ targets:
         excludes:
           - LaunchAgents/**  # plist do daemon: scripts/build.sh o embute em Contents/Library/LaunchAgents
     dependencies:
-      - package: AgentBoxKit
-        product: AgentBoxPlatform
-      # AgentBoxUI (T1-02): registro de ações, A11yID, janela e canal ctl. Puxa SwiftTerm (shaders Metal).
-      - package: AgentBoxKit
-        product: AgentBoxUI
+      - package: RackyKit
+        product: RackyPlatform
+      # RackyUI (T1-02): registro de ações, A11yID, janela e canal ctl. Puxa SwiftTerm (shaders Metal).
+      - package: RackyKit
+        product: RackyUI
     info:
       path: App/Info.plist
       properties:
         CFBundleName: Racky
         CFBundleDisplayName: Racky
         CFBundleExecutable: Racky
-        CFBundleIconFile: AgentBox
+        CFBundleIconFile: Racky
         CFBundlePackageType: APPL
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
@@ -58,37 +58,37 @@ targets:
         NSPrincipalClass: NSApplication
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: app.agentbox.mac
+        PRODUCT_BUNDLE_IDENTIFIER: app.racky.mac
         PRODUCT_NAME: Racky
-        # Executável 'Racky' (antes 'Agent Box'): 'AgentBox' colidiria com o helper Contents/MacOS/agentbox
+        # Executável 'Racky' (antes 'Racky'): 'Racky' colidiria com o helper Contents/Helpers/racky
         # em volumes case-insensitive (APFS padrão).
         EXECUTABLE_NAME: Racky
-        PRODUCT_MODULE_NAME: AgentBox
+        PRODUCT_MODULE_NAME: Racky
         GENERATE_INFOPLIST_FILE: NO
         ENABLE_APP_SANDBOX: NO
         # Sem entitlements (AR-532).
-  AgentBoxUITests:
+  RackyUITests:
     type: bundle.ui-testing
     platform: macOS
     sources:
       - path: AppUITests
     dependencies:
-      - target: AgentBox
+      - target: Racky
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: app.agentbox.mac.uitests
-        TEST_TARGET_NAME: AgentBox
+        PRODUCT_BUNDLE_IDENTIFIER: app.racky.mac.uitests
+        TEST_TARGET_NAME: Racky
         GENERATE_INFOPLIST_FILE: YES
 schemes:
-  AgentBox:
+  Racky:
     build:
       targets:
-        AgentBox: all
+        Racky: all
     run:
       config: Debug
     test:
       config: Debug
       targets:
-        - AgentBoxUITests
+        - RackyUITests
     archive:
       config: Release

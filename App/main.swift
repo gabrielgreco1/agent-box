@@ -1,4 +1,4 @@
-import AgentBoxUI
+import RackyUI
 import AppKit
 import Foundation
 
@@ -7,7 +7,7 @@ MainActor.assumeIsolated {
     let app = NSApplication.shared
     let delegate = AppDelegate()
     app.delegate = delegate
-    // AGENTBOX_TEST_HEADLESS=1 (testes e evidência): sem Dock, sem janela à frente, sem item na barra de menus, sem notificações do sistema.
-    app.setActivationPolicy(ProcessInfo.processInfo.environment["AGENTBOX_TEST_HEADLESS"] == "1" ? .prohibited : .regular)
+    // RACKY_TEST_HEADLESS=1 (testes e evidência): sem Dock, sem janela à frente, sem item na barra de menus, sem notificações do sistema.
+    app.setActivationPolicy(ProcessInfo.processInfo.environment["RACKY_TEST_HEADLESS"] == "1" ? .prohibited : .regular)
     app.run()
 }

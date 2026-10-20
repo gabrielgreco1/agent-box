@@ -3,18 +3,18 @@
 #
 # Contrato
 #   Entrada : Docker rodando, `claude` logado, Xcode (build.sh). Nada é instalado em /Applications: o app é construído por
-#             scripts/build.sh (AGENTBOX_BUILD_DIR, padrão build/e2e) e COPIADO para um diretório temporário curto (/tmp/abe2e-XXXXXX,
-#             o limite do sun_path é 104 bytes) com dados num AGENTBOX_HOME temporário. Sem AGENTBOX_LAUNCHD: o app sobe um daemon filho
-#             e nunca toca no job do launchd do dono. AGENTBOX_E2E_APP=<Racky.app> pula o build e usa esse bundle.
+#             scripts/build.sh (RACKY_BUILD_DIR, padrão build/e2e) e COPIADO para um diretório temporário curto (/tmp/abe2e-XXXXXX,
+#             o limite do sun_path é 104 bytes) com dados num RACKY_HOME temporário. Sem RACKY_LAUNCHD: o app sobe um daemon filho
+#             e nunca toca no job do launchd do dono. RACKY_E2E_APP=<Racky.app> pula o build e usa esse bundle.
 #   Passos  : 1 build, instalação temporária e isolamento (home, socket, owner dos containers) · 2 projeto, shell e Claude
 #             3 ⌘Q com Keep Running, reabrir: mesmos PIDs de PTY e buffer restaurado · 4 subagente leve com box_claim: container,
 #             rede, iptables, VNC, um quadro · 5 Take Over (imediato) e Hand Back · 6 computador efêmero removido (container e
 #             volume) quando o subagente solta · 7 daemon morto com kill -9: banner, estado interrupted, Resume · 8 nenhum token
 #             em `docker inspect`, nos logs do container nem nos logs do app · 9 lote de 10 crawlers ("Subagent computers" = full):
 #             10 computadores, 10 resultados validados, tudo removido, nada vazado, tempo e custo.
-#   Modelo  : o pai usa AGENTBOX_E2E_MODEL (padrão `haiku`) por um perfil duplicado do "Claude · Default"; os subagentes herdam.
-#   Segurança: só mexe no que ele mesmo criou. Containers e volumes são achados e removidos pelo label agentbox.owner do app de
-#             teste (derivado do AGENTBOX_HOME, nunca `agent-box`, que é o do app do dono) e pelos IDs do banco de teste. Antes e depois
+#   Modelo  : o pai usa RACKY_E2E_MODEL (padrão `haiku`) por um perfil duplicado do "Claude · Default"; os subagentes herdam.
+#   Segurança: só mexe no que ele mesmo criou. Containers e volumes são achados e removidos pelo label racky.owner do app de
+#             teste (derivado do RACKY_HOME, nunca `racky`, que é o do app do dono) e pelos IDs do banco de teste. Antes e depois
 #             grava o que é do dono (processos do app instalado, job do launchd, containers) e falha se mudou. No fim (sempre) encerra o
 #             app de teste, mata só os PIDs que ele subiu, remove containers/volumes do teste, o home e a instalação temporários.
 #   Saída   : exit 0 só se todos os passos pedidos passaram. Evidência (JSON, telas, trechos de log) em
@@ -42,11 +42,11 @@ export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Develope
 SHA="$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo nogit)"
 EVIDENCE_DIR="${EVIDENCE_DIR:-$ROOT/docs/evidence/e2e/$(date +%Y%m%d)-$SHA}"
 mkdir -p "$EVIDENCE_DIR"
-BUILD_DIR="${AGENTBOX_BUILD_DIR:-$ROOT/build/e2e}"
-MODEL="${AGENTBOX_E2E_MODEL:-haiku}"
+BUILD_DIR="${RACKY_BUILD_DIR:-$ROOT/build/e2e}"
+MODEL="${RACKY_E2E_MODEL:-haiku}"
 WORK="$(mktemp -d /tmp/abe2e-XXXXXX)" || exit 2
 HOME_T="$WORK/h"; SOCK="$WORK/app.sock"; INSTALL="$WORK/install"; APP="$INSTALL/Racky.app"; MACOS="$APP/Contents/MacOS"
-REPO="$WORK/repo"; DB="$HOME_T/db/agentbox.sqlite"
+REPO="$WORK/repo"; DB="$HOME_T/db/racky.sqlite"
 mkdir -p "$HOME_T" "$INSTALL" "$REPO"; chmod 700 "$HOME_T"
 REPORT="$EVIDENCE_DIR/report.txt"; RESULTS="$WORK/results.tsv"
 : > "$REPORT"; : > "$RESULTS"
@@ -66,12 +66,12 @@ check() { # descrição comando...
 note() { say "  note  $*"; }
 step_begin() { STEP="$1"; STEP_T0=$SECONDS; say; say "== $1. $2"; mkdir -p "$EVIDENCE_DIR/step-$1"; }
 step_end() {
-  # AGENTBOX_E2E_PAUSE_AFTER=<passo>:<segundos> segura o ambiente vivo depois do passo, para depurar à mão (app em $WORK).
-  case "${AGENTBOX_E2E_PAUSE_AFTER:-}" in "$STEP":*) say "  pausa de ${AGENTBOX_E2E_PAUSE_AFTER#*:} s: ctl --sock $SOCK, home $HOME_T"; sleep "${AGENTBOX_E2E_PAUSE_AFTER#*:}" ;; esac
+  # RACKY_E2E_PAUSE_AFTER=<passo>:<segundos> segura o ambiente vivo depois do passo, para depurar à mão (app em $WORK).
+  case "${RACKY_E2E_PAUSE_AFTER:-}" in "$STEP":*) say "  pausa de ${RACKY_E2E_PAUSE_AFTER#*:} s: ctl --sock $SOCK, home $HOME_T"; sleep "${RACKY_E2E_PAUSE_AFTER#*:}" ;; esac
   printf '%s\tTIME\t%s\n' "$STEP" "$((SECONDS - STEP_T0))" >> "$RESULTS"; say "  ($((SECONDS - STEP_T0)) s)"
 }
 
-ctl() { "$MACOS/agentbox" ctl "$@" --sock "$SOCK"; }
+ctl() { "$APP/Contents/Helpers/racky" ctl "$@" --sock "$SOCK"; }
 act() { ctl ui action "$@"; }
 act_ok() { act "$@" 2>/dev/null | jq -e '.ok == true' >/dev/null 2>&1; }
 db() { sqlite3 -cmd ".timeout 5000" "$DB" "$1" 2>/dev/null; }
@@ -103,21 +103,21 @@ terminal_state() { db "SELECT state FROM terminal WHERE id='$1';"; }
 
 # --- processos e Docker: só o que é nosso ----------------------------------------------------------------------------------
 app_pid() { pgrep -f "$(basename "$WORK")/install/Racky.app/Contents/MacOS/Racky" | head -1; }
-daemon_pid() { pgrep -f "agentboxd .*--home $HOME_T" | head -1; }
+daemon_pid() { pgrep -f "rackyd .*--home $HOME_T" | head -1; }
 child_pids() { pgrep -P "$1" 2>/dev/null; }
-docker_mine() { docker ps -a --filter "label=agentbox.owner=$OWNER" "$@"; }
-mine_ids() { docker ps -a -q --filter "label=agentbox.owner=$OWNER"; }
-mine_names() { docker ps -a --filter "label=agentbox.owner=$OWNER" --format '{{.Names}}'; }
-mine_running_count() { docker ps -q --filter "label=agentbox.owner=$OWNER" | wc -l | tr -d ' '; }
+docker_mine() { docker ps -a --filter "label=racky.owner=$OWNER" "$@"; }
+mine_ids() { docker ps -a -q --filter "label=racky.owner=$OWNER"; }
+mine_names() { docker ps -a --filter "label=racky.owner=$OWNER" --format '{{.Names}}'; }
+mine_running_count() { docker ps -q --filter "label=racky.owner=$OWNER" | wc -l | tr -d ' '; }
 computer_ids() { db "SELECT lower(id) FROM computer;"; }
-container_of() { docker ps -a -q --filter "label=agentbox.owner=$OWNER" --filter "label=agentbox.computer_name=$1" | head -1; }
+container_of() { docker ps -a -q --filter "label=racky.owner=$OWNER" --filter "label=racky.computer_name=$1" | head -1; }
 volumes_clean() { [ -z "$(profile_volumes)" ]; }
 profile_volumes() { local id; for id in $(computer_ids); do docker volume ls -q --filter "name=ab-prof-$id"; done; }
 owner_snapshot() { # o que é do dono, só leitura
   {
     echo "app instalado:"; pgrep -fl "/Applications/Racky.app/Contents/MacOS" | sed -E "s/^[0-9]+ //" | sort -u
-    echo "daemons fora do teste:"; pgrep -fl "agentboxd" | grep -v -- "--home $HOME_T" | sed -E "s/^[0-9]+ //" | sort -u
-    echo "job do launchd:"; launchctl print "gui/$(id -u)/app.agentbox.ptyd.v1" 2>/dev/null | grep -E "^\s(state|program) = " | sort
+    echo "daemons fora do teste:"; pgrep -fl "rackyd" | grep -v -- "--home $HOME_T" | sed -E "s/^[0-9]+ //" | sort -u
+    echo "job do launchd:"; launchctl print "gui/$(id -u)/app.racky.ptyd.v1" 2>/dev/null | grep -E "^\s(state|program) = " | sort
     echo "containers:"; docker ps -a --format '{{.ID}} {{.Names}} {{.Status}}' | grep -v "$(mine_ids | head -50 | tr '\n' '|' | sed 's/|$//;s/^$/__none__/')" | awk '{print $1, $2}' | sort
     echo "volumes:"; docker volume ls -q | sort
   }
@@ -128,9 +128,9 @@ cleanup() {
   say; say "--- limpeza"
   if [ -S "$SOCK" ]; then ctl ui action app.quitCompletely >/dev/null 2>&1; sleep 2; fi
   local pid; pid="$(app_pid)"; [ -z "$pid" ] || { kill "$pid" 2>/dev/null; sleep 1; }
-  for pid in $(pgrep -f "agentboxd .*--home $HOME_T"); do kill "$pid" 2>/dev/null; done
+  for pid in $(pgrep -f "rackyd .*--home $HOME_T"); do kill "$pid" 2>/dev/null; done
   sleep 1
-  for pid in $(pgrep -f "$(basename "$WORK")/install/Racky.app"; pgrep -f "agentboxd .*--home $HOME_T"); do kill -9 "$pid" 2>/dev/null; done
+  for pid in $(pgrep -f "$(basename "$WORK")/install/Racky.app"; pgrep -f "rackyd .*--home $HOME_T"); do kill -9 "$pid" 2>/dev/null; done
   # Docker: containers com o owner do teste e os volumes dos computadores do banco do teste (nada além disso).
   if [ -n "$OWNER" ]; then
     local ids vols; ids="$(mine_ids)"
@@ -176,8 +176,8 @@ command -v claude >/dev/null 2>&1 || [ -x "$HOME/.local/bin/claude" ] || { say "
 owner_snapshot > "$EVIDENCE_DIR/owner-before.txt" 2>&1
 docker network ls --format '{{.Name}}' | sort > "$WORK/networks-before.txt"
 
-# Label do dono dos containers do app de teste: "agent-box-" + FNV-1a de 32 bits do AGENTBOX_HOME (AppEnvironment.computerOwner).
-OWNER="agent-box-$(python3 -I - "$HOME_T" <<'PY'
+# Label do dono dos containers do app de teste: "racky-" + FNV-1a de 32 bits do RACKY_HOME (AppEnvironment.computerOwner).
+OWNER="racky-$(python3 -I - "$HOME_T" <<'PY'
 import sys
 h = 2166136261
 for b in sys.argv[1].encode():
@@ -185,25 +185,25 @@ for b in sys.argv[1].encode():
 print("%08x" % h)
 PY
 )"
-say "owner dos containers do teste: $OWNER (o do dono é agent-box)"
+say "owner dos containers do teste: $OWNER (o do dono é racky)"
 
 launch_app() {
-  open -g -n --env "AGENTBOX_HOME=$HOME_T" --env "AGENTBOX_APP_SOCK=$SOCK" --env AGENTBOX_AUTOMATION=1 --env AGENTBOX_SKIP_ONBOARDING=1 "$APP"
+  open -g -n --env "RACKY_HOME=$HOME_T" --env "RACKY_APP_SOCK=$SOCK" --env RACKY_AUTOMATION=1 --env RACKY_SKIP_ONBOARDING=1 "$APP"
 }
 
 ensure_app() { # constrói, instala em diretório temporário e abre o app de teste, uma vez
   [ -z "$APP_PID" ] || return 0
-  local src="${AGENTBOX_E2E_APP:-}"
+  local src="${RACKY_E2E_APP:-}"
   if [ -z "$src" ]; then
-    say "build: scripts/build.sh (AGENTBOX_BUILD_DIR=$BUILD_DIR)"
-    AGENTBOX_BUILD_DIR="$BUILD_DIR" "$ROOT/scripts/build.sh" > "$EVIDENCE_DIR/build.log" 2>&1 || { tail -20 "$EVIDENCE_DIR/build.log" | tee -a "$REPORT"; return 1; }
+    say "build: scripts/build.sh (RACKY_BUILD_DIR=$BUILD_DIR)"
+    RACKY_BUILD_DIR="$BUILD_DIR" "$ROOT/scripts/build.sh" > "$EVIDENCE_DIR/build.log" 2>&1 || { tail -20 "$EVIDENCE_DIR/build.log" | tee -a "$REPORT"; return 1; }
     src="$BUILD_DIR/Racky.app"
   fi
   [ -d "$src" ] || { say "ERRO: app não encontrado em $src"; return 1; }
   ditto "$src" "$APP" || return 1
   codesign --verify --strict "$APP" > "$EVIDENCE_DIR/codesign.txt" 2>&1
   launch_app
-  wait_for 30 sh -c "[ -S '$SOCK' ] && '$MACOS/agentbox' ctl state --sock '$SOCK' >/dev/null 2>&1" || { say "ERRO: o app de teste não subiu"; return 1; }
+  wait_for 30 sh -c "[ -S '$SOCK' ] && '$APP/Contents/Helpers/racky' ctl state --sock '$SOCK' >/dev/null 2>&1" || { say "ERRO: o app de teste não subiu"; return 1; }
   APP_PID="$(app_pid)"
   sleep 2
   DAEMON_PIDS="$(daemon_pid)"
@@ -213,7 +213,7 @@ ensure_app() { # constrói, instala em diretório temporário e abre o app de te
 ensure_project() { # projeto = repositório git temporário; perfil do Claude com o modelo barato
   [ -z "$PROFILE" ] || return 0
   ensure_app || return 1
-  ( cd "$REPO" && git init -q && echo "e2e repo" > README.md && git add . && git -c user.email=e2e@agentbox.local -c user.name=e2e commit -qm init ) || return 1
+  ( cd "$REPO" && git init -q && echo "e2e repo" > README.md && git add . && git -c user.email=e2e@racky.local -c user.name=e2e commit -qm init ) || return 1
   act_ok project.add set "$REPO" || return 1
   wait_for 15 sh -c "[ -n \"\$(sqlite3 '$DB' \"SELECT id FROM session LIMIT 1\")\" ]" || return 1
   MAIN_SESSION="$(db "SELECT id FROM session ORDER BY created_at LIMIT 1;")"
@@ -249,14 +249,14 @@ new_claude_session() { # modo(off|ask|full) prompt
 if want 1; then
   step_begin 1 "build, instalação temporária e isolamento"
   ensure_app; rc=$?
-  check "scripts/build.sh e instalação temporária ($INSTALL) sem tocar em /Applications" test "$rc" -eq 0 -a -x "$MACOS/agentbox"
+  check "scripts/build.sh e instalação temporária ($INSTALL) sem tocar em /Applications" test "$rc" -eq 0 -a -x "$APP/Contents/Helpers/racky"
   check "assinatura do bundle copiado válida" codesign --verify --strict "$APP"
-  check "app de teste no ar, respondendo ao ctl (pid ${APP_PID:-?})" sh -c "'$MACOS/agentbox' ctl state --sock '$SOCK' | jq -e '.ok == true and .state.automation == true'"
+  check "app de teste no ar, respondendo ao ctl (pid ${APP_PID:-?})" sh -c "'$APP/Contents/Helpers/racky' ctl state --sock '$SOCK' | jq -e '.ok == true and .state.automation == true'"
   ctl state > "$(dir)/state.json" 2>&1
-  check "dados isolados em AGENTBOX_HOME temporário (banco em $DB)" test -f "$DB"
+  check "dados isolados em RACKY_HOME temporário (banco em $DB)" test -f "$DB"
   check "o app de teste não é o do dono (processo vem do diretório temporário)" sh -c "ps -o command= -p ${APP_PID:-0} | grep -q '$(basename "$WORK")/install'"
   check "daemon filho próprio (--home do teste), não o launchd do dono" test -n "$DAEMON_PIDS" -o -z "$(pgrep -f 'ptyd.v1' | head -1)"
-  check "owner dos containers do teste difere do do dono" test "$OWNER" != "agent-box"
+  check "owner dos containers do teste difere do do dono" test "$OWNER" != "racky"
   ensure_project; rc=$?
   check "projeto criado (repositório git temporário) e perfil Claude com modelo '$MODEL'" test "$rc" -eq 0 -a -n "$PROFILE"
   db "SELECT id,name,kind FROM project;" > "$(dir)/project.txt"
@@ -329,7 +329,7 @@ if want 3; then
   check "Keep Running: o daemon e os PTYs seguem (mesmos pids)" sh -c "[ '$(daemon_pid)' = '$D_BEFORE' ] && kill -0 $SH_BEFORE && kill -0 $CL_BEFORE"
   ASN="$(lsappinfo find pid="$APP_BEFORE" 2>/dev/null | head -1)"
   check "Keep Running: sem ícone no Dock (accessory)" sh -c "lsappinfo info -only applicationtype '$ASN' | grep -qi 'UIElement\\|BackgroundOnly'"
-  check "o ctl segue respondendo em segundo plano" sh -c "'$MACOS/agentbox' ctl state --sock '$SOCK' | jq -e .ok"
+  check "o ctl segue respondendo em segundo plano" sh -c "'$APP/Contents/Helpers/racky' ctl state --sock '$SOCK' | jq -e .ok"
   act app.openMainWindow > "$(dir)/reopen.json" 2>&1
   sleep 3
   refresh_pids
@@ -376,7 +376,7 @@ save_secrets() { # guarda os segredos dos computadores vivos (token da API e egr
   mkdir -p "$WORK/tokens"; chmod 700 "$WORK/tokens"
   local c f
   for c in $(mine_ids); do
-    for f in token egress.json; do docker exec -u egress "$c" cat "/run/agentbox/$f" > "$WORK/tokens/$c-$f" 2>/dev/null || rm -f "$WORK/tokens/$c-$f"; done
+    for f in token egress.json; do docker exec -u egress "$c" cat "/run/racky/$f" > "$WORK/tokens/$c-$f" 2>/dev/null || rm -f "$WORK/tokens/$c-$f"; done
   done
 }
 
@@ -429,7 +429,7 @@ if want 4; then
   save_secrets
   if [ -n "$CID" ]; then
     docker inspect "$CID" > "$(dir)/docker-inspect.json" 2>&1
-    check "1 container 'agentbox-computer' em execução, com os labels do teste (owner $OWNER, role computer, efêmero)" sh -c "jq -e --arg o '$OWNER' '.[0] | .State.Running == true and .Config.Labels[\"agentbox.owner\"] == \$o and .Config.Labels[\"agentbox.role\"] == \"computer\" and .Config.Labels[\"agentbox.ephemeral\"] == \"true\"' '$(dir)/docker-inspect.json'"
+    check "1 container 'racky-computer' em execução, com os labels do teste (owner $OWNER, role computer, efêmero)" sh -c "jq -e --arg o '$OWNER' '.[0] | .State.Running == true and .Config.Labels[\"racky.owner\"] == \$o and .Config.Labels[\"racky.role\"] == \"computer\" and .Config.Labels[\"racky.ephemeral\"] == \"true\"' '$(dir)/docker-inspect.json'"
     check "saudável (healthcheck)" wait_for 60 sh -c "[ \"\$(docker inspect -f '{{.State.Health.Status}}' $CID)\" = healthy ]"
     check "rede: só a bridge padrão, sem rede extra por computador (P24; não existe rede 'internal' por computador)" sh -c "jq -e '.[0].NetworkSettings.Networks | keys == [\"bridge\"]' '$(dir)/docker-inspect.json'"
     check "portas publicadas só em 127.0.0.1" sh -c "jq -e '[.[0].NetworkSettings.Ports[]?[]?.HostIp] | length > 0 and all(. == \"127.0.0.1\")' '$(dir)/docker-inspect.json'"
@@ -454,7 +454,7 @@ if want 4; then
   term_screen "$LIGHT_TID" > "$(dir)/parent-screen.txt"
   shot computers
   capture_containers
-  [ -z "${AGENTBOX_E2E_PAUSE:-}" ] || { note "pausa de $AGENTBOX_E2E_PAUSE s (AGENTBOX_E2E_PAUSE) com o computador no ar: container $CID, home $HOME_T"; sleep "$AGENTBOX_E2E_PAUSE"; }
+  [ -z "${RACKY_E2E_PAUSE:-}" ] || { note "pausa de $RACKY_E2E_PAUSE s (RACKY_E2E_PAUSE) com o computador no ar: container $CID, home $HOME_T"; sleep "$RACKY_E2E_PAUSE"; }
   step_end
 fi
 
@@ -502,7 +502,7 @@ if want 6; then
   check "antes: o volume de perfil existe" test -n "$(docker volume ls -q --filter "name=ab-prof-$CUUID")"
   capture_containers
   # o subagente solta o computador quando recupera o controle (ou, sem passo 5, quando a ajuda expira)
-  wait_for 420 sh -c "[ -z \"\$(docker ps -a -q --filter label=agentbox.owner=$OWNER --filter label=agentbox.computer_name=$LIGHT)\" ]"; rc=$?
+  wait_for 420 sh -c "[ -z \"\$(docker ps -a -q --filter label=racky.owner=$OWNER --filter label=racky.computer_name=$LIGHT)\" ]"; rc=$?
   check "container removido depois do subagente soltar (box_release / SubagentStop)" test "$rc" -eq 0
   check "estado 'removed' no banco" wait_for 30 sh -c "[ \"\$(sqlite3 '$DB' \"SELECT state FROM computer WHERE name='$LIGHT'\")\" = removed ]"
   check "volume de perfil efêmero removido" wait_for 30 sh -c "[ -z \"\$(docker volume ls -q --filter name=ab-prof-$CUUID)\" ]"
@@ -537,7 +537,7 @@ if want 7; then
   db "SELECT id,provider,state,native_conversation_id FROM terminal;" > "$(dir)/terminals-after-kill.txt"
   act terminal.resume select "$CLAUDE_TID" > "$(dir)/resume.json" 2>&1
   check "Resume relança o Claude (terminal 'running')" wait_for 60 sh -c "[ \"\$(sqlite3 '$DB' \"SELECT state FROM terminal WHERE id='$CLAUDE_TID'\")\" = running ]"
-  check "o daemon voltou por ativação (pid novo, diferente de $D7)" wait_for 30 sh -c "[ -n \"\$(pgrep -f 'agentboxd .*--home $HOME_T')\" ] && [ \"\$(pgrep -f 'agentboxd .*--home $HOME_T' | head -1)\" != '$D7' ]"
+  check "o daemon voltou por ativação (pid novo, diferente de $D7)" wait_for 30 sh -c "[ -n \"\$(pgrep -f 'rackyd .*--home $HOME_T')\" ] && [ \"\$(pgrep -f 'rackyd .*--home $HOME_T' | head -1)\" != '$D7' ]"
   check "a conversa anterior aparece no Claude retomado (PONG)" term_wait "$CLAUDE_TID" "PONG" 90
   term_screen "$CLAUDE_TID" > "$(dir)/claude-resumed.txt"
   shot resumed
@@ -565,9 +565,9 @@ batch_prompt() {
   echo "Run a batch of exactly 10 crawlers, each on its own computer. Call boxes_reserve ONCE with names [wiki-01 ... wiki-10] (display headless, batch e2e-crawlers). Then spawn all 10 workers in ONE message, in the background, one per computer, using the worker returned for each. Brief for each worker: COMPUTER: <its name>. TASK: browser_open https://en.wikipedia.org/wiki/<COUNTRY>, browser_read the page, then call result_submit with result {url, title (the article heading), first_paragraph (the first non-empty paragraph of the article, at least 80 characters)} and evidence {\"/title\": [<id>], \"/first_paragraph\": [<id>]} where <id> is the request id of the page load (shown in the browser_open result, or find it with reqlog_query). If the validation reports cited_missing, fix the citation and resubmit once. Then call box_release. WHAT WE ALREADY KNOW: nothing. OUTPUT: /work/result.json as described. Computer to country mapping:$list (underscores are spaces in the URL). When all 10 workers have finished, reply with E2E-BATCH-DONE and a one-line table."
 }
 # Custo estimado a partir das transcrições do Claude desta execução (pai + subagentes). Preço por milhão de tokens configurável:
-# AGENTBOX_E2E_PRICE="entrada,saída,escrita-de-cache,leitura-de-cache" (padrão: faixa Haiku, 1 / 5 / 1,25 / 0,10).
+# RACKY_E2E_PRICE="entrada,saída,escrita-de-cache,leitura-de-cache" (padrão: faixa Haiku, 1 / 5 / 1,25 / 0,10).
 claude_cost() { # saída JSON em stdout
-  python3 -I - "$HOME/.claude/projects" "$CLAUDE_PROJ_PREFIX" "${AGENTBOX_E2E_PRICE:-1,5,1.25,0.10}" <<'PY'
+  python3 -I - "$HOME/.claude/projects" "$CLAUDE_PROJ_PREFIX" "${RACKY_E2E_PRICE:-1,5,1.25,0.10}" <<'PY'
 import glob, json, os, sys
 root, prefix, price = sys.argv[1], sys.argv[2], [float(x) for x in sys.argv[3].split(",")]
 tot = {"input": 0, "output": 0, "cache_write": 0, "cache_read": 0}
@@ -599,7 +599,7 @@ if want 9; then
   check "sessão do lote criada pelo composer (Subagent computers = full, modelo $MODEL)" test "$rc" -eq 0 -a "$rc2" -eq 0
   BATCH_TID="$NEW_TID"
   : > "$(dir)/timeline.tsv"
-  PEAK=0; DONE=0; i=0; BATCH_MAX=$((${AGENTBOX_E2E_BATCH_TIMEOUT_S:-2400}))
+  PEAK=0; DONE=0; i=0; BATCH_MAX=$((${RACKY_E2E_BATCH_TIMEOUT_S:-2400}))
   SEEN=""
   while [ $((SECONDS - BATCH_T0)) -lt "$BATCH_MAX" ]; do
     [ $((i % 3)) -ne 0 ] || term_wait "$BATCH_TID" "NEVER-MATCHES-ONLY-TRUST" 1 >/dev/null 2>&1   # trust da pasta, uma vez
@@ -634,17 +634,17 @@ if want 9; then
   done
   check "10 resultados enviados com result_submit e validados (título + 1º parágrafo; verified >= 2, cited_missing = 0): $OKRES de 10" test "$OKRES" -eq 10
   check "todos os computadores liberados (estado removed)" test "$(db "SELECT count(*) FROM computer WHERE name LIKE 'wiki-%' AND state<>'removed';")" = 0
-  check "nenhum container do teste sobrou" wait_for 60 sh -c "[ -z \"\$(docker ps -a -q --filter label=agentbox.owner=$OWNER)\" ]"
+  check "nenhum container do teste sobrou" wait_for 60 sh -c "[ -z \"\$(docker ps -a -q --filter label=racky.owner=$OWNER)\" ]"
   check "nenhum volume de perfil do teste sobrou" wait_for 60 volumes_clean
   docker network ls --format '{{.Name}}' | sort > "$(dir)/networks-after.txt"
-  check "nenhuma rede do teste sobrou (label agentbox.owner=$OWNER)" test -z "$(docker network ls -q --filter label=agentbox.owner=$OWNER)"
+  check "nenhuma rede do teste sobrou (label racky.owner=$OWNER)" test -z "$(docker network ls -q --filter label=racky.owner=$OWNER)"
   diff "$WORK/networks-before.txt" "$(dir)/networks-after.txt" > "$(dir)/networks-diff.txt" 2>&1
   claude_cost > "$(dir)/cost.json"
   COST="$(jq -r '.estimated_cost_usd' "$(dir)/cost.json" 2>/dev/null)"
   note "lote: $BATCH_WALL s de relógio, pico de $PEAK computadores simultâneos, custo estimado US\$ $COST ($(jq -c .tokens "$(dir)/cost.json" 2>/dev/null))"
   jq -n --argjson wall "$BATCH_WALL" --argjson peak "$PEAK" --argjson ok "$OKRES" --slurpfile cost "$(dir)/cost.json" --arg model "$MODEL" \
     '{wall_seconds: $wall, peak_concurrent_computers: $peak, results_validated: $ok, model: $model, cost: $cost[0]}' > "$(dir)/batch.json"
-  check "custo do lote dentro do orçamento (US\$ ${AGENTBOX_E2E_BUDGET_USD:-2}, estimado)" test "$(python3 -c "print(1 if float('${COST:-99}') <= float('${AGENTBOX_E2E_BUDGET_USD:-2}') else 0)")" = 1
+  check "custo do lote dentro do orçamento (US\$ ${RACKY_E2E_BUDGET_USD:-2}, estimado)" test "$(python3 -c "print(1 if float('${COST:-99}') <= float('${RACKY_E2E_BUDGET_USD:-2}') else 0)")" = 1
   leak_scan
   step_end
 fi

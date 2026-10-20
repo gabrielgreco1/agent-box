@@ -1,5 +1,5 @@
 {
-  "schema": "agentbox.tokens.colors",
+  "schema": "racky.tokens.colors",
   "version": 1,
   "_nota": "Fonte dos tokens de cor (02 §2, P17). 'dark' e o valor do app (v1 so escuro). 'orca' = variavel do CSS extraido (docs/rebuild/reference/orca-1.4.219/tokens/colors.json) ou 'palette:--color-*'; null exige 'note'. 'opacity' compoe sobre a superficie (nunca pre-misturar). 'light' e registro (DS13), nao gerado.",
   "groups": [

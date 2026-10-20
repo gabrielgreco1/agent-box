@@ -4,7 +4,7 @@
 # Contrato
 #   Entrada : scripts/tool-versions.txt (fonte única; override: TOOL_VERSIONS_FILE=/caminho).
 #   Efeitos : baixa XcodeGen (e, com --fonts, Geist) para .tools/ (gitignored), conferindo SHA-256.
-#             Com --fonts, copia Geist[wght].ttf e OFL.txt para AgentBoxDesignSystem/Resources/Fonts/.
+#             Com --fonts, copia Geist[wght].ttf e OFL.txt para RackyDesignSystem/Resources/Fonts/.
 #   Saída   : exit 0 se tudo confere; exit 1 em qualquer divergência, com mensagem "ERRO: ...".
 #   Confere : Xcode >= XCODE_MIN (major XCODE_MAJOR), rg no PATH, SHA-256 dos downloads,
 #             versão do xcodegen instalado, e (se existirem) pins de Package.resolved
@@ -82,8 +82,8 @@ if [ "$WITH_FONTS" = 1 ]; then
   G_VER="$(get GEIST_VERSION)"
   download_checked "$(get GEIST_URL)" "$(get GEIST_SHA256)" "$TOOLS/downloads/geist-font-$G_VER.zip"
   ok "Geist $G_VER (SHA-256 conferido)"
-  # Embute no módulo AgentBoxDesignSystem: Geist[wght].ttf (gitignored) e OFL.txt (versionado) em Resources/Fonts.
-  FONT_DEST="$ROOT/Packages/AgentBoxKit/Sources/AgentBoxDesignSystem/Resources/Fonts"
+  # Embute no módulo RackyDesignSystem: Geist[wght].ttf (gitignored) e OFL.txt (versionado) em Resources/Fonts.
+  FONT_DEST="$ROOT/Packages/RackyKit/Sources/RackyDesignSystem/Resources/Fonts"
   G_EXTRACT="$TOOLS/geist-font-$G_VER"
   if [ ! -f "$G_EXTRACT/geist-font/Geist/variable/Geist[wght].ttf" ]; then
     rm -rf "$G_EXTRACT"; mkdir -p "$G_EXTRACT"

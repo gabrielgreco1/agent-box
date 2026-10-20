@@ -9,10 +9,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from agentbox_egress import reqlog as rl  # noqa: E402
-from agentbox_egress.admin import AdminServer  # noqa: E402
-from agentbox_egress.config import Config  # noqa: E402
-from agentbox_egress.proxy import EgressProxy  # noqa: E402
+from racky_egress import reqlog as rl  # noqa: E402
+from racky_egress.admin import AdminServer  # noqa: E402
+from racky_egress.config import Config  # noqa: E402
+from racky_egress.proxy import EgressProxy  # noqa: E402
 
 TOKEN = "t0ken-abcdefabcdefabcdef"
 API_KEY = "zyte-api-key-SECRET-123456"

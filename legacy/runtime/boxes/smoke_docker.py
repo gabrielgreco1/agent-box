@@ -16,12 +16,12 @@ import uuid
 
 from PIL import Image
 
-CONTEXT = 'colima-agentbox-dev'
-IMAGE = 'agentbox-browser:ab019-dev'
+CONTEXT = 'colima-racky-dev'
+IMAGE = 'racky-browser:ab019-dev'
 DOCKER = ['docker', '--context', CONTEXT]
 RUN_ID = uuid.uuid4().hex[:12]
-NAME = f'agentbox-ab019-smoke-{RUN_ID}'
-VOLUME = f'agentbox-ab019-smoke-data-{RUN_ID}'
+NAME = f'racky-ab019-smoke-{RUN_ID}'
+VOLUME = f'racky-ab019-smoke-data-{RUN_ID}'
 COMPUTER_ID = str(uuid.uuid4())
 created_volume = False
 containers = []
@@ -35,9 +35,9 @@ def request(port, token, path, body=None, lease=None):
     headers = {'Authorization': 'Bearer ' + token}
     if body is not None: headers['Content-Type'] = 'application/json'
     if lease:
-        headers.update({'X-AgentBox-Actor-ID': lease['actor_id'],
-                        'X-AgentBox-Lease-Epoch': str(lease['epoch']),
-                        'X-AgentBox-Control-Token': lease['control_token']})
+        headers.update({'X-Racky-Actor-ID': lease['actor_id'],
+                        'X-Racky-Lease-Epoch': str(lease['epoch']),
+                        'X-Racky-Control-Token': lease['control_token']})
     req = urllib.request.Request(f'http://127.0.0.1:{port}{path}',
                                  data=json.dumps(body).encode() if body is not None else None, headers=headers)
     try:
@@ -64,13 +64,13 @@ def start_container(suffix):
     name = NAME + suffix
     try:
         ident = docker('run', '-d', '--init', '--name', name,
-                       '--label', 'com.agentbox.smoke=' + RUN_ID,
+                       '--label', 'com.racky.smoke=' + RUN_ID,
                        '--mount', f'type=volume,source={VOLUME},target=/data',
                        '--publish', '127.0.0.1::8765', '--env-file', env_path,
                        '--cpus', '1', '--memory', '2g', '--pids-limit', '256', '--shm-size', '256m',
                        '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges',
                        '--read-only', '--tmpfs', '/tmp:rw,nosuid,nodev,size=256m',
-                       '--tmpfs', '/home/agentbox:rw,nosuid,nodev,size=32m,uid=10001,gid=10001', IMAGE)
+                       '--tmpfs', '/home/racky:rw,nosuid,nodev,size=32m,uid=10001,gid=10001', IMAGE)
     finally: os.unlink(env_path)
     containers.append(ident)
     port_line = docker('port', ident, '8765/tcp')
@@ -131,7 +131,7 @@ def assert_page(port, token, generation):
 def main():
     global created_volume
     try:
-        docker('volume', 'create', '--label', 'com.agentbox.smoke=' + RUN_ID, VOLUME)
+        docker('volume', 'create', '--label', 'com.racky.smoke=' + RUN_ID, VOLUME)
         created_volume = True
         ident, port, token = start_container('-a')
         _, health = checked(port, token, '/v1/health')
@@ -159,7 +159,7 @@ def main():
             "import json,urllib.request; j=json.load(urllib.request.urlopen('http://127.0.0.1:9222/json/version')); print(json.dumps({k:j[k] for k in ['Browser','User-Agent']}))"))
         assert ':9222' not in docker('port', ident)
         headers, frame = checked(port, token, '/v1/frame')
-        assert headers['X-AgentBox-Frame-Source'] == 'desktop'
+        assert headers['X-Racky-Frame-Source'] == 'desktop'
         assert Image.open(io.BytesIO(frame)).size == (1280, 800)
         checked(port, token, '/v1/input', {'kind': 'move', 'x': 640, 'y': 400}, lease)
         checked(port, token, '/v1/input', {'kind': 'click', 'button': 1}, lease)

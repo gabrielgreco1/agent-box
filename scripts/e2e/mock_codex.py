@@ -28,7 +28,7 @@ def decide(d):
     def js(code): return {"type": "custom_tool_call", "name": "exec", "input": '// @exec: {"yield_time_ms": 150000, "max_output_tokens": 4000}\n' + code}
     def final(text): return {"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": text, "annotations": []}]}
     if "COMPUTER: ex" in user_texts:  # worker
-        W = "mcp__agentbox_worker__"
+        W = "mcp__racky_worker__"
         if k == 0:
             return js(f"""
 const c = await tools.{W}box_claim({{name: "ex", wait_s: 45}}); text(c.content[0].text);
@@ -48,18 +48,18 @@ const b = await tools.{W}box_release({{}}); text(b.content[0].text);
     # pai
     if k == 0:
         return js("""
-const r = await tools.mcp__agentbox__boxes_reserve({names: ["ex"], display: "headless", batch: "mock"}); text(r.content[0].text);
+const r = await tools.mcp__racky__boxes_reserve({names: ["ex"], display: "headless", batch: "mock"}); text(r.content[0].text);
 text(JSON.stringify(ALL_TOOLS.map(t => t.name).filter(n => /agent|wait/.test(n))));
 """)
     if k == 1:
         box = (first_json(last_out()).get('boxes') or [{}])[0]
         brief = "COMPUTER: ex\nTASK: open https://example.com and submit the page title with result_submit.\nWHAT WE ALREADY KNOW: nothing yet\nOUTPUT: {\"title\": \"string\"}"
-        args = {"agent_type": box.get('worker', 'agentbox-worker-1'), "message": brief, "task_name": "ex_worker", "fork_turns": "none"}
+        args = {"agent_type": box.get('worker', 'racky-worker-1'), "message": brief, "task_name": "ex_worker", "fork_turns": "none"}
         return {"type": "function_call", "namespace": "collaboration", "name": "spawn_agent", "arguments": json.dumps(args)}
     if k in (2, 3):
         return {"type": "function_call", "namespace": "collaboration", "name": "wait_agent", "arguments": json.dumps({"timeout_ms": 30000})}
     if k == 4:
-        return js("const b = await tools.mcp__agentbox__boxes_status({}); text(b.content[0].text);")
+        return js("const b = await tools.mcp__racky__boxes_status({}); text(b.content[0].text);")
     return final("ROOT-DONE the subagent submitted the title: Example Domain")
 
 class H(http.server.BaseHTTPRequestHandler):

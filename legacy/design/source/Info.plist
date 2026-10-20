@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-<key>CFBundleExecutable</key><string>AgentBoxPreview</string>
-<key>CFBundleIdentifier</key><string>local.agentbox.designpreview</string>
-<key>CFBundleName</key><string>Agent Box Preview</string>
-<key>CFBundleDisplayName</key><string>Agent Box Preview</string>
+<key>CFBundleExecutable</key><string>RackyPreview</string>
+<key>CFBundleIdentifier</key><string>local.racky.designpreview</string>
+<key>CFBundleName</key><string>Racky Preview</string>
+<key>CFBundleDisplayName</key><string>Racky Preview</string>
 <key>CFBundleVersion</key><string>4</string>
 <key>CFBundleShortVersionString</key><string>0.4</string>
 <key>CFBundlePackageType</key><string>APPL</string>

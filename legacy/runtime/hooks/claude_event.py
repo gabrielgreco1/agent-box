@@ -12,7 +12,7 @@ import time
 MAX_STDIN = 65_536
 MAX_INBOX = 1_048_576
 KINDS = {"SessionStart", "SubagentStart", "SubagentStop"}
-MCP_PREFIX = "mcp__agentbox__computer_"
+MCP_PREFIX = "mcp__racky__computer_"
 MAX_CHILD_CONTEXT = 65_536
 CHILD_CHUNK_BYTES = 8_000
 
@@ -107,9 +107,9 @@ def route_tool(source, run_id, token):
 
 
 def main():
-    run_id = os.environ.get("AGENT_BOX_HOOK_RUN_ID", "")
-    token = os.environ.get("AGENT_BOX_HOOK_TOKEN", "")
-    path = os.environ.get("AGENT_BOX_HOOK_INBOX", "")
+    run_id = os.environ.get("RACKY_HOOK_RUN_ID", "")
+    token = os.environ.get("RACKY_HOOK_TOKEN", "")
+    path = os.environ.get("RACKY_HOOK_INBOX", "")
     kind = None
     try:
         raw = sys.stdin.buffer.read(MAX_STDIN + 1)
@@ -125,7 +125,7 @@ def main():
         if kind == "PreToolUse" and str(source.get("tool_name", "")).startswith(MCP_PREFIX):
             return route_tool(source, run_id, token)
         if not run_id or len(token) != 64 or not path:
-            return 0  # Observation is harmless outside an opt-in Agent Box launch.
+            return 0  # Observation is harmless outside an opt-in Racky launch.
         key = bytes.fromhex(token)
         session = source.get("session_id")
         agent = source.get("agent_id", "") if kind != "SessionStart" else ""

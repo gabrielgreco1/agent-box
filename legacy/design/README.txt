@@ -1,8 +1,8 @@
-AGENT BOX · DESIGN v0.4
+RACKY · DESIGN v0.4
 Preparado para Gabriel · 15 outubro 2026
 
 COMECE AQUI
-Abra index.html para a prévia interativa, ou Agent Box Preview.app para o app nativo.
+Abra index.html para a prévia interativa, ou Racky Preview.app para o app nativo.
 No navegador, a página adapta o split à largura; o app mostra terminal + desktop lado a lado.
 A referência de uso é Orca: terminais originais, workspaces e troca de clientes.
 Maestrum informa a biblioteca de agentes. Nenhuma configuração desses apps foi importada.
@@ -19,13 +19,13 @@ EXPERIMENTE
 
 CONTEÚDO
 index.html                  Protótipo web local e interativo
-Agent Box Preview.app       Protótipo SwiftUI/AppKit para Apple Silicon
-Agent-Box-Preview.zip        App compactado
+Racky Preview.app       Protótipo SwiftUI/AppKit para Apple Silicon
+Racky-Preview.zip        App compactado
 screens/                    16 telas nativas 2880×1800 e folha de contato
 docs/spec.html              Especificação detalhada em 19 capítulos
 docs/review.html            Verificações e limites observados
 source/                     Código Swift, build, fonte Manrope e licença OFL
-motion/agentbox-walkthrough.mp4  Estudo de navegação, 24 s / 60 fps
+motion/racky-walkthrough.mp4  Estudo de navegação, 24 s / 60 fps
 motion/box-loop.mp4          Asset reutilizável, 4 s / 60 fps
 motion/timeline.html        Composição determinística window.seek(t)
 motion/render.sh            Reprodução do pipeline 240 fps → 60 fps

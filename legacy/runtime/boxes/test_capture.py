@@ -25,7 +25,7 @@ class CaptureTests(unittest.TestCase):
         with self.assertRaises(ValueError): self.store.configure(config(hosts=[]))
         with self.assertRaises(ValueError): self.store.configure(config(hosts=['*.example.com']))
         response = self.store.configure(config())
-        self.assertEqual(response['coverage_version'], 'agentbox-capture/1')
+        self.assertEqual(response['coverage_version'], 'racky-capture/1')
         self.assertEqual(response['computer_id'], 'computer-1')
         self.assertNotEqual(response['capture_id'], CaptureStore('computer-1').capture_id)
         self.assertIn('browser_response_bodies', response['gaps'])
