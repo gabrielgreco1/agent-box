@@ -93,6 +93,7 @@ public struct DSIconButton: View {
 /// Controle segmentado (02 §12.12): `Picker(.segmented)` do sistema é proibido. Cada segmento dispara `action` com
 /// `select(<valor>)`; ←/→ movem a seleção com o controle focado; o fundo do ativo desliza (M-113, `snappy`).
 public struct DSSegmented: View {
+    @FocusState private var keyboardFocused: Bool
     public struct Option: Identifiable, Equatable {
         public let id: String
         public let title: LocalizedStringKey
@@ -150,7 +151,11 @@ public struct DSSegmented: View {
         .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(fillWidth ? DS.Color.fg6 : DS.Color.secondary))
         .animation(MotionPolicy.shared.animation(MotionTokens.Springs.snappy), value: selection)
         .fixedSize(horizontal: !fillWidth, vertical: true)
-        .focusable()
+        // Foco só pela navegação do teclado (Tab): o clique não acende o anel azul do sistema; o anel é o do DS.
+        .focusable(interactions: .activate)
+        .focused($keyboardFocused)
+        .focusEffectDisabled()
+        .dsFocusRing(keyboardFocused, radius: DS.Radius.control)
         .onKeyPress(.leftArrow) { move(-1) }
         .onKeyPress(.rightArrow) { move(1) }
         .a11y(id, kind: "segmented", value: selection)
