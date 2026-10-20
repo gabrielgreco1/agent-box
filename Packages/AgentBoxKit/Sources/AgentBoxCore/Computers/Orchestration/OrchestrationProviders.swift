@@ -197,11 +197,15 @@ public struct OpenCodeOrchestration: Sendable, Equatable {
     public var workerPrompt: String
     /// Pastas fora do projeto liberadas para leitura (`permission.external_directory`): sem isso o OpenCode pergunta ao pai ao abrir o `result.json`.
     public var readableDirectories: [String]
+    /// Gatilho de spawn (F12): com valor, o lançamento leva o plugin `spawn-guard.js` (`tool.execute.before` em `task`). `nil` = sem plugin.
+    public var spawnGuard: SpawnGuardConfig?
 
     public init(
         helperPath: String, parentID: String, parentCapability: String, workers: [WorkerSlot], readableDirectories: [String] = [],
-        instructions: String = OrchestrationText.openCodeInstructions, workerPrompt: String = OrchestrationText.workerPrompt
+        instructions: String = OrchestrationText.openCodeInstructions, workerPrompt: String = OrchestrationText.workerPrompt,
+        spawnGuard: SpawnGuardConfig? = nil
     ) {
+        self.spawnGuard = spawnGuard
         self.helperPath = helperPath; self.parentID = parentID; self.parentCapability = parentCapability
         self.workers = workers; self.instructions = instructions; self.workerPrompt = workerPrompt; self.readableDirectories = readableDirectories
     }
@@ -240,10 +244,70 @@ public struct OpenCodeOrchestration: Sendable, Equatable {
             "tools": ["abx-*": false],
             "experimental": ["mcp_timeout": Self.mcpTimeoutMs],
         ]
+        var files = [LaunchFile(name: OrchestrationText.openCodeInstructionsFile, contents: Data(instructions.utf8))]
+        if let guardConfig = spawnGuard {
+            config["plugin"] = ["file://\(dir)/\(OpenCodeSpawnGuardPlugin.fileName)"]
+            files.append(LaunchFile(name: OpenCodeSpawnGuardPlugin.fileName, contents: Data(OpenCodeSpawnGuardPlugin.source(helperPath: helperPath, config: guardConfig).utf8)))
+        }
         if !readableDirectories.isEmpty {
             config["permission"] = ["external_directory": Dictionary(uniqueKeysWithValues: readableDirectories.map { ("\($0)/*", "allow") })]
         }
         let data = try JSONSerialization.data(withJSONObject: config, options: [.sortedKeys, .withoutEscapingSlashes])
-        return ([Self.environmentName: String(decoding: data, as: UTF8.self)], [LaunchFile(name: OrchestrationText.openCodeInstructionsFile, contents: Data(instructions.utf8))])
+        return ([Self.environmentName: String(decoding: data, as: UTF8.self)], files)
+    }
+}
+
+/// Plugin por lançamento do OpenCode (F12): `tool.execute.before` na ferramenta `task` (payload real em docs/evidence/spikes/BK-13: `input.tool`
+/// = "task", `output.args` = `{description, prompt, subagent_type}`). Remonta o payload do hook do Claude e roda `agentbox hook-guard` (mesma
+/// decisão e mesmo caminho até o app); `deny` vira `throw`, que o OpenCode devolve ao modelo como erro da ferramenta. Sem rede nem deps.
+public enum OpenCodeSpawnGuardPlugin {
+    public static let fileName = "spawn-guard.js"
+    public static let toolName = "task"
+
+    /// Argv do helper (igual ao comando do hook do Claude).
+    public static func argv(helperPath: String, config: SpawnGuardConfig) -> [String] {
+        [helperPath, "hook-guard", "--child", config.child, "--capability", config.capability, "--mode", config.mode.rawValue]
+    }
+
+    public static func source(helperPath: String, config: SpawnGuardConfig) -> String {
+        let argvJSON = (try? JSONSerialization.data(withJSONObject: argv(helperPath: helperPath, config: config), options: [.withoutEscapingSlashes]))
+            .map { String(decoding: $0, as: UTF8.self) } ?? "[]"
+        return """
+            // Gerado pelo Racky por lançamento: não editar.
+            import { spawn } from "node:child_process"
+
+            const argv = \(argvJSON)
+            const budgetMs = \(SubagentSpawnGuard.helperBudgetSeconds * 1000 + 2000)
+
+            // Falha aberta: helper ausente, timeout ou saída ilegível deixam o subagente passar.
+            const ask = (args) => new Promise((resolve) => {
+              let out = ""
+              let child
+              const timer = setTimeout(() => { try { child.kill() } catch {} ; resolve("") }, budgetMs)
+              const done = (v) => { clearTimeout(timer); resolve(v) }
+              try { child = spawn(argv[0], argv.slice(1), { stdio: ["pipe", "pipe", "ignore"] }) } catch { return done("") }
+              child.on("error", () => done(""))
+              child.stdout.on("data", (d) => { out += d })
+              child.on("close", () => done(out))
+              child.stdin.on("error", () => {})
+              child.stdin.end(JSON.stringify({
+                tool_name: "Task",
+                tool_input: { subagent_type: args?.subagent_type ?? "", prompt: args?.prompt ?? "", description: args?.description ?? "" },
+              }))
+            })
+
+            export default async () => ({
+              "tool.execute.before": async (input, output) => {
+                if (input.tool !== "\(toolName)") return
+                let reason = ""
+                try {
+                  const out = JSON.parse((await ask(output.args)).trim().split("\\n").pop() || "{}").hookSpecificOutput
+                  if (out?.permissionDecision === "deny") reason = out.permissionDecisionReason || "Blocked by Racky."
+                } catch {}
+                if (reason) throw new Error(reason)
+              },
+            })
+
+            """
     }
 }

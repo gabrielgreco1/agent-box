@@ -137,7 +137,10 @@ public struct OrchestrationBundle: Sendable {
         var out = base ?? LaunchInjection(helperPath: helperPath, codexActivityHooks: false)
         switch provider {
         case .codex: out.codexOrchestration = codex
-        case .opencode: out.openCodeOrchestration = openCode
+        case .opencode:
+            out.openCodeOrchestration = openCode
+            // F12: o gatilho de spawn só entra com Ask/Full (igual ao Claude).
+            if let mode = spawnGuardMode, mode.isOn { out.openCodeOrchestration?.spawnGuard = SpawnGuardConfig(child: parentID, capability: parentCapability, mode: mode) }
         default: return apply(to: out)
         }
         return out
