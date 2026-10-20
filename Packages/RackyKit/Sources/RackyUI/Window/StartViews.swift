@@ -5,7 +5,7 @@ import SwiftUI
 
 /// Medidas da tela inicial e da sessão vazia.
 enum StartMetrics {
-    static let logo: CGFloat = 56
+    static let logo: CGFloat = 36
     static let cardWidth: CGFloat = 196
     static let cardHeight: CGFloat = 124
     static let agentCardWidth: CGFloat = 148
@@ -19,6 +19,16 @@ enum StartMetrics {
     static let rowIcon: CGFloat = 18
     static let rowIconTile: CGFloat = 34
     static let maxRecent = 5
+    static let actionRow: CGFloat = 32
+    static let tableRow: CGFloat = 32
+    static let actionsWidth: CGFloat = 260
+    static let columnGap: CGFloat = 40
+    static let blockGap: CGFloat = 32
+    static let contentMax: CGFloat = 960
+    static let margin: CGFloat = 48
+    static let top: CGFloat = 72
+    static let nameColumn: CGFloat = 140
+    static let ageColumn: CGFloat = 56
 }
 
 /// Card de ação das telas de início: ícone (ou logo do agente), título, uma linha do que faz e o atalho. Passa pelo registro
@@ -64,8 +74,9 @@ struct StartCard<Icon: View>: View {
     }
 }
 
-/// Tela inicial (nenhuma sessão selecionada): o que o Racky faz, um card por agente (abre uma sessão limpa com ele, F37),
-/// os dois caminhos de projeto (pasta ou GitHub) e as sessões recentes.
+/// Tela inicial (nenhuma sessão selecionada), no tom de ferramenta profissional: tudo alinhado à esquerda, ações em linhas
+/// com o atalho à direita (um agente = sessão limpa nova com ele, F37), sessões recentes em tabela e o ambiente (agentes
+/// instalados, versão) num bloco de chave e valor.
 struct LandingView: View {
     let automationOn: Bool
     let sidebar: SidebarModel
@@ -82,57 +93,73 @@ struct LandingView: View {
     }
 
     var body: some View {
-        VStack(spacing: DS.Space.s8) {
-            VStack(spacing: DS.Space.s2) {
-                BrandMark(size: StartMetrics.logo)
-                Text("Racky", bundle: .module).dsFont(DS.Font.display).foregroundStyle(DS.Color.textPrimary).padding(.top, DS.Space.s2)
-                Text("Run coding agents side by side, and give each subagent its own computer.", bundle: .module)
-                    .dsFont(DS.Font.dialogBody).foregroundStyle(DS.Color.textSecondary).multilineTextAlignment(.center)
-            }
-            VStack(alignment: .leading, spacing: DS.Space.s6) {
-                if registry?.isOffered(.sessionNewClean) ?? true {
-                    section(String(localized: "Start an agent", bundle: .module)) {
-                        HStack(spacing: DS.Space.s3) {
+        ScrollView {
+            VStack(alignment: .leading, spacing: StartMetrics.blockGap) {
+                header
+                HStack(alignment: .top, spacing: StartMetrics.columnGap) {
+                    VStack(alignment: .leading, spacing: StartMetrics.blockGap) {
+                        if registry?.isOffered(.sessionNewClean) ?? true {
+                            LandingBlock(String(localized: "New session", bundle: .module)) {
+                                ForEach(Self.agents, id: \.self) { provider in
+                                    let info = settings.agent(provider)
+                                    LandingActionRow(
+                                        action: .sessionNewClean, id: .landingAgent(provider.rawValue),
+                                        argument: .set(#"{"provider":"\#(provider.rawValue)"}"#),
+                                        title: ProviderAdapters.name(provider),
+                                        shortcut: settings.settings.agents.defaultAgent == provider ? ActionID.sessionNewClean.spec.shortcut : "",
+                                        enabled: info?.installedState != false
+                                    ) { DSAgentLogo(QuickLaunchModel.kind(provider), size: StartMetrics.rowIcon) }
+                                }
+                            }
+                        }
+                        LandingBlock(String(localized: "Project", bundle: .module)) {
+                            if registry?.isOffered(.projectAdd) ?? true {
+                                LandingActionRow(
+                                    action: .projectAdd, id: .landingAddProject, title: String(localized: "Open a Folder…", bundle: .module),
+                                    shortcut: ActionID.projectAdd.spec.shortcut
+                                ) { Image(systemName: "folder").font(.system(size: StartMetrics.rowIcon - 4)).foregroundStyle(DS.Color.textSecondary) }
+                            }
+                            if registry?.isOffered(.projectCloneFromGitHub) ?? true {
+                                LandingActionRow(
+                                    action: .projectCloneFromGitHub, id: .landingCloneProject,
+                                    title: String(localized: "Clone from GitHub…", bundle: .module),
+                                    shortcut: ActionID.projectCloneFromGitHub.spec.shortcut
+                                ) { DSGitHubMark(size: StartMetrics.rowIcon - 3).foregroundStyle(DS.Color.textSecondary) }
+                            }
+                        }
+                    }
+                    .frame(width: StartMetrics.actionsWidth)
+                    VStack(alignment: .leading, spacing: StartMetrics.blockGap) {
+                        LandingBlock(String(localized: "Recent sessions", bundle: .module)) {
+                            LandingTableHeader(columns: [
+                                String(localized: "Name", bundle: .module), String(localized: "Folder", bundle: .module),
+                                String(localized: "Active", bundle: .module),
+                            ])
+                            if recent.isEmpty {
+                                Text("No sessions yet. Start one on the left.", bundle: .module)
+                                    .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                                    .frame(maxWidth: .infinity, minHeight: StartMetrics.tableRow, alignment: .leading)
+                                    .padding(.horizontal, DS.Space.s2)
+                            } else {
+                                ForEach(recent) { session in RecentSessionRow(session: session) }
+                            }
+                        }
+                        LandingBlock(String(localized: "Environment", bundle: .module)) {
                             ForEach(Self.agents, id: \.self) { provider in
-                                LandingAgentTile(
-                                    provider: provider, installed: settings.agent(provider)?.installedState != false,
-                                    isDefault: settings.settings.agents.defaultAgent == provider)
+                                LandingKeyValue(key: ProviderAdapters.name(provider), value: Self.state(settings.agent(provider)))
                             }
                         }
                     }
-                }
-                section(String(localized: "Work in a project", bundle: .module)) {
-                    HStack(spacing: DS.Space.s3) {
-                        if registry?.isOffered(.projectAdd) ?? true {
-                            LandingProjectRow(
-                                action: .projectAdd, id: .landingAddProject, title: String(localized: "Open a Folder…", bundle: .module),
-                                detail: String(localized: "A folder or repository on this Mac.", bundle: .module)
-                            ) {
-                                Image(systemName: "folder").font(.system(size: StartMetrics.rowIcon - 2)).foregroundStyle(DS.Color.textPrimary)
-                            }
-                        }
-                        if registry?.isOffered(.projectCloneFromGitHub) ?? true {
-                            LandingProjectRow(
-                                action: .projectCloneFromGitHub, id: .landingCloneProject, title: String(localized: "Clone from GitHub…", bundle: .module),
-                                detail: String(localized: "Pick one of your repositories or paste a URL.", bundle: .module)
-                            ) {
-                                DSGitHubMark(size: StartMetrics.rowIcon).foregroundStyle(DS.Color.textPrimary)
-                            }
-                        }
-                    }
-                }
-                if !recent.isEmpty {
-                    section(String(localized: "Recent sessions", bundle: .module)) {
-                        VStack(spacing: .zero) {
-                            ForEach(recent) { session in RecentSessionRow(session: session) }
-                        }
-                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            .frame(width: StartMetrics.column)
+            .frame(maxWidth: StartMetrics.contentMax, alignment: .leading)
+            .padding(.horizontal, StartMetrics.margin)
+            .padding(.top, StartMetrics.top)
+            .padding(.bottom, StartMetrics.margin)
+            .frame(maxWidth: .infinity)
         }
-        .padding(.horizontal, DS.Space.s4)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .scrollIndicators(.never)
         .background(DS.Color.canvas)
         .ignoresSafeArea()
         .overlay(alignment: .topTrailing) {
@@ -148,85 +175,97 @@ struct LandingView: View {
         .a11y(.landing, kind: "container")
     }
 
-    private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: DS.Space.s2) {
-            Text(verbatim: title).dsFont(DS.Font.sectionLabel).foregroundStyle(DS.Color.textTertiary).padding(.leading, DS.Space.s1)
-            content()
+    private var header: some View {
+        HStack(alignment: .center, spacing: DS.Space.s3) {
+            BrandMark(size: StartMetrics.logo)
+            VStack(alignment: .leading, spacing: .zero) {
+                Text("Racky", bundle: .module).dsFont(DS.Font.dialogTitle).foregroundStyle(DS.Color.textPrimary)
+                Text("Coding agents with their own computers.", bundle: .module)
+                    .dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
+            }
+        }
+    }
+
+    /// Estado de um agente para o bloco de ambiente: versão quando instalado.
+    static func state(_ info: AgentInfo?) -> (text: String, tone: AgentInfo.Tone) {
+        switch info?.phase {
+        case .installed(_, let version, _)?:
+            (version.map { String(localized: "Installed · \($0)", bundle: .module) } ?? String(localized: "Installed", bundle: .module), .success)
+        case .notInstalled?: (String(localized: "Not installed", bundle: .module), .warning)
+        case .checking?, nil: (String(localized: "Checking…", bundle: .module), .neutral)
         }
     }
 }
 
-/// Card de agente da landing: clique = sessão limpa nova com esse agente já rodando (`session.newClean` com o provider).
-private struct LandingAgentTile: View {
-    let provider: TerminalProvider
-    let installed: Bool
-    let isDefault: Bool
-    @State private var hovering = false
+/// Bloco da landing: rótulo pequeno em caixa alta e o conteúdo logo abaixo, separado por uma linha fina.
+private struct LandingBlock<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: () -> Content
 
-    private var request: String { #"{"provider":"\#(provider.rawValue)"}"# }
+    init(_ title: String, @ViewBuilder content: @escaping () -> Content) {
+        self.title = title
+        self.content = content
+    }
 
     var body: some View {
-        ActionButton(.sessionNewClean, id: .landingAgent(provider.rawValue), argument: .set(request)) {
-            VStack(alignment: .leading, spacing: .zero) {
-                HStack(alignment: .top) {
-                    DSAgentLogo(QuickLaunchModel.kind(provider), size: StartMetrics.agentLogo)
-                    Spacer(minLength: .zero)
-                    if isDefault, installed {
-                        Text(verbatim: ActionID.sessionNewClean.spec.shortcut).dsFont(DS.Font.keycap).foregroundStyle(DS.Color.textTertiary)
-                    }
-                }
-                Spacer(minLength: .zero)
-                Text(verbatim: ProviderAdapters.name(provider)).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
-                Text(installed ? String(localized: "New session in a clean folder", bundle: .module) : String(localized: "Not installed", bundle: .module))
-                    .dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary).lineLimit(1)
-            }
-            .padding(DS.Space.s4)
-            .frame(maxWidth: .infinity, minHeight: StartMetrics.agentTileHeight, maxHeight: StartMetrics.agentTileHeight, alignment: .topLeading)
-            .background(RoundedRectangle(cornerRadius: DS.Radius.card).fill(hovering ? DS.Color.secondary : DS.Color.chrome))
-            .overlay(RoundedRectangle(cornerRadius: DS.Radius.card).strokeBorder(hovering ? DS.Color.borderStrong : DS.Color.border))
-            .contentShape(RoundedRectangle(cornerRadius: DS.Radius.card))
-            .offset(y: hovering ? -1 : 0)
+        VStack(alignment: .leading, spacing: .zero) {
+            Text(verbatim: title.uppercased()).dsFont(DS.Font.micro).tracking(0.6).foregroundStyle(DS.Color.textTertiary)
+                .padding(.horizontal, DS.Space.s2).padding(.bottom, DS.Space.s2)
+            Rectangle().fill(DS.Color.border).frame(height: 1)
+            VStack(alignment: .leading, spacing: .zero) { content() }.padding(.top, DS.Space.s1)
         }
-        .buttonStyle(.plain)
-        .disabled(!installed)
-        .opacity(installed ? 1 : 0.5)
-        .onHover { hovering = installed && $0 }
-        .animation(MotionPolicy.shared.animation(MotionTokens.Springs.snappy), value: hovering)
     }
 }
 
-/// Linha larga de projeto da landing: ícone num quadrado, título e uma linha do que faz.
-private struct LandingProjectRow<Icon: View>: View {
+/// Linha de ação: ícone pequeno, título e o atalho à direita; fundo só no hover.
+private struct LandingActionRow<Icon: View>: View {
     let action: ActionID
     let id: A11yID
+    var argument: ActionArgument = .press
     let title: String
-    let detail: String
+    var shortcut: String = ""
+    var enabled = true
     @ViewBuilder let icon: () -> Icon
     @State private var hovering = false
 
     var body: some View {
-        ActionButton(action, id: id) {
-            HStack(spacing: DS.Space.s3) {
-                icon()
-                    .frame(width: StartMetrics.rowIconTile, height: StartMetrics.rowIconTile)
-                    .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(DS.Color.secondary))
-                VStack(alignment: .leading, spacing: DS.Space.s0_5) {
-                    Text(verbatim: title).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
-                    Text(verbatim: detail).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary).lineLimit(1)
+        ActionButton(action, id: id, argument: argument) {
+            HStack(spacing: DS.Space.s2_5) {
+                icon().frame(width: StartMetrics.rowIcon, height: StartMetrics.rowIcon)
+                Text(verbatim: title).dsFont(DS.Font.body).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
+                Spacer(minLength: DS.Space.s2)
+                if !enabled {
+                    Text("Not installed", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                } else if !shortcut.isEmpty {
+                    Text(verbatim: shortcut).dsFont(DS.Font.keycap).foregroundStyle(DS.Color.textTertiary)
                 }
-                Spacer(minLength: .zero)
-                let key = action.spec.shortcut
-                if !key.isEmpty { Text(verbatim: key).dsFont(DS.Font.keycap).foregroundStyle(DS.Color.textTertiary) }
             }
-            .padding(.horizontal, DS.Space.s3)
-            .frame(maxWidth: .infinity, minHeight: StartMetrics.projectRowHeight, maxHeight: StartMetrics.projectRowHeight)
-            .background(RoundedRectangle(cornerRadius: DS.Radius.card).fill(hovering ? DS.Color.secondary : DS.Color.chrome))
-            .overlay(RoundedRectangle(cornerRadius: DS.Radius.card).strokeBorder(hovering ? DS.Color.borderStrong : DS.Color.border))
-            .contentShape(RoundedRectangle(cornerRadius: DS.Radius.card))
+            .padding(.horizontal, DS.Space.s2)
+            .frame(height: StartMetrics.actionRow)
+            .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(hovering ? DS.Color.secondary : Color.clear))
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .onHover { hovering = $0 }
-        .animation(MotionPolicy.shared.animation(MotionTokens.Springs.snappy), value: hovering)
+        .disabled(!enabled)
+        .opacity(enabled ? 1 : 0.55)
+        .onHover { hovering = enabled && $0 }
+    }
+}
+
+/// Cabeçalho da tabela de sessões; as larguras batem com `RecentSessionRow`.
+private struct LandingTableHeader: View {
+    let columns: [String]
+
+    var body: some View {
+        HStack(spacing: DS.Space.s3) {
+            Text(verbatim: columns[0]).frame(width: StartMetrics.nameColumn, alignment: .leading)
+            Text(verbatim: columns[1]).frame(maxWidth: .infinity, alignment: .leading)
+            Text(verbatim: columns[2]).frame(width: StartMetrics.ageColumn, alignment: .trailing)
+        }
+        .lineLimit(1)
+        .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+        .padding(.horizontal, DS.Space.s2)
+        .frame(maxWidth: .infinity, minHeight: StartMetrics.tableRow, maxHeight: StartMetrics.tableRow)
     }
 }
 
@@ -237,16 +276,18 @@ private struct RecentSessionRow: View {
     var body: some View {
         ActionButton(.sessionSelect, id: .landingRecent(session.id.uuidString), argument: .select(session.id.uuidString)) {
             HStack(spacing: DS.Space.s3) {
-                Image(systemName: "rectangle.stack").foregroundStyle(DS.Color.textSecondary)
                 Text(verbatim: session.title).dsFont(DS.Font.body).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
+                    .frame(width: StartMetrics.nameColumn, alignment: .leading)
                 Text(verbatim: (session.folderPath as NSString).abbreviatingWithTildeInPath)
-                    .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(1).truncationMode(.middle)
-                Spacer(minLength: DS.Space.s2)
-                Text(verbatim: Self.age(session.lastActiveAt ?? session.createdAt)).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                    .dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textSecondary).lineLimit(1).truncationMode(.middle)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text(verbatim: Self.age(session.lastActiveAt ?? session.createdAt)).dsFont(DS.Font.microNumeric)
+                    .foregroundStyle(DS.Color.textSecondary).frame(width: StartMetrics.ageColumn, alignment: .trailing)
             }
-            .padding(.horizontal, DS.Space.s3)
-            .frame(height: StartMetrics.recentRow)
-            .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(hovering ? DS.Color.hoverRow : Color.clear))
+            .padding(.horizontal, DS.Space.s2)
+            .frame(height: StartMetrics.tableRow)
+            .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(hovering ? DS.Color.secondary : Color.clear))
+            .overlay(alignment: .top) { Rectangle().fill(DS.Color.fg5).frame(height: 1) }
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -257,6 +298,32 @@ private struct RecentSessionRow: View {
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .abbreviated
         return formatter.localizedString(for: date, relativeTo: Date())
+    }
+}
+
+/// Linha de chave e valor do bloco de ambiente; o valor ganha um ponto com a cor do estado.
+private struct LandingKeyValue: View {
+    let key: String
+    let value: (text: String, tone: AgentInfo.Tone)
+
+    var body: some View {
+        HStack(spacing: DS.Space.s3) {
+            Text(verbatim: key).dsFont(DS.Font.body).foregroundStyle(DS.Color.textSecondary)
+                .frame(width: StartMetrics.nameColumn, alignment: .leading)
+            Circle().fill(color).frame(width: 6, height: 6)
+            Text(verbatim: value.text).dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
+            Spacer(minLength: .zero)
+        }
+        .padding(.horizontal, DS.Space.s2)
+        .frame(height: StartMetrics.tableRow)
+    }
+
+    private var color: Color {
+        switch value.tone {
+        case .success: DS.Color.success
+        case .warning: DS.Color.warning
+        case .neutral: DS.Color.textTertiary
+        }
     }
 }
 
