@@ -4,6 +4,7 @@ SETGID, SETPCAP, KILL) e faz, nesta ordem:
 1. instala as regras de rede por uid (firewall.py). Falhou = o container sai (fail closed: sem regra não há computador);
 2. sobe os serviços já sem privilégio e com o conjunto de capacidades REDUZIDO por `setpriv`:
    - `egress` (uid 10003): proxy + reqlog + contadores + admin API, sem nenhuma capacidade;
+   - `vsock` (uid 10003, só no runtime sem Docker, quando `RACKY_VSOCK_PORT` existe): encaminha vsock -> admin API em loopback;
    - `runtime` (uid 10003): servidor de controle do browser; só mantém CAP_SETUID/SETGID (ambiente) para largar o privilégio
      e iniciar Xvfb, x11vnc, openbox e o Chromium como `agent`, que é quem os possui;
 3. supervisiona: reinicia o serviço que cair (com espera crescente) e repassa SIGTERM/SIGINT.
@@ -58,6 +59,10 @@ def service_env(name: str) -> dict[str, str]:
             env[key] = os.environ[key]
     if name == "runtime":
         env["RACKY_PROFILE_DIR"] = "/profile"
+    # Runtime sem Docker (VM): admin API só em loopback e o encaminhador vsock (o app chega nela pelo vsock, não pelo IP da VM).
+    for key in ("RACKY_ADMIN_BIND", "RACKY_VSOCK_PORT", "RACKY_ADMIN_PORT"):
+        if os.environ.get(key) and name in ("egress", "vsock"):
+            env[key] = os.environ[key]
     return env
 
 
@@ -66,6 +71,8 @@ def command(name: str) -> list[str]:
     base = ["setpriv", f"--reuid={egress.pw_uid}", f"--regid={egress.pw_gid}", "--clear-groups", "--no-new-privs"]
     if name == "egress":
         return base + DROP_ALL + ["python", "-m", "racky_egress"]
+    if name == "vsock":
+        return base + DROP_ALL + ["python", "-m", "racky_supervisor.vsock"]
     keep = "+setuid,+setgid,+setpcap,+kill"  # kill: encerrar o Openbox do `agent` ao voltar para headless
     return base + [f"--bounding-set=-all,{keep}", f"--inh-caps=-all,{keep}", f"--ambient-caps=-all,{keep}", "python", "-m", "racky_runtime"]
 
@@ -74,7 +81,8 @@ def main() -> int:
     os.makedirs("/tmp/.X11-unix", exist_ok=True)
     os.chmod("/tmp/.X11-unix", 0o1777)
     install_firewall()
-    names = ["egress"] + (["runtime"] if os.environ.get("RACKY_DISPLAY", "headless") != "http" else [])
+    names = ["egress"] + (["vsock"] if os.environ.get("RACKY_VSOCK_PORT") else []) + (
+        ["runtime"] if os.environ.get("RACKY_DISPLAY", "headless") != "http" else [])
     procs: dict[str, subprocess.Popen] = {}
     backoff = {n: 0.5 for n in names}
     started: dict[str, float] = {}

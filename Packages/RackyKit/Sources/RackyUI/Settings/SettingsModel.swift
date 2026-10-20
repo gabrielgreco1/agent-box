@@ -32,6 +32,8 @@ public final class SettingsModel {
 
     /// Estado do Docker e das imagens do computador (Settings › Computers).
     var dockerStatus = DockerStatusInfo()
+    /// Runtime dos computadores: o nativo (VMs, sem Docker) serve a este Mac? (Settings › Computers › Computer runtime.)
+    var runtimeInfo = ComputerRuntimeInfo()
     /// Página Computers com computadores na lista: a escolha local/nuvem fica recolhida numa faixa até "Change".
     var computersWhereOpen = false
     /// Abre os links do provedor (testes trocam).

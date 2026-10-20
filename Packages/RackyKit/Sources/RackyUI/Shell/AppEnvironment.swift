@@ -1032,6 +1032,8 @@ public final class AppEnvironment {
 
     /// Saída limpa (T1-23): a próxima abertura distingue "parou com o app fechado" de "parou sem aviso".
     public func markCleanExit() async {
+        // As VMs do runtime sem Docker morrem com este processo de qualquer jeito: para-as antes, para as pastas não sobrarem.
+        await orchestratorHolder.value?.provisioning.shutdownNative()
         await diagnostics.stop()
         if let store { await SessionReconciler.markCleanExit(store: store) }
     }

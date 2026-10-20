@@ -17,6 +17,13 @@ let grdb: Target.Dependency = .product(name: "GRDB", package: "GRDB.swift")
 let argumentParser: Target.Dependency = .product(name: "ArgumentParser", package: "swift-argument-parser")
 let snapshotTesting: Target.Dependency = .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
 
+let containerization: Target.Dependency = .product(name: "Containerization", package: "containerization")
+let containerizationOCI: Target.Dependency = .product(name: "ContainerizationOCI", package: "containerization")
+let containerizationExtras: Target.Dependency = .product(name: "ContainerizationExtras", package: "containerization")
+let containerizationOS: Target.Dependency = .product(name: "ContainerizationOS", package: "containerization")
+let containerizationArchive: Target.Dependency = .product(name: "ContainerizationArchive", package: "containerization")
+let containerizationEXT4: Target.Dependency = .product(name: "ContainerizationEXT4", package: "containerization")
+
 func lib(_ name: String, _ deps: [Target.Dependency], ui: Bool = false, resources: [Resource] = []) -> Target {
     .target(name: name, dependencies: deps, resources: resources, swiftSettings: ui ? mainActorSettings : nonisolatedSettings)
 }
@@ -34,6 +41,7 @@ let package = Package(
         .library(name: "RackyTerminalCore", targets: ["RackyTerminalCore"]),
         .library(name: "RackyStore", targets: ["RackyStore"]),
         .library(name: "RackyDocker", targets: ["RackyDocker"]),
+        .library(name: "RackyVZ", targets: ["RackyVZ"]),
         .library(name: "RackyCore", targets: ["RackyCore"]),
         .library(name: "RackyDesignSystem", targets: ["RackyDesignSystem"]),
         .library(name: "RackyUI", targets: ["RackyUI"]),
@@ -41,12 +49,15 @@ let package = Package(
         .executable(name: "rackyd-launch", targets: ["rackyd-launch"]),
         .executable(name: "racky", targets: ["racky"]),
         .executable(name: "racky-bench", targets: ["RackyBench"]),
+        .executable(name: "racky-vz-selftest", targets: ["RackyVZSelfTest"]),
     ],
     dependencies: [
         .package(url: "https://github.com/migueldeicaza/SwiftTerm.git", exact: "1.99.0"),
         .package(url: "https://github.com/groue/GRDB.swift.git", exact: "7.11.1"),
         .package(url: "https://github.com/apple/swift-argument-parser.git", exact: "1.8.2"),
         .package(url: "https://github.com/pointfreeco/swift-snapshot-testing.git", exact: "1.19.6"),
+        // Runtime sem Docker (RackyVZ): VMs Linux leves sobre Virtualization.framework. Exata; só o alvo RackyVZ a importa.
+        .package(url: "https://github.com/apple/containerization.git", exact: "0.52.1"),
     ],
     targets: [
         lib("RackyProtocol", []),
@@ -55,11 +66,13 @@ let package = Package(
         lib("RackyStore", ["RackyPlatform", "RackyProtocol", grdb]),
         lib("RackyDocker", ["RackyPlatform", "RackyProtocol"]),
         lib("RackyCore", ["RackyProtocol", "RackyPlatform", "RackyStore", "RackyDocker"]),
+        // Backend de computadores sem Docker (VMs via apple/containerization). Isolado: RackyDocker e RackyCore não o importam.
+        lib("RackyVZ", ["RackyProtocol", "RackyPlatform", "RackyDocker", "RackyCore", containerization, containerizationOCI, containerizationExtras, containerizationOS, containerizationEXT4]),
         lib("RackyDesignSystem", ["RackyProtocol"], ui: true, resources: [.copy("Resources/Fonts"), .copy("Resources/AgentLogos")]),
         // T3-05: viewer noVNC (vendorizado, v1.6.0) num WKWebView isolado, servido por esquema local (07 CS-401, 00 T8).
         lib("RackyViewerKit", [], ui: true, resources: [.copy("Resources/Viewer")]),
         lib(
-            "RackyUI", ["RackyCore", "RackyStore", "RackyDesignSystem", "RackyTerminalCore", "RackyViewerKit", swiftTerm], ui: true,
+            "RackyUI", ["RackyCore", "RackyStore", "RackyDesignSystem", "RackyTerminalCore", "RackyViewerKit", "RackyVZ", swiftTerm], ui: true,
             resources: [.process("Resources")]  // String Catalog (lint-ui exige strings no catálogo)
         ),
         .executableTarget(
@@ -76,6 +89,8 @@ let package = Package(
             dependencies: ["RackyProtocol", "RackyPlatform", argumentParser],
             swiftSettings: nonisolatedSettings
         ),
+        // Autoteste/CLI do backend VZ (precisa do entitlement de virtualização: scripts/vz/selftest.sh compila e assina).
+        .executableTarget(name: "RackyVZSelfTest", dependencies: ["RackyVZ", "RackyCore", "RackyDocker", "RackyPlatform", "RackyProtocol", containerization, containerizationOCI, containerizationArchive], swiftSettings: nonisolatedSettings),
         // Cliente de teste do peer auth (T1-07); fora de `products`, só os testes o usam.
         .executableTarget(name: "peerprobe", dependencies: ["RackyProtocol", "RackyPlatform"], swiftSettings: nonisolatedSettings),
         .executableTarget(
@@ -92,6 +107,7 @@ let package = Package(
             exclude: ["Launch/Fixtures", "Launch/Golden", "GitHub/Fixtures"], // lidos por caminho (#filePath); golden gravado com RACKY_UPDATE_GOLDEN=1
             swiftSettings: nonisolatedSettings
         ),
+        tests("VZTests", ["RackyVZ", "RackyDocker", "RackyCore", "RackyPlatform", "RackyProtocol", "RackyVZSelfTest"]),
         tests("DockerTests", ["RackyDocker", "RackyPlatform"], resources: [.copy("Fixtures")]),
         .testTarget(name: "ViewerKitTests", dependencies: ["RackyViewerKit"], swiftSettings: mainActorSettings),
         tests("TerminalCoreTests", ["RackyTerminalCore", swiftTerm]),

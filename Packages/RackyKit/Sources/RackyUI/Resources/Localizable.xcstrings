@@ -650,6 +650,28 @@
         }
       }
     },
+    "Computer runtime": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Computer runtime"
+          }
+        }
+      }
+    },
+    "Each computer is a small virtual machine on this Mac. The first one downloads the runtime.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Each computer is a small virtual machine on this Mac. The first one downloads the runtime."
+          }
+        }
+      }
+    },
     "Open file": {
       "extractionState": "manual",
       "localizations": {
@@ -5182,6 +5204,17 @@
         }
       }
     },
+    "Ready. The computer runtime is installed.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ready. The computer runtime is installed."
+          }
+        }
+      }
+    },
     "Reason (optional)": {
       "extractionState": "manual",
       "localizations": {
@@ -5530,6 +5563,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Run Claude Code, Codex and OpenCode side by side, each in its own folder."
+          }
+        }
+      }
+    },
+    "Run computers in Docker containers instead of the built-in runtime. Applies to the next computers you reserve.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run computers in Docker containers instead of the built-in runtime. Applies to the next computers you reserve."
           }
         }
       }
@@ -6337,6 +6381,17 @@
         }
       }
     },
+    "Subagent computers need the computer runtime. Check Settings › Computers and ask Claude again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subagent computers need the computer runtime. Check Settings › Computers and ask Claude again."
+          }
+        }
+      }
+    },
     "Subagent computers: %@": {
       "extractionState": "manual",
       "localizations": {
@@ -6531,6 +6586,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "The color palette of the terminal."
+          }
+        }
+      }
+    },
+    "The computer runtime isn't ready": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The computer runtime isn't ready"
           }
         }
       }
@@ -6982,6 +7048,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Usage limits"
+          }
+        }
+      }
+    },
+    "Use Docker instead": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use Docker instead"
           }
         }
       }

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import signal
 import sys
 
@@ -30,8 +31,10 @@ async def main() -> int:
     bind = config.bind or "127.0.0.1"
     proxy_server = await asyncio.start_server(proxy.handle, bind, config.proxy_port, limit=1 << 17, backlog=256)
     admin = AdminServer(proxy, token)
-    admin_server = await asyncio.start_server(admin.handle, "0.0.0.0", config.admin_port)
-    print(f"egress: proxy em {bind}:{config.proxy_port}, admin em :{config.admin_port}, via={config.via}", flush=True)
+    # `RACKY_ADMIN_BIND=127.0.0.1` no runtime sem Docker (VM): a admin API só chega pelo encaminhador vsock, nunca pela rede da vmnet.
+    admin_bind = os.environ.get("RACKY_ADMIN_BIND") or "0.0.0.0"
+    admin_server = await asyncio.start_server(admin.handle, admin_bind, config.admin_port)
+    print(f"egress: proxy em {bind}:{config.proxy_port}, admin em {admin_bind}:{config.admin_port}, via={config.via}", flush=True)
 
     stop = asyncio.Event()
     loop = asyncio.get_running_loop()

@@ -5,10 +5,56 @@ import Foundation
 /// O app monta a partir do `ProxyService` (T3-02); o egress é o único que recebe as credenciais, por arquivo 0400.
 public typealias ProxyConfigResolver = @Sendable (_ proxy: String, _ country: String?) async throws -> (config: EgressConfigFile, caPEM: String?)
 
-/// Backend real (P24, um container por computador): Engine API para o exec (usuário `agent`), reverse proxy da admin API para o
-/// navegador, ingest e render no proxy do mesmo container.
-public struct DockerComputerBackend: ComputerBackend {
+/// Uma sessão de exec em andamento, venha do Docker (`ExecSession`) ou de uma VM (`RackyVZ`): o que o `ExecJobs` precisa para
+/// juntar a saída, esperar o código de saída e encerrar o grupo de processos.
+public protocol ComputerExecSession: Sendable {
+    var frames: AsyncThrowingStream<DockerStreamFrame, any Error> { get }
+    func writeInput(_ data: Data) async throws
+    func closeInput() async
+    func finalExitCode() async throws -> Int
+    /// SIGTERM no grupo e, depois de `grace`, SIGKILL.
+    func terminateGroup(grace: Duration) async throws
+}
+
+/// O que o backend do computador pede ao runtime (Docker ou VM): iniciar um exec como o usuário do `spec` e regravar a config do
+/// egress dentro do computador (troca de proxy). É a única parte do backend que muda entre os runtimes; a admin API, o reqlog e o
+/// viewer passam pela porta `computer.adminPort` nos dois.
+public protocol ComputerExecTransport: Sendable {
+    func startExec(_ spec: ExecSpec) async throws -> any ComputerExecSession
+    func rewriteConfig(_ config: EgressConfigFile, proxyCA: String?) async throws
+}
+
+extension ExecSession: ComputerExecSession {
+    public var frames: AsyncThrowingStream<DockerStreamFrame, any Error> { output }
+    public func writeInput(_ data: Data) async throws { try await writeStdin(data) }
+    public func closeInput() async { closeStdin() }
+    public func finalExitCode() async throws -> Int { try await exitCode() }
+    public func terminateGroup(grace: Duration) async throws { try await terminate(grace: grace) }
+}
+
+/// Transporte do Docker: Engine API (`docker exec -u agent`) e `abx-provision` por exec no container.
+public struct DockerExecTransport: ComputerExecTransport {
     public let client: DockerClient
+    public let computer: ProvisionedComputer
+
+    public init(client: DockerClient, computer: ProvisionedComputer) {
+        self.client = client
+        self.computer = computer
+    }
+
+    public func startExec(_ spec: ExecSpec) async throws -> any ComputerExecSession {
+        try await client.startExec(in: computer.containerID, spec: spec)
+    }
+
+    public func rewriteConfig(_ config: EgressConfigFile, proxyCA: String?) async throws {
+        try await ComputerProvisioner(client: client).rewriteConfig(config, proxyCA: proxyCA, computer: computer)
+    }
+}
+
+/// Backend real (P24, um computador): exec como `agent` por um `ComputerExecTransport` (Docker ou VM), reverse proxy da admin API
+/// para o navegador, ingest e render no proxy do mesmo computador.
+public struct DockerComputerBackend: ComputerBackend {
+    public let transport: any ComputerExecTransport
     public let computer: ProvisionedComputer
     public let secrets: BoxSecretFiles
     public let baseConfig: EgressConfigFile
@@ -16,7 +62,11 @@ public struct DockerComputerBackend: ComputerBackend {
     private let jobs = ExecJobs()
 
     public init(client: DockerClient, computer: ProvisionedComputer, secrets: BoxSecretFiles, baseConfig: EgressConfigFile, resolver: ProxyConfigResolver? = nil) {
-        self.client = client
+        self.init(transport: DockerExecTransport(client: client, computer: computer), computer: computer, secrets: secrets, baseConfig: baseConfig, resolver: resolver)
+    }
+
+    public init(transport: any ComputerExecTransport, computer: ProvisionedComputer, secrets: BoxSecretFiles, baseConfig: EgressConfigFile, resolver: ProxyConfigResolver? = nil) {
+        self.transport = transport
         self.computer = computer
         self.secrets = secrets
         self.baseConfig = baseConfig
@@ -52,7 +102,7 @@ public struct DockerComputerBackend: ComputerBackend {
 
     // MARK: Exec como `agent` no container do computador
 
-    static func command(for request: BackendExec) -> [String] {
+    public static func command(for request: BackendExec) -> [String] {
         let base: [String] = request.shell.map { ["bash", "-lc", $0] } ?? request.argv ?? []
         guard !request.secretEnv.isEmpty else { return base }
         // O valor do segredo vem de arquivo montado só leitura (`/run/abx-secrets`, legível pelo `agent`) e só existe neste processo (§3.3).
@@ -61,7 +111,7 @@ public struct DockerComputerBackend: ComputerBackend {
         return ["/bin/sh", "-c", script, "sh", request.secretEnv.joined(separator: " ")] + base
     }
 
-    func spec(_ request: BackendExec) -> ExecSpec {
+    public func spec(_ request: BackendExec) -> ExecSpec {
         var spec = ExecSpec(command: Self.command(for: request), attachStdin: request.stdin != nil, killableGroup: true)
         spec.user = ComputerProvisioner.agentUser
         spec.workingDirectory = request.cwd
@@ -70,10 +120,10 @@ public struct DockerComputerBackend: ComputerBackend {
     }
 
     private func start(_ request: BackendExec) async throws -> String {
-        let session = try await client.startExec(in: computer.containerID, spec: spec(request))
+        let session = try await transport.startExec(spec(request))
         if let stdin = request.stdin {
-            try await session.writeStdin(stdin)
-            session.closeStdin()
+            try await session.writeInput(stdin)
+            await session.closeInput()
         }
         return await jobs.add(session)
     }
@@ -118,7 +168,7 @@ public struct DockerComputerBackend: ComputerBackend {
         config.adminPort = baseConfig.adminPort
         config.allowCIDRs = baseConfig.allowCIDRs
         config.allowHosts = baseConfig.allowHosts
-        try await ComputerProvisioner(client: client).rewriteConfig(config, proxyCA: resolved.caPEM, computer: computer)
+        try await transport.rewriteConfig(config, proxyCA: resolved.caPEM)
         do { return try await computer.admin.reloadProxy() } catch {
             throw ToolError(.proxyError, "the egress did not confirm the proxy switch: \(error)")
         }
@@ -144,7 +194,7 @@ public struct DockerComputerBackend: ComputerBackend {
 /// Jobs de exec em andamento: consome a saída de cada `ExecSession` e guarda stdout, stderr e código de saída.
 actor ExecJobs {
     private struct Job {
-        var session: ExecSession
+        var session: any ComputerExecSession
         var stdout = Data()
         var stderr = Data()
         var exitCode: Int?
@@ -158,19 +208,19 @@ actor ExecJobs {
     func contains(_ id: String) -> Bool { jobs[id] != nil }
     func forget(_ id: String) { jobs[id] = nil }
 
-    func add(_ session: ExecSession) -> String {
+    func add(_ session: any ComputerExecSession) -> String {
         let id = ULID.generate()
         jobs[id] = Job(session: session)
         Task { [weak self] in await self?.consume(id, session) }
         return id
     }
 
-    private func consume(_ id: String, _ session: ExecSession) async {
+    private func consume(_ id: String, _ session: any ComputerExecSession) async {
         do {
-            for try await frame in session.output {
+            for try await frame in session.frames {
                 if frame.kind == .stderr { jobs[id]?.stderr.append(frame.data) } else { jobs[id]?.stdout.append(frame.data) }
             }
-            jobs[id]?.exitCode = try? await session.exitCode()
+            jobs[id]?.exitCode = try? await session.finalExitCode()
         } catch {
             jobs[id]?.exitCode = nil
         }
@@ -195,7 +245,7 @@ actor ExecJobs {
 
     func cancel(_ id: String, grace: Duration) async -> BackendExecOutcome {
         guard let job = jobs[id], !job.finished else { return outcome(id) }
-        try? await job.session.terminate(grace: grace)
+        try? await job.session.terminateGroup(grace: grace)
         return await poll(id, wait: .seconds(5))
     }
 }

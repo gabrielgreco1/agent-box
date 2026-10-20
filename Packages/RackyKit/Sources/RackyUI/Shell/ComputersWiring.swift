@@ -3,6 +3,7 @@ import RackyDocker
 import RackyPlatform
 import RackyProtocol
 import RackyStore
+import RackyVZ
 import AppKit
 import Foundation
 import Synchronization
@@ -64,6 +65,30 @@ extension AppEnvironment {
             if let country, var upstream = resolved.config.upstream { upstream.geoCountry = country; resolved.config.upstream = upstream }
             return resolved
         }
+        // Runtime sem Docker (macOS 26+, Apple silicon, build com o entitlement de virtualização): VMs hospedadas neste processo. O
+        // Settings › Computers › "Use Docker instead" força o Docker; testes com Docker (`RACKY_TEST_RUN`) ficam sempre no Docker.
+        let settingsForRuntime = settings
+        let nativeAllowed = environmentVariables["RACKY_TEST_RUN"] == nil && environmentVariables["RACKY_COMPUTER_RUNTIME"] != "docker"
+        var nativeRuntime: VZRuntime?
+        if nativeAllowed {
+            var nativeConfig = VZRuntime.Config(
+                appDataRoot: root, secretsRoot: config.secretsRoot, owner: config.owner, runtimeRoot: config.runtimeRoot,
+                environment: environmentVariables)
+            nativeConfig.allowCIDRs = config.allowCIDRs
+            nativeConfig.resolver = config.resolver
+            let runtime = VZRuntime(config: nativeConfig)
+            nativeRuntime = runtime
+            config.native = runtime
+            config.forceDocker = { await MainActor.run { settingsForRuntime.settings.computers.forceDocker } }
+            if runtime.unavailableReason == nil {
+                // VMs e pastas de uma execução anterior já morreram com o processo: limpa antes de qualquer computador novo.
+                Task { await runtime.startupSweep() }
+            }
+        }
+        let runtimeInfo = ComputerRuntimeInfo(
+            nativeAvailable: nativeRuntime != nil && nativeRuntime?.unavailableReason == nil,
+            unavailableReason: nativeRuntime == nil ? nil : nativeRuntime?.unavailableReason.map { "\($0) Computers use Docker." })
+        settings.runtimeInfo = runtimeInfo
         let provisioning = AppComputerProvisioning(config: config)
         // BK-12: `runOn == .cloud` nunca cai no Mac. Sem provedor implementado (a AWS ainda é esqueleto) o pedido falha com mensagem clara.
         let settingsForRoute = settings
@@ -87,7 +112,11 @@ extension AppEnvironment {
                 Task { @MainActor in
                     switch state {
                     case .idle: break
-                    case .ready: settings.dockerStatus = DockerStatusInfo(text: String(localized: "Running. Computer images are ready.", bundle: .module))
+                    case .ready:
+                        let native = settings.runtimeInfo.nativeAvailable && !settings.settings.computers.forceDocker
+                        settings.dockerStatus = DockerStatusInfo(
+                            text: native ? String(localized: "Ready. The computer runtime is installed.", bundle: .module)
+                                : String(localized: "Running. Computer images are ready.", bundle: .module))
                     case .failed(let text): settings.dockerStatus = DockerStatusInfo(text: text, stopped: text.hasPrefix(ComputerSetupError.dockerNotRunningMessage))
                     default: settings.dockerStatus = DockerStatusInfo(text: state.label ?? "")
                     }
@@ -102,6 +131,16 @@ extension AppEnvironment {
                     Task { @MainActor in
                         toasts.show(kind: .error, title: String(localized: "Cloud computers aren't available yet", bundle: .module),
                                     detail: String(localized: "Switch to This Mac in Computers.", bundle: .module))
+                    }
+                    return
+                }
+                if case .nativeRuntime = problem {
+                    // Sem Docker no meio: não existe "Open Docker"; o texto do Settings traz a causa (download, imagem, entitlement...).
+                    Task { @MainActor in
+                        settings.dockerStatus = DockerStatusInfo(text: problem.localizedDescription)
+                        toasts.show(
+                            kind: .error, title: String(localized: "The computer runtime isn't ready", bundle: .module),
+                            detail: String(localized: "Subagent computers need the computer runtime. Check Settings › Computers and ask Claude again.", bundle: .module))
                     }
                     return
                 }

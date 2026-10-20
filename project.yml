@@ -36,6 +36,7 @@ targets:
       - path: App
         excludes:
           - LaunchAgents/**  # plist do daemon: scripts/build.sh o embute em Contents/Library/LaunchAgents
+          - Racky.entitlements  # assinatura: scripts/build.sh passa --entitlements ao codesign do app (o build do xcodebuild é sem assinatura)
     dependencies:
       - package: RackyKit
         product: RackyPlatform
@@ -66,7 +67,9 @@ targets:
         PRODUCT_MODULE_NAME: Racky
         GENERATE_INFOPLIST_FILE: NO
         ENABLE_APP_SANDBOX: NO
-        # Sem entitlements (AR-532).
+        # Entitlement único: com.apple.security.virtualization (runtime de computadores sem Docker, VMs hospedadas no app). Sem sandbox
+        # e sem perfil de provisionamento, então vale com assinatura ad-hoc e com a identidade local. Aplicado por scripts/build.sh.
+        CODE_SIGN_ENTITLEMENTS: App/Racky.entitlements
   RackyUITests:
     type: bundle.ui-testing
     platform: macOS

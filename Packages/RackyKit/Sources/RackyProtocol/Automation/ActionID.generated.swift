@@ -317,6 +317,7 @@ extension ActionID {
     public static let settingsPickPath = ActionID(unchecked: "settings.pickPath")
     public static let settingsResetConfirmations = ActionID(unchecked: "settings.resetConfirmations")
     public static let settingsComputersDefaultSubagentMode = ActionID(unchecked: "settings.computers.defaultSubagentMode")
+    public static let settingsComputersForceDocker = ActionID(unchecked: "settings.computers.forceDocker")
     public static let settingsAgentsDefaultAgent = ActionID(unchecked: "settings.agents.defaultAgent")
     public static let settingsAgentsDefaultProfile = ActionID(unchecked: "settings.agents.defaultProfile")
     public static let settingsAgentsProfileNew = ActionID(unchecked: "settings.agents.profileNew")
@@ -781,6 +782,7 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "settings.pickPath"), label: "Change…", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.resetConfirmations"), label: "Reset", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.computers.defaultSubagentMode"), label: "Subagent computers (padrão das novas sessões)", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "settings.computers.forceDocker"), label: "Use Docker instead (runtime dos computadores)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.agents.defaultAgent"), label: "Default agent", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.agents.defaultProfile"), label: "Default profile", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.agents.profileNew"), label: "New Profile", shortcut: "", slice: .slice1),

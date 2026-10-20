@@ -42,6 +42,20 @@ import Testing
         #expect(env.settings.computersWhereOpen)
     }
 
+    @Test func useDockerInsteadIsDisabledWithoutTheNativeRuntimeAndToggleableWithIt() async throws {
+        let env = AppEnvironment(environment: ["RACKY_SKIP_ONBOARDING": "1"])
+        let registry = env.registry
+        env.settings.runtimeInfo = ComputerRuntimeInfo(nativeAvailable: false, unavailableReason: "The built-in computer runtime needs macOS 26 or later. Computers use Docker.")
+        #expect(registry.availability(of: .settingsComputersForceDocker) != .enabled)
+        env.settings.runtimeInfo = ComputerRuntimeInfo(nativeAvailable: true, unavailableReason: nil)
+        #expect(registry.availability(of: .settingsComputersForceDocker) == .enabled)
+        #expect(env.settings.settings.computers.forceDocker == false)
+        _ = try await registry.perform(.settingsComputersForceDocker, .set("on"))
+        #expect(env.settings.settings.computers.forceDocker)
+        _ = try await registry.perform(.settingsComputersForceDocker, .press)
+        #expect(env.settings.settings.computers.forceDocker == false)
+    }
+
     @Test func oldSettingsFilesDecodeWithLocalDefaultsAndClampedLimits() throws {
         let old = #"{"computers":{"defaultSubagentMode":"full"}}"#.data(using: .utf8)!
         let settings = try JSONDecoder().decode(AppSettings.self, from: old)
