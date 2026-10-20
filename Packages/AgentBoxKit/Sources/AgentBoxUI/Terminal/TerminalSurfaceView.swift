@@ -50,10 +50,26 @@ public final class TerminalSurfaceView: TerminalView {
             log.error("Metal unavailable, using CoreGraphics: \(error)")
         }
         if !metalEnabled { log.publicError("terminal renderer fell back to CoreGraphics") }
+        _ = Self.installArrowCursor
         links = TerminalLinkInteraction(surface: self)
     }
 
     @available(*, unavailable) required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }  // required init?(coder:) não usado
+
+    /// Seta comum sobre o terminal, como no Orca: o SwiftTerm põe o I-beam no pane inteiro (`resetCursorRects`/`cursorUpdate`), o que
+    /// incomoda sem estar selecionando texto. Os dois métodos são `public` (não `open`) lá; o AppKit os chama pelo runtime do ObjC, então
+    /// esta subclasse ganha as próprias implementações uma vez, sem tocar no `TerminalView` original.
+    static let installArrowCursor: Void = {
+        let resetBlock: @convention(block) (NSView) -> Void = { view in view.addCursorRect(view.bounds, cursor: .arrow) }
+        let updateBlock: @convention(block) (NSView, NSEvent) -> Void = { _, _ in NSCursor.arrow.set() }
+        for (selector, block) in [(#selector(NSView.resetCursorRects), resetBlock as Any), (#selector(NSResponder.cursorUpdate(with:)), updateBlock as Any)] {
+            guard let method = class_getInstanceMethod(NSView.self, selector) else { continue }
+            let imp = imp_implementationWithBlock(block)
+            if !class_addMethod(TerminalSurfaceView.self, selector, imp, method_getTypeEncoding(method)) {
+                class_replaceMethod(TerminalSurfaceView.self, selector, imp, method_getTypeEncoding(method))
+            }
+        }
+    }()
 
     /// Clique no terminal sempre devolve o foco à superfície (um overlay aberto engole o clique antes, no hit test).
     public override func mouseDown(with event: NSEvent) {
