@@ -87,7 +87,19 @@ nonisolated public struct DSTextStyle: Sendable, Equatable {
     public let tracking: CGFloat
     public let tabularDigits: Bool
 
+    /// Cache de `NSFont` por estilo: cada `body` do SwiftUI pedia a fonte de novo (descriptor + variação de eixo), o que aparecia
+    /// no perfil do app parado com o painel Insights aberto (T2-11). O estilo é imutável, então a fonte também é.
+    @MainActor private static var fontCache: [String: NSFont] = [:]
+
     @MainActor public var nsFont: NSFont {
+        let key = "\(family)|\(size)|\(weight)|\(tabularDigits)"
+        if let cached = Self.fontCache[key] { return cached }
+        let font = makeFont()
+        Self.fontCache[key] = font
+        return font
+    }
+
+    @MainActor private func makeFont() -> NSFont {
         let base = family == .ui
             ? DSFonts.uiFont(size: size, weight: weight)
             : DSFonts.monoFont(size: size, weight: weight)

@@ -14,7 +14,10 @@
 #             código != 0 se algum orçamento estourar. Não cobre xctrace nem os cenários AR-701/705/706 completos.
 #   Saída   : docs/evidence/bench/<data>-<sha>.json (ou --out <arquivo>); exit 0 = dentro dos orçamentos; 1 = estourou;
 #             2 = erro de execução.
-# Uso: scripts/bench.sh [--quick] [--out <arquivo.json>] [--no-present] [--help]
+#   --ten   : em vez dos cenários acima, os de 10 sessões em paralelo (T2-11, AC-608/609): 10 com saída alta (todas anexadas;
+#             4 visíveis + 6 ocultas) e 20 ociosas; mede CPU/RAM do app e do daemon, eco, tempo de quadro e parada do main.
+#             `--seconds <n>` muda a janela de CPU (padrão 30 s; ocioso 60 s).
+# Uso: scripts/bench.sh [--quick] [--ten] [--seconds <n>] [--out <arquivo.json>] [--no-present] [--help]
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 usage() { sed -n '2,/^set -euo/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; }
@@ -25,7 +28,8 @@ while [ $# -gt 0 ]; do
   case "$1" in
     -h|--help) usage; exit 0 ;;
     --out) OUT="${2:?--out exige um caminho}"; shift 2 ;;
-    --quick|--no-present) EXTRA+=("$1"); shift ;;
+    --quick|--no-present|--ten) EXTRA+=("$1"); shift ;;
+    --seconds) EXTRA+=("$1" "${2:?--seconds exige um número}"); shift 2 ;;
     *) usage >&2; exit 64 ;;
   esac
 done
@@ -38,9 +42,9 @@ DATE="$(date +%Y-%m-%d)"
 mkdir -p "$(dirname "$OUT")"
 
 PKG=Packages/AgentBoxKit
-for prod in agentboxd agentbox-bench; do
-  swift build -c release --package-path "$PKG" --product "$prod" 2>&1 | tail -1
-done
+# O bench é ad-hoc: o agentboxd de Release só aceita o cliente com o modo ad-hoc de desenvolvimento (S-03, só vale se o próprio daemon for ad-hoc).
+swift build -c release --package-path "$PKG" --product agentboxd -Xswiftc -DAGENTBOX_ALLOW_ADHOC_PEERS 2>&1 | tail -1
+swift build -c release --package-path "$PKG" --product agentbox-bench 2>&1 | tail -1
 BIN="$(swift build -c release --package-path "$PKG" --show-bin-path)"
 
 echo "bench: executando (alguns minutos)" >&2

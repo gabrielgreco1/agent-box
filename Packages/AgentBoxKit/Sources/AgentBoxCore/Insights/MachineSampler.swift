@@ -70,13 +70,23 @@ public actor MachineSampler {
     private var previousCoreTicks: [MachineMath.CPUTicks] = []
     private var previousNet: (down: UInt64, up: UInt64, at: Date)?
     private var previousDisk: (read: UInt64, write: UInt64, at: Date)?
+    private var capacity: (total: Int, free: Int64, at: Date)?
+    static let capacityTTL: TimeInterval = 30
+    static let processTTL: TimeInterval = 2.5
+    private var topCache: (cpu: [AppUsage], mem: [AppUsage], at: Date)?
+    /// Quantas vezes os processos foram de fato enumerados (testes).
+    public private(set) var processReads = 0
     private var previousProc: [Int32: UInt64] = [:]
     private var previousProcAt: Date?
     private var pathCache: [Int32: String] = [:]
     private let timebase: (numer: UInt64, denom: UInt64)
     private let topCount: Int
 
-    public init(topCount: Int = 6) {
+    /// Leitura da capacidade do volume (total, livre). Injetável para o teste contar as chamadas.
+    private let capacityReader: @Sendable () -> (total: Int, free: Int64)?
+
+    public init(topCount: Int = 6, capacityReader: @escaping @Sendable () -> (total: Int, free: Int64)? = MachineSampler.readVolumeCapacity) {
+        self.capacityReader = capacityReader
         var info = mach_timebase_info_data_t()
         mach_timebase_info(&info)
         timebase = (UInt64(info.numer), UInt64(max(1, info.denom)))
@@ -91,9 +101,16 @@ public actor MachineSampler {
         var byCPU: [AppUsage] = []
         var byMem: [AppUsage] = []
         if includeProcesses {
-            let apps = readProcesses(now: now)
-            byCPU = apps.sorted { $0.cpuPercent > $1.cpuPercent }.prefix(topCount).map { $0 }
-            byMem = apps.sorted { $0.memoryBytes > $1.memoryBytes }.prefix(topCount).map { $0 }
+            // Enumerar todos os processos custa mais que o resto do tick: as listas "top" se renovam a cada 3 s, não a cada 1,5 s.
+            if let cached = topCache, now.timeIntervalSince(cached.at) < Self.processTTL {
+                (byCPU, byMem) = (cached.cpu, cached.mem)
+            } else {
+                processReads += 1
+                let apps = readProcesses(now: now)
+                byCPU = apps.sorted { $0.cpuPercent > $1.cpuPercent }.prefix(topCount).map { $0 }
+                byMem = apps.sorted { $0.memoryBytes > $1.memoryBytes }.prefix(topCount).map { $0 }
+                topCache = (byCPU, byMem, now)
+            }
         }
         return MachineSnapshot(
             at: now, cpu: cpu, memory: memory, disk: disk, network: network, topByCPU: byCPU, topByMemory: byMem,
@@ -194,11 +211,24 @@ public actor MachineSampler {
 
     // MARK: Disco
 
-    private func readDisk(now: Date) -> DiskSample? {
+    @Sendable public static func readVolumeCapacity() -> (total: Int, free: Int64)? {
         let url = URL(fileURLWithPath: "/")
         guard let values = try? url.resourceValues(forKeys: [.volumeTotalCapacityKey, .volumeAvailableCapacityForImportantUsageKey]),
               let total = values.volumeTotalCapacity else { return nil }
-        let free = values.volumeAvailableCapacityForImportantUsage ?? 0
+        return (total, values.volumeAvailableCapacityForImportantUsage ?? 0)
+    }
+
+    private func readDisk(now: Date) -> DiskSample? {
+        // Capacidade do volume muda devagar e `volumeAvailableCapacityForImportantUsage` faz uma ida e volta XPC síncrona ao CacheDelete:
+        // a cada tick isso era o maior consumidor de CPU do app parado (T2-11). Relê a cada 30 s e reaproveita entre os ticks.
+        let total: Int, free: Int64
+        if let cached = capacity, now.timeIntervalSince(cached.at) < Self.capacityTTL {
+            (total, free) = (cached.total, cached.free)
+        } else {
+            guard let read = capacityReader() else { return nil }
+            (total, free) = (read.total, read.free)
+            capacity = (total, free, now)
+        }
         var readRate = 0.0
         var writeRate = 0.0
         if let io = Self.blockStorageCounters() {

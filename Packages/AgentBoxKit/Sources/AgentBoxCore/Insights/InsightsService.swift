@@ -363,6 +363,8 @@ public actor InsightsService {
         ingest(claudeFiles) { $0.ingestClaude(path: $1, cutoff: cutoff) }
         ingest(codexFiles) { $0.ingestCodex(path: $1, cutoff: cutoff) }
         ledger.prune(before: cutoff, existingPaths: existing)
+        // Devolve ao sistema as páginas liberadas pela varredura (o malloc as segura; o app ficava com centenas de MB a mais).
+        malloc_zone_pressure_relief(nil, 0)
         report.seconds = Date().timeIntervalSince(started)
         return (ledger, report)
     }

@@ -1,0 +1,149 @@
+{
+  "AC-608-4visible-6hidden" : {
+    "appReceivedMiBPerSecondTotal" : 46.575669307822928,
+    "echo" : {
+      "keysSent" : 300,
+      "keyToEmulatorMs" : {
+        "count" : 300,
+        "max" : 0.95933299999999999,
+        "mean" : 0.22777595333333342,
+        "p50" : 0.170708,
+        "p95" : 0.63412500000000005,
+        "p99" : 0.88241700000000001
+      },
+      "timeouts" : 0
+    },
+    "floodersMiBPerSecond" : [
+      11.649140949081829,
+      11.683388518638163,
+      11.585437799581349,
+      11.657702040521585
+    ],
+    "frames" : {
+      "framesPerSecondAggregate" : 0,
+      "gapMs" : {
+        "max" : 0,
+        "p50" : 0,
+        "p95" : 0,
+        "p99" : 0
+      },
+      "presentedTotal" : 0
+    },
+    "load" : {
+      "appCPUPercentOfOneCore" : 27.942713988398143,
+      "appFootprintMiB" : 136.9229736328125,
+      "daemonCPUPercentOfOneCore" : 533.15045261478667,
+      "daemonFootprintMiB" : 199.48524475097656,
+      "windowSeconds" : 30.000397583000002
+    },
+    "mainGapP99Ms" : 2.3999169999999999,
+    "mainMaxGapMs" : 2.6142089999999998
+  },
+  "AC-608-4visible-6hidden-echo-p95-ms" : 0.63412500000000005,
+  "AC-608-10flood-all-attached" : {
+    "appReceivedMiBPerSecondTotal" : 119.71622809848746,
+    "echo" : {
+      "keysSent" : 300,
+      "keyToEmulatorMs" : {
+        "count" : 300,
+        "max" : 2.3378329999999998,
+        "mean" : 0.54697377000000025,
+        "p50" : 0.262125,
+        "p95" : 1.667708,
+        "p99" : 1.94675
+      },
+      "timeouts" : 0
+    },
+    "floodersMiBPerSecond" : [
+      11.979785073028449,
+      11.927517010275713,
+      12.012887283457381,
+      11.957416848888817,
+      12.004993866068842,
+      12.041078980711601,
+      11.98514046031411,
+      11.925326883987617,
+      11.847217835960459,
+      12.034863855794452
+    ],
+    "frames" : {
+      "framesPerSecondAggregate" : 0,
+      "gapMs" : {
+        "max" : 0,
+        "p50" : 0,
+        "p95" : 0,
+        "p99" : 0
+      },
+      "presentedTotal" : 0
+    },
+    "load" : {
+      "appCPUPercentOfOneCore" : 65.371271308436178,
+      "appFootprintMiB" : 232.68864440917969,
+      "daemonCPUPercentOfOneCore" : 558.47891531406401,
+      "daemonFootprintMiB" : 95.578880310058594,
+      "windowSeconds" : 30.000410958
+    },
+    "mainGapP99Ms" : 2.3956659999999999,
+    "mainMaxGapMs" : 2.5475409999999998
+  },
+  "AC-608-10flood-all-attached-echo-p95-ms" : 1.667708,
+  "AC-609-hidden-bytes-routed-to-app" : 0,
+  "AR-705-20idle" : {
+    "appCPUPercentOfOneCore" : 0.0060249147812457358,
+    "appFootprintMiB" : 189.2198486328125,
+    "daemonCPUPercentOfOneCore" : 0.19026183007805825,
+    "daemonFootprintMiB" : 186.14151763916016,
+    "windowSeconds" : 60.128784082999999
+  },
+  "AR-706-sidebar-update" : [
+    {
+      "maxMs" : 1.4100410000000001,
+      "p50Ms" : 0.35491699999999998,
+      "p95Ms" : 0.61375000000000002,
+      "p99Ms" : 0.801458,
+      "sessions" : 10,
+      "terminals" : 20,
+      "updates" : 400
+    },
+    {
+      "maxMs" : 0.80841600000000002,
+      "p50Ms" : 0.68304200000000004,
+      "p95Ms" : 0.721167,
+      "p99Ms" : 0.76637500000000003,
+      "sessions" : 20,
+      "terminals" : 40,
+      "updates" : 400
+    },
+    {
+      "maxMs" : 2.1254580000000001,
+      "p50Ms" : 1.7417499999999999,
+      "p95Ms" : 1.8482080000000001,
+      "p99Ms" : 2.0767090000000001,
+      "sessions" : 50,
+      "terminals" : 100,
+      "updates" : 400
+    },
+    {
+      "maxMs" : 8.2260000000000009,
+      "p50Ms" : 7.041417,
+      "p95Ms" : 7.3428750000000003,
+      "p99Ms" : 7.6873750000000003,
+      "sessions" : 200,
+      "terminals" : 400,
+      "updates" : 400
+    }
+  ],
+  "failures" : [
+
+  ],
+  "machine" : {
+    "arch" : "arm64",
+    "cpus" : 14,
+    "date" : "2026-10-20T11:43:38Z",
+    "os" : "Version 27.0.1 (Build 26A434)",
+    "quick" : false,
+    "swiftTerm" : "1.99.0 (2dad6a1)",
+    "ten" : true
+  },
+  "passed" : true
+}
