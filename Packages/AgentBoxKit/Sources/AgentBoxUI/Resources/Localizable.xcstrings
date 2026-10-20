@@ -9399,6 +9399,316 @@
           }
         }
       }
+    },
+    "Where do agents' computers run?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Where do agents' computers run?"
+          }
+        }
+      }
+    },
+    "Each subagent gets its own computer with a browser, so agents work side by side without touching your Mac.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Each subagent gets its own computer with a browser, so agents work side by side without touching your Mac."
+          }
+        }
+      }
+    },
+    "This Mac": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This Mac"
+          }
+        }
+      }
+    },
+    "Your cloud": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your cloud"
+          }
+        }
+      }
+    },
+    "Free. Computers run in Docker on this Mac.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Free. Computers run in Docker on this Mac."
+          }
+        }
+      }
+    },
+    "More computers at once and more power, on your own account.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More computers at once and more power, on your own account."
+          }
+        }
+      }
+    },
+    "up to %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "up to %lld"
+          }
+        }
+      }
+    },
+    "Cloud computers are in testing. Your choices are saved and used as soon as it ships.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cloud computers are in testing. Your choices are saved and used as soon as it ships."
+          }
+        }
+      }
+    },
+    "Provider": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Provider"
+          }
+        }
+      }
+    },
+    "Account": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Account"
+          }
+        }
+      }
+    },
+    "Connect %@…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect %@…"
+          }
+        }
+      }
+    },
+    "How sign-in works": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How sign-in works"
+          }
+        }
+      }
+    },
+    "Sign in through your browser with single sign-on. Racky never sees your password.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign in through your browser with single sign-on. Racky never sees your password."
+          }
+        }
+      }
+    },
+    "Region": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Region"
+          }
+        }
+      }
+    },
+    "Pick the closest one: the computer's screen streams to you from there.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick the closest one: the computer's screen streams to you from there."
+          }
+        }
+      }
+    },
+    "Spending limit": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spending limit"
+          }
+        }
+      }
+    },
+    "per day": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "per day"
+          }
+        }
+      }
+    },
+    "per month": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "per month"
+          }
+        }
+      }
+    },
+    "At the limit Racky stops creating computers and shuts down the ones that would go over it.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "At the limit Racky stops creating computers and shuts down the ones that would go over it."
+          }
+        }
+      }
+    },
+    "At most": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "At most"
+          }
+        }
+      }
+    },
+    "computer at once": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "computer at once"
+          }
+        }
+      }
+    },
+    "computers at once": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "computers at once"
+          }
+        }
+      }
+    },
+    "About %@ per computer per hour. All of them running all day: %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About %@ per computer per hour. All of them running all day: %@."
+          }
+        }
+      }
+    },
+    "%@ console": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ console"
+          }
+        }
+      }
+    },
+    "Pricing": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pricing"
+          }
+        }
+      }
+    },
+    "Soon": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soon"
+          }
+        }
+      }
+    },
+    "%@ is coming soon.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is coming soon."
+          }
+        }
+      }
+    },
+    "New sessions": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New sessions"
+          }
+        }
+      }
+    },
+    "Computers run on this Mac": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Computers run on this Mac"
+          }
+        }
+      }
+    },
+    "Computers run in your cloud": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Computers run in your cloud"
+          }
+        }
+      }
+    },
+    "Cloud computers are in testing. Your choices are saved.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cloud computers are in testing. Your choices are saved."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

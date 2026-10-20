@@ -14,11 +14,17 @@ enum WhereMetrics {
     static let providerLogo: CGFloat = 26
     static let regionChipHeight: CGFloat = 44
     static let stepperButton: CGFloat = 24
-    static let stepperValue: CGFloat = 76
     static let ringWidth: CGFloat = 1.5
     static let compactBar: CGFloat = 44
     static let pulse: CGFloat = 7
     static let stagger: Double = 0.04
+    static let openMaxHeight: CGFloat = 560
+    static let heroText: CGFloat = 520
+    static let badge: CGFloat = 22
+    static let check: CGFloat = 18
+    static let stepBadge: CGFloat = 20
+    static let dividerInset: CGFloat = 44
+    static let stepperNumber: CGFloat = 28
 }
 
 /// "Where do agents' computers run?" (BK-12, P27): a escolha principal é local (Docker no Mac) ou a nuvem do próprio usuário. Com
@@ -37,7 +43,7 @@ struct ComputersWhereView: View {
                 CompactWhereBar(settings: settings)
                 if settings.computersWhereOpen {
                     ScrollView { chooser.padding(.vertical, DS.Space.s6) }
-                        .frame(maxHeight: 560)
+                        .frame(maxHeight: WhereMetrics.openMaxHeight)
                         .transition(MotionPolicy.shared.reduceMotion ? .opacity : .opacity.combined(with: .move(edge: .top)))
                     DS.Color.border.frame(height: DSMetrics.hairline)
                 }
@@ -67,7 +73,7 @@ struct ComputersWhereView: View {
             Text("Where do agents' computers run?", bundle: .module).dsFont(DS.Font.pageTitle).foregroundStyle(DS.Color.textPrimary)
             Text("Each subagent gets its own computer with a browser, so agents work side by side without touching your Mac.", bundle: .module)
                 .dsFont(DS.Font.dialogBody).foregroundStyle(DS.Color.textSecondary).multilineTextAlignment(.center)
-                .frame(maxWidth: 520)
+                .frame(maxWidth: WhereMetrics.heroText)
         }
     }
 
@@ -182,7 +188,7 @@ private struct WhereChoiceCard<Status: View>: View {
             Circle().strokeBorder(DS.Color.borderStrong)
             content()
         }
-        .frame(width: WhereMetrics.miniLogo + 6, height: WhereMetrics.miniLogo + 6)
+        .frame(width: WhereMetrics.badge, height: WhereMetrics.badge)
         .offset(y: WhereMetrics.choiceIcon / 2 - 6)
     }
 
@@ -195,7 +201,7 @@ private struct WhereChoiceCard<Status: View>: View {
                     .transition(.scale.combined(with: .opacity))
             }
         }
-        .frame(width: 18, height: 18)
+        .frame(width: WhereMetrics.check, height: WhereMetrics.check)
     }
 }
 
@@ -341,7 +347,7 @@ private struct CloudSetupView: View {
         .onAppear { shown = true }
     }
 
-    private var divider: some View { DS.Color.border.frame(height: DSMetrics.hairline).padding(.leading, DS.Space.s4 + 28) }
+    private var divider: some View { DS.Color.border.frame(height: DSMetrics.hairline).padding(.leading, WhereMetrics.dividerInset) }
 
     private func sectionLabel(_ title: LocalizedStringKey) -> some View {
         Text(title, bundle: .module).dsFont(DS.Font.sectionLabel).foregroundStyle(DS.Color.textTertiary).padding(.leading, DS.Space.s1)
@@ -417,7 +423,7 @@ private struct SetupRow<Control: View, Detail: View>: View {
         HStack(alignment: .top, spacing: DS.Space.s3) {
             Text(verbatim: "\(step)")
                 .dsFont(DS.Font.label).foregroundStyle(DS.Color.textSecondary)
-                .frame(width: 20, height: 20)
+                .frame(width: WhereMetrics.stepBadge, height: WhereMetrics.stepBadge)
                 .background(Circle().fill(DS.Color.secondary))
             VStack(alignment: .leading, spacing: DS.Space.s2) {
                 Text(verbatim: title).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary)
@@ -489,7 +495,7 @@ private struct LimitStepper: View {
                 Text(verbatim: value)
                     .dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary).monospacedDigit()
                     .contentTransition(.numericText())
-                    .frame(minWidth: WhereMetrics.stepperValue - 2 * WhereMetrics.stepperButton)
+                    .frame(minWidth: WhereMetrics.stepperNumber)
                     .animation(MotionPolicy.shared.animation(MotionTokens.Springs.snappy), value: value)
                 button("plus", "\(key)+")
             }
@@ -582,7 +588,7 @@ private struct CompactWhereBar: View {
             Spacer(minLength: DS.Space.s2)
             ActionButton(.computersWhereToggle, id: .computersWhereChange) {
                 HStack(spacing: DS.Space.s1) {
-                    Text(settings.computersWhereOpen ? "Done" : "Change", bundle: .module).dsFont(DS.Font.label)
+                    Text(settings.computersWhereOpen ? "Done" : "Change…", bundle: .module).dsFont(DS.Font.label)
                     Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold))
                         .rotationEffect(.degrees(settings.computersWhereOpen ? 180 : 0))
                 }
