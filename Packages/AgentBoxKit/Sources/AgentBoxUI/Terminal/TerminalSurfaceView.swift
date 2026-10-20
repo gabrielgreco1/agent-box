@@ -30,6 +30,10 @@ public final class TerminalSurfaceView: TerminalView {
     private let log = LogFacade(.app, category: "terminal")
     /// `true` se o renderer Metal subiu (AR-708); `false` registra o fallback para CoreGraphics.
     public private(set) var metalEnabled = false
+    /// Caminhos de arquivo clicáveis (hover com ⌘, clique); URLs são do SwiftTerm.
+    private(set) var links: TerminalLinkInteraction!
+    /// ⌘ estava apertado no `mouseDown` em curso: o programa não recebe nem press, nem arrasto, nem release dele.
+    private var commandPress = false
 
     public init(appearance: TerminalAppearance = TerminalAppearance()) {
         let options = TerminalOptions(cols: 80, rows: 25, cursorStyle: .blinkBlock, scrollback: appearance.scrollback)
@@ -46,6 +50,7 @@ public final class TerminalSurfaceView: TerminalView {
             log.error("Metal unavailable, using CoreGraphics: \(error)")
         }
         if !metalEnabled { log.publicError("terminal renderer fell back to CoreGraphics") }
+        links = TerminalLinkInteraction(surface: self)
     }
 
     @available(*, unavailable) required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }  // required init?(coder:) não usado
@@ -53,7 +58,41 @@ public final class TerminalSurfaceView: TerminalView {
     /// Clique no terminal sempre devolve o foco à superfície (um overlay aberto engole o clique antes, no hit test).
     public override func mouseDown(with event: NSEvent) {
         takeFocus()
-        super.mouseDown(with: event)
+        if links.claimClick(event) { return }
+        commandPress = event.modifierFlags.contains(.command)
+        withLocalMouse { super.mouseDown(with: event) }
+    }
+
+    public override func mouseDragged(with event: NSEvent) {
+        if links.hasClaimedClick { return }
+        withLocalMouse { super.mouseDragged(with: event) }
+    }
+
+    public override func mouseUp(with event: NSEvent) {
+        if links.hasClaimedClick { return links.finishClaimedClick(event) }
+        withLocalMouse { super.mouseUp(with: event) }
+        commandPress = false
+    }
+
+    /// ⌘-clique é do app mesmo com o programa pedindo mouse (TUIs como o Claude Code): sem `allowMouseReporting` o SwiftTerm
+    /// trata o clique localmente, e `mouseUp` abre o link sob o cursor em vez de mandar o release ao PTY.
+    private func withLocalMouse(_ body: () -> Void) {
+        guard commandPress else { return body() }
+        let previous = allowMouseReporting
+        allowMouseReporting = false
+        defer { allowMouseReporting = previous }
+        body()
+    }
+
+    /// Pasta para resolver caminhos relativos (cwd do terminal); o runtime liga isto ao Files/OSC 7.
+    public var linkCwd: () -> String? {
+        get { links.cwd }
+        set { links.cwd = newValue }
+    }
+    /// Abre um caminho clicado (⌘ = visualizador do app, ⇧⌘ = app padrão).
+    public var onOpenFile: ((TerminalFileTarget, TerminalLinkOpenMode) -> Void)? {
+        get { links.onOpen }
+        set { links.onOpen = newValue }
     }
 
     /// Torna a surface first responder de qualquer jeito: descarta texto marcado preso (tecla morta do ABNT2) e, se o

@@ -207,6 +207,72 @@ import Testing
         #expect(opened.map(\.absoluteString) == ["https://example.com/path", "mailto:dev@example.com"])
     }
 
+    // MARK: Links com mouse (03 §4.1)
+
+    /// Evento de mouse na célula (col, row) da superfície, em coordenadas da janela.
+    private func mouse(_ type: NSEvent.EventType, col: Int, row: Int, in host: TerminalHostView, window: NSWindow, flags: NSEvent.ModifierFlags) -> NSEvent {
+        let surface = host.surface
+        let dims = surface.terminalDimensions
+        let optimal = surface.getOptimalFrameSize()
+        let size = CGSize(width: optimal.width / CGFloat(dims.cols), height: optimal.height / CGFloat(dims.rows))
+        let local = NSPoint(x: (CGFloat(col) + 0.5) * size.width, y: surface.bounds.height - (CGFloat(row) + 0.5) * size.height)
+        return NSEvent.mouseEvent(
+            with: type, location: surface.convert(local, to: nil), modifierFlags: flags, timestamp: 0, windowNumber: window.windowNumber,
+            context: nil, eventNumber: 1, clickCount: 1, pressure: 1)!
+    }
+
+    @Test func commandClickOnURLOpensEvenWhenTheProgramReportsMouse() async {
+        let (host, window, out) = make()
+        var opened: [URL] = []
+        host.surface.openURL = { opened.append($0) }
+        await feedOffMain(host.surface, "\u{1b}[?1000h\u{1b}[?1006hhttps://example.com/x")
+        out.reset()
+        host.surface.mouseDown(with: mouse(.leftMouseDown, col: 4, row: 0, in: host, window: window, flags: [.command]))
+        host.surface.mouseUp(with: mouse(.leftMouseUp, col: 4, row: 0, in: host, window: window, flags: [.command]))
+        #expect(opened.map(\.absoluteString) == ["https://example.com/x"])
+        #expect(out.all.isEmpty)  // nem press nem release chegam ao programa
+        // Sem ⌘ o clique continua sendo do programa.
+        host.surface.mouseDown(with: mouse(.leftMouseDown, col: 4, row: 0, in: host, window: window, flags: []))
+        host.surface.mouseUp(with: mouse(.leftMouseUp, col: 4, row: 0, in: host, window: window, flags: []))
+        #expect(opened.count == 1)
+        #expect(!out.all.isEmpty)
+    }
+
+    @Test func commandClickOnExistingPathOpensItAndPlainClickDoesNot() async throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("link-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try "x".write(to: dir.appendingPathComponent("a.txt"), atomically: true, encoding: .utf8)
+        let cwd = dir.resolvingSymlinksInPath().path
+        let (host, window, out) = make()
+        host.surface.linkCwd = { cwd }
+        var opened: [(TerminalFileTarget, TerminalLinkOpenMode)] = []
+        host.surface.onOpenFile = { opened.append(($0, $1)) }
+        await feedOffMain(host.surface, "\u{1b}[?1000h\u{1b}[?1006hsee a.txt:7 and nope.txt")
+        out.reset()
+        func hover(col: Int, flags: NSEvent.ModifierFlags) async {
+            host.surface.links.mouseMoved(with: mouse(.mouseMoved, col: col, row: 0, in: host, window: window, flags: flags))
+            for _ in 0..<100 where (host.surface.links.hoveredTarget != nil) != flags.contains(.command) || col > 20 {
+                try? await Task.sleep(for: .milliseconds(10))
+            }
+        }
+        await hover(col: 5, flags: [])
+        #expect(host.surface.links.hoveredTarget == nil)  // sem ⌘ não há link
+        await hover(col: 5, flags: [.command])
+        #expect(host.surface.links.hoveredTarget == TerminalFileTarget(path: cwd + "/a.txt", line: 7, column: nil, isDirectory: false))
+        host.surface.mouseDown(with: mouse(.leftMouseDown, col: 5, row: 0, in: host, window: window, flags: [.command, .shift]))
+        host.surface.mouseUp(with: mouse(.leftMouseUp, col: 5, row: 0, in: host, window: window, flags: [.command, .shift]))
+        #expect(opened.count == 1 && opened[0].1 == .system && opened[0].0.line == 7)
+        #expect(out.all.isEmpty)
+        host.surface.mouseDown(with: mouse(.leftMouseDown, col: 5, row: 0, in: host, window: window, flags: [.command]))
+        host.surface.mouseUp(with: mouse(.leftMouseUp, col: 5, row: 0, in: host, window: window, flags: [.command]))
+        #expect(opened.count == 2 && opened[1].1 == .inApp)
+        // Caminho que não existe nunca vira link.
+        host.surface.links.mouseMoved(with: mouse(.mouseMoved, col: 20, row: 0, in: host, window: window, flags: [.command]))
+        try? await Task.sleep(for: .milliseconds(150))
+        #expect(host.surface.links.hoveredTarget == nil)
+    }
+
     @Test func zoomStepsAndClamps() {
         let (host, _, _) = make()
         host.fontBigger()

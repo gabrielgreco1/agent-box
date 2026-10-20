@@ -93,6 +93,10 @@ final class TerminalRuntime {
     var onFocusRequested: ((UUID) -> Void)?
     /// Menu de contexto de um pane (03 §4.5), montado por quem conhece as ações.
     var onPaneContext: ((UUID, CGPoint) -> Void)?
+    /// Pasta atual do terminal, para resolver caminhos relativos clicáveis na saída.
+    var cwdProvider: ((UUID) -> String?)?
+    /// ⌘-clique (visualizador) ou ⇧⌘-clique (app padrão) num caminho da saída do terminal.
+    var onOpenFile: ((UUID, TerminalFileTarget, TerminalLinkOpenMode) -> Void)?
     var onConnectionChange: ((Connection) -> Void)?
     /// Onde o daemon roda (LaunchAgent ou filho) e, no fallback, por quê (Settings › General mostra o aviso de aprovação).
     private(set) var hostMode: DaemonHostMode = .childProcess(reason: nil)
@@ -304,6 +308,11 @@ final class TerminalRuntime {
         host.surface.onContextMenu = { [weak self] point in
             self?.onFocusRequested?(terminalID)
             self?.onPaneContext?(terminalID, point)
+        }
+        host.surface.linkCwd = { [weak self] in self?.cwdProvider?(terminalID) }
+        host.surface.onOpenFile = { [weak self] target, mode in
+            self?.onFocusRequested?(terminalID)
+            self?.onOpenFile?(terminalID, target, mode)
         }
         let entry = TerminalEntry(terminalID: terminalID, host: host)
         entries[terminalID] = entry

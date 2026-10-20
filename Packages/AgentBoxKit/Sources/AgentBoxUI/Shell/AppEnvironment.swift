@@ -367,7 +367,32 @@ public final class AppEnvironment {
         }
         workspace.addListener { [files] in files.recompute() }
         workspace.onCwd = { [files] terminal, path in files.noteCwd(path, terminal: terminal, source: .osc7) }
+        workspace.runtime.cwdProvider = { [files, workspace] id in
+            files.trackedCwd(for: id) ?? workspace.terminal(id)?.cwd ?? workspace.currentSessionID.flatMap { workspace.sessionLookup($0)?.folderPath }
+        }
+        workspace.runtime.onOpenFile = { [weak self] _, target, mode in self?.openTerminalFile(target, mode: mode) }
         files.recompute()
+    }
+
+    /// Caminho clicado na saída do terminal: ⌘ abre no visualizador do painel Files (pasta: mostra na árvore); ⇧⌘ no app padrão
+    /// (pasta: Finder). O que o sistema executaria em vez de mostrar só é revelado no Finder.
+    func openTerminalFile(_ target: TerminalFileTarget, mode: TerminalLinkOpenMode) {
+        let url = URL(fileURLWithPath: target.path)
+        switch mode {
+        case .system:
+            if TerminalLinkPolicy.opensSafelyWithDefaultApp(target.path, isDirectory: target.isDirectory) {
+                NSWorkspace.shared.open(url)
+            } else {
+                NSWorkspace.shared.activateFileViewerSelecting([url])
+            }
+        case .inApp:
+            rightPanel.show(.files)
+            if target.isDirectory {
+                if !files.revealFolder(target.path) { NSWorkspace.shared.activateFileViewerSelecting([url]) }
+            } else {
+                files.open(target.path, line: target.line)
+            }
+        }
     }
 
     /// Liga o controlador de computadores: ações `computer.*`, ⌘W fecha a página do viewer e a notificação de pedido de ajuda.

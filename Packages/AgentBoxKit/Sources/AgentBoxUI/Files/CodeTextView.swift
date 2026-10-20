@@ -38,6 +38,8 @@ struct CodeTextView: NSViewRepresentable {
     let version: Int
     let matches: [NSRange]
     let current: Int
+    /// Linha (base 1) para onde rolar quando `version` muda (abrir `arquivo:linha` pelo terminal).
+    var line: Int?
 
     func makeNSView(context: Context) -> CodeScrollView { CodeScrollView() }
 
@@ -45,6 +47,7 @@ struct CodeTextView: NSViewRepresentable {
         view.apply(text: text, spans: spans, version: version)
         view.setMarks(marks)
         view.applyMatches(matches, current: current)
+        view.jump(to: line, version: version)
     }
 }
 
@@ -56,6 +59,7 @@ final class CodeScrollView: NSScrollView {
     private var appliedSpans = 0
     private var appliedMatches: [NSRange] = []
     private var appliedCurrent = -1
+    private var appliedJump = -1
     private var boundsObserver: (any NSObjectProtocol)?
 
     static let lineHeight: CGFloat = 18
@@ -139,6 +143,30 @@ final class CodeScrollView: NSScrollView {
     }
 
     func setMarks(_ marks: LineChangeMarks) { gutter.setMarks(marks) }
+
+    /// Rola até a linha (base 1) uma vez por leitura (`version`) e a realça de leve; fora do texto, vai para a última linha.
+    func jump(to line: Int?, version: Int) {
+        guard let line, line > 0, version != appliedJump, let layoutManager = textView.layoutManager,
+            let storage = textView.textStorage, storage.length > 0
+        else { return }
+        appliedJump = version
+        let text = storage.string as NSString
+        var range = text.lineRange(for: NSRange(location: 0, length: 0))
+        var current = 1
+        while current < line, NSMaxRange(range) < text.length {
+            range = text.lineRange(for: NSRange(location: NSMaxRange(range), length: 0))
+            current += 1
+        }
+        layoutManager.removeTemporaryAttribute(.backgroundColor, forCharacterRange: NSRange(location: 0, length: text.length))
+        layoutManager.addTemporaryAttribute(.backgroundColor, value: CodeTheme.matchSoft, forCharacterRange: range)
+        appliedMatches = []
+        appliedCurrent = -1
+        layoutManager.ensureLayout(forCharacterRange: range)
+        let rect = layoutManager.boundingRect(forGlyphRange: layoutManager.glyphRange(forCharacterRange: range, actualCharacterRange: nil), in: textView.textContainer!)
+        let y = max(0, rect.minY + textView.textContainerOrigin.y - contentView.bounds.height / 3)
+        contentView.scroll(to: NSPoint(x: 0, y: y))
+        reflectScrolledClipView(contentView)
+    }
 
     func applyMatches(_ matches: [NSRange], current: Int) {
         guard matches != appliedMatches || current != appliedCurrent, let layoutManager = textView.layoutManager else { return }

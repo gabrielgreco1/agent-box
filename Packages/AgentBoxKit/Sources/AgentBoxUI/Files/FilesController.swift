@@ -41,6 +41,8 @@ struct FileViewerState: Equatable {
     /// Muda a cada (re)leitura: a view reaplica o texto.
     var version: Int
     var highlightLimited: Bool
+    /// Linha (base 1) para onde o visualizador rola ao abrir, vinda de `arquivo:linha` no terminal.
+    var targetLine: Int? = nil
 
     var name: String { (path as NSString).lastPathComponent }
 }
@@ -104,6 +106,7 @@ final class FilesController {
     @ObservationIgnored private var gitTask: Task<Void, Never>?
     @ObservationIgnored private var viewerTask: Task<Void, Never>?
     @ObservationIgnored private var viewerVersion = 0
+    @ObservationIgnored private var pendingLine: Int?
     @ObservationIgnored var treeDebounce: Duration = .milliseconds(250)
     @ObservationIgnored var gitDebounce: Duration = .milliseconds(300)
 
@@ -122,6 +125,9 @@ final class FilesController {
     }
 
     func terminalClosed(_ terminal: UUID) { cwds.forget(terminal) }
+
+    /// Último `cwd` informado por OSC 7/hooks para o terminal (caminhos relativos clicáveis no terminal partem daqui).
+    func trackedCwd(for terminal: UUID) -> String? { cwds.cwd(for: terminal) }
 
     /// Sessão, foco ou `cwd` mudaram: decide a raiz de novo (barato quando nada mudou).
     func recompute() {
@@ -331,17 +337,28 @@ final class FilesController {
 
     // MARK: Visualizador
 
-    func open(_ path: String) {
+    func open(_ path: String, line: Int? = nil) {
         viewerTask?.cancel()
         viewerVersion += 1
+        pendingLine = line
         let language = SyntaxLanguage.forFile(named: (path as NSString).lastPathComponent)
         let change = changes.change(for: path)
         viewer = FileViewerState(
             path: path, content: nil, language: language, lineCount: 0, marks: .none, spans: [], change: change, version: viewerVersion,
-            highlightLimited: false)
+            highlightLimited: false, targetLine: line)
         search = FileSearchState()
         tree?.reveal(path).forEach { load($0) }
         loadViewerContent(path: path)
+    }
+
+    /// Mostra uma pasta na árvore (clique no terminal): fecha o visualizador e expande até ela. `false` se está fora da raiz.
+    @discardableResult
+    func revealFolder(_ path: String) -> Bool {
+        guard let root = tree?.root, path == root || path.hasPrefix(root.hasSuffix("/") ? root : root + "/") else { return false }
+        closeViewer()
+        tree?.reveal(path + "/_").forEach { load($0) }
+        if let tree { expandedByRoot[tree.root] = tree.expanded }
+        return true
     }
 
     func closeViewer() {
@@ -373,7 +390,7 @@ final class FilesController {
             guard !Task.isCancelled, self.viewer?.path == path else { return }
             self.viewer = FileViewerState(
                 path: path, content: content, language: language, lineCount: lineCount, marks: marks, spans: spans, change: change,
-                version: version, highlightLimited: limited)
+                version: version, highlightLimited: limited, targetLine: self.pendingLine)
             self.updateSearchMatches()
         }
     }
@@ -398,6 +415,7 @@ final class FilesController {
     private func reloadViewerIfNeeded(paths: [String]?) {
         guard let path = viewer?.path else { return }
         if let paths, !paths.contains(path) { return }
+        pendingLine = nil  // reler não rola de novo para a linha pedida
         viewerVersion += 1
         loadViewerContent(path: path)
     }

@@ -131,7 +131,8 @@ struct FileViewerView: View {
         case .text(let text, let truncated):
             CodeTextView(
                 text: text, spans: viewer.spans, marks: viewer.marks, version: viewer.version,
-                matches: controller.search.isActive ? controller.search.matches : [], current: controller.search.current)
+                matches: controller.search.isActive ? controller.search.matches : [], current: controller.search.current,
+                line: viewer.targetLine)
                 .a11y(.rightPanelFilesViewerCode, kind: "text", value: "\(viewer.lineCount)")
             if truncated || viewer.highlightLimited {
                 Text("Showing only the first part of this large file.", bundle: .module)
