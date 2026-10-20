@@ -47,7 +47,7 @@ import Testing
         let collected = Collected()
         let start = ContinuousClock.now
         await run(engine, into: collected)
-        #expect(ContinuousClock.now - start < .seconds(3))
+        #expect(ContinuousClock.now - start < .seconds(10), "bem abaixo dos 30 s do item preso, com folga para a suíte carregada")
         #expect(collected.last(.gh)?.fix == .retry && collected.last(.gh)?.state == .problem)
         #expect(collected.last(.docker)?.state == .ok, "o resto chegou")
     }

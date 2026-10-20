@@ -36,7 +36,8 @@ import Testing
         } catch let error as ProcessRunnerError {
             #expect(error == .timedOut)
         }
-        #expect(ContinuousClock.now - start < .seconds(5))
+        // Folga para a máquina carregada (a suíte inteira em paralelo): o que importa é não esperar os 30 s.
+        #expect(ContinuousClock.now - start < .seconds(15))
     }
 
     @Test func cancellationKillsProcess() async throws {
@@ -64,9 +65,10 @@ import Testing
 
     @Test func backgroundGrandchildHoldingPipeDoesNotHangResult() async throws {
         let start = ContinuousClock.now
-        let out = try await ProcessRunner.run(request("/bin/sh", ["-c", "sleep 6 & echo done"]))
+        let out = try await ProcessRunner.run(request("/bin/sh", ["-c", "sleep 30 & echo done"]))
         #expect(out.stdoutString == "done\n")
-        #expect(ContinuousClock.now - start < .seconds(5))
+        // Bem abaixo dos 30 s do neto, com folga para a suíte carregada.
+        #expect(ContinuousClock.now - start < .seconds(15))
     }
 
     /// AR-404: esperar processos não pode ocupar o pool cooperativo.

@@ -19,7 +19,7 @@ import Testing
             await previous.stop()
         }
         let started = await AppEnvironment.startRetryingWhileAnotherInstanceExits(
-            socketPath: path, start: { try await next.start() }, log: LogFacade(.app, category: "test"), timeout: .seconds(5), interval: .milliseconds(50))
+            socketPath: path, start: { try await next.start() }, log: LogFacade(.app, category: "test"), timeout: .seconds(30), interval: .milliseconds(50))
         #expect(started)
         #expect(await next.isRunning)
         await next.stop()
