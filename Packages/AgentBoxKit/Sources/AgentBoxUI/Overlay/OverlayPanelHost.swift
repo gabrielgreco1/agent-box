@@ -168,6 +168,42 @@ final class OverlayHostingView: NSHostingView<AnyView> {
         self.toasts = toasts
         super.init(rootView: AnyView(OverlayPanelHost(router: router, toasts: toasts, registry: registry, elements: elements)))
         safeAreaRegions = []
+        trackCursorOwnership()
+    }
+
+    // MARK: Cursor
+
+    /// Com overlay aberto o cursor é a seta: sem isto o terminal por baixo (SwiftTerm, área de rastreamento `.activeAlways`)
+    /// punha o "I" de texto sobre os botões do composer e dos diálogos.
+    private func trackCursorOwnership() {
+        let host = CursorHostBox(self)
+        withObservationTracking {
+            _ = router.capturesInput
+        } onChange: {
+            Task { @MainActor in
+                guard let view = host.view else { return }
+                view.window?.invalidateCursorRects(for: view)
+                if view.router.capturesInput { NSCursor.arrow.set() }
+                view.trackCursorOwnership()
+            }
+        }
+    }
+
+    override func resetCursorRects() {
+        super.resetCursorRects()
+        if router.capturesInput { addCursorRect(bounds, cursor: .arrow) }
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if !trackingAreas.contains(where: { $0.userInfo?["overlayCursor"] != nil }) {
+            addTrackingArea(NSTrackingArea(
+                rect: .zero, options: [.cursorUpdate, .activeAlways, .inVisibleRect], owner: self, userInfo: ["overlayCursor": true]))
+        }
+    }
+
+    override func cursorUpdate(with event: NSEvent) {
+        if router.capturesInput { NSCursor.arrow.set() } else { super.cursorUpdate(with: event) }
     }
 
     /// Exigido pela superclasse; o host sempre nasce por `init(router:...)`. Aqui o roteador é vazio e nunca é usado.
@@ -235,4 +271,10 @@ final class OverlayHostingView: NSHostingView<AnyView> {
 
     override var previousValidKeyView: NSView? { router.capturesInput ? self : super.previousValidKeyView }
     override var nextValidKeyView: NSView? { router.capturesInput ? self : super.nextValidKeyView }
+}
+
+/// Referência fraca ao host do overlay para o `onChange` (`@Sendable`) da observação do cursor.
+private final class CursorHostBox: @unchecked Sendable {  // SAFETY: `view` só é lido dentro de `Task { @MainActor }`.
+    weak var view: OverlayHostingView?
+    init(_ view: OverlayHostingView) { self.view = view }
 }
