@@ -442,6 +442,7 @@ Pedidos do dono depois do primeiro uso real. Só tarefas anotadas; a ordem e o i
 |---|---|---|
 | BK-11 Outro modelo para o subagente | Escolher o modelo/CLI de cada subagente: por exemplo um subagente no Codex, ou com uma API de terceiros (DeepSeek e afins via endpoint compatível). Precisa de desenho: como o pai Claude delega para um worker que não é Claude (worker leve da V11-B? CLI diferente por slot?), credenciais no Vault, custo por modelo | V11-B, V11-C |
 | BK-12 Computadores na nuvem | Rodar os computadores fora do Mac: conta AWS, Cloudflare e outros provedores ligados por uma UI simples (login, região, limite como "no máximo 5 na AWS"); o mesmo container/compose sobe lá em vez do Docker local; viewer, egress e ferramentas iguais; custo visível | T3-01, T3-09 |
+| BK-13 Gatilho de spawn no Codex e no OpenCode | Hoje só o Claude tem o gatilho `PreToolUse` em `Agent|Task` (F12: "Give this subagent a computer?"). No Codex e no OpenCode o modo Ask já pede aprovação em `boxes_reserve`; falta o gatilho para subagente comum que vai mexer com web. Precisa gravar os payloads reais (`PreToolUse` do Codex via `-c hooks…` com trust inline; `tool.execute.before` de plugin no OpenCode) antes de codar: Codex com cota (rodar poucas vezes), OpenCode só com modelo grátis | S-05 (payloads do Codex) |
 
 
 #### 4.4c Plano de fases do BK-12 (P27; estudo em `study/cloud-computers.md` §9.3)
