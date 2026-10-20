@@ -278,31 +278,6 @@ struct PaneCardView: View {
     }
 }
 
-/// Sessão sem tabs (03 §4.7): coluna de 320 centralizada.
-struct PaneEmptyView: View {
-    let model: WorkspaceModel
-
-    var body: some View {
-        VStack(spacing: DS.Space.s3) {
-            Text(String(localized: "No terminals open in \(model.session?.title ?? "")", bundle: .module))
-                .dsFont(DS.Font.body)
-                .foregroundStyle(DS.Color.textSecondary)
-                .multilineTextAlignment(.center)
-            VStack(spacing: DS.Space.s2) {
-                DSButton(.tabNewAgent, id: .paneEmptyNewAgent, "New Claude Code Tab", variant: .secondary, size: .sm, keycap: nil)
-                DSButton(.tabNewTerminal, id: .paneEmptyNewTerminal, "New Terminal", variant: .ghost, size: .sm)
-                if model.hasClosedTabs {
-                    DSButton(.tabReopen, id: .paneEmptyReopen, "Reopen Closed Tab", variant: .ghost, size: .sm)
-                }
-            }
-        }
-        .frame(width: DSMetrics.emptyStateMaxWidth)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(DS.Color.canvas)
-        .a11y(.paneEmpty, kind: "container")
-    }
-}
-
 extension ProviderAdapters {
     /// Nome do agente na UI ("Claude Code").
     static func name(_ provider: TerminalProvider) -> String { adapter(for: provider).displayName }

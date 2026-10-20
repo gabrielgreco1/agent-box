@@ -205,7 +205,7 @@ final class WorkspaceViewController: NSViewController {
         super.init(nibName: nil, bundle: nil)
         let blocked: () -> Bool = { [overlays = env.overlays] in overlays.blocksTerminalInput }
         let landing = ChromeHostingView(
-            content: LandingView(automationOn: env.automationEnabled).environment(\.elementStore, env.elements)
+            content: LandingView(automationOn: env.automationEnabled, sidebar: env.sidebar).environment(\.elementStore, env.elements)
                 .environment(\.actionRegistry, env.registry).environment(\.a11yParent, .windowMain))
         landing.inputBlocked = blocked
         let tabRow = ChromeHostingView(

@@ -160,6 +160,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `pane.empty.reopen`
 - `pane.empty.start`
 - `pane.empty.resume`
+- `pane.empty.agent.<provider>`
 
 ### Tabs
 
@@ -546,6 +547,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `landing.cloneProject`
 - `landing.newCleanSession`
 - `landing.newSession`
+- `landing.recent.<sessionId>`
 
 ### Menu bar
 

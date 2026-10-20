@@ -1052,6 +1052,11 @@ extension A11yID {
         A11yID(unchecked: "pane.divider.\(A11yID.segment(id))")
     }
 
+    /// `pane.empty.agent.<provider>`
+    public static func paneEmptyAgent(_ provider: String) -> A11yID {
+        A11yID(unchecked: "pane.empty.agent.\(A11yID.segment(provider))")
+    }
+
     /// `subtabs.computer.<computerId>`
     public static func subtabsComputer(_ computerId: String) -> A11yID {
         A11yID(unchecked: "subtabs.computer.\(A11yID.segment(computerId))")
@@ -1517,6 +1522,11 @@ extension A11yID {
         A11yID(unchecked: "overlay.newBatch.allowedProxies.\(A11yID.segment(proxy))")
     }
 
+    /// `landing.recent.<sessionId>`
+    public static func landingRecent(_ sessionId: String) -> A11yID {
+        A11yID(unchecked: "landing.recent.\(A11yID.segment(sessionId))")
+    }
+
     /// `menuBar.item.<sessionId>`
     public static func menuBarItem(_ sessionId: String) -> A11yID {
         A11yID(unchecked: "menuBar.item.\(A11yID.segment(sessionId))")
@@ -1678,6 +1688,7 @@ extension A11yID {
         A11yIDSpec(pattern: "pane.empty.reopen", surface: "Panes"),
         A11yIDSpec(pattern: "pane.empty.start", surface: "Panes"),
         A11yIDSpec(pattern: "pane.empty.resume", surface: "Panes"),
+        A11yIDSpec(pattern: "pane.empty.agent.<provider>", surface: "Panes"),
         A11yIDSpec(pattern: "tabs.dropIndicator", surface: "Tabs"),
         A11yIDSpec(pattern: "subtabs", surface: "Tabs"),
         A11yIDSpec(pattern: "subtabs.terminal", surface: "Tabs"),
@@ -2010,6 +2021,7 @@ extension A11yID {
         A11yIDSpec(pattern: "landing.cloneProject", surface: "Landing"),
         A11yIDSpec(pattern: "landing.newCleanSession", surface: "Landing"),
         A11yIDSpec(pattern: "landing.newSession", surface: "Landing"),
+        A11yIDSpec(pattern: "landing.recent.<sessionId>", surface: "Landing"),
         A11yIDSpec(pattern: "menuBar.icon", surface: "Menu bar"),
         A11yIDSpec(pattern: "menuBar.item.<sessionId>", surface: "Menu bar"),
         A11yIDSpec(pattern: "menuBar.open", surface: "Menu bar"),

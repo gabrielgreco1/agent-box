@@ -9251,6 +9251,72 @@
           }
         }
       }
+    },
+    "Run coding agents side by side, and give each subagent its own computer.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run coding agents side by side, and give each subagent its own computer."
+          }
+        }
+      }
+    },
+    "Work in a folder or repository you already have.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Work in a folder or repository you already have."
+          }
+        }
+      }
+    },
+    "Pick one of your repositories or paste a URL.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick one of your repositories or paste a URL."
+          }
+        }
+      }
+    },
+    "An empty folder, ready for an agent in one click.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An empty folder, ready for an agent in one click."
+          }
+        }
+      }
+    },
+    "Recent sessions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recent sessions"
+          }
+        }
+      }
+    },
+    "No terminals open. Start an agent in this session:": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No terminals open. Start an agent in this session:"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
