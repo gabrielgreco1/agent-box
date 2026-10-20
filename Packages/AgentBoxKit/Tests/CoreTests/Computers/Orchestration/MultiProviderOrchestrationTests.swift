@@ -74,6 +74,18 @@ private func render(_ label: String, _ plan: LaunchPlan, env: [String] = []) -> 
         #expect((config["tools"] as? [String: Bool]) == ["abx-*": false])
     }
 
+    @Test func openCodeParentCanReadTheRunFoldersWithoutAsking() throws {
+        var options = OrchestrationInjectionBuilder.Options()
+        options.workerSlots = 1
+        options.readableDirectories = ["/tmp/ab/computers/runs"]
+        let bundle = try OrchestrationInjectionBuilder.make(parentID: parent, helperPath: helper, options: options, provider: .opencode)
+        let rendered = try #require(bundle.openCode).render(launchDirectory: LaunchSamples.launchDirectory)
+        let raw = try #require(rendered.environment[OpenCodeOrchestration.environmentName])
+        let config = try #require(try JSONSerialization.jsonObject(with: Data(raw.utf8)) as? [String: Any])
+        let permission = try #require(config["permission"] as? [String: [String: String]])
+        #expect(permission["external_directory"] == ["/tmp/ab/computers/runs/*": "allow"])
+    }
+
     @Test func noOrchestrationLeavesOpenCodeUntouched() throws {
         let plan = try LaunchSamples.plan(LaunchSpec(provider: .opencode), capabilities: LaunchSamples.helpCapabilities(.opencode), slice: .slice2, injection: nil)
         #expect(plan.environment[OpenCodeOrchestration.environmentName] == nil && plan.files.isEmpty)

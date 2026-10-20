@@ -18,6 +18,7 @@ public final class ComputerOrchestrator: Sendable {
     public let helperPath: String
     public let server: ComputerMCPServer
     private let store: AgentBoxStore?
+    private let runsRoot: URL
 
     /// `waitSeconds`: quanto uma chamada de `boxes_reserve` espera a decisão do Ask antes de devolver `pending` (45 s no app).
     public init(
@@ -27,6 +28,7 @@ public final class ComputerOrchestrator: Sendable {
     ) {
         self.helperPath = helperPath
         self.store = store
+        self.runsRoot = runsRoot
         self.provisioning = provisioning
         let hub = ComputerHub()
         self.hub = hub
@@ -72,6 +74,8 @@ public final class ComputerOrchestrator: Sendable {
         precondition(info.mode.isOn, "prepareParent só vale com Subagent computers ligado")
         var info = info
         if info.proxy == nil, let session = info.sessionID { info.proxy = await parents.proxy(forSession: session) }
+        var options = options
+        if info.provider == .opencode { options.readableDirectories.append(runsRoot.standardizedFileURL.path) }
         var bundle = try OrchestrationInjectionBuilder.make(parentID: info.parentID, helperPath: helperPath, options: options, provider: info.provider)
         bundle.spawnGuardMode = info.mode
         await parents.register(info)

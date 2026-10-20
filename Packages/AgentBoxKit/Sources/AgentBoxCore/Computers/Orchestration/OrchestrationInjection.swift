@@ -171,6 +171,8 @@ public enum OrchestrationInjectionBuilder {
         public var workerModel: String?
         /// Regras `deny` extras além de `Skill(agentbox)`.
         public var extraDenyRules: [String] = []
+        /// OpenCode: pastas fora do projeto que o pai pode ler sem pedir permissão (as pastas dos runs, onde estão os `result.json`).
+        public var readableDirectories: [String] = []
         public init() {}
     }
 
@@ -261,7 +263,8 @@ public enum OrchestrationInjectionBuilder {
             bundle.codex = CodexOrchestration(
                 helperPath: helperPath, parentID: parentID, parentCapability: capability, poolID: poolID, poolCapability: poolCapability, workers: workers)
         } else {
-            bundle.openCode = OpenCodeOrchestration(helperPath: helperPath, parentID: parentID, parentCapability: capability, workers: workers)
+            bundle.openCode = OpenCodeOrchestration(
+                helperPath: helperPath, parentID: parentID, parentCapability: capability, workers: workers, readableDirectories: options.readableDirectories)
         }
         return bundle
     }

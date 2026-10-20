@@ -45,10 +45,11 @@ extension OrchestrationText {
         cannot be created: read `reason` (`docker_unavailable`: tell the user to open Docker). If the answer is `{"status":"pending"}` the \
         user is deciding: call `boxes_reserve` again with the same arguments until it answers. If it is denied, do not retry.
         3. **Write one brief per target** (template below), with the computer name.
-        4. **Spawn all workers**: one `spawn_agent` call per computer with `agent_type` set to the `worker` of that box, `message` set to the \
-        brief and `fork_context` false. Never spawn a worker for a box that is not yours.
-        5. **Wait** with `wait_agent` on the agent ids (long timeouts, never a tight loop). `boxes_status` shows state, queue position and \
-        last DOING note.
+        4. **Spawn all workers**: one `spawn_agent` call per computer with `agent_type` set to the `worker` of that box (this is required: \
+        the user asked for it), `message` set to the brief, and no inherited history (`fork_context` false, or `fork_turns` "none"; a short \
+        `task_name` such as the computer name if the tool asks for one). Never spawn a worker for a box that is not yours.
+        5. **Wait** with `wait_agent` (pass the agent ids if the tool asks for them; long timeouts, never a tight loop). `boxes_status` shows \
+        state, queue position and last DOING note.
         6. **Collect.** Each worker ends with a short summary and the path of its `result.json`. Read it. The validation block says which claims \
         are `verified`, `cited_missing` or `not_verified`: report unverified claims as unverified, never as fact.
         7. **Release** what is left with `boxes_release(names: [...])`. Workers release their own computer when they finish.
@@ -192,13 +193,15 @@ public struct OpenCodeOrchestration: Sendable, Equatable {
     public var workers: [WorkerSlot]
     public var instructions: String
     public var workerPrompt: String
+    /// Pastas fora do projeto liberadas para leitura (`permission.external_directory`): sem isso o OpenCode pergunta ao pai ao abrir o `result.json`.
+    public var readableDirectories: [String]
 
     public init(
-        helperPath: String, parentID: String, parentCapability: String, workers: [WorkerSlot],
+        helperPath: String, parentID: String, parentCapability: String, workers: [WorkerSlot], readableDirectories: [String] = [],
         instructions: String = OrchestrationText.openCodeInstructions, workerPrompt: String = OrchestrationText.workerPrompt
     ) {
         self.helperPath = helperPath; self.parentID = parentID; self.parentCapability = parentCapability
-        self.workers = workers; self.instructions = instructions; self.workerPrompt = workerPrompt
+        self.workers = workers; self.instructions = instructions; self.workerPrompt = workerPrompt; self.readableDirectories = readableDirectories
     }
 
     /// Variável de ambiente com a config inline (funde com a do usuário; nada é escrito em `~/.config/opencode`).
@@ -229,12 +232,15 @@ public struct OpenCodeOrchestration: Sendable, Equatable {
                 "tools": ["\(name)_*": true, "\(OrchestrationText.parentServerName)_*": false, "task": false],
             ] as [String: Any]
         }
-        let config: [String: Any] = [
+        var config: [String: Any] = [
             "mcp": mcp, "agent": agents,
             "instructions": ["\(dir)/\(OrchestrationText.openCodeInstructionsFile)"],
             "tools": ["abx-*": false],
             "experimental": ["mcp_timeout": Self.mcpTimeoutMs],
         ]
+        if !readableDirectories.isEmpty {
+            config["permission"] = ["external_directory": Dictionary(uniqueKeysWithValues: readableDirectories.map { ("\($0)/*", "allow") })]
+        }
         let data = try JSONSerialization.data(withJSONObject: config, options: [.sortedKeys, .withoutEscapingSlashes])
         return ([Self.environmentName: String(decoding: data, as: UTF8.self)], [LaunchFile(name: OrchestrationText.openCodeInstructionsFile, contents: Data(instructions.utf8))])
     }
