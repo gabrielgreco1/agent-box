@@ -74,7 +74,8 @@ enum FilesFixture {
     }
 
     /// Espera uma condição do main actor (a árvore carrega fora do main).
-    static func wait(timeout: Duration = .seconds(5), _ condition: @MainActor () -> Bool) async -> Bool {
+    /// 15 s: sob a suíte paralela carregada o FSEvents atrasa mais que 5 s (só pesa quando a condição demora).
+    static func wait(timeout: Duration = .seconds(15), _ condition: @MainActor () -> Bool) async -> Bool {
         let deadline = ContinuousClock.now + timeout
         while ContinuousClock.now < deadline {
             if condition() { return true }

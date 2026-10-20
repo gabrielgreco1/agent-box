@@ -125,11 +125,15 @@ final class ComposerController {
 
     /// Um projeto acabou de ser clonado (`Clone from GitHub…` aberto pelo combobox Project): seleciona-o no composer, que
     /// continua aberto com o que já foi digitado. Sem composer aberto não faz nada.
+    /// Clone terminou (pelo composer ou pela tela inicial): o próximo passo é a sessão nesse projeto, então o composer abre (ou
+    /// continua aberto) com o projeto clonado já escolhido. Espera o projeto chegar à sidebar (clone grande: o banco avisa
+    /// depois de alguns segundos; com 2 s a escolha se perdia em silêncio e o composer ficava em "No Project").
     func projectCloned(_ project: Project) {
-        guard let model, isOpen else { return }
         Task { @MainActor in
-            for _ in 0 ..< 100 where sidebar.project(project.id) == nil { try? await Task.sleep(for: .milliseconds(20)) }
-            guard self.model === model, isOpen else { return }
+            for _ in 0 ..< 300 where sidebar.project(project.id) == nil { try? await Task.sleep(for: .milliseconds(50)) }
+            guard sidebar.project(project.id) != nil else { return }
+            if !isOpen { _ = open() }
+            guard let model, isOpen else { return }
             model.setProject(project.id)
         }
     }

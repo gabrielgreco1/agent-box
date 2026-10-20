@@ -209,6 +209,16 @@ struct FakeGH: GitHubCommandRunning {
         #expect(condition(), "\(what)")
     }
 
+    /// Depois do clone o composer abre com o projeto clonado escolhido (o próximo passo é a sessão nele); o teste o fecha.
+    func expectComposerOnClonedProject(_ rig: Rig, named name: String) async throws {
+        try await wait("composer opens on the cloned project") {
+            guard let composer = rig.env.composer, let id = composer.model?.draft.projectID else { return false }
+            return rig.env.sidebar.project(id)?.name == name
+        }
+        _ = try await rig.registry.perform(.composerCancel, .press)
+        try await wait("composer closed") { rig.env.overlays.live.isEmpty }
+    }
+
     func openPanel(_ rig: Rig) async throws -> CloneRepoModel {
         let result = try await rig.registry.perform(.projectCloneFromGitHub, .press)
         #expect(result.message == "opened" && rig.controller.isOpen && rig.env.overlays.top?.spec.id == .overlayCloneRepo)
@@ -310,8 +320,8 @@ struct FakeGH: GitHubCommandRunning {
 
         let retry = try await rig.registry.perform(.dialogCloneRepoRetry, .press)
         #expect(retry.message.flatMap(UUID.init(uuidString:)) != nil)
-        try await wait("cloned on retry") { rig.env.overlays.live.isEmpty }
         try await wait("project in sidebar") { rig.env.sidebar.snapshot.projects.contains { $0.name == "platform" } }
+        try await expectComposerOnClonedProject(rig, named: "platform")
         #expect(rig.runner.calls == 2)
     }
 
@@ -336,8 +346,8 @@ struct FakeGH: GitHubCommandRunning {
         _ = try await rig.registry.perform(.dialogCloneRepoSetSource, .set("https://github.com/octocat/Hello-World"))
         #expect(model.submitReference?.displayName == "octocat/Hello-World")
         _ = try await rig.registry.perform(.dialogCloneRepoSubmit, .press)
-        try await wait("cloned") { rig.env.overlays.live.isEmpty }
         try await wait("project in sidebar") { rig.env.sidebar.snapshot.projects.contains { $0.name == "Hello-World" } }
+        try await expectComposerOnClonedProject(rig, named: "Hello-World")
         #expect(argv == nil)
 
         _ = try await rig.registry.perform(.projectCloneFromGitHub, .press)
