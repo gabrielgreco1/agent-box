@@ -54,6 +54,7 @@ final class WorkspaceModel {
     @ObservationIgnored var sessionLookup: (UUID) -> Session? = { _ in nil }
     @ObservationIgnored private var snapshot = StoreSnapshot()
     @ObservationIgnored private var listeners: [() -> Void] = []
+    @ObservationIgnored private var subagentModes: [UUID: SubagentComputersMode] = [:]
     @ObservationIgnored private var persistTail: Task<Void, Never>?
     @ObservationIgnored private var launching: Set<UUID> = []
     /// Fechados aqui: o snapshot do Store pode ainda mostrá-los por um instante e não deve ressuscitá-los.
@@ -161,6 +162,13 @@ final class WorkspaceModel {
         for id in states.keys where !alive.contains(id) { dropSession(id) }
         mergeNewRecords(from: snap)
         ensureLoaded()
+        // Modo "Subagent computers" mudou: o header do pane (ícone e "Restart to apply") lê a sessão por `sessionLookup`, fora da
+        // observação; sem isso o aviso só aparecia na próxima mudança do terminal (a primeira mensagem).
+        let modes = Dictionary(uniqueKeysWithValues: snap.sessions.map { ($0.id, $0.subagentComputers) })
+        if modes != subagentModes {
+            subagentModes = modes
+            notify()
+        }
     }
 
     /// Sessão já carregada: acrescenta tabs e terminais que outro escritor gravou depois (o Store grava a tab antes do terminal).
