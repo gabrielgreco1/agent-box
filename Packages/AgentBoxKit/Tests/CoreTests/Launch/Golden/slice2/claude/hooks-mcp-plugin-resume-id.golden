@@ -8,4 +8,4 @@ cwd: /Users/example/work/repo
 native_id: aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee
 shield_off: Skip permissions (--dangerously-skip-permissions)
 warnings: 
-files: settings.json mode=600 bytes=3444,mcp.json mode=600 bytes=65,plugin/.claude-plugin/plugin.json mode=600 bytes=23,plugin/skills/x/SKILL.md mode=600 bytes=16
+files: settings.json mode=600 bytes=3396,mcp.json mode=600 bytes=65,plugin/.claude-plugin/plugin.json mode=600 bytes=23,plugin/skills/x/SKILL.md mode=600 bytes=16
