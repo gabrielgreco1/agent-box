@@ -49,7 +49,7 @@ extension ComputerScheduler {
 
     /// SubagentStop (AC-422): o computador do filho para, o perfil e o run folder ficam. Se o filho já liberou, não há mais nada a fazer.
     func childStopped(_ childID: String) async {
-        guard let entry = entries.values.first(where: { $0.childID == childID }) else { return }
+        guard let entry = entries.values.first(where: { $0.childID == childID }) else { await checkBatches(); return }
         let name = entry.spec.name
         switch entry.phase {
         case .queued, .creating, .failed:
@@ -60,6 +60,7 @@ extension ComputerScheduler {
             await entry.computer.emit(.released(computer: name))
             await finish(entry.computer, keep24h: false)
         }
+        await checkBatches()
     }
 
     /// Onde está o run de `name` para este pai: na pasta da sessão dele, ou (sessão renomeada ou pai retomado) em qualquer pasta de
@@ -114,6 +115,7 @@ extension ComputerScheduler {
             archived.append(name)
         }
         await drain()
+        await checkBatches()
         return archived
     }
 

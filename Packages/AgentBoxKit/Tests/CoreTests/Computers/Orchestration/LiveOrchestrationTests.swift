@@ -135,7 +135,7 @@ struct LiveOrchestrationTests {
             let w = bundle.workers[slot - 1]
             return ScriptedAgent(socket: socketHome.socket, child: w.childID, capability: w.capability)
         }
-        #expect(try await parent.list() == ["boxes_reserve", "boxes_status", "boxes_release", "box_collect", "agent_message"])
+        #expect(try await parent.list() == ["boxes_reserve", "boxes_status", "boxes_release", "box_collect", "batch_status", "batch_collect", "agent_message"])
         #expect(try await worker(1).list().count == ToolCatalog.all.count)
 
         // =========================================================== fila com capacidade pela memória (display http: containers leves)

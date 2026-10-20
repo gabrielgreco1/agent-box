@@ -14,7 +14,8 @@ struct InboxView: View {
         Section {
             let help = model.helpItems
             let approvals = model.approvalItems
-            if feed.isEmpty, help.isEmpty, approvals.isEmpty {
+            let batches = model.inboxFilter == .needsYou ? [] : model.batchItems
+            if feed.isEmpty, help.isEmpty, approvals.isEmpty, batches.isEmpty {
                 DSEmptyState(String(localized: "Nothing needs you.", bundle: .module)) { EmptyView() }
                     .padding(.top, DS.Space.s6)
                     .a11y(.inboxEmpty, kind: "container", label: String(localized: "Nothing needs you.", bundle: .module))
@@ -24,8 +25,13 @@ struct InboxView: View {
                 approvalRows(approvals)
                 helpRows(help)
             }
+            if !batches.isEmpty, !feed.groups.contains(where: { $0.group == .done }) {
+                groupHeader(.done)
+                batchRows(batches)
+            }
             ForEach(feed.groups, id: \.group) { entry in
                 groupHeader(entry.group)
+                if entry.group == .done { batchRows(batches) }
                 if entry.group == .needsYou {
                     approvalRows(approvals)
                     helpRows(help)
@@ -45,6 +51,12 @@ struct InboxView: View {
     private func approvalRows(_ items: [ComputerApprovalRequest]) -> some View {
         ForEach(items) { request in
             ComputerApprovalRowView(request: request).transition(.opacity.combined(with: .offset(y: -DS.Space.s2)))
+        }
+    }
+
+    private func batchRows(_ items: [AttentionItem]) -> some View {
+        ForEach(items) { item in
+            BatchDoneRowView(item: item).transition(.opacity.combined(with: .offset(y: -DS.Space.s2)))
         }
     }
 

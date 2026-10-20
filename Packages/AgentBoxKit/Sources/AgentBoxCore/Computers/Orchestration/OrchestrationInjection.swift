@@ -55,9 +55,9 @@ public enum OrchestrationText {
         5. **Wait.** You are notified as each background subagent finishes. Meanwhile `boxes_status` shows state, queue position, last
            DOING note and usage; poll it sparingly, never in a tight loop and never with `sleep`.
         6. **Collect.** Each worker ends with a short summary and the path of its `result.json` (under the run folder it received from
-           `box_claim`). Call `box_collect(name)`: it works after the worker released its computer and returns the result, the validation
-           and a timeline. The validation says which claims are `verified`, `cited_missing` or `not_verified`: report unverified claims as
-           unverified, never as fact.
+           `box_claim`). Call `box_collect(name)` for one computer, or `batch_collect(batch)` for the whole batch: they work after the worker
+           released its computer and return the result, the validation and a timeline. The validation says which claims are `verified`,
+           `cited_missing` or `not_verified`: report unverified claims as unverified, never as fact.
         7. **Release** what is left with `boxes_release(names: [...])`. Workers release their own computer when they finish.
         8. **Answer** with a table per target: status, key findings, evidence ids, what could not be verified.
 

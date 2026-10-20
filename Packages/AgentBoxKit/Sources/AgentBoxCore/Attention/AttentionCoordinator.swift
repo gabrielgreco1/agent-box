@@ -27,6 +27,8 @@ public final class AttentionCoordinator {
     @ObservationIgnored public var setDockBadge: (String?) -> Void = { _ in }
     /// Pedidos de ajuda de computador abertos (T3-05): entram na mesma contagem do badge do Dock.
     @ObservationIgnored public var extraBadgeCount: () -> Int = { 0 }
+    /// Abre o painel `Batch` (clique na notificação ou no item do Inbox de "lote concluído").
+    @ObservationIgnored public var openBatch: (String) -> Void = { _ in }
     @ObservationIgnored public var clock: () -> Date = { Date() }
     /// Quanto o pane precisa ficar visível com a janela key para contar como visto (06 §3.6).
     @ObservationIgnored public var viewDwell: Duration = .seconds(1)
@@ -123,6 +125,14 @@ public final class AttentionCoordinator {
         scheduleViewCheck()
     }
 
+    /// "Lote concluído" (07 CS-326, AC-429): **um** item na fila e **uma** notificação, sem uma por filho. O terminal é o do pai.
+    public func batchFinished(batchID: String, title: String, body: String, sessionID: UUID, terminalID: UUID, runID: UUID? = nil) {
+        guard let item = center.openBatchDone(
+            batchID: batchID, sessionID: sessionID, terminalID: terminalID, runID: runID, title: title, body: body, now: clock()) else { return }
+        notify(item)
+        refreshDock()
+    }
+
     /// BEL (06 §3.6): o pane fica não lido até ser visto. Com o pane visível e a janela key nada muda.
     public func bell(terminalID: UUID) {
         let context = contexts()[terminalID]
@@ -157,9 +167,10 @@ public final class AttentionCoordinator {
                 item, preferences: prefs,
                 environment: .init(
                     authorization: auth, windowIsKey: windowIsKey(), paneVisible: visibleTerminals().contains(item.terminalID), now: now,
-                    last: lastPosted[item.terminalID]))
-            guard case .post(let notification) = decision else { return }
-            lastPosted[item.terminalID] = (now, item.priority)
+                    last: item.kind == .batchDone ? nil : lastPosted[item.terminalID]))
+            guard case .post(var notification) = decision else { return }
+            if let batch = item.batchID { notification.target.batchID = batch }
+            if item.kind != .batchDone { lastPosted[item.terminalID] = (now, item.priority) }
             center.markNotified(itemID: item.id)
             await notifier.post(notification)
         }
@@ -250,6 +261,12 @@ public final class AttentionCoordinator {
 
     /// Clique numa notificação ou numa linha do Inbox: leva ao pane e marca como lido.
     public func open(_ target: NotificationTarget, source: AttentionNavigation = .notification) {
+        if let batch = target.batchID {
+            center.resolveBatch(batch, now: clock())
+            refreshDock()
+            openBatch(batch)
+            return
+        }
         navigate(target.terminalID, target.sessionID, source)
         markViewed([target.terminalID])
     }

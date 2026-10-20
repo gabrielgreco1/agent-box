@@ -41,7 +41,9 @@ nonisolated final class SystemNotificationCenter: NSObject, NotificationCenterin
         content.body = notification.body
         content.threadIdentifier = notification.threadID
         content.sound = notification.sound ? .default : nil
-        content.userInfo = ["terminalID": notification.target.terminalID.uuidString, "sessionID": notification.target.sessionID.uuidString]
+        var info = ["terminalID": notification.target.terminalID.uuidString, "sessionID": notification.target.sessionID.uuidString]
+        if let batch = notification.target.batchID { info["batchID"] = batch }
+        content.userInfo = info
         try? await center.add(UNNotificationRequest(identifier: notification.id, content: content, trigger: nil))
     }
 
@@ -72,7 +74,7 @@ nonisolated final class SystemNotificationCenter: NSObject, NotificationCenterin
         guard let terminal = (info["terminalID"] as? String).flatMap(UUID.init(uuidString:)),
               let session = (info["sessionID"] as? String).flatMap(UUID.init(uuidString:)) else { return }
         let handler = handler.withLock { $0 }
-        handler?(NotificationTarget(terminalID: terminal, sessionID: session))
+        handler?(NotificationTarget(terminalID: terminal, sessionID: session, batchID: info["batchID"] as? String))
     }
 
     /// Com o app em primeiro plano o coordenador já decidiu (suprime só se o pane está visível): o que chega aqui é de outra sessão.

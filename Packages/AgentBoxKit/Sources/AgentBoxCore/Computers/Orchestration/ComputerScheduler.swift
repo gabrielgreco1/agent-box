@@ -117,12 +117,17 @@ public protocol ParentOrchestrating: Sendable {
     func workerChild(ofComputer name: String, parent: String) async -> String?
     /// `box_collect` (T3-06): resultado, validação e timeline de um computador do pai, mesmo já removido (o run folder fica).
     func collect(parent: String, name: String, include: Set<CollectedRun.Section>) async throws -> JSON
+    /// `batch_status` / `batch_collect` (T3-07).
+    func batchStatus(parent: String, batch: String) async throws -> JSON
+    func collectBatch(parent: String, batch: String) async throws -> JSON
 }
 
 extension ParentOrchestrating {
     public func childClaimed(_ child: String, computer: String) async {}
     public func workerChild(ofComputer name: String, parent: String) async -> String? { nil }
     public func collect(parent: String, name: String, include: Set<CollectedRun.Section>) async throws -> JSON { throw ToolError(.notSupported, "collect is not supported") }
+    public func batchStatus(parent: String, batch: String) async throws -> JSON { throw ToolError(.notSupported, "batches are not supported") }
+    public func collectBatch(parent: String, batch: String) async throws -> JSON { throw ToolError(.notSupported, "batches are not supported") }
 }
 
 /// A sessão do app dona do pai: id e título.
@@ -172,7 +177,16 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
     var entries: [String: Entry] = [:]
     /// Pasta da sessão (`runs/<slug>/`) de cada pai, fixada na primeira reserva: renomear a sessão no meio não muda onde os runs ficam.
     var sessionFolders: [String: URL] = [:]
+    /// Lotes já concluídos e notificados neste processo (o marcador em disco vale para o próximo).
+    var batchTracker = BatchCompletionTracker()
+    /// O app liga isto ao Inbox e à notificação do macOS (T3-07): chamado uma vez por lote concluído.
+    var onBatchFinished: (@Sendable (BatchSummary) -> Void)?
+    var summaryCache: [String: (stamp: String, counts: (verified: Int, citedMissing: Int, notVerified: Int))] = [:]
+    var activityCache: [String: AgentActivity] = [:]
+    /// Lotes vistos neste processo (`pasta da sessão|lote` -> pai): é por onde `checkBatches` sabe o que olhar depois que os filhos saíram.
+    var trackedBatches: [String: (parent: String, batch: String)] = [:]
 
+    public func setBatchObserver(_ observer: (@Sendable (BatchSummary) -> Void)?) { onBatchFinished = observer }
 
     public func childClaimed(_ child: String, computer: String) async {
         guard entries[computer]?.childID == child else { return }
@@ -329,6 +343,7 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
         try? await store?.updateOrchestrationChild(id: childID, state: .reserved, computerName: .some(name), batchID: .some(request.batch), at: now())
         await persist(name)
         await writeStartMetadata(entry)
+        if let batch = request.batch { trackBatch(parent: parent, batch: batch) }
         return await boxJSON(entry, base: [:])
     }
 
@@ -397,6 +412,7 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
             await persist(name)
             await closeRun(current, outcome: .failed)
             await drain()  // a vaga volta para a fila
+            await checkBatches()
         }
     }
 
@@ -430,10 +446,12 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
             entries[computer.name] = entry
             try? await store?.updateOrchestrationChild(id: entry.childID, state: .released, at: now())
             await persist(computer.name)
+            await checkBatches()
             return
         }
         await discard(computer.name, childState: .released)
         await drain()
+        await checkBatches()
     }
 
     func discard(_ name: String, childState: OrchestrationChildState = .idle) async {
@@ -477,6 +495,7 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
             }
         }
         if !released.isEmpty { await drain() }
+        await checkBatches()
         return (warned, released)
     }
 
@@ -528,6 +547,7 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
             // Mantido por 24 h (`released` sem `ended`): a data exata não foi persistida, conta a partir de agora.
             if child.state == .released { entry.keepUntil = now().addingTimeInterval(Self.keepDuration) }
             entries[row.name] = entry
+            if let batch = spec.batch { trackBatch(parent: parent, batch: batch) }
             if spec.run.readMetadata() == nil { await writeStartMetadata(entry) }
             await hub.register(computer)
             if child.state == .claimed { _ = try? await hub.claim(name: row.name, child: child.id) }

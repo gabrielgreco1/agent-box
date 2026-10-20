@@ -49,6 +49,8 @@ public struct HelpNotificationContent: Sendable, Equatable {
 public final class ComputersModel {
     public private(set) var rows: [ComputerRow] = []
     public private(set) var inbox: [InboxItem] = []
+    /// Lotes das sessões abertas (painel `Batch`, T3-07): reagregados do scheduler a cada poucos segundos.
+    public private(set) var batches: [BatchSummary] = []
     /// Pedidos de computador esperando o usuário no modo Ask (F12): card no pane, item no Inbox e notificação.
     public private(set) var approvals: [ComputerApprovalRequest] = []
     /// Qual sessão do app é dona de cada computador (linha filha da sidebar).
@@ -78,6 +80,8 @@ public final class ComputersModel {
     public init() {}
 
     public func computer(named name: String) -> ManagedComputer? { computers[name] }
+
+    public func setBatches(_ list: [BatchSummary]) { if list != batches { batches = list } }
 
     /// Lista atual de pedidos abertos do `ComputerApprovalCenter`; cada pedido novo gera a notificação uma vez.
     public func setApprovals(_ requests: [ComputerApprovalRequest]) {

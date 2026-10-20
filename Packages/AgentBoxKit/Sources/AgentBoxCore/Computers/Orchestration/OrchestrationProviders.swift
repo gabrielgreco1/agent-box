@@ -50,9 +50,9 @@ extension OrchestrationText {
         `task_name` such as the computer name if the tool asks for one). Never spawn a worker for a box that is not yours.
         5. **Wait** with `wait_agent` (pass the agent ids if the tool asks for them; long timeouts, never a tight loop). `boxes_status` shows \
         state, queue position and last DOING note.
-        6. **Collect.** Each worker ends with a short summary and the path of its `result.json`. Call `box_collect(name)`: it returns the result and \
-        the validation even after the worker released its computer. The validation says which claims are `verified`, `cited_missing` or \
-        `not_verified`: report unverified claims as unverified, never as fact.
+        6. **Collect.** Each worker ends with a short summary and the path of its `result.json`. Call `box_collect(name)` for one computer or \
+        `batch_collect(batch)` for the whole batch: they return the result and the validation even after the worker released its computer. The \
+        validation says which claims are `verified`, `cited_missing` or `not_verified`: report unverified claims as unverified, never as fact.
         7. **Release** what is left with `boxes_release(names: [...])`. Workers release their own computer when they finish.
         8. **Answer** with a table per target: status, key findings, evidence ids, what could not be verified.
 
@@ -99,9 +99,10 @@ extension OrchestrationText {
         3. **Write one brief per target** (template below), with the computer name.
         4. **Spawn the workers** with the `task` tool: one call per computer, `subagent_type` set to the `worker` of that box and the brief as \
         `prompt`. Several `task` calls in the same message run in parallel. Never spawn a worker for a box that is not yours.
-        5. **Collect.** Each worker ends with a short summary and the path of its `result.json`. Call `agentbox_box_collect(name)`: it returns the result and \
-        the validation even after the worker released its computer. The validation says which claims are `verified`, `cited_missing` or \
-        `not_verified`: report unverified claims as unverified, never as fact. `agentbox_boxes_status` shows state, queue position and last DOING note; poll it sparingly.
+        5. **Collect.** Each worker ends with a short summary and the path of its `result.json`. Call `agentbox_box_collect(name)` for one \
+        computer or `agentbox_batch_collect(batch)` for the whole batch: they return the result and the validation even after the worker \
+        released its computer. The validation says which claims are `verified`, `cited_missing` or `not_verified`: report unverified claims as \
+        unverified, never as fact. `agentbox_boxes_status` shows state, queue position and last DOING note; poll it sparingly.
         6. **Release** what is left with `agentbox_boxes_release(names: [...])`. Workers release their own computer when they finish.
         7. **Answer** with a table per target: status, key findings, evidence ids, what could not be verified.
 

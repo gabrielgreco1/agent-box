@@ -52,6 +52,7 @@ enum MenuLayout {
                     .action(.sessionNew, title: "New Session…"),
                     .action(.sessionNewClean, title: "New Clean Session"),
                     .action(.sessionNewCleanInFolder, title: "New Clean Session in Folder…"),
+                    .action(.batchNew, title: "New Batch…"),
                     .separator,
                     .action(.tabQuickLaunch, title: "New Tab…"),
                     .action(.tabNewAgent, title: "New Agent Tab"),

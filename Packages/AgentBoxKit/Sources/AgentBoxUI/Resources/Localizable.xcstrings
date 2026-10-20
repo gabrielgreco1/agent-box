@@ -7866,6 +7866,39 @@
         }
       }
     },
+    "%lld targets": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld targets"
+          }
+        }
+      }
+    },
+    "1 target": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 target"
+          }
+        }
+      }
+    },
+    "Add at least one target.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add at least one target."
+          }
+        }
+      }
+    },
     "Agent-reported": {
       "extractionState": "manual",
       "localizations": {
@@ -7873,6 +7906,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Agent-reported"
+          }
+        }
+      }
+    },
+    "Archive Batch": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Archive Batch"
+          }
+        }
+      }
+    },
+    "Batch · %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Batch · %@"
           }
         }
       }
@@ -7899,6 +7954,116 @@
         }
       }
     },
+    "Collect All": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Collect All"
+          }
+        }
+      }
+    },
+    "Couldn't read that file.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't read that file."
+          }
+        }
+      }
+    },
+    "Current session": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current session"
+          }
+        }
+      }
+    },
+    "Desktop": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desktop"
+          }
+        }
+      }
+    },
+    "Export CSV": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export CSV"
+          }
+        }
+      }
+    },
+    "Export JSON": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export JSON"
+          }
+        }
+      }
+    },
+    "HTTP": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HTTP"
+          }
+        }
+      }
+    },
+    "Headless": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Headless"
+          }
+        }
+      }
+    },
+    "Import CSV…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import CSV…"
+          }
+        }
+      }
+    },
+    "Install Claude Code first.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install Claude Code first."
+          }
+        }
+      }
+    },
     "Loading…": {
       "extractionState": "manual",
       "localizations": {
@@ -7906,6 +8071,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "Loading…"
+          }
+        }
+      }
+    },
+    "New Batch": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Batch"
           }
         }
       }
@@ -7928,6 +8104,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "No run folder for this computer."
+          }
+        }
+      }
+    },
+    "No such batch.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No such batch."
+          }
+        }
+      }
+    },
+    "No targets yet.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No targets yet."
           }
         }
       }
@@ -7965,6 +8163,17 @@
         }
       }
     },
+    "Removes the computers of this batch. Run folders, results and named profiles stay.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Removes the computers of this batch. Run folders, results and named profiles stay."
+          }
+        }
+      }
+    },
     "Result": {
       "extractionState": "manual",
       "localizations": {
@@ -7972,6 +8181,94 @@
           "stringUnit": {
             "state": "translated",
             "value": "Result"
+          }
+        }
+      }
+    },
+    "Search proxies…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search proxies…"
+          }
+        }
+      }
+    },
+    "Select a session with Claude Code.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select a session with Claude Code."
+          }
+        }
+      }
+    },
+    "Start Batch": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start Batch"
+          }
+        }
+      }
+    },
+    "Start a new batch": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start a new batch"
+          }
+        }
+      }
+    },
+    "Stop %lld running subagents?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop %lld running subagents?"
+          }
+        }
+      }
+    },
+    "Stop 1 running subagent?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop 1 running subagent?"
+          }
+        }
+      }
+    },
+    "TASK, WHAT WE ALREADY KNOW and OUTPUT for each target. Use {{target}} and CSV columns like {{city}}.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TASK, WHAT WE ALREADY KNOW and OUTPUT for each target. Use {{target}} and CSV columns like {{city}}."
+          }
+        }
+      }
+    },
+    "Target": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Target"
           }
         }
       }

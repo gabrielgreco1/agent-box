@@ -153,12 +153,23 @@ struct ComputersPanelView: View {
 // MARK: Página Computers (03 §12.3)
 
 struct PageHeader<Trailing: View>: View {
-    let title: LocalizedStringKey
-    @ViewBuilder let trailing: Trailing
+    let title: Text
+    let trailing: Trailing
+
+    init(title: LocalizedStringKey, @ViewBuilder trailing: () -> Trailing) {
+        self.title = Text(title, bundle: .module)
+        self.trailing = trailing()
+    }
+
+    /// Título já montado (nome do lote).
+    init(verbatim title: String, @ViewBuilder trailing: () -> Trailing) {
+        self.title = Text(verbatim: title)
+        self.trailing = trailing()
+    }
 
     var body: some View {
         HStack(spacing: DS.Space.s2) {
-            Text(title, bundle: .module).dsFont(DS.Font.sectionLabel).foregroundStyle(DS.Color.textPrimary)
+            title.dsFont(DS.Font.sectionLabel).foregroundStyle(DS.Color.textPrimary)
             Spacer(minLength: DS.Space.s2)
             trailing
             ActionButton(.pageClose, tooltip: String(localized: "Close", bundle: .module)) { Image(systemName: "xmark") }
@@ -178,6 +189,7 @@ struct ComputersPageView: View {
         VStack(spacing: 0) {
             PageHeader(title: "Computers") {
                 Text(verbatim: controller.model.summaryText).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
+                DSIconButton(.batchNew, id: .computersNewBatch, symbol: "plus", name: String(localized: "Start a new batch", bundle: .module), variant: .header)
             }
             if controller.model.rows.isEmpty {
                 Text("No computers yet. Agents create them when they need a browser.", bundle: .module)

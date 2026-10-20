@@ -21,6 +21,7 @@ extension AppEnvironment {
         switch computers.page {
         case .viewer(let name): return .viewer(name)
         case .computers: return .computers
+        case .batch(let name): return .batch(name)
         case .workspace: break
         }
         if sidebar.inboxOpen { return .inbox }
@@ -35,6 +36,7 @@ extension AppEnvironment {
         case .terminal(let session, let terminal): sidebar.session(session) != nil && sidebar.snapshot.terminals.contains(where: { $0.id == terminal })
         case .viewer(let name): computers.model.computer(named: name) != nil
         case .computers: true
+        case .batch(let name): computers.model.batch(name) != nil
         case .inbox: attention != nil
         case .library: false
         }
@@ -77,6 +79,9 @@ extension AppEnvironment {
             computers.openViewer(name)
         case .computers:
             computers.show(.computers)
+        case .batch(let name):
+            sidebar.setInbox(open: false)
+            computers.openBatch(name)
         case .inbox:
             computers.closePage()
             sidebar.setInbox(open: true)

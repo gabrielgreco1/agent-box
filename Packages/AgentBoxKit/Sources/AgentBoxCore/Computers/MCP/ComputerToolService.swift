@@ -241,6 +241,8 @@ public actor ComputerToolService {
         case "box_collect":
             let sections = args.strings("include").map { Set($0.compactMap(CollectedRun.Section.init(rawValue:))) } ?? Set(CollectedRun.Section.allCases)
             return ToolResult(try await orchestrator.collect(parent: parent, name: args.string("name") ?? "", include: sections))
+        case "batch_status": return ToolResult(try await orchestrator.batchStatus(parent: parent, batch: args.string("batch") ?? ""))
+        case "batch_collect": return ToolResult(try await orchestrator.collectBatch(parent: parent, batch: args.string("batch") ?? ""))
         case "boxes_release": return ToolResult(await orchestrator.release(parent: parent, names: args.strings("names") ?? [], keep24h: args.string("keep") == "24h"))
         case "agent_message": return ToolResult(try await orchestrator.message(parent: parent, to: args.string("child_id") ?? "", text: args.string("text") ?? ""))
         default: throw ToolError(.notFound, "tool \(name) is not implemented")

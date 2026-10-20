@@ -10,6 +10,8 @@ public enum CenterPage: Equatable, Sendable {
     case workspace
     case viewer(String)
     case computers
+    /// Painel do lote (03 §12.4); o valor é o nome do lote.
+    case batch(String)
 }
 
 extension CenterPage {
@@ -47,8 +49,16 @@ public final class ComputersController {
     /// Detalhe aberto no painel direito (aba `Result`) e o que o run mostra agora.
     public internal(set) var detail: ComputerDetail?
     public internal(set) var detailCollected: CollectedRun?
+    /// Filtro do painel do lote (03 §12.4) e o consolidado já lido por lote (`Collect All`, lote concluído).
+    public internal(set) var batchFilter: BatchSummary.Filter = .all
+    public internal(set) var consolidated: [String: BatchSummary] = [:]
     @ObservationIgnored let loader = RunResultLoader()
+    @ObservationIgnored var batchTick = 0
     @ObservationIgnored var detailTick = 0
+    /// Overlays (confirmação de `Archive Batch`, `New Batch…`); ligado pelo `AppEnvironment`.
+    @ObservationIgnored weak var overlays: OverlayRouter?
+    /// Lote cujo `Archive Batch` espera a confirmação.
+    var pendingArchive: String?
     /// F28: um lease humano ocioso voltou sozinho ao agente (o app mostra o toast `Control returned to <Agent>`).
     /// F29: nomes dos proxies salvos (Settings › Computers › Proxies) e o menu do card de aprovação; ligados pelo app.
     @ObservationIgnored public var proxyNames: () async -> [String] = { [] }
@@ -126,6 +136,7 @@ public final class ComputersController {
                 let visible = self.panelOpen || self.page == .computers || self.hoverPreviewOpen
                 await self.model.refresh(withThumbnails: visible)
                 await self.refreshDetail()
+                await self.refreshBatches()
                 for name in await self.model.returnIdleControl() { self.onControlReturned(name, self.agentName(forComputer: name)) }
                 try? await Task.sleep(for: .seconds(1))
             }

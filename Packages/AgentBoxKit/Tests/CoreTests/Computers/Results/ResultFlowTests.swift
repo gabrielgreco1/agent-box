@@ -4,8 +4,13 @@ import Testing
 
 @testable import AgentBoxCore
 
-// T3-06 com o scheduler e o backend falso: o filho entrega o resultado e libera, o computador sai e o pai coleta pelo run folder
-// (AC-420…423). O Docker real fica no teste vivo.
+// T3-06 / T3-07 com o scheduler e o backend falso: o filho entrega o resultado e libera, o computador sai e o pai coleta pelo run folder
+// (AC-420…423); lote concluído uma vez só (AC-429). O Docker real fica no teste vivo.
+
+actor FinishedBatches {
+    private(set) var summaries: [BatchSummary] = []
+    func add(_ s: BatchSummary) { summaries.append(s) }
+}
 
 extension SchedulerRig {
     func childIDs(_ reply: JSON) -> [String: String] {
@@ -164,6 +169,8 @@ extension JSON {
             await rig.claim(name, as: try #require(kids[name]))
             await rig.finish(name, child: try #require(kids[name]), release: false)
         }
+        let before = try #require(await rig.scheduler.batchSummary(parent: rig.parent, batch: "permits-oct"))
+        #expect(before.children.allSatisfy { $0.status == .running })
         let archived = await rig.scheduler.archiveComputers(names: ["a", "b", "ghost"])
         #expect(archived == ["a", "b"])
         #expect(Set(await rig.provisioning.tornDown) == ["a", "b"])
@@ -172,6 +179,8 @@ extension JSON {
             let run = rig.runFolder(name)
             #expect(FileManager.default.fileExists(atPath: run.resultFile.path) && run.readMetadata()?.outcome == .stopped)
         }
+        let after = try #require(await rig.scheduler.batchSummary(parent: rig.parent, batch: "permits-oct"))
+        #expect(after.children.map(\.status) == [.stopped, .stopped])
         #expect((await rig.parentCall("box_collect", ["name": "a"])).json["result"]?["permits"] == 12)
     }
 

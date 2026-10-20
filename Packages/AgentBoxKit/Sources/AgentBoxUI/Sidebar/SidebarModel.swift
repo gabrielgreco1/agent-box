@@ -154,6 +154,9 @@ final class SidebarModel {
     /// Pedidos de computador esperando você no modo Ask (F12): primeiro em `Needs You`.
     var approvalItems: [ComputerApprovalRequest] { helpInbox?.approvals ?? [] }
 
+    /// "Lote concluído" (07 CS-326, AC-429): um item por lote, em `Done` do mesmo Inbox. Clicar abre o painel `Batch`.
+    var batchItems: [AttentionItem] { (attention?.center.batchItems ?? []).sorted { $0.createdAt > $1.createdAt } }
+
     var inboxFeed: InboxFeed {
         (attention?.center ?? AttentionCenter()).inbox(contexts: attentionContexts(), filter: inboxFilter, now: clock())
     }

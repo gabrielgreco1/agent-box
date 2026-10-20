@@ -26,6 +26,21 @@ extension AppEnvironment {
         return "agent-box-\(BackgroundAgentIdentity.testSuffix(forHome: home))"
     }
 
+    /// Lote concluído: o item vai à fila de atenção do terminal pai (Inbox + notificação do macOS, uma vez); sem atenção ou sem terminal
+    /// conhecido, vira um toast com o mesmo texto.
+    func batchFinished(_ summary: BatchSummary) {
+        Task { if let orchestrator = orchestratorHolder.value { computers.model.setBatches(await orchestrator.batches()) } }
+        let contexts = sidebar.attentionContexts()
+        let terminal = contexts.filter { $0.value.sessionID == summary.sessionID }.sorted { $0.key.uuidString < $1.key.uuidString }
+            .first { $0.value.provider.supportsSubagentComputers }?.key
+            ?? contexts.first { $0.value.sessionID == summary.sessionID }?.key
+        if let attention, let sessionID = summary.sessionID, let terminal {
+            attention.batchFinished(batchID: summary.name, title: summary.notificationTitle, body: summary.notificationBody, sessionID: sessionID, terminalID: terminal)
+        } else {
+            toasts.show(kind: .success, title: summary.notificationTitle, detail: summary.notificationBody)
+        }
+    }
+
     func startOrchestrator(store: AgentBoxStore) async {
         guard flags.isEnabled(.slice3), orchestratorHolder.value == nil, let helper = Self.helperPath(environmentVariables) else { return }
         let root = StorePaths.default(environment: environmentVariables).root
@@ -60,6 +75,8 @@ extension AppEnvironment {
         let toasts = toasts
         let settings = settings
         await orchestrator.start()
+        // T3-07: todos os filhos de um lote terminaram: um item no Inbox e uma notificação (CS-326, AC-429).
+        await orchestrator.scheduler.setBatchObserver { [weak self] summary in Task { @MainActor in self?.batchFinished(summary) } }
         await provisioning.setObserver(
             state: { state in
                 Task { @MainActor in

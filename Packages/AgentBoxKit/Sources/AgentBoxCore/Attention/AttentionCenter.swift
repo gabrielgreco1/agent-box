@@ -96,6 +96,32 @@ public struct AttentionCenter: Sendable, Equatable {
         return item
     }
 
+    /// "Lote concluído" (07 CS-326, AC-429): **um** item por lote (o `id` é o do lote), sem mexer no estado do terminal pai. Devolve o item
+    /// criado, ou `nil` se esse lote já tem item (um segundo `batch_collect` ou o reinício do app não geram outro).
+    @discardableResult
+    public mutating func openBatchDone(
+        batchID: String, sessionID: UUID, terminalID: UUID, runID: UUID? = nil, title: String, body: String, now: Date
+    ) -> AttentionItem? {
+        let id = "batch.\(batchID).\(AttentionKind.batchDone.rawValue)"
+        if items.contains(where: { $0.id == id }) { return nil }
+        let item = AttentionItem(
+            id: id, kind: .batchDone, sessionID: sessionID, terminalID: terminalID, runID: runID, title: title, body: body, createdAt: now, batchID: batchID)
+        items.append(item)
+        if items.count > Self.itemLimit { items.removeFirst(items.count - Self.itemLimit) }
+        return item
+    }
+
+    /// O usuário abriu o painel do lote (ou o item): o item sai da fila.
+    public mutating func resolveBatch(_ batchID: String, now: Date) {
+        for i in items.indices where items[i].batchID == batchID && !items[i].isResolved {
+            items[i].seenAt = items[i].seenAt ?? now
+            items[i].resolvedAt = now
+        }
+    }
+
+    /// Itens de lote concluído ainda abertos (o Inbox os mostra em `Done`).
+    public var batchItems: [AttentionItem] { items.filter { $0.kind == .batchDone && !$0.isResolved } }
+
     private mutating func resolve(terminal id: UUID, kinds: Set<AttentionKind>? = nil, now: Date) {
         for i in items.indices where items[i].terminalID == id && !items[i].isResolved && (kinds?.contains(items[i].kind) ?? true) {
             items[i].resolvedAt = now

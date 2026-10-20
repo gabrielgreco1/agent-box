@@ -160,6 +160,40 @@ public final class ComputerOrchestrator: Sendable {
         return (await parents.info(parent)?.provider ?? .claude).computerAgentName
     }
 
+    /// Todos os lotes das sessões abertas (painel "Batch"): rótulo, filhos e estado. Pais da mesma sessão (retomada) viram um só lote.
+    public func batches() async -> [BatchSummary] {
+        var out: [BatchSummary] = []
+        var seen = Set<String>()
+        for info in await parents.all {
+            for name in await scheduler.batchNames(parent: info.parentID) {
+                guard let summary = await scheduler.batchSummary(parent: info.parentID, batch: name) else { continue }
+                let key = "\(summary.sessionID?.uuidString ?? info.parentID)|\(name)"
+                if seen.insert(key).inserted { out.append(summary) }
+            }
+        }
+        return out.sorted { ($0.createdAt ?? .distantPast, $0.name) > ($1.createdAt ?? .distantPast, $1.name) }
+    }
+
+    /// O consolidado de um lote com os resultados (exportação CSV/JSON e `Collect All`).
+    public func consolidated(batch: BatchSummary) async -> BatchSummary? {
+        guard let parent = batch.parent else { return nil }
+        return await scheduler.consolidatedBatch(parent: parent, batch: batch.name)
+    }
+
+    /// `Collect All` do painel: o mesmo `batch_collect` do pai; devolve o caminho do `results.jsonl`.
+    public func collectAll(batch: BatchSummary) async -> URL? {
+        guard let parent = batch.parent, let reply = try? await scheduler.collectBatch(parent: parent, batch: batch.name),
+              let path = reply["results_jsonl_path"]?.string else { return nil }
+        return URL(fileURLWithPath: path)
+    }
+
+    /// `Archive Batch`: remove os computadores do lote; runs e resultados ficam.
+    @discardableResult
+    public func archive(batch: BatchSummary) async -> [String] {
+        guard let parent = batch.parent else { return [] }
+        return await scheduler.archiveBatch(parent: parent, batch: batch.name)
+    }
+
     /// `Archive Computers` de uma sessão (AC-423): os computadores dela saem; runs e perfis ficam.
     @discardableResult
     public func archiveComputers(sessionID: UUID) async -> [String] {

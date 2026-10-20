@@ -268,6 +268,10 @@ extension ActionID {
     public static let imageDownload = ActionID(unchecked: "image.download")
     public static let computersCleanUp = ActionID(unchecked: "computers.cleanUp")
     public static let batchNew = ActionID(unchecked: "batch.new")
+    public static let batchOpen = ActionID(unchecked: "batch.open")
+    public static let batchFilter = ActionID(unchecked: "batch.filter")
+    public static let batchExportCSV = ActionID(unchecked: "batch.exportCSV")
+    public static let batchExportJSON = ActionID(unchecked: "batch.exportJSON")
     public static let batchCollectAll = ActionID(unchecked: "batch.collectAll")
     public static let batchArchive = ActionID(unchecked: "batch.archive")
     public static let proxyAdd = ActionID(unchecked: "proxy.add")
@@ -359,6 +363,8 @@ extension ActionID {
     public static let dialogCloseTerminalDontAsk = ActionID(unchecked: "dialog.closeTerminal.dontAsk")
     public static let dialogArchiveConfirm = ActionID(unchecked: "dialog.archive.confirm")
     public static let dialogArchiveCancel = ActionID(unchecked: "dialog.archive.cancel")
+    public static let dialogArchiveBatchConfirm = ActionID(unchecked: "dialog.archiveBatch.confirm")
+    public static let dialogArchiveBatchCancel = ActionID(unchecked: "dialog.archiveBatch.cancel")
     public static let dialogStopComputerConfirm = ActionID(unchecked: "dialog.stopComputer.confirm")
     public static let dialogDeleteComputerConfirm = ActionID(unchecked: "dialog.deleteComputer.confirm")
     public static let dialogDeleteSessionConfirm = ActionID(unchecked: "dialog.deleteSession.confirm")
@@ -405,6 +411,13 @@ extension ActionID {
     public static let dialogAboutCopy = ActionID(unchecked: "dialog.about.copy")
     public static let dialogNewBatchConfirm = ActionID(unchecked: "dialog.newBatch.confirm")
     public static let dialogNewBatchImportCSV = ActionID(unchecked: "dialog.newBatch.importCSV")
+    public static let dialogNewBatchSetTargets = ActionID(unchecked: "dialog.newBatch.setTargets")
+    public static let dialogNewBatchSetBrief = ActionID(unchecked: "dialog.newBatch.setBrief")
+    public static let dialogNewBatchSetDisplay = ActionID(unchecked: "dialog.newBatch.setDisplay")
+    public static let dialogNewBatchSetProxy = ActionID(unchecked: "dialog.newBatch.setProxy")
+    public static let dialogNewBatchToggleProxy = ActionID(unchecked: "dialog.newBatch.toggleProxy")
+    public static let dialogNewBatchSetSession = ActionID(unchecked: "dialog.newBatch.setSession")
+    public static let dialogNewBatchCancel = ActionID(unchecked: "dialog.newBatch.cancel")
     public static let rightPanelToggleFiles = ActionID(unchecked: "rightPanel.toggleFiles")
     public static let rightPanelToggleInsights = ActionID(unchecked: "rightPanel.toggleInsights")
     public static let rightPanelToggle = ActionID(unchecked: "rightPanel.toggle")
@@ -699,6 +712,10 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "image.download"), label: "Download (imagem)", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "computers.cleanUp"), label: "Clean Up…", shortcut: "", slice: .v11),
         ActionSpec(id: ActionID(unchecked: "batch.new"), label: "New Batch…", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "batch.open"), label: "Open Batch", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "batch.filter"), label: "Filter", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "batch.exportCSV"), label: "Export CSV", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "batch.exportJSON"), label: "Export JSON", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "batch.collectAll"), label: "Collect All", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "batch.archive"), label: "Archive Batch", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "proxy.add"), label: "Add Proxy", shortcut: "", slice: .slice3),
@@ -790,6 +807,8 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "dialog.closeTerminal.dontAsk"), label: "Don't ask again (§16.1)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.archive.confirm"), label: "Archive (§16.2)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.archive.cancel"), label: "Cancel (§16.2)", shortcut: "Esc", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "dialog.archiveBatch.confirm"), label: "Archive Batch", shortcut: "Esc", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dialog.archiveBatch.cancel"), label: "Cancel (confirmação com filhos rodando: `Stop <n> running subagents?`)", shortcut: "Esc", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dialog.stopComputer.confirm"), label: "Stop Computer (§16.3)", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dialog.deleteComputer.confirm"), label: "Delete Computer (§16.4)", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dialog.deleteSession.confirm"), label: "Delete Session (§16.5)", shortcut: "", slice: .slice1),
@@ -836,6 +855,13 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "dialog.about.copy"), label: "Copy Version Info (§16.14)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dialog.newBatch.confirm"), label: "Start Batch", shortcut: "⌘↵", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dialog.newBatch.importCSV"), label: "Import CSV… (§16.15)", shortcut: "⌘↵", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dialog.newBatch.setTargets"), label: "Campos de New Batch… (§16.15)", shortcut: "Esc (cancel)", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dialog.newBatch.setBrief"), label: "Campos de New Batch… (§16.15)", shortcut: "Esc (cancel)", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dialog.newBatch.setDisplay"), label: "Campos de New Batch… (§16.15)", shortcut: "Esc (cancel)", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dialog.newBatch.setProxy"), label: "Campos de New Batch… (§16.15)", shortcut: "Esc (cancel)", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dialog.newBatch.toggleProxy"), label: "Campos de New Batch… (§16.15)", shortcut: "Esc (cancel)", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dialog.newBatch.setSession"), label: "Campos de New Batch… (§16.15)", shortcut: "Esc (cancel)", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dialog.newBatch.cancel"), label: "Campos de New Batch… (§16.15)", shortcut: "Esc (cancel)", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "rightPanel.toggleFiles"), label: "Toggle Files", shortcut: "⌥⌘1", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "rightPanel.toggleInsights"), label: "Toggle Insights", shortcut: "⌥⌘2", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "rightPanel.toggle"), label: "Toggle Right Panel", shortcut: "⌥⌘0", slice: .slice1),

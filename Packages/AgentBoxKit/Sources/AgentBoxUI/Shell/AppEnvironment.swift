@@ -95,6 +95,8 @@ public final class AppEnvironment {
     private(set) var conversations: ConversationsController?
     /// "Open in…" e "Open in Editor" (T1-27).
     private(set) var openIn: OpenInController?
+    /// "New Batch…" (T3-07, 03 §16.15).
+    private(set) var newBatch: NewBatchController?
     let environmentVariables: [String: String]
     private let log = LogFacade(.app, category: "ui")
 
@@ -274,7 +276,13 @@ public final class AppEnvironment {
     /// Liga o controlador de computadores: ações `computer.*`, ⌘W fecha a página do viewer e a notificação de pedido de ajuda.
     private func wireComputers() {
         do { try computers.register(in: registry) } catch { log.publicError("duplicate computer action registration") }
+        computers.overlays = overlays
+        attention?.openBatch = { [weak self] id in
+            NSApp.activate()
+            self?.computers.openBatch(id)
+        }
         do { try computers.registerResults(in: registry) } catch { log.publicError("duplicate result action registration") }
+        do { try computers.registerBatch(in: registry, automationEnabled: automationEnabled) } catch { log.publicError("duplicate batch action registration") }
         do { try subagentComputers.register(in: registry) } catch { log.publicError("duplicate subagent computers registration") }
         subagentHoverCards = SubagentHoverCardController(computers: computers, registry: registry, elements: elements)
         computers.hoverCards = subagentHoverCards
@@ -466,6 +474,11 @@ public final class AppEnvironment {
         cloneController.openLoginTerminal = { [workspace] argv in workspace.newTab(provider: .custom, customArgv: argv) != nil }
         cloneRepo = cloneController
         do { try cloneController.register(in: registry) } catch { log.publicError("duplicate clone registration") }
+        let newBatchController = NewBatchController(
+            sidebar: sidebar, workspace: workspace, settings: settings, overlays: overlays, computers: computers, launcher: sessionLauncher,
+            automationEnabled: automationEnabled)
+        newBatch = newBatchController
+        do { try newBatchController.register(in: registry) } catch { log.publicError("duplicate new batch registration") }
         let resume = ResumeAgentsController(
             workspace: workspace, sessionTitle: { [sidebar] in sidebar.session($0)?.title }, selectedSession: { [sidebar] in sidebar.selectedSession },
             overlays: overlays, toasts: toasts)

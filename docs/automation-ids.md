@@ -260,6 +260,9 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `inbox.item.<eventId>.takeOver`
 - `inbox.item.<eventId>.allow`
 - `inbox.item.<eventId>.deny`
+- `inbox.item.<eventId>.open`
+- `eventId`
+- `batch.<batchId>`
 
 ### Painel direito
 
@@ -373,6 +376,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 ### Páginas
 
 - `computers.page`
+- `computers.newBatch`
 - `computers.cleanUp`
 - `computers.dockerBanner`
 - `computers.empty`
@@ -382,6 +386,12 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `batch.<batchId>.row.<childId>`
 - `batch.<batchId>.collectAll`
 - `batch.<batchId>.archive`
+- `batch.<batchId>.summary`
+- `batch.<batchId>.empty`
+- `batch.<batchId>.results`
+- `batch.<batchId>.filter.<name>`
+- `batch.<batchId>.export.csv`
+- `batch.<batchId>.export.json`
 - `computers.row.<id>.result`
 - `computers.row.<id>.runFolder`
 - `library.page`
@@ -432,6 +442,9 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `overlay.confirmArchive`
 - `overlay.confirmArchive.cancel`
 - `overlay.confirmArchive.confirm`
+- `overlay.confirmArchiveBatch`
+- `overlay.confirmArchiveBatch.cancel`
+- `overlay.confirmArchiveBatch.confirm`
 - `overlay.confirmStopComputer.confirm`
 - `overlay.confirmDeleteComputer.confirm`
 - `overlay.confirmDelete`
@@ -493,7 +506,18 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `overlay.about`
 - `overlay.about.licenses`
 - `overlay.about.copy`
-- `overlay.newBatch.*`
+- `overlay.newBatch`
+- `overlay.newBatch.targets`
+- `overlay.newBatch.importCSV`
+- `overlay.newBatch.brief`
+- `overlay.newBatch.display`
+- `overlay.newBatch.proxy`
+- `overlay.newBatch.allowedProxies`
+- `overlay.newBatch.session`
+- `overlay.newBatch.submit`
+- `overlay.newBatch.cancel`
+- `overlay.newBatch.count`
+- `overlay.newBatch.allowedProxies.<proxy>`
 - `popover.paste`
 - `popover.paste.text`
 - `popover.paste.confirm`
@@ -795,6 +819,10 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `image.download` | Download (imagem) | — | slice3 |
 | `computers.cleanUp` | Clean Up… | — | v11 |
 | `batch.new` | New Batch… | — | slice3 |
+| `batch.open` | Open Batch | — | slice3 |
+| `batch.filter` | Filter | — | slice3 |
+| `batch.exportCSV` | Export CSV | — | slice3 |
+| `batch.exportJSON` | Export JSON | — | slice3 |
 | `batch.collectAll` | Collect All | — | slice3 |
 | `batch.archive` | Archive Batch | — | slice3 |
 | `proxy.add` | Add Proxy | — | slice3 |
@@ -886,6 +914,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `dialog.closeTerminal.dontAsk` | Don't ask again (§16.1) | — | slice1 |
 | `dialog.archive.confirm` | Archive (§16.2) | — | slice1 |
 | `dialog.archive.cancel` | Cancel (§16.2) | Esc | slice1 |
+| `dialog.archiveBatch.confirm` | Archive Batch | Esc | slice3 |
+| `dialog.archiveBatch.cancel` | Cancel (confirmação com filhos rodando: `Stop <n> running subagents?`) | Esc | slice3 |
 | `dialog.stopComputer.confirm` | Stop Computer (§16.3) | — | slice3 |
 | `dialog.deleteComputer.confirm` | Delete Computer (§16.4) | — | slice3 |
 | `dialog.deleteSession.confirm` | Delete Session (§16.5) | — | slice1 |
@@ -932,6 +962,13 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `dialog.about.copy` | Copy Version Info (§16.14) | — | slice1 |
 | `dialog.newBatch.confirm` | Start Batch | ⌘↵ | slice3 |
 | `dialog.newBatch.importCSV` | Import CSV… (§16.15) | ⌘↵ | slice3 |
+| `dialog.newBatch.setTargets` | Campos de New Batch… (§16.15) | Esc (cancel) | slice3 |
+| `dialog.newBatch.setBrief` | Campos de New Batch… (§16.15) | Esc (cancel) | slice3 |
+| `dialog.newBatch.setDisplay` | Campos de New Batch… (§16.15) | Esc (cancel) | slice3 |
+| `dialog.newBatch.setProxy` | Campos de New Batch… (§16.15) | Esc (cancel) | slice3 |
+| `dialog.newBatch.toggleProxy` | Campos de New Batch… (§16.15) | Esc (cancel) | slice3 |
+| `dialog.newBatch.setSession` | Campos de New Batch… (§16.15) | Esc (cancel) | slice3 |
+| `dialog.newBatch.cancel` | Campos de New Batch… (§16.15) | Esc (cancel) | slice3 |
 | `rightPanel.toggleFiles` | Toggle Files | ⌥⌘1 | slice1 |
 | `rightPanel.toggleInsights` | Toggle Insights | ⌥⌘2 | slice1 |
 | `rightPanel.toggle` | Toggle Right Panel | ⌥⌘0 | slice1 |

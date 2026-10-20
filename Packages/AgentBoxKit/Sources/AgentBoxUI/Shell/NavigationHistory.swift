@@ -6,6 +6,7 @@ enum NavDestination: Equatable, Sendable {
     case terminal(session: UUID, terminal: UUID)
     case viewer(String)
     case computers
+    case batch(String)
     case inbox
     case library
 }

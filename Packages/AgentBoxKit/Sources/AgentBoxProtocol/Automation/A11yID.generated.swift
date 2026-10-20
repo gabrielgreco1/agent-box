@@ -200,6 +200,8 @@ extension A11yID {
     public static let inboxMarkAllRead = A11yID(unchecked: "inbox.markAllRead")
     /// `inbox.empty`
     public static let inboxEmpty = A11yID(unchecked: "inbox.empty")
+    /// `eventId`
+    public static let eventId = A11yID(unchecked: "eventId")
     /// `rightPanel`
     public static let rightPanel = A11yID(unchecked: "rightPanel")
     /// `rightPanel.tabs.indicator`
@@ -298,6 +300,8 @@ extension A11yID {
     public static let rightPanelFilesViewerEmpty = A11yID(unchecked: "rightPanel.files.viewer.empty")
     /// `computers.page`
     public static let computersPage = A11yID(unchecked: "computers.page")
+    /// `computers.newBatch`
+    public static let computersNewBatch = A11yID(unchecked: "computers.newBatch")
     /// `computers.cleanUp`
     public static let computersCleanUp = A11yID(unchecked: "computers.cleanUp")
     /// `computers.dockerBanner`
@@ -370,6 +374,12 @@ extension A11yID {
     public static let overlayConfirmArchiveCancel = A11yID(unchecked: "overlay.confirmArchive.cancel")
     /// `overlay.confirmArchive.confirm`
     public static let overlayConfirmArchiveConfirm = A11yID(unchecked: "overlay.confirmArchive.confirm")
+    /// `overlay.confirmArchiveBatch`
+    public static let overlayConfirmArchiveBatch = A11yID(unchecked: "overlay.confirmArchiveBatch")
+    /// `overlay.confirmArchiveBatch.cancel`
+    public static let overlayConfirmArchiveBatchCancel = A11yID(unchecked: "overlay.confirmArchiveBatch.cancel")
+    /// `overlay.confirmArchiveBatch.confirm`
+    public static let overlayConfirmArchiveBatchConfirm = A11yID(unchecked: "overlay.confirmArchiveBatch.confirm")
     /// `overlay.confirmStopComputer.confirm`
     public static let overlayConfirmStopComputerConfirm = A11yID(unchecked: "overlay.confirmStopComputer.confirm")
     /// `overlay.confirmDeleteComputer.confirm`
@@ -488,6 +498,28 @@ extension A11yID {
     public static let overlayAboutLicenses = A11yID(unchecked: "overlay.about.licenses")
     /// `overlay.about.copy`
     public static let overlayAboutCopy = A11yID(unchecked: "overlay.about.copy")
+    /// `overlay.newBatch`
+    public static let overlayNewBatch = A11yID(unchecked: "overlay.newBatch")
+    /// `overlay.newBatch.targets`
+    public static let overlayNewBatchTargets = A11yID(unchecked: "overlay.newBatch.targets")
+    /// `overlay.newBatch.importCSV`
+    public static let overlayNewBatchImportCSV = A11yID(unchecked: "overlay.newBatch.importCSV")
+    /// `overlay.newBatch.brief`
+    public static let overlayNewBatchBrief = A11yID(unchecked: "overlay.newBatch.brief")
+    /// `overlay.newBatch.display`
+    public static let overlayNewBatchDisplay = A11yID(unchecked: "overlay.newBatch.display")
+    /// `overlay.newBatch.proxy`
+    public static let overlayNewBatchProxy = A11yID(unchecked: "overlay.newBatch.proxy")
+    /// `overlay.newBatch.allowedProxies`
+    public static let overlayNewBatchAllowedProxies = A11yID(unchecked: "overlay.newBatch.allowedProxies")
+    /// `overlay.newBatch.session`
+    public static let overlayNewBatchSession = A11yID(unchecked: "overlay.newBatch.session")
+    /// `overlay.newBatch.submit`
+    public static let overlayNewBatchSubmit = A11yID(unchecked: "overlay.newBatch.submit")
+    /// `overlay.newBatch.cancel`
+    public static let overlayNewBatchCancel = A11yID(unchecked: "overlay.newBatch.cancel")
+    /// `overlay.newBatch.count`
+    public static let overlayNewBatchCount = A11yID(unchecked: "overlay.newBatch.count")
     /// `popover.paste`
     public static let popoverPaste = A11yID(unchecked: "popover.paste")
     /// `popover.paste.text`
@@ -1072,6 +1104,16 @@ extension A11yID {
         A11yID(unchecked: "inbox.item.\(A11yID.segment(eventId)).deny")
     }
 
+    /// `inbox.item.<eventId>.open`
+    public static func inboxItemOpen(_ eventId: String) -> A11yID {
+        A11yID(unchecked: "inbox.item.\(A11yID.segment(eventId)).open")
+    }
+
+    /// `batch.<batchId>`
+    public static func batch(_ batchId: String) -> A11yID {
+        A11yID(unchecked: "batch.\(A11yID.segment(batchId))")
+    }
+
     /// `rightPanel.tab.<name>`
     public static func rightPanelTab(_ name: String) -> A11yID {
         A11yID(unchecked: "rightPanel.tab.\(A11yID.segment(name))")
@@ -1347,6 +1389,36 @@ extension A11yID {
         A11yID(unchecked: "batch.\(A11yID.segment(batchId)).archive")
     }
 
+    /// `batch.<batchId>.summary`
+    public static func batchSummary(_ batchId: String) -> A11yID {
+        A11yID(unchecked: "batch.\(A11yID.segment(batchId)).summary")
+    }
+
+    /// `batch.<batchId>.empty`
+    public static func batchEmpty(_ batchId: String) -> A11yID {
+        A11yID(unchecked: "batch.\(A11yID.segment(batchId)).empty")
+    }
+
+    /// `batch.<batchId>.results`
+    public static func batchResults(_ batchId: String) -> A11yID {
+        A11yID(unchecked: "batch.\(A11yID.segment(batchId)).results")
+    }
+
+    /// `batch.<batchId>.filter.<name>`
+    public static func batchFilter(_ batchId: String, _ name: String) -> A11yID {
+        A11yID(unchecked: "batch.\(A11yID.segment(batchId)).filter.\(A11yID.segment(name))")
+    }
+
+    /// `batch.<batchId>.export.csv`
+    public static func batchExportCsv(_ batchId: String) -> A11yID {
+        A11yID(unchecked: "batch.\(A11yID.segment(batchId)).export.csv")
+    }
+
+    /// `batch.<batchId>.export.json`
+    public static func batchExportJson(_ batchId: String) -> A11yID {
+        A11yID(unchecked: "batch.\(A11yID.segment(batchId)).export.json")
+    }
+
     /// `computers.row.<id>.result`
     public static func computersRowResult(_ id: String) -> A11yID {
         A11yID(unchecked: "computers.row.\(A11yID.segment(id)).result")
@@ -1397,9 +1469,9 @@ extension A11yID {
         A11yID(unchecked: "overlay.cloneRepo.row.\(A11yID.segment(id))")
     }
 
-    /// `overlay.newBatch.*`
-    public static func overlayNewBatch(_ rest: String) -> A11yID {
-        A11yID(unchecked: "overlay.newBatch.\(A11yID.rawSegment(rest, loose: true))")
+    /// `overlay.newBatch.allowedProxies.<proxy>`
+    public static func overlayNewBatchAllowedProxiesWithProxy(_ proxy: String) -> A11yID {
+        A11yID(unchecked: "overlay.newBatch.allowedProxies.\(A11yID.segment(proxy))")
     }
 
     /// `menuBar.item.<sessionId>`
@@ -1636,6 +1708,9 @@ extension A11yID {
         A11yIDSpec(pattern: "inbox.item.<eventId>.takeOver", surface: "Inbox"),
         A11yIDSpec(pattern: "inbox.item.<eventId>.allow", surface: "Inbox"),
         A11yIDSpec(pattern: "inbox.item.<eventId>.deny", surface: "Inbox"),
+        A11yIDSpec(pattern: "inbox.item.<eventId>.open", surface: "Inbox"),
+        A11yIDSpec(pattern: "eventId", surface: "Inbox"),
+        A11yIDSpec(pattern: "batch.<batchId>", surface: "Inbox"),
         A11yIDSpec(pattern: "rightPanel", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.tab.<name>", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.tabs.indicator", surface: "Painel direito"),
@@ -1734,6 +1809,7 @@ extension A11yID {
         A11yIDSpec(pattern: "viewer.<computerId>.exit.handBack", surface: "Viewer"),
         A11yIDSpec(pattern: "viewer.<computerId>.exit.keep", surface: "Viewer"),
         A11yIDSpec(pattern: "computers.page", surface: "Páginas"),
+        A11yIDSpec(pattern: "computers.newBatch", surface: "Páginas"),
         A11yIDSpec(pattern: "computers.cleanUp", surface: "Páginas"),
         A11yIDSpec(pattern: "computers.dockerBanner", surface: "Páginas"),
         A11yIDSpec(pattern: "computers.empty", surface: "Páginas"),
@@ -1743,6 +1819,12 @@ extension A11yID {
         A11yIDSpec(pattern: "batch.<batchId>.row.<childId>", surface: "Páginas"),
         A11yIDSpec(pattern: "batch.<batchId>.collectAll", surface: "Páginas"),
         A11yIDSpec(pattern: "batch.<batchId>.archive", surface: "Páginas"),
+        A11yIDSpec(pattern: "batch.<batchId>.summary", surface: "Páginas"),
+        A11yIDSpec(pattern: "batch.<batchId>.empty", surface: "Páginas"),
+        A11yIDSpec(pattern: "batch.<batchId>.results", surface: "Páginas"),
+        A11yIDSpec(pattern: "batch.<batchId>.filter.<name>", surface: "Páginas"),
+        A11yIDSpec(pattern: "batch.<batchId>.export.csv", surface: "Páginas"),
+        A11yIDSpec(pattern: "batch.<batchId>.export.json", surface: "Páginas"),
         A11yIDSpec(pattern: "computers.row.<id>.result", surface: "Páginas"),
         A11yIDSpec(pattern: "computers.row.<id>.runFolder", surface: "Páginas"),
         A11yIDSpec(pattern: "library.page", surface: "Páginas"),
@@ -1784,6 +1866,9 @@ extension A11yID {
         A11yIDSpec(pattern: "overlay.confirmArchive", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmArchive.cancel", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmArchive.confirm", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmArchiveBatch", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmArchiveBatch.cancel", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.confirmArchiveBatch.confirm", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmStopComputer.confirm", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmDeleteComputer.confirm", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.confirmDelete", surface: "Dialogs"),
@@ -1845,7 +1930,18 @@ extension A11yID {
         A11yIDSpec(pattern: "overlay.about", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.about.licenses", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.about.copy", surface: "Dialogs"),
-        A11yIDSpec(pattern: "overlay.newBatch.*", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.newBatch", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.newBatch.targets", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.newBatch.importCSV", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.newBatch.brief", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.newBatch.display", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.newBatch.proxy", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.newBatch.allowedProxies", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.newBatch.session", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.newBatch.submit", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.newBatch.cancel", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.newBatch.count", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.newBatch.allowedProxies.<proxy>", surface: "Dialogs"),
         A11yIDSpec(pattern: "popover.paste", surface: "Dialogs"),
         A11yIDSpec(pattern: "popover.paste.text", surface: "Dialogs"),
         A11yIDSpec(pattern: "popover.paste.confirm", surface: "Dialogs"),

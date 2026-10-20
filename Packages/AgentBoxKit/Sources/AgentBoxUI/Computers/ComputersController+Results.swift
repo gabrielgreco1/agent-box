@@ -16,8 +16,12 @@ extension ComputersController {
 
     // MARK: Detalhe do computador (03 §11.7)
 
-    /// Pasta do run de um computador (o que o painel `Result` abre).
-    func runURL(forComputer name: String) -> URL? { model.computer(named: name)?.run.root }
+    /// Pasta do run de um computador: a do computador vivo ou a do filho de um lote que já terminou.
+    func runURL(forComputer name: String) -> URL? {
+        if let live = model.computer(named: name) { return live.run.root }
+        for batch in model.batches { if let child = batch.children.first(where: { $0.name == name }), !child.runPath.isEmpty { return URL(fileURLWithPath: child.runPath) } }
+        return nil
+    }
 
     /// Abre o detalhe `Result` no painel direito. `false` sem pasta de run (`No run folder for this computer.`).
     @discardableResult

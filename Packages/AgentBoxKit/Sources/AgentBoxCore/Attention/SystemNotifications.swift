@@ -13,7 +13,9 @@ public enum NotificationAuthorization: String, Sendable, Equatable, Codable {
 public struct NotificationTarget: Sendable, Equatable, Codable {
     public var terminalID: UUID
     public var sessionID: UUID
-    public init(terminalID: UUID, sessionID: UUID) { self.terminalID = terminalID; self.sessionID = sessionID }
+    /// "Lote concluído" (07 CS-326): o clique abre o painel `Batch` desse lote em vez de levar ao pane.
+    public var batchID: String?
+    public init(terminalID: UUID, sessionID: UUID, batchID: String? = nil) { self.terminalID = terminalID; self.sessionID = sessionID; self.batchID = batchID }
 }
 
 public struct SystemNotification: Sendable, Equatable, Codable {

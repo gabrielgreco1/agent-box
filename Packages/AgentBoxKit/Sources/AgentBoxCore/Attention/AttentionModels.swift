@@ -129,14 +129,17 @@ public struct AttentionItem: Identifiable, Sendable, Equatable {
     public var seenAt: Date?
     public var resolvedAt: Date?
     public var systemNotified: Bool
+    /// `batchDone`: o lote que terminou (o clique abre o painel `Batch`).
+    public var batchID: String?
 
     public var priority: Int { kind.priority }
     public var isResolved: Bool { resolvedAt != nil }
 
     public init(
         id: String, kind: AttentionKind, sessionID: UUID, terminalID: UUID, runID: UUID? = nil, title: String, body: String,
-        createdAt: Date, seenAt: Date? = nil, resolvedAt: Date? = nil, systemNotified: Bool = false
+        createdAt: Date, seenAt: Date? = nil, resolvedAt: Date? = nil, systemNotified: Bool = false, batchID: String? = nil
     ) {
+        self.batchID = batchID
         self.id = id; self.kind = kind; self.sessionID = sessionID; self.terminalID = terminalID; self.runID = runID
         self.title = title; self.body = body; self.createdAt = createdAt; self.seenAt = seenAt; self.resolvedAt = resolvedAt
         self.systemNotified = systemNotified
