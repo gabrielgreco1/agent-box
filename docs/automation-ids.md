@@ -286,6 +286,10 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `rightPanel.computers.thumb.<computerId>.takeOver`
 - `rightPanel.conversations.search`
 - `rightPanel.conversations.scope`
+- `rightPanel.conversations.empty`
+- `rightPanel.conversations.warning`
+- `rightPanel.conversations.back`
+- `rightPanel.conversations.transcript`
 - `rightPanel.conversations.row.<id>`
 - `rightPanel.conversations.row.<id>.resume`
 - `rightPanel.context.item.<kind>.<id>`
@@ -435,6 +439,9 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `overlay.resume`
 - `overlay.resume.row.<id>`
 - `overlay.resume.confirm`
+- `overlay.resume.cancel`
+- `overlay.resume.selectAll`
+- `overlay.resume.selectNone`
 - `overlay.moveToProject`
 - `overlay.moveToProject.project`
 - `overlay.moveToProject.cancel`
@@ -710,6 +717,12 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `conversation.resume` | Resume in New Tab / in Split, Show Transcript | — | slice2 |
 | `conversation.resumeSplit` | Resume in New Tab / in Split, Show Transcript | — | slice2 |
 | `conversation.showTranscript` | Resume in New Tab / in Split, Show Transcript | — | slice2 |
+| `conversation.menu` | Menu da conversa | — | slice2 |
+| `conversation.copyResumeCommand` | Copy Resume Command | — | slice2 |
+| `conversation.copyId` | Copy Conversation ID | — | slice2 |
+| `conversation.setScope` | Escopo | — | slice2 |
+| `conversation.setQuery` | Busca | — | slice2 |
+| `conversation.back` | Voltar do transcript | — | slice2 |
 | `context.restartWithResume` | Restart Agents with Resume | — | slice4 |
 | `context.toggleItem` | Toggle item in this session | — | slice4 |
 | `page.library` | Open Library / Library | ⇧⌘L | slice4 |

@@ -90,6 +90,9 @@ public final class AppEnvironment {
     private(set) var composer: ComposerController?
     /// Clone from GitHub… (F24): overlay, ações `project.cloneFromGitHub` e `dialog.cloneRepo.*`.
     private(set) var cloneRepo: CloneRepoController?
+    /// "Resume Agents…" em lote (T2-07, 03 §16.7) e a aba Conversations (⇧⌘H, 03 §10.5).
+    private(set) var resumeAgents: ResumeAgentsController?
+    private(set) var conversations: ConversationsController?
     /// "Open in…" e "Open in Editor" (T1-27).
     private(set) var openIn: OpenInController?
     let environmentVariables: [String: String]
@@ -427,6 +430,15 @@ public final class AppEnvironment {
         cloneController.openLoginTerminal = { [workspace] argv in workspace.newTab(provider: .custom, customArgv: argv) != nil }
         cloneRepo = cloneController
         do { try cloneController.register(in: registry) } catch { log.publicError("duplicate clone registration") }
+        let resume = ResumeAgentsController(
+            workspace: workspace, sessionTitle: { [sidebar] in sidebar.session($0)?.title }, selectedSession: { [sidebar] in sidebar.selectedSession },
+            overlays: overlays, toasts: toasts)
+        resumeAgents = resume
+        do { try resume.register(in: registry) } catch { log.publicError("duplicate resume agents registration") }
+        let conversationsController = ConversationsController(
+            workspace: workspace, sidebar: sidebar, overlays: overlays, toasts: toasts, elements: elements, rightPanel: rightPanel)
+        conversations = conversationsController
+        do { try conversationsController.register(in: registry) } catch { log.publicError("duplicate conversations registration") }
     }
 
     /// Ações reais da casca vazia; as demais entram com a tela que as possui.

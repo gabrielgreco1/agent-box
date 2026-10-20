@@ -236,6 +236,14 @@ extension A11yID {
     public static let rightPanelConversationsSearch = A11yID(unchecked: "rightPanel.conversations.search")
     /// `rightPanel.conversations.scope`
     public static let rightPanelConversationsScope = A11yID(unchecked: "rightPanel.conversations.scope")
+    /// `rightPanel.conversations.empty`
+    public static let rightPanelConversationsEmpty = A11yID(unchecked: "rightPanel.conversations.empty")
+    /// `rightPanel.conversations.warning`
+    public static let rightPanelConversationsWarning = A11yID(unchecked: "rightPanel.conversations.warning")
+    /// `rightPanel.conversations.back`
+    public static let rightPanelConversationsBack = A11yID(unchecked: "rightPanel.conversations.back")
+    /// `rightPanel.conversations.transcript`
+    public static let rightPanelConversationsTranscript = A11yID(unchecked: "rightPanel.conversations.transcript")
     /// `rightPanel.divider`
     public static let rightPanelDivider = A11yID(unchecked: "rightPanel.divider")
     /// `rightPanel.insights.empty`
@@ -392,6 +400,12 @@ extension A11yID {
     public static let overlayResume = A11yID(unchecked: "overlay.resume")
     /// `overlay.resume.confirm`
     public static let overlayResumeConfirm = A11yID(unchecked: "overlay.resume.confirm")
+    /// `overlay.resume.cancel`
+    public static let overlayResumeCancel = A11yID(unchecked: "overlay.resume.cancel")
+    /// `overlay.resume.selectAll`
+    public static let overlayResumeSelectAll = A11yID(unchecked: "overlay.resume.selectAll")
+    /// `overlay.resume.selectNone`
+    public static let overlayResumeSelectNone = A11yID(unchecked: "overlay.resume.selectNone")
     /// `overlay.moveToProject`
     public static let overlayMoveToProject = A11yID(unchecked: "overlay.moveToProject")
     /// `overlay.moveToProject.project`
@@ -1600,6 +1614,10 @@ extension A11yID {
         A11yIDSpec(pattern: "rightPanel.computers.thumb.<computerId>.takeOver", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.conversations.search", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.conversations.scope", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.conversations.empty", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.conversations.warning", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.conversations.back", surface: "Painel direito"),
+        A11yIDSpec(pattern: "rightPanel.conversations.transcript", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.conversations.row.<id>", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.conversations.row.<id>.resume", surface: "Painel direito"),
         A11yIDSpec(pattern: "rightPanel.context.item.<kind>.<id>", surface: "Painel direito"),
@@ -1728,6 +1746,9 @@ extension A11yID {
         A11yIDSpec(pattern: "overlay.resume", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.resume.row.<id>", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.resume.confirm", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.resume.cancel", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.resume.selectAll", surface: "Dialogs"),
+        A11yIDSpec(pattern: "overlay.resume.selectNone", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.moveToProject", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.moveToProject.project", surface: "Dialogs"),
         A11yIDSpec(pattern: "overlay.moveToProject.cancel", surface: "Dialogs"),

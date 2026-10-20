@@ -327,6 +327,76 @@ import Testing
         run2.runtime.daemonKill()
         await world.finish(run2)
     }
+
+    /// T2-07 (AC-207, F32): "Resume Agents…" lista os três agentes parados, a conversa que já roda noutro processo vem
+    /// desmarcada e fora da retomada, e `Resume 2` relança só os dois marcados com `--resume`, escalonados.
+    @Test func resumeAgentsOverlayResumesTwoOfThreeAndSkipsTheOneLiveElsewhere() async throws {
+        let world = try await World()
+        try world.installFakeCLI("claude", script: "echo \"ARGV:$@\"; exec cat")
+        let seeds = [
+            try await world.seed(spec: LaunchSpec(provider: .claude, permissionMode: "bypassPermissions"), provider: .claude),
+            try await world.seed(spec: LaunchSpec(provider: .claude, permissionMode: "bypassPermissions"), provider: .claude),
+            try await world.seed(spec: LaunchSpec(provider: .claude, permissionMode: "bypassPermissions"), provider: .claude),
+        ]
+        let (a, b, c) = (seeds[0].terminal.id, seeds[1].terminal.id, seeds[2].terminal.id)
+        let run1 = AppRun(harness: world.harness, session: world.session, binDirectory: world.binDirectory)
+        try await run1.open(store: world.store, session: world.session)
+        for seed in seeds {
+            run1.model.selectTab(seed.tab.id)
+            run1.area.layoutSubtreeIfNeeded()
+            try await eventually("tab launched", timeout: .seconds(30)) { run1.model.terminal(seed.terminal.id)?.state == .running }
+        }
+        try await eventually("all running", timeout: .seconds(40)) { [a, b, c].allSatisfy { run1.screen($0).contains("ARGV:") } }
+        let natives = try [a, b, c].map { try #require(run1.model.terminal($0)?.nativeConversationID) }
+        await run1.model.settlePersistence()
+        try await Task.sleep(for: .milliseconds(400))
+        await run1.die()
+        await SessionReconciler.markCleanExit(store: world.store)
+        await world.harness.killDaemon()  // reinício do Mac: nada sobe sozinho
+
+        let run2 = AppRun(harness: world.harness, session: world.session, binDirectory: world.binDirectory)
+        try await run2.open(store: world.store, session: world.session)
+        #expect(Set(try #require(run2.report).interrupted.keys) == [a, b, c])
+        run2.model.liveConversations = { [natives] in [natives[2]] }  // a terceira roda em outra build
+
+        let flags = SliceFlags()
+        let elements = UIElementStore()
+        let registry = ActionRegistry(flags: flags, surface: WindowAutomation(store: elements, flags: flags, fixture: nil, automationEnabled: false))
+        let overlays = OverlayRouter()
+        let session = world.session
+        let controller = ResumeAgentsController(
+            workspace: run2.model, sessionTitle: { _ in session.title }, selectedSession: { nil }, overlays: overlays, toasts: ToastCenter())
+        let empty = world.binDirectory.appendingPathComponent("no-transcripts", isDirectory: true)
+        controller.history = ConversationHistory(claudeProjects: empty, codexSessions: empty)
+        controller.stagger = .milliseconds(50)
+        try controller.register(in: registry)
+
+        _ = try await registry.perform(.sessionResumeAgents, .select(world.session.id.uuidString))
+        let model = try #require(controller.model)
+        #expect(controller.isOpen && overlays.top?.spec.id == .overlayResume)
+        #expect(model.candidates.count == 3, "lista os três parados")
+        #expect(model.candidates.first { $0.id == c }?.isLive == true && !model.isSelected(c), "a viva noutro processo não é marcada")
+        #expect(model.count == 2 && model.isSelected(a) && model.isSelected(b))
+        await #expect(throws: (any Error).self) { _ = try await registry.perform(.dialogResumeAgentsToggleRow, .select(c.uuidString)) }
+        #expect(!model.isSelected(c), "linha viva não alterna")
+        // Nada subiu só por abrir o overlay (nunca automático).
+        #expect([a, b, c].allSatisfy { run2.model.terminal($0)?.state == .interrupted })
+
+        let result = try await registry.perform(.dialogResumeAgentsConfirm, nil)
+        #expect(result.message == "2")
+        #expect(overlays.live.isEmpty, "o overlay fecha ao confirmar")
+        for id in [a, b] {
+            let tab = try #require(seeds.first { $0.terminal.id == id }).tab
+            run2.model.selectTab(tab.id)  // só a tab ativa lança
+            run2.area.layoutSubtreeIfNeeded()
+            try await eventually("agent resumed", timeout: .seconds(40)) { run2.model.paneState(id) == .running && run2.screen(id).contains("ARGV:--resume") }
+        }
+        #expect(run2.screen(a).contains("ARGV:--resume \(natives[0])") && run2.screen(b).contains("ARGV:--resume \(natives[1])"))
+        #expect(run2.model.terminal(c)?.state == .interrupted, "a conversa viva noutro processo continua parada")
+        #expect(try await run2.runtime.client.list().filter { $0.state == .running }.count == 2)
+        run2.runtime.daemonKill()
+        await world.finish(run2)
+    }
 }
 
 extension TerminalRuntime {

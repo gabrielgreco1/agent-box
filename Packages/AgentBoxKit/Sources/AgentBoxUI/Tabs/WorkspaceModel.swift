@@ -426,11 +426,14 @@ final class WorkspaceModel {
 
     /// Nova tab com um terminal (⌘T shell, ⌥⌘T agente, Quick Launch). Entra à direita da ativa (M-301).
     @discardableResult
-    func newTab(provider: TerminalProvider, profileID: UUID? = nil, prompt: String? = nil, customArgv: [String]? = nil) -> UUID? {
+    func newTab(
+        provider: TerminalProvider, profileID: UUID? = nil, prompt: String? = nil, customArgv: [String]? = nil, resumeOf: String? = nil
+    ) -> UUID? {
         guard let session, let sid = currentSessionID, states[sid] != nil else { return nil }
         let tabID = UUID.v7()
         var spec = LaunchSpec(provider: provider, profileID: profileID)
         spec.initialPrompt = prompt
+        spec.resumeOf = resumeOf
         spec.customArgv = customArgv
         let terminal = makeTerminal(tabID: tabID, spec: spec, cwd: session.folderPath, folder: session.folderPath)
         let pane = Pane(content: .terminal(terminal.id))
@@ -1115,7 +1118,51 @@ final class WorkspaceModel {
     /// `Resume All` do banner: todos os agentes parados da sessão atual voltam com `--resume`, escalonados.
     @discardableResult
     func resumeStoppedAgentsInCurrentSession(stagger: Duration = .milliseconds(300)) async -> Int {
-        await resume(all: stoppedAgentsInCurrentSession.map(\.id), stagger: stagger)
+        await resumeSelected(stoppedAgentsInCurrentSession.map(\.id), stagger: stagger).resumed
+    }
+
+    /// Agentes que "Resume Agents…" oferece na sessão `sid` (carrega a sessão se preciso): primeiro os interrompidos, depois
+    /// os que saíram sozinhos, sempre com ID nativo.
+    func resumableAgents(in sid: UUID) -> [Terminal] {
+        load(session: sid)
+        guard let state = states[sid] else { return [] }
+        let all = state.tabs.flatMap { $0.layout.terminalIDs }.compactMap { state.terminals[$0] }
+            .filter { $0.provider.isAgent && RestorePlanner.hasExactResume($0) }
+        return all.filter { $0.state == .interrupted } + all.filter { $0.state == .exited }
+    }
+
+    /// Há agente interrompido com ID nativo na sessão (sem carregá-la): decide se "Resume Agents…" aparece.
+    func hasInterruptedAgents(in sid: UUID?) -> Bool {
+        let tabIDs: Set<UUID>? = sid.map { id in Set(snapshot.tabs.filter { $0.sessionID == id && $0.closedAt == nil }.map(\.id)) }
+        return snapshot.terminals.contains { t in
+            t.state == .interrupted && t.provider.isAgent && RestorePlanner.hasExactResume(t) && (tabIDs?.contains(t.tabID) ?? true)
+        }
+    }
+
+    /// Retoma os terminais escolhidos com `--resume`, escalonados. Nunca relança uma conversa que já roda em outro processo
+    /// (F32): essas ficam de fora e voltam em `skippedLive`.
+    func resumeSelected(_ ids: [UUID], stagger: Duration = .milliseconds(300)) async -> (resumed: Int, skippedLive: Int) {
+        let live = await liveConversations()
+        var eligible: [UUID] = []
+        var skipped = 0
+        for id in ids {
+            guard let t = terminal(id) else { continue }
+            if let native = RestorePlanner.nativeID(of: t), live.contains(native) { skipped += 1 } else { eligible.append(id) }
+        }
+        return (await resume(all: eligible, stagger: stagger), skipped)
+    }
+
+    /// Conversa do histórico (aba Conversations): tab nova, ou split à direita, com `--resume <id>` e o perfil padrão.
+    @discardableResult
+    func resumeConversation(_ conversation: ConversationSummary, split asSplit: Bool) -> UUID? {
+        guard conversation.provider.isAgent else { return nil }
+        if asSplit {
+            var spec = LaunchSpec(provider: conversation.provider)
+            spec.resumeOf = conversation.nativeID
+            guard case .created(let id) = split(.horizontal, spec: spec) else { return nil }
+            return id
+        }
+        return newTab(provider: conversation.provider, resumeOf: conversation.nativeID)
     }
 
     /// Retomada automática ao abrir (P25): só agentes com ID nativo que morreram sem o usuário pedir (nunca shells, nunca os
@@ -1135,7 +1182,7 @@ final class WorkspaceModel {
     private func resume(all ids: [UUID], stagger: Duration) async -> Int {
         var resumed = 0
         for id in ids {
-            guard let t = terminal(id), t.state == .interrupted, !launching.contains(id) else { continue }
+            guard let t = terminal(id), t.state == .interrupted || t.state == .exited, !launching.contains(id) else { continue }
             if resumed > 0 { try? await Task.sleep(for: stagger) }
             resume(id)
             resumed += 1

@@ -17,6 +17,7 @@ public struct PanelModuleID: Hashable, Codable, Sendable, RawRepresentable, Expr
     public static let files: PanelModuleID = "files"
     public static let insights: PanelModuleID = "insights"
     public static let computers: PanelModuleID = "computers"
+    public static let conversations: PanelModuleID = "conversations"
 }
 
 /// Posição vertical de um módulo no painel.

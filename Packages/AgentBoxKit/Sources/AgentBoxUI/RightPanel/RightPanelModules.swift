@@ -10,6 +10,7 @@ enum RightPanelModules {
         controller.register(FilesModule(controller: env.files))
         controller.register(makeInsightsModule(env: env))
         controller.register(ComputersModule(controller: env.computers))
+        if let conversations = env.conversations { controller.register(ConversationsModule(controller: conversations)) }
         if env.flags.isEnabled(.slice2) {
             controller.register(SourceControlModule(controller: env.github))
             controller.register(ChecksModule(controller: env.github))
@@ -59,5 +60,20 @@ final class ComputersModule: RightPanelModule {
                 .font(DS.Font.small.font)
                 .foregroundStyle(DS.Color.textTertiary)
                 .lineLimit(1))
+    }
+}
+
+/// Conversations (03 §10.5) como módulo do painel; abre por ⇧⌘H e não tem botão na faixa de topo.
+@MainActor
+final class ConversationsModule: RightPanelModule {
+    let id = PanelModuleID.conversations
+    let title = String(localized: "Conversations", bundle: .module)
+    let icon = "clock.arrow.circlepath"
+    private let controller: ConversationsController
+
+    init(controller: ConversationsController) { self.controller = controller }
+
+    func makeView(context: RightPanelModuleContext) -> AnyView {
+        AnyView(ConversationsView(controller: controller))
     }
 }

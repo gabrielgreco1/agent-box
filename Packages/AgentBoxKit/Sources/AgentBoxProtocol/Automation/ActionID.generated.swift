@@ -199,6 +199,12 @@ extension ActionID {
     public static let conversationResume = ActionID(unchecked: "conversation.resume")
     public static let conversationResumeSplit = ActionID(unchecked: "conversation.resumeSplit")
     public static let conversationShowTranscript = ActionID(unchecked: "conversation.showTranscript")
+    public static let conversationMenu = ActionID(unchecked: "conversation.menu")
+    public static let conversationCopyResumeCommand = ActionID(unchecked: "conversation.copyResumeCommand")
+    public static let conversationCopyId = ActionID(unchecked: "conversation.copyId")
+    public static let conversationSetScope = ActionID(unchecked: "conversation.setScope")
+    public static let conversationSetQuery = ActionID(unchecked: "conversation.setQuery")
+    public static let conversationBack = ActionID(unchecked: "conversation.back")
     public static let contextRestartWithResume = ActionID(unchecked: "context.restartWithResume")
     public static let contextToggleItem = ActionID(unchecked: "context.toggleItem")
     public static let pageLibrary = ActionID(unchecked: "page.library")
@@ -619,6 +625,12 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "conversation.resume"), label: "Resume in New Tab / in Split, Show Transcript", shortcut: "", slice: .slice2),
         ActionSpec(id: ActionID(unchecked: "conversation.resumeSplit"), label: "Resume in New Tab / in Split, Show Transcript", shortcut: "", slice: .slice2),
         ActionSpec(id: ActionID(unchecked: "conversation.showTranscript"), label: "Resume in New Tab / in Split, Show Transcript", shortcut: "", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "conversation.menu"), label: "Menu da conversa", shortcut: "", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "conversation.copyResumeCommand"), label: "Copy Resume Command", shortcut: "", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "conversation.copyId"), label: "Copy Conversation ID", shortcut: "", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "conversation.setScope"), label: "Escopo", shortcut: "", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "conversation.setQuery"), label: "Busca", shortcut: "", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "conversation.back"), label: "Voltar do transcript", shortcut: "", slice: .slice2),
         ActionSpec(id: ActionID(unchecked: "context.restartWithResume"), label: "Restart Agents with Resume", shortcut: "", slice: .slice4),
         ActionSpec(id: ActionID(unchecked: "context.toggleItem"), label: "Toggle item in this session", shortcut: "", slice: .slice4),
         ActionSpec(id: ActionID(unchecked: "page.library"), label: "Open Library / Library", shortcut: "⇧⌘L", slice: .slice4),
