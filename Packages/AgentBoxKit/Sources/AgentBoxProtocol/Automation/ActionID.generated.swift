@@ -764,7 +764,7 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "proxy.preset"), label: "Preset", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "proxy.scheme"), label: "Type", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "proxy.setDefault"), label: "Default proxy (proxy)", shortcut: "", slice: .slice3),
-        ActionSpec(id: ActionID(unchecked: "proxy.importFromCLI"), label: "Import from agentbox CLI…", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "proxy.importFromCLI"), label: "Import from racky CLI…", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "settings.openSection"), label: "Seção do Settings (nav)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.back"), label: "Back to App", shortcut: "Esc", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.general.keepAgentsRunning"), label: "Keep agents running when you quit", shortcut: "", slice: .slice1),

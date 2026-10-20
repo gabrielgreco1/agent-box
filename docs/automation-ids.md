@@ -883,7 +883,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `proxy.preset` | Preset | — | slice3 |
 | `proxy.scheme` | Type | — | slice3 |
 | `proxy.setDefault` | Default proxy (proxy) | — | slice3 |
-| `proxy.importFromCLI` | Import from agentbox CLI… | — | slice3 |
+| `proxy.importFromCLI` | Import from racky CLI… | — | slice3 |
 | `settings.openSection` | Seção do Settings (nav) | — | slice1 |
 | `settings.back` | Back to App | Esc | slice1 |
 | `settings.general.keepAgentsRunning` | Keep agents running when you quit | — | slice1 |
