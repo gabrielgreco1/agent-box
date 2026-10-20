@@ -924,11 +924,18 @@ public final class AppEnvironment {
 
 
     /// Sobe o servidor `ctl` se a automação estiver ligada. Chamado uma vez, no primeiro `.task` da janela.
+    /// O app real vai restaurar as sessões (o `AppDelegate` marca antes de criar a janela): a tela inicial espera, senão
+    /// ela pisca por meio segundo antes de a sessão selecionada voltar.
+    @ObservationIgnored public var restorePending = false
+    @ObservationIgnored var onRestored: () -> Void = {}
+
     public func start() async {
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1.0 (dev)"
         // Log em disco, sentinela de crash e (só no produto) MetricKit; depois do lock da instância (AppDelegate).
         diagnostics.start(build: build, systemHooks: Bundle.main.bundleURL.pathExtension == "app" && !headless && !automationEnabled && fixture == nil)
         await startStore()
+        restorePending = false
+        onRestored()
         computers.startRefreshing()
         computers.startDemo(environment: environmentVariables)
         // Fatia 2: `app.sock` é de um hub só (ctl + hook); os hooks chegam mesmo com a automação desligada.

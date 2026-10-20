@@ -9,7 +9,7 @@ enum StartMetrics {
     static let cardWidth: CGFloat = 196
     static let cardHeight: CGFloat = 124
     static let agentCardWidth: CGFloat = 148
-    static let agentCardHeight: CGFloat = 104
+    static let agentCardHeight: CGFloat = 88
     static let icon: CGFloat = 20
     static let column: CGFloat = 632
     static let recentRow: CGFloat = 40

@@ -77,6 +77,13 @@ final class WorkspaceRootView: NSView {
         applyMode()
     }
 
+    /// Enquanto as sessões restauram, sem landing (a sessão selecionada ainda vai voltar).
+    private var landingHeld = false
+    func setLandingHeld(_ held: Bool) {
+        landingHeld = held
+        applyMode()
+    }
+
     func setPendingVisible(_ visible: Bool) {
         pendingVisible = visible
         applyMode()
@@ -98,7 +105,7 @@ final class WorkspaceRootView: NSView {
             pending.removeFromSuperview()
             area.removeFromSuperview()
             tabRow.removeFromSuperview()
-            if landing.superview == nil { addSubview(landing) }
+            if landingHeld { landing.removeFromSuperview() } else if landing.superview == nil { addSubview(landing) }
         }
         needsLayout = true
     }
@@ -240,6 +247,8 @@ final class WorkspaceViewController: NSViewController {
             guard let tabRow, tabRow.window != nil, tabRow.superview != nil else { return nil }
             return tabRow.convert(tabRow.bounds, to: nil)
         }
+        root.setLandingHeld(env.restorePending)
+        env.onRestored = { [weak root] in root?.setLandingHeld(false) }
         root.setWorkspaceVisible(env.workspace.currentSessionID != nil)
         env.workspace.addListener { [weak root, weak env] in
             guard let root, let env else { return }

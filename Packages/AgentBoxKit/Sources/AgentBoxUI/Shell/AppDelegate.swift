@@ -26,6 +26,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         if env.headless { MainWindowController.invisibleForTests = true }
         NSApp.appearance = NSAppearance(named: .darkAqua)
         // Telas de fixture (dev e evidência) não leem nem gravam o frame salvo do usuário.
+        env.restorePending = true
         let controller = MainWindowController(env: env, autosaveName: env.fixture == nil ? "workspace" : nil)
         windowController = controller
         env.lifecycle.dependencies.showWindow = { [weak controller] in controller?.present(activate: true) }
