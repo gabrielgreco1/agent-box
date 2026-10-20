@@ -35,7 +35,7 @@ import Testing
             conflicts: { ConflictScan(findings: findings, choice: choice.value, hasBackup: hasBackup()) })
     }
 
-    private let skill = ConflictFinding(kind: .globalSkill, provider: .claude, path: "~/.claude/skills/racky", message: "A global \"racky\" skill is installed and may compete with Racky tools.")
+    private let skill = ConflictFinding(kind: .globalSkill, provider: .claude, path: "~/.claude/skills/agentbox", message: "A global \"agentbox\" skill is installed and may compete with Racky tools.")
     private let notify = ConflictFinding(kind: .notify, provider: .codex, path: "~/.codex/config.toml", message: "Codex notify is used by another app (left untouched).")
 
     private func make(
@@ -183,7 +183,7 @@ import Testing
         let home = try SettingsModelTests.tempHome()
         let support = try SettingsModelTests.tempHome()
         defer { try? FileManager.default.removeItem(at: home); try? FileManager.default.removeItem(at: support) }
-        let skillDir = home.appendingPathComponent(".claude/skills/racky", isDirectory: true)
+        let skillDir = home.appendingPathComponent(".claude/skills/agentbox", isDirectory: true)
         try FileManager.default.createDirectory(at: skillDir, withIntermediateDirectories: true)
         try "# skill".write(to: skillDir.appendingPathComponent("SKILL.md"), atomically: true, encoding: .utf8)
         let backup = GlobalSkillBackup(home: home, backupRoot: support)

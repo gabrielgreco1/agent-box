@@ -1,3 +1,4 @@
+import RackyProtocol
 import Foundation
 
 /// Decisão da chave morta (estudo 6.1, camadas 1 a 3). O Mac é o controlador (P27.2): se ele some, a VM se apaga sozinha, sem papel
@@ -41,6 +42,8 @@ public struct DeadManPolicy: Sendable, Equatable {
     public static let stateDirectory = "/var/lib/racky"
     /// Rótulo dos containers que contam como "computador" para o teste de ociosidade.
     public static let computerLabel = "racky.computer"
+    /// Containers criados antes do rename ainda têm este label; contam como computador vivo para não desligar o host por engano.
+    public static let legacyComputerLabel = LegacyNames.dockerLabelPrefix + "computer"
 
     /// Comando fixo do app pelo SSH: grava a hora DA VM (sem depender do relógio do Mac) de forma atômica.
     public static let heartbeatCommand =
@@ -87,7 +90,7 @@ public enum DeadManScript {
 
         computers() {
           if [ -n "${RACKY_COMPUTERS:-}" ]; then echo "$RACKY_COMPUTERS"; return; fi
-          docker ps -q --filter "label=\(DeadManPolicy.computerLabel)" 2>/dev/null | wc -l | tr -d ' '
+          { docker ps -q --filter "label=\(DeadManPolicy.computerLabel)"; docker ps -q --filter "label=\(DeadManPolicy.legacyComputerLabel)"; } 2>/dev/null | sort -u | wc -l | tr -d ' '
         }
 
         stop_host() {

@@ -66,6 +66,9 @@ public actor BackgroundAgentHost {
     /// O binário do daemon mudou com o job rodando: re-registrar quando o daemon antigo sair.
     public private(set) var pendingReRegistration = false
     public private(set) var lastMode: DaemonHostMode?
+    private let legacyRetirement: LegacyDaemonRetirement?
+    /// Resultado da última tentativa de aposentar o LaunchAgent do nome antigo (`nil`: não tentou).
+    public private(set) var legacyOutcome: LegacyRetirementOutcome?
 
     /// Onde publicar o ponteiro do launcher estável (F30): o `rackyd` deste app e o build dele.
     public struct PointerConfiguration: Sendable {
@@ -85,8 +88,10 @@ public actor BackgroundAgentHost {
     public init(
         identity: BackgroundAgentIdentity, service: any BackgroundAgentService, launchd: any LaunchdQuerying = SystemLaunchd(),
         bundleURL: URL, daemonExecutable: URL?, stateFile: URL, pointer: PointerConfiguration? = nil,
+        legacyRetirement: LegacyDaemonRetirement? = nil,
         pause: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) }
     ) {
+        self.legacyRetirement = legacyRetirement
         self.identity = identity
         self.service = service
         self.launchd = launchd
@@ -115,8 +120,22 @@ public actor BackgroundAgentHost {
         return mode
     }
 
+    /// Aposenta o LaunchAgent do nome antigo, mas só se ele não tiver terminais vivos (senão o deixa drenar, intocado).
+    public func retireLegacyIfDrained() async {
+        guard let legacyRetirement else { return }
+        let outcome = await legacyRetirement.retireIfDrained()
+        legacyOutcome = outcome
+        switch outcome {
+        case .retired: log.publicInfo("retired the previous launch agent (no terminals were alive in it)")
+        case .keptRunning: log.publicInfo("the previous launch agent still has terminals: leaving it to drain")
+        case .failed: log.publicInfo("could not retire the previous launch agent")
+        case .notPresent: break
+        }
+    }
+
     private func resolve() async -> DaemonHostMode {
         guard FileManager.default.fileExists(atPath: plistURL.path) else { return .childProcess(reason: .notInBundle) }
+        await retireLegacyIfDrained()
         if let pointer { DaemonPointer.update(home: pointer.home, executable: pointer.daemonBinary, build: pointer.build) }
         var status = service.status
         // F30: um daemon vivo (registrado por este ou por outro app, de outra pasta) é adotado como está. Registrar de novo
@@ -159,6 +178,7 @@ public actor BackgroundAgentHost {
     /// Chamado quando o cliente perdeu o daemon: se o binário mudou e o job não roda mais, re-registra (o launchd não
     /// conseguiria subir o binário novo) e devolve o caminho vigente do socket.
     public func recover() async -> DaemonHostMode {
+        await retireLegacyIfDrained()
         guard service.status == .enabled else { return await prepare() }
         let job = await launchd.jobState(label: identity.label)
         if job != .running, job == .failed || pendingReRegistration || fingerprintMismatch() {

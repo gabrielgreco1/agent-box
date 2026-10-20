@@ -136,6 +136,7 @@ public final class AppEnvironment {
         self.keyBindings = bindings
         let settings = SettingsModel(flags: flags, probe: Self.makeProbe(fixture: environment["RACKY_SCREEN"]))
         self.settings = settings
+        if environment["RACKY_HOME"].map({ $0.isEmpty }) ?? true { settings.legacyDefaultFoldersHome = URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true) }
         let choice = ConflictChoiceBox()
         let supportRoot = StorePaths.default(environment: environment).root
         // Com sondas de mentira, "Disable Globally…" mexe numa home de mentira dentro do RACKY_HOME, nunca na do usuário.
@@ -486,8 +487,8 @@ public final class AppEnvironment {
                 ConflictScan(
                     findings: [
                         ConflictFinding(
-                            kind: .globalSkill, provider: .claude, path: "~/.claude/skills/racky",
-                            message: "A global \"racky\" skill is installed and may compete with Racky tools."),
+                            kind: .globalSkill, provider: .claude, path: "~/.claude/skills/\(LegacyNames.externalSkillName)",
+                            message: "A global \"\(LegacyNames.externalSkillName)\" skill is installed and may compete with Racky tools."),
                         ConflictFinding(
                             kind: .notify, provider: .codex, path: "~/.codex/config.toml",
                             message: "Codex notify is used by another app (left untouched)."),
@@ -733,7 +734,9 @@ public final class AppEnvironment {
                 .init(
                     home: storeRoot, daemonBinary: $0,
                     build: Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "0")
-            })
+            },
+            // Só o daemon de produção aposenta o LaunchAgent do nome antigo (labels de teste nunca).
+            legacyRetirement: identity.isTest ? nil : LegacyDaemonRetirement())
     }
 
     /// ⌘Q, accessory, barra de menus e o aviso de aprovação do LaunchAgent.

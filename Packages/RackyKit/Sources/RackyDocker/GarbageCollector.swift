@@ -11,8 +11,8 @@ public struct ManagedResource: Sendable, Equatable {
     public var name: String
     public var labels: [String: String]
 
-    public var computerID: String? { labels[RackyLabel.computer] }
-    public var isEphemeral: Bool { labels[RackyLabel.ephemeral] == "true" }
+    public var computerID: String? { RackyLabel.value(RackyLabel.computer, in: labels) }
+    public var isEphemeral: Bool { RackyLabel.value(RackyLabel.ephemeral, in: labels) == "true" }
 }
 
 /// Resultado do cruzamento do inventário com o banco (07 CS-181).
@@ -33,16 +33,26 @@ public struct GarbageCollector: Sendable {
     public func inventory(labels: [String]) async throws -> [ManagedResource] {
         // GC exige ao menos um label: nunca varrer o daemon inteiro.
         guard !labels.isEmpty else { return [] }
-        let filter = ["label": labels]
+        // Recursos criados antes do rename têm os labels do nome antigo: a mesma consulta roda também com eles.
+        var queries = [labels]
+        let legacy = labels.compactMap(RackyLabel.legacyFilter)
+        if legacy.count == labels.count { queries.append(legacy) }
         var result: [ManagedResource] = []
-        for container in try await client.listContainers(all: true, filters: filter) {
-            result.append(ManagedResource(kind: .container, id: container.id, name: container.name, labels: container.labels))
+        var seen = Set<String>()
+        func add(_ resource: ManagedResource) {
+            if seen.insert("\(resource.kind.rawValue):\(resource.id)").inserted { result.append(resource) }
         }
-        for network in try await client.listNetworks(filters: filter) {
-            result.append(ManagedResource(kind: .network, id: network.id, name: network.name, labels: network.labels))
-        }
-        for volume in try await client.listVolumes(filters: filter) {
-            result.append(ManagedResource(kind: .volume, id: volume.name, name: volume.name, labels: volume.labels))
+        for query in queries {
+            let filter = ["label": query]
+            for container in try await client.listContainers(all: true, filters: filter) {
+                add(ManagedResource(kind: .container, id: container.id, name: container.name, labels: container.labels))
+            }
+            for network in try await client.listNetworks(filters: filter) {
+                add(ManagedResource(kind: .network, id: network.id, name: network.name, labels: network.labels))
+            }
+            for volume in try await client.listVolumes(filters: filter) {
+                add(ManagedResource(kind: .volume, id: volume.name, name: volume.name, labels: volume.labels))
+            }
         }
         return result
     }

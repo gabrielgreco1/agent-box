@@ -345,7 +345,7 @@ enum StoreMigrations {
 
         CREATE TABLE import_run (
             id TEXT PRIMARY KEY NOT NULL,
-            source TEXT NOT NULL CHECK (source IN ('racky_json','orca','racky_cli')),
+            source TEXT NOT NULL CHECK (source IN ('agentbox_json','orca','agentbox_cli')),
             source_path TEXT NOT NULL,
             source_fingerprint TEXT,
             dry_run INTEGER NOT NULL DEFAULT 0 CHECK (dry_run IN (0,1)),

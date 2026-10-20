@@ -1,4 +1,5 @@
 import RackyPlatform
+import RackyProtocol
 import Darwin
 import Foundation
 
@@ -23,6 +24,8 @@ struct RackyD {
         let launch = CommandLine.arguments
         if launch.count >= 3, launch[1] == PTYSpawner.cttyFlag { PTYSpawner.execWithControllingTTY(Array(launch.dropFirst(2))) }
         PTYSpawner.cttyShim = PTYSpawner.ownExecutablePath()
+        // Nome antigo: variáveis `AGENTBOX_*` herdadas viram `RACKY_*` (o nome novo vence).
+        LegacyEnvironment.promoteProcessEnvironment()
         signal(SIGPIPE, SIG_IGN)
         // F30: o daemon só encerra por `shutdown` (protocolo) ou ocioso sem sessões. SIGTERM/SIGHUP/SIGINT do app, do shell ou de
         // um `kill` por engano são ignorados. Um handler (e não `SIG_IGN`) para que os filhos PTY voltem ao padrão no `exec`.
@@ -65,6 +68,8 @@ struct RackyD {
                 Darwin.exit(64)
             }
         }
+        // Pasta de dados do nome antigo: o app já migra no boot; aqui é só a rede de segurança (idempotente, no-op com `--home`/`RACKY_HOME`).
+        if home == nil { _ = DataFolderMigration.migrateDefault() }
         let paths = DaemonPaths.resolve(environment: ProcessInfo.processInfo.environment, socketOverride: socket, homeOverride: home)
         // Log em disco do daemon (08 AR-602): `logs/ptyd.jsonl`, redigido antes de gravar; as métricas do daemon vão para o mesmo arquivo.
         let disk = DiskLog(.init(directory: paths.home.appendingPathComponent("logs", isDirectory: true), process: "ptyd"))

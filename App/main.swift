@@ -3,6 +3,8 @@ import AppKit
 import Foundation
 
 // Casca AppKit (00 T5): sem cena SwiftUI; a janela é um NSWindow configurado à mão.
+// Migrações do nome antigo (pasta de dados, defaults, variáveis de ambiente) antes do lock de instância e do banco.
+StartupMigrations.run()
 MainActor.assumeIsolated {
     let app = NSApplication.shared
     let delegate = AppDelegate()

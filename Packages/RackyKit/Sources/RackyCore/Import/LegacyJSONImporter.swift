@@ -28,7 +28,7 @@ public struct LegacyImportReport: Codable, Sendable, Equatable {
     public func count(_ key: String) -> Int { counts[key] ?? 0 }
 }
 
-/// Leitura dos valores do Keychain antigo (`com.racky.secret.v1`), um segredo por vez.
+/// Leitura dos valores do Keychain antigo (serviço `LegacyNames.preRebuildKeychainService`), um segredo por vez.
 public protocol LegacySecretReading: Sendable {
     func readLegacySecret(id: UUID) async throws -> String?
 }
@@ -148,13 +148,13 @@ public struct LegacyJSONImporter: Sendable {
         let pending = report.count("secrets.skipped.unconfirmed") + report.count("secrets.skipped.unreadable") + report.count("secrets.skipped.noVault")
         let status = dryRun ? "dry_run" : (pending > 0 ? "completed_pending_secrets" : "completed")
         try await store.recordImportRun(ImportRunRow(
-            source: "racky_json", sourcePath: dir.path, fingerprint: fingerprint, dryRun: dryRun, status: status,
+            source: LegacyNames.importSourceJSON, sourcePath: dir.path, fingerprint: fingerprint, dryRun: dryRun, status: status,
             summaryJSON: summary, startedAt: started, finishedAt: clock()))
         return report
     }
 
     private func completedRun(fingerprint: String) async throws -> ImportRunRow? {
-        try await store.importRuns(source: "racky_json").first { $0.fingerprint == fingerprint && !$0.dryRun && $0.status == "completed" }
+        try await store.importRuns(source: LegacyNames.importSourceJSON).first { $0.fingerprint == fingerprint && !$0.dryRun && $0.status == "completed" }
     }
 
     // MARK: workspace.json
@@ -185,7 +185,7 @@ public struct LegacyJSONImporter: Sendable {
                 if let p = existingProjects[gitRoot] { projectID = p.id }
                 else {
                     let p = Project(name: URL(fileURLWithPath: gitRoot).lastPathComponent, kind: .git, rootPath: gitRoot,
-                                    source: .manual, importSourceID: "racky_json", sortIndex: existingProjects.count, createdAt: now)
+                                    source: .manual, importSourceID: LegacyNames.importSourceJSON, sortIndex: existingProjects.count, createdAt: now)
                     existingProjects[gitRoot] = p
                     projectID = p.id
                     counts["projects.new", default: 0] += 1
@@ -347,7 +347,7 @@ public struct LegacyJSONImporter: Sendable {
             guard let value = try? await secretReader.readLegacySecret(id: id) else { counts["secrets.skipped.unreadable", default: 0] += 1; continue }
             let env = SecretVault.isValidEnvName(name) ? name : nil
             do {
-                try await vault.create(NewSecret(name: name, value: value, defaultEnvName: env, importedFrom: "racky:secret-references.json"))
+                try await vault.create(NewSecret(name: name, value: value, defaultEnvName: env, importedFrom: LegacyNames.importedFromSecretReferences))
                 counts["secrets.new", default: 0] += 1
             } catch SecretError.duplicateName {
                 counts["secrets.alreadyPresent", default: 0] += 1
@@ -413,14 +413,14 @@ public struct LegacyJSONImporter: Sendable {
     }
 }
 
-/// Leitor do Keychain antigo (`com.racky.secret.v1`, conta = UUID da referência). Só o importador o usa, e só depois
+/// Leitor do Keychain antigo (serviço `LegacyNames.preRebuildKeychainService`, conta = UUID da referência). Só o importador o usa, e só depois
 /// da confirmação do usuário por segredo.
 public struct SystemLegacySecretReader: LegacySecretReading {
     public init() {}
     public func readLegacySecret(id: UUID) async throws -> String? {
         await BlockingIOBridge.run {
             let query: [String: Any] = [
-                kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: "com.racky.secret.v1",
+                kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: LegacyNames.preRebuildKeychainService,
                 kSecAttrAccount as String: id.uuidString, kSecReturnData as String: kCFBooleanTrue as Any,
                 kSecMatchLimit as String: kSecMatchLimitOne]
             var item: CFTypeRef?

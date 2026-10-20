@@ -13,6 +13,9 @@ public final class SettingsModel {
     public static let sectionStateKey = "settings.section"
 
     public private(set) var settings = AppSettings()
+    /// Home real do usuário quando é para manter as pastas padrão do nome antigo de quem nunca salvou as configurações (ver
+    /// `LegacyDefaultFolders`). `nil` (testes, `RACKY_HOME` isolado): só os padrões novos.
+    public var legacyDefaultFoldersHome: URL?
     public private(set) var isOpen = false
     public private(set) var section: String
     public private(set) var agents: [AgentInfo] = AgentCatalog.providers.map { AgentInfo(provider: $0) }
@@ -151,11 +154,14 @@ public final class SettingsModel {
         if let saved = try? await store.setting(AppSettings.storeKey, as: AppSettings.self) {
             settings = saved
             persisted = saved
+        } else if let home = legacyDefaultFoldersHome {
+            settings.general = LegacyDefaultFolders.applying(to: settings.general, home: home)
+            persisted = settings
         }
         if let id = try? await store.uiState(Self.sectionStateKey, as: String.self), sections.contains(where: { $0.id == id }) { section = id }
         await reloadProfiles()
         if proxyService == nil {
-            proxyService = ProxyService(store: store, vault: SecretVault(store: store, keyring: VaultKeyring(backend: SystemKeychainBackend())))
+            proxyService = ProxyService(store: store, vault: SecretVault(store: store, keyring: VaultKeyring(backend: MigratingMasterKeyBackend.system())))
         }
         await reloadProxies()
     }

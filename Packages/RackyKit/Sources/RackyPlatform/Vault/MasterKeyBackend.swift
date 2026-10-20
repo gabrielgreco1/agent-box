@@ -1,3 +1,4 @@
+import RackyProtocol
 import Foundation
 import Security
 
@@ -34,10 +35,12 @@ public enum VaultError: Error, Equatable, Sendable, CustomStringConvertible {
 public struct SystemKeychainBackend: MasterKeyBackend {
     public static let service = "app.racky.vault"
     public static let account = "master-v1"
+    /// Serviço do item: o do produto, ou o do nome antigo (só para a migração em `MigratingMasterKeyBackend`).
+    public let serviceName: String
 
-    public init() {}
+    public init(service: String = SystemKeychainBackend.service) { serviceName = service }
 
-    private static func identity() -> [String: Any] {
+    private static func identity(service: String) -> [String: Any] {
         [kSecClass as String: kSecClassGenericPassword,
          kSecAttrService as String: service,
          kSecAttrAccount as String: account,
@@ -45,8 +48,9 @@ public struct SystemKeychainBackend: MasterKeyBackend {
     }
 
     public func loadMasterKey() async throws -> Data? {
+        let service = serviceName
         let result: Result<Data?, VaultError> = await BlockingIOBridge.run {
-            var query = Self.identity()
+            var query = Self.identity(service: service)
             query[kSecReturnData as String] = kCFBooleanTrue
             query[kSecMatchLimit as String] = kSecMatchLimitOne
             var item: CFTypeRef?
@@ -61,13 +65,14 @@ public struct SystemKeychainBackend: MasterKeyBackend {
     }
 
     public func storeMasterKey(_ key: Data) async throws {
+        let service = serviceName
         let status: OSStatus = await BlockingIOBridge.run {
-            var attributes = Self.identity()
+            var attributes = Self.identity(service: service)
             attributes[kSecValueData as String] = key
             attributes[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
             let added = SecItemAdd(attributes as CFDictionary, nil)
             if added == errSecDuplicateItem {
-                return SecItemUpdate(Self.identity() as CFDictionary, [kSecValueData as String: key] as CFDictionary)
+                return SecItemUpdate(Self.identity(service: service) as CFDictionary, [kSecValueData as String: key] as CFDictionary)
             }
             return added
         }
@@ -75,8 +80,41 @@ public struct SystemKeychainBackend: MasterKeyBackend {
     }
 
     public func deleteMasterKey() async throws {
-        let status: OSStatus = await BlockingIOBridge.run { SecItemDelete(Self.identity() as CFDictionary) }
+        let service = serviceName
+        let status: OSStatus = await BlockingIOBridge.run { SecItemDelete(Self.identity(service: service) as CFDictionary) }
         guard status == errSecSuccess || status == errSecItemNotFound else { throw VaultError.keychain(status: status) }
+    }
+}
+
+/// Chave mestra com migração do nome antigo: lê o item novo; se não existe, lê o do nome antigo e o grava no novo (o antigo fica
+/// intocado, para desfazer a atualização). Sem isso o cofre criaria uma chave nova e os segredos já gravados ficariam ilegíveis.
+public struct MigratingMasterKeyBackend: MasterKeyBackend {
+    private let primary: any MasterKeyBackend
+    private let legacy: any MasterKeyBackend
+
+    public init(primary: any MasterKeyBackend, legacy: any MasterKeyBackend) {
+        self.primary = primary
+        self.legacy = legacy
+    }
+
+    /// Produção: serviço novo, com leitura do serviço antigo como origem da migração.
+    public static func system() -> MigratingMasterKeyBackend {
+        MigratingMasterKeyBackend(primary: SystemKeychainBackend(), legacy: SystemKeychainBackend(service: LegacyNames.vaultKeychainService))
+    }
+
+    public func loadMasterKey() async throws -> Data? {
+        if let key = try await primary.loadMasterKey() { return key }
+        guard let old = try await legacy.loadMasterKey() else { return nil }
+        try await primary.storeMasterKey(old)
+        return old
+    }
+
+    public func storeMasterKey(_ key: Data) async throws { try await primary.storeMasterKey(key) }
+
+    /// Apagar a chave tem de apagar as duas: senão a do nome antigo ressuscitaria na próxima leitura.
+    public func deleteMasterKey() async throws {
+        try await primary.deleteMasterKey()
+        try await legacy.deleteMasterKey()
     }
 }
 

@@ -8,7 +8,7 @@ import Testing
 @testable import RackyCore
 
 // T3-04: árvore pai -> filhos (persistida e derivada), `waitingOnSubagents`, `agent_message` do pai (P12), injeção por lançamento
-// (skill, `--agents` com mcpServers em array, deny de `Skill(racky)`, env) e a correlação com os hooks reais do S-08.
+// (skill, `--agents` com mcpServers em array, deny de `Skill(agentbox)`, env) e a correlação com os hooks reais do S-08.
 
 @Suite("T3-04 árvore e estado do pai") struct TreeStateTests {
     typealias Child = OrchestrationTree.ChildSummary
@@ -269,7 +269,7 @@ import Testing
                        "queued", "cited_missing", "untrusted", "ONE message", "never buy"] {
             #expect(skill.contains(needle) || skill.lowercased().contains(needle.lowercased()), "skill misses \(needle)")
         }
-        #expect(skill.contains("Prefer this over any \"racky\" CLI skill"), "specific description so the app skill wins over the global one")
+        #expect(skill.contains("Prefer this over any \"agentbox\" CLI skill"), "specific description so the app skill wins over the global one")
         #expect(!skill.contains("racky exec"), "no old CLI commands")
         let manifestFile = try #require(b.pluginFiles.first { $0.name.hasSuffix("plugin.json") })
         let manifest = try #require(try JSONSerialization.jsonObject(with: manifestFile.contents) as? [String: Any])
@@ -279,7 +279,7 @@ import Testing
     @Test func settingsDenyTheGlobalSkillAndKeepTheHooks() throws {
         let data = try ClaudeHookSettings.settingsJSON(helperPath: Self.helper, denyRules: [OrchestrationText.denyGlobalSkill])
         let root = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
-        #expect((root["permissions"] as? [String: Any])?["deny"] as? [String] == ["Skill(racky)"])
+        #expect((root["permissions"] as? [String: Any])?["deny"] as? [String] == ["Skill(agentbox)"])
         #expect((root["hooks"] as? [String: Any])?["SubagentStop"] != nil)
         let plain = try #require(try JSONSerialization.jsonObject(with: try ClaudeHookSettings.settingsJSON(helperPath: Self.helper)) as? [String: Any])
         #expect(plain["permissions"] == nil, "default settings stay as before")
@@ -306,7 +306,7 @@ import Testing
         let names = Set(plan.files.map(\.name))
         #expect(names.isSuperset(of: ["settings.json", "mcp.json", "plugin/.claude-plugin/plugin.json", "plugin/skills/racky-boxes/SKILL.md"]))
         let settings = try #require(plan.files.first { $0.name == "settings.json" })
-        #expect(String(decoding: settings.contents, as: UTF8.self).contains("Skill(racky)"))
+        #expect(String(decoding: settings.contents, as: UTF8.self).contains("Skill(agentbox)"))
         // Env: limite de subagentes (CS-325) e agent teams ausente mesmo que o shell de login o tenha (CS-310).
         #expect(plan.environment["CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS"] == "3")
         #expect(plan.environment["CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS"] == nil)

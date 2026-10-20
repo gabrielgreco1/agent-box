@@ -10,13 +10,13 @@ import Security
 public enum OrchestrationText {
     public static let pluginName = "racky-app"
     public static let skillName = "racky-boxes"
-    public static let denyGlobalSkill = "Skill(racky)"
+    public static let denyGlobalSkill = "Skill(\(LegacyNames.externalSkillName))"
 
     public static let skillDescription = """
         Racky built-in computers. USE THIS WHENEVER A SUBAGENT WILL STUDY, BROWSE OR SCRAPE A WEBSITE, PORTAL OR ENDPOINT, FIND HIDDEN API \
         ENDPOINTS, VALIDATE DATA SOURCES OR BUILD CRAWLERS (for example "spawn a sub agent to study the permits site of Houston", "spawn 2 subagents \
         for Phoenix and Austin"): reserve a computer with boxes_reserve and give it to an racky-worker subagent, instead of a plain subagent \
-        with WebFetch or curl. Any other subagent task stays a normal subagent. Prefer this over any "racky" CLI skill or Docker commands.
+        with WebFetch or curl. Any other subagent task stays a normal subagent. Prefer this over any "\(LegacyNames.externalSkillName)" CLI skill or Docker commands.
         """
 
     /// SKILL.md do plugin (CS-330): quando usar, os passos, o brief e as regras. Migrado do SKILL.md antigo trocando `racky exec` por MCP.
@@ -30,7 +30,7 @@ public enum OrchestrationText {
         # Racky computers
 
         Each target gets its own isolated computer (a headless browser, a shell, a request log, an egress proxy) and its own background
-        subagent. You orchestrate; the subagents operate. Do NOT use the `racky` CLI, Docker, or any other skill for this.
+        subagent. You orchestrate; the subagents operate. Do NOT use the `\(LegacyNames.externalSkillName)` CLI, Docker, or any other skill for this.
 
         ## When to use
         - Whenever a subagent is going to study, navigate or scrape a website, portal or endpoint, or validate a data source: reserve a computer

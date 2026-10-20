@@ -29,7 +29,7 @@ extension OrchestrationText {
 
         You are authorized to spawn subagents with spawn_agent for the work described here. Each target gets its own isolated computer (a \
         headless browser, a shell, a request log, an egress proxy) and its own subagent. You orchestrate; the subagents operate. Do NOT use \
-        the `racky` CLI, Docker, or any other skill for this.
+        the `\(LegacyNames.externalSkillName)` CLI, Docker, or any other skill for this.
 
         ## When to use
         - Whenever a subagent is going to study, navigate or scrape a website, portal or endpoint, or validate a data source: reserve a \
@@ -81,7 +81,7 @@ extension OrchestrationText {
         # Racky computers (Subagent computers is ON for this session)
 
         Each target gets its own isolated computer (a headless browser, a shell, a request log, an egress proxy) and its own subagent. You \
-        orchestrate; the subagents operate. Do NOT use the `racky` CLI, Docker, or any other skill for this.
+        orchestrate; the subagents operate. Do NOT use the `\(LegacyNames.externalSkillName)` CLI, Docker, or any other skill for this.
 
         ## When to use
         - Whenever a subagent is going to study, navigate or scrape a website, portal or endpoint, or validate a data source: reserve a \

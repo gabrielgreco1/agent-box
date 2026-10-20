@@ -57,7 +57,7 @@ import Testing
     }
 
     private func skillFinding() -> ConflictFinding {
-        ConflictFinding(kind: .globalSkill, provider: .claude, path: "~/.claude/skills/racky", message: "A global \"racky\" skill is installed and may compete with Racky tools.")
+        ConflictFinding(kind: .globalSkill, provider: .claude, path: "~/.claude/skills/agentbox", message: "A global \"agentbox\" skill is installed and may compete with Racky tools.")
     }
 
     private func notifyFinding() -> ConflictFinding {

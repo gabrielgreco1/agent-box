@@ -271,14 +271,20 @@ public struct DockerComputerSource: InsightsComputerSource {
 
     public func computerSamples() async -> [ContainerSample]? {
         let label = owner.map { "\(RackyLabel.owner)=\($0)" } ?? RackyLabel.owner
-        guard let list = try? await client.listContainers(all: false, filters: ["label": [label]]) else { return nil }
+        guard let current = try? await client.listContainers(all: false, filters: ["label": [label]]) else { return nil }
+        // Containers do nome antigo (`agentbox.owner`) entram na mesma conta.
+        var previous: [ContainerSummary] = []
+        if let legacy = RackyLabel.legacyFilter(label), let found = try? await client.listContainers(all: false, filters: ["label": [legacy]]) {
+            previous = found
+        }
+        var seen = Set<String>()
         var out: [ContainerSample] = []
-        for c in list where c.labels[RackyLabel.test] != "1" {
+        for c in current + previous where seen.insert(c.id).inserted && RackyLabel.value(RackyLabel.test, in: c.labels) != "1" {
             let stats = try? await client.statsSnapshot(c.id)
-            let name = c.labels[RackyLabel.computerName] ?? c.names.first ?? String(c.id.prefix(12))
+            let name = RackyLabel.value(RackyLabel.computerName, in: c.labels) ?? c.names.first ?? String(c.id.prefix(12))
             out.append(ContainerSample(id: c.id, name: name, state: c.state, memoryBytes: stats?.memoryUsageBytes ?? 0,
                                        memoryLimitBytes: stats?.memoryLimitBytes ?? 0, cpuTotalNanos: stats?.cpuTotalUsageNanos ?? 0,
-                                       pids: stats?.pids ?? 0, sessionID: c.labels[RackyLabel.session]))
+                                       pids: stats?.pids ?? 0, sessionID: RackyLabel.value(RackyLabel.session, in: c.labels)))
         }
         return out
     }

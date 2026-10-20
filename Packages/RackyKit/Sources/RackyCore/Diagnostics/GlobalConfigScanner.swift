@@ -21,7 +21,7 @@ public struct GlobalConfigScanner: Sendable {
     }
 
     /// Donos de hooks que o Racky reconhece (minúsculas). Hooks de outros donos não são listados: não colidem por nome.
-    static let hookOwners: [(needle: String, label: String)] = [("orca", "Orca"), ("racky", "the old Racky"), ("racky", "the old Racky")]
+    static let hookOwners: [(needle: String, label: String)] = [("orca", "Orca")] + LegacyNames.hookNeedles.map { ($0, "the old Racky") }
 
     public func scan() -> [ConflictFinding] {
         var findings: [ConflictFinding] = []
@@ -39,17 +39,17 @@ public struct GlobalConfigScanner: Sendable {
 
     private func skillFindings() -> [ConflictFinding] {
         var result: [ConflictFinding] = []
-        if exists(path(".claude/skills/racky")) {
+        if exists(path(".claude/skills/\(LegacyNames.externalSkillName)")) {
             result.append(ConflictFinding(
-                kind: .globalSkill, provider: .claude, path: shown(".claude/skills/racky"),
-                message: "A global \"racky\" skill is installed and may compete with Racky tools."))
+                kind: .globalSkill, provider: .claude, path: shown(".claude/skills/\(LegacyNames.externalSkillName)"),
+                message: "A global \"\(LegacyNames.externalSkillName)\" skill is installed and may compete with Racky tools."))
         }
-        for (provider, relative) in [(TerminalProvider.codex, ".codex/skills/racky"),
-                                     (.opencode, ".config/opencode/skills/racky"), (.opencode, ".config/opencode/skill/racky")]
+        for (provider, relative) in [(TerminalProvider.codex, ".codex/skills/\(LegacyNames.externalSkillName)"),
+                                     (.opencode, ".config/opencode/skills/\(LegacyNames.externalSkillName)"), (.opencode, ".config/opencode/skill/\(LegacyNames.externalSkillName)")]
         where exists(path(relative)) {
             result.append(ConflictFinding(
                 kind: .globalSkill, provider: provider, path: shown(relative),
-                message: "A global \"racky\" skill in \(shown(relative)) may compete with Racky tools (left untouched)."))
+                message: "A global \"\(LegacyNames.externalSkillName)\" skill in \(shown(relative)) may compete with Racky tools (left untouched)."))
         }
         return result
     }
@@ -65,10 +65,10 @@ public struct GlobalConfigScanner: Sendable {
                     kind: .hooks, provider: .claude, path: shown(relative),
                     message: "Hooks from \(owner) in \(shown(relative)) run alongside Racky's (left untouched)."))
             }
-            if let servers = object["mcpServers"] as? [String: Any], servers["racky"] != nil {
+            if let servers = object["mcpServers"] as? [String: Any], servers[LegacyNames.externalMCPServerName] != nil {
                 result.append(ConflictFinding(
                     kind: .mcpServer, provider: .claude, path: shown(relative),
-                    message: "A global \"racky\" MCP server in \(shown(relative)) may duplicate Racky's tools (left untouched)."))
+                    message: "A global \"\(LegacyNames.externalSkillName)\" MCP server in \(shown(relative)) may duplicate Racky's tools (left untouched)."))
             }
         }
         return result
@@ -84,10 +84,10 @@ public struct GlobalConfigScanner: Sendable {
                 let line = raw.trimmingCharacters(in: .whitespaces)
                 if line.hasPrefix("[") {
                     topLevel = false
-                    if line.hasPrefix("[mcp_servers.racky") {
+                    if line.hasPrefix("[mcp_servers.\(LegacyNames.externalMCPServerName)") {
                         result.append(ConflictFinding(
                             kind: .mcpServer, provider: .codex, path: shown(".codex/config.toml"),
-                            message: "A global \"racky\" MCP server in ~/.codex/config.toml may duplicate Racky's tools (left untouched)."))
+                            message: "A global \"\(LegacyNames.externalSkillName)\" MCP server in ~/.codex/config.toml may duplicate Racky's tools (left untouched)."))
                     }
                 } else if topLevel, line.hasPrefix("notify"), line.dropFirst("notify".count).trimmingCharacters(in: .whitespaces).hasPrefix("=") {
                     result.append(ConflictFinding(
@@ -110,10 +110,10 @@ public struct GlobalConfigScanner: Sendable {
     private func openCodeFindings() -> [ConflictFinding] {
         for relative in [".config/opencode/opencode.json", ".config/opencode/opencode.jsonc"] {
             guard let data = readFile(path(relative)), let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
-                  let servers = object["mcp"] as? [String: Any], servers["racky"] != nil else { continue }
+                  let servers = object["mcp"] as? [String: Any], servers[LegacyNames.externalMCPServerName] != nil else { continue }
             return [ConflictFinding(
                 kind: .mcpServer, provider: .opencode, path: shown(relative),
-                message: "A global \"racky\" MCP server in \(shown(relative)) may duplicate Racky's tools (left untouched).")]
+                message: "A global \"\(LegacyNames.externalSkillName)\" MCP server in \(shown(relative)) may duplicate Racky's tools (left untouched).")]
         }
         return []
     }
@@ -151,8 +151,8 @@ public struct GlobalSkillBackup: Sendable {
         self.backupRoot = backupRoot
     }
 
-    var original: URL { home.appendingPathComponent(".claude/skills/racky", isDirectory: true) }
-    var backup: URL { backupRoot.appendingPathComponent("global-skill-backup/claude-skills-racky", isDirectory: true) }
+    var original: URL { home.appendingPathComponent(".claude/skills/\(LegacyNames.externalSkillName)", isDirectory: true) }
+    var backup: URL { backupRoot.appendingPathComponent("global-skill-backup/claude-skills-\(LegacyNames.externalSkillName)", isDirectory: true) }
 
     public var hasBackup: Bool { FileManager.default.fileExists(atPath: backup.path) }
 

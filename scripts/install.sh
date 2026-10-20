@@ -23,11 +23,17 @@ usage() { sed -n '2,/^set -euo/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; }
 fail() { echo "ERRO: $*" >&2; exit 1; }
 
 INSTALL_DIR="${RACKY_INSTALL_DIR:-/Applications}"
-AB="${RACKY_HOME:-$HOME/Library/Application Support/Racky}"
+SUPPORT="$HOME/Library/Application Support"
+AB="${RACKY_HOME:-$SUPPORT/Racky}"
+# Pasta de dados do nome antigo: o app novo a renomeia para Racky no primeiro boot (antes do banco). Se este script criasse
+# `Racky/` antes disso, o app veria as duas pastas e não migraria. Enquanto a antiga existir e a nova não, `previous/` vive nela
+# (e vai junto com o rename).
+if [ -z "${RACKY_HOME:-}" ] && [ ! -e "$SUPPORT/Racky" ] && [ -d "$SUPPORT/AgentBox" ]; then AB="$SUPPORT/AgentBox"; fi
 PREV_DIR="$AB/previous"
 BUILD_APP="${RACKY_BUILD_DIR:-$ROOT/build/Racky}/Racky.app"
 TARGET="$INSTALL_DIR/Racky.app"
 BUNDLE_ID=app.racky.mac
+LEGACY_BUNDLE_ID=app.agentbox.mac  # o app instalado antes do rename ainda se chama assim até ser trocado
 OPEN=1; ROLLBACK=0
 for a in "$@"; do
   case "$a" in
@@ -42,6 +48,7 @@ quit_app() {
   if pgrep -f "$TARGET/Contents/MacOS/Racky" >/dev/null 2>&1; then
     echo "install: encerrando o app (o daemon continua vivo)"
     osascript -e "tell application id \"$BUNDLE_ID\" to quit" >/dev/null 2>&1 || true
+    osascript -e "tell application id \"$LEGACY_BUNDLE_ID\" to quit" >/dev/null 2>&1 || true
     for _ in $(seq 1 60); do
       pgrep -f "$TARGET/Contents/MacOS/Racky" >/dev/null 2>&1 || return 0
       sleep 0.5

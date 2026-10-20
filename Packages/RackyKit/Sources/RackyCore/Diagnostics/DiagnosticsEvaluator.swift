@@ -1,3 +1,4 @@
+import RackyProtocol
 import RackyDocker
 import Foundation
 
@@ -86,17 +87,17 @@ public nonisolated enum DiagnosticsEvaluator {
                     secondaryFixes: [.disableSkill, .keepSkill], notes: others)
             case .block?:
                 return DiagnosticItem(
-                    key: .conflicts, state: .ok, detail: "The global \"racky\" skill is blocked in Racky. Nothing global changed.",
+                    key: .conflicts, state: .ok, detail: "The global \"\(LegacyNames.externalSkillName)\" skill is blocked in Racky. Nothing global changed.",
                     secondaryFixes: [.disableSkill], notes: others)
             case .keep?:
                 return DiagnosticItem(
-                    key: .conflicts, state: .neutral, detail: "Kept. The global \"racky\" skill may compete with Racky tools.",
+                    key: .conflicts, state: .neutral, detail: "Kept. The global \"\(LegacyNames.externalSkillName)\" skill may compete with Racky tools.",
                     fix: .blockSkill, notes: others)
             }
         }
         if scan.hasBackup {
             return DiagnosticItem(
-                key: .conflicts, state: .ok, detail: "The global \"racky\" skill is disabled. A backup is kept.",
+                key: .conflicts, state: .ok, detail: "The global \"\(LegacyNames.externalSkillName)\" skill is disabled. A backup is kept.",
                 fix: .restoreSkill, notes: others)
         }
         return DiagnosticItem(

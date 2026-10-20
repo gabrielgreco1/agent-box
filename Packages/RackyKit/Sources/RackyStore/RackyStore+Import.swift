@@ -4,7 +4,8 @@ import GRDB
 
 /// Registro de uma execução de importador (08 AR-340, tabela `import_run`).
 public struct ImportRun: Sendable, Equatable, Identifiable {
-    public enum Source: String, Sendable, CaseIterable { case rackyJSON = "racky_json", rackyCLI = "racky_cli" }
+    // Valores gravados no SQLite (CHECK constraint e linhas existentes): ver LegacyNames.importSourceJSON.
+    public enum Source: String, Sendable, CaseIterable { case rackyJSON = "agentbox_json", rackyCLI = "agentbox_cli" }
 
     public var id: UUID
     public var source: Source

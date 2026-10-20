@@ -27,10 +27,10 @@ import Testing
     @Test func detectsTheGlobalSkillAndForeignConfigs() throws {
         let home = try makeHome()
         defer { try? FileManager.default.removeItem(at: home) }
-        try write("# skill", ".claude/skills/racky/SKILL.md", in: home)
-        try write(#"{"hooks":{"Stop":[{"hooks":[{"type":"command","command":"/Users/x/.orca/hook.sh stop"}]}]},"mcpServers":{"racky":{"command":"x"}}}"#, ".claude/settings.json", in: home)
-        try write("model = \"gpt\"\nnotify = [\"/usr/bin/other-app\"]\n[mcp_servers.racky]\ncommand = \"x\"\n", ".codex/config.toml", in: home)
-        try write(#"{"mcp":{"racky":{"type":"local"}}}"#, ".config/opencode/opencode.json", in: home)
+        try write("# skill", ".claude/skills/agentbox/SKILL.md", in: home)
+        try write(#"{"hooks":{"Stop":[{"hooks":[{"type":"command","command":"/Users/x/.orca/hook.sh stop"}]}]},"mcpServers":{"agentbox":{"command":"x"}}}"#, ".claude/settings.json", in: home)
+        try write("model = \"gpt\"\nnotify = [\"/usr/bin/other-app\"]\n[mcp_servers.agentbox]\ncommand = \"x\"\n", ".codex/config.toml", in: home)
+        try write(#"{"mcp":{"agentbox":{"type":"local"}}}"#, ".config/opencode/opencode.json", in: home)
 
         let findings = GlobalConfigScanner(home: home).scan()
         let kinds = findings.map { "\($0.provider.rawValue):\($0.kind.rawValue)" }
@@ -51,7 +51,7 @@ import Testing
     @Test func scanNeverModifiesAnything() throws {
         let home = try makeHome()
         defer { try? FileManager.default.removeItem(at: home) }
-        try write("# skill", ".claude/skills/racky/SKILL.md", in: home)
+        try write("# skill", ".claude/skills/agentbox/SKILL.md", in: home)
         try write("notify = [\"x\"]\n", ".codex/config.toml", in: home)
         func snapshot() -> [String: Date] {
             var result: [String: Date] = [:]
@@ -68,17 +68,17 @@ import Testing
         let home = try makeHome()
         let support = try makeHome()
         defer { try? FileManager.default.removeItem(at: home); try? FileManager.default.removeItem(at: support) }
-        try write("# skill", ".claude/skills/racky/SKILL.md", in: home)
+        try write("# skill", ".claude/skills/agentbox/SKILL.md", in: home)
         let backup = GlobalSkillBackup(home: home, backupRoot: support)
         #expect(!backup.hasBackup)
         try backup.disable()
         #expect(backup.hasBackup)
-        #expect(!FileManager.default.fileExists(atPath: home.appendingPathComponent(".claude/skills/racky").path))
+        #expect(!FileManager.default.fileExists(atPath: home.appendingPathComponent(".claude/skills/agentbox").path))
         #expect(GlobalConfigScanner(home: home).scan().isEmpty)
         #expect(throws: GlobalSkillBackupError.skillNotFound) { try backup.disable() }
         try backup.restore()
         #expect(!backup.hasBackup)
-        #expect(try String(contentsOf: home.appendingPathComponent(".claude/skills/racky/SKILL.md"), encoding: .utf8) == "# skill")
+        #expect(try String(contentsOf: home.appendingPathComponent(".claude/skills/agentbox/SKILL.md"), encoding: .utf8) == "# skill")
         #expect(throws: GlobalSkillBackupError.nothingToRestore) { try backup.restore() }
     }
 
@@ -86,11 +86,11 @@ import Testing
         let home = try makeHome()
         let support = try makeHome()
         defer { try? FileManager.default.removeItem(at: home); try? FileManager.default.removeItem(at: support) }
-        try write("old", ".claude/skills/racky/SKILL.md", in: home)
+        try write("old", ".claude/skills/agentbox/SKILL.md", in: home)
         let backup = GlobalSkillBackup(home: home, backupRoot: support)
         try backup.disable()
-        try write("new", ".claude/skills/racky/SKILL.md", in: home)
+        try write("new", ".claude/skills/agentbox/SKILL.md", in: home)
         #expect(throws: GlobalSkillBackupError.originalExists) { try backup.restore() }
-        #expect(try String(contentsOf: home.appendingPathComponent(".claude/skills/racky/SKILL.md"), encoding: .utf8) == "new")
+        #expect(try String(contentsOf: home.appendingPathComponent(".claude/skills/agentbox/SKILL.md"), encoding: .utf8) == "new")
     }
 }

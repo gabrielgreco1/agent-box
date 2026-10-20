@@ -1,4 +1,5 @@
 import Foundation
+import RackyProtocol
 
 /// Labels de todos os recursos Docker do app (07 CS-115, 08 §0).
 public enum RackyLabel {
@@ -14,6 +15,39 @@ public enum RackyLabel {
     /// Marca recursos criados por testes. Testes só tocam em recursos com `racky.test=1`.
     public static let test = "racky.test"
     public static let contextHash = "racky.context_hash"
+}
+
+/// Containers, redes e volumes criados antes do rename carregam os labels do nome antigo (`agentbox.*`, owner `agent-box`). O GC, a
+/// adoção e o Insights os reconhecem: o app novo só grava `racky.*`, mas lê os dois.
+extension RackyLabel {
+    /// `racky.owner` -> o mesmo label no nome antigo; `nil` se a chave não é de um label do app.
+    public static func legacyKey(_ key: String) -> String? {
+        key.hasPrefix("racky.") ? LegacyNames.dockerLabelPrefix + key.dropFirst("racky.".count) : nil
+    }
+
+    /// `racky` -> `agent-box`; `racky-<sufixo>` (app isolado) -> `agent-box-<sufixo>`.
+    public static func legacyOwner(_ owner: String) -> String {
+        owner.hasPrefix("racky") ? LegacyNames.dockerOwner + owner.dropFirst("racky".count) : owner
+    }
+
+    /// Filtro `chave` ou `chave=valor` no nome antigo (o valor do owner também é traduzido). `nil` se não há equivalente.
+    public static func legacyFilter(_ filter: String) -> String? {
+        let parts = filter.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false).map(String.init)
+        guard let key = legacyKey(parts[0]) else { return nil }
+        guard parts.count == 2 else { return key }
+        return key + "=" + (parts[0] == owner ? legacyOwner(parts[1]) : parts[1])
+    }
+
+    /// Valor do label pelo nome novo ou, se ausente, pelo antigo.
+    public static func value(_ key: String, in labels: [String: String]) -> String? {
+        labels[key] ?? legacyKey(key).flatMap { labels[$0] }
+    }
+
+    /// O recurso pertence a `ownerValue` (valor atual do owner), seja com o label novo ou com o antigo.
+    public static func isOwned(by ownerValue: String, labels: [String: String]) -> Bool {
+        if labels[owner] == ownerValue { return true }
+        return legacyKey(owner).flatMap { labels[$0] } == legacyOwner(ownerValue)
+    }
 }
 
 /// P24: um computador é UM container (`computer`). Os demais valores existem só para ler labels de computadores criados antes

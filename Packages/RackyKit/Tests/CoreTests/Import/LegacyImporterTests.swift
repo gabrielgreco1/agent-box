@@ -263,7 +263,7 @@ struct LegacyFixture {
         #expect(report.count("secrets.skipped.unreadable") == 1, "confirmado mas ausente do Keychain antigo")
         let imported = try #require(try await store.secret(named: "ZYTE_API_KEY"))
         #expect(try await v.reveal(id: imported.id).text == "zyte-VALUE-1")
-        #expect(imported.importedFrom == "racky:secret-references.json" && imported.defaultEnvName == "ZYTE_API_KEY")
+        #expect(imported.importedFrom == "agentbox:secret-references.json" && imported.defaultEnvName == "ZYTE_API_KEY")
         #expect(try await store.secret(named: "GITHUB_TOKEN") == nil)
 
         // Há pendências: a mesma origem pode ser reexecutada depois (agora confirmando).

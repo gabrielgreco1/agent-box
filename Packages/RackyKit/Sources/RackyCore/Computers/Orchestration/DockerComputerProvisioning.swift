@@ -1,4 +1,5 @@
 import RackyDocker
+import RackyProtocol
 import Foundation
 
 /// Fábrica real de computadores para o `ComputerScheduler`: um container por computador (P24, `ComputerProvisioner`) e o
@@ -65,13 +66,19 @@ public struct DockerComputerProvisioning: ComputerProvisioning {
     /// Containers de computador (P24) do owner, vivos ou parados. Só lê; `nil` sem Docker.
     public func liveComputers() async -> [LiveComputer]? {
         guard (try? await client.ping()) != nil else { return nil }
-        let filters = ["label": ["\(RackyLabel.owner)=\(owner)", RackyLabel.computer]]
-        guard let list = try? await client.listContainers(all: true, filters: filters) else { return nil }
-        return list.compactMap { item in
-            guard item.labels[RackyLabel.owner] == owner, let id = item.labels[RackyLabel.computer], let name = item.labels[RackyLabel.computerName],
-                  item.labels[RackyLabel.role].map({ $0 == ComputerRole.computer.rawValue }) ?? true else { return nil }
+        let current = ["\(RackyLabel.owner)=\(owner)", RackyLabel.computer]
+        guard let list = try? await client.listContainers(all: true, filters: ["label": current]) else { return nil }
+        // Containers criados antes do rename (labels `agentbox.*`) continuam sendo adotados pelo mesmo dono.
+        let legacyFilters = current.compactMap(RackyLabel.legacyFilter)
+        let previous = legacyFilters.count == current.count ? ((try? await client.listContainers(all: true, filters: ["label": legacyFilters])) ?? []) : []
+        var seen = Set<String>()
+        return (list + previous).compactMap { item in
+            guard seen.insert(item.id).inserted, RackyLabel.isOwned(by: owner, labels: item.labels),
+                  let id = RackyLabel.value(RackyLabel.computer, in: item.labels), let name = RackyLabel.value(RackyLabel.computerName, in: item.labels),
+                  RackyLabel.value(RackyLabel.role, in: item.labels).map({ $0 == ComputerRole.computer.rawValue }) ?? true else { return nil }
             return LiveComputer(
-                computerID: id, name: name, containerID: item.id, running: item.state == "running", created: item.created, batch: item.labels[RackyLabel.batch])
+                computerID: id, name: name, containerID: item.id, running: item.state == "running", created: item.created,
+                batch: RackyLabel.value(RackyLabel.batch, in: item.labels))
         }
     }
 
@@ -79,10 +86,17 @@ public struct DockerComputerProvisioning: ComputerProvisioning {
     /// de `/run/racky` por `docker exec -u egress` (o mesmo usuário que os gravou). O token nunca é logado nem vai para o disco.
     public func adopt(_ live: LiveComputer, spec: ComputerSpec) async throws -> AdoptedComputer {
         let user = ComputerProvisioner.egressUser
-        let tokenResult = try await client.run(in: live.containerID, command: ["cat", "/run/racky/token"], user: user, timeout: .seconds(15))
+        // Computadores criados antes do rename guardam token e política em `/run/agentbox`: tenta o diretório novo e depois o antigo.
+        var runDirectory = "/run/racky"
+        var tokenResult = try await client.run(in: live.containerID, command: ["cat", "\(runDirectory)/token"], user: user, timeout: .seconds(15))
+        if tokenResult.exitCode != 0 {
+            let previous = try await client.run(
+                in: live.containerID, command: ["cat", "\(LegacyNames.containerRuntimeDirectory)/token"], user: user, timeout: .seconds(15))
+            if previous.exitCode == 0 { tokenResult = previous; runDirectory = LegacyNames.containerRuntimeDirectory }
+        }
         let token = tokenResult.stdoutString.trimmingCharacters(in: .whitespacesAndNewlines)
         guard tokenResult.exitCode == 0, !token.isEmpty else { throw ComputerProvisionerError.provisioningFailed("the computer's token is not readable") }
-        let configResult = try await client.run(in: live.containerID, command: ["cat", "/run/racky/egress.json"], user: user, timeout: .seconds(15))
+        let configResult = try await client.run(in: live.containerID, command: ["cat", "\(runDirectory)/egress.json"], user: user, timeout: .seconds(15))
         let parsed = configResult.exitCode == 0 ? Self.parseEgressConfig(configResult.stdout) : nil
         let config = parsed ?? EgressConfigFile.make(profile: nil, secret: nil, allowCIDRs: allowCIDRs, allowHosts: [])
         let inspect = try await client.inspectContainer(live.containerID)

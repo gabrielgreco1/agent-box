@@ -57,7 +57,7 @@ extension AppEnvironment {
             config.allowCIDRs = (environmentVariables["RACKY_ALLOW_CIDRS"] ?? "").split(separator: ",").map { String($0) }
         }
         // F29: `boxes_reserve(proxy:)` e `proxy_set` resolvem o nome para o ProxyProfile salvo (segredo no Vault, só para o egress).
-        let proxyService = ProxyService(store: store, vault: SecretVault(store: store, keyring: VaultKeyring(backend: SystemKeychainBackend())))
+        let proxyService = ProxyService(store: store, vault: SecretVault(store: store, keyring: VaultKeyring(backend: MigratingMasterKeyBackend.system())))
         config.resolver = { name, country in
             guard let profile = try await store.proxy(named: name) else { throw ProxyServiceError.unknownProxy(name) }
             var resolved = try await proxyService.egressConfig(for: profile.id)

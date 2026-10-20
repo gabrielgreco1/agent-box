@@ -8,7 +8,7 @@ cwd: /Users/example/work/repo
 native_id: -
 shield_off: -
 warnings: 
-files: orchestration.md mode=600 bytes=3534
+files: orchestration.md mode=600 bytes=3537
 env OPENCODE_CONFIG_CONTENT:
 {
   "agent" : {

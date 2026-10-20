@@ -77,9 +77,12 @@ public struct ProxyService: Sendable {
 
     // MARK: Import from racky CLI…
 
-    /// Caminho padrão do `.env` do CLI antigo.
-    public static func defaultCLIEnvFile() -> URL {
-        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".racky/.env")
+    /// Caminho padrão do `.env` do CLI antigo: `~/.racky/.env` se existir; senão o da pasta do CLI de antes do rename.
+    public static func defaultCLIEnvFile(home: URL = FileManager.default.homeDirectoryForCurrentUser) -> URL {
+        let current = home.appendingPathComponent(".racky/.env")
+        let previous = home.appendingPathComponent("\(LegacyNames.externalCLIFolder)/.env")
+        let fm = FileManager.default
+        return !fm.fileExists(atPath: current.path) && fm.fileExists(atPath: previous.path) ? previous : current
     }
 
     /// `Import from racky CLI…` (08 AR-343, 07 CS-160): lê SÓ `ZYTE_API_KEY` (e os preços informativos) do `.env` do CLI antigo,

@@ -38,8 +38,10 @@ private func resource(_ kind: ManagedResourceKind, _ name: String, computer: Str
         let gc = GarbageCollector(client: daemon.client)
         let inventory = try await gc.inventory(labels: ["racky.owner=install-1", "racky.test=1"])
         #expect(inventory.map(\.kind) == [.container, .network, .volume])
+        let current = "filters=%7B%22label%22%3A%5B%22racky.owner%3Dinstall-1%22%2C%22racky.test%3D1%22%5D%7D"
+        let previous = "filters=%7B%22label%22%3A%5B%22agentbox.owner%3Dinstall-1%22%2C%22agentbox.test%3D1%22%5D%7D"
         for request in await daemon.log.items {
-            #expect(request.query.contains("filters=%7B%22label%22%3A%5B%22racky.owner%3Dinstall-1%22%2C%22racky.test%3D1%22%5D%7D"))
+            #expect(request.query.contains(current) || request.query.contains(previous), "só consultas pelos labels do app, novos ou antigos")
         }
         // Sem label o GC nunca varre o daemon inteiro.
         #expect(try await gc.inventory(labels: []).isEmpty)
@@ -113,5 +115,53 @@ actor ConnectionCounter {
     func next() -> Int {
         count += 1
         return count
+    }
+
+    // MARK: Labels do nome antigo (rename para Racky)
+
+    @Test func legacyLabelsAreTranslatedFromTheNewOnes() {
+        #expect(RackyLabel.legacyKey("racky.owner") == "agentbox.owner")
+        #expect(RackyLabel.legacyKey("racky.test_run") == "agentbox.test_run")
+        #expect(RackyLabel.legacyKey("other.owner") == nil)
+        #expect(RackyLabel.legacyOwner("racky") == "agent-box")
+        #expect(RackyLabel.legacyOwner("racky-1a2b3c4d") == "agent-box-1a2b3c4d")
+        #expect(RackyLabel.legacyFilter("racky.owner=racky-1a2b3c4d") == "agentbox.owner=agent-box-1a2b3c4d")
+        #expect(RackyLabel.legacyFilter("racky.computer=abc") == "agentbox.computer=abc")
+        #expect(RackyLabel.legacyFilter("racky.computer") == "agentbox.computer")
+        #expect(RackyLabel.legacyFilter("com.docker.compose.project=x") == nil)
+    }
+
+    @Test func labelValuesAndOwnershipAcceptTheOldNames() {
+        let old = ["agentbox.owner": "agent-box", "agentbox.computer": "c1", "agentbox.ephemeral": "true"]
+        #expect(RackyLabel.value(RackyLabel.computer, in: old) == "c1")
+        #expect(RackyLabel.isOwned(by: "racky", labels: old))
+        #expect(!RackyLabel.isOwned(by: "racky-1a2b3c4d", labels: old), "um app isolado nunca adota os containers do app do dono")
+        #expect(RackyLabel.isOwned(by: "racky", labels: [RackyLabel.owner: "racky"]))
+        let resource = ManagedResource(kind: .container, id: "x", name: "ab-c1", labels: old)
+        #expect(resource.computerID == "c1" && resource.isEphemeral)
+    }
+
+    @Test func inventoryAlsoFindsResourcesLabelledWithTheOldNames() async throws {
+        let daemon = try await FakeDockerDaemon { request, connection in
+            let oldFilter = request.query.contains("agentbox")
+            switch request.path {
+            case "/v1.43/containers/json":
+                let body = oldFilter
+                    ? #"[{"Id":"old1","Names":["/ab-1111"],"Image":"agentbox-computer:1","State":"running","Labels":{"agentbox.owner":"agent-box","agentbox.computer":"c-old"}}]"#
+                    : #"[{"Id":"new1","Names":["/ab-2222"],"Image":"racky-computer:1","State":"running","Labels":{"racky.owner":"racky","racky.computer":"c-new"}}]"#
+                await Reply.json(connection, body: Data(body.utf8))
+            case "/v1.43/networks": await Reply.json(connection, body: Data("[]".utf8))
+            case "/v1.43/volumes": await Reply.json(connection, body: Data(#"{"Volumes":[],"Warnings":null}"#.utf8))
+            default: await Reply.json(connection, status: 404, body: Data(#"{"message":"?"}"#.utf8))
+            }
+        }
+        defer { daemon.stop() }
+        let inventory = try await GarbageCollector(client: daemon.client).inventory(labels: ["racky.owner=racky"])
+        #expect(inventory.map(\.id).sorted() == ["new1", "old1"])
+        #expect(Set(inventory.compactMap(\.computerID)) == ["c-new", "c-old"])
+        // Sem equivalente no nome antigo (label de terceiros), só a consulta direta.
+        let before = await daemon.log.items.count
+        _ = try await GarbageCollector(client: daemon.client).inventory(labels: ["thirdparty=1"])
+        #expect(await daemon.log.items.count - before == 3)
     }
 }

@@ -45,7 +45,7 @@ write_files:
 
       computers() {
         if [ -n "${RACKY_COMPUTERS:-}" ]; then echo "$RACKY_COMPUTERS"; return; fi
-        docker ps -q --filter "label=racky.computer" 2>/dev/null | wc -l | tr -d ' '
+        { docker ps -q --filter "label=racky.computer"; docker ps -q --filter "label=agentbox.computer"; } 2>/dev/null | sort -u | wc -l | tr -d ' '
       }
 
       stop_host() {

@@ -89,7 +89,7 @@ private func fixedBundle(parent: String = "parent-aaaaaaaa") throws -> Orchestra
         #expect(skill.contains("boxes_reserve") && skill.contains("study"))
         let settingsPath = try #require(argv.firstIndex(of: "--settings").map { argv[$0 + 1] })
         let settings = try #require(try JSONSerialization.jsonObject(with: Data(contentsOf: URL(fileURLWithPath: settingsPath))) as? [String: Any])
-        #expect(((settings["permissions"] as? [String: Any])?["deny"] as? [String]) == ["Skill(racky)"])
+        #expect(((settings["permissions"] as? [String: Any])?["deny"] as? [String]) == ["Skill(agentbox)"])
         #expect(gateway.requests[0].env["CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS"] == "2")
         #expect(gateway.requests[0].env["CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS"] == nil)
         // O pai some com o lançamento.
@@ -364,7 +364,7 @@ struct TestFailure: Error, CustomStringConvertible {
 
     @Test func settingsCarryASecondPreToolUseGroupOnlyWhenTheModeIsOn() throws {
         func groups(_ guardConfig: SpawnGuardConfig?) throws -> [[String: Any]] {
-            let data = try ClaudeHookSettings.settingsJSON(helperPath: helper, denyRules: ["Skill(racky)"], spawnGuard: guardConfig)
+            let data = try ClaudeHookSettings.settingsJSON(helperPath: helper, denyRules: ["Skill(agentbox)"], spawnGuard: guardConfig)
             let root = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
             return try #require((root["hooks"] as? [String: Any])?["PreToolUse"] as? [[String: Any]])
         }

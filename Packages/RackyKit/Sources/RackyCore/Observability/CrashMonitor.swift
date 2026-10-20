@@ -1,3 +1,4 @@
+import RackyProtocol
 import RackyPlatform
 import Darwin
 import Foundation
@@ -46,7 +47,7 @@ public struct PreviousRunCrash: Codable, Sendable, Equatable {
 }
 
 public struct CrashMonitor: Sendable {
-    public static let processNames = ["Racky", "Racky", "rackyd", "racky"]
+    public static let processNames = ["Racky", "rackyd", "racky"] + LegacyNames.processNames
 
     public let runDirectory: URL
     public let reportsDirectory: URL

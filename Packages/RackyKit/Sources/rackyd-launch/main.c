@@ -26,6 +26,8 @@
 static int pointer_target(char *out, size_t size) {
     char path[PATH_MAX];
     const char *home = getenv("RACKY_HOME");
+    // Nome antigo: um ambiente herdado de uma versão anterior só tem AGENTBOX_HOME.
+    if (!home || !*home) home = getenv("AGENTBOX_HOME");
     if (home && *home) {
         if (snprintf(path, sizeof path, "%s/bin/rackyd-current", home) >= (int)sizeof path) return 0;
     } else {
