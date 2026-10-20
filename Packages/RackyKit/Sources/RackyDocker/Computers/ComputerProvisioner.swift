@@ -222,6 +222,15 @@ public struct ComputerProvisioner: Sendable {
     /// Entrega token, `egress.json` e CA ao tmpfs `/run/racky` por `docker exec -i -u egress abx-provision` (stdin). O valor
     /// nunca aparece em env, argv, `inspect` nem no disco do host. Serve também à troca de proxy (reescrita atômica).
     func deliver(config: EgressConfigFile, proxyCA: String?, token: String?, to container: String) async throws {
+        let payload = try Self.provisionPayload(config: config, proxyCA: proxyCA, token: token)
+        let result = try await client.run(in: container, command: ["abx-provision"], stdin: payload, user: Self.egressUser, killableGroup: false)
+        guard result.exitCode == 0 else {
+            throw ComputerProvisionerError.provisioningFailed("abx-provision saiu com \(result.exitCode): \(result.stderrString.prefix(200))")
+        }
+    }
+
+    /// Corpo JSON de `abx-provision` (`{"files": {...}}`): token, `egress.json` e a CA do proxy. Compartilhado com o runtime sem Docker.
+    public static func provisionPayload(config: EgressConfigFile, proxyCA: String?, token: String?) throws -> Data {
         var config = config
         var files: [String: String] = [:]
         if let ca = proxyCA, config.upstream != nil {
@@ -231,11 +240,7 @@ public struct ComputerProvisioner: Sendable {
         // O token entra por último: o egress só sobe com token + config.
         files["egress.json"] = String(decoding: try config.jsonData(), as: UTF8.self)
         if let token { files["token"] = token }
-        let payload = try JSONSerialization.data(withJSONObject: ["files": files])
-        let result = try await client.run(in: container, command: ["abx-provision"], stdin: payload, user: Self.egressUser, killableGroup: false)
-        guard result.exitCode == 0 else {
-            throw ComputerProvisionerError.provisioningFailed("abx-provision saiu com \(result.exitCode): \(result.stderrString.prefix(200))")
-        }
+        return try JSONSerialization.data(withJSONObject: ["files": files])
     }
 
     /// Troca de proxy (CS-141): reescreve `egress.json` dentro do container; quem chama pede o `reload` pela admin API.

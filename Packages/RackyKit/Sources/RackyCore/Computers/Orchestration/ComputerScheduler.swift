@@ -41,6 +41,14 @@ public struct ComputerSpec: Sendable {
     public var run: RunFolder
     /// Id do computador: o mesmo do label `racky.computer` e da linha persistida (a adoção casa os dois).
     public var computerID = UUID()
+
+    public init(
+        name: String, parent: String, display: ComputerDisplay, profile: String?, proxy: String, proxiesAllowed: [String], allowHosts: [String],
+        batch: String?, run: RunFolder, computerID: UUID = UUID()
+    ) {
+        self.name = name; self.parent = parent; self.display = display; self.profile = profile; self.proxy = proxy
+        self.proxiesAllowed = proxiesAllowed; self.allowHosts = allowHosts; self.batch = batch; self.run = run; self.computerID = computerID
+    }
 }
 
 /// Computador vivo achado no Docker pelos labels do app (`racky.owner`), antes de casar com o que o app persistiu.

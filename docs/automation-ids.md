@@ -900,6 +900,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `settings.pickPath` | Change… | — | slice1 |
 | `settings.resetConfirmations` | Reset | — | slice1 |
 | `settings.computers.defaultSubagentMode` | Subagent computers (padrão das novas sessões) | — | slice3 |
+| `settings.computers.forceDocker` | Use Docker instead (runtime dos computadores) | — | slice1 |
 | `settings.agents.defaultAgent` | Default agent | — | slice1 |
 | `settings.agents.defaultProfile` | Default profile | — | slice1 |
 | `settings.agents.profileNew` | New Profile | — | slice1 |

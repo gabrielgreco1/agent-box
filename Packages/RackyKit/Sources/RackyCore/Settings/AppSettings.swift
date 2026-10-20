@@ -29,6 +29,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
         /// Onde os computadores sobem (BK-12, P27): no Mac (Docker) ou na conta de nuvem do próprio usuário.
         public var runOn = ComputerRunTarget.local
         public var cloud = Cloud()
+        /// "Use Docker instead": no macOS 26+ o app usa o runtime nativo (VMs, sem Docker); com isto ligado, usa o Docker.
+        public var forceDocker = false
 
         public init() {}
 
@@ -37,6 +39,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
             defaultSubagentMode = try c.decodeIfPresent(SubagentComputersMode.self, forKey: .defaultSubagentMode) ?? .off
             runOn = try c.decodeIfPresent(ComputerRunTarget.self, forKey: .runOn) ?? .local
             cloud = try c.decodeIfPresent(Cloud.self, forKey: .cloud) ?? Cloud()
+            forceDocker = try c.decodeIfPresent(Bool.self, forKey: .forceDocker) ?? false
         }
     }
 
