@@ -8405,13 +8405,13 @@
         }
       }
     },
-    "Stop \"%@\"?": {
+    "Stop computer \"%@\"?": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Stop \"%@\"?"
+            "value": "Stop computer \"%@\"?"
           }
         }
       }

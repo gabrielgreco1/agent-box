@@ -43,7 +43,7 @@ extension ConfirmationModel {
     /// `Stop "<computer>"?` (03 §16.3).
     static func stopComputer(name: String, inUse: Bool) -> ConfirmationModel {
         ConfirmationModel(
-            name: "confirmStopComputer", rootID: .overlayConfirmStopComputer, title: String(localized: "Stop \"\(name)\"?", bundle: .module),
+            name: "confirmStopComputer", rootID: .overlayConfirmStopComputer, title: String(localized: "Stop computer \"\(name)\"?", bundle: .module),
             message: inUse
                 ? String(localized: "Claude Code is using it right now.", bundle: .module)
                 : String(localized: "Claude Code keeps running on your Mac. The browser session is saved in the computer's profile.", bundle: .module),

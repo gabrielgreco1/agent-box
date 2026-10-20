@@ -196,7 +196,12 @@ import json, re, sys
 keys = json.load(open(sys.argv[1], encoding="utf-8"))["strings"].keys()
 seen, bad = {}, []
 for k in keys:
-    sym = re.sub(r"[\s.…!?:]+$", "", k.strip()).lower()
+    # Como o gerador do Xcode: ignora pontuação, aspas e espaços; um especificador de formato vira o TIPO do argumento
+    # (objeto, inteiro, decimal), que é o que distingue as chaves (%@ e %lld geram símbolos diferentes).
+    def arg(m):
+        c = m.group(5)
+        return "%o" if c in "@sS" else ("%f" if c in "fFeEgGaA" else "%i")
+    sym = re.sub(r"[^0-9a-z%]", "", re.sub(r"%(\d+\$)?([-+ 0#]*)(\d*(?:\.\d+)?)(hh|h|ll|l|q|L|z|t|j)?([@dDiuUxXoOfFeEgGcCsSpaA])", arg, k).lower())
     if sym and sym in seen and seen[sym] != k:
         bad.append(f"  {seen[sym]!r} x {k!r}")
     seen.setdefault(sym, k)
