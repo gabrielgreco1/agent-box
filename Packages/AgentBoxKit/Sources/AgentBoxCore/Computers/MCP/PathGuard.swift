@@ -15,7 +15,9 @@ public enum PathGuard {
         var path = raw
         if path.hasPrefix("/") {
             guard path == boxRoot || path.hasPrefix(boxRoot + "/") else {
-                throw ToolError(.pathRejected, "absolute path outside /work", details: ["path": .string(raw)])
+                throw ToolError(
+                    .pathRejected, "absolute path outside /work: tools only save under /work (use /work/scratch/ for throwaway files)",
+                    details: ["path": .string(raw)])
             }
             path = String(path.dropFirst(boxRoot.count))
         }

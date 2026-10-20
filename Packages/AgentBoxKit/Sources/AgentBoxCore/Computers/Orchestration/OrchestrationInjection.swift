@@ -90,7 +90,7 @@ public enum OrchestrationText {
         1. Your brief names the computer. Call box_claim(name) first; if it says queued or provisioning, call it again (each call waits up \
         to 45 s). Keep the work_path_host it returns.
         2. Journal as you go: PLAN once, DOING before each step, FOUND with evidence (request ids from the browser or http_request results, \
-        or /work files), BLOCKED when stuck. Scratch files go to /tmp, never /work.
+        or /work files), BLOCKED when stuck. Files saved by tools must be under /work: throwaway ones go to /work/scratch/.
         3. Escalate cheapest first: http_request, browser, proxy_set to an allowed proxy, reqlog_query(xhr) for the hidden API, render.
         4. Finish with result_submit(result, evidence): evidence maps a JSON Pointer into result ("/title", "/items/0/price") to request ids or \
         /work files. Read the validation in the answer; fix what is cited_missing. Then box_release.

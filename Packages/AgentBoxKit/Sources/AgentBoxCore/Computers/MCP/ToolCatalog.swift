@@ -39,7 +39,8 @@ public enum ToolCatalog {
         then poll help_wait, each call returns within 50 s); if the task seems to need something forbidden, use \
         help_request(kind=permission) or journal BLOCKED. Escalate cheapest first: http_request, browser, proxy_set to an allowed \
         proxy, reqlog_query(xhr) for the hidden API, render if supported. Keep the journal (PLAN/DOING/FOUND/BLOCKED), cite a \
-        request id for every claim in result_submit, keep /work clean (scratch goes to /tmp). Errors are {error, message, \
+        request id for every claim in result_submit. Tool paths (save_as, files) must be under /work: put throwaway files in \
+        /work/scratch/ and keep the rest of /work for results; plain shell commands may also use /tmp. Errors are {error, message, \
         retry_after_s?, details?} with a fixed code.
         """
 
