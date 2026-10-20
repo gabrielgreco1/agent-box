@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Racky: nova UI e features</title>
+<style>
+  :root {
+    --bg:#f6f5f2; --panel:#ffffff; --line:#e4e2dc; --fg:#1b1b1a; --muted:#6b6a66; --quiet:#9a9893;
+    --blue:#2f6bff; --p0:#e5484d; --p1:#f5a524; --p2:#8b8a85;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0f0f10; --panel:#18181a; --line:#2a2a2d; --fg:#f2f2f0; --muted:#a3a29e; --quiet:#6f6e6a; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:1180px; margin:0 auto; padding:56px 28px 120px; }
+  h1 { font-size:40px; letter-spacing:-.025em; margin:0 0 8px; }
+  h2 { font-size:26px; letter-spacing:-.02em; margin:72px 0 6px; }
+  h3 { font-size:17px; margin:0 0 4px; }
+  p.lead { color:var(--muted); font-size:18px; max-width:760px; margin:0; }
+  .sub { color:var(--muted); margin:0 0 24px; max-width:820px; }
+  nav.toc { display:flex; gap:8px; flex-wrap:wrap; margin:28px 0 0; }
+  nav.toc a { color:var(--fg); text-decoration:none; border:1px solid var(--line); background:var(--panel); padding:6px 12px; border-radius:999px; font-size:13px; }
+
+  /* diagnosis */
+  .diag { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px 20px; }
+  .card p { margin:0; color:var(--muted); font-size:14px; }
+
+  /* feature list */
+  .group { background:var(--panel); border:1px solid var(--line); border-radius:16px; margin-top:16px; overflow:hidden; }
+  .group > header { display:flex; align-items:baseline; gap:12px; padding:18px 22px 14px; border-bottom:1px solid var(--line); }
+  .group > header .n { font:600 12px ui-monospace, Menlo, monospace; color:var(--quiet); }
+  .group > header p { margin:0; color:var(--muted); font-size:14px; }
+  table { width:100%; border-collapse:collapse; }
+  td { padding:11px 22px; border-top:1px solid var(--line); vertical-align:top; font-size:14px; }
+  tr:first-child td { border-top:0; }
+  td.pri { width:56px; padding-right:0; }
+  td.name { width:30%; font-weight:600; }
+  td.desc { color:var(--muted); }
+  td.orca { width:110px; text-align:right; color:var(--quiet); font-size:12px; white-space:nowrap; }
+  .tag { display:inline-block; font:700 11px ui-monospace, Menlo, monospace; padding:2px 7px; border-radius:6px; color:#fff; }
+  .P0 { background:var(--p0); } .P1 { background:var(--p1); color:#1b1b1a; } .P2 { background:var(--p2); }
+  .legend { display:flex; gap:16px; font-size:13px; color:var(--muted); margin-top:4px; flex-wrap:wrap; }
+
+  /* mockups */
+  .dir { margin-top:40px; }
+  .dir-head { display:flex; justify-content:space-between; align-items:flex-end; gap:24px; margin-bottom:14px; flex-wrap:wrap; }
+  .dir-head h3 { font-size:22px; letter-spacing:-.015em; }
+  .dir-head p { margin:2px 0 0; color:var(--muted); max-width:760px; }
+  .swatches { display:flex; gap:6px; }
+  .swatches i { width:22px; height:22px; border-radius:6px; border:1px solid rgba(127,127,127,.25); display:block; }
+  .why { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:14px; }
+  .why div { font-size:13.5px; color:var(--muted); }
+  .why b { color:var(--fg); display:block; font-size:13.5px; }
+  .shot { border-radius:14px; overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,.28), 0 0 0 1px rgba(0,0,0,.1); }
+  .scale { width:100%; overflow-x:auto; }
+  .win { width:1120px; height:640px; display:flex; flex-direction:column; font:12.5px/1.4 -apple-system, BlinkMacSystemFont, sans-serif; position:relative; }
+  .mono { font-family:ui-monospace, "SF Mono", Menlo, monospace; }
+  .lights { display:flex; gap:7px; }
+  .lights i { width:11px; height:11px; border-radius:50%; display:block; }
+  .lights i:nth-child(1){background:#ff5f57} .lights i:nth-child(2){background:#febc2e} .lights i:nth-child(3){background:#28c840}
+  .fakeweb { flex:1; background:#fff; border-radius:8px; overflow:hidden; display:flex; flex-direction:column; color:#111; }
+  .fakeweb .bar { height:28px; background:#eef0f3; display:flex; align-items:center; padding:0 10px; gap:8px; font-size:11px; color:#555; }
+  .fakeweb .bar span { background:#fff; border-radius:6px; padding:3px 10px; flex:1; }
+  .fakeweb .body { flex:1; padding:18px 22px; display:grid; grid-template-columns:1fr 1fr; gap:14px; background:linear-gradient(#fff,#f7f7f7); }
+  .fakeweb .h { grid-column:1/-1; font:700 22px -apple-system; letter-spacing:-.02em; }
+  .fakeweb .ph { border-radius:8px; background:linear-gradient(135deg,#cfe3f5,#f3d9b8); min-height:60px; }
+  .fakeweb .ln { height:8px; border-radius:4px; background:#e3e3e3; margin:6px 0; }
+
+  /* ---------- A: Rack ---------- */
+  .A { background:#0b0e14; color:#e8ecf4; }
+  .A .top { height:38px; display:flex; align-items:center; gap:14px; padding:0 14px; border-bottom:1px solid #1a2030; }
+  .A .main { flex:1; display:flex; min-height:0; }
+  .A .side { width:232px; background:#0e121b; border-right:1px solid #1a2030; padding:10px; display:flex; flex-direction:column; gap:2px; }
+  .A .lbl { font:600 10px ui-monospace, Menlo, monospace; letter-spacing:.12em; color:#5b6680; text-transform:uppercase; margin:12px 8px 6px; }
+  .A .row { display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:7px; color:#b7c0d4; }
+  .A .row.sel { background:#16203a; color:#fff; box-shadow:inset 2px 0 0 #3d7bff; }
+  .A .dot { width:7px; height:7px; border-radius:50%; }
+  .A .center { flex:1; display:flex; flex-direction:column; min-width:0; padding:10px; gap:8px; }
+  .A .tabs { display:flex; gap:6px; }
+  .A .tab { padding:5px 10px; border-radius:7px; background:#121828; color:#8f9ab3; }
+  .A .tab.on { background:#1b2440; color:#fff; }
+  .A .rack { width:250px; background:#0e121b; border-left:1px solid #1a2030; padding:10px; display:flex; flex-direction:column; gap:8px; }
+  .A .unit { background:#121828; border:1px solid #1e2740; border-radius:9px; padding:8px; display:grid; grid-template-columns:8px 1fr; gap:8px; }
+  .A .led { width:8px; border-radius:4px; }
+  .A .unit .t { display:flex; justify-content:space-between; color:#e8ecf4; font-weight:600; }
+  .A .unit .m { font:10.5px ui-monospace, Menlo, monospace; color:#6f7b96; margin-top:2px; }
+  .A .thumb { height:46px; border-radius:5px; margin-top:6px; background:linear-gradient(135deg,#dfe9f7,#f4e2c8); }
+  .A .bar2 { height:3px; border-radius:2px; background:#1e2740; margin-top:6px; overflow:hidden; }
+  .A .bar2 i { display:block; height:100%; background:#3d7bff; }
+  .A .status { height:26px; border-top:1px solid #1a2030; display:flex; align-items:center; gap:16px; padding:0 14px; font:10.5px ui-monospace, Menlo, monospace; color:#6f7b96; }
+  .A .alert { background:linear-gradient(90deg,rgba(255,170,40,.16),rgba(255,170,40,.04)); border:1px solid rgba(255,170,40,.35); color:#ffc86b; border-radius:8px; padding:7px 10px; display:flex; justify-content:space-between; }
+
+  /* ---------- B: Floating console ---------- */
+  .B { background:radial-gradient(120% 90% at 20% 0%, #1d2140 0%, #121424 55%, #0d0e18 100%); color:#eceefe; padding:10px; gap:10px; }
+  .B .top { height:30px; display:flex; align-items:center; gap:14px; padding:0 6px; }
+  .B .cmdk { margin:0 auto; width:420px; height:28px; border-radius:9px; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1); display:flex; align-items:center; padding:0 10px; color:#9aa0c8; justify-content:space-between; }
+  .B .main { flex:1; display:flex; gap:10px; min-height:0; }
+  .B .pnl { background:rgba(20,22,40,.72); border:1px solid rgba(255,255,255,.08); border-radius:14px; backdrop-filter:blur(20px); }
+  .B .side { width:210px; padding:10px; display:flex; flex-direction:column; gap:3px; }
+  .B .row { display:flex; align-items:center; gap:9px; padding:7px 9px; border-radius:9px; color:#b8bde0; }
+  .B .row.sel { background:rgba(124,140,255,.16); color:#fff; }
+  .B .av { width:18px; height:18px; border-radius:6px; display:grid; place-items:center; font-size:10px; font-weight:700; color:#fff; }
+  .B .lbl { font-size:11px; color:#6d73a0; margin:12px 9px 4px; font-weight:600; }
+  .B .center { flex:1; padding:10px; display:flex; flex-direction:column; gap:10px; min-width:0; }
+  .B .chip { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; background:rgba(255,255,255,.07); color:#c8ccf0; }
+  .B .dock { height:96px; display:flex; gap:10px; padding:10px; align-items:stretch; }
+  .B .scr { width:150px; border-radius:10px; position:relative; overflow:hidden; background:linear-gradient(135deg,#dbe6fb,#f1dcc4); border:2px solid transparent; }
+  .B .scr.on { border-color:#7c8cff; box-shadow:0 0 0 4px rgba(124,140,255,.18); }
+  .B .scr b { position:absolute; left:6px; bottom:6px; background:rgba(10,12,30,.75); color:#fff; font-size:10px; padding:2px 7px; border-radius:6px; font-weight:600; }
+  .B .scr .need { position:absolute; right:6px; top:6px; background:#ffb547; color:#1a1300; font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:6px; }
+  .B .add { width:96px; border-radius:10px; border:1.5px dashed rgba(255,255,255,.18); display:grid; place-items:center; color:#8a90bd; }
+
+  /* ---------- C: Studio (light, data-first) ---------- */
+  .C { background:#f3f1ec; color:#22201c; }
+  .C .top { height:38px; display:flex; align-items:center; gap:14px; padding:0 14px; }
+  .C .main { flex:1; display:flex; min-height:0; padding:0 8px 8px; gap:8px; }
+  .C .side { width:220px; padding:4px 6px; display:flex; flex-direction:column; gap:2px; }
+  .C .row { display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:7px; color:#4a463f; }
+  .C .row.sel { background:#fff; color:#111; box-shadow:0 1px 2px rgba(0,0,0,.06), 0 0 0 1px #e6e2d9; }
+  .C .lbl { font-size:11px; color:#9a948a; margin:12px 8px 4px; font-weight:600; }
+  .C .center { flex:1; background:#fff; border-radius:12px; box-shadow:0 0 0 1px #e6e2d9, 0 8px 24px rgba(60,50,30,.06); display:flex; flex-direction:column; min-width:0; overflow:hidden; }
+  .C .tabs { display:flex; gap:2px; padding:8px 10px 0; border-bottom:1px solid #eeebe4; }
+  .C .tab { padding:6px 12px; border-radius:8px 8px 0 0; color:#7d776d; }
+  .C .tab.on { color:#111; box-shadow:inset 0 -2px 0 #2f6bff; }
+  .C .insp { width:300px; background:#fff; border-radius:12px; box-shadow:0 0 0 1px #e6e2d9, 0 8px 24px rgba(60,50,30,.06); display:flex; flex-direction:column; overflow:hidden; }
+  .C .seg { display:flex; margin:10px; background:#f3f1ec; border-radius:8px; padding:2px; }
+  .C .seg span { flex:1; text-align:center; padding:5px; border-radius:6px; color:#7d776d; }
+  .C .seg span.on { background:#fff; color:#111; box-shadow:0 1px 2px rgba(0,0,0,.08); }
+  .C table td { padding:6px 10px; font-size:11.5px; border-top:1px solid #f0ede6; color:#3c3832; }
+  .C table tr:first-child td { border-top:0; color:#9a948a; font-weight:600; }
+  .C .kpi { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 10px 10px; }
+  .C .kpi div { background:#f8f7f3; border-radius:8px; padding:8px 10px; }
+  .C .kpi b { display:block; font-size:18px; letter-spacing:-.02em; }
+  .C .kpi span { color:#8b857a; font-size:11px; }
+
+  .pick { margin-top:56px; padding:22px 24px; border-radius:16px; background:var(--panel); border:1px solid var(--line); }
+  .pick ol { margin:8px 0 0; padding-left:20px; color:var(--muted); }
+  .pick li { margin:4px 0; }
+  .pick b { color:var(--fg); }
+  @media (max-width:860px){ .diag,.why{grid-template-columns:1fr} td.orca{display:none} td.name{width:auto} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Racky: nova cara e o que vem depois</h1>
+  <p class="lead">Por que o app parece o Orca, três direções de UI para escolher e a lista completa de features: dados, cloud e computadores configuráveis.</p>
+  <nav class="toc"><a href="#diag">Diagnóstico</a><a href="#ui">Direções de UI</a><a href="#features">Lista de features</a><a href="#ordem">Ordem de execução</a></nav>
+
+  <h2 id="diag">Por que parece o Orca</h2>
+  <p class="sub">O problema não é uma tela específica. São três coisas herdadas que se repetem em todas as telas.</p>
+  <div class="diag">
+    <div class="card"><h3>A mesma paleta</h3><p>Os tokens do Racky são a paleta neutra do Orca, cor por cor: fundo #0a0a0a, painéis #171717, seleção #262626, botão primário quase branco. Não existe cor de marca no app; o azul do logo não aparece em lugar nenhum.</p></div>
+    <div class="card"><h3>O mesmo esqueleto</h3><p>Sidebar cinza com Search, Inbox, Projects e Sessions, abas em cima, barra de status embaixo. É a estrutura do Orca, e os computadores (o que só o Racky tem) ficam escondidos dentro da árvore de sessões.</p></div>
+    <div class="card"><h3>Computador não é protagonista</h3><p>O diferencial do Racky são os computadores e os dados que eles produzem, mas visualmente eles são uma linha de texto com um ícone. Nada na tela diz "aqui tem máquinas rodando".</p></div>
+  </div>
+
+  <h2 id="ui">Três direções de UI</h2>
+  <p class="sub">As três mostram a mesma cena: uma sessão com dois subagentes, um deles pedindo ajuda num CAPTCHA. Escolha uma (ou misture partes) e eu levo para o app: tokens novos, sidebar, abas e a área dos computadores.</p>
+
+  <!-- A -->
+  <div class="dir">
+    <div class="dir-head">
+      <div><h3>A · Rack</h3><p>Escuro com um toque azul-marinho e o azul da marca como acento. Os computadores ganham uma coluna própria à direita, como um rack de servidores: cada máquina é uma "unidade" com LED de status, miniatura ao vivo, CPU, RAM e região.</p></div>
+      <div class="swatches"><i style="background:#0b0e14"></i><i style="background:#121828"></i><i style="background:#3d7bff"></i><i style="background:#ffaa28"></i><i style="background:#2bd47d"></i></div>
+    </div>
+    <div class="scale"><div class="shot"><div class="win A">
+      <div class="top"><div class="lights"><i></i><i></i><i></i></div><b style="margin-left:10px">modest-falcon</b><span style="color:#5b6680">~/Racky/sessions/modest-falcon</span><span style="margin-left:auto;color:#6f7b96" class="mono">⌘K</span></div>
+      <div class="main">
+        <div class="side">
+          <div class="row" style="background:#121828;color:#6f7b96">⌕ Search</div>
+          <div class="lbl">Workspace</div>
+          <div class="row">▣ Inbox <span style="margin-left:auto;background:#ffaa28;color:#1a1100;border-radius:6px;padding:0 6px;font-weight:700">1</span></div>
+          <div class="row">▤ Datasets</div>
+          <div class="row">☁ Fleet</div>
+          <div class="lbl">Sessions</div>
+          <div class="row sel"><span class="dot" style="background:#ff8a4c"></span> modest-falcon <span class="mono" style="margin-left:auto;color:#6f7b96">2 ▣</span></div>
+          <div class="row"><span class="dot" style="background:#7c8cff"></span> api-migration</div>
+          <div class="row"><span class="dot" style="background:#2bd47d"></span> pricing-crawl</div>
+        </div>
+        <div class="center">
+          <div class="tabs"><span class="tab">✳ Claude</span><span class="tab on">▣ tripadvisor-la</span><span class="tab">▣ booking-la</span></div>
+          <div class="alert"><span>⚠ tripadvisor-la precisa de você · CAPTCHA</span><b>Assumir ⌘⏎</b></div>
+          <div class="fakeweb"><div class="bar">‹ › <span>tripadvisor.com/Hotels-g32655-Los_Angeles</span></div><div class="body"><div class="h">Los Angeles Hotels</div><div><div class="ln" style="width:80%"></div><div class="ln" style="width:60%"></div><div class="ln" style="width:70%"></div></div><div class="ph"></div><div class="ph"></div><div class="ph"></div></div></div>
+        </div>
+        <div class="rack">
+          <div class="lbl" style="margin:4px 4px 2px">Rack · 2 de 4</div>
+          <div class="unit"><div class="led" style="background:#ffaa28;box-shadow:0 0 8px #ffaa28"></div><div><div class="t">tripadvisor-la <span style="color:#ffaa28;font-size:10px">precisa de você</span></div><div class="m">local · 2 vCPU · 4 GB · 14 min</div><div class="thumb"></div><div class="bar2"><i style="width:62%"></i></div><div class="m">CPU 62% · 1.213 linhas</div></div></div>
+          <div class="unit"><div class="led" style="background:#2bd47d;box-shadow:0 0 8px #2bd47d"></div><div><div class="t">booking-la <span style="color:#2bd47d;font-size:10px">rodando</span></div><div class="m">aws · sa-east-1 · 2 vCPU · US$ 0,04</div><div class="thumb" style="background:linear-gradient(135deg,#d6e4ff,#e9f2e1)"></div><div class="bar2"><i style="width:34%"></i></div><div class="m">CPU 34% · 488 linhas</div></div></div>
+          <div class="unit" style="opacity:.55"><div class="led" style="background:#3a4560"></div><div><div class="t">livre</div><div class="m">+ novo computador</div></div></div>
+        </div>
+      </div>
+      <div class="status"><span>✳ 5h 35%</span><span>◐ 7d 28%</span><span style="margin-left:auto">2 computadores · 1,1 GB · US$ 0,04 hoje</span></div>
+    </div></div></div>
+    <div class="why"><div><b>O que muda</b>Paleta própria (azul-marinho + azul Racky), coluna "Rack" sempre visível, metadados em fonte mono, LED de status com brilho.</div><div><b>Diferente do Orca</b>A coluna de computadores não existe no Orca e vira a assinatura visual do app. A sidebar perde Projects/Library e ganha Datasets e Fleet.</div><div><b>Risco</b>Mais uma coluna ocupa espaço em telas pequenas; o rack precisa recolher para uma faixa fina de LEDs.</div></div>
+  </div>
+
+  <!-- B -->
+  <div class="dir">
+    <div class="dir-head">
+      <div><h3>B · Console flutuante</h3><p>Fundo com degradê índigo e painéis flutuantes de vidro com cantos grandes, separados por espaço em vez de bordas. Busca e comandos numa barra central (⌘K). Os computadores ficam num dock embaixo, como as telas de um centro de controle.</p></div>
+      <div class="swatches"><i style="background:#121424"></i><i style="background:#1d2140"></i><i style="background:#7c8cff"></i><i style="background:#ffb547"></i><i style="background:#eceefe"></i></div>
+    </div>
+    <div class="scale"><div class="shot"><div class="win B">
+      <div class="top"><div class="lights"><i></i><i></i><i></i></div><div class="cmdk"><span>⌕ Buscar sessões, computadores, datasets…</span><span class="mono">⌘K</span></div><span class="chip">☁ 2 rodando</span></div>
+      <div class="main">
+        <div class="pnl side">
+          <div class="row">✉ Inbox <span style="margin-left:auto;background:#ffb547;color:#1a1300;border-radius:6px;padding:0 6px;font-weight:700">1</span></div>
+          <div class="row">▤ Datasets</div>
+          <div class="row">☁ Fleet</div>
+          <div class="lbl">Sessões</div>
+          <div class="row sel"><span class="av" style="background:#ff7a3d">C</span> modest-falcon</div>
+          <div class="row"><span class="av" style="background:#6b72ff">X</span> api-migration</div>
+          <div class="row"><span class="av" style="background:#ff7a3d">C</span> pricing-crawl</div>
+        </div>
+        <div class="pnl center">
+          <div style="display:flex;gap:8px;align-items:center"><span class="chip" style="background:rgba(124,140,255,.2);color:#fff">▣ tripadvisor-la</span><span class="chip">✳ Claude</span><span class="chip" style="margin-left:auto;background:rgba(255,181,71,.18);color:#ffcf85">CAPTCHA · Assumir ⌘⏎</span></div>
+          <div class="fakeweb" style="border-radius:10px"><div class="bar">‹ › <span>tripadvisor.com/Hotels-g32655-Los_Angeles</span></div><div class="body"><div class="h">Los Angeles Hotels</div><div><div class="ln" style="width:80%"></div><div class="ln" style="width:60%"></div><div class="ln" style="width:70%"></div></div><div class="ph"></div><div class="ph"></div><div class="ph"></div></div></div>
+        </div>
+      </div>
+      <div class="pnl dock">
+        <div class="scr on"><span class="need">AJUDA</span><b>tripadvisor-la</b></div>
+        <div class="scr" style="background:linear-gradient(135deg,#d6e4ff,#e9f2e1)"><b>booking-la · aws</b></div>
+        <div class="add">+ computador</div>
+        <div style="margin-left:auto;align-self:center;text-align:right;color:#9aa0c8;font-size:11.5px">1.701 linhas coletadas<br>US$ 0,04 hoje</div>
+      </div>
+    </div></div></div>
+    <div class="why"><div><b>O que muda</b>Nada de sidebar colada na borda: tudo são cartões flutuantes. Barra de comando no centro, dock de telas ao vivo embaixo, avatar colorido por agente.</div><div><b>Diferente do Orca</b>É a ruptura mais forte: outra estrutura, outra luz, outro material. Ninguém confunde com o Orca à primeira vista.</div><div><b>Risco</b>Vidro e degradê custam GPU e envelhecem rápido; terminais em cima de vidro perdem legibilidade, então o terminal fica sempre em painel sólido.</div></div>
+  </div>
+
+  <!-- C -->
+  <div class="dir">
+    <div class="dir-head">
+      <div><h3>C · Estúdio de dados (claro)</h3><p>Tema claro e quente por padrão (com escuro opcional), cartões brancos sobre papel. À direita um Inspetor com três abas: Computador, Dados e Custo. O resultado que o agente coleta aparece como tabela ao vivo enquanto ele trabalha.</p></div>
+      <div class="swatches"><i style="background:#f3f1ec"></i><i style="background:#ffffff"></i><i style="background:#22201c"></i><i style="background:#2f6bff"></i><i style="background:#e8890c"></i></div>
+    </div>
+    <div class="scale"><div class="shot"><div class="win C">
+      <div class="top"><div class="lights"><i></i><i></i><i></i></div><b style="margin-left:10px">modest-falcon</b><span style="margin-left:auto;color:#9a948a" class="mono">⌘K</span></div>
+      <div class="main">
+        <div class="side">
+          <div class="row" style="background:#e9e6df;color:#8b857a">⌕ Buscar</div>
+          <div class="lbl">Workspace</div>
+          <div class="row">Inbox <span style="margin-left:auto;background:#e8890c;color:#fff;border-radius:6px;padding:0 6px;font-weight:700">1</span></div>
+          <div class="row">Datasets</div>
+          <div class="row">Fleet</div>
+          <div class="lbl">Sessões</div>
+          <div class="row sel">✳ modest-falcon</div>
+          <div class="row">◐ api-migration</div>
+          <div class="row">✳ pricing-crawl</div>
+        </div>
+        <div class="center">
+          <div class="tabs"><span class="tab">Claude</span><span class="tab on">tripadvisor-la</span><span class="tab">booking-la</span></div>
+          <div style="margin:8px 10px 0;background:#fff4e2;border:1px solid #f3cf95;color:#8a4b00;border-radius:8px;padding:7px 10px;display:flex;justify-content:space-between"><span>tripadvisor-la precisa de você · CAPTCHA</span><b>Assumir ⌘⏎</b></div>
+          <div style="flex:1;display:flex;padding:10px"><div class="fakeweb" style="box-shadow:0 0 0 1px #e6e2d9"><div class="bar">‹ › <span>tripadvisor.com/Hotels-g32655-Los_Angeles</span></div><div class="body"><div class="h">Los Angeles Hotels</div><div><div class="ln" style="width:80%"></div><div class="ln" style="width:60%"></div></div><div class="ph"></div><div class="ph"></div></div></div></div>
+        </div>
+        <div class="insp">
+          <div class="seg"><span>Computador</span><span class="on">Dados</span><span>Custo</span></div>
+          <div class="kpi"><div><b>1.213</b><span>linhas</span></div><div><b>98%</b><span>campos preenchidos</span></div></div>
+          <table><tr><td>hotel</td><td>nota</td><td>preço</td></tr><tr><td>The Hoxton</td><td>4,5</td><td>$289</td></tr><tr><td>Hotel Figueroa</td><td>4,6</td><td>$312</td></tr><tr><td>Ace Hotel</td><td>4,3</td><td>$241</td></tr><tr><td>Freehand LA</td><td>4,4</td><td>$198</td></tr><tr><td>Line Hotel</td><td>4,2</td><td>$226</td></tr></table>
+          <div style="margin-top:auto;padding:10px;display:flex;gap:6px"><span style="flex:1;text-align:center;background:#2f6bff;color:#fff;border-radius:8px;padding:7px;font-weight:600">Exportar</span><span style="flex:1;text-align:center;background:#f3f1ec;border-radius:8px;padding:7px">Enviar para…</span></div>
+        </div>
+      </div>
+    </div></div></div>
+    <div class="why"><div><b>O que muda</b>Tema claro quente como padrão, cartões brancos, Inspetor fixo à direita. Dados e custo viram parte da tela principal, não um relatório escondido.</div><div><b>Diferente do Orca</b>O Orca é escuro e centrado em terminal; o Racky vira um app de dados. É a direção que mais combina com as features de dados e cloud.</div><div><b>Risco</b>Terminais no claro precisam de um tema próprio bem feito; quem vive no escuro vai trocar o tema (o escuro continua disponível).</div></div>
+  </div>
+
+  <div class="pick">
+    <h3>Minha recomendação: A como base, com o Inspetor de C</h3>
+    <ol>
+      <li><b>A dá identidade sem quebrar o hábito:</b> continua escuro (o público vive no terminal), mas com paleta própria e a coluna Rack como assinatura.</li>
+      <li><b>O Inspetor de C (Computador · Dados · Custo) entra no lugar da coluna Rack</b> quando um computador está selecionado. É a casa natural das features de dados e cloud da lista abaixo.</li>
+      <li><b>B fica para depois,</b> como tema alternativo, se você quiser ainda mais ruptura.</li>
+    </ol>
+  </div>
+
+  <h2 id="features">Lista de features</h2>
+  <p class="sub">O que o Orca não tem, agrupado. A coluna da direita diz se o Orca tem algo parecido.</p>
+  <div class="legend"><span><span class="tag P0">P0</span> primeiro, faz o Racky ser outro produto</span><span><span class="tag P1">P1</span> logo depois</span><span><span class="tag P2">P2</span> quando sobrar tempo</span></div>
+
+  <section class="group">
+    <header><span class="n">01</span><div><h3>UI e identidade</h3><p>Deixar de parecer o Orca.</p></div></header>
+    <table>
+      <tr><td class="pri"><span class="tag P0">P0</span></td><td class="name">Paleta e tokens próprios</td><td class="desc">Nova escala de cores com tom azul-marinho, azul Racky como acento, âmbar só para "precisa de você", verde para rodando. Troca nos tokens gerados, então pega o app inteiro de uma vez.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P0">P0</span></td><td class="name">Coluna Rack de computadores</td><td class="desc">Todos os computadores da sessão como unidades com LED, miniatura ao vivo, CPU/RAM, região e custo. Clique abre o viewer; recolhe para uma faixa de LEDs.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P0">P0</span></td><td class="name">Sidebar nova</td><td class="desc">Workspace com Inbox, Datasets e Fleet; sessões com cor por agente e contador de computadores. Projects e Library saem do topo.</td><td class="orca">parecido</td></tr>
+      <tr><td class="pri"><span class="tag P1">P1</span></td><td class="name">Inspetor (Computador · Dados · Custo)</td><td class="desc">Painel à direita para o computador selecionado: configuração, tabela de dados ao vivo e gasto.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P1">P1</span></td><td class="name">Barra de comando ⌘K</td><td class="desc">Uma busca para sessões, computadores, datasets e ações ("novo computador em São Paulo", "exportar dados").</td><td class="orca">parcial</td></tr>
+      <tr><td class="pri"><span class="tag P1">P1</span></td><td class="name">Tipografia e ícones próprios</td><td class="desc">Fonte mono para metadados de máquina, conjunto de ícones próprio para computador, dataset e região.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P2">P2</span></td><td class="name">Tema claro e tema Console</td><td class="desc">O claro de C e o vidro de B como temas alternativos.</td><td class="orca">não</td></tr>
+    </table>
+  </section>
+
+  <section class="group">
+    <header><span class="n">02</span><div><h3>Dados</h3><p>O que o agente coleta vira um ativo: tabela, histórico, destino.</p></div></header>
+    <table>
+      <tr><td class="pri"><span class="tag P0">P0</span></td><td class="name">Datasets</td><td class="desc">Tudo que os subagentes salvam (CSV, JSON) é detectado e vira um dataset com nome, schema, linhas e prévia. Uma página lista todos, de todas as sessões.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P0">P0</span></td><td class="name">Tabela ao vivo</td><td class="desc">As linhas aparecem enquanto o agente coleta, com contagem e % de campos preenchidos.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P0">P0</span></td><td class="name">Exportar</td><td class="desc">CSV, JSON, Excel e Parquet com um clique; copiar como tabela para colar no Sheets.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P1">P1</span></td><td class="name">Schema antes de rodar</td><td class="desc">Você define as colunas (nome, tipo, obrigatório) e o agente recebe isso como contrato; linhas fora do schema são marcadas.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P1">P1</span></td><td class="name">Origem de cada linha</td><td class="desc">URL, horário e screenshot de onde cada linha veio. Clique numa linha e veja a página.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P1">P1</span></td><td class="name">Destinos</td><td class="desc">Enviar para Google Sheets, Postgres/Supabase, BigQuery, S3 ou webhook, uma vez ou a cada execução.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P1">P1</span></td><td class="name">Execuções agendadas</td><td class="desc">Rodar o mesmo trabalho todo dia ou toda hora (cron), localmente ou na cloud com o Mac fechado.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P1">P1</span></td><td class="name">Diferença entre execuções</td><td class="desc">O que entrou, saiu e mudou desde a última vez (preço subiu, hotel novo).</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P2">P2</span></td><td class="name">SQL local</td><td class="desc">Consultar qualquer dataset com SQL (DuckDB embutido), juntar datasets.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P2">P2</span></td><td class="name">Alertas de qualidade</td><td class="desc">Avisar quando a contagem cai, campos vêm vazios ou duplicados aparecem.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P2">P2</span></td><td class="name">Descoberta de API</td><td class="desc">O computador grava o tráfego de rede e mostra endpoints JSON que dão os mesmos dados sem raspar a página.</td><td class="orca">não</td></tr>
+    </table>
+  </section>
+
+  <section class="group">
+    <header><span class="n">03</span><div><h3>Cloud</h3><p>Rodar em qualquer lugar, saber quanto custa.</p></div></header>
+    <table>
+      <tr><td class="pri"><span class="tag P0">P0</span></td><td class="name">Provedor próprio de verdade</td><td class="desc">AWS, Hetzner e DigitalOcean funcionando (hoje só o visual existe): conectar conta, criar e destruir máquinas, ver a tela.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P0">P0</span></td><td class="name">Fleet</td><td class="desc">Uma página com todas as máquinas, locais e na cloud, de todos os provedores: status, região, idade, custo, desligar em massa.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P0">P0</span></td><td class="name">Custo ao vivo</td><td class="desc">Gasto por computador, sessão e dia, na barra de status e no Inspetor; limites por dia e por mês que desligam máquinas.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P1">P1</span></td><td class="name">Racky Cloud (créditos)</td><td class="desc">Plano de assinatura ou créditos, sem conta em provedor. Spec já escrita (Hetzner + Firecracker, US$ 0,15/h).</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P1">P1</span></td><td class="name">Transbordar para a cloud</td><td class="desc">Quando o Mac chega no limite de computadores locais, os próximos sobem na cloud automaticamente.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P1">P1</span></td><td class="name">Região por computador</td><td class="desc">Escolher o país do computador (IP, idioma e fuso daquele lugar), útil para preços e conteúdo por região.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P1">P1</span></td><td class="name">Computadores que sobrevivem ao Mac</td><td class="desc">Na cloud, a máquina continua rodando com o Mac dormindo; o Racky reconecta quando você volta.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P2">P2</span></td><td class="name">Snapshots compartilhados</td><td class="desc">Salvar um computador pronto (logins, extensões) e subir cópias em qualquer provedor.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P2">P2</span></td><td class="name">Times</td><td class="desc">Várias pessoas vendo a mesma fleet e os mesmos datasets, com limites por pessoa.</td><td class="orca">não</td></tr>
+    </table>
+  </section>
+
+  <section class="group">
+    <header><span class="n">04</span><div><h3>Computadores extremamente configuráveis</h3><p>Cada detalhe da máquina vira opção, com perfis prontos para não assustar.</p></div></header>
+    <table>
+      <tr><td class="pri"><span class="tag P0">P0</span></td><td class="name">Perfis de computador</td><td class="desc">Presets com nome ("Scraping BR", "Pesquisa leve", "Login salvo") que juntam tudo abaixo. A sessão ou o próprio agente escolhe o perfil.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P0">P0</span></td><td class="name">Recursos</td><td class="desc">vCPU, memória, disco e resolução da tela por perfil.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P0">P0</span></td><td class="name">Proxy por computador</td><td class="desc">Residencial ou datacenter, país, rotação por pedido ou sessão fixa, teste de IP com um clique.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P0">P0</span></td><td class="name">Identidade do navegador</td><td class="desc">Idioma, fuso, geolocalização, tamanho de tela, user agent, WebGL e fontes, coerentes entre si e com o IP. Botão "parecer uma pessoa de São Paulo".</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P1">P1</span></td><td class="name">Persistência</td><td class="desc">Descartável ou persistente; cofre de cookies e logins por site, reaproveitado entre execuções.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P1">P1</span></td><td class="name">Regras de rede</td><td class="desc">Sites permitidos e bloqueados, bloquear imagens e vídeo para economizar, limite de banda, modo offline.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P1">P1</span></td><td class="name">Ciclo de vida</td><td class="desc">Desligar depois de X minutos parado, tempo máximo de vida, quantos computadores por sessão, ligar sempre ou só quando pedir.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P1">P1</span></td><td class="name">CAPTCHA e intervenção</td><td class="desc">Por perfil: chamar você, tentar um serviço de resolução, ou pular o site; quanto tempo esperar antes de desistir.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P1">P1</span></td><td class="name">Educação com os sites</td><td class="desc">Intervalo mínimo entre páginas por domínio, máximo de páginas por minuto, respeitar robots.txt (opcional).</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P2">P2</span></td><td class="name">Software instalado</td><td class="desc">Pacotes extras (apt, pip, npm), extensões do Chrome e imagem própria a partir de um Dockerfile.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P2">P2</span></td><td class="name">Pastas e segredos</td><td class="desc">Compartilhar uma pasta do Mac (só leitura ou leitura e escrita) e injetar variáveis e senhas sem o agente ver o valor.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P2">P2</span></td><td class="name">Gravação</td><td class="desc">Vídeo da sessão inteira ou screenshot a cada N segundos, para auditar o que o agente fez.</td><td class="orca">não</td></tr>
+      <tr><td class="pri"><span class="tag P2">P2</span></td><td class="name">Navegador</td><td class="desc">Escolher Chrome, Chromium ou Firefox e a versão.</td><td class="orca">não</td></tr>
+    </table>
+  </section>
+
+  <h2 id="ordem">Ordem de execução</h2>
+  <div class="diag">
+    <div class="card"><h3>1 · UI (agora)</h3><p>Tokens novos, sidebar nova, coluna Rack e Inspetor vazio. Tudo atrás dos testes de snapshot que já existem, um passo por vez, instalado no seu Mac quando você não estiver gravando.</p></div>
+    <div class="card"><h3>2 · Dados</h3><p>Datasets, tabela ao vivo no Inspetor e exportar. É o que mais mostra o produto em vídeo.</p></div>
+    <div class="card"><h3>3 · Computadores e cloud</h3><p>Perfis com recursos, proxy e identidade; depois provedor próprio real, Fleet e custo ao vivo.</p></div>
+  </div>
+</div>
+</body>
+</html>
