@@ -705,6 +705,12 @@ public final class AppEnvironment {
         return ["/tmp/", "/private/tmp/", "/var/folders/", "/private/var/folders/"].contains { path.hasPrefix($0) } || path.hasPrefix(temp)
     }
 
+    /// Bundle instalado de verdade: direto em `/Applications` ou `~/Applications` (não em subpastas de projetos).
+    static func isInstalledBundle(_ url: URL, home: String = NSHomeDirectory()) -> Bool {
+        let parent = url.resolvingSymlinksInPath().deletingLastPathComponent().path
+        return parent == "/Applications" || parent == "/System/Volumes/Data/Applications" || parent == (home as NSString).appendingPathComponent("Applications")
+    }
+
     static func makeBackgroundAgent(environment: [String: String], storeRoot: URL) -> BackgroundAgentHost? {
         let explicit = environment["AGENTBOX_LAUNCHD"] == "1"
         if environment["AGENTBOX_LAUNCHD"] == "0" { return nil }
@@ -715,8 +721,9 @@ public final class AppEnvironment {
         }
         let bundleURL = Bundle.main.bundleURL
         guard bundleURL.pathExtension == "app" else { return nil }
-        // F33: build em pasta temporária (worktree de agente, teste) nunca vira o daemon oficial do launchd do dono.
-        guard explicit || !Self.isTemporaryBundle(bundleURL) else { return nil }
+        // F33: só a cópia instalada (`/Applications` ou `~/Applications`) vira o daemon oficial do launchd do dono; build de
+        // worktree, DerivedData, `build/` ou pasta temporária usa o daemon filho.
+        guard explicit || (Self.isInstalledBundle(bundleURL) && !Self.isTemporaryBundle(bundleURL)) else { return nil }
         let identity = BackgroundAgentIdentity.resolve(environment: environment)
         return BackgroundAgentHost(
             identity: identity, service: SMBackgroundAgentService(plistName: identity.plistName), bundleURL: bundleURL,

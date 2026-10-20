@@ -12,4 +12,15 @@ struct TemporaryBundleGuardTests {
         #expect(!AppEnvironment.isTemporaryBundle(URL(fileURLWithPath: "/Applications/Racky.app")))
         #expect(!AppEnvironment.isTemporaryBundle(URL(fileURLWithPath: "/Users/someone/orca/workspaces/agent-box/otter/build/AgentBox/Racky.app")))
     }
+
+    /// Só a cópia instalada registra: build de worktree, DerivedData e `build/` usam o daemon filho.
+    @Test func onlyInstalledBundlesRegisterTheLaunchAgent() {
+        let home = "/Users/someone"
+        #expect(AppEnvironment.isInstalledBundle(URL(fileURLWithPath: "/Applications/Racky.app"), home: home))
+        #expect(AppEnvironment.isInstalledBundle(URL(fileURLWithPath: "/Users/someone/Applications/Racky.app"), home: home))
+        #expect(!AppEnvironment.isInstalledBundle(URL(fileURLWithPath: "/Users/someone/orca/workspaces/agent-box/otter/build/AgentBox/Racky.app"), home: home))
+        #expect(!AppEnvironment.isInstalledBundle(
+            URL(fileURLWithPath: "/Users/someone/Library/Developer/Xcode/DerivedData/AgentBox-x/Build/Products/Debug/Racky.app"), home: home))
+        #expect(!AppEnvironment.isInstalledBundle(URL(fileURLWithPath: "/Applications/Dev/Racky.app"), home: home))
+    }
 }
