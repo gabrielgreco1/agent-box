@@ -1,0 +1,120 @@
+import Foundation
+import GRDB
+import RackyProtocol
+import Testing
+
+@testable import RackyStore
+
+/// Datasets v1: migração `v10_datasets`, upsert/dedupe por chave, filtros e cascata ao apagar a sessão.
+@Suite struct DatasetStoreTests {
+    private func seeded(_ home: TempHome) async throws -> (RackyStore, Session, Dataset) {
+        let store = try await home.openStore()
+        let session = Session(kind: .clean, folderPath: "/tmp/ds", title: "ds")
+        try await store.save(session)
+        let dataset = Dataset(
+            id: "01DATASET", sessionID: session.id, name: "hotels",
+            columns: [DatasetColumn(name: "name", required: true), DatasetColumn(name: "rating", type: .number)], key: ["name"], createdAt: Fixture.t0)
+        try await store.createDataset(dataset)
+        return (store, session, dataset)
+    }
+
+    private func input(_ key: String, _ data: String, valid: Bool = true) -> DatasetRowInput {
+        DatasetRowInput(rowKey: key, data: data, valid: valid, error: valid ? nil : "bad", computer: "c1", trust: .none)
+    }
+
+    @Test func migrationIsLastInTheChain() {
+        #expect(StoreMigrations.all.last?.id == "v10_datasets")
+    }
+
+    @Test func createsAndReadsBackTheSchema() async throws {
+        let home = try TempHome(); defer { home.remove() }
+        let (store, session, dataset) = try await seeded(home)
+        let loaded = try #require(try await store.dataset(sessionID: session.id, name: "hotels"))
+        #expect(loaded == dataset)
+        #expect(try await store.dataset(id: "01DATASET")?.columns.count == 2)
+        // Nome é único por sessão.
+        await #expect(throws: (any Error).self) { try await store.createDataset(Dataset(id: "01OTHER", sessionID: session.id, name: "hotels", columns: [], key: [])) }
+        try await store.updateDatasetSchema(id: dataset.id, columns: dataset.columns + [DatasetColumn(name: "url", type: .url)], key: ["name"], at: Fixture.t0.addingTimeInterval(5))
+        #expect(try await store.dataset(id: dataset.id)?.columns.last?.name == "url")
+        try await store.close()
+    }
+
+    @Test func upsertCountsInsertedUpdatedAndDuplicate() async throws {
+        let home = try TempHome(); defer { home.remove() }
+        let (store, _, dataset) = try await seeded(home)
+        let t1 = Fixture.t0.addingTimeInterval(10), t2 = Fixture.t0.addingTimeInterval(20), t3 = Fixture.t0.addingTimeInterval(30)
+        let first = try await store.upsertDatasetRows(datasetID: dataset.id, rows: [input("a", #"{"name":"A","rating":4}"#), input("b", #"{"name":"B","rating":3}"#)], at: t1)
+        #expect(first == DatasetUpsertCounts(inserted: 2, updated: 0, duplicate: 0))
+        let second = try await store.upsertDatasetRows(datasetID: dataset.id, rows: [input("a", #"{"name":"A","rating":4}"#), input("b", #"{"name":"B","rating":5}"#), input("c", #"{"name":"C"}"#)], at: t2)
+        #expect(second == DatasetUpsertCounts(inserted: 1, updated: 1, duplicate: 1))
+        // Duas vezes a mesma chave no mesmo lote: a segunda é duplicata da primeira.
+        let same = try await store.upsertDatasetRows(datasetID: dataset.id, rows: [input("d", "{}"), input("d", "{}")], at: t3)
+        #expect(same == DatasetUpsertCounts(inserted: 1, updated: 0, duplicate: 1))
+
+        let a = try #require(try await store.datasetRow(datasetID: dataset.id, rowKey: "a"))
+        #expect(a.seenCount == 2 && a.firstSeen == t1 && a.lastSeen == t2)
+        let b = try #require(try await store.datasetRow(datasetID: dataset.id, rowKey: "b"))
+        #expect(b.data.contains("5") && b.seenCount == 2 && b.firstSeen == t1)
+        #expect(try await store.dataset(id: dataset.id)?.updatedAt == t3)
+        try await store.close()
+    }
+
+    @Test func summariesCountRowsAndInvalidOnes() async throws {
+        let home = try TempHome(); defer { home.remove() }
+        let (store, session, dataset) = try await seeded(home)
+        _ = try await store.upsertDatasetRows(datasetID: dataset.id, rows: [input("a", "{}"), input("b", "{}", valid: false), input("c", "{}", valid: false)])
+        let summary = try #require(try await store.datasetSummaries(sessionID: session.id).first)
+        #expect(summary.rowCount == 3 && summary.invalidCount == 2)
+        #expect(try await store.datasetSummaries().count == 1)
+        #expect(try await store.datasetSummaries(sessionID: UUID()).isEmpty)
+        // Dataset vazio aparece com zero linhas.
+        try await store.createDataset(Dataset(id: "01EMPTY", sessionID: session.id, name: "empty", columns: [], key: []))
+        let all = try await store.datasetSummaries()
+        #expect(all.first { $0.dataset.name == "empty" }?.rowCount == 0)
+        try await store.close()
+    }
+
+    @Test func rowsPageFilterAndSearch() async throws {
+        let home = try TempHome(); defer { home.remove() }
+        let (store, _, dataset) = try await seeded(home)
+        var rows: [DatasetRowInput] = []
+        for i in 0..<25 { rows.append(input("k\(i)", #"{"name":"Hotel \#(i)"}"#, valid: i % 5 != 0)) }
+        rows.append(DatasetRowInput(rowKey: "pct", data: #"{"name":"100% real_deal"}"#, sourceURL: "https://example.com/p"))
+        _ = try await store.upsertDatasetRows(datasetID: dataset.id, rows: rows)
+        #expect(try await store.datasetRowCount(datasetID: dataset.id) == 26)
+        #expect(try await store.datasetRowCount(datasetID: dataset.id, filter: .invalid) == 5)
+        let page = try await store.datasetRows(datasetID: dataset.id, limit: 10, offset: 10)
+        #expect(page.map(\.rowKey) == (10..<20).map { "k\($0)" }, "arrival order, paged")
+        #expect(try await store.datasetRows(datasetID: dataset.id, filter: .invalid, limit: 100).count == 5)
+        #expect(try await store.datasetRows(datasetID: dataset.id, search: "Hotel 1", limit: 100).count == 11)
+        // `%` e `_` são texto, não curinga.
+        #expect(try await store.datasetRows(datasetID: dataset.id, search: "100%").map(\.rowKey) == ["pct"])
+        #expect(try await store.datasetRows(datasetID: dataset.id, search: "real_deal").count == 1)
+        #expect(try await store.datasetRows(datasetID: dataset.id, search: "l_deal").count == 1)
+        #expect(try await store.datasetRows(datasetID: dataset.id, search: "example.com").count == 1)
+        #expect(try await store.datasetRowCount(datasetID: dataset.id, filter: .invalid, search: "Hotel 5") == 1)
+        try await store.close()
+    }
+
+    @Test func deletingTheSessionCascadesToDatasetsAndRows() async throws {
+        let home = try TempHome(); defer { home.remove() }
+        let (store, session, dataset) = try await seeded(home)
+        _ = try await store.upsertDatasetRows(datasetID: dataset.id, rows: [input("a", "{}")])
+        try await store.deleteSession(id: session.id)
+        #expect(try await store.dataset(id: dataset.id) == nil)
+        #expect(try await store.datasetRows(datasetID: dataset.id).isEmpty)
+        try await store.close()
+        let db = try DatabaseQueue(path: home.paths.databaseFile.path)
+        #expect(try await db.read { try Int.fetchOne($0, sql: "SELECT COUNT(*) FROM dataset_row") } == 0)
+    }
+
+    @Test func rowTableRejectsABadTrust() async throws {
+        let home = try TempHome(); defer { home.remove() }
+        let (store, _, dataset) = try await seeded(home)
+        try await store.close()
+        let db = try DatabaseQueue(path: home.paths.databaseFile.path)
+        await #expect(throws: (any Error).self) {
+            try await db.write { try $0.execute(sql: "INSERT INTO dataset_row (dataset_id, row_key, data, valid, trust, first_seen, last_seen) VALUES (?, 'x', '{}', 1, 'bogus', 1, 1)", arguments: [dataset.id]) }
+        }
+    }
+}

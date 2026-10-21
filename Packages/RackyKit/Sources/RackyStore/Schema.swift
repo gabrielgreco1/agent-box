@@ -486,8 +486,46 @@ enum StoreMigrations {
         """)
     }
 
+    /// `v10_datasets`: tabelas que os subagentes de uma sessão preenchem (Datasets v1). `dataset` guarda o esquema (colunas e chave em JSON);
+    /// `dataset_row` guarda uma linha por chave (SHA-256 da chave canônica), com a proveniência (computador, run, request id, confiança)
+    /// e se a linha é válida. Só tabelas novas: nada de v1-v9 muda. Apagar a sessão apaga os datasets e as linhas (cascata).
+    static let v10Datasets = StoreMigration(id: "v10_datasets") { db in
+        try db.execute(sql: """
+        CREATE TABLE dataset (
+            id TEXT PRIMARY KEY NOT NULL,
+            session_id TEXT NOT NULL REFERENCES session(id) ON DELETE CASCADE,
+            name TEXT NOT NULL,
+            columns TEXT NOT NULL,
+            key TEXT NOT NULL,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL,
+            UNIQUE (session_id, name)
+        ) STRICT;
+        CREATE INDEX dataset_session ON dataset(session_id, updated_at);
+
+        CREATE TABLE dataset_row (
+            dataset_id TEXT NOT NULL REFERENCES dataset(id) ON DELETE CASCADE,
+            row_key TEXT NOT NULL,
+            data TEXT NOT NULL,
+            valid INTEGER NOT NULL CHECK (valid IN (0,1)),
+            error TEXT,
+            computer TEXT,
+            run_id TEXT,
+            request_id TEXT,
+            source_url TEXT,
+            trust TEXT CHECK (trust IN ('observed','reported','none')),
+            first_seen INTEGER NOT NULL,
+            last_seen INTEGER NOT NULL,
+            seen_count INTEGER NOT NULL DEFAULT 1,
+            PRIMARY KEY (dataset_id, row_key)
+        ) STRICT;
+        CREATE INDEX dataset_row_seen ON dataset_row(dataset_id, last_seen);
+        """)
+    }
+
     static let all: [StoreMigration] = [
         v1Initial, v2Activity, v3Computers, v4VaultCatalog, v5ProxyExt, v6AgentTree, v7SubagentComputers, v8OrchestrationIdentity, v9OrchestrationPool,
+        v10Datasets,
     ]
 
     static func migrator(_ migrations: [StoreMigration]) -> DatabaseMigrator {
