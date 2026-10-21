@@ -890,6 +890,7 @@ final class WorkspaceModel {
         guard states[sid] != nil, let session = sessionLookup(sid) else { return nil }
         var spec = baseSpec
         spec.workerChildID = worker.childID
+        spec.workerParentTerminalID = parentTerminal
         let parentTab = parentTerminal.flatMap { locate(terminal: $0) }.flatMap { $0.sid == sid ? $0.tab : nil }
         let cwd = parentTerminal.flatMap(terminal)?.cwd ?? session.folderPath
         let tabID = parentTab?.id ?? UUID.v7()

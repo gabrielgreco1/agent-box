@@ -10808,6 +10808,116 @@
           }
         }
       }
+    },
+    "Subagents run as": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subagents run as"
+          }
+        }
+      }
+    },
+    "OpenCode": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OpenCode"
+          }
+        }
+      }
+    },
+    "Mixed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mixed"
+          }
+        }
+      }
+    },
+    "native": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "native"
+          }
+        }
+      }
+    },
+    "agent picks": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "agent picks"
+          }
+        }
+      }
+    },
+    "Default for new sessions.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default for new sessions."
+          }
+        }
+      }
+    },
+    "Claude Code's own subagents, inside the agent. Each gets its own computer.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Code's own subagents, inside the agent. Each gets its own computer."
+          }
+        }
+      }
+    },
+    "Each subagent runs as a separate Codex session in a pane beside the agent, with its own computer.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Each subagent runs as a separate Codex session in a pane beside the agent, with its own computer."
+          }
+        }
+      }
+    },
+    "Each subagent runs as a separate OpenCode session in a pane beside the agent, with its own computer.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Each subagent runs as a separate OpenCode session in a pane beside the agent, with its own computer."
+          }
+        }
+      }
+    },
+    "The agent picks per task: its own subagents or Codex / OpenCode sessions.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The agent picks per task: its own subagents or Codex / OpenCode sessions."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

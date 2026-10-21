@@ -261,3 +261,26 @@ import Testing
         #expect(card.badges == [.main, .detached])
     }
 }
+
+/// Workers de app (`agent_spawn`): ficam embaixo do agente que os pediu, com o CLI e o terminal, e não viram linha de agente.
+@MainActor
+@Suite(.offscreenAppKit) struct SidebarWorkerRowsTests {
+    @Test func appWorkersHangUnderTheirParentWithTheirCLI() throws {
+        var cast = SidebarFixtures.full(now: SidebarProjectionTests.now, home: SidebarProjectionTests.home)
+        let session = try #require(cast.sessions.first { $0.title == "quiet-harbor" })
+        let tabs = Set(cast.tabs.filter { $0.sessionID == session.id }.map(\.id))
+        let parent = try #require(cast.terminals.first { tabs.contains($0.tabID) && $0.provider == .claude })
+        var spec = LaunchSpec(provider: .codex, workerChildID: "01a15eca-a1")
+        spec.workerParentTerminalID = parent.id
+        let worker = Terminal(
+            tabID: parent.tabID, provider: .codex, title: "Codex · Pages 1–4", titleSource: .user, cwd: parent.cwd, launchSpec: spec, state: .running,
+            createdAt: SidebarProjectionTests.now, startedAt: SidebarProjectionTests.now)
+        cast.terminals.append(worker)
+        var input = SidebarInput(snapshot: cast.snapshot, now: SidebarProjectionTests.now, home: SidebarProjectionTests.home)
+        input.selectedSession = session.id
+        let card = try #require(SidebarProjector.build(input).cleanSessions.first { $0.id == session.id })
+        #expect(card.agentRows.map(\.id) == [parent.id], "the worker is not an agent row")
+        let child = try #require(card.agentRows.first?.children.first { $0.workerTerminalID == worker.id })
+        #expect(child.title == "Pages 1–4" && child.worker == .codex && child.phase == .running)
+    }
+}

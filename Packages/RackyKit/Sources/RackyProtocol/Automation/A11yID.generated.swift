@@ -168,6 +168,8 @@ extension A11yID {
     public static let overlayComposerLocation = A11yID(unchecked: "overlay.composer.location")
     /// `overlay.composer.computers`
     public static let overlayComposerComputers = A11yID(unchecked: "overlay.composer.computers")
+    /// `overlay.composer.subagentHarness`
+    public static let overlayComposerSubagentHarness = A11yID(unchecked: "overlay.composer.subagentHarness")
     /// `overlay.composer.proxy`
     public static let overlayComposerProxy = A11yID(unchecked: "overlay.composer.proxy")
     /// `overlay.composer.watchSubagents`
@@ -1847,6 +1849,7 @@ extension A11yID {
         A11yIDSpec(pattern: "overlay.composer.branch", surface: "Composer"),
         A11yIDSpec(pattern: "overlay.composer.location", surface: "Composer"),
         A11yIDSpec(pattern: "overlay.composer.computers", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.subagentHarness", surface: "Composer"),
         A11yIDSpec(pattern: "overlay.composer.proxy", surface: "Composer"),
         A11yIDSpec(pattern: "overlay.composer.watchSubagents", surface: "Composer"),
         A11yIDSpec(pattern: "overlay.composer.summary", surface: "Composer"),

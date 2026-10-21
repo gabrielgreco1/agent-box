@@ -53,7 +53,10 @@ struct ComposerView: View {
                             .id(model.focusPromptNonce)
                     }
                 }
-                if model.draft.provider.supportsSubagentComputers { subagentComputers }
+                if model.draft.provider.supportsSubagentComputers {
+                    subagentComputers
+                    if model.draft.subagentComputers.isOn { subagentHarness }
+                }
                 advanced
                 summary
                 if let issue = model.boxIssue { errorBox(issue) }
@@ -161,6 +164,24 @@ struct ComposerView: View {
                         .transition(MotionPolicy.shared.reduceMotion ? .opacity : .opacity.combined(with: .offset(y: DS.Space.s1)))
                 }
                 .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.base), value: model.draft.subagentComputers)
+            }
+        }
+    }
+
+    /// "Subagents run as": Claude (os subagentes do próprio agente) ou sessões separadas de Codex / OpenCode, cada uma num pane.
+    private var subagentHarness: some View {
+        field("Subagents run as") {
+            VStack(alignment: .leading, spacing: DS.Space.s1_5) {
+                DSSegmented(
+                    SubagentHarness.allCases.map { .init($0.rawValue, LocalizedStringKey($0.segmentTitle)) },
+                    selection: model.draft.subagentHarness.rawValue, action: .composerSetSubagentHarness, id: .overlayComposerSubagentHarness,
+                    fillWidth: true, height: DSMetrics.segmentedHeightComposer)
+                Text(verbatim: model.draft.subagentHarness.explanation)
+                    .dsFont(DS.Font.small)
+                    .foregroundStyle(DS.Color.textTertiary)
+                    .id(model.draft.subagentHarness)
+                    .transition(.opacity)
+                    .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.base), value: model.draft.subagentHarness)
             }
         }
     }

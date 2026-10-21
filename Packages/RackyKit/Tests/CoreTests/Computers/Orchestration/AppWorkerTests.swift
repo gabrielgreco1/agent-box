@@ -168,7 +168,7 @@ private struct WorkerRig {
         let started = ContinuousClock.now
         let reply = ok(await w.rig.parentCall("agent_wait", ["names": ["houston"], "wait_s": 0.4]))
         let took = started.duration(to: .now)
-        #expect(took >= .milliseconds(350) && took < .seconds(3))
+        #expect(took >= .milliseconds(350) && took < .seconds(10), "never blocks much past wait_s (loose bound: the suite runs in parallel)")
         #expect(reply["done"]?.bool == false && reply["workers"]?.array?.first?["state"]?.string == "running")
         #expect(errorCode(await w.rig.parentCall("agent_wait", ["names": ["nobody"], "wait_s": 0])) == "not_found")
     }

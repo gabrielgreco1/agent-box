@@ -281,6 +281,13 @@ extension SettingsModel {
             change("Subagent computers") { $0.computers.defaultSubagentMode = mode }
             return mode.rawValue
         }
+        try registry.register(.settingsComputersDefaultSubagentHarness) { [unowned self] arg in
+            guard let raw = arg.value, let harness = SubagentHarness(rawValue: raw) else {
+                throw ActionError.failed(.settingsComputersDefaultSubagentHarness, message: "expected claude, codex, opencode or mixed")
+            }
+            change("Subagents run as") { $0.computers.defaultSubagentHarness = harness }
+            return harness.rawValue
+        }
         try registry.register(
             .settingsComputersForceDocker,
             enablement: { [unowned self] in

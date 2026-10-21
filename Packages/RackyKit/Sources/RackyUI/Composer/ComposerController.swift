@@ -258,6 +258,10 @@ final class ComposerController {
             if let value = arg.value, let mode = SubagentComputersMode(rawValue: value) { model.draft.subagentComputers = mode }
             return model.draft.subagentComputers.rawValue
         }
+        try edit(.composerSetSubagentHarness) { model, arg in
+            if let value = arg.value, let harness = SubagentHarness(rawValue: value) { model.draft.subagentHarness = harness }
+            return model.draft.subagentHarness.rawValue
+        }
         try edit(.composerSetProfile) { model, arg in
             if let value = arg.value { model.draft.profileID = UUID(uuidString: value) }
             return model.draft.profileID?.uuidString

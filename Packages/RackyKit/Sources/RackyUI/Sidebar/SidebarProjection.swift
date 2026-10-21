@@ -117,6 +117,9 @@ struct SubagentRowData: Identifiable, Equatable {
     var subtitle: String?
     /// Computador do subagente (hover com a pré-visualização e o viewer).
     var computer: String?
+    /// Worker de app (sessão separada de Codex / OpenCode / Claude): o CLI e o terminal dele (clique foca o pane).
+    var worker: TerminalProvider?
+    var workerTerminalID: UUID?
 
     var glyph: DSIndicatorGlyph {
         switch phase {
@@ -369,6 +372,25 @@ enum SidebarProjector {
     }
 
     /// Estado de um terminal com atividade de hooks (Fatia 2): vale só para agente com o processo vivo; o resto é do processo.
+    /// Linha de um worker de app: título sem o prefixo do CLI, estado do terminal (rodando, precisa de você, terminou, falhou).
+    static func workerRow(_ w: Terminal, input: SidebarInput) -> SubagentRowData {
+        let g = status(for: w, center: input.attention, now: input.now)
+        let phase: SubagentInfo.Phase
+        switch g.glyph {
+        case .needsInput: phase = .needsInput
+        case .done: phase = .done
+        default:
+            if w.state == .running || w.state == .launching { phase = .running }
+            else if w.state == .failedToStart || (w.exitCode ?? 0) != 0 { phase = .failed }
+            else { phase = .done }
+        }
+        // O título do worker é "<CLI> · <tarefa>"; a sidebar já mostra o logo do CLI, então fica só a tarefa.
+        let title = w.title.range(of: " · ").map { String(w.title[$0.upperBound...]) } ?? w.title
+        return SubagentRowData(
+            id: "worker-\(w.id.uuidString)", title: title, phase: phase, startedAt: w.startedAt ?? w.createdAt, endedAt: w.endedAt,
+            subtitle: w.lastMessage, computer: nil, worker: w.provider, workerTerminalID: w.id)
+    }
+
     static func status(for t: Terminal, center: AttentionCenter, now: Date) -> StatusSample {
         let process = glyph(for: t)
         let base = StatusSample(glyph: process.glyph, label: process.label, rank: rank(process.glyph))
@@ -452,7 +474,11 @@ enum SidebarProjector {
             let agents = rows.filter { $0.provider.isAgent }
             // Shells só viram linha rodando comando (título OSC) ou quando a sessão não tem agentes (03 §2.6).
             let shellRows = rows.filter { !$0.provider.isAgent && ($0.titleSource == .osc || agents.isEmpty) }
-            let shown = rows.filter { t in agents.contains { $0.id == t.id } || shellRows.contains { $0.id == t.id } }
+            // Workers de app (sessões separadas pedidas por `agent_spawn`) não viram linha de agente: ficam embaixo do pai.
+            let parentIDs = Set(rows.map(\.id))
+            let workers = rows.filter { t in t.launchSpec.workerParentTerminalID.map(parentIDs.contains) ?? false }
+            let workerIDs = Set(workers.map(\.id))
+            let shown = rows.filter { t in !workerIDs.contains(t.id) && (agents.contains { $0.id == t.id } || shellRows.contains { $0.id == t.id }) }
             let grouped = rows.count - shown.count
 
             let agentRows = shown.map { t -> AgentRowData in
@@ -477,13 +503,15 @@ enum SidebarProjector {
                     id: t.id, sessionID: s.id, provider: t.provider, glyph: g.glyph, lead: lead, trail: trail,
                     timeText: relativeTime(since: since, now: input.now), stateLabel: g.label,
                     unread: input.attention.unread.contains(t.id), fullMessage: lead,
-                    children: (t.state == .running ? input.attention.statuses[t.id]?.children : nil).map { list in
+                    children: ((t.state == .running ? input.attention.statuses[t.id]?.children : nil).map { list in
                         list.map {
                             SubagentRowData(
                                 id: $0.agentID, title: $0.displayTitle, phase: $0.phase, startedAt: $0.startedAt, endedAt: $0.endedAt,
                                 subtitle: $0.subtitle, computer: input.agentComputers[$0.agentID])
                         }
-                    } ?? [], childrenCollapsed: input.collapsedChildren.contains(t.id))
+                    } ?? []) + workers.filter { $0.launchSpec.workerParentTerminalID == t.id }.map { w in
+                        workerRow(w, input: input)
+                    }, childrenCollapsed: input.collapsedChildren.contains(t.id))
             }
 
             var badges: [SidebarBadge] = []

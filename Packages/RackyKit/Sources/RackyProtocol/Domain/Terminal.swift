@@ -38,6 +38,8 @@ public struct LaunchSpec: Codable, Hashable, Sendable {
     public var resumeOf: String?
     /// Terminal de um worker de app (spec subagent-harness): a identidade MCP do filho. Nunca é pai de orquestração, nem depois de reabrir o app.
     public var workerChildID: String?
+    /// Terminal do agente que pediu o worker: a sidebar pendura o worker embaixo dele, como subagente.
+    public var workerParentTerminalID: UUID?
 
     public init(
         provider: TerminalProvider, profileID: UUID? = nil, model: String? = nil, permissionMode: String? = nil,

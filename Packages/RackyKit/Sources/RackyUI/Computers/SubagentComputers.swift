@@ -150,6 +150,20 @@ final class SubagentComputersController {
             try await store.setSubagentComputers(sessionID: sessionID, mode: mode)
             return mode.rawValue
         }
+        // Quem roda os próximos subagentes: vale no próximo `agent_spawn`, sem reiniciar o agente.
+        try registry.register(.sessionSetSubagentHarness) { [unowned self] arg in
+            let parts = (arg.value ?? "").split(separator: ":", maxSplits: 1).map(String.init)
+            let sessionID = parts.count == 2 ? UUID(uuidString: parts[0]) : sidebar.selectedSession
+            guard let sessionID, sidebar.session(sessionID) != nil else {
+                throw ActionError.failed(.sessionSetSubagentHarness, message: "No such session.")
+            }
+            guard let raw = parts.last, let harness = SubagentHarness(rawValue: raw) else {
+                throw ActionError.failed(.sessionSetSubagentHarness, message: "expected select(<sessionId>:claude|codex|opencode|mixed)")
+            }
+            guard let store else { throw ActionError.failed(.sessionSetSubagentHarness, message: "The database isn't open") }
+            try await store.setSubagentHarness(sessionID: sessionID, harness: harness)
+            return harness.rawValue
+        }
         try registry.register(
             .sessionRestartToApply,
             enablement: { [unowned self] in
@@ -177,6 +191,13 @@ final class SubagentComputersController {
             .item(DSMenuItem(
                 mode.rawValue, mode.menuTitle, icon: .symbol(mode.symbol), detail: mode.menuDetail, checked: session.subagentComputers == mode,
                 action: .sessionSetSubagentComputers, argument: .select("\(sid):\(mode.rawValue)")))
+        }
+        entries.append(.separator("harness"))
+        entries.append(.header(String(localized: "Subagents run as", bundle: .module)))
+        entries += SubagentHarness.allCases.map { harness in
+            .item(DSMenuItem(
+                "harness.\(harness.rawValue)", harness.segmentTitle, icon: harness.menuIcon, detail: harness.menuDetail,
+                checked: session.subagentHarness == harness, action: .sessionSetSubagentHarness, argument: .select("\(sid):\(harness.rawValue)")))
         }
         if restartPending(session: session.id) {
             entries.append(.separator("restart"))
@@ -217,6 +238,45 @@ enum SubagentMetrics {
     /// O fio das linhas filhas fica sob o centro do indicador do card.
     static let connectorInset: CGFloat = SidebarMetrics.statusColumn / 2 - SidebarMetrics.agentRowPaddingH + SidebarMetrics.statusGap + SidebarMetrics.agentRowPaddingH
     static let pulseSeconds = 1.4
+}
+
+extension SubagentHarness {
+    var segmentTitle: String {
+        switch self {
+        case .claude: String(localized: "Claude", bundle: .module)
+        case .codex: String(localized: "Codex", bundle: .module)
+        case .opencode: String(localized: "OpenCode", bundle: .module)
+        case .mixed: String(localized: "Mixed", bundle: .module)
+        }
+    }
+
+    /// Uma linha do que a escolha faz (composer e Settings).
+    var explanation: String {
+        switch self {
+        case .claude: String(localized: "Claude Code's own subagents, inside the agent. Each gets its own computer.", bundle: .module)
+        case .codex: String(localized: "Each subagent runs as a separate Codex session in a pane beside the agent, with its own computer.", bundle: .module)
+        case .opencode: String(localized: "Each subagent runs as a separate OpenCode session in a pane beside the agent, with its own computer.", bundle: .module)
+        case .mixed: String(localized: "The agent picks per task: its own subagents or Codex / OpenCode sessions.", bundle: .module)
+        }
+    }
+
+    var menuDetail: String? {
+        switch self {
+        case .claude: String(localized: "native", bundle: .module)
+        case .mixed: String(localized: "agent picks", bundle: .module)
+        default: nil
+        }
+    }
+
+    /// Logo do agente no menu (Mixed sem logo).
+    var menuIcon: DSMenuItem.Icon? {
+        switch self {
+        case .claude: .agent(.claude)
+        case .codex: .agent(.codex)
+        case .opencode: .agent(.opencode)
+        case .mixed: .symbol("square.stack.3d.up")
+        }
+    }
 }
 
 // MARK: Ícone do card e do header

@@ -79,6 +79,9 @@ struct SubagentRowView: View {
             let line = HStack(spacing: SidebarMetrics.agentRowGap) {
                 DSAgentIndicator(child.glyph, size: .sm)
                     .a11y(.sidebarSessionChildStatus(sid, cid), kind: "image", label: child.stateLabel)
+                if let worker = child.worker {
+                    DSAgentLogo(QuickLaunchModel.kind(worker), size: DS.Space.s3)
+                }
                 Text(verbatim: child.title)
                     .dsFont(DS.Font.small)
                     .fontWeight(.semibold)
@@ -107,7 +110,11 @@ struct SubagentRowView: View {
             .accessibilityElement(children: .combine)
             .accessibilityLabel(Text(verbatim: "\(child.title), \(child.stateLabel), \(child.elapsedText(now: context.date))"))
             Group {
-                if let computer = child.computer, let registry, registry.isOffered(.computerOpenViewer) {
+                if let workerTerminal = child.workerTerminalID, let registry, registry.isOffered(.paneShow) {
+                    // Worker de app: o clique leva ao pane dele (a sessão separada ao lado do agente).
+                    ActionButton(.paneShow, id: .sidebarSessionChild(sid, cid), argument: .select(workerTerminal.uuidString)) { line }
+                        .buttonStyle(.plain)
+                } else if let computer = child.computer, let registry, registry.isOffered(.computerOpenViewer) {
                     ActionButton(.computerOpenViewer, id: .sidebarSessionChild(sid, cid), argument: .select(computer)) { line }
                         .buttonStyle(.plain)
                 } else if let registry, registry.isOffered(.paneShow) {

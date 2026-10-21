@@ -229,6 +229,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `overlay.composer.branch`
 - `overlay.composer.location`
 - `overlay.composer.computers`
+- `overlay.composer.subagentHarness`
 - `overlay.composer.proxy`
 - `overlay.composer.watchSubagents`
 - `overlay.composer.summary`
@@ -651,6 +652,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `session.newCleanInFolder` | New Clean Session in Folder… | ⌥⇧⌘N | slice1 |
 | `project.add` | Add Project… | — | slice1 |
 | `session.setSubagentComputers` | Subagent computers (card, header do pane) | — | slice3 |
+| `session.setSubagentHarness` | Subagents run as (card, header do pane) | — | slice3 |
 | `agent.toggleChildren` | Collapse / Expand Subagents (chevron da linha do agente) | — | slice3 |
 | `session.restartToApply` | Restart to apply | — | slice3 |
 | `project.cloneFromGitHub` | Clone from GitHub… | — | slice1 |
@@ -943,6 +945,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `settings.pickPath` | Change… | — | slice1 |
 | `settings.resetConfirmations` | Reset | — | slice1 |
 | `settings.computers.defaultSubagentMode` | Subagent computers (padrão das novas sessões) | — | slice3 |
+| `settings.computers.defaultSubagentHarness` | Subagents run as (padrão das novas sessões) | — | slice3 |
 | `settings.computers.forceDocker` | Use Docker instead (runtime dos computadores) | — | slice1 |
 | `settings.agents.defaultAgent` | Default agent | — | slice1 |
 | `settings.agents.defaultProfile` | Default profile | — | slice1 |
@@ -992,6 +995,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `composer.setProfile` | Profile (combobox) | — | slice1 |
 | `composer.editProfiles` | Edit Profiles… (rodapé do combobox de perfil) | — | slice1 |
 | `composer.setSubagentComputers` | Subagent computers (segmented) | — | slice3 |
+| `composer.setSubagentHarness` | Subagents run as (segmented) | — | slice3 |
 | `composer.setPrompt` | Prompt | — | slice1 |
 | `composer.toggleAdvanced` | Advanced (disclosure) | — | slice1 |
 | `composer.setSessionName` | Session name | — | slice1 |

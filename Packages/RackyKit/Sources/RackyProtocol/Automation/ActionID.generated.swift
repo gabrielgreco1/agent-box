@@ -39,6 +39,7 @@ extension ActionID {
     public static let sessionNewCleanInFolder = ActionID(unchecked: "session.newCleanInFolder")
     public static let projectAdd = ActionID(unchecked: "project.add")
     public static let sessionSetSubagentComputers = ActionID(unchecked: "session.setSubagentComputers")
+    public static let sessionSetSubagentHarness = ActionID(unchecked: "session.setSubagentHarness")
     public static let agentToggleChildren = ActionID(unchecked: "agent.toggleChildren")
     public static let sessionRestartToApply = ActionID(unchecked: "session.restartToApply")
     public static let projectCloneFromGitHub = ActionID(unchecked: "project.cloneFromGitHub")
@@ -331,6 +332,7 @@ extension ActionID {
     public static let settingsPickPath = ActionID(unchecked: "settings.pickPath")
     public static let settingsResetConfirmations = ActionID(unchecked: "settings.resetConfirmations")
     public static let settingsComputersDefaultSubagentMode = ActionID(unchecked: "settings.computers.defaultSubagentMode")
+    public static let settingsComputersDefaultSubagentHarness = ActionID(unchecked: "settings.computers.defaultSubagentHarness")
     public static let settingsComputersForceDocker = ActionID(unchecked: "settings.computers.forceDocker")
     public static let settingsAgentsDefaultAgent = ActionID(unchecked: "settings.agents.defaultAgent")
     public static let settingsAgentsDefaultProfile = ActionID(unchecked: "settings.agents.defaultProfile")
@@ -380,6 +382,7 @@ extension ActionID {
     public static let composerSetProfile = ActionID(unchecked: "composer.setProfile")
     public static let composerEditProfiles = ActionID(unchecked: "composer.editProfiles")
     public static let composerSetSubagentComputers = ActionID(unchecked: "composer.setSubagentComputers")
+    public static let composerSetSubagentHarness = ActionID(unchecked: "composer.setSubagentHarness")
     public static let composerSetPrompt = ActionID(unchecked: "composer.setPrompt")
     public static let composerToggleAdvanced = ActionID(unchecked: "composer.toggleAdvanced")
     public static let composerSetSessionName = ActionID(unchecked: "composer.setSessionName")
@@ -518,6 +521,7 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "session.newCleanInFolder"), label: "New Clean Session in Folder…", shortcut: "⌥⇧⌘N", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "project.add"), label: "Add Project…", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "session.setSubagentComputers"), label: "Subagent computers (card, header do pane)", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "session.setSubagentHarness"), label: "Subagents run as (card, header do pane)", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "agent.toggleChildren"), label: "Collapse / Expand Subagents (chevron da linha do agente)", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "session.restartToApply"), label: "Restart to apply", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "project.cloneFromGitHub"), label: "Clone from GitHub…", shortcut: "", slice: .slice1),
@@ -810,6 +814,7 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "settings.pickPath"), label: "Change…", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.resetConfirmations"), label: "Reset", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.computers.defaultSubagentMode"), label: "Subagent computers (padrão das novas sessões)", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "settings.computers.defaultSubagentHarness"), label: "Subagents run as (padrão das novas sessões)", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "settings.computers.forceDocker"), label: "Use Docker instead (runtime dos computadores)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.agents.defaultAgent"), label: "Default agent", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "settings.agents.defaultProfile"), label: "Default profile", shortcut: "", slice: .slice1),
@@ -859,6 +864,7 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "composer.setProfile"), label: "Profile (combobox)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "composer.editProfiles"), label: "Edit Profiles… (rodapé do combobox de perfil)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "composer.setSubagentComputers"), label: "Subagent computers (segmented)", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "composer.setSubagentHarness"), label: "Subagents run as (segmented)", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "composer.setPrompt"), label: "Prompt", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "composer.toggleAdvanced"), label: "Advanced (disclosure)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "composer.setSessionName"), label: "Session name", shortcut: "", slice: .slice1),

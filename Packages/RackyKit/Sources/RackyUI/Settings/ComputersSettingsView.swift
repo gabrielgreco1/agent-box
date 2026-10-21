@@ -25,6 +25,17 @@ struct ComputersSettingsView: View {
                     .id(mode)
                     .transition(.opacity)
                     .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.base), value: mode)
+                SettingsRow(title: "Subagents run as", help: "Default for new sessions.") {
+                    DSSegmented(
+                        SubagentHarness.allCases.map { .init($0.rawValue, LocalizedStringKey($0.segmentTitle)) },
+                        selection: model.settings.computers.defaultSubagentHarness.rawValue,
+                        action: .settingsComputersDefaultSubagentHarness, id: .settings("computers", "defaultSubagentHarness"))
+                }
+                Text(verbatim: model.settings.computers.defaultSubagentHarness.explanation)
+                    .dsFont(DS.Font.small)
+                    .foregroundStyle(DS.Color.textTertiary)
+                    .id(model.settings.computers.defaultSubagentHarness)
+                    .transition(.opacity)
             }
             ProxiesSettingsBlock(model: model)
             SettingsBlock(title: "Computer runtime") {
