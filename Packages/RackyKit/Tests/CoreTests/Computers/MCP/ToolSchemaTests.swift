@@ -76,7 +76,7 @@ import Testing
         #expect(specNames.subtracting(ours).subtracting(Self.notImplemented).isEmpty, "missing: \(specNames.subtracting(ours).subtracting(Self.notImplemented))")
         #expect(ours.subtracting(specNames).isEmpty, "not in spec: \(ours.subtracting(specNames))")
         #expect(ours.count == ToolCatalog.all.count, "duplicate tool names")
-        #expect(ours.count == 38)  // 07 §3.2 menos desktop_action (A4 + B17 + D4 + E1 + F3 + G3 + H3 + I3)
+        #expect(ours.count == 42)  // 07 §3.2 menos desktop_action (A4 + B17 + D4 + E1 + F3 + G3 + H3 + datasets 4 + I3)
     }
 
     @Test func errorCodeSetIsExactlyTheClosedSetOfTheSpec() {

@@ -47,11 +47,19 @@ public final class ComputerOrchestrator: Sendable {
         let approvals = ComputerApprovalCenter()
         self.approvals = approvals
         let scheduler = scheduler
+        // Datasets: a sessão de quem chama é a do pai (o filho e o pai compartilham a tabela).
+        let datasets = store.map { store in
+            DatasetBackend(service: DatasetService(store: store)) { [hub, parents] identity in
+                let parent = await hub.parent(of: identity) ?? identity
+                return await parents.info(parent)?.sessionID
+            }
+        }
         tools = ComputerToolService(
             hub: hub, orchestrator: scheduler,
             gate: SubagentComputersGate(
                 parents: parents, approvals: approvals, waitSeconds: waitSeconds,
-                effectiveProxy: { parent, requested in await scheduler.effectiveProxy(parent: parent, requested: requested) }))
+                effectiveProxy: { parent, requested in await scheduler.effectiveProxy(parent: parent, requested: requested) }),
+            datasets: datasets)
         server = ComputerMCPServer(tools: tools)
         if let store {
             Task { await parents.observeProxyChanges { id, proxy in Task { try? await store.updateOrchestrationParentProxy(id: id, proxy: proxy) } } }

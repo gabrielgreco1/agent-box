@@ -2,7 +2,7 @@ import Foundation
 
 /// Reqlog lido do host (`logs/requests.jsonl`): só o egress escreve ali, o agente não alcança (CS-149).
 extension ComputerToolService {
-    private static func records(_ c: ManagedComputer) -> [[String: JSON]] { ChainedLog.read(c.run.requestsFile) }
+    static func records(_ c: ManagedComputer) -> [[String: JSON]] { ChainedLog.read(c.run.requestsFile) }
 
     /// Corpo salvo (`bodies/<id>.<kind>.txt`), confinado a `logs/bodies/`.
     static func bodyData(_ c: ManagedComputer, _ record: [String: JSON], kind: String) -> Data? {

@@ -430,6 +430,22 @@ result_submit(result: object, evidence?: {[json_pointer: string]: string[]})
 | CS-262 | `result_submit` grava `/work/result.json` e roda o **validador**: cada `evidence` precisa citar um `request_id` existente no reqlog **deste computador** ou um arquivo existente em `/work` (CS-234). Cada campo vira `verified`, `cited_missing` ou `not_verified`. O validador também roda em `box_collect` sobre um `result.json` escrito à mão, procurando ids pelo padrão (audit/08 N8) | L/I | P0 gravar / P1 validar | v1 | 33 |
 | CS-263 | Registros `reported` (hooks do `work`) citados como evidência aparecem com selo `"Agent-reported"`, e registros `observed` com `"Observed"` | L/I | P1 | v1 | 34 |
 
+#### H2. Datasets (v1, `docs/rebuild/spec/datasets.md`)
+
+```
+dataset_define(name: string, columns: {name: string, type?: "string"|"integer"|"number"|"boolean"|"date"|"datetime"|"url"|"json"="string",
+               required?: bool=false}[], key?: string[])
+  → {dataset, created: bool, columns, key, total_rows}
+dataset_append(name: string, rows: object[])
+  → {dataset, inserted, updated, duplicate, invalid, warnings: string[], total_rows, created?, inferred?}  // _request_id, _source_url reservados
+dataset_import(name: string, file: string, format?: "csv"|"jsonl"|"json")
+  → {dataset, inserted, updated, duplicate, invalid, warnings: string[], total_rows, format, rows_read}
+dataset_read(name: string, limit?: number=100, offset?: number=0, invalid_only?: bool=false)
+  → {dataset, columns, key, total_rows, invalid_rows, offset, returned, rows: [{data, valid, error?, trust, source_url?, request_id?, computer?, seen_count}]}
+```
+
+O pai (`parentTools`) tem `dataset_list()` e o mesmo `dataset_read`. O dataset pertence à sessão do pai: todos os computadores dela anexam à mesma tabela.
+
 #### I. Ajuda humana
 
 ```

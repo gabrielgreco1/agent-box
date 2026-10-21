@@ -39,7 +39,7 @@ public enum ToolCatalog {
         then poll help_wait, each call returns within 50 s); if the task seems to need something forbidden, use \
         help_request(kind=permission) or journal BLOCKED. Escalate cheapest first: http_request, browser, proxy_set to an allowed \
         proxy, reqlog_query(xhr) for the hidden API, render if supported. Keep the journal (PLAN/DOING/FOUND/BLOCKED), cite a \
-        request id for every claim in result_submit. Tool paths (save_as, files) must be under /work: put throwaway files in \
+        request id for every claim in result_submit. Tables you collect: dataset_define a key, then dataset_append rows as you go with _request_id. Tool paths (save_as, files) must be under /work: put throwaway files in \
         /work/scratch/ and keep the rest of /work for results; plain shell commands may also use /tmp. Errors are {error, message, \
         retry_after_s?, details?} with a fixed code.
         """
@@ -54,6 +54,11 @@ public enum ToolCatalog {
         ("httpOnly", .boolean()), ("secure", .boolean()), ("sameSite", .oneOf(["Strict", "Lax", "None"])),
     ], required: ["name", "value", "domain"], additional: .forbidden))
     private static let stringMap = Schema.object(ObjectSpec(additional: .schema(.string())))
+    private static let datasetColumn = Schema.object(ObjectSpec([
+        ("name", .string("Letters, digits and _, starting with a letter", minLength: 1, maxLength: 64)),
+        ("type", .oneOf(["string", "integer", "number", "boolean", "date", "datetime", "url", "json"], def: "string")),
+        ("required", .boolean("A row without it is stored as invalid", def: false)),
+    ], required: ["name"], additional: .forbidden))
 
     public static let all: [ToolDefinition] = [
         // A. Computador e identidade
@@ -165,6 +170,24 @@ public enum ToolCatalog {
             ObjectSpec([("result", .object(ObjectSpec(additional: .any))),
                         ("evidence", .object(ObjectSpec(additional: .schema(.array(.string("Request id or /work file"))))))], required: ["result"])),
 
+        // J. Datasets (Datasets v1, docs/rebuild/spec/datasets.md)
+        def("dataset_define", "Create a dataset (a named table shared by every computer of this session) or extend it. Idempotent: adding columns is free; changing a "
+            + "column type or the key of a dataset that already has rows is invalid_argument. key = the columns that identify a row (empty = the whole row), "
+            + "so the same page scraped twice never duplicates.", .neutral,
+            ObjectSpec([("name", .string("Dataset name: a-z, 0-9, _ or -, up to 64", minLength: 1, maxLength: 64)), ("columns", .array(datasetColumn, minItems: 1, maxItems: 200)),
+                        ("key", .array(.string("Column name"), maxItems: 200))], required: ["name", "columns"])),
+        def("dataset_append", "Append rows (objects) to a dataset as you collect them: up to 5000 per call, 500 is a good batch. Rows are validated and type-coerced; invalid rows "
+            + "are stored and flagged, never dropped. Add _request_id (an id from reqlog_query or a browser/http result) so the row links to the page it came from, and "
+            + "optionally _source_url. Returns {inserted, updated, duplicate, invalid, warnings, total_rows}. A missing dataset is created from the first row.", .neutral,
+            ObjectSpec([("name", .string(minLength: 1, maxLength: 64)), ("rows", .array(.object(ObjectSpec(additional: .any)), minItems: 1, maxItems: 5000))], required: ["name", "rows"])),
+        def("dataset_import", "Load a CSV (header row), JSON Lines or JSON array file from /work into a dataset. Same result as dataset_append; rows get trust none and "
+            + "source_url from a `url` column when present.", .neutral,
+            ObjectSpec([("name", .string(minLength: 1, maxLength: 64)), ("file", .string("Path under /work")), ("format", .oneOf(["csv", "jsonl", "json"], "Default: from the extension"))],
+                       required: ["name", "file"])),
+        def("dataset_read", "Read rows back as JSON (at most 500 per call), with validity, error and provenance. invalid_only lists the rows that failed validation.", .neutral,
+            ObjectSpec([("name", .string(minLength: 1, maxLength: 64)), ("limit", .integer(min: 1, max: 500, def: 100)), ("offset", .integer(min: 0, def: 0)),
+                        ("invalid_only", .boolean(def: false))], required: ["name"])),
+
         // I. Ajuda humana
         def("help_request", "Ask the human for help (captcha, login, mfa, choice, download, permission). Returns at once with a request_id; poll help_wait.", .neutral,
             ObjectSpec([("kind", .oneOf(["captcha", "login", "mfa", "choice", "download", "permission", "other"])), ("reason", .string(minLength: 1, maxLength: 2000)),
@@ -212,6 +235,10 @@ public enum ToolCatalog {
         def("batch_collect", "Collect every target of a batch: writes results.jsonl in the session run folder and returns the summary per target "
             + "(status, verified, cited_missing, not_verified, usage).", .neutral,
             ObjectSpec([("batch", .string(minLength: 1))], required: ["batch"])),
+        def("dataset_list", "The datasets your subagents are filling in this session: name, rows, invalid, updated, columns.", .neutral),
+        def("dataset_read", "Read rows of a dataset as JSON (at most 500 per call), with validity, error and provenance. invalid_only lists the rows that failed validation.", .neutral,
+            ObjectSpec([("name", .string(minLength: 1, maxLength: 64)), ("limit", .integer(min: 1, max: 500, def: 100)), ("offset", .integer(min: 0, def: 0)),
+                        ("invalid_only", .boolean(def: false))], required: ["name"])),
         def("agent_message", "Send a full message to a subagent YOU created (child_id from boxes_reserve, or its computer name). It reaches the subagent "
             + "with its next box_status or box_claim and is recorded in the timeline. Other terminals: blocked_by_policy.", .neutral,
             ObjectSpec([("child_id", .string(minLength: 1)), ("text", .string(minLength: 1, maxLength: 16000))], required: ["child_id", "text"])),

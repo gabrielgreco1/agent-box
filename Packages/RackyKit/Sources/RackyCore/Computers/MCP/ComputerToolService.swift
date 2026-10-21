@@ -32,6 +32,14 @@ struct Args {
     var json: JSON { .object(values) }
 }
 
+/// Datasets v1: o serviço sobre o store e como achar a sessão de quem chama (o filho e o pai compartilham a sessão do pai).
+public struct DatasetBackend: Sendable {
+    public var service: DatasetService
+    /// Sessão da identidade MCP (filho ou pai); `nil` = sem sessão conhecida.
+    public var sessionID: @Sendable (_ identity: String) async -> UUID?
+    public init(service: DatasetService, sessionID: @escaping @Sendable (_ identity: String) async -> UUID?) { self.service = service; self.sessionID = sessionID }
+}
+
 /// Executa as ferramentas MCP de 07 §3 no computador do filho que chama. O roteamento é por filho (identidade da
 /// configuração do processo MCP), nunca por argumento. Cada chamada devolve em ≤ 50 s; o que for longo tem `*_poll`/`*_wait`.
 public actor ComputerToolService {
@@ -40,6 +48,8 @@ public actor ComputerToolService {
     let orchestrator: (any ParentOrchestrating)?
     /// Consentimento por sessão (F12): Full cria direto, Ask espera o card de aprovação. `nil` = sem porta (testes da T3).
     let gate: (any ReserveGating)?
+    /// Datasets (ferramentas `dataset_*`). `nil` = o app não tem store (testes): as ferramentas devolvem `not_supported`.
+    let datasets: DatasetBackend?
     var jobs: [String: JobMeta] = [:]
 
     struct JobMeta {
@@ -50,10 +60,11 @@ public actor ComputerToolService {
         var logged = false
     }
 
-    public init(hub: ComputerHub, orchestrator: (any ParentOrchestrating)? = nil, gate: (any ReserveGating)? = nil) {
+    public init(hub: ComputerHub, orchestrator: (any ParentOrchestrating)? = nil, gate: (any ReserveGating)? = nil, datasets: DatasetBackend? = nil) {
         self.hub = hub
         self.orchestrator = orchestrator
         self.gate = gate
+        self.datasets = datasets
     }
 
     /// Gatilho de spawn (F12): resposta ao hook `PreToolUse` do helper (`racky hook-guard`). Sem porta, deixa passar.
@@ -72,14 +83,16 @@ public actor ComputerToolService {
     public func call(_ name: String, arguments: JSON, child: String) async -> ToolOutcome {
         let started = ContinuousClock.now
         let role = await hub.role(of: child) ?? .worker
-        guard let definition = ToolCatalog.byName[name] ?? ToolCatalog.parentByName[name] else {
+        // `dataset_read` existe nos dois catálogos (pai e worker): o papel de quem chama escolhe a definição.
+        let workerDefinition = ToolCatalog.byName[name], parentDefinition = ToolCatalog.parentByName[name]
+        guard let definition = (role == .parent ? parentDefinition : workerDefinition) ?? workerDefinition ?? parentDefinition else {
             return Self.failure(ToolError(.notFound, "unknown tool \(name)"), box: nil)
         }
-        let isParentTool = ToolCatalog.parentByName[name] != nil
-        if isParentTool != (role == .parent) {
+        let isParentTool = role == .parent
+        if (role == .parent ? parentDefinition : workerDefinition) == nil {
             return Self.failure(ToolError(
                 .blockedByPolicy,
-                isParentTool ? "\(name) belongs to the parent session; workers use the computer they claimed"
+                parentDefinition != nil ? "\(name) belongs to the parent session; workers use the computer they claimed"
                     : "\(name) belongs to the worker subagents; reserve computers with boxes_reserve and spawn a worker for each"), box: nil)
         }
         let cleaned = JSON.object(ObjectSpec.stripNulls(arguments.object ?? [:]))
@@ -170,6 +183,7 @@ public actor ComputerToolService {
         case "journal": return try await journal(args, c)
         case "timeline": return try await timeline(args, c)
         case "result_submit": return try await resultSubmit(args, c)
+        case "dataset_define", "dataset_append", "dataset_import", "dataset_read": return try await datasetTool(name, args, child: child, c)
         case "help_request": return try await helpRequest(args, c)
         case "help_wait": return try await helpWait(args, c)
         case "help_cancel": return try await helpCancel(args, c)
@@ -221,6 +235,7 @@ public actor ComputerToolService {
     // MARK: Ferramentas do pai (07 §4.2)
 
     func executeParent(_ name: String, _ args: Args, parent: String) async throws -> ToolResult {
+        if name == "dataset_list" || name == "dataset_read" { return try await parentDatasetTool(name, args, parent: parent) }
         guard let orchestrator else { throw ToolError(.notSupported, "this app build has no orchestrator") }
         switch name {
         case "boxes_reserve":
