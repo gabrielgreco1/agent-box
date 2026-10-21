@@ -17,12 +17,12 @@
           "light": "#ffffff"
         },
         "sidebar": {
-          "dark": "#2a2a2a",
+          "dark": "#0a0a0a",
           "reference": "--worktree-sidebar",
           "light": "#f5f5f5"
         },
         "sidebarSelected": {
-          "dark": "#353535",
+          "dark": "#1c1c1c",
           "reference": "--worktree-sidebar-accent",
           "light": "#eaeaea"
         },

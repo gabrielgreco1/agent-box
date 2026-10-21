@@ -9,8 +9,8 @@ extension DS {
         // surfaces
         public static let canvas = DSRGBA(hex: 0x0a0a0a)
         public static let chrome = DSRGBA(hex: 0x171717)
-        public static let sidebar = DSRGBA(hex: 0x2a2a2a)
-        public static let sidebarSelected = DSRGBA(hex: 0x353535)
+        public static let sidebar = DSRGBA(hex: 0x0a0a0a)
+        public static let sidebarSelected = DSRGBA(hex: 0x1c1c1c)
         public static let panel = DSRGBA(hex: 0x171717)
         public static let panelSelected = DSRGBA(hex: 0x262626)
         public static let secondary = DSRGBA(hex: 0x262626)

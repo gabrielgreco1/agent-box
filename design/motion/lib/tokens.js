@@ -342,14 +342,14 @@ window.DS = {
       "css": "#171717"
     },
     "sidebar": {
-      "hex": "#2a2a2a",
+      "hex": "#0a0a0a",
       "alpha": 1.0,
-      "css": "#2a2a2a"
+      "css": "#0a0a0a"
     },
     "sidebarSelected": {
-      "hex": "#353535",
+      "hex": "#1c1c1c",
       "alpha": 1.0,
-      "css": "#353535"
+      "css": "#1c1c1c"
     },
     "panel": {
       "hex": "#171717",

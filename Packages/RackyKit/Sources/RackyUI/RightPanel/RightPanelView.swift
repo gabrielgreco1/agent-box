@@ -66,7 +66,7 @@ struct RightPanelView: View {
                 .a11y(.rightPanel, kind: "container")
             }
         }
-        .background(DS.Color.panel)
+        .background(DS.Color.canvas)
         .overlay(alignment: .leading) { DS.Color.border.frame(width: RightPanelMetrics.hairline) }
     }
 
@@ -166,7 +166,7 @@ struct RightPanelModuleFrame: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .clipped()
         }
-        .background(DS.Color.panel)
+        .background(DS.Color.canvas)
         .overlay {
             RoundedRectangle(cornerRadius: DS.Radius.sm)
                 .strokeBorder(DS.Color.locate.opacity(dropTargeted ? 1 : 0), lineWidth: MotionTokens.Stroke.focusRing)
