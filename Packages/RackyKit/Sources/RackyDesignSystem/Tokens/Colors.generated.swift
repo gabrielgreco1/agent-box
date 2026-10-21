@@ -7,11 +7,11 @@ extension DS {
     /// Valores puros (testáveis). Alfa compõe sobre a superfície; nunca pré-misturar (02 §2).
     nonisolated public enum ColorSpec {
         // surfaces
-        public static let canvas = DSRGBA(hex: 0x0a0a0a)
-        public static let chrome = DSRGBA(hex: 0x171717)
-        public static let sidebar = DSRGBA(hex: 0x0a0a0a)
-        public static let sidebarSelected = DSRGBA(hex: 0x1c1c1c)
-        public static let panel = DSRGBA(hex: 0x171717)
+        public static let canvas = DSRGBA(hex: 0x1c1c1c)
+        public static let chrome = DSRGBA(hex: 0x232323)
+        public static let sidebar = DSRGBA(hex: 0x1c1c1c)
+        public static let sidebarSelected = DSRGBA(hex: 0x2a2a2a)
+        public static let panel = DSRGBA(hex: 0x232323)
         public static let panelSelected = DSRGBA(hex: 0x262626)
         public static let secondary = DSRGBA(hex: 0x262626)
         public static let accent = DSRGBA(hex: 0x404040)
@@ -97,6 +97,10 @@ extension DS {
         public static let checksPending = DSRGBA(hex: 0xf99c00, opacity: 0.85)
         public static let checksPassing = DSRGBA(hex: 0x00bb7f, opacity: 0.8)
         public static let conflict = DSRGBA(hex: 0xf99c00)
+        // data
+        public static let dataValid = DSRGBA(hex: 0x3ecf8e)
+        public static let dataKey = DSRGBA(hex: 0x6f9bf5)
+        public static let dataString = DSRGBA(hex: 0xa5d6a7)
 
         public static let all: [String: DSRGBA] = [
             "canvas": canvas,
@@ -183,6 +187,9 @@ extension DS {
             "checksPending": checksPending,
             "checksPassing": checksPassing,
             "conflict": conflict,
+            "dataValid": dataValid,
+            "dataKey": dataKey,
+            "dataString": dataString,
         ]
     }
 
@@ -272,6 +279,9 @@ extension DS {
         public static let checksPending = ColorSpec.checksPending.color
         public static let checksPassing = ColorSpec.checksPassing.color
         public static let conflict = ColorSpec.conflict.color
+        public static let dataValid = ColorSpec.dataValid.color
+        public static let dataKey = ColorSpec.dataKey.color
+        public static let dataString = ColorSpec.dataString.color
     }
 
     /// AppKit / SwiftTerm.
@@ -360,6 +370,9 @@ extension DS {
         public static var checksPending: AppKit.NSColor { ColorSpec.checksPending.nsColor }
         public static var checksPassing: AppKit.NSColor { ColorSpec.checksPassing.nsColor }
         public static var conflict: AppKit.NSColor { ColorSpec.conflict.nsColor }
+        public static var dataValid: AppKit.NSColor { ColorSpec.dataValid.nsColor }
+        public static var dataKey: AppKit.NSColor { ColorSpec.dataKey.nsColor }
+        public static var dataString: AppKit.NSColor { ColorSpec.dataString.nsColor }
     }
 
     /// Tema do terminal (02 §3).

@@ -376,6 +376,20 @@ extension A11yID {
     public static let datasetProvenanceSeen = A11yID(unchecked: "dataset.provenance.seen")
     /// `dataset.provenance.error`
     public static let datasetProvenanceError = A11yID(unchecked: "dataset.provenance.error")
+    /// `dataset.stats`
+    public static let datasetStats = A11yID(unchecked: "dataset.stats")
+    /// `dataset.chart`
+    public static let datasetChart = A11yID(unchecked: "dataset.chart")
+    /// `dataset.range`
+    public static let datasetRange = A11yID(unchecked: "dataset.range")
+    /// `dataset.columns`
+    public static let datasetColumns = A11yID(unchecked: "dataset.columns")
+    /// `dataset.page.prev`
+    public static let datasetPagePrev = A11yID(unchecked: "dataset.page.prev")
+    /// `dataset.page.next`
+    public static let datasetPageNext = A11yID(unchecked: "dataset.page.next")
+    /// `dataset.copyRow`
+    public static let datasetCopyRow = A11yID(unchecked: "dataset.copyRow")
     /// `library.page`
     public static let libraryPage = A11yID(unchecked: "library.page")
     /// `library.section`
@@ -1551,6 +1565,16 @@ extension A11yID {
         A11yID(unchecked: "dataset.row.\(A11yID.segment(key))")
     }
 
+    /// `dataset.facet.<facet>.<value>`
+    public static func datasetFacet(_ facet: String, _ value: String) -> A11yID {
+        A11yID(unchecked: "dataset.facet.\(A11yID.segment(facet)).\(A11yID.segment(value))")
+    }
+
+    /// `dataset.panel.tab.<tab>`
+    public static func datasetPanelTab(_ tab: String) -> A11yID {
+        A11yID(unchecked: "dataset.panel.tab.\(A11yID.segment(tab))")
+    }
+
     /// `library.row.<kind>.<id>`
     public static func libraryRow(_ kind: String, _ id: String) -> A11yID {
         A11yID(unchecked: "library.row.\(A11yID.segment(kind)).\(A11yID.segment(id))")
@@ -2006,6 +2030,15 @@ extension A11yID {
         A11yIDSpec(pattern: "dataset.provenance.trust", surface: "Páginas"),
         A11yIDSpec(pattern: "dataset.provenance.seen", surface: "Páginas"),
         A11yIDSpec(pattern: "dataset.provenance.error", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.stats", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.chart", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.range", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.columns", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.facet.<facet>.<value>", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.page.prev", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.page.next", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.copyRow", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.panel.tab.<tab>", surface: "Páginas"),
         A11yIDSpec(pattern: "library.page", surface: "Páginas"),
         A11yIDSpec(pattern: "library.section", surface: "Páginas"),
         A11yIDSpec(pattern: "library.search", surface: "Páginas"),

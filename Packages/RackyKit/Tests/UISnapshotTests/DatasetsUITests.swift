@@ -134,16 +134,81 @@ struct DatasetsUITests {
         #expect(f.controller.snapshot?.rows.count == 30)
         await #expect(throws: ActionError.self) { _ = try await f.registry.perform(.datasetFilter, .select("weird")) }
 
-        // Mais de uma página: `Load more` traz as 1.000 seguintes.
+        // Mais de uma página: 50 por página, `dataset.page` anda entre elas.
         _ = try await f.service.define(session: DatasetsFixture.session, name: "big", columns: [DatasetColumn(name: "n", type: .integer)], key: ["n"])
         for start in stride(from: 0, to: 1500, by: 500) {
             _ = try await f.service.append(session: DatasetsFixture.session, name: "big", rows: (start..<start + 500).map { ["n": .int($0)] }, provenance: .none)
         }
         let big = try #require(try await f.store.dataset(sessionID: DatasetsFixture.session, name: "big")).id
         _ = try await f.registry.perform(.datasetOpen, .select(big))
-        #expect(f.controller.snapshot?.rows.count == 1000 && f.controller.snapshot?.matching == 1500)
-        _ = try await f.registry.perform(.datasetLoadMore, .press)
-        #expect(f.controller.snapshot?.rows.count == 1500)
+        #expect(f.controller.snapshot?.rows.count == 50 && f.controller.snapshot?.matching == 1500 && f.controller.pageCount == 30)
+        #expect(f.controller.snapshot?.rows.first?.cells == ["1499"], "newest first")
+        _ = try await f.registry.perform(.datasetPage, .select("next"))
+        #expect(f.controller.page == 1 && f.controller.snapshot?.rows.first?.cells == ["1449"])
+        _ = try await f.registry.perform(.datasetPage, .select("prev"))
+        _ = try await f.registry.perform(.datasetPage, .select("prev"))
+        #expect(f.controller.page == 0, "prev stops at the first page")
+        await #expect(throws: ActionError.self) { _ = try await f.registry.perform(.datasetPage, .select("sideways")) }
+    }
+
+    @Test func queryBarParsesColumnConditionsAndKeepsTheRestAsText() {
+        let columns = [DatasetColumn(name: "name"), DatasetColumn(name: "rating", type: .number), DatasetColumn(name: "price", type: .integer)]
+        let parsed = DatasetLoader.parse(#"price:>200 rating:>=4.5 name:"grand plaza" union note:x"#, columns: columns)
+        #expect(parsed.conditions == [
+            DatasetCondition(column: "price", comparison: .greater, value: "200"),
+            DatasetCondition(column: "rating", comparison: .greaterOrEqual, value: "4.5"),
+            DatasetCondition(column: "name", comparison: .contains, value: "grand plaza"),
+        ])
+        #expect(parsed.text == "union note:x", "unknown columns stay as text")
+        #expect(DatasetLoader.parse("price:300", columns: columns).conditions == [DatasetCondition(column: "price", comparison: .equals, value: "300")])
+        #expect(DatasetLoader.parse("price:", columns: columns).text == "price:", "an empty value is just text")
+    }
+
+    @Test func facetsRangeColumnsTabsAndCopy() async throws {
+        let f = try await DatasetsFixture.make()
+        defer { f.remove() }
+        var copied: [String] = []
+        f.controller.copyText = { copied.append($0) }
+        _ = try await f.registry.perform(.datasetOpen, .select(try await f.datasetID()))
+        let facets = try #require(f.controller.snapshot?.facets)
+        #expect(facets[.status]?.map(\.value).sorted() == ["invalid", "valid"])
+        #expect(facets[.error]?.isEmpty == false, "invalid rows group by error kind")
+
+        _ = try await f.registry.perform(.datasetFacet, .select("status:valid"))
+        #expect(f.controller.snapshot?.rows.allSatisfy { !$0.row.valid } == true && f.controller.filter == .invalid)
+        #expect(!f.controller.isChecked(.status, "valid"))
+        _ = try await f.registry.perform(.datasetFacet, .select("status:*"))
+        #expect(f.controller.snapshot?.matching == 30)
+        let kind = try #require(facets[.error]?.first?.value)
+        _ = try await f.registry.perform(.datasetFacet, .select("error:\(kind)"))
+        #expect(f.controller.isChecked(.error, kind) && f.controller.snapshot?.rows.allSatisfy { $0.row.errorKind == kind } == true)
+        _ = try await f.registry.perform(.datasetFacet, .select("error:*"))
+        await #expect(throws: ActionError.self) { _ = try await f.registry.perform(.datasetFacet, .select("planet:mars")) }
+
+        _ = try await f.registry.perform(.datasetSearch, .set("price:>200"))
+        #expect(f.controller.snapshot?.rows.isEmpty == false)
+        #expect(f.controller.snapshot?.rows.allSatisfy { Int($0.cells[2]) ?? 0 > 200 } == true)
+        _ = try await f.registry.perform(.datasetSearch, .set(""))
+
+        _ = try await f.registry.perform(.datasetRange, .select("15m"))
+        #expect(f.controller.range == .minutes15 && f.controller.snapshot?.activity.count == DatasetLoader.activityBuckets)
+        await #expect(throws: ActionError.self) { _ = try await f.registry.perform(.datasetRange, .select("forever")) }
+        _ = try await f.registry.perform(.datasetRange, .select("all"))
+
+        _ = try await f.registry.perform(.datasetColumns, .select("url"))
+        #expect(f.controller.visibleColumns.map(\.name) == ["name", "rating", "price"])
+        _ = try await f.registry.perform(.datasetColumns, .select("url"))
+        #expect(f.controller.visibleColumns.count == 4)
+        await #expect(throws: ActionError.self) { _ = try await f.registry.perform(.datasetColumns, .select("ghost")) }
+
+        _ = try await f.registry.perform(.datasetPanelTab, .select("history"))
+        #expect(f.controller.panelTab == .history)
+        await #expect(throws: ActionError.self) { _ = try await f.registry.perform(.datasetCopyRow, .press) }
+        let first = try #require(f.controller.snapshot?.rows.last)
+        _ = try await f.registry.perform(.datasetSelectRow, .select(first.id))
+        _ = try await f.registry.perform(.datasetCopyRow, .press)
+        #expect(copied.count == 1 && copied[0].contains("\"Grand Plaza\""))
+        #expect(f.controller.snapshot?.stats.rows == 30 && f.controller.snapshot?.stats.invalid == 2)
     }
 
     @Test func selectingARowShowsItsProvenance() async throws {

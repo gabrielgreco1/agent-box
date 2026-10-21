@@ -31,7 +31,7 @@ import Testing
         env.sidebar.apply(cast.snapshot)
         let session = try #require(cast.selectedSessionID)
         env.sidebar.select(session)
-        let c = await EmptyWindowTreeTests.host(env, size: NSSize(width: 1400, height: 860))
+        let c = await EmptyWindowTreeTests.host(env, size: NSSize(width: 1680, height: 980))
         defer { c.window?.close() }
         let store = try await RackyStore.open(paths: StorePaths(root: home))
         defer { Task { try? await store.close() } }
@@ -62,19 +62,24 @@ import Testing
                 let n = minute * 20 + i
                 let site = n % 3 == 0 ? "booking.com/hotel/us/stay-\(n)" : "tripadvisor.com/Hotel_Review-g32655-d\(7_600_000 + n)"
                 let bad = blocked && i < 2
+                let badRating = !blocked && n % 97 == 0
                 let price = 140 + (n * 37) % 480
+                let rating = badRating ? "" : #","rating":\#(Double(36 + n % 13) / 10)"#
                 let data = bad ? #"{"name":"\#(names[n % names.count]) \#(n)","rating":4.1,"url":"https://\#(site)"}"#
-                    : #"{"name":"\#(names[n % names.count]) \#(n)","rating":\#(Double(36 + n % 13) / 10),"price":\#(price),"url":"https://\#(site)"}"#
+                    : #"{"name":"\#(names[n % names.count]) \#(n)"\#(rating),"price":\#(price),"url":"https://\#(site)"}"#
+                let error = bad ? "price: required" : (badRating ? #"rating: expected a number, got "four""# : nil)
                 batch.append(DatasetRowInput(
-                    rowKey: "k\(n)", data: data, valid: !bad, error: bad ? "price: required" : nil, computer: n % 3 == 0 ? "booking-la" : "tripadvisor-la",
+                    rowKey: "k\(n)", data: data, valid: error == nil, error: error, computer: n % 3 == 0 ? "booking-la" : "tripadvisor-la",
                     runID: "01ARZ3NDEKTSV4RRFFQ69G5RUN", requestID: "01ARZ3NDEKTSV4RRFFQ69G\(String(format: "%04d", n % 10000))",
-                    sourceURL: "https://\(site)", trust: .observed))
+                    sourceURL: "https://\(site)", trust: n % 17 == 0 ? .reported : .observed,
+                    request: DatasetRequestInfo(method: "GET", status: 200, milliseconds: 180 + (n * 53) % 700), errorKind: DatasetEngine.errorKind(error)))
             }
             _ = try await store.upsertDatasetRows(datasetID: live.id, rows: batch, at: now.addingTimeInterval(Double(minute - 60) * 60))
         }
         env.datasets.isRunning = { $0 == session }
         await env.datasets.reloadList()
 
+        _ = try? await env.registry.perform(.rightPanelToggle, .press)
         _ = try await env.registry.perform(.pageDatasets, .press)
         await VisualBatchTests.settle(800)
         write(c.window!.contentView!, "datasets-list")

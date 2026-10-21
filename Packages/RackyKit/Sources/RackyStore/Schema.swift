@@ -513,13 +513,19 @@ enum StoreMigrations {
             run_id TEXT,
             request_id TEXT,
             source_url TEXT,
+            source_host TEXT,
             trust TEXT CHECK (trust IN ('observed','reported','none')),
+            request_method TEXT,
+            request_status INTEGER,
+            request_ms INTEGER,
+            error_kind TEXT,
             first_seen INTEGER NOT NULL,
             last_seen INTEGER NOT NULL,
             seen_count INTEGER NOT NULL DEFAULT 1,
             PRIMARY KEY (dataset_id, row_key)
         ) STRICT;
         CREATE INDEX dataset_row_seen ON dataset_row(dataset_id, last_seen);
+        CREATE INDEX dataset_row_first ON dataset_row(dataset_id, first_seen);
         """)
     }
 

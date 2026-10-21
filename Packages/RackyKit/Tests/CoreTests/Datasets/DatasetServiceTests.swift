@@ -100,7 +100,7 @@ import Testing
         let known = "01ARZ3NDEKTSV4RRFFQ69G5FAV", reported = "01ARZ3NDEKTSV4RRFFQ69G5FAW", ghost = "01ARZ3NDEKTSV4RRFFQ69G5FAX"
         let provenance = DatasetProvenance(computer: "phoenix", runID: "RUN1") { id in
             switch id {
-            case known: .init(url: "https://hotels.test/ritz", trust: .observed)
+            case known: .init(url: "https://hotels.test/ritz", trust: .observed, info: DatasetRequestInfo(method: "GET", status: 200, milliseconds: 412))
             case reported: .init(url: "https://hotels.test/plaza", trust: .reported)
             default: nil
             }
@@ -121,6 +121,7 @@ import Testing
         }
         let ritz = try await row("Ritz")
         #expect(ritz.trust == .observed && ritz.requestID == known && ritz.sourceURL == "https://hotels.test/ritz" && ritz.computer == "phoenix" && ritz.runID == "RUN1")
+        #expect(ritz.request == DatasetRequestInfo(method: "GET", status: 200, milliseconds: 412), "method, status and time come from the reqlog")
         #expect(try await row("Plaza").trust == .reported)
         let ghostRow = try await row("Ghost")
         #expect(ghostRow.trust == .none && ghostRow.requestID == nil && ghostRow.sourceURL == "https://claimed.test", "unknown request id: stored, trust none, own url kept")

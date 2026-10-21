@@ -114,6 +114,53 @@ import Testing
         try await store.close()
     }
 
+    @Test func queryFacetsConditionsRangeAndStats() async throws {
+        let home = try TempHome(); defer { home.remove() }
+        let (store, _, dataset) = try await seeded(home)
+        let t0 = Date(timeIntervalSince1970: 1_900_000_000)
+        func row(_ key: String, _ name: String, _ rating: Double?, computer: String, url: String, trust: DatasetTrust, kind: String? = nil) -> DatasetRowInput {
+            let data = rating.map { #"{"name":"\#(name)","rating":\#($0)}"# } ?? #"{"name":"\#(name)"}"#
+            return DatasetRowInput(
+                rowKey: key, data: data, valid: kind == nil, error: kind.map { _ in "rating: required" }, computer: computer, sourceURL: url, trust: trust,
+                request: DatasetRequestInfo(method: "GET", status: 200, milliseconds: 412), errorKind: kind)
+        }
+        _ = try await store.upsertDatasetRows(datasetID: dataset.id, rows: [
+            row("a", "Grand Plaza", 4.5, computer: "ta", url: "https://www.tripadvisor.com/a", trust: .observed),
+            row("b", "Harbor View", 3.9, computer: "ta", url: "https://www.tripadvisor.com/b", trust: .observed),
+        ], at: t0)
+        _ = try await store.upsertDatasetRows(datasetID: dataset.id, rows: [
+            row("c", "The Ritz", 4.8, computer: "bk", url: "https://booking.com/c", trust: .reported),
+            row("d", "Palm Court", nil, computer: "bk", url: "https://booking.com/d", trust: .none, kind: "rating missing"),
+        ], at: t0.addingTimeInterval(600))
+        // Duplicada: a mesma linha de novo (seen 2x).
+        _ = try await store.upsertDatasetRows(datasetID: dataset.id, rows: [row("a", "Grand Plaza", 4.5, computer: "ta", url: "https://www.tripadvisor.com/a", trust: .observed)], at: t0.addingTimeInterval(700))
+
+        func keys(_ q: DatasetQuery) async throws -> [String] { try await store.datasetRows(datasetID: dataset.id, query: q, limit: 50, offset: 0).map(\.rowKey) }
+        #expect(try await keys(.all) == ["d", "c", "b", "a"], "newest first")
+        #expect(try await keys(DatasetQuery(conditions: [DatasetCondition(column: "rating", comparison: .greaterOrEqual, value: "4.5")])) == ["c", "a"])
+        #expect(try await keys(DatasetQuery(conditions: [DatasetCondition(column: "name", comparison: .contains, value: "pla")])) == ["a"])
+        #expect(try await keys(DatasetQuery(conditions: [DatasetCondition(column: "name", comparison: .equals, value: "the ritz")])) == ["c"], "text equality ignores case")
+        #expect(try await keys(DatasetQuery(excluded: [.computer: ["ta"]])) == ["d", "c"])
+        #expect(try await keys(DatasetQuery(excluded: [.status: ["valid"]])) == ["d"])
+        #expect(try await keys(DatasetQuery(errorKinds: ["rating missing"])) == ["d"])
+        #expect(try await keys(DatasetQuery(text: "harbor")) == ["b"])
+        #expect(try await keys(DatasetQuery(since: t0.addingTimeInterval(300))) == ["d", "c"], "range uses first_seen")
+        #expect(try await store.datasetRowCount(datasetID: dataset.id, query: DatasetQuery(excluded: [.evidence: ["none"]])) == 3)
+
+        let facets = try await store.datasetFacets(datasetID: dataset.id, query: DatasetQuery(excluded: [.computer: ["ta"]]))
+        #expect(facets[.computer] == [DatasetFacetCount(value: "bk", count: 2), DatasetFacetCount(value: "ta", count: 2)], "a facet ignores its own exclusions")
+        #expect(facets[.source] == [DatasetFacetCount(value: "booking.com", count: 2)], "the source facet drops www. and applies the computer filter")
+        #expect(facets[.status] == [DatasetFacetCount(value: "invalid", count: 1), DatasetFacetCount(value: "valid", count: 1)])
+        #expect(facets[.error] == [DatasetFacetCount(value: "rating missing", count: 1)])
+
+        let stats = try await store.datasetStats(datasetID: dataset.id, columns: ["name", "rating"])
+        #expect(stats.rows == 4 && stats.invalid == 1 && stats.computers == 2 && stats.duplicatesMerged == 1)
+        #expect(abs(stats.filled - 7.0 / 8.0) < 0.0001, "7 of 8 cells are filled")
+        let detail = try #require(try await store.datasetRow(datasetID: dataset.id, rowKey: "a"))
+        #expect(detail.request == DatasetRequestInfo(method: "GET", status: 200, milliseconds: 412))
+        try await store.close()
+    }
+
     @Test func deletingTheSessionCascadesToDatasetsAndRows() async throws {
         let home = try TempHome(); defer { home.remove() }
         let (store, session, dataset) = try await seeded(home)

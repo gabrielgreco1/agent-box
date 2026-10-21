@@ -7,27 +7,27 @@
       "name": "surfaces",
       "tokens": {
         "canvas": {
-          "dark": "#0a0a0a",
+          "dark": "#1c1c1c",
           "reference": "--background",
           "light": "#ffffff"
         },
         "chrome": {
-          "dark": "#171717",
+          "dark": "#232323",
           "reference": "--card",
           "light": "#ffffff"
         },
         "sidebar": {
-          "dark": "#0a0a0a",
+          "dark": "#1c1c1c",
           "reference": "--worktree-sidebar",
           "light": "#f5f5f5"
         },
         "sidebarSelected": {
-          "dark": "#1c1c1c",
+          "dark": "#2a2a2a",
           "reference": "--worktree-sidebar-accent",
           "light": "#eaeaea"
         },
         "panel": {
-          "dark": "#171717",
+          "dark": "#232323",
           "reference": "--sidebar",
           "light": "#fafafa"
         },
@@ -477,6 +477,26 @@
         "conflict": {
           "dark": "#f99c00",
           "reference": "palette:--color-amber-500"
+        }
+      }
+    },
+    {
+      "name": "data",
+      "tokens": {
+        "dataValid": {
+          "dark": "#3ecf8e",
+          "light": "#16a34a",
+          "reference": "racky: linha válida e barra do gráfico (verde Supabase)"
+        },
+        "dataKey": {
+          "dark": "#6f9bf5",
+          "light": "#2563eb",
+          "reference": "racky: nome do atributo no painel da linha"
+        },
+        "dataString": {
+          "dark": "#a5d6a7",
+          "light": "#15803d",
+          "reference": "racky: valor de texto no painel da linha"
         }
       }
     }

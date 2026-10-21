@@ -40,7 +40,7 @@ import Testing
 
     private func seedReqlog(_ env: Env) throws {
         try env.rig.seedRequests([
-            ["id": .string(Self.observed), "trust": "observed", "method": "GET", "status": 200, "source": "browser", "url": "https://hotels.test/ritz"],
+            ["id": .string(Self.observed), "trust": "observed", "method": "GET", "status": 200, "duration_ms": 412, "source": "browser", "url": "https://hotels.test/ritz"],
             ["id": .string(Self.reported), "trust": "reported", "method": "GET", "status": 200, "source": "work", "url": "https://hotels.test/plaza"],
         ])
     }
@@ -75,6 +75,9 @@ import Testing
         let dataset = try #require(try await env.store.dataset(sessionID: env.session, name: "hotels"))
         let stored = try await env.store.datasetRows(datasetID: dataset.id)
         #expect(stored.count == 4 && stored.allSatisfy { $0.runID?.count == 26 }, "the computer's run id (a ULID) is kept per row")
+        let ritz = try #require(stored.first { $0.requestID == Self.observed })
+        #expect(ritz.request == DatasetRequestInfo(method: "GET", status: 200, milliseconds: 412), "method, status and time come from the reqlog record")
+        #expect(stored.first { !$0.valid }?.errorKind == "name missing")
     }
 
     @Test func importReadsFromWorkAndRefusesEscapes() async throws {

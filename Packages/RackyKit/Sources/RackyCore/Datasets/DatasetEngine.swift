@@ -260,6 +260,21 @@ public enum DatasetEngine {
             sourceURL: raw[sourceURLField]?.string)
     }
 
+    /// Problema principal de uma linha inválida, curto e agrupável para a faceta "Error": `price: required` vira `price missing`,
+    /// `rating: expected a number, got "four"` vira `rating not a number`.
+    public static func errorKind(_ error: String?) -> String? {
+        guard let first = error?.components(separatedBy: "; ").first, !first.isEmpty else { return nil }
+        if first == "row is larger than 1 MiB" { return "row too large" }
+        guard let colon = first.firstIndex(of: ":") else { return String(first.prefix(40)) }
+        let column = first[..<colon]
+        let message = first[first.index(after: colon)...].trimmingCharacters(in: .whitespaces)
+        if message == "required" { return "\(column) missing" }
+        if message.hasPrefix("expected "), let comma = message.range(of: ", got ") {
+            return "\(column) not \(message[message.index(message.startIndex, offsetBy: 9)..<comma.lowerBound])"
+        }
+        return String(first.prefix(40))
+    }
+
     /// SHA-256 (hex) do JSON canônico (chaves ordenadas) dos valores da chave; chave vazia = a linha inteira. A ordem das chaves no objeto
     /// do agente e a ordem da lista `key` não mudam o hash.
     public static func rowKey(key: [String], data: [String: JSON]) -> String {

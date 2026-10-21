@@ -332,29 +332,29 @@ window.MOTION = {
 window.DS = {
   "color": {
     "canvas": {
-      "hex": "#0a0a0a",
-      "alpha": 1.0,
-      "css": "#0a0a0a"
-    },
-    "chrome": {
-      "hex": "#171717",
-      "alpha": 1.0,
-      "css": "#171717"
-    },
-    "sidebar": {
-      "hex": "#0a0a0a",
-      "alpha": 1.0,
-      "css": "#0a0a0a"
-    },
-    "sidebarSelected": {
       "hex": "#1c1c1c",
       "alpha": 1.0,
       "css": "#1c1c1c"
     },
-    "panel": {
-      "hex": "#171717",
+    "chrome": {
+      "hex": "#232323",
       "alpha": 1.0,
-      "css": "#171717"
+      "css": "#232323"
+    },
+    "sidebar": {
+      "hex": "#1c1c1c",
+      "alpha": 1.0,
+      "css": "#1c1c1c"
+    },
+    "sidebarSelected": {
+      "hex": "#2a2a2a",
+      "alpha": 1.0,
+      "css": "#2a2a2a"
+    },
+    "panel": {
+      "hex": "#232323",
+      "alpha": 1.0,
+      "css": "#232323"
     },
     "panelSelected": {
       "hex": "#262626",
@@ -750,6 +750,21 @@ window.DS = {
       "hex": "#f99c00",
       "alpha": 1.0,
       "css": "#f99c00"
+    },
+    "dataValid": {
+      "hex": "#3ecf8e",
+      "alpha": 1.0,
+      "css": "#3ecf8e"
+    },
+    "dataKey": {
+      "hex": "#6f9bf5",
+      "alpha": 1.0,
+      "css": "#6f9bf5"
+    },
+    "dataString": {
+      "hex": "#a5d6a7",
+      "alpha": 1.0,
+      "css": "#a5d6a7"
     }
   },
   "terminal": {

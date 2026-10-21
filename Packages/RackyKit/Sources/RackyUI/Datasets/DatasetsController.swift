@@ -18,15 +18,48 @@ nonisolated public struct DatasetDisplayRow: Sendable, Equatable, Identifiable {
     public var id: String { row.rowKey }
 }
 
+/// Período da página (gráfico, facetas e grade): só linhas que chegaram nele.
+nonisolated public enum DatasetRange: String, Sendable, CaseIterable {
+    case minutes15 = "15m", hour = "1h", hours6 = "6h", day = "24h", week = "7d", all
+
+    public var seconds: TimeInterval? {
+        switch self {
+        case .minutes15: 900
+        case .hour: 3600
+        case .hours6: 21_600
+        case .day: 86_400
+        case .week: 604_800
+        case .all: nil
+        }
+    }
+}
+
+/// Aba do painel da linha.
+nonisolated public enum DatasetPanelTab: String, Sendable, CaseIterable {
+    case attributes, source, history
+}
+
 /// O que a página de um dataset mostra agora.
 nonisolated public struct DatasetPageSnapshot: Sendable, Equatable {
     public var summary: DatasetSummary
     public var rows: [DatasetDisplayRow]
-    /// Linhas que casam o filtro e a busca (o `Load more` aparece quando é maior que `rows.count`).
+    /// Linhas que casam a consulta (a paginação usa).
     public var matching: Int
-    /// Linhas novas por faixa na última hora (o gráfico de volume) e o ritmo recente por minuto.
+    /// Linhas novas por faixa no período (o gráfico de volume), o início do período e o ritmo recente por minuto.
     public var activity: [DatasetActivityBucket] = []
+    public var activityStart: Date?
     public var perMinute: Int = 0
+    public var facets: [DatasetFacet: [DatasetFacetCount]] = [:]
+    public var stats = DatasetStats()
+}
+
+/// O que o controlador pede ao loader.
+nonisolated struct DatasetPageRequest: Sendable, Equatable {
+    var id: String
+    var query: DatasetQuery
+    var range: DatasetRange
+    var page: Int
+    var pageSize: Int
 }
 
 nonisolated enum DatasetLoader {
@@ -36,28 +69,75 @@ nonisolated enum DatasetLoader {
     }
 
     @concurrent
-    static func page(store: RackyStore, id: String, filter: DatasetRowFilter, search: String, limit: Int, now: Date = Date()) async -> DatasetPageSnapshot? {
-        guard let summary = try? await store.datasetSummary(id: id) else { return nil }
-        let query = search.trimmingCharacters(in: .whitespaces)
-        let rows = (try? await store.datasetRows(datasetID: id, filter: filter, search: query, limit: limit, newestFirst: true)) ?? []
-        let matching = (try? await store.datasetRowCount(datasetID: id, filter: filter, search: query)) ?? rows.count
+    static func page(store: RackyStore, request: DatasetPageRequest, now: Date = Date()) async -> DatasetPageSnapshot? {
+        guard let summary = try? await store.datasetSummary(id: request.id) else { return nil }
+        let id = request.id
+        var query = request.query
+        let stats = (try? await store.datasetStats(datasetID: id, columns: summary.dataset.columns.map(\.name))) ?? DatasetStats()
+        let start: Date = request.range.seconds.map { now.addingTimeInterval(-$0) } ?? min(stats.firstSeen ?? summary.dataset.createdAt, now.addingTimeInterval(-60))
+        if request.range.seconds != nil { query.since = start }
+        let rows = (try? await store.datasetRows(datasetID: id, query: query, limit: request.pageSize, offset: request.page * request.pageSize)) ?? []
+        let matching = (try? await store.datasetRowCount(datasetID: id, query: query)) ?? rows.count
         let columns = summary.dataset.columns
         let display = rows.map { row -> DatasetDisplayRow in
             let object = DatasetExporter.decode(row)
             let problems = Self.problems(row.error)
             return DatasetDisplayRow(row: row, cells: columns.map { Self.text(object[$0.name]) }, problems: columns.map { problems[$0.name] })
         }
-        let activity = (try? await store.datasetActivity(datasetID: id, until: now, bucket: activityBucket, buckets: activityBuckets)) ?? []
-        // Ritmo: linhas das últimas três faixas (6 min) por minuto.
-        let recent = activity.suffix(3).reduce(0) { $0 + $1.valid + $1.invalid }
-        let minutes = max(activityBucket * 3 / 60, 1)
+        let span = max(now.timeIntervalSince(start), 60)
+        let bucket = max((span / Double(activityBuckets)).rounded(.up), 1)
+        let activity = (try? await store.datasetActivity(datasetID: id, until: now, bucket: bucket, buckets: activityBuckets)) ?? []
+        // Ritmo: linhas novas nos últimos 5 minutos, por minuto.
+        let recent = (try? await store.datasetActivity(datasetID: id, until: now, bucket: 300, buckets: 1))?.first
+        let perMinute = Int((Double((recent?.valid ?? 0) + (recent?.invalid ?? 0)) / 5).rounded())
+        let facets = (try? await store.datasetFacets(datasetID: id, query: query)) ?? [:]
         return DatasetPageSnapshot(
-            summary: summary, rows: display, matching: matching, activity: activity, perMinute: Int((Double(recent) / minutes).rounded()))
+            summary: summary, rows: display, matching: matching, activity: activity, activityStart: now.addingTimeInterval(-bucket * Double(activityBuckets)),
+            perMinute: perMinute, facets: facets, stats: stats)
     }
 
-    /// Última hora em 30 faixas de 2 minutos.
-    static let activityBucket: TimeInterval = 120
+    /// O período vira 30 barras.
     static let activityBuckets = 30
+
+    /// `price:>200 rating:>=4.5 Union` vira condições sobre colunas conhecidas e o texto livre que sobra. `coluna:valor` numa coluna de texto
+    /// é "contém"; em número, data e booleano é "igual". Palavras com `:` que não são coluna ficam no texto.
+    static func parse(_ input: String, columns: [DatasetColumn]) -> (conditions: [DatasetCondition], text: String) {
+        let known = Dictionary(columns.map { ($0.name.lowercased(), $0) }, uniquingKeysWith: { first, _ in first })
+        var conditions: [DatasetCondition] = []
+        var free: [String] = []
+        for token in tokens(input) {
+            guard let colon = token.firstIndex(of: ":"), let column = known[token[..<colon].lowercased()] else { free.append(token); continue }
+            var rest = String(token[token.index(after: colon)...])
+            var comparison: DatasetComparison?
+            for op in [DatasetComparison.greaterOrEqual, .lessOrEqual, .notEquals, .greater, .less, .equals, .contains] where rest.hasPrefix(op.rawValue) {
+                comparison = op
+                rest.removeFirst(op.rawValue.count)
+                break
+            }
+            guard !rest.isEmpty else { free.append(token); continue }
+            let fallback: DatasetComparison = column.type == .string || column.type == .url || column.type == .json ? .contains : .equals
+            conditions.append(DatasetCondition(column: column.name, comparison: comparison ?? fallback, value: rest))
+        }
+        return (conditions, free.joined(separator: " "))
+    }
+
+    /// Divide por espaço respeitando aspas (`name:"grand plaza"`).
+    static func tokens(_ input: String) -> [String] {
+        var result: [String] = []
+        var current = ""
+        var quoted = false
+        for char in input {
+            if char == "\"" { quoted.toggle(); continue }
+            if char == " ", !quoted {
+                if !current.isEmpty { result.append(current) }
+                current = ""
+            } else {
+                current.append(char)
+            }
+        }
+        if !current.isEmpty { result.append(current) }
+        return result
+    }
 
     /// `"price: required; rating: expected number, got \"four\""` vira `["price": "missing", "rating": "\"four\""]`.
     static func problems(_ error: String?) -> [String: String] {
@@ -103,16 +183,25 @@ enum DatasetExportFormat: String, CaseIterable {
 @MainActor
 @Observable
 public final class DatasetsController {
-    public static let pageSize = 1000
+    public static let pageSize = 50
 
     public private(set) var summaries: [DatasetSummary] = []
     public private(set) var listLoaded = false
     public private(set) var currentID: String?
     public private(set) var snapshot: DatasetPageSnapshot?
-    public internal(set) var filter: DatasetRowFilter = .all
+    /// Texto da barra de consulta (`price:>200 rating:>=4.5 plaza`).
     public var search = ""
+    public private(set) var range: DatasetRange = .all
+    /// Valores desmarcados por faceta e tipos de erro escolhidos.
+    public private(set) var excluded: [DatasetFacet: Set<String>] = [:]
+    public private(set) var errorKinds: Set<String> = []
+    public private(set) var hiddenColumns: Set<String> = []
+    public private(set) var page = 0
     public private(set) var selectedRowKey: String?
-    public private(set) var limit = DatasetsController.pageSize
+    public private(set) var panelTab: DatasetPanelTab = .attributes
+
+    /// Filtro antigo `All | Invalid` (automação): equivale a desmarcar `valid` na faceta de status.
+    public var filter: DatasetRowFilter { excluded[.status]?.contains("valid") == true ? .invalid : .all }
 
     @ObservationIgnored public private(set) var store: RackyStore?
     /// Título da sessão (sidebar) e se algum computador dela está rodando (atualização a cada 1 s); ligados pelo `AppEnvironment`.
@@ -122,6 +211,10 @@ public final class DatasetsController {
     @ObservationIgnored public var showPage: (CenterPage) -> Void = { _ in }
     @ObservationIgnored public var hidePage: () -> Void = {}
     @ObservationIgnored public var openURL: (URL) -> Void = { NSWorkspace.shared.open($0) }
+    @ObservationIgnored public var copyText: (String) -> Void = { text in
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+    }
     /// A ação do viewer que abre a evidência de um request (a mesma do painel `Result`).
     @ObservationIgnored public var openEvidence: (_ computer: String, _ requestID: String) async throws -> Void = { _, _ in }
     @ObservationIgnored public var automationEnabled = false
@@ -154,17 +247,18 @@ public final class DatasetsController {
         }
     }
 
-    /// Hora da captura na grade (`22:51:08`).
-    public func clock(_ date: Date) -> String {
-        date.formatted(Date.FormatStyle(date: .omitted, time: .standard, locale: locale, timeZone: timeZone))
+    /// Hora na grade e no eixo do gráfico (`22:51:08`, `22:50`).
+    public func clock(_ date: Date, seconds: Bool = true) -> String {
+        if seconds { return date.formatted(Date.FormatStyle(date: .omitted, time: .standard, locale: locale, timeZone: timeZone)) }
+        return date.formatted(Date.FormatStyle(date: .omitted, time: .shortened, locale: locale, timeZone: timeZone))
     }
-
-    /// Algum computador da sessão do dataset está rodando (o "Collecting" e a atualização a cada segundo).
-    public func isCollecting(_ summary: DatasetSummary) -> Bool { isRunning(summary.dataset.sessionID) }
 
     public func absolute(_ date: Date) -> String {
         date.formatted(Date.FormatStyle(date: .abbreviated, time: .standard, locale: locale, timeZone: timeZone))
     }
+
+    /// Algum computador da sessão do dataset está rodando (o "Collecting" e a atualização a cada segundo).
+    public func isCollecting(_ summary: DatasetSummary) -> Bool { isRunning(summary.dataset.sessionID) }
 
     // MARK: Dados
 
@@ -177,30 +271,51 @@ public final class DatasetsController {
         listLoaded = true
     }
 
+    /// Colunas do dataset aberto, na ordem do esquema.
+    public var columns: [DatasetColumn] { snapshot?.summary.dataset.columns ?? [] }
+    public var visibleColumns: [DatasetColumn] { columns.filter { !hiddenColumns.contains($0.name) } }
+
+    private func request(id: String) -> DatasetPageRequest {
+        let parsed = DatasetLoader.parse(search, columns: columns)
+        let query = DatasetQuery(excluded: excluded, errorKinds: errorKinds, text: parsed.text, conditions: parsed.conditions)
+        return DatasetPageRequest(id: id, query: query, range: range, page: page, pageSize: Self.pageSize)
+    }
+
     public func reloadPage() async {
         guard let store, let id = currentID else { return }
-        let (filter, search, limit) = (filter, search, limit)
-        let loaded = await DatasetLoader.page(store: store, id: id, filter: filter, search: search, limit: limit, now: now())
+        let wanted = request(id: id)
+        let loaded = await DatasetLoader.page(store: store, request: wanted, now: now())
         // Uma consulta lenta não sobrescreve o que o usuário mudou enquanto ela rodava.
-        guard currentID == id, self.filter == filter, self.search == search, self.limit == limit else { return }
+        guard currentID == id, request(id: id) == wanted else { return }
         if loaded != snapshot { snapshot = loaded }
     }
 
-    /// Abre o dataset: zera filtro, busca e seleção e carrega a primeira página.
+    /// Abre o dataset: zera consulta, facetas, página e seleção e carrega.
     public func open(_ id: String) async -> Bool {
-        guard let store, (try? await store.dataset(id: id)) != nil else { return false }
+        guard let store, let dataset = try? await store.dataset(id: id) else { return false }
         currentID = id
-        filter = .all
         search = ""
+        range = .all
+        excluded = [:]
+        errorKinds = []
+        hiddenColumns = []
+        page = 0
         selectedRowKey = nil
-        limit = Self.pageSize
-        snapshot = nil
+        panelTab = .attributes
+        snapshot = DatasetPageSnapshot(summary: DatasetSummary(dataset: dataset, rowCount: 0, invalidCount: 0), rows: [], matching: 0)
         await reloadPage()
         showPage(.dataset(id))
         return true
     }
 
     public var selectedRow: DatasetDisplayRow? { snapshot?.rows.first { $0.row.rowKey == selectedRowKey } }
+
+    public var pageCount: Int { max(Int((Double(snapshot?.matching ?? 0) / Double(Self.pageSize)).rounded(.up)), 1) }
+
+    /// Valor marcado na faceta (`error` começa todo desmarcado: marcar filtra).
+    public func isChecked(_ facet: DatasetFacet, _ value: String) -> Bool {
+        facet == .error ? errorKinds.contains(value) : !(excluded[facet]?.contains(value) ?? false)
+    }
 
     // MARK: Atualização
 
@@ -234,9 +349,8 @@ public final class DatasetsController {
     // MARK: Ações
 
     public func register(in registry: ActionRegistry) throws {
-        let hasDataset: ActionRegistry.Enablement = { [unowned self] in
-            currentID == nil ? .disabled(reason: String(localized: "Open a dataset first.", bundle: .module)) : .enabled
-        }
+        let noDataset = String(localized: "Open a dataset first.", bundle: .module)
+        let hasDataset: ActionRegistry.Enablement = { [unowned self] in currentID == nil ? .disabled(reason: noDataset) : .enabled }
         try registry.register(.pageDatasets) { [unowned self] _ in
             if currentPage() == .datasets {
                 hidePage()
@@ -256,8 +370,8 @@ public final class DatasetsController {
             guard arg.kind == .select, let raw = arg.value, let filter = DatasetRowFilter(rawValue: raw) else {
                 throw ActionError.failed(.datasetFilter, message: "expected select(all|invalid)")
             }
-            self.filter = filter
-            limit = Self.pageSize
+            excluded[.status] = filter == .invalid ? ["valid"] : nil
+            page = 0
             await reloadPage()
             return filter.rawValue
         }
@@ -265,18 +379,79 @@ public final class DatasetsController {
             let text = arg.value ?? ""
             guard text != search || snapshot == nil else { return text }
             search = text
-            limit = Self.pageSize
+            page = 0
             await reloadPage()
             return text
+        }
+        try registry.register(.datasetRange, enablement: hasDataset) { [unowned self] arg in
+            guard arg.kind == .select, let raw = arg.value, let range = DatasetRange(rawValue: raw) else {
+                throw ActionError.failed(.datasetRange, message: "expected select(15m|1h|6h|24h|7d|all)")
+            }
+            self.range = range
+            page = 0
+            await reloadPage()
+            return range.rawValue
+        }
+        try registry.register(.datasetFacet, enablement: hasDataset) { [unowned self] arg in
+            guard arg.kind == .select, let raw = arg.value, let colon = raw.firstIndex(of: ":"),
+                  let facet = DatasetFacet(rawValue: String(raw[..<colon])) else {
+                throw ActionError.failed(.datasetFacet, message: "expected select(<facet>:<value>)")
+            }
+            let value = String(raw[raw.index(after: colon)...])
+            if value == "*" {
+                if facet == .error { errorKinds = [] } else { excluded[facet] = nil }
+            } else if facet == .error {
+                if errorKinds.contains(value) { errorKinds.remove(value) } else { errorKinds.insert(value) }
+            } else {
+                var set = excluded[facet] ?? []
+                if set.contains(value) { set.remove(value) } else { set.insert(value) }
+                excluded[facet] = set.isEmpty ? nil : set
+            }
+            page = 0
+            await reloadPage()
+            return raw
+        }
+        try registry.register(.datasetPage, enablement: hasDataset) { [unowned self] arg in
+            switch arg.value {
+            case "next": page = min(page + 1, pageCount - 1)
+            case "prev": page = max(page - 1, 0)
+            case "first": page = 0
+            default: throw ActionError.failed(.datasetPage, message: "expected select(next|prev|first)")
+            }
+            await reloadPage()
+            return "\(page + 1)"
+        }
+        try registry.register(.datasetLoadMore, enablement: hasDataset) { [unowned self] _ in
+            page = min(page + 1, pageCount - 1)
+            await reloadPage()
+            return "\(page + 1)"
+        }
+        try registry.register(.datasetColumns, enablement: hasDataset) { [unowned self] arg in
+            guard arg.kind == .select, let name = arg.value, columns.contains(where: { $0.name == name }) else {
+                throw ActionError.failed(.datasetColumns, message: String(localized: "No such column.", bundle: .module))
+            }
+            if hiddenColumns.contains(name) { hiddenColumns.remove(name) } else if hiddenColumns.count + 1 < columns.count { hiddenColumns.insert(name) }
+            return hiddenColumns.contains(name) ? "hidden" : "shown"
         }
         try registry.register(.datasetSelectRow, enablement: hasDataset) { [unowned self] arg in
             selectedRowKey = arg.kind == .select ? arg.value.flatMap { $0.isEmpty ? nil : $0 } : nil
             return selectedRowKey
         }
-        try registry.register(.datasetLoadMore, enablement: hasDataset) { [unowned self] _ in
-            limit += Self.pageSize
-            await reloadPage()
-            return "\(snapshot?.rows.count ?? 0)"
+        try registry.register(.datasetPanelTab, enablement: hasDataset) { [unowned self] arg in
+            guard arg.kind == .select, let raw = arg.value, let tab = DatasetPanelTab(rawValue: raw) else {
+                throw ActionError.failed(.datasetPanelTab, message: "expected select(attributes|source|history)")
+            }
+            panelTab = tab
+            return tab.rawValue
+        }
+        try registry.register(.datasetCopyRow, enablement: hasDataset) { [unowned self] arg in
+            let key = arg.kind == .select ? arg.value : selectedRowKey
+            guard let row = snapshot?.rows.first(where: { $0.row.rowKey == key })?.row else {
+                throw ActionError.failed(.datasetCopyRow, message: String(localized: "Select a row first.", bundle: .module))
+            }
+            let text = String(data: JSON.object(DatasetExporter.decode(row)).data(pretty: true), encoding: .utf8) ?? row.data
+            copyText(text)
+            return "copied"
         }
         try registry.register(.datasetOpenSource, enablement: hasDataset) { [unowned self] arg in
             let key = arg.value ?? selectedRowKey

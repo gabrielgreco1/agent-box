@@ -20,7 +20,9 @@ extension ComputerToolService {
             for record in records(c) {
                 guard let id = record["id"]?.string, wanted.contains(id) else { continue }
                 let trust = DatasetTrust(rawValue: record["trust"]?.string ?? "observed") ?? .observed
-                found[id] = .init(url: record["url"]?.string, trust: trust == .none ? .observed : trust)
+                let info = DatasetRequestInfo(
+                    method: record["method"]?.string, status: record["status"]?.int, milliseconds: record["duration_ms"].flatMap { $0.int ?? $0.double.map { Int($0) } })
+                found[id] = .init(url: record["url"]?.string, trust: trust == .none ? .observed : trust, info: info)
             }
         }
         let table = found

@@ -6,7 +6,8 @@ public struct DatasetProvenance: Sendable {
     public struct Request: Sendable, Equatable {
         public var url: String?
         public var trust: DatasetTrust
-        public init(url: String?, trust: DatasetTrust) { self.url = url; self.trust = trust }
+        public var info: DatasetRequestInfo?
+        public init(url: String?, trust: DatasetTrust, info: DatasetRequestInfo? = nil) { self.url = url; self.trust = trust; self.info = info }
     }
 
     public var computer: String?
@@ -216,7 +217,8 @@ public struct DatasetService: Sendable {
                 if outcome.examples.count < 5 { outcome.examples.append(["row": .int(index), "error": .string(reason)]) }
                 let key = DatasetEngine.sha256(Data("broken:\(item.line ?? index):".utf8) + Data((item.brokenRaw ?? "").utf8))
                 inputs.append(DatasetRowInput(
-                    rowKey: key, data: "{}", valid: false, error: reason, computer: provenance.computer, runID: provenance.runID, trust: .none))
+                    rowKey: key, data: "{}", valid: false, error: reason, computer: provenance.computer, runID: provenance.runID, trust: .none,
+                    errorKind: "unreadable line"))
                 continue
             }
             let processed = DatasetEngine.process(item.raw, dataset: dataset)
@@ -224,9 +226,10 @@ public struct DatasetService: Sendable {
             var requestID: String?
             var sourceURL = processed.sourceURL
             var trust = DatasetTrust.none
+            var request: DatasetRequestInfo?
             if let id = processed.requestID {
                 if ResultValidator.looksLikeRequestID(id), let record = provenance.lookup(id) {
-                    requestID = id; trust = record.trust
+                    requestID = id; trust = record.trust; request = record.info
                     if let url = record.url { sourceURL = url }
                 } else {
                     unknownRequests.insert(id)
@@ -239,7 +242,8 @@ public struct DatasetService: Sendable {
             }
             inputs.append(DatasetRowInput(
                 rowKey: processed.rowKey, data: JSON.object(processed.data).text, valid: processed.valid, error: processed.error, computer: provenance.computer,
-                runID: provenance.runID, requestID: requestID, sourceURL: sourceURL, trust: trust))
+                runID: provenance.runID, requestID: requestID, sourceURL: sourceURL, trust: trust, request: request,
+                errorKind: processed.valid ? nil : DatasetEngine.errorKind(processed.error)))
         }
         if !dropped.isEmpty { outcome.warnings.append("unknown columns dropped: \(dropped.sorted().joined(separator: ", ")); call dataset_define to add them") }
         if !unknownRequests.isEmpty {

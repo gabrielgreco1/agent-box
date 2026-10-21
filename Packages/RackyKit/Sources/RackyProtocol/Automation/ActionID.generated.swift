@@ -222,6 +222,12 @@ extension ActionID {
     public static let datasetLoadMore = ActionID(unchecked: "dataset.loadMore")
     public static let datasetExport = ActionID(unchecked: "dataset.export")
     public static let datasetOpenSource = ActionID(unchecked: "dataset.openSource")
+    public static let datasetRange = ActionID(unchecked: "dataset.range")
+    public static let datasetFacet = ActionID(unchecked: "dataset.facet")
+    public static let datasetPage = ActionID(unchecked: "dataset.page")
+    public static let datasetColumns = ActionID(unchecked: "dataset.columns")
+    public static let datasetCopyRow = ActionID(unchecked: "dataset.copyRow")
+    public static let datasetPanelTab = ActionID(unchecked: "dataset.panelTab")
     public static let pageInbox = ActionID(unchecked: "page.inbox")
     public static let pageClose = ActionID(unchecked: "page.close")
     public static let inboxMarkRead = ActionID(unchecked: "inbox.markRead")
@@ -695,6 +701,12 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "dataset.loadMore"), label: "Load more", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dataset.export"), label: "Export Dataset", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dataset.openSource"), label: "Open Source URL", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dataset.range"), label: "Dataset: período", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dataset.facet"), label: "Dataset: faceta", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dataset.page"), label: "Dataset: página", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dataset.columns"), label: "Dataset: colunas", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dataset.copyRow"), label: "Copy Row JSON", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dataset.panelTab"), label: "Dataset: aba do painel", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "page.inbox"), label: "Inbox", shortcut: "⇧⌘I", slice: .slice2),
         ActionSpec(id: ActionID(unchecked: "page.close"), label: "Close page", shortcut: "Esc", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "inbox.markRead"), label: "Mark as Read", shortcut: "", slice: .slice2),

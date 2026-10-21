@@ -14,6 +14,18 @@ import Testing
             DatasetColumn(name: "url", type: .url), DatasetColumn(name: "meta", type: .json),
         ], key: ["name"])
 
+    @Test func errorKindIsShortAndGroupable() {
+        #expect(DatasetEngine.errorKind(nil) == nil)
+        #expect(DatasetEngine.errorKind("price: required") == "price missing")
+        #expect(DatasetEngine.errorKind(#"rating: expected a number, got "four"; price: required"#) == "rating not a number")
+        #expect(DatasetEngine.errorKind("row is larger than 1 MiB") == "row too large")
+        // A mensagem real do motor vira o mesmo tipo, qualquer que seja o valor.
+        let dataset = Dataset(id: "d", sessionID: UUID(), name: "h", columns: [DatasetColumn(name: "rating", type: .number)], key: [])
+        let a = DatasetEngine.process(["rating": "four"], dataset: dataset)
+        let b = DatasetEngine.process(["rating": "five"], dataset: dataset)
+        #expect(!a.valid && DatasetEngine.errorKind(a.error) == DatasetEngine.errorKind(b.error))
+    }
+
     @Test func namesFollowTheSlugAndColumnRules() {
         #expect(DatasetEngine.isValidName("hotels-2026_a") && DatasetEngine.isValidName(String(repeating: "a", count: 64)))
         #expect(!DatasetEngine.isValidName("") && !DatasetEngine.isValidName("Hotels") && !DatasetEngine.isValidName("a b") && !DatasetEngine.isValidName(String(repeating: "a", count: 65)))
