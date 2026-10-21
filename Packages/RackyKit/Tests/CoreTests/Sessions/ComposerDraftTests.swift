@@ -186,6 +186,21 @@ import Testing
         }
     }
 
+    @Test func subagentHarnessTravelsInTheRequestOnlyForAgentsThatSupportIt() throws {
+        var d = draft("x", where: .mainCheckout)
+        d.subagentHarness = .opencode
+        d.subagentComputers = .ask
+        #expect(try #require(d.request(context())).subagentHarness == .opencode)
+        d.provider = .shell
+        #expect(try #require(d.request(context())).subagentHarness == .claude, "a shell has no subagents: the default stays")
+        let old = try JSONDecoder().decode(AppSettings.self, from: Data(#"{"computers":{"defaultSubagentMode":"ask"}}"#.utf8))
+        #expect(old.computers.defaultSubagentHarness == .claude)
+        var changed = AppSettings()
+        changed.computers.defaultSubagentHarness = .mixed
+        let back = try JSONDecoder().decode(AppSettings.self, from: JSONEncoder().encode(changed))
+        #expect(back.computers.defaultSubagentHarness == .mixed)
+    }
+
     @Test func otherTargetsMapToPlacements() throws {
         var d = draft("x", where: .mainCheckout)
         #expect(try #require(d.request(context())).target == .existingCheckout(worktreeID: Self.main.id))
