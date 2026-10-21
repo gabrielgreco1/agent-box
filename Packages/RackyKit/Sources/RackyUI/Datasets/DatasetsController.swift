@@ -13,6 +13,8 @@ import Observation
 nonisolated public struct DatasetDisplayRow: Sendable, Equatable, Identifiable {
     public var row: DatasetRow
     public var cells: [String]
+    /// Por coluna, o problema curto daquela célula quando a linha é inválida ("missing", `"four"`); nil = célula ok.
+    public var problems: [String?] = []
     public var id: String { row.rowKey }
 }
 
@@ -22,6 +24,9 @@ nonisolated public struct DatasetPageSnapshot: Sendable, Equatable {
     public var rows: [DatasetDisplayRow]
     /// Linhas que casam o filtro e a busca (o `Load more` aparece quando é maior que `rows.count`).
     public var matching: Int
+    /// Linhas novas por faixa na última hora (o gráfico de volume) e o ritmo recente por minuto.
+    public var activity: [DatasetActivityBucket] = []
+    public var perMinute: Int = 0
 }
 
 nonisolated enum DatasetLoader {
@@ -31,17 +36,46 @@ nonisolated enum DatasetLoader {
     }
 
     @concurrent
-    static func page(store: RackyStore, id: String, filter: DatasetRowFilter, search: String, limit: Int) async -> DatasetPageSnapshot? {
+    static func page(store: RackyStore, id: String, filter: DatasetRowFilter, search: String, limit: Int, now: Date = Date()) async -> DatasetPageSnapshot? {
         guard let summary = try? await store.datasetSummary(id: id) else { return nil }
         let query = search.trimmingCharacters(in: .whitespaces)
-        let rows = (try? await store.datasetRows(datasetID: id, filter: filter, search: query, limit: limit)) ?? []
+        let rows = (try? await store.datasetRows(datasetID: id, filter: filter, search: query, limit: limit, newestFirst: true)) ?? []
         let matching = (try? await store.datasetRowCount(datasetID: id, filter: filter, search: query)) ?? rows.count
         let columns = summary.dataset.columns
         let display = rows.map { row -> DatasetDisplayRow in
             let object = DatasetExporter.decode(row)
-            return DatasetDisplayRow(row: row, cells: columns.map { Self.text(object[$0.name]) })
+            let problems = Self.problems(row.error)
+            return DatasetDisplayRow(row: row, cells: columns.map { Self.text(object[$0.name]) }, problems: columns.map { problems[$0.name] })
         }
-        return DatasetPageSnapshot(summary: summary, rows: display, matching: matching)
+        let activity = (try? await store.datasetActivity(datasetID: id, until: now, bucket: activityBucket, buckets: activityBuckets)) ?? []
+        // Ritmo: linhas das últimas três faixas (6 min) por minuto.
+        let recent = activity.suffix(3).reduce(0) { $0 + $1.valid + $1.invalid }
+        let minutes = max(activityBucket * 3 / 60, 1)
+        return DatasetPageSnapshot(
+            summary: summary, rows: display, matching: matching, activity: activity, perMinute: Int((Double(recent) / minutes).rounded()))
+    }
+
+    /// Última hora em 30 faixas de 2 minutos.
+    static let activityBucket: TimeInterval = 120
+    static let activityBuckets = 30
+
+    /// `"price: required; rating: expected number, got \"four\""` vira `["price": "missing", "rating": "\"four\""]`.
+    static func problems(_ error: String?) -> [String: String] {
+        guard let error else { return [:] }
+        var result: [String: String] = [:]
+        for part in error.components(separatedBy: "; ") {
+            guard let colon = part.firstIndex(of: ":") else { continue }
+            let column = String(part[..<colon])
+            let message = part[part.index(after: colon)...].trimmingCharacters(in: .whitespaces)
+            if message == "required" {
+                result[column] = "missing"
+            } else if let got = message.range(of: ", got ") {
+                result[column] = String(message[got.upperBound...])
+            } else {
+                result[column] = message
+            }
+        }
+        return result
     }
 
     static func text(_ value: JSON?) -> String {
@@ -106,13 +140,27 @@ public final class DatasetsController {
 
     // MARK: Datas
 
-    /// `3 minutes ago`, relativo ao relógio do controlador.
+    /// Idade curta, relativa ao relógio do controlador: `just now`, `12s ago`, `4m ago`, `3h ago`, `yesterday`, depois a data.
+    /// Uma data um pouco no futuro (relógios de processos diferentes) conta como agora.
     public func relative(_ date: Date) -> String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.locale = locale
-        formatter.unitsStyle = .full
-        return formatter.localizedString(for: date, relativeTo: now())
+        let seconds = max(Int(now().timeIntervalSince(date)), 0)
+        switch seconds {
+        case ..<5: return String(localized: "just now", bundle: .module)
+        case ..<60: return String(localized: "\(seconds)s ago", bundle: .module)
+        case ..<3600: return String(localized: "\(seconds / 60)m ago", bundle: .module)
+        case ..<86_400: return String(localized: "\(seconds / 3600)h ago", bundle: .module)
+        case ..<172_800: return String(localized: "yesterday", bundle: .module)
+        default: return date.formatted(Date.FormatStyle(date: .abbreviated, time: .omitted, locale: locale, timeZone: timeZone))
+        }
     }
+
+    /// Hora da captura na grade (`22:51:08`).
+    public func clock(_ date: Date) -> String {
+        date.formatted(Date.FormatStyle(date: .omitted, time: .standard, locale: locale, timeZone: timeZone))
+    }
+
+    /// Algum computador da sessão do dataset está rodando (o "Collecting" e a atualização a cada segundo).
+    public func isCollecting(_ summary: DatasetSummary) -> Bool { isRunning(summary.dataset.sessionID) }
 
     public func absolute(_ date: Date) -> String {
         date.formatted(Date.FormatStyle(date: .abbreviated, time: .standard, locale: locale, timeZone: timeZone))
@@ -132,7 +180,7 @@ public final class DatasetsController {
     public func reloadPage() async {
         guard let store, let id = currentID else { return }
         let (filter, search, limit) = (filter, search, limit)
-        let loaded = await DatasetLoader.page(store: store, id: id, filter: filter, search: search, limit: limit)
+        let loaded = await DatasetLoader.page(store: store, id: id, filter: filter, search: search, limit: limit, now: now())
         // Uma consulta lenta não sobrescreve o que o usuário mudou enquanto ela rodava.
         guard currentID == id, self.filter == filter, self.search == search, self.limit == limit else { return }
         if loaded != snapshot { snapshot = loaded }

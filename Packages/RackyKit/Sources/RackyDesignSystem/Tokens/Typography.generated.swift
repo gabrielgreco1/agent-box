@@ -30,6 +30,8 @@ extension DS {
         public static let pageTitle = DSTextStyle(name: "pageTitle", family: .ui, size: 24, weight: 600, lineHeight: 32, tracking: 0.01, tabularDigits: false)
         public static let display = DSTextStyle(name: "display", family: .ui, size: 28, weight: 600, lineHeight: 34, tracking: 0.01, tabularDigits: false)
         public static let paletteInput = DSTextStyle(name: "paletteInput", family: .ui, size: 16, weight: 400, lineHeight: 24, tracking: 0.01, tabularDigits: false)
+        public static let cell = DSTextStyle(name: "cell", family: .ui, size: 12.5, weight: 400, lineHeight: 16, tracking: 0.01, tabularDigits: false)
+        public static let monoCell = DSTextStyle(name: "monoCell", family: .mono, size: 12, weight: 400, lineHeight: 16, tracking: 0, tabularDigits: true)
 
         public static let all: [String: DSTextStyle] = [
             "keycap": keycap,
@@ -55,6 +57,8 @@ extension DS {
             "pageTitle": pageTitle,
             "display": display,
             "paletteInput": paletteInput,
+            "cell": cell,
+            "monoCell": monoCell,
         ]
     }
 

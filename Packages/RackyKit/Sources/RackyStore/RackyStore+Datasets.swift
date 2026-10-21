@@ -84,6 +84,13 @@ public struct DatasetRow: Sendable, Equatable, Identifiable {
     }
 }
 
+/// Uma faixa do gráfico de volume: quantas linhas novas chegaram a partir de `start`.
+public struct DatasetActivityBucket: Sendable, Equatable {
+    public var start: Date
+    public var valid: Int
+    public var invalid: Int
+}
+
 public struct DatasetUpsertCounts: Sendable, Equatable {
     public var inserted = 0
     public var updated = 0
@@ -223,8 +230,10 @@ extension RackyStore {
         }
     }
 
-    /// Linhas por ordem de chegada (`rowid`), com filtro de validade e busca de texto no dado e na URL de origem.
-    public func datasetRows(datasetID: String, filter: DatasetRowFilter = .all, search: String? = nil, limit: Int = 1000, offset: Int = 0) async throws -> [DatasetRow] {
+    /// Linhas por ordem de chegada (`rowid`; `newestFirst` inverte, para a tabela viva), com filtro de validade e busca de texto no dado e na URL de origem.
+    public func datasetRows(
+        datasetID: String, filter: DatasetRowFilter = .all, search: String? = nil, limit: Int = 1000, offset: Int = 0, newestFirst: Bool = false
+    ) async throws -> [DatasetRow] {
         try await read { db in
             var sql = "SELECT * FROM dataset_row WHERE dataset_id = ?"
             var arguments: StatementArguments = [datasetID]
@@ -233,7 +242,7 @@ extension RackyStore {
                 sql += " AND (data LIKE ? ESCAPE '\\' OR COALESCE(source_url, '') LIKE ? ESCAPE '\\')"
                 arguments += [likePattern(search), likePattern(search)]
             }
-            sql += " ORDER BY rowid LIMIT ? OFFSET ?"
+            sql += newestFirst ? " ORDER BY rowid DESC LIMIT ? OFFSET ?" : " ORDER BY rowid LIMIT ? OFFSET ?"
             arguments += [limit, offset]
             return try Row.fetchAll(db, sql: sql, arguments: arguments).map { try DatasetRow(row: $0) }
         }
@@ -251,6 +260,30 @@ extension RackyStore {
             }
             return try Int.fetchOne(db, sql: sql, arguments: arguments) ?? 0
         }
+    }
+
+    /// Linhas novas por faixa de tempo (`first_seen`), separadas em válidas e inválidas: o gráfico de volume da página do dataset.
+    /// Devolve exatamente `buckets` faixas de `bucket` segundos terminando em `until`, as vazias com zero.
+    public func datasetActivity(datasetID: String, until: Date, bucket: TimeInterval, buckets: Int) async throws -> [DatasetActivityBucket] {
+        let width = max(Int64(bucket * 1000), 1)
+        let end = RowCodec.ms(until)
+        let start = end - width * Int64(buckets)
+        let counted = try await read { db in
+            try Row.fetchAll(
+                db,
+                sql: """
+                    SELECT (first_seen - ?) / ? AS slot, SUM(valid) AS valid, SUM(1 - valid) AS invalid FROM dataset_row
+                    WHERE dataset_id = ? AND first_seen >= ? AND first_seen < ? GROUP BY slot
+                    """,
+                arguments: [start, width, datasetID, start, end]
+            ).map { (Int($0["slot"] as Int64), $0["valid"] as Int, $0["invalid"] as Int) }
+        }
+        var result = (0..<buckets).map { DatasetActivityBucket(start: RowCodec.date(start + width * Int64($0)), valid: 0, invalid: 0) }
+        for (slot, valid, invalid) in counted where slot >= 0 && slot < buckets {
+            result[slot].valid = valid
+            result[slot].invalid = invalid
+        }
+        return result
     }
 
     public func datasetRow(datasetID: String, rowKey: String) async throws -> DatasetRow? {

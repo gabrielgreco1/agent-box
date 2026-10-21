@@ -96,6 +96,24 @@ import Testing
         try await store.close()
     }
 
+    @Test func newestFirstAndActivityBuckets() async throws {
+        let home = try TempHome(); defer { home.remove() }
+        let (store, _, dataset) = try await seeded(home)
+        let t0 = Date(timeIntervalSince1970: 1_900_000_000)
+        // 3 linhas no primeiro minuto (1 inválida), 2 no terceiro; nada no segundo.
+        _ = try await store.upsertDatasetRows(datasetID: dataset.id, rows: [input("a", "{}"), input("b", "{}"), input("c", "{}", valid: false)], at: t0)
+        _ = try await store.upsertDatasetRows(datasetID: dataset.id, rows: [input("d", "{}"), input("e", "{}")], at: t0.addingTimeInterval(130))
+        #expect(try await store.datasetRows(datasetID: dataset.id, newestFirst: true).map(\.rowKey) == ["e", "d", "c", "b", "a"])
+        let buckets = try await store.datasetActivity(datasetID: dataset.id, until: t0.addingTimeInterval(180), bucket: 60, buckets: 3)
+        #expect(buckets.map(\.valid) == [2, 0, 2])
+        #expect(buckets.map(\.invalid) == [1, 0, 0])
+        #expect(buckets.first?.start == t0)
+        // Fora da janela não conta.
+        let later = try await store.datasetActivity(datasetID: dataset.id, until: t0.addingTimeInterval(3600), bucket: 60, buckets: 3)
+        #expect(later.allSatisfy { $0.valid == 0 && $0.invalid == 0 })
+        try await store.close()
+    }
+
     @Test func deletingTheSessionCascadesToDatasetsAndRows() async throws {
         let home = try TempHome(); defer { home.remove() }
         let (store, session, dataset) = try await seeded(home)

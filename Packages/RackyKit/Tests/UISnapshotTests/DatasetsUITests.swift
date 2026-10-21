@@ -113,7 +113,9 @@ struct DatasetsUITests {
         #expect(reply.message == id && shown == [.dataset(id)])
         let snapshot = try #require(f.controller.snapshot)
         #expect(snapshot.rows.count == 30 && snapshot.matching == 30 && snapshot.summary.invalidCount == 2)
-        #expect(snapshot.rows[0].cells == ["Grand Plaza", "3", "90", "https://hotels.example.test/hotel-1"], "cells follow the schema order: 3.0 prints as 3, not 3.0")
+        #expect(snapshot.rows.last?.cells == ["Grand Plaza", "3", "90", "https://hotels.example.test/hotel-1"], "cells follow the schema order: 3.0 prints as 3, not 3.0")
+        #expect(snapshot.rows.first?.cells.first == "Hotel 30", "the live table shows the newest row first")
+        #expect(snapshot.activity.count == DatasetLoader.activityBuckets)
         await #expect(throws: ActionError.failed(.datasetOpen, message: "No such dataset.")) { _ = try await f.registry.perform(.datasetOpen, .select("ghost")) }
     }
 
@@ -148,7 +150,7 @@ struct DatasetsUITests {
         let f = try await DatasetsFixture.make()
         defer { f.remove() }
         _ = try await f.registry.perform(.datasetOpen, .select(try await f.datasetID()))
-        let first = try #require(f.controller.snapshot?.rows.first)
+        let first = try #require(f.controller.snapshot?.rows.last)
         _ = try await f.registry.perform(.datasetSelectRow, .select(first.id))
         let row = try #require(f.controller.selectedRow?.row)
         #expect(row.trust == .observed && row.requestID == DatasetsFixture.observed && row.computer == "phoenix-az" && row.sourceURL == "https://hotels.example.test/grand-plaza")
@@ -162,7 +164,7 @@ struct DatasetsUITests {
         var opened: [URL] = []
         f.controller.openURL = { opened.append($0) }
         _ = try await f.registry.perform(.datasetOpen, .select(try await f.datasetID()))
-        let first = try #require(f.controller.snapshot?.rows.first)
+        let first = try #require(f.controller.snapshot?.rows.last)
         let reply = try await f.registry.perform(.datasetOpenSource, .select(first.id))
         #expect(reply.message == "https://hotels.example.test/grand-plaza" && opened.count == 1)
         #expect(DatasetsController.webURL("javascript:alert(1)") == nil && DatasetsController.webURL("file:///etc/passwd") == nil && DatasetsController.webURL("https://a.test/x") != nil)
@@ -229,7 +231,7 @@ struct DatasetsUITests {
         let f = try await DatasetsFixture.make()
         defer { f.remove() }
         _ = try await f.registry.perform(.datasetOpen, .select(try await f.datasetID()))
-        let first = try #require(f.controller.snapshot?.rows.first)
+        let first = try #require(f.controller.snapshot?.rows.last)
         _ = try await f.registry.perform(.datasetSelectRow, .select(first.id))
         f.render(DatasetPageView(controller: f.controller), size: CGSize(width: 1000, height: 640), name: "datasetProvenance")
         _ = try await f.registry.perform(.datasetFilter, .select("invalid"))

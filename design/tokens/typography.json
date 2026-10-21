@@ -196,6 +196,22 @@
       "weight": 400,
       "lineHeight": 24,
       "tracking": 0.01
+    },
+    "cell": {
+      "family": "ui",
+      "size": 12.5,
+      "weight": 400,
+      "lineHeight": 16,
+      "tracking": 0.01,
+      "tabularDigits": false
+    },
+    "monoCell": {
+      "family": "mono",
+      "size": 12,
+      "weight": 400,
+      "lineHeight": 16,
+      "tracking": 0,
+      "tabularDigits": true
     }
   }
 }

@@ -43,14 +43,43 @@ import Testing
             id: ULID.generate(), sessionID: session, name: "permits", columns: [DatasetColumn(name: "permit_id"), DatasetColumn(name: "status")], key: ["permit_id"]))
         _ = try await service.define(session: session, name: "reviews", columns: [DatasetColumn(name: "hotel"), DatasetColumn(name: "stars", type: .integer)], key: nil)
         _ = try await service.append(session: session, name: "reviews", rows: (0..<240).map { ["hotel": .string("Hotel \($0 % 30)"), "stars": .int(1 + $0 % 5)] }, provenance: .none)
+        // Uma coleta "ao vivo": 600 hotéis chegando ao longo da última hora, de dois computadores, com um trecho de bloqueio.
+        let live = Dataset(
+            id: ULID.generate(), sessionID: session, name: "la_hotels",
+            columns: [
+                DatasetColumn(name: "name", required: true), DatasetColumn(name: "rating", type: .number),
+                DatasetColumn(name: "price", type: .integer, required: true), DatasetColumn(name: "url", type: .url),
+            ],
+            key: ["url"])
+        try await store.createDataset(live)
+        let names = ["Grand Plaza", "Harbor View", "The Ritz", "Shutters on the Beach", "Hotel Figueroa", "The Hoxton", "Ace Hotel", "Freehand LA", "Line Hotel", "Hotel Erwin", "Cedar Lodge", "Palm Court"]
+        let now = Date()
+        for minute in 0..<60 {
+            let blocked = (40...43).contains(minute)
+            let count = blocked ? 3 : 6 + (minute * 7) % 9
+            var batch: [DatasetRowInput] = []
+            for i in 0..<count {
+                let n = minute * 20 + i
+                let site = n % 3 == 0 ? "booking.com/hotel/us/stay-\(n)" : "tripadvisor.com/Hotel_Review-g32655-d\(7_600_000 + n)"
+                let bad = blocked && i < 2
+                let price = 140 + (n * 37) % 480
+                let data = bad ? #"{"name":"\#(names[n % names.count]) \#(n)","rating":4.1,"url":"https://\#(site)"}"#
+                    : #"{"name":"\#(names[n % names.count]) \#(n)","rating":\#(Double(36 + n % 13) / 10),"price":\#(price),"url":"https://\#(site)"}"#
+                batch.append(DatasetRowInput(
+                    rowKey: "k\(n)", data: data, valid: !bad, error: bad ? "price: required" : nil, computer: n % 3 == 0 ? "booking-la" : "tripadvisor-la",
+                    runID: "01ARZ3NDEKTSV4RRFFQ69G5RUN", requestID: "01ARZ3NDEKTSV4RRFFQ69G\(String(format: "%04d", n % 10000))",
+                    sourceURL: "https://\(site)", trust: .observed))
+            }
+            _ = try await store.upsertDatasetRows(datasetID: live.id, rows: batch, at: now.addingTimeInterval(Double(minute - 60) * 60))
+        }
+        env.datasets.isRunning = { $0 == session }
         await env.datasets.reloadList()
 
         _ = try await env.registry.perform(.pageDatasets, .press)
         await VisualBatchTests.settle(800)
         write(c.window!.contentView!, "datasets-list")
 
-        let hotels = try #require(try await store.dataset(sessionID: session, name: "hotels"))
-        _ = try await env.registry.perform(.datasetOpen, .select(hotels.id))
+        _ = try await env.registry.perform(.datasetOpen, .select(live.id))
         let selected = try #require(env.datasets.snapshot?.rows.first)
         _ = try await env.registry.perform(.datasetSelectRow, .select(selected.id))
         await VisualBatchTests.settle(800)
