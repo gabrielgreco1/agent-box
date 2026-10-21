@@ -436,6 +436,15 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `dataset.provenance.trust`
 - `dataset.provenance.seen`
 - `dataset.provenance.error`
+- `dataset.stats`
+- `dataset.chart`
+- `dataset.range`
+- `dataset.columns`
+- `dataset.facet.<facet>.<value>`
+- `dataset.page.prev`
+- `dataset.page.next`
+- `dataset.copyRow`
+- `dataset.panel.tab.<tab>`
 - `library.page`
 - `library.section`
 - `library.search`
@@ -825,6 +834,12 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `dataset.loadMore` | Load more | — | slice3 |
 | `dataset.export` | Export Dataset | — | slice3 |
 | `dataset.openSource` | Open Source URL | — | slice3 |
+| `dataset.range` | Dataset: período | — | slice3 |
+| `dataset.facet` | Dataset: faceta | — | slice3 |
+| `dataset.page` | Dataset: página | — | slice3 |
+| `dataset.columns` | Dataset: colunas | — | slice3 |
+| `dataset.copyRow` | Copy Row JSON | — | slice3 |
+| `dataset.panelTab` | Dataset: aba do painel | — | slice3 |
 | `page.inbox` | Inbox | ⇧⌘I | slice2 |
 | `page.close` | Close page | Esc | slice1 |
 | `inbox.markRead` | Mark as Read | — | slice2 |
