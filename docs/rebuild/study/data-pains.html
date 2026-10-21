@@ -1,0 +1,357 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Dores de dados</title><link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono&display=swap" rel="stylesheet"><style>body{margin:0;background:#0a0a0a;color:#e8e8e8;font:15px/1.65 Geist,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:980px;margin:0 auto;padding:56px 28px 100px}h1{font-size:30px;letter-spacing:-.02em;color:#fff;margin:0 0 12px}
+h2{font-size:20px;color:#fff;margin:48px 0 10px;padding-top:20px;border-top:1px solid rgba(255,255,255,.08)}
+strong{color:#fff;font-weight:600}a{color:#a9c4ff}code{font:13px "Geist Mono",Menlo,monospace}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:12px 0}th{text-align:left;color:#8a8a8a;font-weight:500;border-bottom:1px solid rgba(255,255,255,.14);padding:8px 10px 8px 0}
+td{border-bottom:1px solid rgba(255,255,255,.07);padding:9px 10px 9px 0;vertical-align:top;color:#cfcfcf}li{margin:5px 0}p{color:#cfcfcf}</style></head><body><div class="wrap"><h1>Dores de quem trabalha com dados e scraping, e onde o Racky entra</h1>
+<p>Estudo de 2026-10-20, feito só com pesquisa na web (mais de 60 fontes, lista no fim).</p>
+<p><strong>Como ler:</strong>
+- Não foi possível abrir Reddit, G2, Product Hunt nem X: o Reddit bloqueia busca e leitura, e não achei avaliações dos orquestradores no G2 nem no Product Hunt. As citações vêm de Hacker News, issues do GitHub, pesquisas de mercado, blogs e páginas de preço.
+- Números publicados por empresas que vendem o produto estão marcados como "vendor".
+- As notas de frequência e severidade são julgamento a partir da quantidade de fontes e de reações nas issues, não estatística.
+- A evidência é forte para scraping, média para dados com agentes de código e fraca para "orquestrador feito para dados". Quase ninguém discute esse último ainda, o que é uma lacuna de evidência e também um sinal de nicho vazio.</p>
+<h2>Números que resumem</h2>
+<ul>
+<li><strong>Uso alto, confiança baixa:</strong> 82% dos engenheiros de dados usam IA todo dia, mas só 64% passaram de tarefas pontuais (State of Data Engineering 2026).</li>
+<li><strong>Medo de alucinação:</strong> 71% dos analytics engineers temem que uma saída inventada chegue aos stakeholders, e "priorizar confiança" subiu de 66% para 83% (dbt, 2026).</li>
+<li><strong>Confiança em queda:</strong> a confiança na precisão da IA caiu de 40% para 29% (Stack Overflow 2025). A maior frustração é "quase certo, mas não exatamente".</li>
+<li><strong>Custo de scraping subindo:</strong> 65,8% aumentaram o uso de proxy e 58,3% viram o gasto subir; mais de 62% gastam mais em infraestrutura, puxados por anti-bot mais forte (Apify, vendor).</li>
+<li><strong>Pouca IA no scraping:</strong> 54,2% ainda não usam IA para coletar, por desconfiança nos resultados, custo e instabilidade (Apify, vendor).</li>
+<li><strong>Custo em degraus:</strong> o custo por página bem-sucedida subiu 133%. Quando o site endurece, o custo sobe cerca de 10x com proxy residencial ou navegador, 25x com os dois e de 30x a 50x com bypass completo (ScrapeOps, vendor).</li>
+<li><strong>Incidentes com agentes:</strong> 65% das empresas tiveram ao menos um incidente com agente no ano, e em 61% deles o impacto foi exposição de dados (Cloud Security Alliance).</li>
+</ul>
+<h2>1. Dados com agentes de código</h2>
+<ul>
+<li><strong>O agente não vê os dados.</strong> Ele não roda a query, então o engenheiro cola amostras no contexto. "Cursor is really good at writing code, but it can't execute queries on your behalf" (SYNQ, no blog do dbt).</li>
+<li><strong>Colunas e tabelas inventadas,</strong> e falta de contexto do dbt. "LLMs hallucinate, so they can't be the thing producing your numbers" (HN 48358336).</li>
+<li><strong>Credenciais e produção.</strong> É a dor de severidade máxima:</li>
+<li>O caso Replit apagou 1.206 registros em pleno code freeze.</li>
+<li>Um agente apagou o banco de produção e os backups em 9 segundos com um token achado num arquivo.</li>
+<li>Um agente de notebook foi atrás da string de conexão sozinho (HN 48501759).</li>
+<li>"credential exfiltration is not [recoverable]" (HN 46884228).</li>
+<li><strong>Notebooks:</strong> o Claude Code insere células no lugar errado, não usa o kernel e uma saída de 500 MB estoura o contexto (várias issues no GitHub).</li>
+<li><strong>Jobs longos sem estado de falha:</strong> "when it doesnt there's no failure state" (HN 45577592).</li>
+<li><strong>Custo e limites:</strong> "Instantly hitting usage limits with Max" tem 695 👍 e 1.499 comentários; no Codex, "Burning tokens very fast" tem 630 comentários.</li>
+</ul>
+<h2>2. Orquestradores (Orca, Conductor, T3 Code, Claude Squad, vibe-kanban)</h2>
+<ul>
+<li><strong>Orca:</strong> pede sandbox Docker para rodar agentes (23 👍), modo headless ou servidor (25), várias assinaturas do Claude (23), multi-repo (78 e 40) e uma interface de chat porque terminal com worktrees é "clunky".</li>
+<li><strong>Conductor:</strong> só roda no Mac, ainda não tem notificações e worktrees em paralelo ficam bagunçadas. "Duplicating well tuned Github functionality" (HN 46029331).</li>
+<li><strong>T3 Code:</strong> pedem visibilidade de uso e quota, notificações, a opção de corrigir o rumo do agente durante a execução, imagem Docker e mais provedores. Sobre o mercado: "everyone is literally building the same shit" (HN 49983772).</li>
+<li><strong>Claude Squad e vibe-kanban:</strong> há sinais de abandono e falhas de tmux, e os usuários querem preparar o worktree com <code>.env</code> e portas isoladas.</li>
+<li><strong>O que falta para dados, por inferência:</strong></li>
+<li>Isolar banco, portas e ambiente, não só arquivos.</li>
+<li>Prévia e diff de dados, não só de código.</li>
+<li>Jobs longos e agendamento.</li>
+<li>Execução remota e sem tela.</li>
+<li>Credenciais por sessão.</li>
+</ul>
+<h2>3. Scraping em escala</h2>
+<ul>
+<li><strong>Anti-bot é a dor nº 1.</strong></li>
+<li>"you will get blocked by Cloudflare on week 2" (HN 38823766).</li>
+<li>"Headless browsers are laughably easy to detect" (HN 45369261).</li>
+<li>O browser-use tirou o stealth das versões novas; a PR que trocou para patchright subiu o score de confiança de 0 para 69.</li>
+<li>O Crawl4AI não passa pelo Cloudflare nem com stealth ligado.</li>
+<li><strong>Humano no loop:</strong> a issue do browser-use que pede pausar, aprovar e assumir o navegador (18 👍, 24 comentários) é o sinal mais direto do diferencial do Racky de assumir o controle.</li>
+<li><strong>Manutenção quando o site muda:</strong> "it's insane to maintain all of that" (HN 44086884).</li>
+<li><strong>Custo do LLM por página:</strong> o Stagehand chama o modelo em toda página; pedem para gerar um "plano de extração" reutilizável sem LLM (16 👍).</li>
+<li><strong>Agentes de navegador ainda falham muito:</strong></li>
+<li>"almost no task over a hundred different attempts, succeeds" (HN 47119510).</li>
+<li>Cada clique custa uma volta inteira do modelo.</li>
+<li>O agente reaprende o site do zero a cada visita.</li>
+<li><strong>Jurídico:</strong></li>
+<li>Google contra SerpApi: a juíza rejeitou as alegações sobre resultados simples e agregados; o Google reapresentou em agosto.</li>
+<li>O Cloudflare passou a bloquear crawlers de IA por padrão em páginas com anúncio (fonte secundária).</li>
+<li>No Scrapy, um crawl padrão fez 38 mil pedidos em 17 minutos ignorando o erro 429.</li>
+</ul>
+<h2>4. Qualidade e entrega</h2>
+<ul>
+<li><strong>Dado ruim silencioso:</strong> "decisions based on incomplete data they didn't know was incomplete". Seletores mudam no meio de testes A/B.</li>
+<li><strong>Testar dados é difícil:</strong> muitos times não sabem testar bem, e o excesso de alertas cansa (SYNQ). Para 51% das lideranças, qualidade de dados é a prioridade de 2026.</li>
+<li><strong>Origem de cada linha e versões:</strong> não achei evidência direta dessa dor; fica como hipótese a validar.</li>
+</ul>
+<h2>5. Times e empresas</h2>
+<ul>
+<li><strong>Shadow AI:</strong> 59% têm uso de IA não autorizado confirmado ou suspeito, e 70% suspeitam de vulnerabilidades no código gerado.</li>
+<li><strong>Desligar agentes:</strong> só 21% têm processo formal para isso, e 82% descobriram agentes que ninguém conhecia.</li>
+<li><strong>Governança é paga:</strong> auditoria, SSO e BYOK só aparecem nos planos Enterprise (Hex, Kernel, Browser Use).</li>
+</ul>
+<h2>6. Concorrentes</h2>
+<table>
+<thead>
+<tr>
+<th>Player</th>
+<th>O que faz</th>
+<th>Entrada</th>
+<th>Espaço para o Racky</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Apify</td>
+<td>Catálogo de scrapers e infra</td>
+<td>US$ 19 a US$ 999/mês; residencial US$ 7 a 8/GB</td>
+<td>Não é agente que escreve e conserta o scraper com humano no loop</td>
+</tr>
+<tr>
+<td>Browserbase</td>
+<td>Navegadores na nuvem</td>
+<td>US$ 20/mês (100 h)</td>
+<td>Só infra de navegador</td>
+</tr>
+<tr>
+<td>Browser Use Cloud</td>
+<td>Agente de navegador na nuvem</td>
+<td>US$ 0,02/h; residencial US$ 5/GB</td>
+<td>Sem fluxo de dados nem entrega</td>
+</tr>
+<tr>
+<td>Firecrawl</td>
+<td>API de scrape e crawl</td>
+<td>US$ 19 a 99/mês por créditos</td>
+<td>Sem agente de código nem VM por tarefa</td>
+</tr>
+<tr>
+<td>Hyperbrowser, Steel, Kernel</td>
+<td>Navegador na nuvem</td>
+<td>US$ 0,10/h; proxy US$ 10/GB</td>
+<td>Só infra; stealth caro ou só no Enterprise</td>
+</tr>
+<tr>
+<td>Bright Data, Zyte</td>
+<td>Proxies e desbloqueio</td>
+<td>Zyte: US$ 1 a 16 por mil páginas renderizadas</td>
+<td>Sem orquestração de agentes</td>
+</tr>
+<tr>
+<td>Diffbot</td>
+<td>Extração e grafo de conhecimento</td>
+<td>US$ 299/mês</td>
+<td>Dados prontos, não "seu scraper"</td>
+</tr>
+<tr>
+<td>Hex, Julius, Deepnote</td>
+<td>Notebook ou análise com IA</td>
+<td>Hex US$ 36/editor</td>
+<td>Sem navegador nem scraping; Julius tem créditos opacos</td>
+</tr>
+<tr>
+<td>Databricks, Snowflake</td>
+<td>Assistente dentro da plataforma</td>
+<td>Pay-as-you-go</td>
+<td>Preso ao ecossistema deles</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Leitura:</strong>
+- Infra de navegador virou commodity, entre US$ 0,02 e US$ 0,12 por hora.
+- Nas fontes lidas, ninguém vende um orquestrador de agentes de código para profissionais de dados com VM isolada por subagente, navegador furtivo e humano assumindo o controle.</p>
+<h2>7. As 15 dores que mais combinam com o Racky</h2>
+<p>Pontos = frequência × severidade × encaixe com o Racky, cada um de 1 a 5.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Dor</th>
+<th>Pontos</th>
+<th>Feature no Racky</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Anti-bot, CAPTCHA, headless detectado</td>
+<td>125</td>
+<td>Fila de CAPTCHA com humano assumindo; perfil por site salvo para o agente retomar</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Scraper quebra quando o site muda</td>
+<td>100</td>
+<td>Receitas versionadas com testes de contrato; um subagente de conserto abre sozinho e propõe o diff</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Credenciais e produção nas mãos de agentes</td>
+<td>100</td>
+<td>Cofre por computador: segredos entram só para hosts aprovados; banco só leitura gerenciado; nenhum <code>.env</code> dentro da VM</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Custo por página (proxy, navegador, LLM)</td>
+<td>80</td>
+<td>Escada de custo: HTTP → TLS impersonado → navegador → navegador com residencial, subindo só quando falha; custo por receita</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Tokens e limites de assinatura</td>
+<td>80</td>
+<td>Orçamento por subagente, teto por tarefa; gerar o scraper uma vez e rodar sem LLM</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Confiança e alucinação</td>
+<td>75</td>
+<td>Prova de execução: toda resposta traz query, linhas e schema; um segundo subagente tenta quebrar</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Dado ruim silencioso, schema que muda</td>
+<td>64</td>
+<td>Contrato por lote: nulos e distribuição por execução, diff entre execuções, alerta</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Agentes de navegador caros e instáveis</td>
+<td>64</td>
+<td>Gravar e repetir: explora uma vez, salva o caminho como script; LLM só na falha</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Jobs longos e notebooks</td>
+<td>60</td>
+<td>Jobs duráveis na VM que sobrevivem ao app fechado, com aviso e retomada</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Contexto de schema</td>
+<td>48</td>
+<td>Catálogo local: o Racky lê o warehouse só leitura e injeta resumo e amostras mascaradas</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Governança e auditoria</td>
+<td>48</td>
+<td>Trilha por subagente: comandos, rede, arquivos e dados lidos, exportável</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Isolamento além do git</td>
+<td>45</td>
+<td>VM por subagente com banco de teste e portas próprias, descartável</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Jurídico e robots</td>
+<td>36</td>
+<td>Perfil de conformidade por domínio: robots, crawl-delay, limite de taxa, registro</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Entrega ao warehouse</td>
+<td>36</td>
+<td>Destinos com idempotência, dedupe por chave e versão do dataset</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Execução remota ou headless</td>
+<td>30</td>
+<td>Modo servidor: VMs na nuvem ou numa máquina remota, Mac só controla</td>
+</tr>
+</tbody>
+</table>
+<h2>8. Jobs to be done</h2>
+<ol>
+<li>Quando preciso de dados de 500 sites com defesas diferentes até sexta, quero um agente por site em sua VM e só intervir nos CAPTCHAs, para entregar sem montar uma frota de proxies.</li>
+<li>Quando um scraper em produção quebra de madrugada, quero que um agente reproduza, conserte e rode os testes de contrato, para acordar com um diff e não com um incidente.</li>
+<li>Quando dou acesso ao warehouse a um agente, quero que ele só leia o necessário e que os segredos não saiam da VM, para não repetir o caso do banco apagado.</li>
+<li>Quando o agente me entrega um número, quero ver a query, as linhas e a checagem de um segundo agente, para defender o resultado.</li>
+<li>Quando o custo por página sobe, quero ver por receita para onde vai o dinheiro e cair para a rota mais barata que funciona, para manter a margem.</li>
+</ol>
+<h2>9. Personas</h2>
+<p>Hipóteses montadas a partir dos padrões do estudo, não de entrevistas.</p>
+<p><strong>Marina, engenheira de dados de web data numa empresa de inteligência de preços (time de 4)</strong>
+- <strong>8h:</strong> dois sites deram 403 de madrugada.
+- <strong>9h30:</strong> o custo do site mais difícil subiu, então ela leva só aquelas páginas para navegador com proxy residencial.
+- <strong>11h:</strong> um subagente achou um endpoint JSON escondido, e ela aceita o diff.
+- <strong>14h:</strong> resolve um CAPTCHA na VM.
+- <strong>17h:</strong> a validação bloqueou a entrega porque os nulos de um campo dobraram.</p>
+<p><strong>Rafael, analytics engineer numa fintech (dbt e Snowflake)</strong>
+- Cola amostras de dados no contexto porque o agente não roda queries.
+- A segurança só libera acesso de leitura.
+- Quer testes em cada modelo e um segundo agente tentando quebrá-lo.</p>
+<p><strong>Camila, cientista de dados em consultoria (freelancer ou time pequeno)</strong>
+- Coleta dados públicos de dezenas de portais, sem orçamento para Bright Data.
+- Já se frustrou com créditos opacos e resultados que mudam a cada execução.
+- Precisa saber a origem de cada linha: URL, quando e com qual versão do scraper.</p>
+<h2>10. O que muda no plano do Racky</h2>
+<p>O estudo confirma a ordem combinada (dados, receitas e fila, proxies, entrega, cloud, UI). Ele também traz quatro itens que não estavam no plano e combinam muito com o Racky:</p>
+<ol>
+<li><strong>Cofre de segredos com saída filtrada:</strong> a dor nº 2, de severidade máxima. A base já existe, porque o Racky já injeta segredos e já registra toda a rede do computador. Entra junto com proxies e perfis.</li>
+<li><strong>Escada de custo automática:</strong> HTTP, depois TLS impersonado, depois navegador, depois navegador com proxy residencial, subindo só quando falha. Entra nas receitas.</li>
+<li><strong>Testes de contrato e conserto automático das receitas:</strong> a dor nº 2. Também entra nas receitas.</li>
+<li><strong>Verificador independente:</strong> um segundo subagente confere o resultado do primeiro. Entra nos Datasets, porque a origem por linha já vai existir.</li>
+</ol>
+<p>Também ganham força os jobs duráveis (computadores que sobrevivem ao app fechado, item já conhecido) e o modo servidor (VMs remotas), que encaixa na infra de cloud.</p>
+<h2>Lacunas</h2>
+<ul>
+<li>Reddit, G2, Product Hunt e X não foram verificados.</li>
+<li>O texto das citações do HN veio de um modelo que resume as páginas; conferir antes de publicar.</li>
+<li>Os relatórios completos da Zyte, da SYNQ e da Precisely/Drexel não foram lidos, só os resumos.</li>
+<li>Os preços da Bright Data e da Deepnote não foram confirmados.</li>
+<li>Não verifiquei se os concorrentes de navegador na nuvem permitem um humano assumir o controle.</li>
+<li>A mudança do Cloudflare vem de fonte secundária.</li>
+<li>Não há evidência primária da dor de "origem de cada linha" nem de dados pessoais com agentes.</li>
+</ul>
+<h2>Fontes</h2>
+<p><strong>Pesquisas:</strong>
+- <a href="https://www.getdbt.com/blog/new-dbt-labs-report-finds-ai-driven-acceleration-is-outpacing-trust-and-governance">dbt State of Analytics Engineering 2026</a>
+- <a href="https://www.getdbt.com/blog/agentic-coding-in-analytics-engineering">dbt: agentic coding</a>
+- <a href="https://joereis.substack.com/p/the-2026-state-of-data-engineering">State of Data Engineering 2026</a>
+- <a href="https://stackoverflow.blog/2025/07/29/developers-remain-willing-but-reluctant-to-use-ai-the-2025-developer-survey-results-are-here/">Stack Overflow 2025</a>
+- <a href="https://blog.apify.com/web-scraping-report-2026/">Apify Web Scraping Report 2026</a>
+- <a href="https://www.zyte.com/whitepaper-ebook/2026-web-scraping-industry-report/">Zyte 2026</a>
+- <a href="https://thewebscrapinginsider.beehiiv.com/p/the-web-scraping-insider-5">ScrapeOps</a>
+- <a href="https://cloudsecurityalliance.org/artifacts/autonomous-but-not-controlled-ai-agent-incidents-now-common-in-enterprises">Cloud Security Alliance</a>
+- <a href="https://securityboulevard.com/2026/03/purple-book-community-and-armorcode-survey-flags-shadow-ai-ai-generated-code-risks">Shadow AI</a></p>
+<p><strong>Artigos:</strong>
+- <a href="https://browser-use.com/posts/one-year-of-progress">Browser Use, um ano</a>
+- <a href="https://www.tigerdata.com/blog/ai-agent-production-database-access">Tiger Data</a>
+- <a href="https://blog.gitguardian.com/ai-agents-security-for-developers-dont-let-your-agents-become-a-liability">GitGuardian</a>
+- <a href="https://zed.dev/blog/anthropic-subscription-changes">Zed</a>
+- <a href="https://current.tinyfish.ai/issue/7/foundations/article/5941/when-scrapers-break-clean">Scrapers que quebram</a>
+- <a href="https://www.promptcloud.com/blog/data-accuracy-in-web-scraping-challenges-2026/">PromptCloud</a>
+- <a href="https://ppc.land/google-loses-dmca-bid-to-treat-search-scraping-like-dvd-piracy/">Google contra SerpApi</a>
+- <a href="https://dev.to/simon_paxton/cloudflare-is-blocking-many-ai-crawlers-by-default-on-ad-supported-pages-not-charging-them-4hcm">Cloudflare</a>
+- <a href="https://oecd.ai/en/incidents/2025-07-19-1eb1">Incidente Replit</a>
+- <a href="https://claude.com/blog/how-anthropic-teams-use-claude-code">Anthropic</a>
+- <a href="https://superset.sh/compare/orca-vs-conductor">Orca vs Conductor</a>
+- <a href="https://popularaitools.ai/blog/julius-ai/">Julius</a></p>
+<p><strong>Preços:</strong>
+- <a href="https://apify.com/pricing">Apify</a>
+- <a href="https://www.browserbase.com/pricing">Browserbase</a>
+- <a href="https://browser-use.com/pricing">Browser Use</a>
+- <a href="https://www.firecrawl.dev/pricing">Firecrawl</a>
+- <a href="https://www.hyperbrowser.ai/pricing">Hyperbrowser</a>
+- <a href="https://www.steel.dev/pricing">Steel</a>
+- <a href="https://www.kernel.sh/pricing">Kernel</a>
+- <a href="https://www.zyte.com/pricing/">Zyte</a>
+- <a href="https://www.diffbot.com/pricing/">Diffbot</a>
+- <a href="https://hex.tech/pricing/">Hex</a>
+- <a href="https://www.conductor.build">Conductor</a>
+- <a href="https://www.onorca.dev">Orca</a></p>
+<p><strong>Issues do GitHub:</strong>
+- <a href="https://github.com/browser-use/browser-use/issues/3074">browser-use #3074</a>
+- <a href="https://github.com/browser-use/browser-use/pull/857">browser-use #857</a>
+- <a href="https://github.com/browser-use/browser-use/issues/221">browser-use #221</a>
+- <a href="https://github.com/browserbase/stagehand/issues/389">Stagehand #389</a>
+- <a href="https://github.com/unclecode/crawl4ai/issues/1757">Crawl4AI #1757</a>
+- <a href="https://github.com/stablyai/orca/issues/13665">Orca #13665</a>
+- <a href="https://github.com/stablyai/orca/issues/4280">Orca #4280</a>
+- <a href="https://github.com/stablyai/orca/issues/11557">Orca #11557</a>
+- <a href="https://github.com/stablyai/orca/issues/3099">Orca #3099</a>
+- <a href="https://github.com/pingdotgg/t3code/issues/228">T3 #228</a>
+- <a href="https://github.com/pingdotgg/t3code/issues/780">T3 #780</a>
+- <a href="https://github.com/BloopAI/vibe-kanban/issues/1947">vibe-kanban #1947</a>
+- <a href="https://github.com/smtg-ai/claude-squad/issues/260">Claude Squad #260</a>
+- <a href="https://github.com/openai/codex/issues/2847">Codex #2847</a>
+- <a href="https://github.com/openai/codex/issues/14593">Codex #14593</a>
+- <a href="https://github.com/anthropics/claude-code/issues/15379">Claude Code #15379</a>
+- <a href="https://github.com/anthropics/claude-code/issues/16157">Claude Code #16157</a>
+- <a href="https://github.com/scrapy/scrapy/issues/6597">Scrapy #6597</a></p>
+<p><strong>Hacker News</strong> (<code>news.ycombinator.com/item?id=</code>):
+- Orquestradores: 46029331, 46682551, 47871018, 47949570, 48716605, 49947002, 49983772, 47602407, 44633890.
+- Dados: 48117619, 48358336, 42272559, 47977587, 48501759, 44933882, 45577592, 48099580, 49263038, 45116057.
+- Scraping: 38823766, 45369261, 45374667, 48870918, 49597434, 44086884, 44971458, 47119510, 49838013, 44390404, 47306634, 48685987, 46321459, 49967498.
+- Segredos: 46884228, 47329033.</p></div></body></html>

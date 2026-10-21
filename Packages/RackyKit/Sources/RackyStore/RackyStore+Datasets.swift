@@ -74,6 +74,14 @@ public struct DatasetRow: Sendable, Equatable, Identifiable {
     public var firstSeen: Date
     public var lastSeen: Date
     public var seenCount: Int
+
+    public init(
+        rowKey: String, data: String, valid: Bool = true, error: String? = nil, computer: String? = nil, runID: String? = nil, requestID: String? = nil,
+        sourceURL: String? = nil, trust: DatasetTrust = .none, firstSeen: Date, lastSeen: Date, seenCount: Int = 1
+    ) {
+        self.rowKey = rowKey; self.data = data; self.valid = valid; self.error = error; self.computer = computer; self.runID = runID
+        self.requestID = requestID; self.sourceURL = sourceURL; self.trust = trust; self.firstSeen = firstSeen; self.lastSeen = lastSeen; self.seenCount = seenCount
+    }
 }
 
 public struct DatasetUpsertCounts: Sendable, Equatable {
@@ -89,6 +97,7 @@ public struct DatasetSummary: Sendable, Equatable, Identifiable {
     public var rowCount: Int
     public var invalidCount: Int
     public var id: String { dataset.id }
+    public init(dataset: Dataset, rowCount: Int, invalidCount: Int) { self.dataset = dataset; self.rowCount = rowCount; self.invalidCount = invalidCount }
 }
 
 public enum DatasetRowFilter: String, Sendable, CaseIterable {

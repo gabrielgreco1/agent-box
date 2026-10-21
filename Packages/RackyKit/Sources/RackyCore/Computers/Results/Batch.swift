@@ -153,10 +153,7 @@ public struct BatchSummary: Sendable, Equatable, Identifiable {
 
     // MARK: Exportação
 
-    static func csvCell(_ text: String) -> String {
-        guard text.contains(where: { $0 == "," || $0 == "\"" || $0 == "\n" || $0 == "\r" }) else { return text }
-        return "\"" + text.replacingOccurrences(of: "\"", with: "\"\"") + "\""
-    }
+    static func csvCell(_ text: String) -> String { CSVFormat.cell(text) }
 
     public static func flat(_ value: JSON?) -> String {
         guard let value else { return "" }
@@ -185,10 +182,7 @@ public struct BatchSummary: Sendable, Equatable, Identifiable {
         return rows.joined(separator: "\r\n") + "\r\n"
     }
 
-    static func safeCell(_ text: String) -> String {
-        guard let first = text.first, "=+-@\t\r".contains(first) else { return text }
-        return "'" + text
-    }
+    static func safeCell(_ text: String) -> String { CSVFormat.safe(text) }
 
     func childJSON(_ child: BatchChild) -> JSON {
         var o: [String: JSON] = [
