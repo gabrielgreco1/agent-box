@@ -200,9 +200,9 @@ struct DatasetsPageView: View {
             DatasetBar {
                 Text("Datasets", bundle: .module).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary)
                 if !summaries.isEmpty {
-                    StatView(value: summaries.count.formatted(), label: summaries.count == 1 ? String(localized: "dataset", bundle: .module) : String(localized: "datasets", bundle: .module))
+                    StatView(value: summaries.count.formatted(), label: summaries.count == 1 ? String(localized: "Dataset", bundle: .module).lowercased() : String(localized: "Datasets", bundle: .module).lowercased())
                         .padding(.leading, DS.Space.s2)
-                    StatView(value: summaries.reduce(0) { $0 + $1.rowCount }.formatted(), label: String(localized: "rows", bundle: .module))
+                    StatView(value: summaries.reduce(0) { $0 + $1.rowCount }.formatted(), label: String(localized: "Rows", bundle: .module).lowercased())
                 }
                 Spacer(minLength: 0)
             }
@@ -385,14 +385,14 @@ struct DatasetPageView: View {
     private func stats(_ snapshot: DatasetPageSnapshot, count: Int) -> some View {
         let s = snapshot.stats
         return HStack(spacing: DatasetMetrics.statGap) {
-            StatView(value: s.rows.formatted(), label: String(localized: "rows", bundle: .module))
+            StatView(value: s.rows.formatted(), label: String(localized: "Rows", bundle: .module).lowercased())
             if count >= 3 {
-                StatView(value: s.invalid.formatted(), label: String(localized: "invalid", bundle: .module), tone: s.invalid > 0 ? DS.Color.warning : DS.Color.textTertiary)
+                StatView(value: s.invalid.formatted(), label: String(localized: "Invalid", bundle: .module).lowercased(), tone: s.invalid > 0 ? DS.Color.warning : DS.Color.textTertiary)
                 StatView(value: String(localized: "\(snapshot.perMinute)/min", bundle: .module), label: String(localized: "rate", bundle: .module))
             }
             if count >= 5 {
                 StatView(value: s.filled.formatted(.percent.precision(.fractionLength(1))), label: String(localized: "filled", bundle: .module))
-                StatView(value: s.computers.formatted(), label: s.computers == 1 ? String(localized: "computer", bundle: .module) : String(localized: "computers", bundle: .module))
+                StatView(value: s.computers.formatted(), label: s.computers == 1 ? String(localized: "Computer", bundle: .module).lowercased() : String(localized: "Computers", bundle: .module).lowercased())
             }
         }
     }
@@ -514,7 +514,7 @@ struct DatasetPageView: View {
                 .overlay(alignment: .trailing) { DS.Color.border.frame(width: ComputersMetrics.separator) }
             }
             HStack(spacing: DS.Space.s1_5) {
-                Text("captured", bundle: .module).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary)
+                Text("Captured", bundle: .module).textCase(.lowercase).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary)
                 Text(verbatim: "time").dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textTertiary)
             }
             .padding(.horizontal, DatasetMetrics.cellPadding)
@@ -578,8 +578,8 @@ private struct ActivityChart: View {
     var body: some View {
         VStack(alignment: .leading, spacing: DS.Space.s1_5) {
             HStack(spacing: DS.Space.s3) {
-                legend(DS.Color.dataValid, String(localized: "valid", bundle: .module))
-                legend(DS.Color.warning, String(localized: "invalid", bundle: .module))
+                legend(DS.Color.dataValid, String(localized: "Valid", bundle: .module).lowercased())
+                legend(DS.Color.warning, String(localized: "Invalid", bundle: .module).lowercased())
                 Spacer(minLength: 0)
                 Text("new rows", bundle: .module).dsFont(DS.Font.micro).foregroundStyle(DS.Color.textTertiary)
             }

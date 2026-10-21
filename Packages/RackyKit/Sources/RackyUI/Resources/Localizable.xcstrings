@@ -10226,17 +10226,6 @@
         }
       }
     },
-    "updated %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "updated %@"
-          }
-        }
-      }
-    },
     "%@ matching": {
       "extractionState": "manual",
       "localizations": {
@@ -10347,17 +10336,6 @@
         }
       }
     },
-    "captured": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "captured"
-          }
-        }
-      }
-    },
     "Evidence": {
       "extractionState": "manual",
       "localizations": {
@@ -10376,50 +10354,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Seen in network"
-          }
-        }
-      }
-    },
-    "dataset": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "dataset"
-          }
-        }
-      }
-    },
-    "datasets": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "datasets"
-          }
-        }
-      }
-    },
-    "rows": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "rows"
-          }
-        }
-      }
-    },
-    "invalid": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "invalid"
           }
         }
       }
@@ -10787,28 +10721,6 @@
         }
       }
     },
-    "computer": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "computer"
-          }
-        }
-      }
-    },
-    "computers": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "computers"
-          }
-        }
-      }
-    },
     "duplicates merged: %@": {
       "extractionState": "manual",
       "localizations": {
@@ -10864,13 +10776,13 @@
         }
       }
     },
-    "valid": {
+    "Dataset": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "valid"
+            "value": "Dataset"
           }
         }
       }
