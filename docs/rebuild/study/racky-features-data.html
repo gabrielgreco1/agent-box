@@ -126,13 +126,15 @@
     <tr><td class="p"><span class="tag">P2</span></td><td class="n">Pastas e segredos</td><td class="d">Pasta do Mac compartilhada e senhas injetadas sem o agente ver o valor.</td></tr>
   </table>
 
-  <h2>Ordem sugerida</h2>
+  <h2>Ordem combinada (2026-10-20)</h2>
+  <p>Funcionalidade primeiro; a UI nova (prévia com a sidebar C, aprovada) fica por último. Cobrança e créditos do Racky Cloud ficam de fora por enquanto; toda a infra de cloud entra.</p>
   <table>
-    <tr><td class="p"><span class="tag P0">1</span></td><td class="n">UI nova</td><td class="d">Sidebar, abas, caminho no topo e barra de status, conforme a prévia que você aprovar.</td></tr>
-    <tr><td class="p"><span class="tag P0">2</span></td><td class="n">Datasets e exportar</td><td class="d">Tabela ao vivo, schema, chave e dedupe, exportação. É o que mais mostra o produto.</td></tr>
-    <tr><td class="p"><span class="tag P0">3</span></td><td class="n">Receitas e fila</td><td class="d">O agente gera o coletor; a fila roda em vários computadores com limite por domínio e retomada.</td></tr>
-    <tr><td class="p"><span class="tag P0">4</span></td><td class="n">Proxies, perfis e painel</td><td class="d">Pools de proxy, identidade coerente, painel da execução e custo por mil linhas.</td></tr>
-    <tr><td class="p"><span class="tag P0">5</span></td><td class="n">Cloud</td><td class="d">Transbordar, Fleet e limites de gasto.</td></tr>
+    <tr><td class="p"><span class="tag P0">1</span></td><td class="n">Datasets e exportar</td><td class="d">Tabela ao vivo, schema, chave e dedupe, origem de cada linha, exportação.</td></tr>
+    <tr><td class="p"><span class="tag P0">2</span></td><td class="n">Receitas e fila</td><td class="d">O agente gera o coletor; a fila roda em vários computadores com limite por domínio, modo HTTP e retomada.</td></tr>
+    <tr><td class="p"><span class="tag P0">3</span></td><td class="n">Proxies, perfis e painel</td><td class="d">Pools de proxy, identidade coerente, perfis de computador, painel da execução e custo por mil linhas.</td></tr>
+    <tr><td class="p"><span class="tag P0">4</span></td><td class="n">Entrega</td><td class="d">Destinos (S3, Postgres, BigQuery, Sheets, webhook), API e CLI, avisos.</td></tr>
+    <tr><td class="p"><span class="tag P0">5</span></td><td class="n">Infra de cloud</td><td class="d">Provedor próprio real, transbordar para a cloud, Fleet e limites de gasto. Sem cobrança e sem créditos Racky Cloud.</td></tr>
+    <tr><td class="p"><span class="tag P0">6</span></td><td class="n">UI nova</td><td class="d">Sidebar por projeto (C), abas com sublinhado, caminho no topo e barra de status.</td></tr>
   </table>
 </div>
 </body>
