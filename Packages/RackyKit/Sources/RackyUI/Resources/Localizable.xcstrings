@@ -10786,6 +10786,17 @@
           }
         }
       }
+    },
+    "Open beside the agent": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open beside the agent"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

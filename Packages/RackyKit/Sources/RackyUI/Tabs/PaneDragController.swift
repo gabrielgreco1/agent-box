@@ -15,7 +15,7 @@ import SwiftUI
 final class PaneDragController {
     enum Target: Equatable {
         /// Zona sobre um pane; `frame` no espaço da área de panes (y para baixo).
-        case pane(terminalID: UUID, zone: PaneDropZone, outcome: DropOutcome, frame: CGRect)
+        case pane(paneID: UUID, zone: PaneDropZone, outcome: DropOutcome, frame: CGRect)
         /// Pane arrastado sobre a tab row: vira tab na posição `index`.
         case tabRow(index: Int)
     }
@@ -99,10 +99,12 @@ final class PaneDragController {
             if target != s.originIndex { model.moveTab(id, to: target) }
             model.returnFocusToTerminal()
             return .applied
-        case (let payload, .pane(let terminalID, let zone, _, _)?):
-            return model.performDrop(payload, onTerminal: terminalID, zone: zone)
+        case (let payload, .pane(let paneID, let zone, _, _)?):
+            return model.performDrop(payload, onPane: paneID, zone: zone)
         case (.pane(let terminalID), .tabRow(let index)?):
             return model.detachPane(terminalID, toIndex: index)
+        case (.otherPane(let paneID), .tabRow(let index)?):
+            return model.detachPane(paneID: paneID, toIndex: index)
         default:
             model.returnFocusToTerminal()
             return nil
@@ -171,10 +173,13 @@ final class PaneDragController {
         s.overTabRow = tabRowRect().map { $0.contains(s.point) } ?? false
         s.target = nil
         if s.overTabRow {
-            if case .pane = s.payload { s.target = .tabRow(index: insertionIndex(atX: s.point.x, in: model)) }
+            switch s.payload {
+            case .pane, .otherPane: s.target = .tabRow(index: insertionIndex(atX: s.point.x, in: model))
+            case .tab: break
+            }
         } else if let hit = paneArea?.dropHit(atWindowPoint: s.point) {
-            let outcome = model.evaluateDrop(s.payload, onTerminal: hit.terminalID, zone: hit.zone)
-            if outcome != .invalid { s.target = .pane(terminalID: hit.terminalID, zone: hit.zone, outcome: outcome, frame: hit.frame) }
+            let outcome = model.evaluateDrop(s.payload, onPane: hit.paneID, zone: hit.zone)
+            if outcome != .invalid { s.target = .pane(paneID: hit.paneID, zone: hit.zone, outcome: outcome, frame: hit.frame) }
         }
         let showGhost = !(s.overTabRow && s.originIndex != nil)
         session = s

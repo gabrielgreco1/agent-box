@@ -180,6 +180,57 @@ enum DatasetExportFormat: String, CaseIterable {
     }
 }
 
+/// Estado de um dataset aberto (uma tab, um pane ou a página): consulta, facetas, período, página, colunas visíveis, linha
+/// selecionada e o que está na tela. Dois panes do mesmo dataset dividem o mesmo estado.
+@MainActor
+@Observable
+public final class DatasetViewModel: Identifiable {
+    public let id: String
+    public fileprivate(set) var snapshot: DatasetPageSnapshot?
+    /// Texto da barra de consulta (`price:>200 rating:>=4.5 plaza`).
+    public var search = ""
+    public fileprivate(set) var range: DatasetRange = .all
+    /// Valores desmarcados por faceta e tipos de erro escolhidos.
+    public fileprivate(set) var excluded: [DatasetFacet: Set<String>] = [:]
+    public fileprivate(set) var errorKinds: Set<String> = []
+    public fileprivate(set) var hiddenColumns: Set<String> = []
+    public fileprivate(set) var page = 0
+    public fileprivate(set) var selectedRowKey: String?
+    public fileprivate(set) var panelTab: DatasetPanelTab = .attributes
+    @ObservationIgnored fileprivate var visibleCount = 0
+    /// Texto da última consulta que chegou ao store (o campo atualiza `search` antes de a ação rodar).
+    @ObservationIgnored fileprivate var loadedSearch: String?
+
+    init(id: String) { self.id = id }
+
+    /// Filtro antigo `All | Invalid` (automação): equivale a desmarcar `valid` na faceta de status.
+    public var filter: DatasetRowFilter { excluded[.status]?.contains("valid") == true ? .invalid : .all }
+    public var columns: [DatasetColumn] { snapshot?.summary.dataset.columns ?? [] }
+    public var visibleColumns: [DatasetColumn] { columns.filter { !hiddenColumns.contains($0.name) } }
+    public var selectedRow: DatasetDisplayRow? { snapshot?.rows.first { $0.row.rowKey == selectedRowKey } }
+    public var pageCount: Int { max(Int((Double(snapshot?.matching ?? 0) / Double(DatasetsController.pageSize)).rounded(.up)), 1) }
+
+    /// Valor marcado na faceta (`error` começa todo desmarcado: marcar filtra).
+    public func isChecked(_ facet: DatasetFacet, _ value: String) -> Bool {
+        facet == .error ? errorKinds.contains(value) : !(excluded[facet]?.contains(value) ?? false)
+    }
+
+    fileprivate var request: DatasetPageRequest {
+        let parsed = DatasetLoader.parse(search, columns: columns)
+        let query = DatasetQuery(excluded: excluded, errorKinds: errorKinds, text: parsed.text, conditions: parsed.conditions)
+        return DatasetPageRequest(id: id, query: query, range: range, page: page, pageSize: DatasetsController.pageSize)
+    }
+
+    fileprivate func reload(store: RackyStore, now: Date) async {
+        let wanted = request
+        let loaded = await DatasetLoader.page(store: store, request: wanted, now: now)
+        // Uma consulta lenta não sobrescreve o que o usuário mudou enquanto ela rodava.
+        guard request == wanted else { return }
+        loadedSearch = search
+        if loaded != snapshot { snapshot = loaded }
+    }
+}
+
 @MainActor
 @Observable
 public final class DatasetsController {
@@ -187,21 +238,31 @@ public final class DatasetsController {
 
     public private(set) var summaries: [DatasetSummary] = []
     public private(set) var listLoaded = false
+    /// Datasets abertos (tabs, panes, página) e o ativo: o último em que o mouse passou ou que foi aberto. As ações agem nele.
+    public private(set) var models: [String: DatasetViewModel] = [:]
     public private(set) var currentID: String?
-    public private(set) var snapshot: DatasetPageSnapshot?
-    /// Texto da barra de consulta (`price:>200 rating:>=4.5 plaza`).
-    public var search = ""
-    public private(set) var range: DatasetRange = .all
-    /// Valores desmarcados por faceta e tipos de erro escolhidos.
-    public private(set) var excluded: [DatasetFacet: Set<String>] = [:]
-    public private(set) var errorKinds: Set<String> = []
-    public private(set) var hiddenColumns: Set<String> = []
-    public private(set) var page = 0
-    public private(set) var selectedRowKey: String?
-    public private(set) var panelTab: DatasetPanelTab = .attributes
 
-    /// Filtro antigo `All | Invalid` (automação): equivale a desmarcar `valid` na faceta de status.
-    public var filter: DatasetRowFilter { excluded[.status]?.contains("valid") == true ? .invalid : .all }
+    public var active: DatasetViewModel? { currentID.flatMap { models[$0] } }
+
+    // Atalhos para o dataset ativo (automação e testes).
+    public var snapshot: DatasetPageSnapshot? { active?.snapshot }
+    public var search: String {
+        get { active?.search ?? "" }
+        set { active?.search = newValue }
+    }
+    public var range: DatasetRange { active?.range ?? .all }
+    public var excluded: [DatasetFacet: Set<String>] { active?.excluded ?? [:] }
+    public var errorKinds: Set<String> { active?.errorKinds ?? [] }
+    public var hiddenColumns: Set<String> { active?.hiddenColumns ?? [] }
+    public var page: Int { active?.page ?? 0 }
+    public var selectedRowKey: String? { active?.selectedRowKey }
+    public var panelTab: DatasetPanelTab { active?.panelTab ?? .attributes }
+    public var filter: DatasetRowFilter { active?.filter ?? .all }
+    public var columns: [DatasetColumn] { active?.columns ?? [] }
+    public var visibleColumns: [DatasetColumn] { active?.visibleColumns ?? [] }
+    public var selectedRow: DatasetDisplayRow? { active?.selectedRow }
+    public var pageCount: Int { active?.pageCount ?? 1 }
+    public func isChecked(_ facet: DatasetFacet, _ value: String) -> Bool { active?.isChecked(facet, value) ?? true }
 
     @ObservationIgnored public private(set) var store: RackyStore?
     /// Título da sessão (sidebar) e se algum computador dela está rodando (atualização a cada 1 s); ligados pelo `AppEnvironment`.
@@ -210,6 +271,10 @@ public final class DatasetsController {
     @ObservationIgnored public var currentPage: () -> CenterPage = { .workspace }
     @ObservationIgnored public var showPage: (CenterPage) -> Void = { _ in }
     @ObservationIgnored public var hidePage: () -> Void = {}
+    /// Abre o dataset como tab da sessão dele (`beside` = ao lado do agente). Devolve false se não deu (sem workspace): cai na página.
+    @ObservationIgnored public var openInSession: (_ datasetID: String, _ sessionID: UUID, _ beside: Bool) -> Bool = { _, _, _ in false }
+    /// Fecha o pane de dataset (`nil` = não está num pane: fecha a página).
+    @ObservationIgnored public var closePane: (UUID) -> Void = { _ in }
     @ObservationIgnored public var openURL: (URL) -> Void = { NSWorkspace.shared.open($0) }
     @ObservationIgnored public var copyText: (String) -> Void = { text in
         NSPasteboard.general.clearContents()
@@ -264,6 +329,11 @@ public final class DatasetsController {
 
     public func title(of summary: DatasetSummary) -> String { sessionTitle(summary.dataset.sessionID) ?? String(localized: "Unknown session", bundle: .module) }
 
+    /// Nome do dataset (título da tab), da lista já carregada ou do snapshot de um aberto.
+    public func name(of id: String) -> String? {
+        summaries.first { $0.dataset.id == id }?.dataset.name ?? models[id]?.snapshot?.summary.dataset.name
+    }
+
     public func reloadList() async {
         guard let store else { return }
         let loaded = await DatasetLoader.summaries(store: store)
@@ -271,55 +341,52 @@ public final class DatasetsController {
         listLoaded = true
     }
 
-    /// Colunas do dataset aberto, na ordem do esquema.
-    public var columns: [DatasetColumn] { snapshot?.summary.dataset.columns ?? [] }
-    public var visibleColumns: [DatasetColumn] { columns.filter { !hiddenColumns.contains($0.name) } }
+    /// Estado do dataset (cria e carrega na primeira vez).
+    public func model(for id: String) -> DatasetViewModel {
+        if let existing = models[id] { return existing }
+        let created = DatasetViewModel(id: id)
+        models[id] = created
+        Task { await reload(created) }
+        return created
+    }
 
-    private func request(id: String) -> DatasetPageRequest {
-        let parsed = DatasetLoader.parse(search, columns: columns)
-        let query = DatasetQuery(excluded: excluded, errorKinds: errorKinds, text: parsed.text, conditions: parsed.conditions)
-        return DatasetPageRequest(id: id, query: query, range: range, page: page, pageSize: Self.pageSize)
+    /// O dataset vira o ativo (o mouse entrou no pane dele): as ações e a automação passam a agir nele.
+    public func activate(_ id: String) {
+        if currentID != id { currentID = id }
+    }
+
+    /// Pane ou tab apareceu / saiu da tela: só os visíveis atualizam.
+    public func noteVisible(_ id: String, _ visible: Bool) {
+        let m = model(for: id)
+        m.visibleCount = max(m.visibleCount + (visible ? 1 : -1), 0)
+    }
+
+    func reload(_ m: DatasetViewModel) async {
+        guard let store else { return }
+        await m.reload(store: store, now: now())
     }
 
     public func reloadPage() async {
-        guard let store, let id = currentID else { return }
-        let wanted = request(id: id)
-        let loaded = await DatasetLoader.page(store: store, request: wanted, now: now())
-        // Uma consulta lenta não sobrescreve o que o usuário mudou enquanto ela rodava.
-        guard currentID == id, request(id: id) == wanted else { return }
-        if loaded != snapshot { snapshot = loaded }
+        guard let m = active else { return }
+        await reload(m)
     }
 
-    /// Abre o dataset: zera consulta, facetas, página e seleção e carrega.
-    public func open(_ id: String) async -> Bool {
+    /// Abre o dataset como tab da sessão dele; sem workspace (testes), na página do centro.
+    public func open(_ id: String, beside: Bool = false) async -> Bool {
         guard let store, let dataset = try? await store.dataset(id: id) else { return false }
+        let m = model(for: id)
+        if m.snapshot == nil {
+            m.snapshot = DatasetPageSnapshot(summary: DatasetSummary(dataset: dataset, rowCount: 0, invalidCount: 0), rows: [], matching: 0)
+        }
         currentID = id
-        search = ""
-        range = .all
-        excluded = [:]
-        errorKinds = []
-        hiddenColumns = []
-        page = 0
-        selectedRowKey = nil
-        panelTab = .attributes
-        snapshot = DatasetPageSnapshot(summary: DatasetSummary(dataset: dataset, rowCount: 0, invalidCount: 0), rows: [], matching: 0)
-        await reloadPage()
-        showPage(.dataset(id))
+        await reload(m)
+        if !openInSession(id, dataset.sessionID, beside) { showPage(.dataset(id)) }
         return true
-    }
-
-    public var selectedRow: DatasetDisplayRow? { snapshot?.rows.first { $0.row.rowKey == selectedRowKey } }
-
-    public var pageCount: Int { max(Int((Double(snapshot?.matching ?? 0) / Double(Self.pageSize)).rounded(.up)), 1) }
-
-    /// Valor marcado na faceta (`error` começa todo desmarcado: marcar filtra).
-    public func isChecked(_ facet: DatasetFacet, _ value: String) -> Bool {
-        facet == .error ? errorKinds.contains(value) : !(excluded[facet]?.contains(value) ?? false)
     }
 
     // MARK: Atualização
 
-    /// 1 s com um computador da sessão rodando; 5 s fora disso. Só trabalha quando a página está aberta.
+    /// 1 s com um computador da sessão rodando; 5 s fora disso. Só trabalha nos datasets que estão na tela.
     public func startRefreshing() {
         refresher?.cancel()
         refresher = Task { @MainActor [weak self] in
@@ -336,13 +403,11 @@ public final class DatasetsController {
     public func stopRefreshing() { refresher?.cancel() }
 
     func refreshVisible(tick: Int) async {
-        switch currentPage() {
-        case .datasets:
-            if !listLoaded || tick % 2 == 0 { await reloadList() }
-        case .dataset(let id) where id == currentID:
-            let running = snapshot.map { isRunning($0.summary.dataset.sessionID) } ?? false
-            if running || tick % 5 == 0 || snapshot == nil { await reloadPage() }
-        default: break
+        if currentPage() == .datasets, !listLoaded || tick % 2 == 0 { await reloadList() }
+        let pageID = currentPage().datasetID
+        for m in models.values where m.visibleCount > 0 || m.id == pageID {
+            let running = m.snapshot.map { isRunning($0.summary.dataset.sessionID) } ?? false
+            if running || tick % 5 == 0 || m.snapshot == nil { await reload(m) }
         }
     }
 
@@ -350,7 +415,7 @@ public final class DatasetsController {
 
     public func register(in registry: ActionRegistry) throws {
         let noDataset = String(localized: "Open a dataset first.", bundle: .module)
-        let hasDataset: ActionRegistry.Enablement = { [unowned self] in currentID == nil ? .disabled(reason: noDataset) : .enabled }
+        let hasDataset: ActionRegistry.Enablement = { [unowned self] in active == nil ? .disabled(reason: noDataset) : .enabled }
         try registry.register(.pageDatasets) { [unowned self] _ in
             if currentPage() == .datasets {
                 hidePage()
@@ -361,7 +426,9 @@ public final class DatasetsController {
             return "datasets"
         }
         try registry.register(.datasetOpen) { [unowned self] arg in
-            guard arg.kind == .select, let id = arg.value, !id.isEmpty, await open(id) else {
+            // `select(<id>)` abre a tab do dataset; `select(<id>|beside)` coloca a tabela ao lado do agente.
+            let parts = (arg.kind == .select ? arg.value ?? "" : "").split(separator: "|").map(String.init)
+            guard let id = parts.first, !id.isEmpty, await open(id, beside: parts.dropFirst().first == "beside") else {
                 throw ActionError.failed(.datasetOpen, message: String(localized: "No such dataset.", bundle: .module))
             }
             return id
@@ -370,26 +437,29 @@ public final class DatasetsController {
             guard arg.kind == .select, let raw = arg.value, let filter = DatasetRowFilter(rawValue: raw) else {
                 throw ActionError.failed(.datasetFilter, message: "expected select(all|invalid)")
             }
-            excluded[.status] = filter == .invalid ? ["valid"] : nil
-            page = 0
-            await reloadPage()
+            guard let m = active else { return filter.rawValue }
+            m.excluded[.status] = filter == .invalid ? ["valid"] : nil
+            m.page = 0
+            await reload(m)
             return filter.rawValue
         }
         try registry.register(.datasetSearch, enablement: hasDataset) { [unowned self] arg in
             let text = arg.value ?? ""
-            guard text != search || snapshot == nil else { return text }
-            search = text
-            page = 0
-            await reloadPage()
+            guard let m = active else { return text }
+            guard text != m.loadedSearch || m.snapshot == nil else { return text }
+            m.search = text
+            m.page = 0
+            await reload(m)
             return text
         }
         try registry.register(.datasetRange, enablement: hasDataset) { [unowned self] arg in
             guard arg.kind == .select, let raw = arg.value, let range = DatasetRange(rawValue: raw) else {
                 throw ActionError.failed(.datasetRange, message: "expected select(15m|1h|6h|24h|7d|all)")
             }
-            self.range = range
-            page = 0
-            await reloadPage()
+            guard let m = active else { return range.rawValue }
+            m.range = range
+            m.page = 0
+            await reload(m)
             return range.rawValue
         }
         try registry.register(.datasetFacet, enablement: hasDataset) { [unowned self] arg in
@@ -398,50 +468,54 @@ public final class DatasetsController {
                 throw ActionError.failed(.datasetFacet, message: "expected select(<facet>:<value>)")
             }
             let value = String(raw[raw.index(after: colon)...])
+            guard let m = active else { return raw }
             if value == "*" {
-                if facet == .error { errorKinds = [] } else { excluded[facet] = nil }
+                if facet == .error { m.errorKinds = [] } else { m.excluded[facet] = nil }
             } else if facet == .error {
-                if errorKinds.contains(value) { errorKinds.remove(value) } else { errorKinds.insert(value) }
+                if m.errorKinds.contains(value) { m.errorKinds.remove(value) } else { m.errorKinds.insert(value) }
             } else {
-                var set = excluded[facet] ?? []
+                var set = m.excluded[facet] ?? []
                 if set.contains(value) { set.remove(value) } else { set.insert(value) }
-                excluded[facet] = set.isEmpty ? nil : set
+                m.excluded[facet] = set.isEmpty ? nil : set
             }
-            page = 0
-            await reloadPage()
+            m.page = 0
+            await reload(m)
             return raw
         }
         try registry.register(.datasetPage, enablement: hasDataset) { [unowned self] arg in
+            guard let m = active else { return "1" }
             switch arg.value {
-            case "next": page = min(page + 1, pageCount - 1)
-            case "prev": page = max(page - 1, 0)
-            case "first": page = 0
+            case "next": m.page = min(m.page + 1, m.pageCount - 1)
+            case "prev": m.page = max(m.page - 1, 0)
+            case "first": m.page = 0
             default: throw ActionError.failed(.datasetPage, message: "expected select(next|prev|first)")
             }
-            await reloadPage()
-            return "\(page + 1)"
+            await reload(m)
+            return "\(m.page + 1)"
         }
         try registry.register(.datasetLoadMore, enablement: hasDataset) { [unowned self] _ in
-            page = min(page + 1, pageCount - 1)
-            await reloadPage()
-            return "\(page + 1)"
+            guard let m = active else { return "1" }
+            m.page = min(m.page + 1, m.pageCount - 1)
+            await reload(m)
+            return "\(m.page + 1)"
         }
         try registry.register(.datasetColumns, enablement: hasDataset) { [unowned self] arg in
-            guard arg.kind == .select, let name = arg.value, columns.contains(where: { $0.name == name }) else {
+            guard arg.kind == .select, let name = arg.value, let m = active, m.columns.contains(where: { $0.name == name }) else {
                 throw ActionError.failed(.datasetColumns, message: String(localized: "No such column.", bundle: .module))
             }
-            if hiddenColumns.contains(name) { hiddenColumns.remove(name) } else if hiddenColumns.count + 1 < columns.count { hiddenColumns.insert(name) }
-            return hiddenColumns.contains(name) ? "hidden" : "shown"
+            if m.hiddenColumns.contains(name) { m.hiddenColumns.remove(name) } else if m.hiddenColumns.count + 1 < m.columns.count { m.hiddenColumns.insert(name) }
+            return m.hiddenColumns.contains(name) ? "hidden" : "shown"
         }
         try registry.register(.datasetSelectRow, enablement: hasDataset) { [unowned self] arg in
-            selectedRowKey = arg.kind == .select ? arg.value.flatMap { $0.isEmpty ? nil : $0 } : nil
-            return selectedRowKey
+            guard let m = active else { return nil }
+            m.selectedRowKey = arg.kind == .select ? arg.value.flatMap { $0.isEmpty ? nil : $0 } : nil
+            return m.selectedRowKey
         }
         try registry.register(.datasetPanelTab, enablement: hasDataset) { [unowned self] arg in
             guard arg.kind == .select, let raw = arg.value, let tab = DatasetPanelTab(rawValue: raw) else {
                 throw ActionError.failed(.datasetPanelTab, message: "expected select(attributes|source|history)")
             }
-            panelTab = tab
+            active?.panelTab = tab
             return tab.rawValue
         }
         try registry.register(.datasetCopyRow, enablement: hasDataset) { [unowned self] arg in
@@ -473,7 +547,7 @@ public final class DatasetsController {
     }
 
     private func export(_ arg: ActionArgument) async throws -> String {
-        guard let store, let id = currentID, let dataset = try await store.dataset(id: id) else {
+        guard let store, let id = active?.id, let dataset = try await store.dataset(id: id) else {
             throw ActionError.failed(.datasetExport, message: String(localized: "Open a dataset first.", bundle: .module))
         }
         if arg.kind == .set, let value = arg.value, let split = value.firstIndex(of: "=") {

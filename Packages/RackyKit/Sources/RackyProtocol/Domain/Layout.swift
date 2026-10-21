@@ -5,12 +5,19 @@ public enum SplitAxis: String, Codable, Sendable { case horizontal, vertical }
 public enum PaneContent: Hashable, Codable, Sendable {
     case terminal(UUID)
     case computerViewer(UUID)
+    /// Tabela de um dataset (id ULID do `dataset`): fica numa tab própria ou ao lado do agente.
+    case dataset(String)
 
     private enum CodingKeys: String, CodingKey { case type, id }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
+        let type = try c.decode(String.self, forKey: .type)
+        if type == "dataset" {
+            self = .dataset(try c.decode(String.self, forKey: .id))
+            return
+        }
         let id = try c.decode(UUID.self, forKey: .id)
-        switch try c.decode(String.self, forKey: .type) {
+        switch type {
         case "terminal": self = .terminal(id)
         case "computer_viewer": self = .computerViewer(id)
         case let other:
@@ -22,8 +29,14 @@ public enum PaneContent: Hashable, Codable, Sendable {
         switch self {
         case .terminal(let id): try c.encode("terminal", forKey: .type); try c.encode(id, forKey: .id)
         case .computerViewer(let id): try c.encode("computer_viewer", forKey: .type); try c.encode(id, forKey: .id)
+        case .dataset(let id): try c.encode("dataset", forKey: .type); try c.encode(id, forKey: .id)
         }
     }
+}
+
+extension PaneContent {
+    /// Terminal do pane (`nil` em panes de dataset e viewer).
+    public var terminalID: UUID? { if case .terminal(let id) = self { id } else { nil } }
 }
 
 public struct Pane: Hashable, Codable, Sendable, Identifiable {
@@ -49,6 +62,16 @@ public indirect enum PaneLayout: Hashable, Codable, Sendable {
 
     public var terminalIDs: [UUID] {
         panes.compactMap { if case .terminal(let id) = $0.content { id } else { nil } }
+    }
+
+    /// Datasets abertos nos panes deste layout.
+    public var datasetIDs: [String] {
+        panes.compactMap { if case .dataset(let id) = $0.content { id } else { nil } }
+    }
+
+    /// Pane que mostra o dataset `id`.
+    public func pane(forDataset id: String) -> Pane? {
+        panes.first { if case .dataset(let d) = $0.content { d == id } else { false } }
     }
 
     /// Invariante: um terminal aparece em no máximo um pane (audit/01 B7), ids de pane únicos e proporções válidas.

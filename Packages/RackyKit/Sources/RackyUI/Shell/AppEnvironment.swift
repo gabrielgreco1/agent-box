@@ -423,6 +423,19 @@ public final class AppEnvironment {
         datasets.openEvidence = { [registry] computer, request in
             _ = try await registry.perform(.computerOpenEvidence, .select("\(computer)|\(request)"))
         }
+        // Dataset aberto vira tab (ou pane ao lado do agente) da sessão dele: seleciona a sessão, fecha a página do centro e abre.
+        datasets.openInSession = { [workspace, sidebar, computers] datasetID, sessionID, beside in
+            guard workspace.store != nil || workspace.isLoaded(session: sessionID) || sidebar.session(sessionID) != nil else { return false }
+            if workspace.currentSessionID != sessionID {
+                _ = sidebar.select(sessionID, closingInbox: true, requestingListFocus: false)
+                workspace.setSession(sessionID)
+            }
+            guard workspace.currentSessionID == sessionID, workspace.isLoaded else { return false }
+            if computers.page != .workspace { computers.closePage() }
+            return workspace.openDataset(datasetID, beside: beside) != nil
+        }
+        datasets.closePane = { [workspace] paneID in workspace.closePane(id: paneID) }
+        workspace.datasetTitle = { [datasets] id in datasets.name(of: id) }
         do { try datasets.register(in: registry) } catch { log.publicError("duplicate dataset action registration") }
     }
 

@@ -503,6 +503,8 @@ final class PaneAreaView: NSView {
     private let elements: UIElementStore?
     private let router: TerminalActionRouter?
     private var containers: [UUID: PaneContainerView] = [:]
+    /// Panes sem terminal (datasets), pelo id do pane.
+    private var otherHosts: [UUID: NSView] = [:]
     private var dividers: [UUID: PaneDividerView] = [:]
     private var emptyHost: NSHostingView<AnyView>?
     private var readyNotified: Set<UUID> = []
@@ -534,17 +536,16 @@ final class PaneAreaView: NSView {
     }
 
     /// O pane (e a zona) sob o cursor durante um arrasto, em coordenadas desta view.
-    func dropHit(atWindowPoint point: NSPoint) -> (terminalID: UUID, zone: PaneDropZone, frame: CGRect)? {
+    func dropHit(atWindowPoint point: NSPoint) -> (paneID: UUID, zone: PaneDropZone, frame: CGRect)? {
         guard model.isLoaded, let tab = model.activeTab else { return nil }
         let local = convert(point, from: nil)
         guard bounds.contains(local) else { return nil }
         let expanded = model.expandedPane(in: tab)
         let arrangement = tab.layout.arrangement(in: bounds)
         for pane in tab.layout.panes {
-            guard case .terminal(let id) = pane.content else { continue }
             if let expanded, expanded != pane.id { continue }
             let frame = expanded == nil ? (arrangement.panes[pane.id] ?? .zero) : bounds
-            if frame.contains(local) { return (id, PaneDropZone.zone(at: local, in: frame), frame) }
+            if frame.contains(local) { return (pane.id, PaneDropZone.zone(at: local, in: frame), frame) }
         }
         return nil
     }
@@ -619,6 +620,19 @@ final class PaneAreaView: NSView {
                 d.setTreeVisible(false)
             }
         }
+        var shownOther: Set<UUID> = []
+        defer {
+            // Panes que saíram de todas as tabs carregadas somem; os de outras tabs só se escondem.
+            let alive = model.allPaneIDs
+            for (id, host) in otherHosts where !shownOther.contains(id) {
+                if alive.contains(id) {
+                    host.isHidden = true
+                } else {
+                    host.removeFromSuperview()
+                    otherHosts[id] = nil
+                }
+            }
+        }
         guard sessionLoaded, let tab else { return }
 
         let expandedPane = model.expandedPane(in: tab)
@@ -647,6 +661,23 @@ final class PaneAreaView: NSView {
                 container.flashRim()
             }
             order.append(terminalID)
+        }
+        for pane in tab.layout.panes where pane.content.terminalID == nil {
+            if let expandedPane, expandedPane != pane.id { continue }
+            let frame = expandedPane == nil ? (arrangement.panes[pane.id] ?? .zero) : bounds
+            guard frame.width > 0, frame.height > 0 else { continue }
+            let host: NSView
+            if let existing = otherHosts[pane.id] {
+                host = existing
+            } else {
+                guard let view = model.makePaneView?(pane) else { continue }
+                host = view
+                addSubview(host, positioned: .below, relativeTo: nil)
+                otherHosts[pane.id] = host
+            }
+            shownOther.insert(pane.id)
+            host.isHidden = false
+            if host.frame != frame { host.frame = frame }
         }
         if expandedPane == nil {
             for geometry in arrangement.dividers {

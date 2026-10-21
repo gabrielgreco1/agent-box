@@ -42,6 +42,10 @@ enum DatasetMetrics {
     static let colJSON: CGFloat = 220
     static let colCaptured: CGFloat = 132
     static let panelWidth: CGFloat = 330
+    static let facetsMinWidth: CGFloat = 820
+    static let panelInlineMinWidth: CGFloat = 1040
+    static let sessionNameMinWidth: CGFloat = 900
+    static let buttonLabelsMinWidth: CGFloat = 720
     static let panelLabel: CGFloat = 92
     static let tabUnderline: CGFloat = 2
 
@@ -164,14 +168,23 @@ private struct MenuButton<Label: View>: View {
 
 /// Barra de cima das páginas de dataset: conteúdo e o fechar da página (mesmo canto do `PageHeader`).
 private struct DatasetBar<Content: View>: View {
+    /// Num pane, o X fecha só o pane; na página, fecha a página.
+    var closePane: (() -> Void)?
     @ViewBuilder let content: () -> Content
     @Environment(\.pageTrailingInset) private var trailingInset
 
     var body: some View {
         HStack(spacing: DS.Space.s3) {
             content()
-            ActionButton(.pageClose, tooltip: String(localized: "Close", bundle: .module)) { Image(systemName: "xmark") }
-                .buttonStyle(DSIconButtonStyle(.header))
+            if let closePane {
+                // lint-ui: allow buttons fecha o pane do dataset (layout do workspace, sem ação de registro própria)
+                Button(action: closePane) { Image(systemName: "xmark") }
+                    .buttonStyle(DSIconButtonStyle(.header))
+                    .dsTooltip(String(localized: "Close", bundle: .module), shortcut: nil)
+            } else {
+                ActionButton(.pageClose, tooltip: String(localized: "Close", bundle: .module)) { Image(systemName: "xmark") }
+                    .buttonStyle(DSIconButtonStyle(.header))
+            }
         }
         .padding(.leading, DS.Space.s4)
         .padding(.trailing, DS.Space.s3 + trailingInset)
@@ -319,42 +332,85 @@ private struct HoverRow<Content: View>: View {
 // MARK: Dataset
 
 struct DatasetPageView: View {
-    @Bindable var controller: DatasetsController
+    let controller: DatasetsController
+    @Bindable var model: DatasetViewModel
+    /// Pane que mostra a tabela (`nil` = página do centro): o título arrasta o pane e o X fecha só ele.
+    var paneID: UUID?
+    var drag: PaneDragController?
+
+    /// Página do centro: o dataset ativo.
+    init(controller: DatasetsController) {
+        self.controller = controller
+        self.model = controller.active ?? controller.model(for: "")
+    }
+
+    init(controller: DatasetsController, model: DatasetViewModel, paneID: UUID?, drag: PaneDragController?) {
+        self.controller = controller
+        self.model = model
+        self.paneID = paneID
+        self.drag = drag
+    }
 
     var body: some View {
-        let snapshot = controller.snapshot
-        VStack(spacing: 0) {
-            topBar(snapshot)
-            if let snapshot {
-                queryBar
-                ActivityChart(snapshot: snapshot, controller: controller)
-                HStack(spacing: 0) {
-                    FacetsPanel(snapshot: snapshot, controller: controller)
-                    grid(snapshot)
-                    if let selected = controller.selectedRow {
-                        RowPanel(row: selected, columns: snapshot.summary.dataset.columns, controller: controller)
+        let snapshot = model.snapshot
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            VStack(spacing: 0) {
+                topBar(snapshot, width: width)
+                if let snapshot {
+                    queryBar
+                    ActivityChart(snapshot: snapshot, controller: controller)
+                    ZStack(alignment: .trailing) {
+                        HStack(spacing: 0) {
+                            if width >= DatasetMetrics.facetsMinWidth { FacetsPanel(snapshot: snapshot, controller: controller, model: model) }
+                            grid(snapshot)
+                            if let selected = model.selectedRow, width >= DatasetMetrics.panelInlineMinWidth {
+                                RowPanel(row: selected, columns: snapshot.summary.dataset.columns, controller: controller, model: model)
+                            }
+                        }
+                        // Estreito: o painel da linha fica por cima da grade, com sombra, em vez de espremer as colunas.
+                        if let selected = model.selectedRow, width < DatasetMetrics.panelInlineMinWidth {
+                            RowPanel(row: selected, columns: snapshot.summary.dataset.columns, controller: controller, model: model)
+                                .shadow(color: .black.opacity(0.35), radius: DS.Space.s4)
+                        }
                     }
+                } else {
+                    Spacer(minLength: 0)
                 }
-            } else {
-                Spacer(minLength: 0)
             }
         }
         .background(DS.Color.canvas)
+        .contentShape(Rectangle())
+        .onHover { if $0 { controller.activate(model.id) } }
+        .onAppear {
+            controller.activate(model.id)
+            controller.noteVisible(model.id, true)
+        }
+        .onDisappear { controller.noteVisible(model.id, false) }
         .a11y(.datasetPage, kind: "page")
     }
 
     // MARK: Topo
 
-    private func topBar(_ snapshot: DatasetPageSnapshot?) -> some View {
-        DatasetBar {
-            TableIcon()
-            HStack(spacing: DS.Space.s1_5) {
-                Text(verbatim: snapshot?.summary.dataset.name ?? "").dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary)
-                if let snapshot {
-                    Text(verbatim: "· " + controller.title(of: snapshot.summary)).dsFont(DS.Font.body).foregroundStyle(DS.Color.textTertiary)
+    private func topBar(_ snapshot: DatasetPageSnapshot?, width: CGFloat) -> some View {
+        DatasetBar(closePane: paneID.map { id in { controller.closePane(id) } }) {
+            HStack(spacing: DS.Space.s2_5) {
+                TableIcon()
+                HStack(spacing: DS.Space.s1_5) {
+                    Text(verbatim: snapshot?.summary.dataset.name ?? "").dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary)
+                    if let snapshot, width >= DatasetMetrics.sessionNameMinWidth {
+                        Text(verbatim: "· " + controller.title(of: snapshot.summary)).dsFont(DS.Font.body).foregroundStyle(DS.Color.textTertiary)
+                    }
+                }
+                .lineLimit(1)
+            }
+            // O título é a alça do pane: arrastar leva a tabela para outro lado, outra tab ou uma tab própria (como o cabeçalho
+            // dos terminais).
+            .overlay {
+                if let paneID, let drag {
+                    PaneDragSource(controller: drag, payload: .otherPane(paneID), title: { snapshot?.summary.dataset.name ?? "" })
                 }
             }
-            .lineLimit(1)
             .layoutPriority(1)
             if let snapshot {
                 if controller.isCollecting(snapshot.summary) { CollectingPill() }
@@ -368,13 +424,17 @@ struct DatasetPageView: View {
                 .padding(.leading, DS.Space.s2)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .a11y(.datasetStats, kind: "group", value: "\(snapshot.stats.rows)")
+                ActionButton(
+                    .datasetOpen, argument: .select("\(model.id)|beside"), tooltip: String(localized: "Open beside the agent", bundle: .module)
+                ) { Image(systemName: "rectangle.split.2x1") }
+                    .buttonStyle(DSIconButtonStyle(.header))
                 MenuButton(id: .datasetColumns, action: .datasetColumns, entries: columnEntries) {
                     Image(systemName: "line.3.horizontal.decrease")
-                    Text("Columns", bundle: .module)
+                    if width >= DatasetMetrics.buttonLabelsMinWidth { Text("Columns", bundle: .module) }
                 }
                 MenuButton(id: .datasetExport, action: .datasetExport, entries: exportEntries, primary: true) {
                     Image(systemName: "arrow.down.to.line")
-                    Text("Export", bundle: .module)
+                    if width >= DatasetMetrics.buttonLabelsMinWidth { Text("Export", bundle: .module) }
                 }
             } else {
                 Spacer(minLength: 0)
@@ -398,10 +458,10 @@ struct DatasetPageView: View {
     }
 
     private var columnEntries: [DSMenuEntry] {
-        controller.columns.map { column in
+        model.columns.map { column in
             .item(DSMenuItem(
                 column.name, column.name, detail: DatasetMetrics.typeLabel(column.type), detailMono: true,
-                checked: !controller.hiddenColumns.contains(column.name), action: .datasetColumns, argument: .select(column.name)))
+                checked: !model.hiddenColumns.contains(column.name), action: .datasetColumns, argument: .select(column.name)))
         }
     }
 
@@ -421,9 +481,9 @@ struct DatasetPageView: View {
     private var queryBar: some View {
         HStack(spacing: DS.Space.s2) {
             DSTextField(
-                "Filter rows: price:>200 rating:>=4.5 name:plaza", text: $controller.search, id: .datasetSearch, action: .datasetSearch, compact: true, mono: true)
+                "Filter rows: price:>200 rating:>=4.5 name:plaza", text: $model.search, id: .datasetSearch, action: .datasetSearch, compact: true, mono: true)
             MenuButton(id: .datasetRange, action: .datasetRange, entries: rangeEntries) {
-                Text(verbatim: Self.rangeTitle(controller.range))
+                Text(verbatim: Self.rangeTitle(model.range))
                 Image(systemName: "chevron.down").font(.system(size: DS.Space.s2_5))
             }
         }
@@ -434,7 +494,7 @@ struct DatasetPageView: View {
 
     private var rangeEntries: [DSMenuEntry] {
         DatasetRange.allCases.map { range in
-            .item(DSMenuItem(range.rawValue, Self.rangeTitle(range), checked: controller.range == range, action: .datasetRange, argument: .select(range.rawValue)))
+            .item(DSMenuItem(range.rawValue, Self.rangeTitle(range), checked: model.range == range, action: .datasetRange, argument: .select(range.rawValue)))
         }
     }
 
@@ -452,7 +512,7 @@ struct DatasetPageView: View {
     // MARK: Grade
 
     private func grid(_ snapshot: DatasetPageSnapshot) -> some View {
-        let columns = controller.visibleColumns
+        let columns = model.visibleColumns
         let all = snapshot.summary.dataset.columns
         return VStack(spacing: 0) {
             GeometryReader { viewport in
@@ -470,7 +530,7 @@ struct DatasetPageView: View {
                                     ForEach(snapshot.rows) { row in
                                         ActionButton(.datasetSelectRow, id: .datasetRow(row.id), argument: .select(row.id)) {
                                             GridRow(
-                                                row: row, columns: columns, allColumns: all, selected: controller.selectedRowKey == row.id,
+                                                row: row, columns: columns, allColumns: all, selected: model.selectedRowKey == row.id,
                                                 captured: controller.clock(row.row.firstSeen))
                                         }
                                         .buttonStyle(.plain)
@@ -528,9 +588,9 @@ struct DatasetPageView: View {
 
     private func footer(_ snapshot: DatasetPageSnapshot) -> some View {
         HStack(spacing: DS.Space.s2) {
-            pageButton("chevron.left", id: .datasetPagePrev, argument: "prev", enabled: controller.page > 0)
-            pageButton("chevron.right", id: .datasetPageNext, argument: "next", enabled: controller.page + 1 < controller.pageCount)
-            Text(verbatim: String(localized: "Page \(controller.page + 1) of \(controller.pageCount)", bundle: .module))
+            pageButton("chevron.left", id: .datasetPagePrev, argument: "prev", enabled: model.page > 0)
+            pageButton("chevron.right", id: .datasetPageNext, argument: "next", enabled: model.page + 1 < model.pageCount)
+            Text(verbatim: String(localized: "Page \(model.page + 1) of \(model.pageCount)", bundle: .module))
                 .dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
                 .padding(.leading, DS.Space.s1)
             Text(verbatim: "·").dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
@@ -647,6 +707,7 @@ private struct ActivityChart: View {
 private struct FacetsPanel: View {
     let snapshot: DatasetPageSnapshot
     let controller: DatasetsController
+    let model: DatasetViewModel
 
     var body: some View {
         ScrollView {
@@ -672,7 +733,7 @@ private struct FacetsPanel: View {
     }
 
     private func row(_ facet: DatasetFacet, _ value: DatasetFacetCount) -> some View {
-        let on = controller.isChecked(facet, value.value)
+        let on = model.isChecked(facet, value.value)
         return ActionButton(.datasetFacet, id: .datasetFacet(facet.rawValue, value.value), argument: .select("\(facet.rawValue):\(value.value)")) {
             HStack(spacing: DS.Space.s2) {
                 CheckSquare(on: on)
@@ -783,6 +844,7 @@ private struct RowPanel: View {
     let row: DatasetDisplayRow
     let columns: [DatasetColumn]
     let controller: DatasetsController
+    let model: DatasetViewModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -790,7 +852,7 @@ private struct RowPanel: View {
             tabs
             ScrollView {
                 VStack(alignment: .leading, spacing: DS.Space.s3) {
-                    switch controller.panelTab {
+                    switch model.panelTab {
                     case .attributes:
                         attributes
                         SourceCard(row: row.row, compact: true)
@@ -860,7 +922,7 @@ private struct RowPanel: View {
     }
 
     private func tab(_ value: DatasetPanelTab, _ title: String) -> some View {
-        let on = controller.panelTab == value
+        let on = model.panelTab == value
         return ActionButton(.datasetPanelTab, id: .datasetPanelTab(value.rawValue), argument: .select(value.rawValue)) {
             Text(verbatim: title).dsFont(DS.Font.label).foregroundStyle(on ? DS.Color.textPrimary : DS.Color.textTertiary)
                 .padding(.vertical, DS.Space.s2)

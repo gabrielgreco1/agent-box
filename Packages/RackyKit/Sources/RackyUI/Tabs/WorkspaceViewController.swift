@@ -260,6 +260,17 @@ final class WorkspaceViewController: NSViewController {
             root.setPendingVisible(env.sidebar.focusedPending != nil)
         }
         root.onTabRowClickWhilePage = { [weak env] in env?.computers.closePage() }
+        // Pane de dataset: a tabela com o estado do dataset, o título que arrasta o pane e o ambiente completo (menus, registro).
+        env.workspace.makePaneView = { [weak env] pane in
+            guard let env, case .dataset(let id) = pane.content else { return NSView() }
+            let model = env.datasets.model(for: id)
+            let host = ChromeHostingView(
+                content: DatasetPageView(controller: env.datasets, model: model, paneID: pane.id, drag: env.workspace.dragController)
+                    .environment(\.elementStore, env.elements).environment(\.actionRegistry, env.registry)
+                    .environment(\.overlayRouter, env.overlays).environment(\.a11yParent, .windowMain))
+            host.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
+            return host
+        }
         env.computers.onPageChange = { [weak self, weak root, weak env] in
             guard let self, let root, let env else { return }
             root.setPage(self.pageView(for: env.computers.page, env: env), keepTabs: env.computers.page.isViewer)
@@ -295,7 +306,7 @@ final class WorkspaceViewController: NSViewController {
         }
         let host = ChromeHostingView(
             content: PageInsetReader(rightPanel: env.rightPanel, content: content).environment(\.elementStore, env.elements)
-                .environment(\.actionRegistry, env.registry).environment(\.a11yParent, .windowMain))
+                .environment(\.actionRegistry, env.registry).environment(\.overlayRouter, env.overlays).environment(\.a11yParent, .windowMain))
         host.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
         return host
     }
