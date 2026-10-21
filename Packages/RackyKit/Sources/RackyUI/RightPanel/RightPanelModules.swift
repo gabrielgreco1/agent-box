@@ -10,6 +10,7 @@ enum RightPanelModules {
         controller.register(FilesModule(controller: env.files))
         controller.register(makeInsightsModule(env: env))
         controller.register(ComputersModule(controller: env.computers))
+        controller.register(DataModule(datasets: env.datasets))
         if let conversations = env.conversations { controller.register(ConversationsModule(controller: conversations)) }
         if env.flags.isEnabled(.slice2) {
             controller.register(SourceControlModule(controller: env.github))

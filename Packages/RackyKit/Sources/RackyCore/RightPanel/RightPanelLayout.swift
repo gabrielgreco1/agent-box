@@ -18,6 +18,8 @@ public struct PanelModuleID: Hashable, Codable, Sendable, RawRepresentable, Expr
     public static let insights: PanelModuleID = "insights"
     public static let computers: PanelModuleID = "computers"
     public static let conversations: PanelModuleID = "conversations"
+    /// Tabela ao vivo do dataset da sessão (abre sozinho quando dados começam a entrar).
+    public static let data: PanelModuleID = "data"
 }
 
 /// Posição vertical de um módulo no painel.

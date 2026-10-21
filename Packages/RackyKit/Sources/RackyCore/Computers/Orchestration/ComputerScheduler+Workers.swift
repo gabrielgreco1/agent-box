@@ -101,12 +101,14 @@ extension ComputerScheduler {
                 .notSupported, box?["message"]?.string ?? "the computer for this worker could not be reserved",
                 details: box.map { (b: JSON) -> JSON in JSON.object(["reason": b["reason"] ?? JSON.null, "name": JSON.string(name)]) })
         }
+        let ordinal = appWorkers.values.filter { $0.parent == parent && $0.harness == harness }.count + 1
         appWorkers[childID] = AppWorker(
             name: name, childID: childID, parent: parent, harness: harness, title: title, state: .starting, startedAt: now())
-        let launch = WorkerLaunchRequest(
+        var launch = WorkerLaunchRequest(
             parentID: parent, sessionID: session?.id, harness: harness, childID: childID, capability: capability, computerName: name, title: title,
             prompt: OrchestrationText.workerPrompt(harness: harness, computer: name, brief: request.brief, title: title), model: request.model,
             helperPath: workerHelperPath)
+        launch.ordinal = ordinal
         // O lançamento do terminal não bloqueia o pai: `agent_spawn` responde já e o resto acontece aqui.
         Task { await self.launchWorker(launch, with: launcher) }
         notifyChange()

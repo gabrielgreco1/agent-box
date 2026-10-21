@@ -103,7 +103,7 @@ extension AppEnvironment {
         await orchestrator.restoreIdentities()
         orchestratorHolder.set(orchestrator)
         // Workers de app (spec subagent-harness): `agent_spawn` abre o terminal do worker pelo workspace; o fim do terminal solta o computador.
-        await orchestrator.setWorkerLauncher(WorkspaceWorkerLauncher.make(workspace: workspace, settings: settings))
+        await orchestrator.setWorkerLauncher(WorkspaceWorkerLauncher.make(workspace: workspace, settings: settings, computers: computers.model))
         workspace.onWorkerTerminalEnded = { [weak orchestrator] child, code in
             Task { await orchestrator?.scheduler.workerExited(childID: child, exitCode: code) }
         }

@@ -10918,6 +10918,39 @@
           }
         }
       }
+    },
+    "No data in this session yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No data in this session yet"
+          }
+        }
+      }
+    },
+    "Tables that subagents collect show up here.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tables that subagents collect show up here."
+          }
+        }
+      }
+    },
+    "No rows yet.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No rows yet."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

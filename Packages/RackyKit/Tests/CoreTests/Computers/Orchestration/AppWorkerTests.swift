@@ -97,7 +97,7 @@ private struct WorkerRig {
         for _ in 0 ..< 100 where await w.launcher.started.isEmpty { try await Task.sleep(for: .milliseconds(10)) }
         let request = try #require(await w.launcher.started.first)
         #expect(request.parentID == "parent-aaaaaaaa" && request.childID == child && request.computerName == "houston" && request.harness == .codex)
-        #expect(request.terminalTitle == "Codex · Houston permits" && request.helperPath == "/usr/local/bin/racky")
+        #expect(request.terminalTitle == "Codex 1 · Houston permits" && request.helperPath == "/usr/local/bin/racky")
         #expect(request.prompt.contains("\"houston\"") && request.prompt.contains("TASK: study houston permits"))
         // A capability é válida no hub e o filho é um worker (não pode chamar ferramenta de pai).
         #expect(await w.rig.hub.authorize(child: child, capability: request.capability))

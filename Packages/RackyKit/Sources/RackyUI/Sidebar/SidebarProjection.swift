@@ -120,6 +120,8 @@ struct SubagentRowData: Identifiable, Equatable {
     /// Worker de app (sessão separada de Codex / OpenCode / Claude): o CLI e o terminal dele (clique foca o pane).
     var worker: TerminalProvider?
     var workerTerminalID: UUID?
+    /// Tarefa do worker, ao lado do nome do agente ("Codex 1  books p1–4").
+    var task: String?
 
     var glyph: DSIndicatorGlyph {
         switch phase {
@@ -279,6 +281,8 @@ struct SidebarInput {
     /// Agentes com as linhas de subagentes recolhidas e o computador de cada subagente (`agent_id` -> nome).
     var collapsedChildren: Set<UUID> = []
     var agentComputers: [String: String] = [:]
+    /// Computador de cada worker de app (terminal -> nome): vai na linha do worker, não como linha de computador solta.
+    var workerComputers: [UUID: String] = [:]
     /// Status Git por pasta de worktree, PR por sessão (T2-05) e a sessão com a nota em edição.
     var gitStatus: [String: GitStatus] = [:]
     var pullRequests: [UUID: PullRequestChipModel] = [:]
@@ -384,11 +388,13 @@ enum SidebarProjector {
             else if w.state == .failedToStart || (w.exitCode ?? 0) != 0 { phase = .failed }
             else { phase = .done }
         }
-        // O título do worker é "<CLI> · <tarefa>"; a sidebar já mostra o logo do CLI, então fica só a tarefa.
-        let title = w.title.range(of: " · ").map { String(w.title[$0.upperBound...]) } ?? w.title
+        // O título do worker é "<agente> · <tarefa>" ("Codex 1 · books p1–4"): o nome do agente lidera, a tarefa vem ao lado.
+        let split = w.title.range(of: " · ")
+        let name = split.map { String(w.title[..<$0.lowerBound]) } ?? w.title
+        let task = split.map { String(w.title[$0.upperBound...]) }
         return SubagentRowData(
-            id: "worker-\(w.id.uuidString)", title: title, phase: phase, startedAt: w.startedAt ?? w.createdAt, endedAt: w.endedAt,
-            subtitle: w.lastMessage, computer: nil, worker: w.provider, workerTerminalID: w.id)
+            id: "worker-\(w.id.uuidString)", title: name, phase: phase, startedAt: w.startedAt ?? w.createdAt, endedAt: w.endedAt,
+            subtitle: w.lastMessage, computer: input.workerComputers[w.id], worker: w.provider, workerTerminalID: w.id, task: task)
     }
 
     static func status(for t: Terminal, center: AttentionCenter, now: Date) -> StatusSample {
@@ -479,7 +485,7 @@ enum SidebarProjector {
             let workers = rows.filter { t in t.launchSpec.workerParentTerminalID.map(parentIDs.contains) ?? false }
             let workerIDs = Set(workers.map(\.id))
             let shown = rows.filter { t in !workerIDs.contains(t.id) && (agents.contains { $0.id == t.id } || shellRows.contains { $0.id == t.id }) }
-            let grouped = rows.count - shown.count
+            let grouped = rows.count - shown.count - workers.count  // workers já aparecem embaixo do pai
 
             let agentRows = shown.map { t -> AgentRowData in
                 let g = status(for: t, center: input.attention, now: input.now)
@@ -551,7 +557,9 @@ enum SidebarProjector {
                 summary: summary, summaryExpanded: expandedSummary, agentsCollapsed: input.collapsedSessions.contains(s.id),
                 branch: branch, folderPath: s.folderPath, a11yLabel: label, subagent: s.subagentComputers,
                 offersSubagentToggle: input.offersSubagentToggle.contains(s.id), restartToApply: input.restartPending.contains(s.id),
-                computers: (input.computers[s.id] ?? []).filter { row in !input.agentComputers.values.contains(row.id) })
+                computers: (input.computers[s.id] ?? []).filter { row in
+                    !input.agentComputers.values.contains(row.id) && !input.workerComputers.values.contains(row.id)
+                })
         }
 
         func sorted(_ sessions: [Session]) -> [Session] {

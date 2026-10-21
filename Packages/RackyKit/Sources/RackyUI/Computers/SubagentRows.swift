@@ -89,6 +89,13 @@ struct SubagentRowView: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
                     .a11y(.sidebarSessionChildTitle(sid, cid), kind: "text", label: child.title)
+                if let task = child.task {
+                    Text(verbatim: task)
+                        .dsFont(DS.Font.small)
+                        .foregroundStyle(DS.Color.textTertiary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
                 Spacer(minLength: DS.Space.s1)
                 if child.computer != nil {
                     Image(systemName: "desktopcomputer")
@@ -108,7 +115,7 @@ struct SubagentRowView: View {
             .contentShape(Rectangle())
             .background { SubagentHoverTracker(child: child, sessionID: sessionID, controller: hoverCards, hovering: $hovering) }
             .accessibilityElement(children: .combine)
-            .accessibilityLabel(Text(verbatim: "\(child.title), \(child.stateLabel), \(child.elapsedText(now: context.date))"))
+            .accessibilityLabel(Text(verbatim: "\(child.title)\(child.task.map { ", \($0)" } ?? ""), \(child.stateLabel), \(child.elapsedText(now: context.date))"))
             Group {
                 if let workerTerminal = child.workerTerminalID, let registry, registry.isOffered(.paneShow) {
                     // Worker de app: o clique leva ao pane dele (a sessão separada ao lado do agente).

@@ -16,10 +16,10 @@ import Testing
 
     @Test func environmentRegistersTheModulesWithStripButtonsForFilesAndInsights() {
         let env = AppEnvironment(environment: [:])
-        #expect(env.rightPanel.modules.map(\.id) == [.files, .insights, .computers, .conversations, .sourceControl, .checks, .context])
+        #expect(env.rightPanel.modules.map(\.id) == [.files, .insights, .computers, .data, .conversations, .sourceControl, .checks, .context])
         #expect(env.rightPanel.layout.visible == [.files, .insights])
         let withButtons = env.rightPanel.modules.filter { $0.toggleAction != nil }.map(\.id)
-        #expect(withButtons == [.files, .insights])
+        #expect(withButtons == [.files, .insights, .data])
         #expect(env.rightPanel.module(.files)?.stripButtonID == .tabsFilesToggle)
         #expect(env.rightPanel.module(.insights)?.stripButtonID == .tabsInsightsToggle)
         #expect(env.rightPanel.module(.insights)?.title == "Insights", "o placeholder do Insights está registrado")
@@ -29,7 +29,7 @@ import Testing
         #expect(RightPanelGeometry.collapseBelowWindowWidth == Double(DS.Layout.rightPanelCollapseBelowWindowWidth))
         #expect(RightPanelGeometry.centerMinWidth == Double(DS.Layout.rightPanelCenterMinWidth))
         #expect(RightPanelGeometry.barHeight == Double(DS.Layout.titlebarHeight))
-        #expect(RightPanelMetrics.stripButtons == StripMetrics.toggleSize.width * 3 + StripMetrics.navGap * 2 + DS.Space.s2 * 2)
+        #expect(RightPanelMetrics.stripButtons == StripMetrics.toggleSize.width * 4 + StripMetrics.navGap * 3 + DS.Space.s2 * 2)
         #expect(DS.Layout.windowMinWidth == 760 && DS.Layout.windowMinHeight == 480)
     }
 
@@ -262,7 +262,7 @@ import Testing
         #expect(!env.rightPanel.isShown, "painel recolhido na janela mínima")
         let tree = env.elements.snapshot()
         let window = try #require(tree.window)
-        for id in [A11yID.tabsFilesToggle, .tabsInsightsToggle, .tabsRightPanelToggle] {
+        for id in [A11yID.tabsFilesToggle, .tabsInsightsToggle, .tabsDataToggle, .tabsRightPanelToggle] {
             let frame = try #require(tree.find(id)?.frame, "\(id.rawValue) existe mesmo com o painel fechado")
             #expect(frame.x >= 0 && frame.x + frame.width <= window.width, "\(id.rawValue) dentro da janela: \(frame)")
             #expect(frame.y >= 0 && frame.y + frame.height <= 36)

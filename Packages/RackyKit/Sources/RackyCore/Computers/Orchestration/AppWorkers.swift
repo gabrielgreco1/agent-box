@@ -23,8 +23,12 @@ public struct WorkerLaunchRequest: Sendable, Equatable {
     public var model: String?
     /// `Racky helper` do app (caminho absoluto do `racky`), que o launcher repassa à injeção.
     public var helperPath: String
-    /// Terminal "Codex · título", como a UI o nomeia.
-    public var terminalTitle: String { "\(harness.title) · \(title)" }
+    /// Número do worker entre os do mesmo CLI deste pai (1, 2, …): o nome que a UI mostra é "Codex 1", "Codex 2".
+    public var ordinal: Int = 1
+    /// Nome curto do worker na UI.
+    public var agentName: String { "\(harness.title) \(ordinal)" }
+    /// Terminal "Codex 1 · tarefa": o nome do agente e, depois do ponto, a tarefa (a sidebar mostra os dois separados).
+    public var terminalTitle: String { "\(agentName) · \(title)" }
 
     public init(
         parentID: String, sessionID: UUID?, harness: WorkerHarness, childID: String, capability: String, computerName: String, title: String,

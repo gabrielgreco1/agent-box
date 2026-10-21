@@ -458,6 +458,8 @@ extension ActionID {
     public static let dialogNewBatchCancel = ActionID(unchecked: "dialog.newBatch.cancel")
     public static let rightPanelToggleFiles = ActionID(unchecked: "rightPanel.toggleFiles")
     public static let rightPanelToggleInsights = ActionID(unchecked: "rightPanel.toggleInsights")
+    public static let rightPanelToggleData = ActionID(unchecked: "rightPanel.toggleData")
+    public static let rightPanelDataPick = ActionID(unchecked: "rightPanel.dataPick")
     public static let rightPanelToggle = ActionID(unchecked: "rightPanel.toggle")
     public static let rightPanelMinimize = ActionID(unchecked: "rightPanel.minimize")
     public static let rightPanelMove = ActionID(unchecked: "rightPanel.move")
@@ -940,6 +942,8 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "dialog.newBatch.cancel"), label: "Campos de New Batch… (§16.15)", shortcut: "Esc (cancel)", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "rightPanel.toggleFiles"), label: "Toggle Files", shortcut: "⌥⌘1", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "rightPanel.toggleInsights"), label: "Toggle Insights", shortcut: "⌥⌘2", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "rightPanel.toggleData"), label: "Toggle Data", shortcut: "⌥⌘3", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "rightPanel.dataPick"), label: "Data: escolher dataset", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "rightPanel.toggle"), label: "Toggle Right Panel", shortcut: "⌥⌘0", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "rightPanel.minimize"), label: "Minimize Module", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "rightPanel.move"), label: "Move Module", shortcut: "", slice: .slice1),

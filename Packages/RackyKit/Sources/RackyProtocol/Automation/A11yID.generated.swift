@@ -274,6 +274,16 @@ extension A11yID {
     public static let tabsFilesToggle = A11yID(unchecked: "tabs.filesToggle")
     /// `tabs.insightsToggle`
     public static let tabsInsightsToggle = A11yID(unchecked: "tabs.insightsToggle")
+    /// `tabs.dataToggle`
+    public static let tabsDataToggle = A11yID(unchecked: "tabs.dataToggle")
+    /// `rightPanel.data`
+    public static let rightPanelData = A11yID(unchecked: "rightPanel.data")
+    /// `rightPanel.data.empty`
+    public static let rightPanelDataEmpty = A11yID(unchecked: "rightPanel.data.empty")
+    /// `rightPanel.data.open`
+    public static let rightPanelDataOpen = A11yID(unchecked: "rightPanel.data.open")
+    /// `rightPanel.data.pick`
+    public static let rightPanelDataPick = A11yID(unchecked: "rightPanel.data.pick")
     /// `rightPanel.files`
     public static let rightPanelFiles = A11yID(unchecked: "rightPanel.files")
     /// `rightPanel.files.chip`
@@ -1934,6 +1944,11 @@ extension A11yID {
         A11yIDSpec(pattern: "rightPanel.insights.showExactLimits", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
         A11yIDSpec(pattern: "tabs.filesToggle", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
         A11yIDSpec(pattern: "tabs.insightsToggle", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
+        A11yIDSpec(pattern: "tabs.dataToggle", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
+        A11yIDSpec(pattern: "rightPanel.data", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
+        A11yIDSpec(pattern: "rightPanel.data.empty", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
+        A11yIDSpec(pattern: "rightPanel.data.open", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
+        A11yIDSpec(pattern: "rightPanel.data.pick", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
         A11yIDSpec(pattern: "rightPanel.files", surface: "Painel direito (Files, 10-right-panel §2)"),
         A11yIDSpec(pattern: "rightPanel.files.chip", surface: "Painel direito (Files, 10-right-panel §2)"),
         A11yIDSpec(pattern: "rightPanel.files.root", surface: "Painel direito (Files, 10-right-panel §2)"),

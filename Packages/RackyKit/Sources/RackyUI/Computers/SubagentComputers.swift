@@ -110,7 +110,10 @@ final class SubagentComputersController {
     }
 
     private func agentTerminals(in session: UUID, includeAll: Bool = false) -> [Terminal] {
-        terminals(in: session).filter { $0.provider.supportsSubagentComputers && (includeAll || $0.state == .running || $0.state == .launching) }
+        // Workers de app (`agent_spawn`) não são pais: lançados só com a identidade do filho, nunca pedem "Restart to apply".
+        terminals(in: session).filter {
+            $0.provider.supportsSubagentComputers && $0.launchSpec.workerChildID == nil && (includeAll || $0.state == .running || $0.state == .launching)
+        }
     }
 
     /// O agente vivo foi lançado com outro modo que o da sessão: precisa de "Restart to apply".

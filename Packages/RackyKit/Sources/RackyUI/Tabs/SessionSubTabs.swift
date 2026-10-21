@@ -45,9 +45,11 @@ struct SessionSubTabs: View {
             ForEach(names, id: \.self) { name in
                 item(selected: current == name, id: .subtabsComputer(name), action: .computerOpenViewer, argument: .select(name)) {
                     Image(systemName: "display")
-                    Text(verbatim: name)
+                    // O computador de um worker leva o nome do agente que o usa ("Codex 1"); o nome da máquina fica no hover.
+                    Text(verbatim: computers.model.computerAgentNames[name] ?? name)
                     statusBadge(name)
                 }
+                .help(name)
             }
             Spacer(minLength: DS.Space.s2)
             // A barra também é o header do viewer aberto: endereço, quem está no controle, Take Over e ações.

@@ -11,8 +11,8 @@ enum RightPanelMetrics {
     static let dividerThickness = CGFloat(RightPanelGeometry.dividerThickness)
     static let dividerHit = CGFloat(RightPanelGeometry.dividerHitSlop) * 2 + CGFloat(RightPanelGeometry.dividerThickness)
     static let hairline: CGFloat = 1
-    /// Largura reservada no canto superior direito da janela para os botões Files · Insights · painel (`RightPanelStripButtons`).
-    static let stripButtons = StripMetrics.toggleSize.width * 3 + StripMetrics.navGap * 2 + DS.Space.s2 * 2
+    /// Largura reservada no canto superior direito da janela para os botões Files · Insights · Data · painel (`RightPanelStripButtons`).
+    static let stripButtons = StripMetrics.toggleSize.width * 4 + StripMetrics.navGap * 3 + DS.Space.s2 * 2
     static let headerIcon: CGFloat = 12
 }
 

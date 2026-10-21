@@ -59,6 +59,9 @@ public final class ComputersModel {
     public var agentNames: [String: String] = [:]
     /// Computador de cada subagente nativo (`agent_id` dos hooks -> nome), ligado quando o filho chama a primeira ferramenta.
     public var agentComputers: [String: String] = [:]
+    /// Workers de app (`agent_spawn`): computador de cada terminal de worker e o nome do agente de cada computador ("Codex 1").
+    public var workerComputers: [UUID: String] = [:]
+    public var computerAgentNames: [String: String] = [:]
     /// Pedidos de ajuda abertos e pedidos de computador sem decisão: o número do badge do Dock (03 §9.3).
     public var attentionCount: Int { inbox.filter { $0.phase == .needsYou }.count + approvals.count }
     public var sessionTitle: (String) -> String? = { _ in nil }

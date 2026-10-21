@@ -1,3 +1,4 @@
+import RackyCore
 import RackyDesignSystem
 import RackyProtocol
 import RackyStore
@@ -273,14 +274,22 @@ import Testing
         var spec = LaunchSpec(provider: .codex, workerChildID: "01a15eca-a1")
         spec.workerParentTerminalID = parent.id
         let worker = Terminal(
-            tabID: parent.tabID, provider: .codex, title: "Codex · Pages 1–4", titleSource: .user, cwd: parent.cwd, launchSpec: spec, state: .running,
+            tabID: parent.tabID, provider: .codex, title: "Codex 1 · Pages 1–4", titleSource: .user, cwd: parent.cwd, launchSpec: spec, state: .running,
             createdAt: SidebarProjectionTests.now, startedAt: SidebarProjectionTests.now)
         cast.terminals.append(worker)
         var input = SidebarInput(snapshot: cast.snapshot, now: SidebarProjectionTests.now, home: SidebarProjectionTests.home)
         input.selectedSession = session.id
+        input.workerComputers = [worker.id: "books-p1-4"]
+        let own = ComputerChildRow(ComputerRow(
+            snapshot: ViewerSnapshot(name: "books-p1-4", state: .inUse, display: "headless", control: .agent, proxy: "direct"), thumbnail: nil,
+            sessionTitle: "quiet-harbor", owner: nil, lastActivity: SidebarProjectionTests.now))
+        input.computers = [session.id: [own]]
         let card = try #require(SidebarProjector.build(input).cleanSessions.first { $0.id == session.id })
         #expect(card.agentRows.map(\.id) == [parent.id], "the worker is not an agent row")
+        #expect(card.computers.isEmpty, "the worker's computer lives on the worker's row, not as a loose computer row")
+        #expect(card.groupedTerminals == 0, "nor a hidden \"+N terminals\" one")
         let child = try #require(card.agentRows.first?.children.first { $0.workerTerminalID == worker.id })
-        #expect(child.title == "Pages 1–4" && child.worker == .codex && child.phase == .running)
+        #expect(child.title == "Codex 1" && child.task == "Pages 1–4" && child.worker == .codex && child.phase == .running)
+        #expect(child.computer == "books-p1-4")
     }
 }

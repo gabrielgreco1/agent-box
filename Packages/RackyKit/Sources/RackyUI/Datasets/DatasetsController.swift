@@ -277,6 +277,10 @@ public final class DatasetsController {
     @ObservationIgnored public var closePane: (UUID) -> Void = { _ in }
     /// Sessão aberta no workspace e "o dataset já está numa tab ou pane dela?" (abrir sozinho só quando não está).
     @ObservationIgnored public var currentSession: () -> UUID? = { nil }
+    /// Dataset que o módulo Data do painel direito mostra (`nil` = o mais recente da sessão aberta).
+    public var panelDatasetID: String?
+    /// Mostra o módulo Data no painel direito (abre o painel se estava fechado).
+    @ObservationIgnored public var showDataPanel: () -> Void = {}
     @ObservationIgnored public var isShownInSession: (_ datasetID: String, _ sessionID: UUID) -> Bool = { _, _ in false }
     /// Abrir a tabela ao lado assim que as primeiras linhas de um dataset novo chegam (uma vez por dataset).
     @ObservationIgnored public var autoOpenEnabled = true
@@ -422,8 +426,8 @@ public final class DatasetsController {
         }
     }
 
-    /// Dados começaram a entrar num dataset novo da sessão aberta: a tela divide (o que o usuário via de um lado, a tabela do
-    /// outro), sem tirar o teclado do agente. Uma vez por dataset; fechar a tabela não faz ela voltar.
+    /// Dados começaram a entrar num dataset novo da sessão aberta: o módulo Data abre no painel direito com a tabela ao vivo, sem mexer
+    /// na tela do usuário nem no teclado. Uma vez por dataset; fechar o módulo não faz ele voltar.
     func autoOpenNewData() async {
         guard autoOpenEnabled, let store, let session = currentSession() else { return }
         if !autoOpenedLoaded {
@@ -437,11 +441,25 @@ public final class DatasetsController {
             autoOpened.insert(summary.dataset.id)
             let saved = Array(autoOpened).sorted()
             try? await store.setUIState(Self.autoOpenedKey, saved)
-            if isShownInSession(summary.dataset.id, session) || currentPage() != .workspace { continue }
+            if isShownInSession(summary.dataset.id, session) { continue }
+            // No painel direito, no lugar dos Insights: a tela do usuário não muda.
             let m = model(for: summary.dataset.id)
             await reload(m)
-            _ = openInSession(summary.dataset.id, session, true)
+            panelDatasetID = summary.dataset.id
+            showDataPanel()
         }
+    }
+
+    /// Datasets da sessão aberta, mais recente primeiro (módulo Data do painel direito).
+    public var sessionSummaries: [DatasetSummary] {
+        guard let session = currentSession() else { return [] }
+        return summaries.filter { $0.dataset.sessionID == session }
+    }
+
+    /// O dataset que o módulo Data mostra: o escolhido, se for da sessão aberta, senão o mais recente dela.
+    public var panelSummary: DatasetSummary? {
+        let list = sessionSummaries
+        return list.first { $0.dataset.id == panelDatasetID } ?? list.first
     }
 
     // MARK: Ações
@@ -567,6 +585,13 @@ public final class DatasetsController {
             }
             openURL(url)
             return url.absoluteString
+        }
+        try registry.register(.rightPanelDataPick) { [unowned self] arg in
+            guard arg.kind == .select, let id = arg.value, summaries.contains(where: { $0.dataset.id == id }) else {
+                throw ActionError.failed(.rightPanelDataPick, message: String(localized: "No such dataset.", bundle: .module))
+            }
+            panelDatasetID = id
+            return id
         }
         try registry.register(.datasetExport, enablement: hasDataset) { [unowned self] arg in
             try await export(arg)

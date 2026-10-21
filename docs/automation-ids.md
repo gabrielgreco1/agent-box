@@ -329,6 +329,11 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `rightPanel.insights.showExactLimits`
 - `tabs.filesToggle`
 - `tabs.insightsToggle`
+- `tabs.dataToggle`
+- `rightPanel.data`
+- `rightPanel.data.empty`
+- `rightPanel.data.open`
+- `rightPanel.data.pick`
 
 ### Painel direito (Files, 10-right-panel §2)
 
@@ -1071,6 +1076,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `dialog.newBatch.cancel` | Campos de New Batch… (§16.15) | Esc (cancel) | slice3 |
 | `rightPanel.toggleFiles` | Toggle Files | ⌥⌘1 | slice1 |
 | `rightPanel.toggleInsights` | Toggle Insights | ⌥⌘2 | slice1 |
+| `rightPanel.toggleData` | Toggle Data | ⌥⌘3 | slice1 |
+| `rightPanel.dataPick` | Data: escolher dataset | — | slice1 |
 | `rightPanel.toggle` | Toggle Right Panel | ⌥⌘0 | slice1 |
 | `rightPanel.minimize` | Minimize Module | — | slice1 |
 | `rightPanel.move` | Move Module | — | slice1 |

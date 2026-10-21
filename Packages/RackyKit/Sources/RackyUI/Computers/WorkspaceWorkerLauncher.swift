@@ -20,9 +20,9 @@ struct WorkspaceWorkerLauncher: WorkerLauncher {
 
     /// O launcher ligado ao workspace e às settings (perfil padrão de cada CLI). `provider` do worker: o mesmo nome do harness.
     @MainActor
-    static func make(workspace: WorkspaceModel, settings: SettingsModel) -> WorkspaceWorkerLauncher {
+    static func make(workspace: WorkspaceModel, settings: SettingsModel, computers: ComputersModel? = nil) -> WorkspaceWorkerLauncher {
         WorkspaceWorkerLauncher(
-            open: { [weak workspace] request in
+            open: { [weak workspace, weak computers] request in
                 guard let workspace else { throw Failure.parentNotOpen }
                 let parentTerminal = UUID(uuidString: request.parentID).flatMap { workspace.terminalOfRun($0) }
                 guard let sid = request.sessionID ?? parentTerminal.flatMap({ workspace.sessionID(of: $0) }) else { throw Failure.parentNotOpen }
@@ -32,6 +32,9 @@ struct WorkspaceWorkerLauncher: WorkerLauncher {
                 guard let id = workspace.openWorkerTerminal(
                     session: sid, nextTo: parentTerminal?.id, worker: WorkerLaunch(request), spec: spec, title: request.terminalTitle)
                 else { throw Failure.parentNotOpen }
+                // A sidebar e as abas da sessão chamam o computador pelo agente que o usa ("Codex 1").
+                computers?.workerComputers[id] = request.computerName
+                computers?.computerAgentNames[request.computerName] = request.agentName
                 return id
             },
             send: { [weak workspace] id, signal in await workspace?.signalWorker(terminal: id, signal) })

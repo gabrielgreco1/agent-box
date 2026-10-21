@@ -209,6 +209,10 @@ public final class RightPanelController {
             toggle(.insights)
             return state(.insights)
         }
+        try registry.register(.rightPanelToggleData) { [unowned self] _ in
+            toggle(.data)
+            return state(.data)
+        }
         try registry.register(.rightPanelToggle) { [unowned self] _ in
             toggleOpen()
             return isShown ? "open" : "closed"
