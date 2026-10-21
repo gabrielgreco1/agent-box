@@ -239,13 +239,15 @@ extension RackyStore {
         }
     }
 
-    /// Execuções principais cuja projeção ficou para trás dos eventos gravados (crash entre os dois passos).
+    /// Execuções principais cuja projeção ficou para trás dos eventos gravados (crash entre os dois passos) ou que estão esperando
+    /// subagentes: refazer a projeção com o redutor atual cura esperas presas (um subagente parado sem `SubagentStop`).
     public func runsNeedingReconcile() async throws -> [UUID] {
         try await read { db in
             try String.fetchAll(db, sql: """
                 SELECT r.id FROM agent_run r
                 WHERE r.parent_run_id IS NULL
-                  AND (SELECT MAX(e.at) FROM agent_event e WHERE e.run_id = r.id) > COALESCE(r.last_event_at, -1)
+                  AND ((SELECT MAX(e.at) FROM agent_event e WHERE e.run_id = r.id) > COALESCE(r.last_event_at, -1)
+                       OR r.status = 'waiting_on_subagents')
                 """).compactMap { UUID(uuidString: $0) }
         }
     }

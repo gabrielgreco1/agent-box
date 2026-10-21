@@ -481,7 +481,7 @@ struct DatasetPageView: View {
     private var queryBar: some View {
         HStack(spacing: DS.Space.s2) {
             DSTextField(
-                "Filter rows: price:>200 rating:>=4.5 name:plaza", text: $model.search, id: .datasetSearch, action: .datasetSearch, compact: true, mono: true)
+                "Filter: price:>200 name:plaza", text: $model.search, id: .datasetSearch, action: .datasetSearch, compact: true, mono: true)
             MenuButton(id: .datasetRange, action: .datasetRange, entries: rangeEntries) {
                 Text(verbatim: Self.rangeTitle(model.range))
                 Image(systemName: "chevron.down").font(.system(size: DS.Space.s2_5))

@@ -219,6 +219,7 @@ public enum ActivityReducer {
             } else {
                 s.pending[""] = nil
                 if [.starting, .idle, .unknown].contains(s.base) { s.base = .working; s.reason = nil }
+                if name == .postToolUse, p.toolName == "TaskStop" { stopChild(&s, target: p.toolTarget, atNs: atNs) }
             }
 
         case .permissionRequest:
@@ -303,6 +304,26 @@ public enum ActivityReducer {
         c.agentType = p.agentType ?? c.agentType
         if working, c.phase != .done { c.phase = .working }
         s.children[id] = c
+    }
+
+    /// O agente principal parou um subagente em segundo plano (`TaskStop`): o Claude Code não manda `SubagentStop` nesse caso,
+    /// então o filho termina aqui. Sem o id no evento (gravado antes de o Racky ler `task_id`), só termina se havia exatamente um
+    /// filho vivo: era ele.
+    private static func stopChild(_ s: inout ActivityState, target: String?, atNs: Int64) {
+        let id: String?
+        if let target, s.children[target] != nil {
+            id = target
+        } else if target == nil {
+            let live = s.children.values.filter { $0.phase != .done }
+            id = live.count == 1 ? live.first?.agentID : nil
+        } else {
+            id = nil
+        }
+        guard let id, var c = s.children[id], c.phase != .done else { return }
+        c.phase = .done; c.endedAtNs = atNs; c.subtitle = nil
+        s.children[id] = c
+        s.pending[id] = nil
+        if s.base == .waiting, s.liveChildCount == 0 { s.base = .done }
     }
 
     private static func endChildren(_ s: inout ActivityState, atNs: Int64) {

@@ -10797,6 +10797,17 @@
           }
         }
       }
+    },
+    "Filter: price:>200 name:plaza": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filter: price:>200 name:plaza"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

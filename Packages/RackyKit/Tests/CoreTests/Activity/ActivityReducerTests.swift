@@ -301,3 +301,43 @@ private func at(_ n: Int64) -> Int64 { t0 + n * 1_000_000 }
         #expect(ActivityTimeouts.applyingIdleTimeout(r, seen: true, now: now).activity == .done)
     }
 }
+
+/// Subagente parado pelo pai com `TaskStop`: o Claude Code não manda `SubagentStop`, e o pai não pode ficar "Waiting" para sempre.
+@Suite struct ReducerTaskStopTests {
+    private func spawn(_ ids: [String]) -> [ActivityEvent] {
+        var events = [ev("UserPromptSubmit", atNs: at(0))]
+        for (i, id) in ids.enumerated() {
+            events.append(ev("SubagentStart", atNs: at(Int64(i + 1)), ReducedHookPayload(agentID: id, agentType: "racky-worker-1")))
+        }
+        events.append(ev("Stop", atNs: at(10)))
+        return events
+    }
+
+    @Test func taskStopWithTheTaskIDEndsThatChildAndReleasesTheParent() {
+        var events = spawn(["a1", "a2"])
+        events.append(ev("PostToolUse", atNs: at(20), ReducedHookPayload(toolName: "TaskStop", toolTarget: "a1")))
+        let s = ActivityReducer.fold(events)
+        #expect(s.children["a1"]?.phase == .done && s.children["a2"]?.phase != .done && s.liveChildCount == 1)
+        #expect(s.activity == .waitingOnSubagents)
+        let done = ActivityReducer.reduce(s, ev("SubagentStop", atNs: at(30), ReducedHookPayload(agentID: "a2")))
+        #expect(done.liveChildCount == 0 && done.activity == .done)
+    }
+
+    @Test func taskStopWithoutAnIDEndsTheOnlyLiveChildOnly() {
+        var one = spawn(["a1"])
+        one.append(ev("PostToolUse", atNs: at(20), ReducedHookPayload(toolName: "TaskStop")))
+        let s = ActivityReducer.fold(one)
+        #expect(s.children["a1"]?.phase == .done && s.activity == .done, "older events have no task id: the single live child was the one")
+        var two = spawn(["a1", "a2"])
+        two.append(ev("PostToolUse", atNs: at(20), ReducedHookPayload(toolName: "TaskStop")))
+        #expect(ActivityReducer.fold(two).liveChildCount == 2, "ambiguous: nothing ends")
+        var unknown = spawn(["a1"])
+        unknown.append(ev("PostToolUse", atNs: at(20), ReducedHookPayload(toolName: "TaskStop", toolTarget: "bash-7")))
+        #expect(ActivityReducer.fold(unknown).liveChildCount == 1, "stopping a shell task leaves the subagent alone")
+    }
+
+    @Test func theHookReducerKeepsTheTaskID() {
+        let p = HookPayloadReducer.reduce(["hook_event_name": "PostToolUse", "tool_name": "TaskStop", "tool_input": ["task_id": "a370b3cd79c8336e7"]])
+        #expect(p.toolTarget == "a370b3cd79c8336e7")
+    }
+}

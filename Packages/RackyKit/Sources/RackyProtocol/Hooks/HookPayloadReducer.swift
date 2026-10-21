@@ -99,6 +99,8 @@ public enum HookPayloadReducer {
         if let url = s("url") { return clip(url) }
         if let pattern = s("pattern") ?? s("query") { return clip(pattern) }
         if name == "Agent" || name == "Task", let d = s("description") ?? s("subagent_type") { return clip(d) }
+        // Parar uma tarefa em segundo plano: o id é o do subagente (o Claude Code não manda `SubagentStop` nesse caso).
+        if name == "TaskStop" || name == "KillShell" || name == "KillBash", let id = s("task_id") ?? s("shell_id") { return clip(id) }
         return nil
     }
 
