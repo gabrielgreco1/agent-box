@@ -104,7 +104,7 @@ let package = Package(
         .testTarget(
             name: "CoreTests",
             dependencies: ["RackyCore", "RackyProtocol", "RackyPlatform", "RackyStore", "RackyDocker", "racky"],
-            exclude: ["Launch/Fixtures", "Launch/Golden", "GitHub/Fixtures"], // lidos por caminho (#filePath); golden gravado com RACKY_UPDATE_GOLDEN=1
+            exclude: ["Launch/Fixtures", "Launch/Golden", "GitHub/Fixtures", "Computers/Orchestration/Fixtures"], // lidos por caminho (#filePath); golden gravado com RACKY_UPDATE_GOLDEN=1
             swiftSettings: nonisolatedSettings
         ),
         tests("VZTests", ["RackyVZ", "RackyDocker", "RackyCore", "RackyPlatform", "RackyProtocol", "RackyVZSelfTest"]),
