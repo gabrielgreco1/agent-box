@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Racky: features de dados</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0a0a0a; --panel:#111; --line:rgba(255,255,255,.08); --fg:#fafafa; --muted:#a1a1a1; --quiet:#6f6f6f; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.6 Geist, -apple-system, sans-serif; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:1040px; margin:0 auto; padding:56px 28px 100px; }
+  h1 { font-size:28px; font-weight:600; letter-spacing:-.02em; margin:0 0 6px; }
+  .lead { color:var(--muted); margin:0 0 8px; max-width:760px; }
+  .legend { display:flex; gap:18px; color:var(--quiet); font-size:12.5px; margin:18px 0 0; flex-wrap:wrap; }
+  .tag { display:inline-block; font:500 11px "Geist Mono", monospace; padding:1px 6px; border-radius:4px; border:1px solid var(--line); color:var(--muted); }
+  .tag.P0 { color:var(--fg); border-color:rgba(255,255,255,.35); }
+  h2 { font-size:13px; font-weight:500; letter-spacing:.05em; text-transform:uppercase; color:var(--quiet); margin:52px 0 4px; }
+  h2 + p { color:var(--muted); margin:0 0 12px; }
+  table { width:100%; border-collapse:collapse; }
+  td { padding:11px 0; border-top:1px solid var(--line); vertical-align:top; }
+  td.p { width:52px; }
+  td.n { width:270px; padding-right:24px; font-weight:500; }
+  td.d { color:var(--muted); }
+  .idea { margin-top:40px; padding:20px 22px; border:1px solid var(--line); border-radius:10px; background:var(--panel); }
+  .idea h3 { margin:0 0 6px; font-size:15px; font-weight:600; }
+  .idea p { margin:0; color:var(--muted); }
+  .idea ol { margin:10px 0 0; padding-left:18px; color:var(--muted); }
+  .idea b { color:var(--fg); font-weight:500; }
+  code { font:12.5px "Geist Mono", monospace; color:var(--fg); }
+  @media (max-width:760px) { td.n { width:auto; display:block; padding-right:0; } td.d { display:block; padding-top:0; border-top:0; } td.p { display:none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Racky para dados em alto volume</h1>
+  <p class="lead">O Racky deixa de ser "agentes com computador" e vira a ferramenta onde quem trabalha com dados coleta, limpa e entrega dados da web em escala, com agentes fazendo o trabalho difícil e código barato fazendo o volume.</p>
+  <div class="legend"><span><span class="tag P0">P0</span> primeiro</span><span><span class="tag">P1</span> logo depois</span><span><span class="tag">P2</span> depois</span></div>
+
+  <div class="idea">
+    <h3>A ideia central: o agente descobre, o código coleta</h3>
+    <p>Rodar um LLM em cada página é lento e caro. Em alto volume, o agente deve trabalhar só onde precisa de inteligência:</p>
+    <ol>
+      <li><b>Explorar:</b> o agente navega o site num computador, entende a estrutura e acha a API JSON por trás da página quando existe.</li>
+      <li><b>Gerar a receita:</b> ele escreve um coletor (HTTP puro quando dá, navegador quando precisa) e salva como receita na Library.</li>
+      <li><b>Rodar em escala:</b> a receita roda sem LLM, em dezenas de computadores ou só HTTP, com fila, proxies e repetição. Custo por mil linhas cai de dólares para centavos.</li>
+      <li><b>Se consertar sozinha:</b> quando o site muda e a receita quebra, o agente é chamado só naquela falha, corrige e a coleta continua.</li>
+    </ol>
+  </div>
+
+  <h2>Coleta em escala</h2>
+  <p>Transformar uma tarefa em milhares de páginas sem perder nada.</p>
+  <table>
+    <tr><td class="p"><span class="tag P0">P0</span></td><td class="n">Receitas (scraper como código)</td><td class="d">O agente gera um coletor reutilizável a partir da exploração; roda de novo sem LLM, com parâmetros (cidade, data, categoria). Versionado na Library.</td></tr>
+    <tr><td class="p"><span class="tag P0">P0</span></td><td class="n">Fila de trabalho</td><td class="d">Lista de URLs ou buscas dividida entre N computadores, com progresso, repetição automática e retomada depois de queda (checkpoint por item).</td></tr>
+    <tr><td class="p"><span class="tag P0">P0</span></td><td class="n">Limite por domínio</td><td class="d">Máximo de pedidos simultâneos e por minuto por site, recuo automático quando aparece 429 ou bloqueio.</td></tr>
+    <tr><td class="p"><span class="tag P0">P0</span></td><td class="n">Modo HTTP (sem navegador)</td><td class="d">Quando a página tem API, a receita usa só HTTP com impersonação de navegador (TLS e headers reais): dez vezes mais rápido e barato que abrir Chrome.</td></tr>
+    <tr><td class="p"><span class="tag">P1</span></td><td class="n">Descoberta de API</td><td class="d">O computador grava o tráfego de rede e mostra os endpoints JSON que trazem os mesmos dados, com exemplo de resposta.</td></tr>
+    <tr><td class="p"><span class="tag">P1</span></td><td class="n">Detecção de bloqueio</td><td class="d">Reconhece página de bloqueio, CAPTCHA e resultado vazio suspeito; troca de identidade e tenta de novo antes de contar como erro.</td></tr>
+    <tr><td class="p"><span class="tag">P1</span></td><td class="n">Paginação e profundidade</td><td class="d">Seguir links com regras (só /hotels/, até 3 níveis), dedupe de URL, prioridade.</td></tr>
+    <tr><td class="p"><span class="tag">P1</span></td><td class="n">Execuções agendadas</td><td class="d">Rodar a receita todo dia ou toda hora, local ou na cloud com o Mac desligado.</td></tr>
+    <tr><td class="p"><span class="tag">P2</span></td><td class="n">Modo rápido do navegador</td><td class="d">Bloquear imagens, fontes, vídeo e rastreadores para cortar banda e tempo por página.</td></tr>
+  </table>
+
+  <h2>Proxies e identidade</h2>
+  <p>Parecer gente de verdade, em qualquer país, sem queimar IP.</p>
+  <table>
+    <tr><td class="p"><span class="tag P0">P0</span></td><td class="n">Pools de proxy</td><td class="d">Vários provedores (residencial, datacenter, mobile), país e cidade, rotação por pedido ou sessão fixa, saúde de cada IP.</td></tr>
+    <tr><td class="p"><span class="tag P0">P0</span></td><td class="n">Identidade coerente</td><td class="d">Idioma, fuso, geolocalização, tela, fontes e WebGL batendo com o país do IP, automático.</td></tr>
+    <tr><td class="p"><span class="tag">P1</span></td><td class="n">Perfis com login</td><td class="d">Cookies e sessões guardados por site, reaproveitados entre execuções, com aquecimento antes de usar.</td></tr>
+    <tr><td class="p"><span class="tag">P1</span></td><td class="n">Fila de CAPTCHA</td><td class="d">Todos os CAPTCHAs de todos os computadores numa fila só no Inbox; ou um serviço de resolução, com custo e taxa de acerto.</td></tr>
+    <tr><td class="p"><span class="tag">P2</span></td><td class="n">Medição de banda</td><td class="d">GB por proxy, por site e por receita, com custo em dólar.</td></tr>
+  </table>
+
+  <h2>Dados</h2>
+  <p>Do HTML para uma tabela confiável, com histórico.</p>
+  <table>
+    <tr><td class="p"><span class="tag P0">P0</span></td><td class="n">Datasets</td><td class="d">Todo resultado vira dataset com schema, linhas, prévia e tabela ao vivo enquanto coleta. Uma página com todos.</td></tr>
+    <tr><td class="p"><span class="tag P0">P0</span></td><td class="n">Schema como contrato</td><td class="d">Colunas, tipos e campos obrigatórios definidos antes; linhas inválidas vão para uma área de rejeitadas com o motivo.</td></tr>
+    <tr><td class="p"><span class="tag P0">P0</span></td><td class="n">Chave e dedupe</td><td class="d">Definir a chave (URL, ID do hotel); repetidos são fundidos, novas execuções atualizam em vez de duplicar.</td></tr>
+    <tr><td class="p"><span class="tag P0">P0</span></td><td class="n">Exportar</td><td class="d">CSV, JSON Lines, Parquet e Excel; copiar como tabela.</td></tr>
+    <tr><td class="p"><span class="tag">P1</span></td><td class="n">Origem de cada linha</td><td class="d">URL, horário, computador, proxy e o HTML guardado; clicar na linha mostra a página como estava.</td></tr>
+    <tr><td class="p"><span class="tag">P1</span></td><td class="n">Arquivo de HTML bruto</td><td class="d">Guardar as páginas para reprocessar com um parser novo sem coletar de novo.</td></tr>
+    <tr><td class="p"><span class="tag">P1</span></td><td class="n">Versões e diferença</td><td class="d">Cada execução é uma versão; ver o que entrou, saiu e mudou (preço subiu 12% em 40 hotéis).</td></tr>
+    <tr><td class="p"><span class="tag">P1</span></td><td class="n">SQL local</td><td class="d">DuckDB embutido: consultar, juntar datasets e salvar a consulta como dataset novo.</td></tr>
+    <tr><td class="p"><span class="tag">P1</span></td><td class="n">Normalização</td><td class="d">Moeda, datas, números, endereços e telefones num formato padrão; geocodificação opcional.</td></tr>
+    <tr><td class="p"><span class="tag">P2</span></td><td class="n">Unir fontes</td><td class="d">O mesmo hotel no TripAdvisor e no Booking vira uma entidade só (resolução de entidades).</td></tr>
+    <tr><td class="p"><span class="tag">P2</span></td><td class="n">Dados pessoais</td><td class="d">Detectar e mascarar e-mail, telefone e CPF antes de exportar.</td></tr>
+  </table>
+
+  <h2>Entrega</h2>
+  <p>Os dados chegam onde a equipe já trabalha.</p>
+  <table>
+    <tr><td class="p"><span class="tag P0">P0</span></td><td class="n">Destinos</td><td class="d">S3, Postgres/Supabase, BigQuery, Snowflake, Google Sheets e webhook; uma vez ou a cada execução, por inserção ou upsert.</td></tr>
+    <tr><td class="p"><span class="tag">P1</span></td><td class="n">API e CLI</td><td class="d">Disparar receitas, acompanhar e baixar datasets por API ou <code>racky run</code>; encaixa em Airflow, Dagster e cron.</td></tr>
+    <tr><td class="p"><span class="tag">P1</span></td><td class="n">Avisos</td><td class="d">Slack ou e-mail quando a execução termina, quebra ou entrega menos linhas que o normal.</td></tr>
+  </table>
+
+  <h2>Observabilidade e custo</h2>
+  <p>Saber o que está acontecendo em mil páginas sem abrir nenhuma.</p>
+  <table>
+    <tr><td class="p"><span class="tag P0">P0</span></td><td class="n">Painel da execução</td><td class="d">Páginas por minuto, linhas por minuto, taxa de sucesso, bloqueios e erros por tipo e por domínio, ao vivo.</td></tr>
+    <tr><td class="p"><span class="tag P0">P0</span></td><td class="n">Custo por mil linhas</td><td class="d">Tokens do agente + computadores + proxies + resolução de CAPTCHA somados, por receita e por execução.</td></tr>
+    <tr><td class="p"><span class="tag">P1</span></td><td class="n">Rastro de cada página</td><td class="d">Log, screenshot, rede e tempo de cada pedido; reproduzir em vídeo o que o computador fez.</td></tr>
+    <tr><td class="p"><span class="tag">P1</span></td><td class="n">Monitores de qualidade</td><td class="d">Alertas quando a contagem cai, campos chegam vazios ou a distribuição muda (preço médio zerado).</td></tr>
+  </table>
+
+  <h2>Cloud e escala</h2>
+  <p>Passar de 4 computadores no Mac para 100 na cloud sem mudar nada.</p>
+  <table>
+    <tr><td class="p"><span class="tag P0">P0</span></td><td class="n">Transbordar para a cloud</td><td class="d">A fila manda o excedente para computadores na cloud (seu provedor ou Racky Cloud) e junta tudo no mesmo dataset.</td></tr>
+    <tr><td class="p"><span class="tag P0">P0</span></td><td class="n">Fleet</td><td class="d">Todas as máquinas, locais e na cloud: estado, região, carga, custo; desligar em massa.</td></tr>
+    <tr><td class="p"><span class="tag">P1</span></td><td class="n">Limites de gasto</td><td class="d">Teto por dia, por mês e por execução que pausa a fila antes de passar.</td></tr>
+    <tr><td class="p"><span class="tag">P1</span></td><td class="n">Região por computador</td><td class="d">Coletar do país certo (preços e conteúdo locais) sem depender só de proxy.</td></tr>
+    <tr><td class="p"><span class="tag">P2</span></td><td class="n">Máquinas spot</td><td class="d">Usar instâncias mais baratas e interruptíveis para filas que aceitam retomada.</td></tr>
+  </table>
+
+  <h2>Computadores configuráveis</h2>
+  <p>Cada detalhe vira opção, agrupado em perfis prontos.</p>
+  <table>
+    <tr><td class="p"><span class="tag P0">P0</span></td><td class="n">Perfis de computador</td><td class="d">Presets com nome que juntam recursos, proxy, identidade, regras de rede e ciclo de vida; a receita escolhe o perfil.</td></tr>
+    <tr><td class="p"><span class="tag P0">P0</span></td><td class="n">Recursos</td><td class="d">vCPU, memória, disco e resolução por perfil.</td></tr>
+    <tr><td class="p"><span class="tag">P1</span></td><td class="n">Regras de rede</td><td class="d">Sites permitidos e bloqueados, limite de banda, modo offline.</td></tr>
+    <tr><td class="p"><span class="tag">P1</span></td><td class="n">Ciclo de vida</td><td class="d">Desligar depois de X minutos parado, tempo máximo, quantos por sessão.</td></tr>
+    <tr><td class="p"><span class="tag">P2</span></td><td class="n">Software e imagem própria</td><td class="d">Pacotes, extensões do Chrome e imagem a partir de um Dockerfile.</td></tr>
+    <tr><td class="p"><span class="tag">P2</span></td><td class="n">Pastas e segredos</td><td class="d">Pasta do Mac compartilhada e senhas injetadas sem o agente ver o valor.</td></tr>
+  </table>
+
+  <h2>Ordem sugerida</h2>
+  <table>
+    <tr><td class="p"><span class="tag P0">1</span></td><td class="n">UI nova</td><td class="d">Sidebar, abas, caminho no topo e barra de status, conforme a prévia que você aprovar.</td></tr>
+    <tr><td class="p"><span class="tag P0">2</span></td><td class="n">Datasets e exportar</td><td class="d">Tabela ao vivo, schema, chave e dedupe, exportação. É o que mais mostra o produto.</td></tr>
+    <tr><td class="p"><span class="tag P0">3</span></td><td class="n">Receitas e fila</td><td class="d">O agente gera o coletor; a fila roda em vários computadores com limite por domínio e retomada.</td></tr>
+    <tr><td class="p"><span class="tag P0">4</span></td><td class="n">Proxies, perfis e painel</td><td class="d">Pools de proxy, identidade coerente, painel da execução e custo por mil linhas.</td></tr>
+    <tr><td class="p"><span class="tag P0">5</span></td><td class="n">Cloud</td><td class="d">Transbordar, Fleet e limites de gasto.</td></tr>
+  </table>
+</div>
+</body>
+</html>
