@@ -286,6 +286,14 @@ extension RackyStore {
         }
     }
 
+    /// O terminal é de um worker de app? O `launch_spec` (gravado antes do lançamento) leva `workerChildID`.
+    public func isWorkerTerminal(_ id: UUID) async throws -> Bool {
+        let key = id.uuidString
+        return try await read { db in
+            try Int.fetchOne(db, sql: "SELECT 1 FROM terminal WHERE id = ? AND json_extract(launch_spec_json, '$.workerChildID') IS NOT NULL", arguments: [key]) != nil
+        }
+    }
+
     /// O terminal do worker de app foi aberto (spec subagent-harness): a sidebar acha o painel por aqui.
     public func setOrchestrationWorkerTerminal(id: String, terminalID: UUID?) async throws {
         try await write { db in try db.execute(sql: "UPDATE orchestration_child SET worker_terminal_id = ? WHERE id = ?", arguments: [terminalID?.uuidString, id]) }

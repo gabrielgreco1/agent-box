@@ -151,8 +151,9 @@ public actor ActivityService {
         do {
             let json = String(decoding: try HookCodec.encoder().encode(payload), as: UTF8.self)
             let harness: TerminalProvider = provider == .claude ? .claude : .codex
+            let mainKind = await runKind(terminalID: terminalID)
             let seed = AgentRun(
-                id: runID, terminalID: terminalID, rootRunID: runID, kind: .main, harness: harness, activity: .starting,
+                id: runID, terminalID: terminalID, rootRunID: runID, kind: mainKind, harness: harness, activity: .starting,
                 startedAt: Date(timeIntervalSince1970: Double(atNs) / 1_000_000_000))
             let inserted = try await store.recordAgentEvent(
                 NewAgentEvent(runID: runID, eventID: eventID, type: name, payloadJSON: json, atNs: atNs), ensuringRun: seed)
@@ -174,7 +175,7 @@ public actor ActivityService {
                     state: state, lastAtNs: stored.last?.atNs ?? atNs, provider: provider, terminalID: terminalID, touched: 0))
             }
             let effectiveTerminal = terminalID ?? cache[runID]?.terminalID
-            let projection = ActivityProjector.projection(runID: runID, terminalID: effectiveTerminal, provider: provider, state: state)
+            let projection = ActivityProjector.projection(runID: runID, terminalID: effectiveTerminal, provider: provider, state: state, mainKind: mainKind)
             try await store.saveActivity(projection)
             publish(runID: runID, terminalID: effectiveTerminal, state: state)
             if inserted, let observer = cwdObserver, let cwd = payload.cwd, !cwd.isEmpty, let terminal = effectiveTerminal {
@@ -188,6 +189,16 @@ public actor ActivityService {
             cache[runID] = nil  // o próximo evento refaz o estado a partir do banco
             throw error
         }
+    }
+
+    /// `app_worker_light` para o terminal de um worker de app (o `launch_spec` gravado antes do lançamento diz); `main` nos demais.
+    private var workerTerminals: [UUID: Bool] = [:]
+    private func runKind(terminalID: UUID?) async -> AgentRunKind {
+        guard let terminalID else { return .main }
+        if let known = workerTerminals[terminalID] { return known ? .appWorkerLight : .main }
+        let isWorker = (try? await store.isWorkerTerminal(terminalID)) ?? false
+        workerTerminals[terminalID] = isWorker
+        return isWorker ? .appWorkerLight : .main
     }
 
     static func replay(_ stored: [StoredAgentEvent]) -> ActivityState {
@@ -211,7 +222,7 @@ public actor ActivityService {
                 let stored = try await store.agentEvents(runID: id)
                 let state = Self.replay(stored)
                 let provider: HookProvider = run.harness == .codex ? .codex : .claude
-                try await store.saveActivity(ActivityProjector.projection(runID: id, terminalID: run.terminalID, provider: provider, state: state))
+                try await store.saveActivity(ActivityProjector.projection(runID: id, terminalID: run.terminalID, provider: provider, state: state, mainKind: run.kind))
                 publish(runID: id, terminalID: run.terminalID, state: state)
             } catch {
                 log.error("reconcile failed: \(error)")

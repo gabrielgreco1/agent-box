@@ -29,6 +29,26 @@ private func waitUntil(timeout: Duration = .seconds(5), _ condition: @escaping @
         return (home, store, ActivityService(store: store, spoolDirectory: home.spoolDirectory))
     }
 
+    @Test func aWorkerTerminalGetsTheAppWorkerLightKindAndStaysAMainRunOfItsTerminal() async throws {
+        let (home, store, service) = try await setup(); defer { home.remove() }
+        let run = UUID()
+        let session = Session(kind: .clean, folderPath: "/tmp/x", title: "quiet-harbor")
+        let tabID = UUID.v7()
+        let terminal = Terminal(
+            tabID: tabID, provider: .claude, title: "Claude \u{00B7} Houston", cwd: "/tmp/x", launchSpec: LaunchSpec(provider: .claude, workerChildID: "parent-a-a1"), state: .running)
+        let tab = Tab(id: tabID, sessionID: session.id, title: "Agent", layout: .leaf(Pane(content: .terminal(terminal.id))))
+        try await store.saveBundle(session: session, tabs: [tab], terminals: [terminal])
+        #expect(try await store.isWorkerTerminal(terminal.id))
+        for e in RealHooks.envelopes(try RealHooks.events(RealHooks.claudeBasic), runID: run, paneID: terminal.id) { try await service.ingest(e) }
+        let row = try #require(try await store.agentRun(id: run))
+        #expect(row.kind == .appWorkerLight && row.terminalID == terminal.id && row.parentRunID == nil)
+        // As consultas por terminal (semeadura da UI) continuam achando a execução.
+        #expect(try await store.latestMainRuns().contains { $0.id == run })
+        let plain = try await home.seedTerminal(store)
+        #expect(try await store.isWorkerTerminal(plain.id) == false)
+        try await store.close()
+    }
+
     @Test func realClaudeTurnProjectsIntoRunAndTerminal() async throws {
         let (home, store, service) = try await setup(); defer { home.remove() }
         let run = UUID()

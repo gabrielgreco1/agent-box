@@ -377,10 +377,14 @@ public enum ActivityProjector {
     private static func date(ns: Int64?) -> Date? { ns.map { Date(timeIntervalSince1970: Double($0) / 1_000_000_000) } }
 
     /// Linhas de `agent_run` (principal + filhos nativos) e a atualização do terminal.
-    public static func projection(runID: UUID, terminalID: UUID?, provider: HookProvider, state s: ActivityState) -> ActivityProjection {
+    /// `mainKind`: `.appWorkerLight` no terminal de um worker de app (spec subagent-harness). O `parent_run_id` fica vazio de propósito: as consultas por
+    /// terminal (`latestMainRuns`, `agentRuns(terminalID:)`, reconcile) só enxergam execuções sem pai; o vínculo com o pai está em `orchestration_child`.
+    public static func projection(
+        runID: UUID, terminalID: UUID?, provider: HookProvider, state s: ActivityState, mainKind: AgentRunKind = .main
+    ) -> ActivityProjection {
         let harness: TerminalProvider = provider == .claude ? .claude : .codex
         let main = AgentRun(
-            id: runID, terminalID: terminalID, rootRunID: runID, kind: .main, harness: harness,
+            id: runID, terminalID: terminalID, rootRunID: runID, kind: mainKind, harness: harness,
             providerSessionID: s.nativeSessionID, activity: s.activity, estimated: s.estimated,
             statusReason: s.statusReason, subtitle: s.subtitle, startedAt: date(ns: s.startedAtNs) ?? Date(timeIntervalSince1970: 0),
             lastEventAt: date(ns: s.lastEventAtNs), endedAt: date(ns: s.endedAtNs))
