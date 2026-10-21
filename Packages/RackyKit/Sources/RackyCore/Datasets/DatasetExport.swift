@@ -57,3 +57,23 @@ public enum DatasetExporter {
         }
     }
 }
+
+extension DatasetExporter {
+    public static func suggestedName(dataset: String, format: Format) -> String { "\(dataset).\(format.fileExtension)" }
+
+    /// Lê as linhas válidas do store em páginas de 5.000 e grava o arquivo (fora da UI). Devolve quantas linhas saíram.
+    @discardableResult
+    public static func write(store: RackyStore, dataset: Dataset, format: Format, to url: URL) async throws -> Int {
+        var rows: [DatasetRow] = []
+        var offset = 0
+        let page = DatasetEngine.maxRowsPerAppend
+        while true {
+            let chunk = try await store.datasetRows(datasetID: dataset.id, limit: page, offset: offset)
+            rows += chunk.filter(\.valid)
+            guard chunk.count == page else { break }
+            offset += page
+        }
+        try data(format, columns: dataset.columns, rows: rows).write(to: url, options: .atomic)
+        return rows.count
+    }
+}

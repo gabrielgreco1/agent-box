@@ -14,6 +14,9 @@ public enum CenterPage: Equatable, Sendable {
     case batch(String)
     /// Library (03 §13, ⇧⌘L): Agents, Skills e Profiles.
     case library
+    /// Datasets (03 §12.5): a lista e, com o id, a tabela viva de um dataset.
+    case datasets
+    case dataset(String)
 }
 
 extension CenterPage {

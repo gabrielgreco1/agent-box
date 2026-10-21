@@ -214,6 +214,14 @@ extension ActionID {
     public static let contextToggleItem = ActionID(unchecked: "context.toggleItem")
     public static let pageLibrary = ActionID(unchecked: "page.library")
     public static let pageComputers = ActionID(unchecked: "page.computers")
+    public static let pageDatasets = ActionID(unchecked: "page.datasets")
+    public static let datasetOpen = ActionID(unchecked: "dataset.open")
+    public static let datasetFilter = ActionID(unchecked: "dataset.filter")
+    public static let datasetSearch = ActionID(unchecked: "dataset.search")
+    public static let datasetSelectRow = ActionID(unchecked: "dataset.selectRow")
+    public static let datasetLoadMore = ActionID(unchecked: "dataset.loadMore")
+    public static let datasetExport = ActionID(unchecked: "dataset.export")
+    public static let datasetOpenSource = ActionID(unchecked: "dataset.openSource")
     public static let pageInbox = ActionID(unchecked: "page.inbox")
     public static let pageClose = ActionID(unchecked: "page.close")
     public static let inboxMarkRead = ActionID(unchecked: "inbox.markRead")
@@ -679,6 +687,14 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "context.toggleItem"), label: "Toggle item in this session", shortcut: "", slice: .slice4),
         ActionSpec(id: ActionID(unchecked: "page.library"), label: "Open Library / Library", shortcut: "⇧⌘L", slice: .slice4),
         ActionSpec(id: ActionID(unchecked: "page.computers"), label: "Computers (página)", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "page.datasets"), label: "Datasets (página)", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dataset.open"), label: "Open Dataset", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dataset.filter"), label: "Dataset: filtro", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dataset.search"), label: "busca", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dataset.selectRow"), label: "linha", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dataset.loadMore"), label: "Load more", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dataset.export"), label: "Export Dataset", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dataset.openSource"), label: "Open Source URL", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "page.inbox"), label: "Inbox", shortcut: "⇧⌘I", slice: .slice2),
         ActionSpec(id: ActionID(unchecked: "page.close"), label: "Close page", shortcut: "Esc", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "inbox.markRead"), label: "Mark as Read", shortcut: "", slice: .slice2),

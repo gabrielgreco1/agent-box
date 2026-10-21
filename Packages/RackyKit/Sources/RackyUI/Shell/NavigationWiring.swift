@@ -23,6 +23,8 @@ extension AppEnvironment {
         case .computers: return .computers
         case .batch(let name): return .batch(name)
         case .library: return .library
+        case .datasets: return .datasets
+        case .dataset(let id): return .dataset(id)
         case .workspace: break
         }
         if sidebar.inboxOpen { return .inbox }
@@ -40,6 +42,8 @@ extension AppEnvironment {
         case .batch(let name): computers.model.batch(name) != nil
         case .inbox: attention != nil
         case .library: true
+        case .datasets: true
+        case .dataset(let id): datasets.summaries.contains { $0.dataset.id == id } || datasets.currentID == id
         }
     }
 
@@ -66,7 +70,7 @@ extension AppEnvironment {
         apply(destination)
         navigating = false
         // A lista da sidebar pede o foco ao selecionar; ir e voltar pelo histórico devolve o teclado ao terminal.
-        if case .viewer = destination {} else if destination != .computers, destination != .inbox {
+        if case .viewer = destination {} else if destination != .computers, destination != .inbox, destination != .datasets {
             DispatchQueue.main.async { [workspace] in workspace.focusTerminalOfActiveTab() }
         }
         refreshNavigationState()
@@ -96,6 +100,12 @@ extension AppEnvironment {
         case .library:
             sidebar.setInbox(open: false)
             computers.show(.library)
+        case .datasets:
+            sidebar.setInbox(open: false)
+            computers.show(.datasets)
+        case .dataset(let id):
+            sidebar.setInbox(open: false)
+            Task { _ = await datasets.open(id) }
         }
     }
 }

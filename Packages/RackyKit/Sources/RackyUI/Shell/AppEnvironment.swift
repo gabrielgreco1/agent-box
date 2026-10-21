@@ -55,6 +55,8 @@ public final class AppEnvironment {
     public let terminalRouter = TerminalActionRouter()
     /// Computadores (T3-05): viewer, página Computers, painel direito, pedido de ajuda e ações `computer.*`.
     public let computers = ComputersController()
+    /// Datasets (Datasets v1): a lista e a tabela viva do que os subagentes de uma sessão coletam.
+    public let datasets = DatasetsController()
     /// Painel direito (10-right-panel): contêiner dos módulos Files, Insights e Computers.
     public let rightPanel = RightPanelController()
     /// Módulo Files: árvore do diretório da sessão que acompanha o cwd do terminal focado.
@@ -403,6 +405,27 @@ public final class AppEnvironment {
         }
     }
 
+    /// Liga os datasets: ações `page.datasets` e `dataset.*`, o título da sessão, "algum computador dela roda?" (atualização a 1 s) e a evidência.
+    private func wireDatasets() {
+        datasets.currentPage = { [computers] in computers.page }
+        datasets.showPage = { [computers, sidebar] page in
+            sidebar.setInbox(open: false)
+            computers.show(page)
+        }
+        datasets.hidePage = { [computers] in computers.closePage() }
+        datasets.automationEnabled = automationEnabled
+        datasets.sessionTitle = { [sidebar] id in sidebar.session(id)?.title }
+        datasets.isRunning = { [computers] session in
+            computers.model.rows.contains { row in
+                computers.model.sessionIDs[row.id] == session && [.inUse, .ready, .provisioning, .queued].contains(row.snapshot.state)
+            }
+        }
+        datasets.openEvidence = { [registry] computer, request in
+            _ = try await registry.perform(.computerOpenEvidence, .select("\(computer)|\(request)"))
+        }
+        do { try datasets.register(in: registry) } catch { log.publicError("duplicate dataset action registration") }
+    }
+
     /// Liga o controlador de computadores: ações `computer.*`, ⌘W fecha a página do viewer e a notificação de pedido de ajuda.
     private func wireComputers() {
         do { try computers.register(in: registry) } catch { log.publicError("duplicate computer action registration") }
@@ -412,6 +435,7 @@ public final class AppEnvironment {
             self?.computers.openBatch(id)
         }
         do { try computers.registerResults(in: registry) } catch { log.publicError("duplicate result action registration") }
+        wireDatasets()
         do { try computers.registerBatch(in: registry, automationEnabled: automationEnabled) } catch { log.publicError("duplicate batch action registration") }
         do { try subagentComputers.register(in: registry) } catch { log.publicError("duplicate subagent computers registration") }
         subagentHoverCards = SubagentHoverCardController(computers: computers, registry: registry, elements: elements)
@@ -850,7 +874,7 @@ public final class AppEnvironment {
     /// Fixture `RACKY_SCREEN=sidebar-demo`: controles cujo fluxo é de outra tarefa (composer, adicionar projeto, Settings,
     /// páginas) ganham handlers de exemplo para a evidência visual mostrar a sidebar completa. Nada disso roda em uso normal.
     private func registerSidebarDemo() {
-        for id in [ActionID.appSettings, .projectNewSession, .pageInbox, .pageComputers, .pageLibrary] where attention == nil || id != .pageInbox {
+        for id in [ActionID.appSettings, .projectNewSession, .pageInbox, .pageComputers, .pageDatasets, .pageLibrary] where attention == nil || id != .pageInbox {
             try? registry.register(id) { _ in "demo" }
         }
     }
@@ -877,6 +901,7 @@ public final class AppEnvironment {
             }
             await rightPanel.attach(store: opened)
             await library.attach(store: opened)
+            await datasets.attach(store: opened)
             await startCatalog(store: opened)
             await statusBar.attach(store: opened)
             await insights.service?.attach(
@@ -1007,6 +1032,7 @@ public final class AppEnvironment {
         restorePending = false
         onRestored()
         computers.startRefreshing()
+        datasets.startRefreshing()
         computers.startDemo(environment: environmentVariables)
         // Fatia 2: `app.sock` é de um hub só (ctl + hook); os hooks chegam mesmo com a automação desligada.
         if let activity, hub == nil {
@@ -1049,6 +1075,7 @@ public final class AppEnvironment {
         sidebar.detach()
         projects.detach()
         computers.stopRefreshing()
+        datasets.stopRefreshing()
         await computers.tearDownDemo()
         computerSweeper?.cancel()
         catalogWatch?.cancel()

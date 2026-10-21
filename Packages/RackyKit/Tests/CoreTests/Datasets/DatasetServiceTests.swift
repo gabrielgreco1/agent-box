@@ -171,3 +171,22 @@ import Testing
         #expect(missing?.code == .notFound)
     }
 }
+
+extension DatasetServiceTests {
+    @Test func exportWritesOnlyValidRowsInEveryFormat() async throws {
+        let rig = try await Rig.make(); defer { Task { await rig.cleanup() } }
+        _ = try await rig.service.define(session: rig.session, name: "hotels", columns: Self.columns, key: ["name"])
+        _ = try await rig.service.append(session: rig.session, name: "hotels", rows: (0..<4000).map { ["name": .string("H\($0)"), "rating": 4] }, provenance: .none)
+        _ = try await rig.service.append(session: rig.session, name: "hotels", rows: (4000..<6001).map { ["name": .string("H\($0)"), "rating": 4] } + [["rating": 1]], provenance: .none)
+        let dataset = try #require(try await rig.store.dataset(sessionID: rig.session, name: "hotels"))
+        for format in DatasetExporter.Format.allCases {
+            let url = rig.root.appendingPathComponent(DatasetExporter.suggestedName(dataset: "hotels", format: format))
+            let count = try await DatasetExporter.write(store: rig.store, dataset: dataset, format: format, to: url)
+            #expect(count == 6001, "the invalid row stays out of the file (\(format))")
+            let text = try String(contentsOf: url, encoding: .utf8)
+            #expect(text.contains("H6000") && !text.contains("\"rating\":1}"))
+        }
+        let csv = try String(contentsOf: rig.root.appendingPathComponent("hotels.csv"), encoding: .utf8)
+        #expect(csv.hasPrefix("name,rating,url\r\nH0,4,\r\n"))
+    }
+}

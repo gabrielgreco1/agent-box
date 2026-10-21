@@ -46,6 +46,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `sidebar.nav.inbox`
 - `sidebar.nav.inbox.badge`
 - `sidebar.nav.computers`
+- `sidebar.nav.datasets`
 - `sidebar.nav.library`
 - `sidebar.projects.filter`
 - `sidebar.projects.filterMenu`
@@ -416,6 +417,25 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `batch.<batchId>.export.json`
 - `computers.row.<id>.result`
 - `computers.row.<id>.runFolder`
+- `datasets.page`
+- `datasets.empty`
+- `datasets.row.<id>`
+- `dataset.page`
+- `dataset.filter`
+- `dataset.search`
+- `dataset.export`
+- `dataset.table`
+- `dataset.empty`
+- `dataset.loadMore`
+- `dataset.row.<key>`
+- `dataset.provenance`
+- `dataset.provenance.source`
+- `dataset.provenance.computer`
+- `dataset.provenance.run`
+- `dataset.provenance.request`
+- `dataset.provenance.trust`
+- `dataset.provenance.seen`
+- `dataset.provenance.error`
 - `library.page`
 - `library.section`
 - `library.search`
@@ -797,6 +817,14 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `context.toggleItem` | Toggle item in this session | — | slice4 |
 | `page.library` | Open Library / Library | ⇧⌘L | slice4 |
 | `page.computers` | Computers (página) | — | slice3 |
+| `page.datasets` | Datasets (página) | — | slice3 |
+| `dataset.open` | Open Dataset | — | slice3 |
+| `dataset.filter` | Dataset: filtro | — | slice3 |
+| `dataset.search` | busca | — | slice3 |
+| `dataset.selectRow` | linha | — | slice3 |
+| `dataset.loadMore` | Load more | — | slice3 |
+| `dataset.export` | Export Dataset | — | slice3 |
+| `dataset.openSource` | Open Source URL | — | slice3 |
 | `page.inbox` | Inbox | ⇧⌘I | slice2 |
 | `page.close` | Close page | Esc | slice1 |
 | `inbox.markRead` | Mark as Read | — | slice2 |

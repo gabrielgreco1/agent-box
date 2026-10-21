@@ -40,6 +40,8 @@ extension A11yID {
     public static let sidebarNavInboxBadge = A11yID(unchecked: "sidebar.nav.inbox.badge")
     /// `sidebar.nav.computers`
     public static let sidebarNavComputers = A11yID(unchecked: "sidebar.nav.computers")
+    /// `sidebar.nav.datasets`
+    public static let sidebarNavDatasets = A11yID(unchecked: "sidebar.nav.datasets")
     /// `sidebar.nav.library`
     public static let sidebarNavLibrary = A11yID(unchecked: "sidebar.nav.library")
     /// `sidebar.projects.filter`
@@ -340,6 +342,40 @@ extension A11yID {
     public static let computersDockerBanner = A11yID(unchecked: "computers.dockerBanner")
     /// `computers.empty`
     public static let computersEmpty = A11yID(unchecked: "computers.empty")
+    /// `datasets.page`
+    public static let datasetsPage = A11yID(unchecked: "datasets.page")
+    /// `datasets.empty`
+    public static let datasetsEmpty = A11yID(unchecked: "datasets.empty")
+    /// `dataset.page`
+    public static let datasetPage = A11yID(unchecked: "dataset.page")
+    /// `dataset.filter`
+    public static let datasetFilter = A11yID(unchecked: "dataset.filter")
+    /// `dataset.search`
+    public static let datasetSearch = A11yID(unchecked: "dataset.search")
+    /// `dataset.export`
+    public static let datasetExport = A11yID(unchecked: "dataset.export")
+    /// `dataset.table`
+    public static let datasetTable = A11yID(unchecked: "dataset.table")
+    /// `dataset.empty`
+    public static let datasetEmpty = A11yID(unchecked: "dataset.empty")
+    /// `dataset.loadMore`
+    public static let datasetLoadMore = A11yID(unchecked: "dataset.loadMore")
+    /// `dataset.provenance`
+    public static let datasetProvenance = A11yID(unchecked: "dataset.provenance")
+    /// `dataset.provenance.source`
+    public static let datasetProvenanceSource = A11yID(unchecked: "dataset.provenance.source")
+    /// `dataset.provenance.computer`
+    public static let datasetProvenanceComputer = A11yID(unchecked: "dataset.provenance.computer")
+    /// `dataset.provenance.run`
+    public static let datasetProvenanceRun = A11yID(unchecked: "dataset.provenance.run")
+    /// `dataset.provenance.request`
+    public static let datasetProvenanceRequest = A11yID(unchecked: "dataset.provenance.request")
+    /// `dataset.provenance.trust`
+    public static let datasetProvenanceTrust = A11yID(unchecked: "dataset.provenance.trust")
+    /// `dataset.provenance.seen`
+    public static let datasetProvenanceSeen = A11yID(unchecked: "dataset.provenance.seen")
+    /// `dataset.provenance.error`
+    public static let datasetProvenanceError = A11yID(unchecked: "dataset.provenance.error")
     /// `library.page`
     public static let libraryPage = A11yID(unchecked: "library.page")
     /// `library.section`
@@ -1505,6 +1541,16 @@ extension A11yID {
         A11yID(unchecked: "computers.row.\(A11yID.segment(id)).runFolder")
     }
 
+    /// `datasets.row.<id>`
+    public static func datasetsRow(_ id: String) -> A11yID {
+        A11yID(unchecked: "datasets.row.\(A11yID.segment(id))")
+    }
+
+    /// `dataset.row.<key>`
+    public static func datasetRow(_ key: String) -> A11yID {
+        A11yID(unchecked: "dataset.row.\(A11yID.segment(key))")
+    }
+
     /// `library.row.<kind>.<id>`
     public static func libraryRow(_ kind: String, _ id: String) -> A11yID {
         A11yID(unchecked: "library.row.\(A11yID.segment(kind)).\(A11yID.segment(id))")
@@ -1618,6 +1664,7 @@ extension A11yID {
         A11yIDSpec(pattern: "sidebar.nav.inbox", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.nav.inbox.badge", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.nav.computers", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.nav.datasets", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.nav.library", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.projects.filter", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.projects.filterMenu", surface: "Sidebar"),
@@ -1940,6 +1987,25 @@ extension A11yID {
         A11yIDSpec(pattern: "batch.<batchId>.export.json", surface: "Páginas"),
         A11yIDSpec(pattern: "computers.row.<id>.result", surface: "Páginas"),
         A11yIDSpec(pattern: "computers.row.<id>.runFolder", surface: "Páginas"),
+        A11yIDSpec(pattern: "datasets.page", surface: "Páginas"),
+        A11yIDSpec(pattern: "datasets.empty", surface: "Páginas"),
+        A11yIDSpec(pattern: "datasets.row.<id>", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.page", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.filter", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.search", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.export", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.table", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.empty", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.loadMore", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.row.<key>", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.provenance", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.provenance.source", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.provenance.computer", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.provenance.run", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.provenance.request", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.provenance.trust", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.provenance.seen", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.provenance.error", surface: "Páginas"),
         A11yIDSpec(pattern: "library.page", surface: "Páginas"),
         A11yIDSpec(pattern: "library.section", surface: "Páginas"),
         A11yIDSpec(pattern: "library.search", surface: "Páginas"),

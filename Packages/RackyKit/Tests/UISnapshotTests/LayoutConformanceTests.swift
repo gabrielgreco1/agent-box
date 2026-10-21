@@ -133,7 +133,7 @@ import Testing
             let search = try #require(tree.find(.sidebarSearch)?.frame, "search \(note)")
             #expect(search.height == 32 && search.x == 8 && search.width == 264 && search.y == 44, "search \(note): \(search)")
             var previous = search
-            for id in [A11yID.sidebarNavInbox, .sidebarNavComputers, .sidebarNavLibrary] {
+            for id in [A11yID.sidebarNavInbox, .sidebarNavComputers, .sidebarNavDatasets, .sidebarNavLibrary] {
                 let nav = try #require(tree.find(id)?.frame, "\(id.rawValue) \(note)")
                 #expect(nav.height == 32 && nav.x == 8 && nav.width == 264, "\(id.rawValue) \(note)")
                 #expect(nav.y == previous.y + previous.height + 2, "gap 2 antes de \(id.rawValue) \(note)")

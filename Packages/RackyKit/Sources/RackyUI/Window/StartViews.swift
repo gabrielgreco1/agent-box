@@ -211,7 +211,7 @@ private struct LandingBlock<Content: View>: View {
         VStack(alignment: .leading, spacing: .zero) {
             Text(verbatim: title.uppercased()).dsFont(DS.Font.micro).tracking(0.6).foregroundStyle(DS.Color.textTertiary)
                 .padding(.horizontal, DS.Space.s2).padding(.bottom, DS.Space.s2)
-            Rectangle().fill(DS.Color.border).frame(height: 1)
+            Rectangle().fill(DS.Color.border).frame(height: DSMetrics.hairline)
             VStack(alignment: .leading, spacing: .zero) { content() }.padding(.top, DS.Space.s1)
         }
     }
@@ -287,7 +287,7 @@ private struct RecentSessionRow: View {
             .padding(.horizontal, DS.Space.s2)
             .frame(height: StartMetrics.tableRow)
             .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(hovering ? DS.Color.secondary : Color.clear))
-            .overlay(alignment: .top) { Rectangle().fill(DS.Color.fg5).frame(height: 1) }
+            .overlay(alignment: .top) { Rectangle().fill(DS.Color.fg5).frame(height: DSMetrics.hairline) }
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -310,7 +310,7 @@ private struct LandingKeyValue: View {
         HStack(spacing: DS.Space.s3) {
             Text(verbatim: key).dsFont(DS.Font.body).foregroundStyle(DS.Color.textSecondary)
                 .frame(width: StartMetrics.nameColumn, alignment: .leading)
-            Circle().fill(color).frame(width: 6, height: 6)
+            Circle().fill(color).frame(width: DS.Space.s1_5, height: DS.Space.s1_5)
             Text(verbatim: value.text).dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
             Spacer(minLength: .zero)
         }
