@@ -30,7 +30,7 @@ import Testing
         try await store.save(Fixture.project())
         let counts = try await store.tableCounts()
         #expect(counts["project"] == 1 && counts["metric"] == 0 && counts["session"] == 0)
-        #expect(try await store.appliedMigrations().last == "v9_orchestration_pool")
+        #expect(try await store.appliedMigrations().last == "v10_datasets")
         try await store.close()
     }
 }

@@ -13,7 +13,7 @@ import Testing
         try await store.close()
         let tables = try tableNames(at: home.paths.databaseFile)
         #expect(tables == [
-            "agent_event", "agent_message", "agent_run", "attention", "browser_profile", "catalog_item", "computer", "computer_queue", "grdb_migrations",
+            "agent_event", "agent_message", "agent_run", "attention", "browser_profile", "catalog_item", "computer", "computer_queue", "dataset", "dataset_row", "grdb_migrations",
             "help_request", "import_run", "inbox_event", "launch_profile", "metric", "orchestration_child", "orchestration_parent", "project", "proxy", "proxy_ext", "proxy_usage", "secret",
             "secret_binding", "session", "setting", "tab", "terminal", "ui_state", "worktree",
         ])
@@ -22,7 +22,7 @@ import Testing
             let q = try DatabaseQueue(path: home.paths.databaseFile.path, configuration: c)
             return try q.read { try String.fetchAll($0, sql: "SELECT identifier FROM grdb_migrations") }
         }()
-        #expect(ids == ["v1_initial", "v2_activity", "v3_computers", "v4_vault_catalog", "v5_proxy_ext", "v6_agent_tree", "v7_subagent_computers", "v8_orchestration_identity", "v9_orchestration_pool"])
+        #expect(ids == ["v1_initial", "v2_activity", "v3_computers", "v4_vault_catalog", "v5_proxy_ext", "v6_agent_tree", "v7_subagent_computers", "v8_orchestration_identity", "v9_orchestration_pool", "v10_datasets"])
     }
 
     @Test func schemaIsStrictAndRejectsInconsistentSessions() async throws {
@@ -462,7 +462,7 @@ import Testing
 
 @Suite struct FullMigrationChainTests {
     @Test func v1DatabaseUpgradesThroughEveryMigrationToCurrent() async throws {
-        #expect(StoreMigrations.all.map(\.id) == ["v1_initial", "v2_activity", "v3_computers", "v4_vault_catalog", "v5_proxy_ext", "v6_agent_tree", "v7_subagent_computers", "v8_orchestration_identity", "v9_orchestration_pool"])
+        #expect(StoreMigrations.all.map(\.id) == ["v1_initial", "v2_activity", "v3_computers", "v4_vault_catalog", "v5_proxy_ext", "v6_agent_tree", "v7_subagent_computers", "v8_orchestration_identity", "v9_orchestration_pool", "v10_datasets"])
         let home = try TempHome(); defer { home.remove() }
         let v1 = try await home.openStore(day: 0, migrations: [StoreMigrations.v1Initial])
         let project = Fixture.project()

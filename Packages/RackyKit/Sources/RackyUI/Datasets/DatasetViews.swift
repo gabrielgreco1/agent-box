@@ -9,9 +9,9 @@ import SwiftUI
 
 enum DatasetMetrics {
     static let rowHeight = DS.Space.s6 + DS.Space.s2
-    static let colName: CGFloat = 200
-    static let colSession: CGFloat = 180
-    static let colCount: CGFloat = 90
+    static let colName: CGFloat = 160
+    static let colSession: CGFloat = 140
+    static let colCount: CGFloat = 72
     static let colUpdated: CGFloat = 110
     static let colStatus: CGFloat = 64
     static let colString: CGFloat = 200
@@ -84,7 +84,7 @@ struct DatasetsPageView: View {
     }
 
     private var header: some View {
-        HStack(spacing: DS.Space.s4) {
+        HStack(spacing: DS.Space.s3) {
             column("Name", DatasetMetrics.colName)
             column("Session", DatasetMetrics.colSession)
             column("Rows", DatasetMetrics.colCount, trailing: true)
@@ -103,7 +103,7 @@ struct DatasetsPageView: View {
     }
 
     private func row(_ summary: DatasetSummary) -> some View {
-        HStack(spacing: DS.Space.s4) {
+        HStack(spacing: DS.Space.s3) {
             Text(verbatim: summary.dataset.name).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
                 .frame(width: DatasetMetrics.colName, alignment: .leading)
             Text(verbatim: controller.title(of: summary)).dsFont(DS.Font.body).foregroundStyle(DS.Color.textSecondary).lineLimit(1)

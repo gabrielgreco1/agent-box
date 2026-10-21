@@ -46,18 +46,23 @@ struct DatasetsFixture {
 
     func remove() { try? FileManager.default.removeItem(at: root) }
 
-    /// `hotels`: 30 linhas (name, rating, price, url), duas com preço inválido; as três primeiras citam requests do reqlog do `phoenix-az`.
+    /// `hotels`: 30 linhas (name, rating, price, url), duas com preço inválido; as duas primeiras citam requests do reqlog do `phoenix-az`.
     func seedHotels() async throws {
+        try await Self.seedHotels(service: service, session: Self.session)
+        await controller.reloadList()
+    }
+
+    static func seedHotels(service: DatasetService, session: UUID) async throws {
         _ = try await service.define(
-            session: Self.session, name: "hotels",
+            session: session, name: "hotels",
             columns: [
                 DatasetColumn(name: "name", required: true), DatasetColumn(name: "rating", type: .number), DatasetColumn(name: "price", type: .integer),
                 DatasetColumn(name: "url", type: .url),
             ], key: ["name"])
         let provenance = DatasetProvenance(computer: "phoenix-az", runID: "01ARZ3NDEKTSV4RRFFQ69G5RUN") { id in
             switch id {
-            case Self.observed: .init(url: "https://hotels.example.test/grand-plaza", trust: .observed)
-            case Self.reported: .init(url: "https://hotels.example.test/hotel-2", trust: .reported)
+            case observed: .init(url: "https://hotels.example.test/grand-plaza", trust: .observed)
+            case reported: .init(url: "https://hotels.example.test/hotel-2", trust: .reported)
             default: nil
             }
         }
@@ -68,14 +73,12 @@ struct DatasetsFixture {
                 "name": .string(i < names.count ? names[i] : "Hotel \(i + 1)"), "rating": .double(3.0 + Double(i % 20) / 10), "price": .int(90 + i * 7),
                 "url": .string("https://hotels.example.test/hotel-\(i + 1)"),
             ]
-            if i == 0 { row["_request_id"] = .string(Self.observed) }
-            if i == 1 { row["_request_id"] = .string(Self.reported) }
+            if i == 0 { row["_request_id"] = .string(observed) }
+            if i == 1 { row["_request_id"] = .string(reported) }
             if i == 7 || i == 19 { row["price"] = "ninety" }
             rows.append(row)
         }
-        rows[7]["name"] = "Union Square Stay"
-        _ = try await service.append(session: Self.session, name: "hotels", rows: rows, provenance: provenance)
-        await controller.reloadList()
+        _ = try await service.append(session: session, name: "hotels", rows: rows, provenance: provenance)
     }
 
     func datasetID() async throws -> String { try #require(try await store.dataset(sessionID: Self.session, name: "hotels")).id }
