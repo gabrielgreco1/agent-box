@@ -102,6 +102,11 @@ extension AppEnvironment {
         // Reinício do app com Claude e subagentes vivos: as identidades MCP voltam antes de qualquer chamada (só lê o Store).
         await orchestrator.restoreIdentities()
         orchestratorHolder.set(orchestrator)
+        // Workers de app (spec subagent-harness): `agent_spawn` abre o terminal do worker pelo workspace; o fim do terminal solta o computador.
+        await orchestrator.setWorkerLauncher(WorkspaceWorkerLauncher.make(workspace: workspace, settings: settings))
+        workspace.onWorkerTerminalEnded = { [weak orchestrator] child, code in
+            Task { await orchestrator?.scheduler.workerExited(childID: child, exitCode: code) }
+        }
         let toasts = toasts
         let settings = settings
         await orchestrator.start()

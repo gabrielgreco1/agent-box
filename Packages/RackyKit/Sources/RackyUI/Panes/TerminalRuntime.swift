@@ -385,7 +385,7 @@ final class TerminalRuntime {
     /// `onEvent` recebe o progresso real (qualquer thread).
     func launch(
         _ terminal: Terminal, mode: LaunchMode = .automatic, catalog: ProfileCatalog = ProfileCatalog(), subagent: SubagentLaunch? = nil,
-        sessionID: UUID? = nil, onEvent: @escaping @Sendable (LaunchEvent) -> Void
+        sessionID: UUID? = nil, workerOf: WorkerLaunch? = nil, onEvent: @escaping @Sendable (LaunchEvent) -> Void
     ) async throws -> LaunchResult {
         let entry = entry(for: terminal.id)
         let dims = entry.host.surface.terminalDimensions
@@ -393,7 +393,7 @@ final class TerminalRuntime {
         let perf = Perf.begin(.launch, tags: ["provider": terminal.provider.rawValue])
         let job = LaunchJob(
             terminalID: terminal.id, spec: terminal.launchSpec, cwd: terminal.cwd, addDirs: terminal.addDirs, coldLog: terminal.coldLog,
-            cols: UInt16(clamping: dims.cols), rows: UInt16(clamping: dims.rows), catalog: catalog, mode: mode, subagent: subagent, sessionID: sessionID)
+            cols: UInt16(clamping: dims.cols), rows: UInt16(clamping: dims.rows), catalog: catalog, mode: mode, subagent: subagent, sessionID: sessionID, workerOf: workerOf)
         do {
             return try await coordinator.launch(
                 job, onEvent: onEvent,

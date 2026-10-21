@@ -55,6 +55,11 @@ final class WorkspaceModel {
     @ObservationIgnored private var snapshot = StoreSnapshot()
     @ObservationIgnored private var listeners: [() -> Void] = []
     @ObservationIgnored private var subagentModes: [UUID: SubagentComputersMode] = [:]
+    /// Workers de app (spec subagent-harness): a identidade MCP de cada terminal de worker (a capability só vive em memória), os panes de
+    /// worker de cada pai (para empilhar o próximo abaixo do último) e o aviso ao orquestrador quando o terminal do worker termina.
+    @ObservationIgnored private var workerLaunches: [UUID: WorkerLaunch] = [:]
+    @ObservationIgnored private var workerPanes: [UUID: [UUID]] = [:]
+    @ObservationIgnored var onWorkerTerminalEnded: ((_ childID: String, _ exitCode: Int?) -> Void)?
     @ObservationIgnored private var persistTail: Task<Void, Never>?
     @ObservationIgnored private var launching: Set<UUID> = []
     /// Fechados aqui: o snapshot do Store pode ainda mostrá-los por um instante e não deve ressuscitá-los.
@@ -261,13 +266,16 @@ final class WorkspaceModel {
 
     /// Modo "Subagent computers" da sessão do terminal (Claude, Codex e OpenCode; cada CLI recebe a sua injeção).
     func subagentLaunch(for terminal: Terminal) -> SubagentLaunch? {
-        guard terminal.provider.supportsSubagentComputers, let sid = sessionID(of: terminal), let session = sessionLookup(sid) else { return nil }
-        return SubagentLaunch(sessionID: sid, sessionTitle: session.title, mode: session.subagentComputers)
+        // O terminal de um worker de app nunca é pai de orquestração (nem depois de reaberto o app).
+        guard terminal.launchSpec.workerChildID == nil, terminal.provider.supportsSubagentComputers, let sid = sessionID(of: terminal),
+              let session = sessionLookup(sid) else { return nil }
+        return SubagentLaunch(sessionID: sid, sessionTitle: session.title, mode: session.subagentComputers, harness: session.subagentHarness)
     }
 
     /// O que o header do pane precisa do "Subagent computers" da sessão.
     func subagentHeader(for terminal: Terminal) -> (session: UUID, mode: SubagentComputersMode, restart: Bool)? {
-        guard terminal.provider.supportsSubagentComputers, let sid = sessionID(of: terminal), let session = sessionLookup(sid) else { return nil }
+        guard terminal.launchSpec.workerChildID == nil, terminal.provider.supportsSubagentComputers, let sid = sessionID(of: terminal),
+              let session = sessionLookup(sid) else { return nil }
         return (sid, session.subagentComputers, subagent?.restartPending(session: sid) ?? false)
     }
 
@@ -818,6 +826,9 @@ final class WorkspaceModel {
     private func finalizeRemoval(of terminalID: UUID) {
         guard let t = terminal(terminalID), let (sid, tab) = locate(terminal: terminalID), let pane = tab.layout.pane(forTerminal: terminalID)
         else { return }
+        noteWorkerEnded(terminalID)
+        workerLaunches[terminalID] = nil
+        for (parent, list) in workerPanes { workerPanes[parent] = list.filter { $0 != terminalID } }
         var removed = t
         removed.deletedAt = Date()
         let gone = removed
@@ -864,6 +875,84 @@ final class WorkspaceModel {
         let closed = tab
         persist { try await $0.save(closed) }
         if sid == currentSessionID { focusTerminalOfActiveTab() }
+    }
+
+    // MARK: Workers de app (spec subagent-harness)
+
+    /// Abre o terminal de um worker de app na sessão `sid` (não depende da tab ativa nem da sessão atual): um pane dividido ao lado do pai
+    /// (o primeiro à direita dele, os seguintes empilhados abaixo do anterior) e, sem espaço, uma tab nova da mesma sessão. Não rouba o foco.
+    /// O terminal sobe já (sem esperar o pane aparecer) e leva a identidade MCP do filho. Devolve o id do terminal, `nil` se a sessão não carrega.
+    @discardableResult
+    func openWorkerTerminal(
+        session sid: UUID, nextTo parentTerminal: UUID?, worker: WorkerLaunch, spec baseSpec: LaunchSpec, title: String
+    ) -> UUID? {
+        if states[sid] == nil { load(session: sid) }
+        guard states[sid] != nil, let session = sessionLookup(sid) else { return nil }
+        var spec = baseSpec
+        spec.workerChildID = worker.childID
+        let parentTab = parentTerminal.flatMap { locate(terminal: $0) }.flatMap { $0.sid == sid ? $0.tab : nil }
+        let cwd = parentTerminal.flatMap(terminal)?.cwd ?? session.folderPath
+        let tabID = parentTab?.id ?? UUID.v7()
+        var terminal = makeTerminal(tabID: tabID, spec: spec, cwd: cwd, folder: cwd)
+        terminal.title = title
+        terminal.titleSource = .user  // "<Harness> · <tarefa>": o OSC do CLI não o troca
+        let pane = Pane(content: .terminal(terminal.id))
+        workerLaunches[terminal.id] = worker
+        let area = CGRect(origin: .zero, size: contentSize)
+        var placed = false
+        if let tab = parentTab, let parent = parentTerminal {
+            // Candidatos em ordem: abaixo do último worker deste pai, depois à direita do pai.
+            var candidates: [(UUID, PaneDropZone, SplitAxis)] = []
+            if let last = workerPanes[parent]?.last(where: { tab.layout.pane(forTerminal: $0) != nil }), let p = tab.layout.pane(forTerminal: last) {
+                candidates.append((p.id, .bottom, .vertical))
+            }
+            if let p = tab.layout.pane(forTerminal: parent) { candidates.append((p.id, .right, .horizontal)) }
+            for (target, zone, axis) in candidates {
+                guard contentSize == .zero || tab.layout.canSplit(paneID: target, axis: axis, in: area),
+                      let layout = tab.layout.inserting(.leaf(pane), beside: target, zone: zone) else { continue }
+                update(tab: tab.id) { $0.layout = layout }
+                if expandedPanes[tab.id] != nil { expandedPanes[tab.id] = nil }
+                saveLayout(of: tab.id, final: true)
+                placed = true
+                break
+            }
+        }
+        if !placed {
+            // Sem pai na sessão ou sem espaço: tab nova no fim da sessão, sem selecioná-la.
+            var state = states[sid]!
+            let tab = Tab(
+                id: tabID == parentTab?.id ? UUID.v7() : tabID, sessionID: sid, title: title, sortIndex: state.tabs.count, layout: .leaf(pane),
+                focusedTerminalID: terminal.id)
+            terminal.tabID = tab.id
+            state.tabs.append(tab)
+            states[sid] = state
+            let saved = tab
+            persist { try await $0.save(saved) }
+        }
+        states[sid]?.terminals[terminal.id] = terminal
+        runStates[terminal.id] = .starting
+        if let parent = parentTerminal { workerPanes[parent, default: []].append(terminal.id) }
+        let saved = terminal
+        persist { try await $0.save(saved) }
+        notify()
+        launch(terminal)  // sem esperar a view: um worker numa tab escondida também precisa subir
+        return terminal.id
+    }
+
+    /// O terminal da execução (o `runID` do lançamento é a identidade MCP do pai).
+    func terminalOfRun(_ runID: UUID) -> Terminal? {
+        for state in states.values { if let t = state.terminals.values.first(where: { $0.currentRunID == runID }) { return t } }
+        return nil
+    }
+
+    /// Sinal ao processo do worker (`agent_stop`): SIGINT, SIGTERM do grupo ou SIGKILL.
+    func signalWorker(terminal id: UUID, _ signal: WorkerSignal) async {
+        guard let t = terminal(id) else { return }
+        switch signal {
+        case .interrupt: await runtime.sendInterrupt(t)
+        case .terminate: await runtime.kill(t, mode: .graceful)
+        case .kill: await runtime.kill(t, mode: .force)
+        }
     }
 
     // MARK: Reabrir
@@ -974,7 +1063,9 @@ final class WorkspaceModel {
             let subagent = self.subagentLaunch(for: current)
             let sessionID = self.sessionID(of: current)
             do {
-                let result = try await runtime.launch(current, mode: mode, catalog: ProfileCatalog(userProfiles: self.snapshot.profiles), subagent: subagent, sessionID: sessionID) { [weak self] event in
+                let result = try await runtime.launch(
+                    current, mode: mode, catalog: ProfileCatalog(userProfiles: self.snapshot.profiles), subagent: subagent, sessionID: sessionID,
+                    workerOf: self.workerLaunches[id]) { [weak self] event in
                     Task { @MainActor in self?.apply(launchEvent: event, terminalID: id) }
                 }
                 guard self.terminal(id) != nil else { return }
@@ -1007,7 +1098,14 @@ final class WorkspaceModel {
         }
     }
 
+    /// O terminal de um worker de app terminou (saiu, não subiu, foi interrompido ou fechado): o orquestrador solta o computador.
+    private func noteWorkerEnded(_ id: UUID, exitCode: Int? = nil) {
+        guard let child = terminal(id)?.launchSpec.workerChildID ?? workerLaunches[id]?.childID else { return }
+        onWorkerTerminalEnded?(child, exitCode)
+    }
+
     private func fail(launch id: UUID, detail: String) {
+        noteWorkerEnded(id)
         ignitionTimers[id]?.cancel()
         update(terminal: id) { $0.state = .failedToStart }
         runStates[id] = .failed(detail)
@@ -1079,6 +1177,7 @@ final class WorkspaceModel {
         update(terminal: id) { $0.state = .interrupted; $0.endedAt = $0.endedAt ?? Date() }
         runStates[id] = .interrupted
         save(terminal: id)
+        noteWorkerEnded(id)
         if let store { Task { await SessionReconciler.recordInterruption(store: store, terminalID: id, reason: why) } }
         runtime.existingEntry(for: id)?.unbind()
         if let fresh = terminal(id) { showColdLog(of: fresh) }
@@ -1310,6 +1409,7 @@ final class WorkspaceModel {
         }
         runStates[id] = .exited(code: info?.code.map(Int.init), signal: info?.signal.map(Int.init))
         save(terminal: id)
+        noteWorkerEnded(id, exitCode: info?.code.map(Int.init))
         notify()
     }
 
