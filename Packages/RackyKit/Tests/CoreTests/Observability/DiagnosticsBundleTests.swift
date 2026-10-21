@@ -126,7 +126,7 @@ import Testing
         let tables = try String(contentsOf: bundle.staging.appendingPathComponent("tables.json"), encoding: .utf8)
         #expect(tables.contains("\"metric\" : 1"))
         let versions = try String(contentsOf: bundle.staging.appendingPathComponent("versions.json"), encoding: .utf8)
-        #expect(versions.contains("v10_datasets") && versions.contains("\"protocol\""))
+        #expect(versions.contains("v11_subagent_harness") && versions.contains("\"protocol\""))
         let zip = try await DiagnosticsExporter.save(bundle, paths: paths)
         #expect(zip.deletingLastPathComponent().lastPathComponent == "diagnostics" && FileManager.default.fileExists(atPath: zip.path))
         #expect(!FileManager.default.fileExists(atPath: bundle.staging.path), "preparo apagado depois de salvar")

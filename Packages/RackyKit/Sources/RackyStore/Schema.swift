@@ -529,9 +529,20 @@ enum StoreMigrations {
         """)
     }
 
+    /// `v11_subagent_harness` (spec subagent-harness): quem roda os subagentes da sessão (`claude` nativo, `codex`, `opencode`, `mixed`) e, em
+    /// cada filho, o CLI do worker de app (NULL = nativo), o terminal dele e um título curto da tarefa. Só colunas novas com padrão.
+    static let v11SubagentHarness = StoreMigration(id: "v11_subagent_harness") { db in
+        try db.execute(sql: """
+        ALTER TABLE session ADD COLUMN subagent_harness TEXT NOT NULL DEFAULT 'claude' CHECK (subagent_harness IN ('claude','codex','opencode','mixed'));
+        ALTER TABLE orchestration_child ADD COLUMN harness TEXT CHECK (harness IS NULL OR harness IN ('claude','codex','opencode'));
+        ALTER TABLE orchestration_child ADD COLUMN worker_terminal_id TEXT;
+        ALTER TABLE orchestration_child ADD COLUMN title TEXT;
+        """)
+    }
+
     static let all: [StoreMigration] = [
         v1Initial, v2Activity, v3Computers, v4VaultCatalog, v5ProxyExt, v6AgentTree, v7SubagentComputers, v8OrchestrationIdentity, v9OrchestrationPool,
-        v10Datasets,
+        v10Datasets, v11SubagentHarness,
     ]
 
     static func migrator(_ migrations: [StoreMigration]) -> DatabaseMigrator {

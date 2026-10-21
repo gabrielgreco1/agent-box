@@ -34,12 +34,15 @@ public struct SessionCreationRequest: Sendable, Equatable {
     public var spec: LaunchSpec
     /// "Subagent computers" da sessão nova (F12).
     public var subagentComputers: SubagentComputersMode
+    /// Quem roda os subagentes da sessão nova (spec subagent-harness).
+    public var subagentHarness: SubagentHarness
 
     public init(
         sessionID: UUID = .v7(), tabID: UUID = .v7(), terminalID: UUID = .v7(), title: String, target: SessionPlacement, spec: LaunchSpec,
-        subagentComputers: SubagentComputersMode = .off
+        subagentComputers: SubagentComputersMode = .off, subagentHarness: SubagentHarness = .claude
     ) {
         self.subagentComputers = subagentComputers
+        self.subagentHarness = subagentHarness
         self.sessionID = sessionID; self.tabID = tabID; self.terminalID = terminalID
         self.title = title; self.target = target; self.spec = spec
     }
@@ -203,6 +206,7 @@ public struct SessionCreationService: Sendable {
         }
 
         session.subagentComputers = request.subagentComputers
+        session.subagentHarness = request.subagentHarness
         onSession(session.id)
         let adapter = ProviderAdapters.adapter(for: request.spec.provider)
         let title = request.spec.provider.isAgent ? adapter.displayName : URL(fileURLWithPath: session.folderPath).lastPathComponent

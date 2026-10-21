@@ -20,6 +20,7 @@ struct SessionLaunchRequest: Codable, Equatable {
     var origin: [Double]?
     /// `off`, `ask` ou `full` (F12); sem o campo vale o padrão de Settings › Computers.
     var subagentComputers: String?
+    var subagentHarness: String?
 }
 
 /// Cria uma sessão limpa com o agente escolhido já rodando (P9, M-501): linha pendente na sidebar, chip voando até ela,
@@ -132,6 +133,8 @@ final class SessionLauncher {
         if provider.supportsSubagentComputers {
             session.subagentComputers = request.subagentComputers.flatMap(SubagentComputersMode.init(rawValue:))
                 ?? settings?.settings.computers.defaultSubagentMode ?? .off
+            session.subagentHarness = request.subagentHarness.flatMap(SubagentHarness.init(rawValue:))
+                ?? settings?.settings.computers.defaultSubagentHarness ?? .claude
         }
         let terminal = Terminal(id: terminalID, tabID: tabID, provider: provider, title: title, cwd: folder.path, launchSpec: spec)
         let tab = Tab(id: tabID, sessionID: sessionID, title: title, layout: .leaf(Pane(content: .terminal(terminalID))), focusedTerminalID: terminalID)

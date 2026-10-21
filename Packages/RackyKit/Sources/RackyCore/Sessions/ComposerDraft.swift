@@ -86,6 +86,8 @@ public struct ComposerDraft: Sendable, Equatable {
     public var createMore = false
     /// "Subagent computers" da sessão nova (F12): começa no padrão de Settings › Computers.
     public var subagentComputers = SubagentComputersMode.off
+    /// "Subagents run as" (spec subagent-harness): quem roda os subagentes da sessão nova.
+    public var subagentHarness = SubagentHarness.claude
 
     public init(projectID: UUID? = nil, whereChoice: ComposerWhere? = nil, automaticName: String = SessionNaming.automaticName()) {
         self.projectID = projectID
@@ -287,7 +289,8 @@ public struct ComposerDraft: Sendable, Equatable {
         }
         return SessionCreationRequest(
             sessionID: ids.session, tabID: ids.tab, terminalID: ids.terminal, title: sessionTitle, target: target, spec: spec(),
-            subagentComputers: provider.supportsSubagentComputers ? subagentComputers : .off)
+            subagentComputers: provider.supportsSubagentComputers ? subagentComputers : .off,
+            subagentHarness: provider.supportsSubagentComputers ? subagentHarness : .claude)
     }
 
     /// `Reuse it` (03 §6.3): o branch digitado em Advanced passa a ser o de "Create from", reaproveitado.

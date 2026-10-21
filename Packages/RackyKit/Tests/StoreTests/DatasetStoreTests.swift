@@ -23,7 +23,7 @@ import Testing
     }
 
     @Test func migrationIsLastInTheChain() {
-        #expect(StoreMigrations.all.last?.id == "v10_datasets")
+        #expect(StoreMigrations.all.last?.id == "v11_subagent_harness")
     }
 
     @Test func createsAndReadsBackTheSchema() async throws {

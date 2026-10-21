@@ -128,9 +128,11 @@ struct SessionRecord: Codable, FetchableRecord, PersistableRecord, Sendable {
     var lastActiveAt: Int64?
     var archivedAt: Int64?
     var subagentComputers: String
+    var subagentHarness: String
 
     init(_ s: Session) {
         subagentComputers = s.subagentComputers.rawValue
+        subagentHarness = s.subagentHarness.rawValue
         id = s.id.uuidString; kind = s.kind.rawValue; projectId = s.projectID?.uuidString
         worktreeId = s.worktreeID?.uuidString; folderPath = s.folderPath; managedFolder = s.managedFolder
         title = s.title; statusNote = s.statusNote?.text; statusNoteAuthor = s.statusNote?.author
@@ -150,7 +152,8 @@ struct SessionRecord: Codable, FetchableRecord, PersistableRecord, Sendable {
             lifecycle: try RowCodec.enumValue(lifecycle, SessionLifecycle.self, table: "session"),
             sortIndex: sortIndex, createdAt: RowCodec.date(createdAt), lastActiveAt: RowCodec.date(lastActiveAt),
             archivedAt: RowCodec.date(archivedAt),
-            subagentComputers: SubagentComputersMode(rawValue: subagentComputers) ?? .off)
+            subagentComputers: SubagentComputersMode(rawValue: subagentComputers) ?? .off,
+            subagentHarness: SubagentHarness(rawValue: subagentHarness) ?? .claude)
     }
 }
 

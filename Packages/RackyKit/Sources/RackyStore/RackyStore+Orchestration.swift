@@ -38,6 +38,12 @@ public struct OrchestrationChild: Sendable, Equatable, Identifiable {
     public var capabilityHash: String?
     /// Codex: thread do worker ligada a este slot no pool (sobrevive ao app para o worker não precisar de novo `box_claim`).
     public var boundThread: String?
+    /// CLI do worker de app (`claude`/`codex`/`opencode`); `nil` = subagente nativo do Claude (spec subagent-harness).
+    public var harness: String?
+    /// Terminal do worker de app (UUID do `terminal`); a sidebar e o painel o focam por aqui.
+    public var workerTerminalID: UUID?
+    /// Título curto da tarefa (linha na sidebar e título do painel).
+    public var title: String?
     public var state: OrchestrationChildState
     public var createdAt: Date
     public var reservedAt: Date?
@@ -49,8 +55,9 @@ public struct OrchestrationChild: Sendable, Equatable, Identifiable {
         id: String, parentID: String, parentRunID: UUID? = nil, slot: Int, agentType: String, computerName: String? = nil, batchID: String? = nil,
         runID: UUID? = nil, providerAgentID: String? = nil, state: OrchestrationChildState = .idle, createdAt: Date = Date(),
         reservedAt: Date? = nil, claimedAt: Date? = nil, releasedAt: Date? = nil, endedAt: Date? = nil, capabilityHash: String? = nil,
-        boundThread: String? = nil
+        boundThread: String? = nil, harness: String? = nil, workerTerminalID: UUID? = nil, title: String? = nil
     ) {
+        self.harness = harness; self.workerTerminalID = workerTerminalID; self.title = title
         self.boundThread = boundThread
         self.id = id; self.parentID = parentID; self.parentRunID = parentRunID; self.slot = slot; self.agentType = agentType
         self.computerName = computerName; self.batchID = batchID; self.runID = runID; self.providerAgentID = providerAgentID
@@ -143,7 +150,8 @@ extension OrchestrationChild {
             runID: (row["run_id"] as String?).flatMap(UUID.init(uuidString:)), providerAgentID: row["provider_agent_id"], state: parsed,
             createdAt: RowCodec.date(row["created_at"] as Int64), reservedAt: RowCodec.date(row["reserved_at"] as Int64?),
             claimedAt: RowCodec.date(row["claimed_at"] as Int64?), releasedAt: RowCodec.date(row["released_at"] as Int64?),
-            endedAt: RowCodec.date(row["ended_at"] as Int64?), capabilityHash: row["capability_hash"], boundThread: row["bound_thread"])
+            endedAt: RowCodec.date(row["ended_at"] as Int64?), capabilityHash: row["capability_hash"], boundThread: row["bound_thread"],
+            harness: row["harness"], workerTerminalID: (row["worker_terminal_id"] as String?).flatMap(UUID.init(uuidString:)), title: row["title"])
     }
 }
 
@@ -165,12 +173,15 @@ extension RackyStore {
         try await write { db in
             try db.execute(
                 sql: """
-                INSERT INTO orchestration_child (id, parent_id, parent_run_id, slot, agent_type, state, created_at, capability_hash)
-                VALUES (?, ?, ?, ?, ?, 'idle', ?, ?)
+                INSERT INTO orchestration_child (id, parent_id, parent_run_id, slot, agent_type, state, created_at, capability_hash, harness, title)
+                VALUES (?, ?, ?, ?, ?, 'idle', ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET parent_run_id = COALESCE(excluded.parent_run_id, parent_run_id), agent_type = excluded.agent_type,
-                    capability_hash = COALESCE(excluded.capability_hash, capability_hash)
+                    capability_hash = COALESCE(excluded.capability_hash, capability_hash), harness = COALESCE(excluded.harness, harness),
+                    title = COALESCE(excluded.title, title)
                 """,
-                arguments: [child.id, child.parentID, child.parentRunID?.uuidString, child.slot, child.agentType, RowCodec.ms(child.createdAt) as Int64, child.capabilityHash])
+                arguments: [
+                    child.id, child.parentID, child.parentRunID?.uuidString, child.slot, child.agentType, RowCodec.ms(child.createdAt) as Int64, child.capabilityHash,
+                    child.harness, child.title])
         }
     }
 
@@ -272,6 +283,25 @@ extension RackyStore {
             }
             if let computerName { try db.execute(sql: "UPDATE orchestration_child SET computer_name = ? WHERE id = ?", arguments: [computerName, id]) }
             if let batchID { try db.execute(sql: "UPDATE orchestration_child SET batch_id = ? WHERE id = ?", arguments: [batchID, id]) }
+        }
+    }
+
+    /// O terminal do worker de app foi aberto (spec subagent-harness): a sidebar acha o painel por aqui.
+    public func setOrchestrationWorkerTerminal(id: String, terminalID: UUID?) async throws {
+        try await write { db in try db.execute(sql: "UPDATE orchestration_child SET worker_terminal_id = ? WHERE id = ?", arguments: [terminalID?.uuidString, id]) }
+    }
+
+    /// Workers de app (CLI separado) do pai, por ordem de criação.
+    public func orchestrationWorkers(parentID: String) async throws -> [OrchestrationChild] {
+        try await read { db in
+            try Row.fetchAll(db, sql: "SELECT * FROM orchestration_child WHERE parent_id = ? AND harness IS NOT NULL ORDER BY created_at, slot", arguments: [parentID]).map { try OrchestrationChild(row: $0) }
+        }
+    }
+
+    /// Todos os workers de app ainda ativos (sidebar): reservados ou reivindicados.
+    public func activeOrchestrationWorkers() async throws -> [OrchestrationChild] {
+        try await read { db in
+            try Row.fetchAll(db, sql: "SELECT * FROM orchestration_child WHERE harness IS NOT NULL ORDER BY created_at, slot").map { try OrchestrationChild(row: $0) }
         }
     }
 

@@ -294,6 +294,12 @@ public actor RackyStore {
         try await write { try $0.execute(sql: "UPDATE session SET subagent_computers = ? WHERE id = ?", arguments: [mode.rawValue, key]) }
     }
 
+    /// "Subagents run as" da sessão (spec subagent-harness). Vale para o próximo `agent_spawn`; nada mais da sessão muda.
+    public func setSubagentHarness(sessionID: UUID, harness: SubagentHarness) async throws {
+        let key = sessionID.uuidString
+        try await write { try $0.execute(sql: "UPDATE session SET subagent_harness = ? WHERE id = ?", arguments: [harness.rawValue, key]) }
+    }
+
     /// Apaga o registro (e tabs/terminais em cascata). Arquivos em disco nunca são tocados aqui.
     public func deleteSession(id: UUID) async throws {
         let key = id.uuidString

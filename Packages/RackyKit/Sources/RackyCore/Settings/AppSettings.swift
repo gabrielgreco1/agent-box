@@ -26,6 +26,8 @@ public struct AppSettings: Codable, Equatable, Sendable {
     /// Settings › Computers (F12): padrão de "Subagent computers" das novas sessões. Sessões existentes não mudam.
     public struct Computers: Codable, Equatable, Sendable {
         public var defaultSubagentMode = SubagentComputersMode.off
+        /// Quem roda os subagentes das novas sessões (spec subagent-harness).
+        public var defaultSubagentHarness = SubagentHarness.claude
         /// Onde os computadores sobem (BK-12, P27): no Mac (Docker) ou na conta de nuvem do próprio usuário.
         public var runOn = ComputerRunTarget.local
         public var cloud = Cloud()
@@ -37,6 +39,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
         public init(from decoder: any Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
             defaultSubagentMode = try c.decodeIfPresent(SubagentComputersMode.self, forKey: .defaultSubagentMode) ?? .off
+            defaultSubagentHarness = try c.decodeIfPresent(SubagentHarness.self, forKey: .defaultSubagentHarness) ?? .claude
             runOn = try c.decodeIfPresent(ComputerRunTarget.self, forKey: .runOn) ?? .local
             cloud = try c.decodeIfPresent(Cloud.self, forKey: .cloud) ?? Cloud()
             forceDocker = try c.decodeIfPresent(Bool.self, forKey: .forceDocker) ?? false
