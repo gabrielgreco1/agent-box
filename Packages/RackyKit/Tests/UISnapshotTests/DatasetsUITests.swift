@@ -211,6 +211,43 @@ struct DatasetsUITests {
         #expect(f.controller.snapshot?.stats.rows == 30 && f.controller.snapshot?.stats.invalid == 2)
     }
 
+    @Test func newDataOpensBesideTheAgentOnceAndNeverAgainAfterClosing() async throws {
+        let f = try await DatasetsFixture.make(seed: false)
+        defer { f.remove() }
+        var opened: [(String, Bool)] = []
+        var shown = Set<String>()
+        f.controller.now = { Date() }  // o dataset nasce com a hora real
+        f.controller.currentSession = { DatasetsFixture.session }
+        f.controller.isShownInSession = { id, _ in shown.contains(id) }
+        f.controller.openInSession = { id, _, beside in opened.append((id, beside)); shown.insert(id); return true }
+        // Dataset definido mas vazio: nada abre.
+        _ = try await f.service.define(session: DatasetsFixture.session, name: "hotels", columns: [DatasetColumn(name: "name")], key: nil)
+        await f.controller.autoOpenNewData()
+        #expect(opened.isEmpty)
+        // Primeiras linhas: abre ao lado, uma vez.
+        _ = try await f.service.append(session: DatasetsFixture.session, name: "hotels", rows: [["name": "A"]], provenance: .none)
+        await f.controller.autoOpenNewData()
+        let id = try await f.datasetID()
+        #expect(opened.count == 1 && opened[0].0 == id && opened[0].1, "beside the agent")
+        // O usuário fechou: mais linhas não reabrem, nem depois de reiniciar o controlador (gravado no store).
+        shown.remove(id)
+        _ = try await f.service.append(session: DatasetsFixture.session, name: "hotels", rows: [["name": "B"]], provenance: .none)
+        await f.controller.autoOpenNewData()
+        let fresh = DatasetsController()
+        fresh.now = f.controller.now
+        fresh.currentSession = { DatasetsFixture.session }
+        fresh.openInSession = { id, _, _ in opened.append((id, true)); return true }
+        await fresh.attach(store: f.store)
+        await fresh.autoOpenNewData()
+        #expect(opened.count == 1)
+        // Desligado, ou dataset antigo (criado há mais de 10 min): não abre.
+        _ = try await f.service.define(session: DatasetsFixture.session, name: "old", columns: [DatasetColumn(name: "x")], key: nil)
+        _ = try await f.service.append(session: DatasetsFixture.session, name: "old", rows: [["x": "1"]], provenance: .none)
+        fresh.now = { Date().addingTimeInterval(3600) }
+        await fresh.autoOpenNewData()
+        #expect(opened.count == 1, "datasets older than the window don't pop up")
+    }
+
     @Test func selectingARowShowsItsProvenance() async throws {
         let f = try await DatasetsFixture.make()
         defer { f.remove() }

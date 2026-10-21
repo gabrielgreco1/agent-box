@@ -275,6 +275,17 @@ public final class DatasetsController {
     @ObservationIgnored public var openInSession: (_ datasetID: String, _ sessionID: UUID, _ beside: Bool) -> Bool = { _, _, _ in false }
     /// Fecha o pane de dataset (`nil` = não está num pane: fecha a página).
     @ObservationIgnored public var closePane: (UUID) -> Void = { _ in }
+    /// Sessão aberta no workspace e "o dataset já está numa tab ou pane dela?" (abrir sozinho só quando não está).
+    @ObservationIgnored public var currentSession: () -> UUID? = { nil }
+    @ObservationIgnored public var isShownInSession: (_ datasetID: String, _ sessionID: UUID) -> Bool = { _, _ in false }
+    /// Abrir a tabela ao lado assim que as primeiras linhas de um dataset novo chegam (uma vez por dataset).
+    @ObservationIgnored public var autoOpenEnabled = true
+    /// Datasets já abertos sozinhos uma vez (gravado no store: fechar a tabela não faz ela voltar).
+    @ObservationIgnored private var autoOpened: Set<String> = []
+    @ObservationIgnored private var autoOpenedLoaded = false
+    static let autoOpenedKey = "datasets.autoOpened"
+    /// Só datasets criados há pouco abrem sozinhos (os antigos não aparecem de surpresa ao abrir o app).
+    static let autoOpenWindow: TimeInterval = 600
     @ObservationIgnored public var openURL: (URL) -> Void = { NSWorkspace.shared.open($0) }
     @ObservationIgnored public var copyText: (String) -> Void = { text in
         NSPasteboard.general.clearContents()
@@ -403,11 +414,33 @@ public final class DatasetsController {
     public func stopRefreshing() { refresher?.cancel() }
 
     func refreshVisible(tick: Int) async {
-        if currentPage() == .datasets, !listLoaded || tick % 2 == 0 { await reloadList() }
+        if tick % 2 == 0 { await autoOpenNewData() } else if currentPage() == .datasets, !listLoaded { await reloadList() }
         let pageID = currentPage().datasetID
         for m in models.values where m.visibleCount > 0 || m.id == pageID {
             let running = m.snapshot.map { isRunning($0.summary.dataset.sessionID) } ?? false
             if running || tick % 5 == 0 || m.snapshot == nil { await reload(m) }
+        }
+    }
+
+    /// Dados começaram a entrar num dataset novo da sessão aberta: a tela divide (o que o usuário via de um lado, a tabela do
+    /// outro), sem tirar o teclado do agente. Uma vez por dataset; fechar a tabela não faz ela voltar.
+    func autoOpenNewData() async {
+        guard autoOpenEnabled, let store, let session = currentSession() else { return }
+        if !autoOpenedLoaded {
+            autoOpened = Set((try? await store.uiState(Self.autoOpenedKey, as: [String].self)) ?? [])
+            autoOpenedLoaded = true
+        }
+        await reloadList()
+        let now = now()
+        for summary in summaries where summary.dataset.sessionID == session && summary.rowCount > 0 && !autoOpened.contains(summary.dataset.id) {
+            guard now.timeIntervalSince(summary.dataset.createdAt) <= Self.autoOpenWindow else { continue }
+            autoOpened.insert(summary.dataset.id)
+            let saved = Array(autoOpened).sorted()
+            try? await store.setUIState(Self.autoOpenedKey, saved)
+            if isShownInSession(summary.dataset.id, session) || currentPage() != .workspace { continue }
+            let m = model(for: summary.dataset.id)
+            await reload(m)
+            _ = openInSession(summary.dataset.id, session, true)
         }
     }
 

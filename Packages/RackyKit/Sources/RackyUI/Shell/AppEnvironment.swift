@@ -435,6 +435,8 @@ public final class AppEnvironment {
             return workspace.openDataset(datasetID, beside: beside) != nil
         }
         datasets.closePane = { [workspace] paneID in workspace.closePane(id: paneID) }
+        datasets.currentSession = { [workspace] in workspace.currentSessionID }
+        datasets.isShownInSession = { [workspace] id, sid in workspace.datasetPane(id, in: sid) != nil }
         workspace.datasetTitle = { [datasets] id in datasets.name(of: id) }
         do { try datasets.register(in: registry) } catch { log.publicError("duplicate dataset action registration") }
     }
