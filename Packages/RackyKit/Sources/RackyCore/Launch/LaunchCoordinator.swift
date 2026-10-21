@@ -100,8 +100,10 @@ public struct SubagentLaunch: Sendable, Equatable {
     public var sessionID: UUID?
     public var sessionTitle: String
     public var mode: SubagentComputersMode
-    public init(sessionID: UUID?, sessionTitle: String, mode: SubagentComputersMode) {
-        self.sessionID = sessionID; self.sessionTitle = sessionTitle; self.mode = mode
+    /// Quem roda os subagentes da sessão (spec subagent-harness).
+    public var harness: SubagentHarness
+    public init(sessionID: UUID?, sessionTitle: String, mode: SubagentComputersMode, harness: SubagentHarness = .claude) {
+        self.sessionID = sessionID; self.sessionTitle = sessionTitle; self.mode = mode; self.harness = harness
     }
 }
 
@@ -122,12 +124,15 @@ public struct LaunchJob: Sendable {
     public var subagent: SubagentLaunch?
     /// Sessão do Racky dona do terminal: a Library liga itens só nela (T4-02). `nil` = terminal sem sessão.
     public var sessionID: UUID?
+    /// Terminal de um worker de app (spec subagent-harness): pula a orquestração de pai e injeta só o MCP do próprio filho.
+    public var workerOf: WorkerLaunch?
 
     public init(
         terminalID: UUID, spec: LaunchSpec, cwd: String, addDirs: [String] = [], projectID: UUID? = nil, coldLog: Bool = true,
         cols: UInt16 = 100, rows: UInt16 = 30, catalog: ProfileCatalog = ProfileCatalog(), workspace: LaunchWorkspaceStep? = nil,
-        mode: LaunchMode = .automatic, subagent: SubagentLaunch? = nil, sessionID: UUID? = nil
+        mode: LaunchMode = .automatic, subagent: SubagentLaunch? = nil, sessionID: UUID? = nil, workerOf: WorkerLaunch? = nil
     ) {
+        self.workerOf = workerOf
         self.sessionID = sessionID
         self.subagent = subagent
         self.mode = mode
@@ -287,10 +292,14 @@ public actor LaunchCoordinator {
                     injection?.claudeSessionLibrary = await library(session)
                 }
                 // Claude parte da injeção de hooks; Codex e OpenCode só levam a de orquestração (hooks do Codex precisam de trust sondado).
-                if job.spec.provider.supportsSubagentComputers, let sub = job.subagent, sub.mode.isOn, injection != nil || job.spec.provider != .claude,
+                if let worker = job.workerOf {
+                    // Worker de app: nada de orquestração de pai (`subagent` é ignorado); só o MCP do próprio filho.
+                    injection = worker.applied(to: injection)
+                } else if job.spec.provider.supportsSubagentComputers, let sub = job.subagent, sub.mode.isOn, injection != nil || job.spec.provider != .claude,
                    let prepare = configuration.prepareOrchestration {
                     let info = ParentInfo(
-                        parentID: runID.uuidString.lowercased(), sessionID: sub.sessionID, sessionTitle: sub.sessionTitle, mode: sub.mode, provider: job.spec.provider)
+                        parentID: runID.uuidString.lowercased(), sessionID: sub.sessionID, sessionTitle: sub.sessionTitle, mode: sub.mode, provider: job.spec.provider,
+                        harness: sub.harness)
                     if let bundle = await prepare(info) {
                         injection = bundle.applied(to: injection)
                         orchestrated.insert(runID)

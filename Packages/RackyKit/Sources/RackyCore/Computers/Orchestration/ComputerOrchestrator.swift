@@ -43,7 +43,13 @@ public final class ComputerOrchestrator: Sendable {
             },
             store: store, maxParallelCreations: maxParallelCreations, fixedEstimates: fixedEstimates, proxies: proxies,
             sessionProxy: { parent in await parents.info(parent)?.proxy },
-            sessionInfo: { parent in await parents.info(parent).map { SessionRef(id: $0.sessionID, title: $0.sessionTitle) } })
+            sessionInfo: { parent in
+                guard let info = await parents.info(parent) else { return nil }
+                // Harness vivo: mudar no menu da sessão vale para o próximo spawn, sem reiniciar o pai.
+                var harness = info.harness
+                if let id = info.sessionID, let live = try? await store?.session(id: id) { harness = live.subagentHarness }
+                return SessionRef(id: info.sessionID, title: info.sessionTitle, harness: harness)
+            })
         let approvals = ComputerApprovalCenter()
         self.approvals = approvals
         let scheduler = scheduler
@@ -65,6 +71,11 @@ public final class ComputerOrchestrator: Sendable {
             Task { await parents.observeProxyChanges { id, proxy in Task { try? await store.updateOrchestrationParentProxy(id: id, proxy: proxy) } } }
             Task { await hub.setBindObserver { thread, child in Task { try? await store.bindOrchestrationThread(childID: child, thread: thread) } } }
         }
+    }
+
+    /// O app liga o launcher dos workers de app (RackyUI): `agent_spawn` abre o terminal por ele. `helperPath` é o do orquestrador.
+    public func setWorkerLauncher(_ launcher: (any WorkerLauncher)?) async {
+        await scheduler.setWorkerLauncher(launcher, helperPath: helperPath)
     }
 
     /// Serviço `mcp` do `app.sock` (o helper `racky mcp` do Claude fala com ele).
@@ -89,6 +100,7 @@ public final class ComputerOrchestrator: Sendable {
         var info = info
         if info.proxy == nil, let session = info.sessionID { info.proxy = await parents.proxy(forSession: session) }
         var options = options
+        options.harness = info.harness
         if info.provider == .opencode { options.readableDirectories.append(runsRoot.standardizedFileURL.path) }
         var bundle = try OrchestrationInjectionBuilder.make(parentID: info.parentID, helperPath: helperPath, options: options, provider: info.provider)
         bundle.spawnGuardMode = info.mode

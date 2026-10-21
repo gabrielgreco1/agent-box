@@ -259,9 +259,35 @@ public actor ComputerToolService {
         case "batch_status": return ToolResult(try await orchestrator.batchStatus(parent: parent, batch: args.string("batch") ?? ""))
         case "batch_collect": return ToolResult(try await orchestrator.collectBatch(parent: parent, batch: args.string("batch") ?? ""))
         case "boxes_release": return ToolResult(await orchestrator.release(parent: parent, names: args.strings("names") ?? [], keep24h: args.string("keep") == "24h"))
+        case "agent_spawn": return ToolResult(try await agentSpawn(args, parent: parent, orchestrator: orchestrator))
+        case "agent_wait":
+            return ToolResult(try await orchestrator.agentWait(
+                parent: parent, names: args.strings("names") ?? [], any: args.bool("any") ?? false, waitSeconds: args.double("wait_s") ?? 45))
+        case "agent_status": return ToolResult(await orchestrator.agentStatus(parent: parent, names: args.strings("names")))
+        case "agent_stop": return ToolResult(try await orchestrator.agentStop(parent: parent, name: args.string("name") ?? ""))
         case "agent_message": return ToolResult(try await orchestrator.message(parent: parent, to: args.string("child_id") ?? "", text: args.string("text") ?? ""))
         default: throw ToolError(.notFound, "tool \(name) is not implemented")
         }
+    }
+
+    /// `agent_spawn`: o mesmo portão de `boxes_reserve` (Ask/Full, fila, capacidade), depois o app abre o terminal do worker.
+    func agentSpawn(_ args: Args, parent: String, orchestrator: any ParentOrchestrating) async throws -> JSON {
+        let harness = args.string("harness").flatMap(WorkerHarness.init(rawValue:))
+        let title = args.string("title")
+        let base = args.string("name") ?? title ?? "worker"
+        let name: String
+        if let explicit = args.string("name") { name = explicit } else { name = await orchestrator.freeWorkerName(parent: parent, base: base) }
+        let display = args.string("display").flatMap(ComputerDisplay.init(rawValue:)) ?? .headless
+        var reserve = ReserveRequest(names: [name], display: display)
+        if let gate {
+            switch try await gate.authorize(parent: parent, reserve) {
+            case .pending(let waiting): return waiting
+            case .proceedWith(let proxy): reserve.proxy = proxy
+            case .proceed: break
+            }
+        }
+        let request = AgentSpawnRequest(harness: harness, brief: args.string("brief") ?? "", title: title, name: name, display: display, model: args.string("model"))
+        return try await orchestrator.agentSpawn(parent: parent, request: request, reserve: reserve)
     }
 
     /// `https://origin:8080/x` ou `origin:8080` viram `origin`; `*.example.com` fica; vazio some (o egress compara só o hostname).

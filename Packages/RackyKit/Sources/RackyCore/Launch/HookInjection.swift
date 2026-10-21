@@ -45,6 +45,13 @@ public struct SpawnGuardConfig: Sendable, Equatable {
     public init(child: String, capability: String, mode: SubagentComputersMode) { self.child = child; self.capability = capability; self.mode = mode }
 }
 
+/// Identidade MCP de um worker de app (`racky mcp --child <child> --capability <capability>`).
+public struct WorkerIdentity: Sendable, Equatable {
+    public var child: String
+    public var capability: String
+    public init(child: String, capability: String) { self.child = child; self.capability = capability }
+}
+
 /// Conteúdo das injeções por lançamento (Fatia 2+, 06 §2.8). Tudo é regenerado a cada start e a cada resume.
 public struct LaunchInjection: Sendable, Equatable {
     /// Caminho absoluto do helper `racky` que os hooks chamam.
@@ -60,6 +67,11 @@ public struct LaunchInjection: Sendable, Equatable {
     public var claudeAgentsJSON: Data?
     /// Claude: regras de `permissions.deny` de `--settings` (ex.: `Skill(racky)`, S4). Valem também com `--dangerously-skip-permissions`.
     public var claudeDenyRules: [String]
+    /// Claude: regras `permissions.allow` de `--settings` (worker de app: `mcp__abx-<filho>__*`, sem a flag variádica `--allowedTools`).
+    public var claudeAllowRules: [String] = []
+    /// Codex e OpenCode: o worker de app só leva o próprio servidor MCP (sem pai, sem pool, sem agentes).
+    public var codexWorker: WorkerIdentity?
+    public var openCodeWorker: WorkerIdentity?
     /// Claude: itens da Library ligados só nesta sessão (T4-02): plugin `plugin-session/` em `--plugin-dir` e agentes somados a `--agents`.
     public var claudeSessionLibrary: SessionLibraryInjection?
     /// Claude: variáveis de ambiente do lançamento (ex.: `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`, CS-325).
@@ -98,7 +110,7 @@ extension LaunchInjection {
     /// Claude: `--settings` sempre; `--mcp-config` e `--plugin-dir` só com conteúdo.
     func claudeInjection(launchDirectory: URL) throws -> (injected: [String], files: [LaunchFile]) {
         let dir = launchDirectory.standardizedFileURL.path
-        var files = [try ClaudeHookSettings.launchFile(helperPath: helperPath, denyRules: claudeDenyRules, spawnGuard: claudeSpawnGuard)]
+        var files = [try ClaudeHookSettings.launchFile(helperPath: helperPath, denyRules: claudeDenyRules, spawnGuard: claudeSpawnGuard, allowRules: claudeAllowRules)]
         var injected = ClaudeHookSettings.injectedArguments(settingsPath: "\(dir)/\(ClaudeHookSettings.fileName)")
         if let mcp = claudeMCPConfig, !mcp.isEmpty {
             files.append(LaunchFile(name: Self.mcpFileName, contents: mcp))
@@ -130,11 +142,15 @@ extension LaunchInjection {
             injected += rendered.arguments
             files += rendered.files
         }
+        if let worker = codexWorker {
+            injected += ["-c", "mcp_servers.\(OrchestrationText.codexWorkerServerName)=\(CodexOrchestration.serverTable(helperPath: helperPath, child: worker.child, capability: worker.capability))"]
+        }
         return (injected, files)
     }
 
     /// OpenCode: `OPENCODE_CONFIG_CONTENT` com a config inline e o arquivo de instruções. Sem Subagent computers não injeta nada.
     func openCodeInjection(launchDirectory: URL) throws -> (environment: [String: String], files: [LaunchFile]) {
+        if let worker = openCodeWorker { return (try OpenCodeOrchestration.renderWorker(helperPath: helperPath, worker: worker), []) }
         guard let orchestration = openCodeOrchestration else { return ([:], []) }
         return try orchestration.render(launchDirectory: launchDirectory)
     }
@@ -147,7 +163,7 @@ public enum ClaudeHookSettings {
 
     /// `{"hooks": {"<Evento>": [{"hooks": [{"type": "command", "command": "...", "timeout": 5}]}]}}` (06 §2.8).
     /// Saída determinística (chaves ordenadas). Hooks de `--settings` somam com os globais (S-05, V1 confirmado).
-    public static func settingsJSON(helperPath: String, denyRules: [String] = [], spawnGuard: SpawnGuardConfig? = nil) throws -> Data {
+    public static func settingsJSON(helperPath: String, denyRules: [String] = [], spawnGuard: SpawnGuardConfig? = nil, allowRules: [String] = []) throws -> Data {
         var hooks: [String: Any] = [:]
         for event in HookEventName.claudeRegistered {
             hooks[event.rawValue] = [[
@@ -169,13 +185,16 @@ public enum ClaudeHookSettings {
             hooks[HookEventName.preToolUse.rawValue] = groups
         }
         var root: [String: Any] = ["hooks": hooks]
-        if !denyRules.isEmpty { root["permissions"] = ["deny": denyRules] }
+        var permissions: [String: Any] = [:]
+        if !denyRules.isEmpty { permissions["deny"] = denyRules }
+        if !allowRules.isEmpty { permissions["allow"] = allowRules }
+        if !permissions.isEmpty { root["permissions"] = permissions }
         return try JSONSerialization.data(withJSONObject: root, options: [.sortedKeys, .prettyPrinted, .withoutEscapingSlashes])
     }
 
     /// Arquivo para `AB/run/launch/<runID>/settings.json` (`0600`).
-    public static func launchFile(helperPath: String, denyRules: [String] = [], spawnGuard: SpawnGuardConfig? = nil) throws -> LaunchFile {
-        LaunchFile(name: fileName, contents: try settingsJSON(helperPath: helperPath, denyRules: denyRules, spawnGuard: spawnGuard))
+    public static func launchFile(helperPath: String, denyRules: [String] = [], spawnGuard: SpawnGuardConfig? = nil, allowRules: [String] = []) throws -> LaunchFile {
+        LaunchFile(name: fileName, contents: try settingsJSON(helperPath: helperPath, denyRules: denyRules, spawnGuard: spawnGuard, allowRules: allowRules))
     }
 
     /// Segmento `injected` do argv (T2-02 o usa; aqui só a forma).

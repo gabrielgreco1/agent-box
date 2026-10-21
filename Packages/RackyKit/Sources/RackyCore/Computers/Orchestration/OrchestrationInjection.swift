@@ -20,8 +20,11 @@ public enum OrchestrationText {
         """
 
     /// SKILL.md do plugin (CS-330): quando usar, os passos, o brief e as regras. Migrado do SKILL.md antigo trocando `racky exec` por MCP.
-    public static var skill: String {
-        """
+    public static var skill: String { skill(harness: .claude) }
+
+    /// A skill do pai; `harness` acrescenta a seção de workers de app (`agent_spawn`) quando a sessão não é só Claude nativo.
+    public static func skill(harness: SubagentHarness) -> String {
+        let base = """
         ---
         name: \(skillName)
         description: \(skillDescription.replacingOccurrences(of: "\n", with: " "))
@@ -82,6 +85,7 @@ public enum OrchestrationText {
           tell the user.
         - The number of computers running at once depends on the Docker VM memory (8 GB runs 4 headless computers); the rest queue.
         """
+        return base + harnessSection(harness, naming: .plain, nativeTool: "Agent")
     }
 
     /// Prompt de sistema do `racky-worker-N` (CS-331): diário, evidência, `/work` limpo e as regras de conduta.
@@ -179,6 +183,8 @@ public enum OrchestrationInjectionBuilder {
         public var extraDenyRules: [String] = []
         /// OpenCode: pastas fora do projeto que o pai pode ler sem pedir permissão (as pastas dos runs, onde estão os `result.json`).
         public var readableDirectories: [String] = []
+        /// Quem roda os subagentes da sessão (spec subagent-harness): decide a seção de workers de app no texto do pai.
+        public var harness: SubagentHarness = .claude
         public init() {}
     }
 
@@ -220,7 +226,7 @@ public enum OrchestrationInjectionBuilder {
         ]
         let pluginFiles = [
             LaunchFile(name: "plugin/.claude-plugin/plugin.json", contents: try JSONSerialization.data(withJSONObject: manifest, options: [.sortedKeys, .prettyPrinted])),
-            LaunchFile(name: "plugin/skills/\(OrchestrationText.skillName)/SKILL.md", contents: Data(OrchestrationText.skill.utf8)),
+            LaunchFile(name: "plugin/skills/\(OrchestrationText.skillName)/SKILL.md", contents: Data(OrchestrationText.skill(harness: options.harness).utf8)),
         ]
 
         // `--agents`: um worker por slot, cada um com o servidor MCP inline do seu filho (array de objetos de um item).
@@ -267,10 +273,12 @@ public enum OrchestrationInjectionBuilder {
             bundle.poolID = poolID
             bundle.poolCapability = poolCapability
             bundle.codex = CodexOrchestration(
-                helperPath: helperPath, parentID: parentID, parentCapability: capability, poolID: poolID, poolCapability: poolCapability, workers: workers)
+                helperPath: helperPath, parentID: parentID, parentCapability: capability, poolID: poolID, poolCapability: poolCapability, workers: workers,
+                instructions: OrchestrationText.codexInstructions(harness: options.harness))
         } else {
             bundle.openCode = OpenCodeOrchestration(
-                helperPath: helperPath, parentID: parentID, parentCapability: capability, workers: workers, readableDirectories: options.readableDirectories)
+                helperPath: helperPath, parentID: parentID, parentCapability: capability, workers: workers, readableDirectories: options.readableDirectories,
+                instructions: OrchestrationText.openCodeInstructions(harness: options.harness))
         }
         return bundle
     }

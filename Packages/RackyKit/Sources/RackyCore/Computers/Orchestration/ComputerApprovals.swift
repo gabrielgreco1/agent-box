@@ -249,7 +249,13 @@ public struct ParentInfo: Sendable, Equatable {
     public var proxy: String?
     /// CLI do pai (decide a injeção; Claude por padrão).
     public var provider: TerminalProvider
-    public init(parentID: String, sessionID: UUID?, sessionTitle: String, mode: SubagentComputersMode, proxy: String? = nil, provider: TerminalProvider = .claude) {
+    /// Quem roda os subagentes da sessão no lançamento (decide o texto do pai); o valor vivo vem do Store a cada spawn.
+    public var harness: SubagentHarness
+    public init(
+        parentID: String, sessionID: UUID?, sessionTitle: String, mode: SubagentComputersMode, proxy: String? = nil, provider: TerminalProvider = .claude,
+        harness: SubagentHarness = .claude
+    ) {
+        self.harness = harness
         self.parentID = parentID; self.sessionID = sessionID; self.sessionTitle = sessionTitle; self.mode = mode; self.proxy = proxy; self.provider = provider
     }
 }

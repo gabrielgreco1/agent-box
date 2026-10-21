@@ -36,13 +36,16 @@ public struct LaunchSpec: Codable, Hashable, Sendable {
     public var initialPromptFile: String?
     public var nativeSessionID: String?
     public var resumeOf: String?
+    /// Terminal de um worker de app (spec subagent-harness): a identidade MCP do filho. Nunca é pai de orquestração, nem depois de reabrir o app.
+    public var workerChildID: String?
 
     public init(
         provider: TerminalProvider, profileID: UUID? = nil, model: String? = nil, permissionMode: String? = nil,
         effort: String? = nil, extraArgs: [String] = [], envOverrides: [String: String] = [:],
         customArgv: [String]? = nil, initialPrompt: String? = nil, initialPromptFile: String? = nil,
-        nativeSessionID: String? = nil, resumeOf: String? = nil
+        nativeSessionID: String? = nil, resumeOf: String? = nil, workerChildID: String? = nil
     ) {
+        self.workerChildID = workerChildID
         self.provider = provider; self.profileID = profileID; self.model = model
         self.permissionMode = permissionMode; self.effort = effort; self.extraArgs = extraArgs
         self.envOverrides = envOverrides; self.customArgv = customArgv; self.initialPrompt = initialPrompt

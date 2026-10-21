@@ -68,6 +68,7 @@ struct SchedulerRig {
 
     static func make(vm: VMCapacity = eightGB, workers: Int = 8, maxParallel: Int = 4, parent: String = "parent-aaaaaaaa", store: RackyStore? = nil,
                      proxies: (any ProxyDirectory)? = nil, sessionProxy: @escaping @Sendable (String) async -> String? = { _ in nil },
+                     sessionInfo: @escaping @Sendable (String) async -> SessionRef? = { _ in nil },
                      now: @escaping @Sendable () -> Date = { Date() }) async throws -> SchedulerRig {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("abx-sched-\(UUID().uuidString.lowercased())", isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
@@ -75,7 +76,7 @@ struct SchedulerRig {
         let provisioning = FakeProvisioning()
         let scheduler = ComputerScheduler(
             hub: hub, provisioning: provisioning, capacity: { vm }, runDirectory: { p, n in root.appendingPathComponent("\(p)/\(n)", isDirectory: true) },
-            store: store, maxParallelCreations: maxParallel, fixedEstimates: true, proxies: proxies, sessionProxy: sessionProxy, now: now)
+            store: store, maxParallelCreations: maxParallel, fixedEstimates: true, proxies: proxies, sessionProxy: sessionProxy, sessionInfo: sessionInfo, now: now)
         await scheduler.attach()
         let service = ComputerToolService(hub: hub, orchestrator: scheduler)
         let bundle = try OrchestrationInjectionBuilder.make(
@@ -284,7 +285,7 @@ struct SchedulerRig {
             let reply = try #require(await server.handle(Data(#"{"jsonrpc":"2.0","id":1,"method":"tools/list"}"#.utf8), child: child))
             return try JSON.parse(reply)["result"]?["tools"]?.array?.compactMap { $0["name"]?.string } ?? []
         }
-        #expect(try await names(rig.parent) == ["boxes_reserve", "boxes_status", "boxes_release", "box_collect", "batch_status", "batch_collect", "dataset_list", "dataset_read", "agent_message"])
+        #expect(try await names(rig.parent) == ["boxes_reserve", "boxes_status", "boxes_release", "box_collect", "batch_status", "batch_collect", "dataset_list", "dataset_read", "agent_message", "agent_spawn", "agent_wait", "agent_status", "agent_stop"])
         #expect(try await names(bundleChild) == ToolCatalog.all.map(\.name))
         let initialize = try #require(await server.handle(Data(#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}"#.utf8), child: rig.parent))
         let instructions = try JSON.parse(initialize)["result"]?["instructions"]?.string ?? ""

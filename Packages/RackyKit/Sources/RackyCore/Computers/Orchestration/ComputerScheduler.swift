@@ -18,11 +18,14 @@ public struct ReserveRequest: Sendable, Equatable {
     public var batch: String?
     public var keep24h: Bool
     public var allowHosts: [String]
+    /// Worker de app (`agent_spawn`): a identidade do filho já alocada. `nil` = o primeiro slot nativo livre.
+    public var childID: String?
 
     public init(
         names: [String], display: ComputerDisplay = .headless, profile: String? = nil, proxy: String? = nil, proxiesAllowed: [String] = [],
-        batch: String? = nil, keep24h: Bool = false, allowHosts: [String] = []
+        batch: String? = nil, keep24h: Bool = false, allowHosts: [String] = [], childID: String? = nil
     ) {
+        self.childID = childID
         self.names = names; self.display = display; self.profile = profile; self.proxy = proxy; self.proxiesAllowed = proxiesAllowed
         self.batch = batch; self.keep24h = keep24h; self.allowHosts = allowHosts
     }
@@ -128,9 +131,26 @@ public protocol ParentOrchestrating: Sendable {
     /// `batch_status` / `batch_collect` (T3-07).
     func batchStatus(parent: String, batch: String) async throws -> JSON
     func collectBatch(parent: String, batch: String) async throws -> JSON
+    /// Workers de app (spec subagent-harness): nome livre para o computador, `agent_spawn`, `agent_wait`, `agent_status` e `agent_stop`.
+    func freeWorkerName(parent: String, base: String) async -> String
+    func sessionHarness(parent: String) async -> SubagentHarness?
+    func agentSpawn(parent: String, request: AgentSpawnRequest, reserve template: ReserveRequest) async throws -> JSON
+    func agentWait(parent: String, names: [String], any: Bool, waitSeconds: Double) async throws -> JSON
+    func agentStatus(parent: String, names: [String]?) async -> JSON
+    func agentStop(parent: String, name: String) async throws -> JSON
 }
 
 extension ParentOrchestrating {
+    public func freeWorkerName(parent: String, base: String) async -> String { base }
+    public func sessionHarness(parent: String) async -> SubagentHarness? { nil }
+    public func agentSpawn(parent: String, request: AgentSpawnRequest, reserve template: ReserveRequest) async throws -> JSON {
+        throw ToolError(.notSupported, "subagent workers are not supported")
+    }
+    public func agentWait(parent: String, names: [String], any: Bool, waitSeconds: Double) async throws -> JSON {
+        throw ToolError(.notSupported, "subagent workers are not supported")
+    }
+    public func agentStatus(parent: String, names: [String]?) async -> JSON { ["workers": .array([])] }
+    public func agentStop(parent: String, name: String) async throws -> JSON { throw ToolError(.notSupported, "subagent workers are not supported") }
     public func childClaimed(_ child: String, computer: String) async {}
     public func workerChild(ofComputer name: String, parent: String) async -> String? { nil }
     public func collect(parent: String, name: String, include: Set<CollectedRun.Section>) async throws -> JSON { throw ToolError(.notSupported, "collect is not supported") }
@@ -142,7 +162,9 @@ extension ParentOrchestrating {
 public struct SessionRef: Sendable, Equatable {
     public var id: UUID?
     public var title: String?
-    public init(id: UUID? = nil, title: String? = nil) { self.id = id; self.title = title }
+    /// Quem roda os subagentes da sessão agora (lido ao vivo do Store: mudar no menu vale para o próximo spawn).
+    public var harness: SubagentHarness?
+    public init(id: UUID? = nil, title: String? = nil, harness: SubagentHarness? = nil) { self.id = id; self.title = title; self.harness = harness }
 }
 
 public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
@@ -208,6 +230,13 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
     private var agentToChild: [String: String] = [:]
     private var loggedMessages: Set<String> = []
     private var pendingMessages: [String: [StoredAgentMessage]] = [:]  // sem store (testes): inbox em memória
+    // Workers de app (AppWorkers.swift, ComputerScheduler+Workers.swift).
+    var appWorkers: [String: AppWorker] = [:]  // childID -> worker
+    var workerLauncher: (any WorkerLauncher)?
+    var workerHelperPath = ""
+    /// Intervalo entre os sinais de `agent_stop` (5 s no app; os testes encurtam).
+    var stopGrace: Duration = .seconds(5)
+    var changeWaiters: [UUID: (continuation: CheckedContinuation<Void, Never>, timer: Task<Void, Never>)] = [:]
 
     public init(
         hub: ComputerHub, provisioning: any ComputerProvisioning, capacity: @escaping @Sendable () async -> VMCapacity,
@@ -348,8 +377,16 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
             return unavailable(name, "profile_busy", "browser profile \(profile) is in use by another computer")
         }
         let used = Set(entries.values.filter { $0.spec.parent == parent && $0.phase != .failed }.map(\.childID))
-        guard let childID = children.first(where: { !used.contains($0) }) else {
-            return unavailable(name, "no_free_worker", "all \(children.count) worker slots of this session hold a computer; release one first")
+        let childID: String
+        if let forced = request.childID {
+            guard children.contains(forced), !used.contains(forced) else { return unavailable(name, "no_free_worker", "the worker identity is not available") }
+            childID = forced
+        } else {
+            // Workers de app têm a identidade deles (`-a<n>`): `boxes_reserve` só enxerga os slots nativos.
+            guard let free = children.first(where: { !used.contains($0) && !OrchestrationInjectionBuilder.isAppWorker($0) }) else {
+                return unavailable(name, "no_free_worker", "all \(children.count) worker slots of this session hold a computer; release one first")
+            }
+            childID = free
         }
         var entry = Entry(spec: spec0, id: spec0.computerID, computer: computer, lazy: lazy, childID: childID, phase: .queued, requestedAt: now())
         if request.keep24h { entry.keepUntil = .distantFuture }  // marcado; a data real nasce no release
@@ -434,6 +471,7 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
             await current.computer.setDetail(String(Self.describe(error).prefix(240)))
             await persist(name)
             await closeRun(current, outcome: .failed)
+            await workerComputerGone(childID: current.childID, reason: "its computer failed to start: \(String(Self.describe(error).prefix(160)))")
             await drain()  // a vaga volta para a fila
             await checkBatches()
         }
@@ -464,6 +502,7 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
     public func finish(_ computer: ManagedComputer, keep24h: Bool) async {
         guard var entry = entries[computer.name] else { return }
         await closeRun(entry, outcome: .released)
+        await workerReleased(childID: entry.childID, run: entry.spec.run)
         if keep24h || entry.keepUntil == .distantFuture {
             entry.keepUntil = now().addingTimeInterval(Self.keepDuration)
             entries[computer.name] = entry
@@ -481,11 +520,14 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
         guard let entry = entries.removeValue(forKey: name) else { return }
         queue.removeAll { $0 == name }
         await closeRun(entry, outcome: .stopped)  // não sobrescreve um run já fechado (released/failed)
+        await workerComputerGone(childID: entry.childID, reason: "its computer was released before it finished")
         entry.lazy.detach()
         await entry.computer.setState(.stopped)
         await hub.remove(name: name)
         if let handle = entry.handle { await handle.teardown() }
-        try? await store?.updateOrchestrationChild(id: entry.childID, state: childState, at: now())  // o slot livre é decidido pelas entradas em memória
+        // Worker de app que terminou fica `ended` (não volta a `released`/`idle`): a sidebar o lê assim.
+        let endedWorker = appWorkers[entry.childID]?.state.isFinal == true
+        try? await store?.updateOrchestrationChild(id: entry.childID, state: endedWorker ? .ended : childState, at: now())  // o slot livre é decidido pelas entradas em memória
         var row = ComputerStateRow(id: entry.id, name: name, display: entry.spec.display.rawValue, state: "removed", ownerParentID: entry.spec.parent)
         row.createdAt = entry.requestedAt
         try? await store?.saveComputerState(row)
@@ -710,6 +752,7 @@ public actor ComputerScheduler: ComputerLifecycle, ParentOrchestrating {
         }
         let queued = queue.filter { entries[$0]?.spec.parent == parent }.count
         var out: [String: JSON] = ["boxes": .array(boxes), "queue": ["length": .int(queued)]]
+        if let harness = await sessionInfo(parent)?.harness { out["subagent_harness"] = .string(harness.rawValue) }
         if let label = queueLabel, queued > 0 { out["queue"] = ["length": .int(queued), "label": .string(label)] }
         return .object(out)
     }

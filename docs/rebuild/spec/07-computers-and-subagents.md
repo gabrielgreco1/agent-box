@@ -535,16 +535,16 @@ batch_status(batch: string)
 batch_collect(batch: string)
   → {results_jsonl_path, summary: [{name, status: ActivityState, verified, cited_missing, not_verified, usage}]}
 
-// v1.1
-agent_spawn(mode: "light"|"isolated", harness: "claude"|"codex", brief: string, box?: string,
-            display?: Display, agent_def?: string, model?: string, effort?: string,
-            worktree?: "new"|"none"|string, name?: string) → {child_id, box?, state: ActivityState}
-agent_status(ids?: string[]) → {children: [{child_id, name, activity: ActivityState, last_doing?, box?, display?, harness}]}
-agent_wait(ids: string[], any?: bool=false, wait_s?: number=45)
-  → {finished: [{child_id, outcome: "done"|"failed"|"stopped", result?}], pending: string[]}
+// Workers de app, versão light (docs/rebuild/spec/subagent-harness.md)
+agent_spawn(brief: string, harness?: "codex"|"opencode"|"claude", title?: string, name?: string, display?: "headless"|"desktop", model?: string)
+  → {name, child_id, harness, state: "starting"|"queued"}
+agent_wait(names: string[], any?: bool=false, wait_s?: number=45)
+  → {workers: [{name, child_id, harness, state: "running"|"done"|"failed"|"stopped", result_ready, reason?}], done}
+agent_status(names?: string[]) → {workers: [...], subagent_harness}
+agent_stop(name: string) → {name, state: "stopped"}
 agent_message(child_id: string, text: string) → {delivered: "pty"|"inbox"|"queued", message_id}
+// v1.1 (isolado, ainda não implementado)
 agent_inbox(wait_s?: number=0) → {items: [{from: child_id, kind: "question"|"progress", text, request_id}]}
-agent_stop(child_id: string, keep_box?: bool=false) → {stopped: bool}
 agent_list() → {children: [{child_id, name, kind, harness, mode, activity: ActivityState, box?}]}
 ```
 
