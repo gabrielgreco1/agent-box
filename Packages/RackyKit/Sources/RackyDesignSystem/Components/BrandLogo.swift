@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 /// Marca de um lugar de dados (banco, warehouse, storage, planilha, webhook): o logo na cor da marca, sozinho ou num ladrilho
-/// com o fundo de leve na mesma cor. Os SVGs vêm da Simple Icons (CC0) e da Devicon (MIT); `sources.json` guarda a origem.
+/// neutro. Os SVGs vêm da Simple Icons (CC0) e da Devicon (MIT); `sources.json` guarda a origem.
 public enum DSDataBrand: String, CaseIterable, Sendable {
     case postgres, supabase, mysql, sqlServer, sqlite
     case bigQuery, snowflake, clickHouse, databricks
@@ -68,10 +68,11 @@ public struct DSDataLogo: View {
     public var body: some View {
         Group {
             if tile {
-                mark(size: size * 0.62)
+                // Ladrilho neutro: a cor é só do logo, nunca do fundo (sem brilho nem tinta).
+                mark(size: size * 0.6)
                     .frame(width: size, height: size)
-                    .background(RoundedRectangle(cornerRadius: size * 0.26).fill(brand.color.opacity(0.13)))
-                    .overlay(RoundedRectangle(cornerRadius: size * 0.26).strokeBorder(brand.color.opacity(0.28)))
+                    .background(RoundedRectangle(cornerRadius: size * 0.24).fill(DS.Color.secondary))
+                    .overlay(RoundedRectangle(cornerRadius: size * 0.24).strokeBorder(DS.Color.border))
             } else {
                 mark(size: size)
             }

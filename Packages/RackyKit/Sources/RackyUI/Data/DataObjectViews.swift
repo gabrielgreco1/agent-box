@@ -487,7 +487,7 @@ struct DataConnectSheet: View {
             .padding(.horizontal, DS.Space.s3)
             .frame(height: DataMetrics.connectCard)
             .background(RoundedRectangle(cornerRadius: DS.Radius.md).fill(hovering ? DS.Color.secondary : DS.Color.chrome))
-            .overlay(RoundedRectangle(cornerRadius: DS.Radius.md).strokeBorder(hovering ? kind.brand.color.opacity(0.45) : DS.Color.border))
+            .overlay(RoundedRectangle(cornerRadius: DS.Radius.md).strokeBorder(hovering ? DS.Color.borderStrong : DS.Color.border))
             .onHover { hovering = $0 }
             .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: hovering)
             .help(kind.tagline)

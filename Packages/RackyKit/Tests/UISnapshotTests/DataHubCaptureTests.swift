@@ -70,6 +70,11 @@ import Testing
         _ = try await env.registry.perform(.viewToggleSidebar, .press)
         await VisualBatchTests.settle(700)
         write(c.window!.contentView!, "data-sidebar-collapsed")
+        // As duas recolhidas: o botão de reabrir o explorer e o da sidebar continuam à vista.
+        _ = try await env.registry.perform(.dataToggleExplorer, .press)
+        await VisualBatchTests.settle(600)
+        write(c.window!.contentView!, "data-both-collapsed")
+        _ = try await env.registry.perform(.dataToggleExplorer, .press)
         _ = try await env.registry.perform(.viewToggleSidebar, .press)
         c.window?.setContentSize(NSSize(width: 1680, height: 980))
         await VisualBatchTests.settle(500)

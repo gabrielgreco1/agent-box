@@ -11,6 +11,7 @@ enum DataMetrics {
     static let explorerMin: CGFloat = 200
     static let contentMin: CGFloat = 640
     static let explorerTitleMin: CGFloat = 100
+    static let collapsedStripFallback: CGFloat = 220
     static let explorerMax: CGFloat = 520
     static let resizeHandle: CGFloat = 2
     static let rowHeight = DS.Space.s6 + DS.Space.s0_5
@@ -78,7 +79,11 @@ struct DataPageView: View {
     var shell: ShellModel?
 
     /// Com a sidebar recolhida, a faixa da janela (semáforos, nome) flutua no canto: o topo começa depois dela.
-    private var topLeading: CGFloat { shell.map { $0.sidebarCollapsed ? $0.titlebarStripWidth : 0 } ?? 0 }
+    private var topLeading: CGFloat {
+        guard let shell, shell.sidebarCollapsed else { return 0 }
+        // Sem a medida ainda (primeiro layout), reserva o tamanho típico da faixa: nunca deixar o conteúdo por baixo dos semáforos.
+        return max(shell.titlebarStripWidth, DataMetrics.collapsedStripFallback)
+    }
 
     @State private var width: CGFloat = .infinity
 
@@ -153,6 +158,9 @@ struct DataExplorerHeader: View {
         .padding(.trailing, DS.Space.s1_5)
         .frame(width: shown ? max(hub.explorerWidth, leading + DataMetrics.explorerTitleMin) : nil, alignment: .leading)
         .frame(maxHeight: .infinity)
+        // Recolhido, sobra só o botão de reabrir: ele nunca pode ser espremido pelas tabs.
+        .fixedSize(horizontal: true, vertical: false)
+        .layoutPriority(2)
         .overlay(alignment: .trailing) { DS.Color.border.frame(width: ComputersMetrics.separator) }
     }
 }
@@ -391,8 +399,8 @@ struct DataRoleBadge: View {
         .foregroundStyle(tint)
         .padding(.horizontal, DS.Space.s2)
         .frame(height: DataMetrics.chipHeight)
-        .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(tint.opacity(0.1)))
-        .overlay(RoundedRectangle(cornerRadius: DS.Radius.sm).strokeBorder(tint.opacity(0.35)))
+        .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.secondary))
+        .overlay(RoundedRectangle(cornerRadius: DS.Radius.sm).strokeBorder(DS.Color.border))
         .fixedSize()
     }
 }
@@ -433,7 +441,7 @@ struct DataMarkView: View {
             case .symbol(let name, let tint):
                 Image(systemName: name).font(.system(size: DataMetrics.icon)).foregroundStyle(muted ? DS.Color.textTertiary : (tint ?? DS.Color.textSecondary))
             case .agent(let kind): DSAgentLogo(kind, size: DataMetrics.markSize - DS.Space.s0_5)
-            case .brand(let brand): DSDataLogo(brand, size: DataMetrics.logoTile, tile: true)
+            case .brand(let brand): DSDataLogo(brand, size: DataMetrics.markSize - DS.Space.s0_5)
             }
         }
         .frame(width: DataMetrics.logoTile, height: DataMetrics.logoTile)
