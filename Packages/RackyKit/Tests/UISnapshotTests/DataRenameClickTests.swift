@@ -10,7 +10,7 @@ import Testing
 /// O lápis ao lado do nome do dataset, clicado com o mouse de verdade (eventos de janela, não a ação direto): o campo de nome abre e
 /// continua aberto, com o foco, até o Enter.
 @MainActor
-@Suite(.serialized, .offscreenAppKit) struct DataRenameClickTests {
+@Suite(.serialized, .offscreenAppKit, .tags(.integration)) struct DataRenameClickTests {
     private func click(_ window: NSWindow, at frame: CGRect, count: Int = 1) {
         let height = window.contentView?.bounds.height ?? 0
         let point = CGPoint(x: frame.midX, y: height - frame.midY)
