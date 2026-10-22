@@ -11369,7 +11369,10 @@
           }
         }
       }
-    }
+    },
+    "Copy…": {},
+    "Your databases and services": {},
+    "Test: post 2 sample rows to this URL…": {}
   },
   "version": "1.0"
 }

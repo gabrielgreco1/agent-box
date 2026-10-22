@@ -34,13 +34,15 @@ struct DataObjectActions: View {
     let object: DataObject
     /// Pouco espaço: só os ícones (o nome vai no tooltip).
     var compact = false
+    /// Um pouco de espaço a menos: nomes curtos ("Copy…") antes de virar só ícones.
+    var short = false
 
     var body: some View {
         HStack(spacing: DS.Space.s2) {
             switch object {
             case .dataset(let id):
                 if !hub.connections.isEmpty {
-                    button(.dataSendTo, id: .dataSendTo, String(localized: "Copy to a connection…", bundle: .module), "arrow.up.right", .select(id))
+                    button(.dataSendTo, id: .dataSendTo, short ? String(localized: "Copy…", bundle: .module) : String(localized: "Copy to a connection…", bundle: .module), "arrow.up.right", .select(id))
                 }
                 if let model = hub.datasets.models[id] { DatasetToolbar(model: model, labels: !compact) }
             case .table(let connection, _, _):
@@ -52,7 +54,7 @@ struct DataObjectActions: View {
                     DSButton(.dataQueryRun, id: .dataQueryRun, "Run", variant: .primary, size: .sm, symbol: "play.fill", keycap: "⌘↩")
                 }
             case .webhook:
-                button(.dataWebhookTest, id: .dataWebhookTest, String(localized: "Send 2 real rows as a test…", bundle: .module), "paperplane", .press)
+                button(.dataWebhookTest, id: .dataWebhookTest, String(localized: "Test: post 2 sample rows to this URL…", bundle: .module), "paperplane", .press)
             case .folder, .tab:
                 EmptyView()
             }
@@ -265,7 +267,7 @@ struct DataOverviewView: View {
                         .padding(.top, DS.Space.s4)
                     }
                     DatasetOverviewTiles(snapshot: snapshot, controller: hub.datasets, wrap: true)
-                    ActivityChart(snapshot: snapshot, controller: hub.datasets, rangeMenu: AnyView(EmptyView()))
+                    ActivityChart(snapshot: snapshot, controller: hub.datasets, rangeMenu: AnyView(EmptyView()), height: InsightMetrics.overviewChartHeight)
                 }
             }
         }

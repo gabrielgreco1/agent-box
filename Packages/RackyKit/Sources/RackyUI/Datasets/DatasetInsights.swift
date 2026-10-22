@@ -14,6 +14,8 @@ enum InsightMetrics {
     static let sparkHeight = DS.Space.s4
     static let sparkWidth: CGFloat = 64
     static let chartHeight: CGFloat = 112
+    /// A aba Overview só tem o gráfico abaixo dos números: ele ganha a altura que sobraria vazia.
+    static let overviewChartHeight: CGFloat = 280
     static let chartBarGap: CGFloat = 2
     static let chartTooltipWidth: CGFloat = 188
     static let barRadius: CGFloat = 1.5
@@ -82,6 +84,7 @@ struct ActivityChart: View {
     let snapshot: DatasetPageSnapshot
     let controller: DatasetsController
     let rangeMenu: AnyView
+    var height = InsightMetrics.chartHeight
     @State private var mode: Mode = .rate
     @State private var hover: Int?
     /// Arrasto no gráfico: faixas de início e fim.
@@ -203,7 +206,7 @@ struct ActivityChart: View {
             Spacer(minLength: 0)
             Text(verbatim: "0").dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textTertiary)
         }
-        .frame(height: InsightMetrics.chartHeight + DS.Space.s1)
+        .frame(height: height + DS.Space.s1)
         .frame(minWidth: DS.Space.s6, alignment: .trailing)
         .offset(y: -DS.Space.s1_5)
     }
@@ -280,7 +283,7 @@ struct ActivityChart: View {
                 }
             }
         }
-        .frame(height: InsightMetrics.chartHeight)
+        .frame(height: height)
     }
 
     private func x(_ index: Int, width: CGFloat) -> CGFloat {

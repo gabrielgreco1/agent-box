@@ -246,7 +246,7 @@ struct DataExplorer: View {
                 VStack(alignment: .leading, spacing: DS.Space.s1) {
                     section(String(localized: "On this Mac", bundle: .module), caption: String(localized: "Saved by Racky as your agents collect", bundle: .module), id: "racky")
                     racky
-                    section(String(localized: "Connections", bundle: .module), caption: String(localized: "Your own databases and services, outside Racky", bundle: .module), id: "connections")
+                    section(String(localized: "Connections", bundle: .module), caption: String(localized: "Your databases and services", bundle: .module), id: "connections")
                         .padding(.top, DS.Space.s3)
                     connections
                 }
@@ -441,17 +441,27 @@ struct DataRoleBadge: View {
     }
 
     let role: Role
+    /// Sem espaço: só o ícone (o nome fica no tooltip).
+    var iconOnly = false
 
-    var body: some View {
-        let (title, symbol, tint): (String, String, Color) = switch role {
-        case .original: (String(localized: "Original", bundle: .module), "star", DS.Color.dataValid)
+    var title: String { look.title }
+
+    private var look: (title: String, symbol: String, tint: Color) {
+        switch role {
+        case .original: (String(localized: "Original", bundle: .module), "checkmark.seal", DS.Color.dataValid)
         case .copy: (String(localized: "One-way copy", bundle: .module), "arrow.right.doc.on.clipboard", DS.Color.dataKey)
         case .direct: (String(localized: "Written by agents", bundle: .module), "person.2", DS.Color.textSecondary)
         }
+    }
+
+    var body: some View {
+        let (title, symbol, tint) = look
         HStack(spacing: DS.Space.s1) {
             Image(systemName: symbol).font(.system(size: DS.Space.s2_5, weight: .semibold)).foregroundStyle(tint)
             // Um rótulo de estado, não um link nem um botão: texto neutro, a cor fica só no ícone.
-            Text(verbatim: title).dsFont(DS.Font.label).foregroundStyle(DS.Color.textSecondary)
+            if !iconOnly {
+                Text(verbatim: title).dsFont(DS.Font.label).foregroundStyle(DS.Color.textSecondary)
+            }
         }
         .fixedSize()
     }
@@ -612,8 +622,8 @@ struct DataTabStrip: View {
                     LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing).frame(width: DS.Space.s6)
                 }
             }
-            .onChange(of: hub.active) { _, active in if let active { reader.scrollTo(active, anchor: .center) } }
-            .onAppear { if let active = hub.active { reader.scrollTo(active, anchor: .center) } }
+            .onChange(of: hub.active) { _, active in if let active { reader.scrollTo(active) } }
+            .onAppear { if let active = hub.active { reader.scrollTo(active) } }
         }
         .padding(.trailing, showsMenu ? DataMetrics.tabsMenuWidth : .zero)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -716,14 +726,17 @@ struct DataLocationBar: View {
             ViewThatFits(in: .horizontal) {
                 place(compact: false, items: trail)
                 place(compact: false, items: Array(trail.suffix(1)))
-                place(compact: true, items: Array(trail.suffix(1)))
+                // O nome do objeto não encolhe: quem cede espaço é o lado direito (nomes curtos, depois só ícones).
+                place(compact: true, items: Array(trail.suffix(1))).fixedSize(horizontal: true, vertical: false)
             }
             .layoutPriority(-1)
             Spacer(minLength: DS.Space.s3)
-            // Com pouco espaço, o lado direito encolhe: primeiro some o tipo, depois os nomes dos botões.
+            // Com pouco espaço, o lado direito encolhe aos poucos: nomes curtos, o papel só com o ícone e, por último, botões só com ícone.
             ViewThatFits(in: .horizontal) {
                 trailing(compact: false)
-                trailing(compact: true)
+                trailing(compact: false, short: true)
+                trailing(compact: false, short: true, iconBadge: true)
+                trailing(compact: true, iconBadge: true)
                 DataObjectActions(hub: hub, object: object, compact: true)
             }
             .layoutPriority(1)
@@ -770,12 +783,13 @@ struct DataLocationBar: View {
         }
     }
 
-    private func trailing(compact: Bool) -> some View {
+    private func trailing(compact: Bool, short: Bool = false, iconBadge: Bool = false) -> some View {
         HStack(spacing: DS.Space.s2) {
             if let role = DataRoleBadge.Role(hub: hub, object: object) {
-                DataRoleBadge(role: role).help(DataLabels.kind(object, hub: hub) + (size.map { " · \($0)" } ?? ""))
+                let badge = DataRoleBadge(role: role, iconOnly: iconBadge)
+                badge.help((iconBadge ? badge.title + " · " : "") + DataLabels.kind(object, hub: hub) + (size.map { " · \($0)" } ?? ""))
             }
-            DataObjectActions(hub: hub, object: object, compact: compact)
+            DataObjectActions(hub: hub, object: object, compact: compact, short: short)
         }
         .fixedSize()
     }
