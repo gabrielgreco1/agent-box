@@ -43,6 +43,13 @@ struct DatasetOverviewTiles: View {
                     HStack(spacing: OverviewMetrics.tileSpacing) { tiles.frame(width: OverviewMetrics.tileMinWidth + DS.Space.s4) }
                         .padding(.horizontal, DS.Space.s4)
                 }
+                // A borda some aos poucos: dá para ver que tem mais cartões de lado.
+                .mask {
+                    HStack(spacing: 0) {
+                        Color.black
+                        LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing).frame(width: DS.Space.s8)
+                    }
+                }
             }
         }
         .padding(.vertical, DS.Space.s3)

@@ -334,7 +334,9 @@ struct ActivityChart: View {
     private func label(_ index: Int) -> String {
         guard let start = snapshot.activityStart, let end = snapshot.activityEnd else { return "" }
         if index == 4, controller.now().timeIntervalSince(end) < 1 { return String(localized: "now", bundle: .module) }
-        return controller.clock(start.addingTimeInterval(end.timeIntervalSince(start) * Double(index) / 4), seconds: false)
+        // Período curto: com segundos, senão as marcas se repetem ("16:47 16:47").
+        let span = end.timeIntervalSince(start)
+        return controller.clock(start.addingTimeInterval(span * Double(index) / 4), seconds: span <= 600)
     }
 }
 
