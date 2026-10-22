@@ -41,6 +41,22 @@ extension WorkspaceModelTests {
         #expect(rig.model.activeTab.map { rig.model.displayTitle(of: $0) } == "Livros do teste")
     }
 
+    /// Tab de agentes já cheia (três panes, janela estreita): "ao lado do agente" põe a tabela embaixo de um pane em vez de desistir.
+    @Test func besideTheAgentFindsRoomWhenTheAgentTabIsFull() async throws {
+        let rig = try await make(tabs: 1)
+        defer { Task { await cleanup(rig) } }
+        rig.model.contentSize = CGSize(width: 1000, height: 800)
+        rig.model.datasetTitle = { $0 == "DS1" ? "books2" : nil }
+        _ = rig.model.split(.horizontal)
+        _ = rig.model.split(.vertical)
+        let agents = try #require(rig.model.activeTab)
+        #expect(agents.layout.leafCount == 3)
+        _ = rig.model.openDataset("DS1", beside: true)
+        let after = try #require(rig.model.tab(agents.id))
+        #expect(after.layout.pane(forDataset: "DS1") != nil, "the table should join the agents' tab")
+        #expect(rig.model.tabs.count == 1)
+    }
+
     /// Soltar a tab do dataset no centro do pane do agente troca os dois de tab: a tab que fica com o agente não herda o nome do dataset.
     @Test func swappingADatasetTabWithTheAgentDoesNotLeaveTheDatasetNameOnTheAgentTab() async throws {
         let rig = try await make(tabs: 1)

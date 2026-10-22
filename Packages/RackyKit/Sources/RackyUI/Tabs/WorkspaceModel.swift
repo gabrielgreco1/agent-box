@@ -1807,21 +1807,22 @@ extension WorkspaceModel {
             let agents = activeTab.flatMap { $0.id != tab.id ? $0 : nil }
                 ?? states[sid]?.recent.lazy.compactMap { id in self.states[sid]?.tabs.first { $0.id == id && !$0.layout.terminalIDs.isEmpty } }.first
                 ?? states[sid]?.tabs.first { !$0.layout.terminalIDs.isEmpty }
-            if beside, let active = agents, active.id != tab.id, tab.layout.leafCount == 1,
-               let target = focusedPaneID(of: active), performDrop(.tab(tab.id), onPane: target, zone: .right) == .applied {
+            if beside, let active = agents, active.id != tab.id, tab.layout.leafCount == 1, placeBeside(tab.id, in: active) {
                 return pane.id
             }
             selectTab(tab.id)
             return pane.id
         }
         let pane = Pane(content: .dataset(datasetID))
-        if beside, let active = activeTab, let target = focusedPaneID(of: active),
-           let layout = active.layout.inserting(.leaf(pane), beside: target, zone: .right),
-           contentSize == .zero || active.layout.canSplit(paneID: target, axis: .horizontal, in: CGRect(origin: .zero, size: contentSize)) {
-            update(tab: active.id) { $0.layout = layout }
-            expandedPanes[active.id] = nil
-            saveLayout(of: active.id, final: true)
-            notify()
+        if beside, let active = activeTab, !active.layout.terminalIDs.isEmpty {
+            // Abre numa tab própria e leva para o lado do agente; sem espaço na tela, fica na tab própria (com o aviso).
+            guard var state = states[sid] else { return nil }
+            let own = Tab(sessionID: sid, title: paneTitle(pane), sortIndex: state.tabs.count, layout: .leaf(pane), focusedTerminalID: nil)
+            state.tabs.append(own)
+            states[sid] = state
+            let saved = own
+            persist { try await $0.save(saved) }
+            if !placeBeside(own.id, in: active) { selectTab(own.id) }
             return pane.id
         }
         guard var state = states[sid] else { return nil }
@@ -1833,6 +1834,24 @@ extension WorkspaceModel {
         recentlyOpenedTab = tab.id
         selectTab(tab.id)
         return pane.id
+    }
+
+    /// Leva a tab do dataset para o lado de um pane da tab de agentes: à direita do pane focado, senão embaixo dele, senão ao lado
+    /// do maior pane da tab. Só avisa "sem espaço" quando nenhum lugar cabe.
+    private func placeBeside(_ datasetTab: UUID, in agents: Tab) -> Bool {
+        let area = CGRect(origin: .zero, size: contentSize == .zero ? CGSize(width: 1600, height: 1000) : contentSize)
+        let frames = agents.layout.arrangement(in: area).panes
+        let byArea = agents.layout.panes.map(\.id).sorted { (frames[$0].map { $0.width * $0.height } ?? 0) > (frames[$1].map { $0.width * $0.height } ?? 0) }
+        let candidates = (focusedPaneID(of: agents).map { [$0] } ?? []) + byArea
+        for target in candidates {
+            for zone in [PaneDropZone.right, .bottom] {
+                guard let plan = planDrop(.tab(datasetTab), onPane: target, zone: zone), hasRoom(plan) else { continue }
+                apply(plan)
+                return true
+            }
+        }
+        toasts?.show(kind: .info, title: String(localized: "Not enough room to split. Close a pane or widen the window.", bundle: .module))
+        return false
     }
 
     /// Pane focado da tab: o do terminal focado, senão o primeiro.
