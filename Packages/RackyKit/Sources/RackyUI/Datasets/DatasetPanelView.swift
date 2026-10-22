@@ -69,13 +69,18 @@ private struct DatasetPanelContent: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
-            if let snapshot = model.snapshot {
-                numbers(snapshot)
-                table(snapshot)
-            } else {
-                Spacer(minLength: 0)
+        // Tudo rola junto (com o cabeçalho da tabela preso no topo): num espaço baixo nada fica cortado.
+        ScrollView {
+            LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                header
+                if let snapshot = model.snapshot {
+                    numbers(snapshot)
+                    Section {
+                        tableRows(snapshot)
+                    } header: {
+                        tableHeader
+                    }
+                }
             }
         }
         .onAppear { controller.noteVisible(model.id, true) }
@@ -163,22 +168,16 @@ private struct DatasetPanelContent: View {
 
     // MARK: Tabela
 
-    private func table(_ snapshot: DatasetPageSnapshot) -> some View {
-        VStack(spacing: 0) {
-            tableHeader
-            if snapshot.rows.isEmpty {
-                Text("No rows yet.", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(snapshot.rows.prefix(DatasetPanelMetrics.maxRows)) { row in
-                            PanelRow(row: row, columns: columns, datasetID: summary.dataset.id)
-                        }
-                    }
-                }
-                footer(snapshot)
+    @ViewBuilder private func tableRows(_ snapshot: DatasetPageSnapshot) -> some View {
+        if snapshot.rows.isEmpty {
+            Text("No rows yet.", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, DS.Space.s6)
+        } else {
+            ForEach(snapshot.rows.prefix(DatasetPanelMetrics.maxRows)) { row in
+                PanelRow(row: row, columns: columns, datasetID: summary.dataset.id)
             }
+            footer(snapshot)
         }
     }
 

@@ -11039,6 +11039,17 @@
           }
         }
       }
+    },
+    "Total so far": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Total so far"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -13,10 +13,11 @@ enum InsightMetrics {
     static let metricMinWidth: CGFloat = 148
     static let sparkHeight = DS.Space.s4
     static let sparkWidth: CGFloat = 64
-    static let chartHeight: CGFloat = 96
+    static let chartHeight: CGFloat = 112
     static let chartBarGap: CGFloat = 2
     static let chartTooltipWidth: CGFloat = 188
     static let barRadius: CGFloat = 1.5
+    static let dot: CGFloat = 8
     static let statusDot: CGFloat = 6
     static let queryHeight = DS.Space.s8
     static let chipHeight = DS.Space.s6
@@ -60,6 +61,7 @@ struct CollectionStatus: View {
 
     private var text: String {
         if collecting {
+            if computers == 0 { return String(localized: "Collecting", bundle: .module) }
             return computers == 1
                 ? String(localized: "Collecting · 1 computer", bundle: .module)
                 : String(localized: "Collecting · \(computers) computers", bundle: .module)
@@ -71,55 +73,65 @@ struct CollectionStatus: View {
 
 // MARK: Gráfico
 
-/// Linhas novas no período, verde válidas e âmbar inválidas, com eixo de valores, grade leve e o período à direita do título. O hover
-/// destaca a faixa e mostra horário e contagens; as barras crescem ao aparecer e quando chegam linhas.
+/// Linhas que chegaram ao longo do período, como área (no jeito do Vercel/Datadog): por minuto, ou o total acumulado. Verde são as
+/// válidas, âmbar as inválidas. O hover mostra a linha do cursor com o ponto e os números daquele trecho; arrastar escolhe um
+/// período (a tabela passa a mostrar só ele). A área se desenha da esquerda para a direita ao aparecer.
 struct ActivityChart: View {
+    enum Mode: String, CaseIterable { case rate, total }
+
     let snapshot: DatasetPageSnapshot
     let controller: DatasetsController
     let rangeMenu: AnyView
+    @State private var mode: Mode = .rate
     @State private var hover: Int?
-    /// Arrasto no gráfico: faixas de início e fim (escolher um período filtra a tabela).
+    /// Arrasto no gráfico: faixas de início e fim.
     @State private var brush: (start: Int, end: Int)?
     @Environment(\.actionRegistry) private var registry
-    /// Sem movimento (preferência do sistema, testes) as barras já nascem no tamanho certo.
-    @State private var grown = MotionPolicy.shared.animation(MotionTokens.Easing.expoOut, MotionTokens.Duration.ripple) == nil
+    /// Sem movimento (preferência do sistema, testes) a área já nasce inteira.
+    @State private var reveal: CGFloat = MotionPolicy.shared.animation(MotionTokens.Easing.expoOut, MotionTokens.Duration.ripple) == nil ? 1 : 0
 
     private var buckets: [DatasetActivityBucket] { snapshot.activity }
     private var total: Int { buckets.reduce(0) { $0 + $1.valid + $1.invalid } }
-    /// Com filtro, o gráfico mostra só o que casa.
     private var filtered: Bool { snapshot.matching < snapshot.stats.rows }
-    /// Topo do eixo: o número redondo logo acima do pico.
-    private var axisTop: Int {
-        let peak = max(buckets.map { $0.valid + $0.invalid }.max() ?? 0, 1)
-        var unit = 1
+    private var perMinute: Double { 60 / max(snapshot.bucketSeconds, 1) }
+
+    /// As duas séries no modo atual: válidas (ou todas, no total) e inválidas.
+    private var series: (main: [Double], invalid: [Double]) {
+        switch mode {
+        case .rate:
+            // Faixas menores que 1 min: soma o último minuto (janela móvel) em vez de multiplicar, senão 30 linhas em 2 s viram 900/min.
+            let window = Int((60 / max(snapshot.bucketSeconds, 1)).rounded())
+            guard window > 1 else {
+                return (buckets.map { Double($0.valid) * perMinute }, buckets.map { Double($0.invalid) * perMinute })
+            }
+            let rolling = { (pick: (DatasetActivityBucket) -> Int) in
+                buckets.indices.map { i in Double(buckets[max(0, i - window + 1)...i].reduce(0) { $0 + pick($1) }) }
+            }
+            return (rolling(\.valid), rolling(\.invalid))
+        case .total:
+            var all = 0.0, bad = 0.0
+            return (buckets.map { all += Double($0.valid + $0.invalid); return all }, buckets.map { bad += Double($0.invalid); return bad })
+        }
+    }
+
+    private var hasInvalid: Bool { buckets.contains { $0.invalid > 0 } }
+
+    /// Topo do eixo: o número redondo logo acima do pico (1, 2, 2.5, 3, 4, 5, 6, 8, 10 × 10ⁿ).
+    private var axisTop: Double {
+        let peak = max(series.main.max() ?? 0, series.invalid.max() ?? 0, 1)
+        var unit = 1.0
         while unit * 10 <= peak { unit *= 10 }
-        // Passos de 2 em 2 marcas: 2, 3, 4, 5, 6, 8, 10 × 10ⁿ (o meio também fica redondo).
-        for step in [2, 3, 4, 5, 6, 8, 10] where unit * step >= peak { return unit * step }
+        while unit > peak { unit /= 10 }
+        for step in [1, 2, 2.5, 3, 4, 5, 6, 8, 10] where unit * step >= peak { return unit * step }
         return peak
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: DS.Space.s2) {
-            HStack(spacing: DS.Space.s2) {
-                Text("Rows over time", bundle: .module).dsFont(DS.Font.sectionLabel).foregroundStyle(DS.Color.textPrimary)
-                Text(verbatim: filtered
-                    ? String(localized: "\(total.formatted()) matching", bundle: .module)
-                    : String(localized: "\(total.formatted()) rows", bundle: .module))
-                    .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
-                if let window = snapshot.window {
-                    windowPill(window)
-                } else if total > 0 {
-                    Text("Drag across the chart to zoom into a period", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textQuaternary)
-                        .lineLimit(1)
-                }
-                Spacer(minLength: DS.Space.s2)
-                legend(DS.Color.dataValid, String(localized: "Valid", bundle: .module))
-                legend(DS.Color.warning, String(localized: "Invalid", bundle: .module))
-                rangeMenu.padding(.leading, DS.Space.s2)
-            }
+        VStack(alignment: .leading, spacing: DS.Space.s2_5) {
+            header
             HStack(alignment: .top, spacing: DS.Space.s2) {
                 yAxis
-                VStack(spacing: DS.Space.s1) {
+                VStack(spacing: DS.Space.s1_5) {
                     plot
                     xAxis
                 }
@@ -127,76 +139,133 @@ struct ActivityChart: View {
         }
         .padding(.horizontal, DS.Space.s4)
         .padding(.top, DS.Space.s3)
-        .padding(.bottom, DS.Space.s2)
+        .padding(.bottom, DS.Space.s2_5)
         .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
         .onAppear {
-            guard let animation = MotionPolicy.shared.animation(MotionTokens.Easing.expoOut, MotionTokens.Duration.ripple) else { grown = true; return }
-            withAnimation(animation) { grown = true }
+            guard reveal < 1 else { return }
+            guard let animation = MotionPolicy.shared.animation(MotionTokens.Easing.expoOut, MotionTokens.Duration.flight * 2) else { reveal = 1; return }
+            withAnimation(animation) { reveal = 1 }
         }
         .a11y(.datasetChart, kind: "chart", value: "\(total)")
     }
 
+    // MARK: Cabeçalho
+
+    private var header: some View {
+        HStack(spacing: DS.Space.s2) {
+            Text("Rows over time", bundle: .module).dsFont(DS.Font.sectionLabel).foregroundStyle(DS.Color.textPrimary)
+            Text(verbatim: filtered
+                ? String(localized: "\(total.formatted()) matching", bundle: .module)
+                : String(localized: "\(total.formatted()) rows", bundle: .module))
+                .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+            if let window = snapshot.window { windowPill(window) }
+            Spacer(minLength: DS.Space.s2)
+            if hasInvalid {
+                legend(DS.Color.dataValid, mode == .total ? String(localized: "All rows", bundle: .module) : String(localized: "Valid", bundle: .module))
+                legend(DS.Color.warning, String(localized: "Invalid", bundle: .module))
+            }
+            modePicker
+            rangeMenu
+        }
+    }
+
+    private var modePicker: some View {
+        HStack(spacing: 0) {
+            ForEach(Mode.allCases, id: \.self) { item in
+                // lint-ui: allow buttons troca a leitura do gráfico (estado local da vista)
+                Button {
+                    withAnimation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.base)) { mode = item }
+                } label: {
+                    Text(verbatim: item == .rate ? String(localized: "Per minute", bundle: .module) : String(localized: "Total", bundle: .module))
+                        .dsFont(DS.Font.small)
+                        .foregroundStyle(mode == item ? DS.Color.textPrimary : DS.Color.textTertiary)
+                        .padding(.horizontal, DS.Space.s2)
+                        .frame(height: DS.Space.s6 - DS.Space.s1)
+                        .background(RoundedRectangle(cornerRadius: DS.Radius.sm - DS.Space.s0_5).fill(mode == item ? DS.Color.secondary : Color.clear))
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(DS.Space.s0_5)
+        .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.chrome))
+        .overlay(RoundedRectangle(cornerRadius: DS.Radius.sm).strokeBorder(DS.Color.border))
+        .fixedSize()
+    }
+
+    // MARK: Eixos
+
     private var yAxis: some View {
         VStack(alignment: .trailing, spacing: 0) {
-            Text(verbatim: axisTop.formatted()).dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textTertiary)
+            Text(verbatim: Self.short(axisTop)).dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textTertiary)
             Spacer(minLength: 0)
-            Text(verbatim: (axisTop / 2).formatted()).dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textTertiary)
+            Text(verbatim: Self.short(axisTop / 2)).dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textTertiary)
             Spacer(minLength: 0)
             Text(verbatim: "0").dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textTertiary)
         }
-        .frame(height: InsightMetrics.chartHeight)
+        .frame(height: InsightMetrics.chartHeight + DS.Space.s1)
         .frame(minWidth: DS.Space.s6, alignment: .trailing)
+        .offset(y: -DS.Space.s1_5)
     }
+
+    static func short(_ value: Double) -> String {
+        if value >= 1000 { return (value / 1000).formatted(.number.precision(.fractionLength(0...1))) + "k" }
+        return value.formatted(.number.precision(.fractionLength(0...1)))
+    }
+
+    private var xAxis: some View {
+        HStack(spacing: 0) {
+            ForEach(0..<5, id: \.self) { index in
+                Text(verbatim: label(index)).dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textTertiary)
+                if index < 4 { Spacer(minLength: 0) }
+            }
+        }
+    }
+
+    private func label(_ index: Int) -> String {
+        guard let start = snapshot.activityStart, let end = snapshot.activityEnd else { return "" }
+        if index == 4, controller.now().timeIntervalSince(end) < 1 { return String(localized: "now", bundle: .module) }
+        // Período curto: com segundos, senão as marcas se repetem ("16:47 16:47").
+        let span = end.timeIntervalSince(start)
+        return controller.clock(start.addingTimeInterval(span * Double(index) / 4), seconds: span <= 600)
+    }
+
+    // MARK: Área
 
     private var plot: some View {
         GeometryReader { geo in
-            let count = max(buckets.count, 1)
-            let gap = InsightMetrics.chartBarGap
-            let width = max((geo.size.width - gap * CGFloat(count - 1)) / CGFloat(count), 1)
+            let size = geo.size
+            let (main, invalid) = series
+            let top = axisTop
             ZStack(alignment: .topLeading) {
-                // Grade: topo, meio (tracejadas) e a base.
-                VStack(spacing: 0) {
-                    gridLine(dashed: true)
-                    Spacer(minLength: 0)
-                    gridLine(dashed: true)
-                    Spacer(minLength: 0)
-                    DS.Color.borderStrong.frame(height: ComputersMetrics.separator)
-                }
-                HStack(alignment: .bottom, spacing: gap) {
-                    ForEach(Array(buckets.enumerated()), id: \.offset) { index, bucket in
-                        bar(bucket, index: index, height: geo.size.height).frame(width: width)
+                Canvas { context, size in
+                    // Grade: três linhas finas (topo, meio, base).
+                    for fraction in [0.0, 0.5, 1.0] {
+                        let y = (size.height - 1) * fraction + 0.5
+                        context.stroke(Path { $0.move(to: CGPoint(x: 0, y: y)); $0.addLine(to: CGPoint(x: size.width, y: y)) },
+                                       with: .color(fraction == 1 ? DS.Color.borderStrong : DS.Color.border), lineWidth: 1)
                     }
                 }
-                if let range = shadedRange {
-                    let span = CGFloat(range.count) * (width + gap) - gap
-                    RoundedRectangle(cornerRadius: InsightMetrics.barRadius)
-                        .fill(DS.Color.dataKey.opacity(0.12))
-                        .overlay(RoundedRectangle(cornerRadius: InsightMetrics.barRadius).strokeBorder(DS.Color.dataKey.opacity(0.5)))
-                        .frame(width: span)
-                        .offset(x: CGFloat(range.lowerBound) * (width + gap))
-                        .allowsHitTesting(false)
-                        .a11y(.datasetChartWindow, kind: "region")
+                Group {
+                    AreaSeries(values: main, top: top, color: DS.Color.dataValid)
+                    if hasInvalid { AreaSeries(values: invalid, top: top, color: DS.Color.warning) }
                 }
+                .mask(alignment: .leading) { Rectangle().frame(width: size.width * reveal) }
+                if let range = shadedRange { shade(range, width: size.width) }
                 if let hover, hover < buckets.count, brush == nil {
-                    tooltip(buckets[hover])
-                        .offset(x: tooltipX(index: hover, barWidth: width, gap: gap, total: geo.size.width), y: DS.Space.s1)
-                        .transition(.opacity)
-                        .allowsHitTesting(false)
+                    cursor(hover, main: main, invalid: invalid, top: top, size: size)
                 }
             }
             .contentShape(Rectangle())
             .gesture(
                 DragGesture(minimumDistance: DS.Space.s1)
-                    .onChanged { drag in
-                        let first = index(at: drag.startLocation.x, width: width, gap: gap)
-                        brush = (first, index(at: drag.location.x, width: width, gap: gap))
-                    }
+                    .onChanged { drag in brush = (index(at: drag.startLocation.x, width: size.width), index(at: drag.location.x, width: size.width)) }
                     .onEnded { _ in commitBrush() }
             )
             .onContinuousHover { phase in
                 switch phase {
                 case .active(let point):
-                    let index = min(max(Int(point.x / (width + gap)), 0), buckets.count - 1)
+                    let index = index(at: point.x, width: size.width)
                     if hover != index { hover = index }
                 case .ended: hover = nil
                 }
@@ -205,9 +274,79 @@ struct ActivityChart: View {
         .frame(height: InsightMetrics.chartHeight)
     }
 
-    private func index(at x: CGFloat, width: CGFloat, gap: CGFloat) -> Int {
-        min(max(Int(x / (width + gap)), 0), max(buckets.count - 1, 0))
+    private func x(_ index: Int, width: CGFloat) -> CGFloat {
+        guard buckets.count > 1 else { return width / 2 }
+        return width * CGFloat(index) / CGFloat(buckets.count - 1)
     }
+
+    private func index(at x: CGFloat, width: CGFloat) -> Int {
+        guard buckets.count > 1, width > 0 else { return 0 }
+        return min(max(Int((x / width * CGFloat(buckets.count - 1)).rounded()), 0), buckets.count - 1)
+    }
+
+    private func cursor(_ index: Int, main: [Double], invalid: [Double], top: Double, size: CGSize) -> some View {
+        let px = x(index, width: size.width)
+        let y = { (value: Double) in size.height - 1 - (size.height - 2) * CGFloat(value / top) }
+        return ZStack(alignment: .topLeading) {
+            DS.Color.textTertiary.frame(width: ComputersMetrics.separator, height: size.height).offset(x: px)
+            dot(DS.Color.dataValid).offset(x: px - InsightMetrics.dot / 2, y: y(main[index]) - InsightMetrics.dot / 2)
+            if hasInvalid, invalid[index] > 0 {
+                dot(DS.Color.warning).offset(x: px - InsightMetrics.dot / 2, y: y(invalid[index]) - InsightMetrics.dot / 2)
+            }
+            tooltip(index)
+                .offset(x: px + DS.Space.s2 + InsightMetrics.chartTooltipWidth <= size.width ? px + DS.Space.s2 : max(px - DS.Space.s2 - InsightMetrics.chartTooltipWidth, 0))
+        }
+        .allowsHitTesting(false)
+        .transition(.opacity)
+    }
+
+    private func dot(_ color: Color) -> some View {
+        Circle().fill(color)
+            .overlay(Circle().strokeBorder(DS.Color.canvas, lineWidth: DS.Space.s0_5))
+            .frame(width: InsightMetrics.dot, height: InsightMetrics.dot)
+    }
+
+    private func tooltip(_ index: Int) -> some View {
+        let bucket = buckets[index]
+        let end = bucket.start.addingTimeInterval(snapshot.bucketSeconds)
+        let seconds = snapshot.bucketSeconds < 60
+        let soFar = buckets[...index].reduce(0) { $0 + $1.valid + $1.invalid }
+        return VStack(alignment: .leading, spacing: DS.Space.s1) {
+            Text(verbatim: "\(controller.clock(bucket.start, seconds: seconds)) – \(controller.clock(end, seconds: seconds))")
+                .dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textTertiary)
+            tooltipLine(DS.Color.dataValid, String(localized: "Valid", bundle: .module), bucket.valid)
+            tooltipLine(DS.Color.warning, String(localized: "Invalid", bundle: .module), bucket.invalid)
+            DS.Color.border.frame(height: ComputersMetrics.separator)
+            HStack {
+                Text("Total so far", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                Spacer(minLength: DS.Space.s2)
+                Text(verbatim: soFar.formatted()).dsFont(DS.Font.monoCell).foregroundStyle(DS.Color.textSecondary)
+            }
+        }
+        .padding(DS.Space.s2)
+        .frame(width: InsightMetrics.chartTooltipWidth, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: DS.Radius.md).fill(DS.Color.panel))
+        .overlay(RoundedRectangle(cornerRadius: DS.Radius.md).strokeBorder(DS.Color.borderStrong))
+        .shadow(color: .black.opacity(0.35), radius: DS.Space.s2, y: DS.Space.s1)
+    }
+
+    private func tooltipLine(_ color: Color, _ title: String, _ value: Int) -> some View {
+        HStack(spacing: DS.Space.s1_5) {
+            RoundedRectangle(cornerRadius: DS.Radius.xs).fill(color).frame(width: DS.Space.s2, height: DS.Space.s2)
+            Text(verbatim: title).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
+            Spacer(minLength: DS.Space.s2)
+            Text(verbatim: value.formatted()).dsFont(DS.Font.monoCell).foregroundStyle(value == 0 ? DS.Color.textTertiary : DS.Color.textPrimary)
+        }
+    }
+
+    private func legend(_ color: Color, _ title: String) -> some View {
+        HStack(spacing: DS.Space.s1) {
+            RoundedRectangle(cornerRadius: DS.Radius.xs).fill(color).frame(width: DS.Space.s2, height: DS.Space.s2)
+            Text(verbatim: title).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+        }
+    }
+
+    // MARK: Período
 
     /// O que fica destacado: o arrasto em curso, senão o período escolhido.
     private var shadedRange: ClosedRange<Int>? {
@@ -217,6 +356,17 @@ struct ActivityChart: View {
         let last = Int((window.upperBound.timeIntervalSince(start) / snapshot.bucketSeconds).rounded(.up)) - 1
         let low = max(first, 0), high = min(last, buckets.count - 1)
         return low <= high ? low...high : nil
+    }
+
+    private func shade(_ range: ClosedRange<Int>, width: CGFloat) -> some View {
+        let from = x(range.lowerBound, width: width), to = x(range.upperBound, width: width)
+        return RoundedRectangle(cornerRadius: InsightMetrics.barRadius)
+            .fill(DS.Color.dataKey.opacity(0.1))
+            .overlay(RoundedRectangle(cornerRadius: InsightMetrics.barRadius).strokeBorder(DS.Color.dataKey.opacity(0.45)))
+            .frame(width: max(to - from, InsightMetrics.dot))
+            .offset(x: range.lowerBound == range.upperBound ? from - InsightMetrics.dot / 2 : from)
+            .allowsHitTesting(false)
+            .a11y(.datasetChartWindow, kind: "region")
     }
 
     private func commitBrush() {
@@ -249,94 +399,69 @@ struct ActivityChart: View {
         .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.dataKey.opacity(0.1)))
         .overlay(RoundedRectangle(cornerRadius: DS.Radius.sm).strokeBorder(DS.Color.dataKey.opacity(0.3)))
     }
+}
 
-    private func gridLine(dashed: Bool) -> some View {
-        Line().stroke(DS.Color.border, style: StrokeStyle(lineWidth: 1, dash: dashed ? [2, 3] : []))
-            .frame(height: ComputersMetrics.separator)
-    }
+/// Uma série como área: curva suave que não passa do zero nem inventa picos (cúbica monotônica), linha de 1,5 pt e o preenchimento
+/// de leve embaixo.
+struct AreaSeries: View {
+    let values: [Double]
+    let top: Double
+    let color: Color
 
-    private func bar(_ bucket: DatasetActivityBucket, index: Int, height: CGFloat) -> some View {
-        let scale: CGFloat = grown ? 1 : 0
-        let top = CGFloat(axisTop)
-        let valid = height * CGFloat(bucket.valid) / top * scale
-        let invalid = bucket.invalid == 0 ? 0 : max(height * CGFloat(bucket.invalid) / top, 2) * scale
-        let dimmed = hover != nil && hover != index
-        return VStack(spacing: 0) {
-            Spacer(minLength: 0)
-            if invalid > 0 {
-                UnevenRoundedRectangle(topLeadingRadius: InsightMetrics.barRadius, topTrailingRadius: InsightMetrics.barRadius)
-                    .fill(DS.Color.warning).frame(height: invalid)
+    var body: some View {
+        Canvas { context, size in
+            guard values.count > 1, top > 0 else { return }
+            let points = values.enumerated().map { index, value in
+                CGPoint(x: size.width * CGFloat(index) / CGFloat(values.count - 1),
+                        y: size.height - 1 - (size.height - 2) * CGFloat(min(value, top) / top))
             }
-            if valid > 0 {
-                UnevenRoundedRectangle(
-                    topLeadingRadius: invalid > 0 ? 0 : InsightMetrics.barRadius, topTrailingRadius: invalid > 0 ? 0 : InsightMetrics.barRadius)
-                    .fill(DS.Color.dataValid.opacity(hover == index ? 1 : 0.8)).frame(height: valid)
-            }
+            let line = Self.monotone(points)
+            var area = line
+            area.addLine(to: CGPoint(x: points[points.count - 1].x, y: size.height))
+            area.addLine(to: CGPoint(x: points[0].x, y: size.height))
+            area.closeSubpath()
+            context.fill(area, with: .color(color.opacity(0.14)))
+            context.stroke(line, with: .color(color), style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
         }
-        .frame(maxHeight: .infinity)
-        .background {
-            if hover == index { RoundedRectangle(cornerRadius: InsightMetrics.barRadius).fill(DS.Color.textPrimary.opacity(0.06)) }
-        }
-        .opacity(dimmed ? 0.6 : 1)
-        .animation(MotionPolicy.shared.animation(MotionTokens.Easing.expoOut, MotionTokens.Duration.medium), value: bucket.valid + bucket.invalid)
-        .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: hover)
+        .accessibilityHidden(true)
     }
 
-    private func tooltipX(index: Int, barWidth: CGFloat, gap: CGFloat, total: CGFloat) -> CGFloat {
-        // Ao lado da barra (direita; perto da borda, esquerda), para não cobrir o que está sendo lido.
-        let right = CGFloat(index + 1) * (barWidth + gap) + DS.Space.s1
-        if right + InsightMetrics.chartTooltipWidth <= total { return right }
-        return max(CGFloat(index) * (barWidth + gap) - InsightMetrics.chartTooltipWidth - DS.Space.s1, 0)
-    }
-
-    private func tooltip(_ bucket: DatasetActivityBucket) -> some View {
-        let end = bucket.start.addingTimeInterval(snapshot.bucketSeconds)
-        let seconds = snapshot.bucketSeconds < 60
-        return VStack(alignment: .leading, spacing: DS.Space.s1) {
-            Text(verbatim: "\(controller.clock(bucket.start, seconds: seconds)) – \(controller.clock(end, seconds: seconds))")
-                .dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textTertiary)
-            tooltipLine(DS.Color.dataValid, String(localized: "Valid", bundle: .module), bucket.valid)
-            tooltipLine(DS.Color.warning, String(localized: "Invalid", bundle: .module), bucket.invalid)
+    /// Fritsch–Carlson: tangentes que não deixam a curva ultrapassar os pontos vizinhos.
+    static func monotone(_ p: [CGPoint]) -> Path {
+        var path = Path()
+        guard let first = p.first else { return path }
+        path.move(to: first)
+        guard p.count > 2 else { p.dropFirst().forEach { path.addLine(to: $0) }; return path }
+        let n = p.count
+        var slopes = (0..<(n - 1)).map { (p[$0 + 1].y - p[$0].y) / max(p[$0 + 1].x - p[$0].x, .ulpOfOne) }
+        var tangents = [CGFloat](repeating: 0, count: n)
+        tangents[0] = slopes[0]
+        tangents[n - 1] = slopes[n - 2]
+        for i in 1..<(n - 1) {
+            tangents[i] = slopes[i - 1] * slopes[i] <= 0 ? 0 : (slopes[i - 1] + slopes[i]) / 2
         }
-        .padding(DS.Space.s2)
-        .frame(width: InsightMetrics.chartTooltipWidth, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: DS.Radius.md).fill(DS.Color.panel))
-        .overlay(RoundedRectangle(cornerRadius: DS.Radius.md).strokeBorder(DS.Color.borderStrong))
-        .shadow(color: .black.opacity(0.35), radius: DS.Space.s2, y: DS.Space.s1)
-    }
-
-    private func tooltipLine(_ color: Color, _ title: String, _ value: Int) -> some View {
-        HStack(spacing: DS.Space.s1_5) {
-            RoundedRectangle(cornerRadius: DS.Radius.xs).fill(color).frame(width: DS.Space.s2, height: DS.Space.s2)
-            Text(verbatim: title).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
-            Spacer(minLength: DS.Space.s2)
-            Text(verbatim: value.formatted()).dsFont(DS.Font.monoCell).foregroundStyle(value == 0 ? DS.Color.textTertiary : DS.Color.textPrimary)
+        for i in 0..<(n - 1) where slopes[i] == 0 {
+            tangents[i] = 0
+            tangents[i + 1] = 0
         }
-    }
-
-    private func legend(_ color: Color, _ title: String) -> some View {
-        HStack(spacing: DS.Space.s1) {
-            RoundedRectangle(cornerRadius: DS.Radius.xs).fill(color).frame(width: DS.Space.s2, height: DS.Space.s2)
-            Text(verbatim: title).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
-        }
-    }
-
-    /// Cinco marcas de hora de ponta a ponta; a última é `now` quando o gráfico acaba agora.
-    private var xAxis: some View {
-        HStack(spacing: 0) {
-            ForEach(0..<5, id: \.self) { index in
-                Text(verbatim: label(index)).dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textTertiary)
-                if index < 4 { Spacer(minLength: 0) }
+        for i in 0..<(n - 1) where slopes[i] != 0 {
+            let a = tangents[i] / slopes[i], b = tangents[i + 1] / slopes[i]
+            let h = a * a + b * b
+            if h > 9 {
+                let t = 3 / h.squareRoot()
+                tangents[i] = t * a * slopes[i]
+                tangents[i + 1] = t * b * slopes[i]
             }
         }
-    }
-
-    private func label(_ index: Int) -> String {
-        guard let start = snapshot.activityStart, let end = snapshot.activityEnd else { return "" }
-        if index == 4, controller.now().timeIntervalSince(end) < 1 { return String(localized: "now", bundle: .module) }
-        // Período curto: com segundos, senão as marcas se repetem ("16:47 16:47").
-        let span = end.timeIntervalSince(start)
-        return controller.clock(start.addingTimeInterval(span * Double(index) / 4), seconds: span <= 600)
+        slopes.removeAll()
+        for i in 0..<(n - 1) {
+            let dx = (p[i + 1].x - p[i].x) / 3
+            path.addCurve(
+                to: p[i + 1],
+                control1: CGPoint(x: p[i].x + dx, y: p[i].y + tangents[i] * dx),
+                control2: CGPoint(x: p[i + 1].x - dx, y: p[i + 1].y - tangents[i + 1] * dx))
+        }
+        return path
     }
 }
 

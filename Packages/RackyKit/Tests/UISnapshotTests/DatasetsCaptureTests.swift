@@ -90,6 +90,14 @@ import Testing
         await VisualBatchTests.settle(800)
         write(c.window!.contentView!, "dataset-page")
 
+        // Uma rajada curta (todas as linhas em segundos), como um lote de páginas que terminou.
+        if let hotels = env.datasets.summaries.first(where: { $0.dataset.name == "reviews" }) {
+            _ = try await env.registry.perform(.datasetOpen, .select(hotels.dataset.id))
+            await VisualBatchTests.settle(800)
+            write(c.window!.contentView!, "dataset-burst")
+            _ = try await env.registry.perform(.datasetOpen, .select(live.id))
+        }
+
         // Filtro de faceta ativo: o chip aparece embaixo da busca.
         _ = try await env.registry.perform(.datasetSelectRow, .press)
         _ = try await env.registry.perform(.datasetFacet, .select("computer:=booking-la"))
