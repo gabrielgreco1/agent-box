@@ -101,9 +101,9 @@ extension ComputerScheduler {
                 .notSupported, box?["message"]?.string ?? "the computer for this worker could not be reserved",
                 details: box.map { (b: JSON) -> JSON in JSON.object(["reason": b["reason"] ?? JSON.null, "name": JSON.string(name)]) })
         }
-        let ordinal = appWorkers.values.filter { $0.parent == parent && $0.harness == harness }.count + 1
         appWorkers[childID] = AppWorker(
             name: name, childID: childID, parent: parent, harness: harness, title: title, state: .starting, startedAt: now())
+        let ordinal = await workerOrdinals(parent: parent)[childID] ?? 1
         var launch = WorkerLaunchRequest(
             parentID: parent, sessionID: session?.id, harness: harness, childID: childID, capability: capability, computerName: name, title: title,
             prompt: OrchestrationText.workerPrompt(harness: harness, computer: name, brief: request.brief, title: title), model: request.model,
@@ -119,6 +119,45 @@ extension ComputerScheduler {
         if let position = box["position"] { out["position"] = position }
         if let hint = session?.harness { out["subagent_harness"] = .string(hint.rawValue) }
         return .object(out)
+    }
+
+    /// Número de cada worker entre os do mesmo CLI do pai ("Codex 1", "Codex 2"), estável depois de reabrir o app: conta os que já abriram
+    /// terminal (Store) e os vivos nesta execução, na ordem do slot.
+    func workerOrdinals(parent: String) async -> [String: Int] {
+        let stored = (try? await store?.orchestrationChildren(parentID: parent)) ?? []
+        var harnessOf: [String: (slot: Int, harness: String)] = [:]
+        for child in stored where child.agentType == "app-worker" && child.workerTerminalID != nil {
+            harnessOf[child.id] = (child.slot, child.harness ?? "")
+        }
+        for worker in appWorkers.values where worker.parent == parent {
+            let slot = stored.first { $0.id == worker.childID }?.slot ?? Int.max
+            harnessOf[worker.childID] = (slot, worker.harness.rawValue)
+        }
+        var out: [String: Int] = [:]
+        for group in Dictionary(grouping: harnessOf, by: { $0.value.harness }).values {
+            for (i, entry) in group.sorted(by: { ($0.value.slot, $0.key) < ($1.value.slot, $1.key) }).enumerated() { out[entry.key] = i + 1 }
+        }
+        return out
+    }
+
+    /// Workers de app com terminal, para a sidebar e as abas: computador, nome do agente e se já terminaram (o CLI pode seguir aberto
+    /// esperando input depois do `result_submit` + `box_release`; para a UI ele terminou).
+    public func appWorkerSummaries(parents: [String]) async -> [AppWorkerSummary] {
+        var out: [AppWorkerSummary] = []
+        for parent in parents {
+            let ordinals = await workerOrdinals(parent: parent)
+            let stored = (try? await store?.orchestrationChildren(parentID: parent)) ?? []
+            for child in stored where child.agentType == "app-worker" {
+                guard let terminal = child.workerTerminalID ?? appWorkers[child.id]?.terminalID else { continue }
+                let live = appWorkers[child.id]
+                let harness = live?.harness ?? child.harness.flatMap(WorkerHarness.init(rawValue:)) ?? .codex
+                let state: AppWorkerState = live?.state ?? (child.state == .ended || child.state == .released ? .done : .running)
+                out.append(AppWorkerSummary(
+                    terminalID: terminal, computer: child.computerName ?? live?.name,
+                    agentName: "\(harness.title) \(ordinals[child.id] ?? 1)", state: state))
+            }
+        }
+        return out
     }
 
     static func workerTitle(_ title: String?, fallback: String) -> String {

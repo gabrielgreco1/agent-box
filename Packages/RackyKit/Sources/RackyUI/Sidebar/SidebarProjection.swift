@@ -283,6 +283,8 @@ struct SidebarInput {
     var agentComputers: [String: String] = [:]
     /// Computador de cada worker de app (terminal -> nome): vai na linha do worker, não como linha de computador solta.
     var workerComputers: [UUID: String] = [:]
+    /// Workers que já entregaram o resultado: aparecem como concluídos mesmo com o CLI aberto esperando input.
+    var finishedWorkers: Set<UUID> = []
     /// Status Git por pasta de worktree, PR por sessão (T2-05) e a sessão com a nota em edição.
     var gitStatus: [String: GitStatus] = [:]
     var pullRequests: [UUID: PullRequestChipModel] = [:]
@@ -384,7 +386,8 @@ enum SidebarProjector {
         case .needsInput: phase = .needsInput
         case .done: phase = .done
         default:
-            if w.state == .running || w.state == .launching { phase = .running }
+            if input.finishedWorkers.contains(w.id), (w.exitCode ?? 0) == 0 { phase = .done }
+            else if w.state == .running || w.state == .launching { phase = .running }
             else if w.state == .failedToStart || (w.exitCode ?? 0) != 0 { phase = .failed }
             else { phase = .done }
         }

@@ -62,6 +62,17 @@ public struct AgentSpawnRequest: Sendable, Equatable {
     }
 }
 
+/// Um worker de app visto pela UI (sidebar, abas da sessão).
+public struct AppWorkerSummary: Sendable, Equatable {
+    public var terminalID: UUID
+    public var computer: String?
+    public var agentName: String
+    public var state: AppWorkerState
+    public init(terminalID: UUID, computer: String?, agentName: String, state: AppWorkerState) {
+        self.terminalID = terminalID; self.computer = computer; self.agentName = agentName; self.state = state
+    }
+}
+
 public enum AppWorkerState: String, Sendable, Equatable { case starting, running, done, failed, stopped
     public var isFinal: Bool { self == .done || self == .failed || self == .stopped }
     /// `starting` e `running` saem como `running` para o pai (o spawn já respondeu `starting`).

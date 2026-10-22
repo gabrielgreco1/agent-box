@@ -180,6 +180,11 @@ public final class ComputerOrchestrator: Sendable {
         return (await parents.info(parent)?.provider ?? .claude).computerAgentName
     }
 
+    /// Workers de app dos pais abertos (sidebar e abas da sessão).
+    public func appWorkers() async -> [AppWorkerSummary] {
+        await scheduler.appWorkerSummaries(parents: await parents.all.map(\.parentID))
+    }
+
     /// Todos os lotes das sessões abertas (painel "Batch"): rótulo, filhos e estado. Pais da mesma sessão (retomada) viram um só lote.
     public func batches() async -> [BatchSummary] {
         var out: [BatchSummary] = []

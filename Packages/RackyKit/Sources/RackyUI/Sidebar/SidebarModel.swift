@@ -109,7 +109,7 @@ final class SidebarModel {
             expandedSummaries: expandedSummaries, selectedSession: selectedSession, pending: pending, now: clock(),
             attention: attention?.center ?? AttentionCenter(), computers: computerRows, restartPending: restartPendingSessions,
             offersSubagentToggle: toggleSessions, collapsedChildren: collapsedChildren, agentComputers: helpInbox?.agentComputers ?? [:],
-            workerComputers: helpInbox?.workerComputers ?? [:],
+            workerComputers: helpInbox?.workerComputers ?? [:], finishedWorkers: helpInbox?.finishedWorkers ?? [],
             gitStatus: gitStatus, pullRequests: pullRequests, editingNote: editingNote)
     }
 

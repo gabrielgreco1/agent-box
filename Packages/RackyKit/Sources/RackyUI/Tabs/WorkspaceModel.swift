@@ -565,8 +565,16 @@ final class WorkspaceModel {
 
     /// Estado do agente do terminal para o indicador da tab e do header do pane (Fatia 2); sem hooks, o do processo.
     func status(of terminal: Terminal) -> SidebarProjector.StatusSample {
-        SidebarProjector.status(for: terminal, center: attention?.center ?? AttentionCenter(), now: Date())
+        let sample = SidebarProjector.status(for: terminal, center: attention?.center ?? AttentionCenter(), now: Date())
+        // Worker de app que já entregou o resultado: concluído, mesmo com o CLI aberto esperando input.
+        if terminal.state == .running, finishedWorkers().contains(terminal.id) {
+            return SidebarProjector.StatusSample(glyph: .done, label: String(localized: "Done", bundle: .module), rank: sample.rank)
+        }
+        return sample
     }
+
+    /// Terminais de workers de app que terminaram (ligado ao `ComputersModel`).
+    @ObservationIgnored var finishedWorkers: () -> Set<UUID> = { [] }
 
     func isUnread(_ terminalID: UUID) -> Bool { attention?.center.unread.contains(terminalID) ?? false }
 

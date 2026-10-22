@@ -308,6 +308,27 @@ private struct WorkerRig {
         #expect(row.state == .ended)
         try await store.close()
     }
+
+    @Test func workersAreNumberedPerCLIAndShowDoneOnceTheyDeliverEvenWithTheCLIStillOpen() async throws {
+        let home = try ActivityHome(); defer { home.remove() }
+        let store = try await home.openStore()
+        let w = try await WorkerRig.make(store: store)
+        defer { w.rig.cleanup() }
+        let first = try #require(await w.spawn("books-a")["child_id"]?.string)
+        _ = await w.spawn("books-b")
+        for _ in 0 ..< 200 where await w.launcher.started.count < 2 { try await Task.sleep(for: .milliseconds(10)) }
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(Set(await w.launcher.started.map(\.agentName)) == ["Codex 1", "Codex 2"], "two concurrent spawns don't share a number")
+        var list = await w.rig.scheduler.appWorkerSummaries(parents: [w.rig.parent])
+        #expect(list.count == 2 && list.allSatisfy { !$0.state.isFinal })
+        #expect(Set(list.map(\.agentName)) == ["Codex 1", "Codex 2"] && Set(list.compactMap(\.computer)) == ["books-a", "books-b"])
+        // O worker entregou e soltou o computador; o CLI segue aberto (nenhuma saída de processo): para a UI, terminou.
+        await w.finishAsWorker(child: first, computer: "books-a")
+        list = await w.rig.scheduler.appWorkerSummaries(parents: [w.rig.parent])
+        #expect(list.first { $0.computer == "books-a" }?.state == .done)
+        #expect(list.first { $0.computer == "books-b" }?.state.isFinal == false)
+        try await store.close()
+    }
 }
 
 private struct PendingGate: ReserveGating {

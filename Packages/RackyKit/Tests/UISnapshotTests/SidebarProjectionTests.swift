@@ -291,5 +291,9 @@ import Testing
         let child = try #require(card.agentRows.first?.children.first { $0.workerTerminalID == worker.id })
         #expect(child.title == "Codex 1" && child.task == "Pages 1–4" && child.worker == .codex && child.phase == .running)
         #expect(child.computer == "books-p1-4")
+        // Entregou o resultado e o Codex ficou aberto esperando input: a linha mostra concluído, não rodando.
+        input.finishedWorkers = [worker.id]
+        let after = try #require(SidebarProjector.build(input).cleanSessions.first { $0.id == session.id })
+        #expect(after.agentRows.first?.children.first { $0.workerTerminalID == worker.id }?.phase == .done)
     }
 }

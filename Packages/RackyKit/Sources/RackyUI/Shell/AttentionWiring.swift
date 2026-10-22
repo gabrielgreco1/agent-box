@@ -42,6 +42,7 @@ extension AppEnvironment {
         sidebar.attention = attention
         // Pedidos de ajuda de computador (T3-05): mesma fila, mesmo Inbox, mesmo badge do Dock.
         sidebar.helpInbox = computers.model
+        workspace.finishedWorkers = { [weak model = computers.model] in model?.finishedWorkers ?? [] }
         attention.extraBadgeCount = { [computers] in computers.model.attentionCount }
         computers.model.onAttentionChange = { [attention] _ in attention.refreshDock() }
         workspace.attention = attention

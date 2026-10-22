@@ -11,7 +11,10 @@ extension ComputersController {
     /// A cada 2 s reagrega os lotes das sessões abertas (estado vivo + runs já fechados).
     func refreshBatches() async {
         batchTick += 1
-        if let orchestrator, batchTick % 2 == 0 { model.setBatches(await orchestrator.batches()) }
+        if let orchestrator, batchTick % 2 == 0 {
+            model.setBatches(await orchestrator.batches())
+            model.setWorkers(await orchestrator.appWorkers())
+        }
     }
 
     // MARK: Lote

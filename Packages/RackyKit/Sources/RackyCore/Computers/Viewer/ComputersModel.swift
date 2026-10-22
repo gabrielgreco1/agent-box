@@ -62,6 +62,20 @@ public final class ComputersModel {
     /// Workers de app (`agent_spawn`): computador de cada terminal de worker e o nome do agente de cada computador ("Codex 1").
     public var workerComputers: [UUID: String] = [:]
     public var computerAgentNames: [String: String] = [:]
+    /// Terminais de workers que já terminaram (resultado entregue e computador solto), mesmo com o CLI ainda aberto.
+    public private(set) var finishedWorkers: Set<UUID> = []
+
+    /// Estado dos workers vindo do orquestrador (sobrevive a reabrir o app: o Store guarda terminal, computador e fim).
+    public func setWorkers(_ list: [AppWorkerSummary]) {
+        for worker in list {
+            if let computer = worker.computer {
+                if workerComputers[worker.terminalID] != computer { workerComputers[worker.terminalID] = computer }
+                if computerAgentNames[computer] != worker.agentName { computerAgentNames[computer] = worker.agentName }
+            }
+        }
+        let finished = Set(list.filter { $0.state.isFinal }.map(\.terminalID))
+        if finished != finishedWorkers { finishedWorkers = finished }
+    }
     /// Pedidos de ajuda abertos e pedidos de computador sem decisão: o número do badge do Dock (03 §9.3).
     public var attentionCount: Int { inbox.filter { $0.phase == .needsYou }.count + approvals.count }
     public var sessionTitle: (String) -> String? = { _ in nil }
