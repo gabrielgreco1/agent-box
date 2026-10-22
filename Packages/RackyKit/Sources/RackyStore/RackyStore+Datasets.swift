@@ -297,18 +297,25 @@ extension RackyStore {
 
     /// Linhas novas por faixa de tempo (`first_seen`), separadas em válidas e inválidas: o gráfico de volume da página do dataset.
     /// Devolve exatamente `buckets` faixas de `bucket` segundos terminando em `until`, as vazias com zero.
-    public func datasetActivity(datasetID: String, until: Date, bucket: TimeInterval, buckets: Int) async throws -> [DatasetActivityBucket] {
+    /// Linhas novas por faixa; com `query`, só as que casam o filtro (o gráfico acompanha a tabela).
+    public func datasetActivity(datasetID: String, until: Date, bucket: TimeInterval, buckets: Int, query: DatasetQuery? = nil) async throws -> [DatasetActivityBucket] {
         let width = max(Int64(bucket * 1000), 1)
         let end = RowCodec.ms(until)
         let start = end - width * Int64(buckets)
         let counted = try await read { db in
-            try Row.fetchAll(
+            var filter = DatasetQuery.all
+            if let query { filter = query; filter.since = nil }
+            let (clauses, filterArguments) = datasetWhere(datasetID: datasetID, query: filter, skipping: nil)
+            var arguments: StatementArguments = [start, width]
+            arguments += filterArguments
+            arguments += [start, end]
+            return try Row.fetchAll(
                 db,
                 sql: """
                     SELECT (first_seen - ?) / ? AS slot, SUM(valid) AS valid, SUM(1 - valid) AS invalid FROM dataset_row
-                    WHERE dataset_id = ? AND first_seen >= ? AND first_seen < ? GROUP BY slot
+                    WHERE \(clauses) AND first_seen >= ? AND first_seen < ? GROUP BY slot
                     """,
-                arguments: [start, width, datasetID, start, end]
+                arguments: arguments
             ).map { (Int($0["slot"] as Int64), $0["valid"] as Int, $0["invalid"] as Int) }
         }
         var result = (0..<buckets).map { DatasetActivityBucket(start: RowCodec.date(start + width * Int64($0)), valid: 0, invalid: 0) }
@@ -389,9 +396,33 @@ public struct DatasetStats: Sendable, Equatable {
     public var duplicatesMerged = 0
     /// Chegada da linha mais antiga (o começo do gráfico em "All time").
     public var firstSeen: Date?
+    /// Chegada da linha mais nova ("last row 3m ago").
+    public var lastSeen: Date?
+    /// Linhas que chegaram desde `recentSince` (o "+12 in 5 min" do topo).
+    public var recent = 0
+    /// Requisições distintas que deram linhas, as que voltaram com status ≥ 400 e o tempo médio delas (ms).
+    public var requests = 0
+    public var failedRequests = 0
+    public var averageRequestMs: Int?
+    /// Sites distintos das linhas.
+    public var hosts = 0
+    /// Preenchimento de cada coluna, de 0 a 1 (a coluna mais fraca aparece no topo).
+    public var columnFill: [String: Double] = [:]
+
     public init(rows: Int = 0, invalid: Int = 0, computers: Int = 0, filled: Double = 0, duplicatesMerged: Int = 0, firstSeen: Date? = nil) {
         self.rows = rows; self.invalid = invalid; self.computers = computers; self.filled = filled; self.duplicatesMerged = duplicatesMerged
         self.firstSeen = firstSeen
+    }
+
+    /// A coluna menos preenchida, quando alguma não está completa.
+    public var weakestColumn: (name: String, fill: Double)? {
+        columnFill.filter { $0.value < 1 }.min { ($0.value, $0.key) < ($1.value, $1.key) }.map { ($0.key, $0.value) }
+    }
+
+    public static func == (a: DatasetStats, b: DatasetStats) -> Bool {
+        a.rows == b.rows && a.invalid == b.invalid && a.computers == b.computers && a.filled == b.filled && a.duplicatesMerged == b.duplicatesMerged
+            && a.firstSeen == b.firstSeen && a.lastSeen == b.lastSeen && a.recent == b.recent && a.requests == b.requests
+            && a.failedRequests == b.failedRequests && a.averageRequestMs == b.averageRequestMs && a.hosts == b.hosts && a.columnFill == b.columnFill
     }
 }
 
@@ -439,23 +470,48 @@ extension RackyStore {
     }
 
     /// Números do topo: linhas, inválidas, computadores, preenchimento e duplicadas fundidas (dataset inteiro, sem filtro).
-    public func datasetStats(datasetID: String, columns: [String]) async throws -> DatasetStats {
+    public func datasetStats(datasetID: String, columns: [String], recentSince: Date? = nil) async throws -> DatasetStats {
         try await read { db in
-            var sql = "SELECT COUNT(*) AS rows, COALESCE(SUM(1 - valid), 0) AS invalid, COUNT(DISTINCT computer) AS computers, COALESCE(SUM(seen_count - 1), 0) AS dups, MIN(first_seen) AS first"
-            var arguments: StatementArguments = []
-            if !columns.isEmpty {
-                sql += ", COALESCE(SUM(" + columns.map { _ in "(json_extract(data, ?) IS NOT NULL)" }.joined(separator: " + ") + "), 0) AS cells"
-                for column in columns { arguments += [jsonPath(column)] }
+            var sql = """
+                SELECT COUNT(*) AS rows, COALESCE(SUM(1 - valid), 0) AS invalid, COUNT(DISTINCT computer) AS computers,
+                COALESCE(SUM(seen_count - 1), 0) AS dups, MIN(first_seen) AS first, MAX(first_seen) AS last,
+                COALESCE(SUM(first_seen >= ?), 0) AS recent, COUNT(DISTINCT request_id) AS requests,
+                COUNT(DISTINCT CASE WHEN request_status >= 400 THEN request_id END) AS failed, COUNT(DISTINCT source_host) AS hosts
+                """
+            var arguments: StatementArguments = [RowCodec.ms(recentSince ?? .distantFuture) as Int64]
+            for (index, column) in columns.enumerated() {
+                sql += ", COALESCE(SUM(json_extract(data, ?) IS NOT NULL AND json_extract(data, ?) != ''), 0) AS c\(index)"
+                arguments += [jsonPath(column), jsonPath(column)]
             }
             sql += " FROM dataset_row WHERE dataset_id = ?"
             arguments += [datasetID]
             guard let row = try Row.fetchOne(db, sql: sql, arguments: arguments) else { return DatasetStats() }
             let rows: Int = row["rows"]
-            let cells: Int = columns.isEmpty ? 0 : row["cells"]
+            var cells = 0
+            var columnFill: [String: Double] = [:]
+            for (index, column) in columns.enumerated() {
+                let count: Int = row["c\(index)"]
+                cells += count
+                columnFill[column] = rows == 0 ? 0 : Double(count) / Double(rows)
+            }
             let expected = rows * columns.count
-            return DatasetStats(
+            var stats = DatasetStats(
                 rows: rows, invalid: row["invalid"], computers: row["computers"], filled: expected == 0 ? 0 : Double(cells) / Double(expected),
                 duplicatesMerged: row["dups"], firstSeen: RowCodec.date(row["first"] as Int64?))
+            stats.lastSeen = RowCodec.date(row["last"] as Int64?)
+            stats.recent = row["recent"]
+            stats.requests = row["requests"]
+            stats.failedRequests = row["failed"]
+            stats.hosts = row["hosts"]
+            stats.columnFill = columnFill
+            // Tempo médio por requisição (cada requisição conta uma vez, não uma por linha).
+            let average = try Double.fetchOne(
+                db, sql: """
+                    SELECT AVG(ms) FROM (SELECT MAX(request_ms) AS ms FROM dataset_row
+                    WHERE dataset_id = ? AND request_id IS NOT NULL AND request_ms IS NOT NULL GROUP BY request_id)
+                    """, arguments: [datasetID])
+            stats.averageRequestMs = average.map { Int($0.rounded()) }
+            return stats
         }
     }
 }

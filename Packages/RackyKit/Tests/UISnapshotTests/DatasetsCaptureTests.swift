@@ -89,5 +89,19 @@ import Testing
         _ = try await env.registry.perform(.datasetSelectRow, .select(selected.id))
         await VisualBatchTests.settle(800)
         write(c.window!.contentView!, "dataset-page")
+
+        // Filtro de faceta ativo: o chip aparece embaixo da busca.
+        _ = try await env.registry.perform(.datasetSelectRow, .press)
+        _ = try await env.registry.perform(.datasetFacet, .select("computer:=booking-la"))
+        await VisualBatchTests.settle(600)
+        write(c.window!.contentView!, "dataset-page-filtered")
+
+        // A prévia do painel direito (módulo Data) com a sessão aberta.
+        _ = try? await env.registry.perform(.pageClose, .press)
+        env.datasets.panelDatasetID = live.id
+        _ = try? await env.registry.perform(.rightPanelToggle, .press)
+        env.rightPanel.show(.data)
+        await VisualBatchTests.settle(1200)
+        write(c.window!.contentView!, "data-panel")
     }
 }

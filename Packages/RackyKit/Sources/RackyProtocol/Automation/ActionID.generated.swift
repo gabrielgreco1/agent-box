@@ -225,6 +225,7 @@ extension ActionID {
     public static let datasetOpenSource = ActionID(unchecked: "dataset.openSource")
     public static let datasetRange = ActionID(unchecked: "dataset.range")
     public static let datasetFacet = ActionID(unchecked: "dataset.facet")
+    public static let datasetFacetsReset = ActionID(unchecked: "dataset.facetsReset")
     public static let datasetPage = ActionID(unchecked: "dataset.page")
     public static let datasetColumns = ActionID(unchecked: "dataset.columns")
     public static let datasetCopyRow = ActionID(unchecked: "dataset.copyRow")
@@ -709,6 +710,7 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "dataset.openSource"), label: "Open Source URL", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dataset.range"), label: "Dataset: período", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dataset.facet"), label: "Dataset: faceta", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dataset.facetsReset"), label: "Dataset: limpar filtros", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dataset.page"), label: "Dataset: página", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dataset.columns"), label: "Dataset: colunas", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dataset.copyRow"), label: "Copy Row JSON", shortcut: "", slice: .slice3),

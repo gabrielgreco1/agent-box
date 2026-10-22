@@ -437,6 +437,8 @@ public final class AppEnvironment {
         datasets.closePane = { [workspace] paneID in workspace.closePane(id: paneID) }
         datasets.currentSession = { [workspace] in workspace.currentSessionID }
         datasets.showDataPanel = { [rightPanel] in rightPanel.show(.data) }
+        datasets.hideDataPanel = { [rightPanel] in rightPanel.hide(.data) }
+        datasets.computerLabel = { [weak model = computers.model] name in model?.computerAgentNames[name] }
         datasets.isShownInSession = { [workspace] id, sid in workspace.datasetPane(id, in: sid) != nil }
         workspace.datasetTitle = { [datasets] id in datasets.name(of: id) }
         do { try datasets.register(in: registry) } catch { log.publicError("duplicate dataset action registration") }

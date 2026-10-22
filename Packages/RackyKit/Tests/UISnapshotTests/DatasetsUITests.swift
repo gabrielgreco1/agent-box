@@ -329,6 +329,9 @@ struct DatasetsUITests {
     }
 
     @Test func datasetPageSnapshots() async throws {
+        let previous = MotionPolicy.shared.mode
+        MotionPolicy.shared.mode = .instant
+        defer { MotionPolicy.shared.mode = previous }
         let f = try await DatasetsFixture.make()
         defer { f.remove() }
         _ = try await f.registry.perform(.datasetOpen, .select(try await f.datasetID()))

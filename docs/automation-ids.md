@@ -334,6 +334,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `rightPanel.data.empty`
 - `rightPanel.data.open`
 - `rightPanel.data.pick`
+- `rightPanel.data.stats`
+- `rightPanel.data.row.<key>`
 
 ### Painel direito (Files, 10-right-panel §2)
 
@@ -447,6 +449,12 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `dataset.range`
 - `dataset.columns`
 - `dataset.facet.<facet>.<value>`
+- `dataset.facet.<facet>.<value>.only`
+- `dataset.facet.<facet>.reset`
+- `dataset.facets.reset`
+- `dataset.chip.<id>.clear`
+- `dataset.search.clear`
+- `dataset.status`
 - `dataset.page.prev`
 - `dataset.page.next`
 - `dataset.copyRow`
@@ -843,6 +851,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `dataset.openSource` | Open Source URL | — | slice3 |
 | `dataset.range` | Dataset: período | — | slice3 |
 | `dataset.facet` | Dataset: faceta | — | slice3 |
+| `dataset.facetsReset` | Dataset: limpar filtros | — | slice3 |
 | `dataset.page` | Dataset: página | — | slice3 |
 | `dataset.columns` | Dataset: colunas | — | slice3 |
 | `dataset.copyRow` | Copy Row JSON | — | slice3 |

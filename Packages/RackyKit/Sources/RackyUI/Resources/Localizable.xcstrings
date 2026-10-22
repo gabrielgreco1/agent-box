@@ -10743,17 +10743,6 @@
         }
       }
     },
-    "new rows": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "new rows"
-          }
-        }
-      }
-    },
     "rate": {
       "extractionState": "manual",
       "localizations": {
@@ -10948,6 +10937,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "No rows yet."
+          }
+        }
+      }
+    },
+    "New rows": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New rows"
+          }
+        }
+      }
+    },
+    "Clear all": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear all"
+          }
+        }
+      }
+    },
+    "only": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "only"
+          }
+        }
+      }
+    },
+    "Tables that subagents collect show up here as rows arrive.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tables that subagents collect show up here as rows arrive."
           }
         }
       }

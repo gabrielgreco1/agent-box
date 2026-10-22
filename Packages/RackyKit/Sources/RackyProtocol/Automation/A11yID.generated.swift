@@ -284,6 +284,8 @@ extension A11yID {
     public static let rightPanelDataOpen = A11yID(unchecked: "rightPanel.data.open")
     /// `rightPanel.data.pick`
     public static let rightPanelDataPick = A11yID(unchecked: "rightPanel.data.pick")
+    /// `rightPanel.data.stats`
+    public static let rightPanelDataStats = A11yID(unchecked: "rightPanel.data.stats")
     /// `rightPanel.files`
     public static let rightPanelFiles = A11yID(unchecked: "rightPanel.files")
     /// `rightPanel.files.chip`
@@ -396,6 +398,12 @@ extension A11yID {
     public static let datasetRange = A11yID(unchecked: "dataset.range")
     /// `dataset.columns`
     public static let datasetColumns = A11yID(unchecked: "dataset.columns")
+    /// `dataset.facets.reset`
+    public static let datasetFacetsReset = A11yID(unchecked: "dataset.facets.reset")
+    /// `dataset.search.clear`
+    public static let datasetSearchClear = A11yID(unchecked: "dataset.search.clear")
+    /// `dataset.status`
+    public static let datasetStatus = A11yID(unchecked: "dataset.status")
     /// `dataset.page.prev`
     public static let datasetPagePrev = A11yID(unchecked: "dataset.page.prev")
     /// `dataset.page.next`
@@ -1342,6 +1350,11 @@ extension A11yID {
         A11yID(unchecked: "rightPanel.module.\(A11yID.segment(id)).minimize")
     }
 
+    /// `rightPanel.data.row.<key>`
+    public static func rightPanelDataRow(_ key: String) -> A11yID {
+        A11yID(unchecked: "rightPanel.data.row.\(A11yID.segment(key))")
+    }
+
     /// `rightPanel.files.row.<path>`
     public static func rightPanelFilesRow(_ path: String) -> A11yID {
         A11yID(unchecked: "rightPanel.files.row.\(A11yID.rawSegment(path, loose: true))")
@@ -1580,6 +1593,21 @@ extension A11yID {
     /// `dataset.facet.<facet>.<value>`
     public static func datasetFacet(_ facet: String, _ value: String) -> A11yID {
         A11yID(unchecked: "dataset.facet.\(A11yID.segment(facet)).\(A11yID.segment(value))")
+    }
+
+    /// `dataset.facet.<facet>.<value>.only`
+    public static func datasetFacetOnly(_ facet: String, _ value: String) -> A11yID {
+        A11yID(unchecked: "dataset.facet.\(A11yID.segment(facet)).\(A11yID.segment(value)).only")
+    }
+
+    /// `dataset.facet.<facet>.reset`
+    public static func datasetFacetReset(_ facet: String) -> A11yID {
+        A11yID(unchecked: "dataset.facet.\(A11yID.segment(facet)).reset")
+    }
+
+    /// `dataset.chip.<id>.clear`
+    public static func datasetChipClear(_ id: String) -> A11yID {
+        A11yID(unchecked: "dataset.chip.\(A11yID.segment(id)).clear")
     }
 
     /// `dataset.panel.tab.<tab>`
@@ -1949,6 +1977,8 @@ extension A11yID {
         A11yIDSpec(pattern: "rightPanel.data.empty", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
         A11yIDSpec(pattern: "rightPanel.data.open", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
         A11yIDSpec(pattern: "rightPanel.data.pick", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
+        A11yIDSpec(pattern: "rightPanel.data.stats", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
+        A11yIDSpec(pattern: "rightPanel.data.row.<key>", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
         A11yIDSpec(pattern: "rightPanel.files", surface: "Painel direito (Files, 10-right-panel §2)"),
         A11yIDSpec(pattern: "rightPanel.files.chip", surface: "Painel direito (Files, 10-right-panel §2)"),
         A11yIDSpec(pattern: "rightPanel.files.root", surface: "Painel direito (Files, 10-right-panel §2)"),
@@ -2053,6 +2083,12 @@ extension A11yID {
         A11yIDSpec(pattern: "dataset.range", surface: "Páginas"),
         A11yIDSpec(pattern: "dataset.columns", surface: "Páginas"),
         A11yIDSpec(pattern: "dataset.facet.<facet>.<value>", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.facet.<facet>.<value>.only", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.facet.<facet>.reset", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.facets.reset", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.chip.<id>.clear", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.search.clear", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.status", surface: "Páginas"),
         A11yIDSpec(pattern: "dataset.page.prev", surface: "Páginas"),
         A11yIDSpec(pattern: "dataset.page.next", surface: "Páginas"),
         A11yIDSpec(pattern: "dataset.copyRow", surface: "Páginas"),

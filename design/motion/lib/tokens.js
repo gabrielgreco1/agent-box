@@ -997,6 +997,14 @@ window.DS = {
         "lineHeight": 16,
         "tracking": 0,
         "tabularDigits": true
+      },
+      "metric": {
+        "family": "ui",
+        "size": 20,
+        "weight": 600,
+        "lineHeight": 24,
+        "tracking": -0.01,
+        "tabularDigits": true
       }
     }
   },

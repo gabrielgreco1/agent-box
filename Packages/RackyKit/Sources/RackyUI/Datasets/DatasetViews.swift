@@ -111,19 +111,6 @@ private struct StatView: View {
     }
 }
 
-/// Caixinha de seleção desenhada (facetas e grade).
-private struct CheckSquare: View {
-    let on: Bool
-    var tint: Color = DS.Color.textPrimary
-
-    var body: some View {
-        RoundedRectangle(cornerRadius: DS.Radius.xs + 1)
-            .fill(on ? tint : Color.clear)
-            .overlay(RoundedRectangle(cornerRadius: DS.Radius.xs + 1).strokeBorder(on ? tint : DS.Color.borderStrong))
-            .frame(width: DatasetMetrics.checkbox, height: DatasetMetrics.checkbox)
-    }
-}
-
 /// Botão que abre um menu do design system cujos itens levam a própria ação (marcar várias colunas, escolher formato ou período).
 private struct MenuButton<Label: View>: View {
     let id: A11yID
@@ -358,7 +345,8 @@ struct DatasetPageView: View {
             VStack(spacing: 0) {
                 topBar(snapshot, width: width)
                 if let snapshot {
-                    queryBar
+                    MetricsStrip(snapshot: snapshot, controller: controller)
+                    DatasetQueryBar(snapshot: snapshot, controller: controller, model: model, rangeMenu: AnyView(rangeMenu))
                     ActivityChart(snapshot: snapshot, controller: controller)
                     ZStack(alignment: .trailing) {
                         HStack(spacing: 0) {
@@ -413,17 +401,10 @@ struct DatasetPageView: View {
             }
             .layoutPriority(1)
             if let snapshot {
-                if controller.isCollecting(snapshot.summary) { CollectingPill() }
-                // Em área estreita os números somem do fim para o começo.
-                ViewThatFits(in: .horizontal) {
-                    stats(snapshot, count: 5)
-                    stats(snapshot, count: 3)
-                    stats(snapshot, count: 1)
-                    Color.clear.frame(width: .zero, height: .zero)
-                }
-                .padding(.leading, DS.Space.s2)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .a11y(.datasetStats, kind: "group", value: "\(snapshot.stats.rows)")
+                CollectionStatus(
+                    collecting: controller.isCollecting(snapshot.summary), computers: snapshot.stats.computers,
+                    lastRow: snapshot.stats.lastSeen.map { controller.relative($0) })
+                Spacer(minLength: DS.Space.s2)
                 ActionButton(
                     .datasetOpen, argument: .select("\(model.id)|beside"), tooltip: String(localized: "Open beside the agent", bundle: .module)
                 ) { Image(systemName: "rectangle.split.2x1") }
@@ -438,21 +419,6 @@ struct DatasetPageView: View {
                 }
             } else {
                 Spacer(minLength: 0)
-            }
-        }
-    }
-
-    private func stats(_ snapshot: DatasetPageSnapshot, count: Int) -> some View {
-        let s = snapshot.stats
-        return HStack(spacing: DatasetMetrics.statGap) {
-            StatView(value: s.rows.formatted(), label: String(localized: "Rows", bundle: .module).lowercased())
-            if count >= 3 {
-                StatView(value: s.invalid.formatted(), label: String(localized: "Invalid", bundle: .module).lowercased(), tone: s.invalid > 0 ? DS.Color.warning : DS.Color.textTertiary)
-                StatView(value: String(localized: "\(snapshot.perMinute)/min", bundle: .module), label: String(localized: "rate", bundle: .module))
-            }
-            if count >= 5 {
-                StatView(value: s.filled.formatted(.percent.precision(.fractionLength(1))), label: String(localized: "filled", bundle: .module))
-                StatView(value: s.computers.formatted(), label: s.computers == 1 ? String(localized: "Computer", bundle: .module).lowercased() : String(localized: "Computers", bundle: .module).lowercased())
             }
         }
     }
@@ -478,18 +444,12 @@ struct DatasetPageView: View {
 
     // MARK: Consulta
 
-    private var queryBar: some View {
-        HStack(spacing: DS.Space.s2) {
-            DSTextField(
-                "Filter: price:>200 name:plaza", text: $model.search, id: .datasetSearch, action: .datasetSearch, compact: true, mono: true)
-            MenuButton(id: .datasetRange, action: .datasetRange, entries: rangeEntries) {
-                Text(verbatim: Self.rangeTitle(model.range))
-                Image(systemName: "chevron.down").font(.system(size: DS.Space.s2_5))
-            }
+    private var rangeMenu: some View {
+        MenuButton(id: .datasetRange, action: .datasetRange, entries: rangeEntries) {
+            Image(systemName: "clock").font(.system(size: DS.Space.s2_5 + 1)).foregroundStyle(DS.Color.textTertiary)
+            Text(verbatim: Self.rangeTitle(model.range))
+            Image(systemName: "chevron.down").font(.system(size: DS.Space.s2)).foregroundStyle(DS.Color.textTertiary)
         }
-        .padding(.horizontal, DS.Space.s4)
-        .frame(height: DatasetMetrics.queryBar)
-        .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
     }
 
     private var rangeEntries: [DSMenuEntry] {
@@ -625,152 +585,6 @@ struct DatasetPageView: View {
             parts.append(String(localized: "duplicates merged: \(snapshot.stats.duplicatesMerged.formatted())", bundle: .module))
         }
         return parts.joined(separator: " · ")
-    }
-}
-
-// MARK: Gráfico
-
-/// Linhas novas no período: verde para válidas, âmbar para inválidas (onde um site começou a falhar), com legenda e eixo de horas.
-private struct ActivityChart: View {
-    let snapshot: DatasetPageSnapshot
-    let controller: DatasetsController
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: DS.Space.s1_5) {
-            HStack(spacing: DS.Space.s3) {
-                legend(DS.Color.dataValid, String(localized: "Valid", bundle: .module).lowercased())
-                legend(DS.Color.warning, String(localized: "Invalid", bundle: .module).lowercased())
-                Spacer(minLength: 0)
-                Text("new rows", bundle: .module).dsFont(DS.Font.micro).foregroundStyle(DS.Color.textTertiary)
-            }
-            Canvas { context, size in draw(context, size) }
-            axis
-        }
-        .padding(.horizontal, DS.Space.s4)
-        .padding(.vertical, DS.Space.s2)
-        .frame(height: DatasetMetrics.chartHeight)
-        .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
-        .a11y(.datasetChart, kind: "chart", value: "\(snapshot.activity.reduce(0) { $0 + $1.valid + $1.invalid })")
-    }
-
-    private func legend(_ color: Color, _ title: String) -> some View {
-        HStack(spacing: DS.Space.s1) {
-            RoundedRectangle(cornerRadius: DS.Radius.xs).fill(color).frame(width: DatasetMetrics.legendSwatch, height: DatasetMetrics.legendSwatch)
-            Text(verbatim: title).dsFont(DS.Font.micro).foregroundStyle(DS.Color.textTertiary)
-        }
-    }
-
-    private func draw(_ context: GraphicsContext, _ size: CGSize) {
-        let buckets = snapshot.activity
-        guard !buckets.isEmpty else { return }
-        let peak = max(buckets.map { $0.valid + $0.invalid }.max() ?? 0, 1)
-        let gap = DatasetMetrics.chartBarGap
-        let width = (size.width - gap * CGFloat(buckets.count - 1)) / CGFloat(buckets.count)
-        for (index, bucket) in buckets.enumerated() {
-            let x = CGFloat(index) * (width + gap)
-            let valid = size.height * CGFloat(bucket.valid) / CGFloat(peak)
-            let invalid = bucket.invalid == 0 ? 0 : max(size.height * CGFloat(bucket.invalid) / CGFloat(peak), 2)
-            if valid > 0 {
-                context.fill(Path(CGRect(x: x, y: size.height - valid, width: width, height: valid)), with: .color(DS.Color.dataValid.opacity(0.7)))
-            }
-            if invalid > 0 {
-                context.fill(Path(CGRect(x: x, y: size.height - valid - invalid, width: width, height: invalid)), with: .color(DS.Color.warning))
-            }
-            if valid + invalid == 0 {
-                context.fill(Path(CGRect(x: x, y: size.height - 1, width: width, height: 1)), with: .color(DS.Color.borderStrong))
-            }
-        }
-    }
-
-    /// Seis marcas de hora de ponta a ponta; a última é `now`.
-    private var axis: some View {
-        HStack(spacing: 0) {
-            ForEach(0..<6, id: \.self) { index in
-                Text(verbatim: label(index)).dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textQuaternary)
-                if index < 5 { Spacer(minLength: 0) }
-            }
-        }
-    }
-
-    private func label(_ index: Int) -> String {
-        guard index < 5 else { return String(localized: "now", bundle: .module) }
-        guard let start = snapshot.activityStart else { return "" }
-        let span = controller.now().timeIntervalSince(start)
-        return controller.clock(start.addingTimeInterval(span * Double(index) / 5), seconds: false)
-    }
-}
-
-// MARK: Facetas
-
-/// Coluna da esquerda: cada faceta com os valores e as contagens; clicar marca/desmarca (status, computador, site e evidência começam
-/// todos marcados; erro começa desmarcado e marcar filtra).
-private struct FacetsPanel: View {
-    let snapshot: DatasetPageSnapshot
-    let controller: DatasetsController
-    let model: DatasetViewModel
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: DS.Space.s4) {
-                ForEach(DatasetFacet.allCases, id: \.self) { facet in
-                    let values = snapshot.facets[facet] ?? []
-                    if !values.isEmpty {
-                        VStack(alignment: .leading, spacing: .zero) {
-                            Text(verbatim: Self.title(facet).uppercased()).dsFont(DS.Font.micro).tracking(0.6).foregroundStyle(DS.Color.textTertiary)
-                                .padding(.bottom, DS.Space.s1_5)
-                            ForEach(values) { value in row(facet, value) }
-                        }
-                    }
-                }
-            }
-            .padding(.horizontal, DS.Space.s4)
-            .padding(.vertical, DS.Space.s3)
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .frame(width: DatasetMetrics.facetWidth)
-        .background(DS.Color.chrome)
-        .overlay(alignment: .trailing) { DS.Color.border.frame(width: ComputersMetrics.separator) }
-    }
-
-    private func row(_ facet: DatasetFacet, _ value: DatasetFacetCount) -> some View {
-        let on = model.isChecked(facet, value.value)
-        return ActionButton(.datasetFacet, id: .datasetFacet(facet.rawValue, value.value), argument: .select("\(facet.rawValue):\(value.value)")) {
-            HStack(spacing: DS.Space.s2) {
-                CheckSquare(on: on)
-                if facet == .status {
-                    Circle().fill(value.value == "valid" ? DS.Color.dataValid : DS.Color.warning)
-                        .frame(width: DatasetMetrics.facetDot, height: DatasetMetrics.facetDot)
-                }
-                Text(verbatim: Self.label(facet, value.value)).dsFont(DS.Font.cell)
-                    .foregroundStyle(on || facet == .error ? DS.Color.textPrimary : DS.Color.textTertiary).lineLimit(1).truncationMode(.middle)
-                Spacer(minLength: DS.Space.s1)
-                Text(verbatim: value.count.formatted()).dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textTertiary)
-            }
-            .frame(height: DatasetMetrics.facetRow)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-
-    static func title(_ facet: DatasetFacet) -> String {
-        switch facet {
-        case .status: String(localized: "Status", bundle: .module)
-        case .computer: String(localized: "Computer", bundle: .module)
-        case .source: String(localized: "Source", bundle: .module)
-        case .evidence: String(localized: "Evidence", bundle: .module)
-        case .error: String(localized: "Error", bundle: .module)
-        }
-    }
-
-    static func label(_ facet: DatasetFacet, _ value: String) -> String {
-        switch (facet, value) {
-        case (.status, "valid"): String(localized: "Valid", bundle: .module)
-        case (.status, "invalid"): String(localized: "Invalid", bundle: .module)
-        case (.evidence, "observed"): String(localized: "Seen in network", bundle: .module)
-        case (.evidence, "reported"): String(localized: "Agent-reported", bundle: .module)
-        case (.evidence, "none"): String(localized: "No source", bundle: .module)
-        default: value
-        }
     }
 }
 

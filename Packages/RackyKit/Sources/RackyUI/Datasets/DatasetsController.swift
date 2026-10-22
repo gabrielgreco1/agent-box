@@ -48,6 +48,9 @@ nonisolated public struct DatasetPageSnapshot: Sendable, Equatable {
     /// Linhas novas por faixa no período (o gráfico de volume), o início do período e o ritmo recente por minuto.
     public var activity: [DatasetActivityBucket] = []
     public var activityStart: Date?
+    /// Fim do gráfico e largura de cada barra (s): "All time" acaba na última linha quando a coleta parou, não em "agora".
+    public var activityEnd: Date?
+    public var bucketSeconds: TimeInterval = 60
     public var perMinute: Int = 0
     public var facets: [DatasetFacet: [DatasetFacetCount]] = [:]
     public var stats = DatasetStats()
@@ -73,8 +76,17 @@ nonisolated enum DatasetLoader {
         guard let summary = try? await store.datasetSummary(id: request.id) else { return nil }
         let id = request.id
         var query = request.query
-        let stats = (try? await store.datasetStats(datasetID: id, columns: summary.dataset.columns.map(\.name))) ?? DatasetStats()
-        let start: Date = request.range.seconds.map { now.addingTimeInterval(-$0) } ?? min(stats.firstSeen ?? summary.dataset.createdAt, now.addingTimeInterval(-60))
+        let stats = (try? await store.datasetStats(
+            datasetID: id, columns: summary.dataset.columns.map(\.name), recentSince: now.addingTimeInterval(-recentWindow))) ?? DatasetStats()
+        let first = stats.firstSeen ?? summary.dataset.createdAt
+        // "All time": da primeira à última linha (com folga), ou até agora se ainda chega coisa; senão, o período escolhido até agora.
+        let end: Date
+        if request.range.seconds == nil, let last = stats.lastSeen, now.timeIntervalSince(last) > idleAfter {
+            end = last.addingTimeInterval(max(last.timeIntervalSince(first) * 0.08, 60))
+        } else {
+            end = now
+        }
+        let start: Date = request.range.seconds.map { now.addingTimeInterval(-$0) } ?? min(first, end.addingTimeInterval(-60))
         if request.range.seconds != nil { query.since = start }
         let rows = (try? await store.datasetRows(datasetID: id, query: query, limit: request.pageSize, offset: request.page * request.pageSize)) ?? []
         let matching = (try? await store.datasetRowCount(datasetID: id, query: query)) ?? rows.count
@@ -84,20 +96,23 @@ nonisolated enum DatasetLoader {
             let problems = Self.problems(row.error)
             return DatasetDisplayRow(row: row, cells: columns.map { Self.text(object[$0.name]) }, problems: columns.map { problems[$0.name] })
         }
-        let span = max(now.timeIntervalSince(start), 60)
+        let span = max(end.timeIntervalSince(start), 60)
         let bucket = max((span / Double(activityBuckets)).rounded(.up), 1)
-        let activity = (try? await store.datasetActivity(datasetID: id, until: now, bucket: bucket, buckets: activityBuckets)) ?? []
+        let activity = (try? await store.datasetActivity(datasetID: id, until: end, bucket: bucket, buckets: activityBuckets, query: query)) ?? []
         // Ritmo: linhas novas nos últimos 5 minutos, por minuto.
         let recent = (try? await store.datasetActivity(datasetID: id, until: now, bucket: 300, buckets: 1))?.first
         let perMinute = Int((Double((recent?.valid ?? 0) + (recent?.invalid ?? 0)) / 5).rounded())
         let facets = (try? await store.datasetFacets(datasetID: id, query: query)) ?? [:]
         return DatasetPageSnapshot(
-            summary: summary, rows: display, matching: matching, activity: activity, activityStart: now.addingTimeInterval(-bucket * Double(activityBuckets)),
-            perMinute: perMinute, facets: facets, stats: stats)
+            summary: summary, rows: display, matching: matching, activity: activity, activityStart: end.addingTimeInterval(-bucket * Double(activityBuckets)),
+            activityEnd: end, bucketSeconds: bucket, perMinute: perMinute, facets: facets, stats: stats)
     }
 
-    /// O período vira 30 barras.
-    static let activityBuckets = 30
+    /// O período vira 48 barras.
+    static let activityBuckets = 48
+    /// "+N" do topo: linhas dos últimos 5 minutos. Sem linha nova há 10 minutos, o gráfico de "All time" para na última.
+    static let recentWindow: TimeInterval = 300
+    static let idleAfter: TimeInterval = 600
 
     /// `price:>200 rating:>=4.5 Union` vira condições sobre colunas conhecidas e o texto livre que sobra. `coluna:valor` numa coluna de texto
     /// é "contém"; em número, data e booleano é "igual". Palavras com `:` que não são coluna ficam no texto.
@@ -281,6 +296,9 @@ public final class DatasetsController {
     public var panelDatasetID: String?
     /// Mostra o módulo Data no painel direito (abre o painel se estava fechado).
     @ObservationIgnored public var showDataPanel: () -> Void = {}
+    @ObservationIgnored public var hideDataPanel: () -> Void = {}
+    /// Nome do agente que usa um computador ("Codex 1"), para a faceta Computer.
+    @ObservationIgnored public var computerLabel: (String) -> String? = { _ in nil }
     @ObservationIgnored public var isShownInSession: (_ datasetID: String, _ sessionID: UUID) -> Bool = { _, _ in false }
     /// Abrir a tabela ao lado assim que as primeiras linhas de um dataset novo chegam (uma vez por dataset).
     @ObservationIgnored public var autoOpenEnabled = true
@@ -482,6 +500,8 @@ public final class DatasetsController {
             guard let id = parts.first, !id.isEmpty, await open(id, beside: parts.dropFirst().first == "beside") else {
                 throw ActionError.failed(.datasetOpen, message: String(localized: "No such dataset.", bundle: .module))
             }
+            // Aberta pelo painel Data: a tabela inteira toma o lugar da prévia, não ficam as duas.
+            if parts.dropFirst().first == "panel" { hideDataPanel() }
             return id
         }
         try registry.register(.datasetFilter, enablement: hasDataset) { [unowned self] arg in
@@ -522,6 +542,11 @@ public final class DatasetsController {
             guard let m = active else { return raw }
             if value == "*" {
                 if facet == .error { m.errorKinds = [] } else { m.excluded[facet] = nil }
+            } else if value.hasPrefix("="), facet != .error {
+                // `=valor`: só esse valor ("only" do Datadog); de novo no mesmo valor volta a mostrar todos.
+                let only = String(value.dropFirst())
+                let others = Set((m.snapshot?.facets[facet] ?? []).map(\.value)).subtracting([only])
+                m.excluded[facet] = m.excluded[facet] == others || others.isEmpty ? nil : others
             } else if facet == .error {
                 if m.errorKinds.contains(value) { m.errorKinds.remove(value) } else { m.errorKinds.insert(value) }
             } else {
@@ -532,6 +557,14 @@ public final class DatasetsController {
             m.page = 0
             await reload(m)
             return raw
+        }
+        try registry.register(.datasetFacetsReset, enablement: hasDataset) { [unowned self] _ in
+            guard let m = active else { return "" }
+            m.excluded = [:]
+            m.errorKinds = []
+            m.page = 0
+            await reload(m)
+            return ""
         }
         try registry.register(.datasetPage, enablement: hasDataset) { [unowned self] arg in
             guard let m = active else { return "1" }
