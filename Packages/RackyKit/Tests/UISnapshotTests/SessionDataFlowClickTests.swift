@@ -49,6 +49,14 @@ import Testing
         try? FileManager.default.removeItem(at: rig.home)
     }
 
+    /// Com `RACKY_FLOW_SHOTS=<pasta>`, salva a janela como ela está (para a rodada de testers por tarefa).
+    private func shot(_ rig: Rig, _ name: String) {
+        guard let dir = ProcessInfo.processInfo.environment["RACKY_FLOW_SHOTS"], let view = rig.window.contentView,
+              let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
+        view.cacheDisplay(in: view.bounds, to: rep)
+        try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: dir).appendingPathComponent("\(name).png"))
+    }
+
     private func click(_ rig: Rig, _ id: A11yID, count: Int = 1) throws {
         let frame = try #require(rig.env.elements.frame(of: id), "\(id.rawValue) is not on screen")
         let height = rig.window.contentView?.bounds.height ?? 0
@@ -66,8 +74,10 @@ import Testing
     @Test func plusOpensTheMenuUnderItAndOffersTheSessionData() async throws {
         let rig = try await make()
         defer { Task { await close(rig) } }
+        shot(rig, "flow-1-session")
         try click(rig, .tabsNew)
         await VisualBatchTests.settle(500)
+        shot(rig, "flow-2-plus-menu")
         // A view do menu na janela (os frames de dentro do menu são relativos a ele).
         func views(_ v: NSView) -> [NSView] { [v] + v.subviews.flatMap(views) }
         let root = try #require(rig.window.contentView)
@@ -87,6 +97,7 @@ import Testing
         await VisualBatchTests.settle(200)
         try key("\r", code: 36)
         await VisualBatchTests.settle(600)
+        shot(rig, "flow-3-table-tab")
         let active = try #require(rig.env.workspace.activeTab)
         #expect(rig.env.workspace.datasetOnly(active) == rig.datasetID, "Open books2 should show the table in its own tab")
         #expect(rig.env.workspace.displayTitle(of: active) == "books2")
@@ -100,6 +111,7 @@ import Testing
         await VisualBatchTests.settle(600)
         try click(rig, .dataBeside)
         await VisualBatchTests.settle(600)
+        shot(rig, "flow-4-beside")
         let active = try #require(rig.env.workspace.activeTab)
         #expect(!active.layout.terminalIDs.isEmpty, "the table should now sit in the agent's tab")
         #expect(active.layout.pane(forDataset: rig.datasetID) != nil)
@@ -120,6 +132,7 @@ import Testing
         }
         try click(rig, chip)
         await VisualBatchTests.settle(600)
+        shot(rig, "flow-5-after-path-click")
         #expect(rig.env.datasets.currentPage() == .datasets, "the click should open the Data area")
         #expect(rig.env.dataHub.active == .table(connection: "conn-supabase", schema: "public", name: "books"))
     }
@@ -136,6 +149,7 @@ import Testing
         #expect(rig.env.workspace.displayTitle(of: agentTab) != rig.env.workspace.displayTitle(of: datasetTab), "two tabs with the same name can't be told apart")
         try click(rig, .tabsTab(agentTab.id.uuidString))
         await VisualBatchTests.settle(400)
+        shot(rig, "flow-6-agent-tab-with-table-tab")
         #expect(rig.env.workspace.activeTab?.id == agentTab.id, "clicking the agent's tab shows the agent")
         try click(rig, .tabsTab(datasetTab.id.uuidString))
         await VisualBatchTests.settle(400)

@@ -160,7 +160,8 @@ struct ComposerView: View {
 
     /// "Save data to": onde os agentes gravam o que coletam (Racky por padrão, ou um lugar de uma conexão), com a frase do que acontece.
     private var dataDestination: some View {
-        let options = model.dataDestinations()
+        var options = model.dataDestinations()
+        if !options.contains(where: { $0.key == "racky" }) { options.insert(.thisMac, at: 0) }
         let chosen = options.first { $0.key == model.draft.dataDestination } ?? options.first
         var entries: [DSMenuEntry] = []
         var lastGroup = ""

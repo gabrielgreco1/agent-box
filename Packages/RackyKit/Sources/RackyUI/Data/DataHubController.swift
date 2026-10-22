@@ -173,9 +173,7 @@ public final class DataHubController {
 
     /// Opções de "Save data to" no formulário de nova sessão: o Racky e cada tabela, pasta, aba ou webhook das conexões.
     func composerDestinations() -> [ComposerDataDestination] {
-        var out = [ComposerDataDestination(
-            key: "racky", title: String(localized: "This Mac (a dataset of this session)", bundle: .module), group: String(localized: "This Mac", bundle: .module), production: false,
-            explanation: String(localized: "Agents save what they collect in a dataset of this session, on this Mac. You can copy it to a connection later.", bundle: .module))]
+        var out = [ComposerDataDestination.thisMac]
         for connection in connections {
             let prod = connection.protected
             let place = connection.name + (prod ? " (protected)" : "")

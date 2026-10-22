@@ -246,4 +246,12 @@ struct ComposerDataDestination: Equatable {
     var explanation: String
     /// Logo do lugar (nil = este Mac).
     var brand: DSDataBrand? = nil
+
+    /// O padrão: um dataset da sessão neste Mac. Sempre existe, mesmo sem nenhuma conexão.
+    static var thisMac: ComposerDataDestination {
+        ComposerDataDestination(
+            key: "racky", title: String(localized: "This Mac (a dataset of this session)", bundle: .module), group: String(localized: "This Mac", bundle: .module),
+            production: false,
+            explanation: String(localized: "Agents save what they collect in a dataset of this session, on this Mac. You can copy it to a connection later.", bundle: .module))
+    }
 }
