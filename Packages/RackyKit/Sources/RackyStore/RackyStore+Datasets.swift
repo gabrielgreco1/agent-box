@@ -367,11 +367,14 @@ public struct DatasetQuery: Sendable, Equatable {
     public var text = ""
     public var conditions: [DatasetCondition] = []
     public var since: Date?
+    /// Limite superior exclusivo de `first_seen` (janela escolhida no gráfico).
+    public var until: Date?
 
     public init(
-        excluded: [DatasetFacet: Set<String>] = [:], errorKinds: Set<String> = [], text: String = "", conditions: [DatasetCondition] = [], since: Date? = nil
+        excluded: [DatasetFacet: Set<String>] = [:], errorKinds: Set<String> = [], text: String = "", conditions: [DatasetCondition] = [], since: Date? = nil,
+        until: Date? = nil
     ) {
-        self.excluded = excluded; self.errorKinds = errorKinds; self.text = text; self.conditions = conditions; self.since = since
+        self.excluded = excluded; self.errorKinds = errorKinds; self.text = text; self.conditions = conditions; self.since = since; self.until = until
     }
 
     public static let all = DatasetQuery()
@@ -383,6 +386,35 @@ public struct DatasetFacetCount: Sendable, Equatable, Identifiable {
     public var count: Int
     public var id: String { value }
     public init(value: String, count: Int) { self.value = value; self.count = count }
+}
+
+/// Um site e quantas linhas vieram dele.
+public struct DatasetHostCount: Sendable, Equatable {
+    public var host: String
+    public var rows: Int
+    public init(host: String, rows: Int) { self.host = host; self.rows = rows }
+}
+
+/// Um valor de coluna e quantas linhas o têm.
+public struct DatasetValueCount: Sendable, Equatable {
+    public var value: String
+    public var count: Int
+    public init(value: String, count: Int) { self.value = value; self.count = count }
+}
+
+/// Perfil de uma coluna (com a consulta aplicada, menos as condições da própria coluna).
+public struct DatasetColumnProfile: Sendable, Equatable {
+    public var filled = 0
+    public var distinct = 0
+    /// Só texto/url/booleano com poucos valores distintos (≤ 30); os 8 mais frequentes.
+    public var topValues: [DatasetValueCount] = []
+    public var min: Double?
+    public var max: Double?
+    /// 24 faixas iguais entre `min` e `max` (numéricas); vazio nas outras.
+    public var histogram: [Int] = []
+    public init(filled: Int = 0, distinct: Int = 0, topValues: [DatasetValueCount] = [], min: Double? = nil, max: Double? = nil, histogram: [Int] = []) {
+        self.filled = filled; self.distinct = distinct; self.topValues = topValues; self.min = min; self.max = max; self.histogram = histogram
+    }
 }
 
 /// Números do topo da página.
@@ -408,6 +440,10 @@ public struct DatasetStats: Sendable, Equatable {
     public var hosts = 0
     /// Preenchimento de cada coluna, de 0 a 1 (a coluna mais fraca aparece no topo).
     public var columnFill: [String: Double] = [:]
+    /// Requisições distintas por classe de status (2, 3, 4, 5 = 2xx..5xx); linhas sem status ficam de fora.
+    public var requestStatus: [Int: Int] = [:]
+    /// Os 5 sites com mais linhas.
+    public var topHosts: [DatasetHostCount] = []
 
     public init(rows: Int = 0, invalid: Int = 0, computers: Int = 0, filled: Double = 0, duplicatesMerged: Int = 0, firstSeen: Date? = nil) {
         self.rows = rows; self.invalid = invalid; self.computers = computers; self.filled = filled; self.duplicatesMerged = duplicatesMerged
@@ -423,6 +459,7 @@ public struct DatasetStats: Sendable, Equatable {
         a.rows == b.rows && a.invalid == b.invalid && a.computers == b.computers && a.filled == b.filled && a.duplicatesMerged == b.duplicatesMerged
             && a.firstSeen == b.firstSeen && a.lastSeen == b.lastSeen && a.recent == b.recent && a.requests == b.requests
             && a.failedRequests == b.failedRequests && a.averageRequestMs == b.averageRequestMs && a.hosts == b.hosts && a.columnFill == b.columnFill
+            && a.requestStatus == b.requestStatus && a.topHosts == b.topHosts
     }
 }
 
@@ -464,6 +501,57 @@ extension RackyStore {
                     db, sql: "SELECT \(column) AS value, COUNT(*) AS n FROM dataset_row WHERE \(sql)\(extra) GROUP BY value ORDER BY n DESC, value LIMIT 50",
                     arguments: arguments)
                 result[facet] = rows.map { DatasetFacetCount(value: $0["value"], count: $0["n"]) }
+            }
+            return result
+        }
+    }
+
+    /// Perfil de cada coluna com a consulta aplicada, menos as condições da própria coluna (como as facetas com a delas).
+    public func datasetColumnProfiles(datasetID: String, columns: [DatasetColumn], query: DatasetQuery) async throws -> [String: DatasetColumnProfile] {
+        try await read { db in
+            var result: [String: DatasetColumnProfile] = [:]
+            for column in columns {
+                let (clauses, base) = datasetWhere(datasetID: datasetID, query: query, skipping: nil, skippingColumn: column.name)
+                let path = jsonPath(column.name)
+                let present = "json_extract(data, ?) IS NOT NULL AND json_extract(data, ?) != ''"
+                var profile = DatasetColumnProfile()
+                var withPresent = base
+                withPresent += [path, path]
+                guard let counts = try Row.fetchOne(
+                    db, sql: "SELECT COUNT(*) AS filled, COUNT(DISTINCT json_extract(data, ?)) AS distinct_n FROM dataset_row WHERE \(clauses) AND \(present)",
+                    arguments: StatementArguments([path]) + withPresent)
+                else { result[column.name] = profile; continue }
+                profile.filled = counts["filled"]
+                profile.distinct = counts["distinct_n"]
+                switch column.type {
+                case .string, .url, .boolean:
+                    if profile.distinct > 0, profile.distinct <= 30 {
+                        profile.topValues = try Row.fetchAll(
+                            db, sql: """
+                                SELECT CAST(json_extract(data, ?) AS TEXT) AS value, COUNT(*) AS n FROM dataset_row WHERE \(clauses) AND \(present)
+                                GROUP BY value ORDER BY n DESC, value LIMIT 8
+                                """, arguments: StatementArguments([path]) + withPresent
+                        ).map { DatasetValueCount(value: $0["value"], count: $0["n"]) }
+                    }
+                case .integer, .number:
+                    var numeric = base
+                    numeric += [path]
+                    let values = try Double.fetchAll(
+                        db, sql: "SELECT CAST(json_extract(data, ?) AS REAL) FROM dataset_row WHERE \(clauses) AND json_type(data, ?) IN ('integer', 'real')",
+                        arguments: StatementArguments([path]) + numeric)
+                    if let low = values.min(), let high = values.max() {
+                        profile.min = low
+                        profile.max = high
+                        var bins = [Int](repeating: 0, count: 24)
+                        for value in values {
+                            let slot = high == low ? 0 : Swift.min(23, Int((value - low) / (high - low) * 24))
+                            bins[slot] += 1
+                        }
+                        profile.histogram = bins
+                    }
+                default: break
+                }
+                result[column.name] = profile
             }
             return result
         }
@@ -511,6 +599,20 @@ extension RackyStore {
                     WHERE dataset_id = ? AND request_id IS NOT NULL AND request_ms IS NOT NULL GROUP BY request_id)
                     """, arguments: [datasetID])
             stats.averageRequestMs = average.map { Int($0.rounded()) }
+            for status in try Row.fetchAll(
+                db, sql: """
+                    SELECT request_status / 100 AS klass, COUNT(DISTINCT request_id) AS n FROM dataset_row
+                    WHERE dataset_id = ? AND request_status IS NOT NULL AND request_id IS NOT NULL GROUP BY klass
+                    """, arguments: [datasetID])
+            {
+                stats.requestStatus[status["klass"]] = status["n"]
+            }
+            stats.topHosts = try Row.fetchAll(
+                db, sql: """
+                    SELECT source_host AS host, COUNT(*) AS n FROM dataset_row WHERE dataset_id = ? AND source_host IS NOT NULL
+                    GROUP BY source_host ORDER BY n DESC, host LIMIT 5
+                    """, arguments: [datasetID]
+            ).map { DatasetHostCount(host: $0["host"], rows: $0["n"]) }
             return stats
         }
     }
@@ -520,7 +622,7 @@ extension RackyStore {
 private func jsonPath(_ column: String) -> String { "$.\"" + column.replacingOccurrences(of: "\"", with: "\\\"") + "\"" }
 
 /// Cláusula `WHERE` da consulta; `skipping` deixa uma faceta de fora (para contar os valores dela).
-private func datasetWhere(datasetID: String, query: DatasetQuery, skipping: DatasetFacet?) -> (String, StatementArguments) {
+private func datasetWhere(datasetID: String, query: DatasetQuery, skipping: DatasetFacet?, skippingColumn: String? = nil) -> (String, StatementArguments) {
     var clauses = ["dataset_id = ?"]
     var arguments: StatementArguments = [datasetID]
     func excludedValues(_ facet: DatasetFacet) -> [String] { facet == skipping ? [] : (query.excluded[facet] ?? []).sorted() }
@@ -543,7 +645,7 @@ private func datasetWhere(datasetID: String, query: DatasetQuery, skipping: Data
         clauses.append("(data LIKE ? ESCAPE '\\' OR COALESCE(source_url, '') LIKE ? ESCAPE '\\')")
         arguments += [likePattern(text), likePattern(text)]
     }
-    for condition in query.conditions {
+    for condition in query.conditions where condition.column != skippingColumn {
         let path = jsonPath(condition.column)
         if condition.comparison == .contains {
             clauses.append("CAST(json_extract(data, ?) AS TEXT) LIKE ? ESCAPE '\\'")
@@ -559,6 +661,10 @@ private func datasetWhere(datasetID: String, query: DatasetQuery, skipping: Data
     if let since = query.since {
         clauses.append("first_seen >= ?")
         arguments += [RowCodec.ms(since)]
+    }
+    if let until = query.until {
+        clauses.append("first_seen < ?")
+        arguments += [RowCodec.ms(until)]
     }
     return (clauses.joined(separator: " AND "), arguments)
 }

@@ -398,6 +398,12 @@ extension A11yID {
     public static let datasetRange = A11yID(unchecked: "dataset.range")
     /// `dataset.columns`
     public static let datasetColumns = A11yID(unchecked: "dataset.columns")
+    /// `dataset.filter.add`
+    public static let datasetFilterAdd = A11yID(unchecked: "dataset.filter.add")
+    /// `dataset.chart.window`
+    public static let datasetChartWindow = A11yID(unchecked: "dataset.chart.window")
+    /// `dataset.chart.window.clear`
+    public static let datasetChartWindowClear = A11yID(unchecked: "dataset.chart.window.clear")
     /// `dataset.facets.reset`
     public static let datasetFacetsReset = A11yID(unchecked: "dataset.facets.reset")
     /// `dataset.search.clear`
@@ -1595,6 +1601,31 @@ extension A11yID {
         A11yID(unchecked: "dataset.facet.\(A11yID.segment(facet)).\(A11yID.segment(value))")
     }
 
+    /// `dataset.pill.<index>`
+    public static func datasetPill(_ index: String) -> A11yID {
+        A11yID(unchecked: "dataset.pill.\(A11yID.segment(index))")
+    }
+
+    /// `dataset.pill.<index>.remove`
+    public static func datasetPillRemove(_ index: String) -> A11yID {
+        A11yID(unchecked: "dataset.pill.\(A11yID.segment(index)).remove")
+    }
+
+    /// `dataset.column.<name>`
+    public static func datasetColumn(_ name: String) -> A11yID {
+        A11yID(unchecked: "dataset.column.\(A11yID.segment(name))")
+    }
+
+    /// `dataset.column.<name>.value.<value>`
+    public static func datasetColumnValue(_ name: String, _ value: String) -> A11yID {
+        A11yID(unchecked: "dataset.column.\(A11yID.segment(name)).value.\(A11yID.segment(value))")
+    }
+
+    /// `dataset.column.<name>.range`
+    public static func datasetColumnRange(_ name: String) -> A11yID {
+        A11yID(unchecked: "dataset.column.\(A11yID.segment(name)).range")
+    }
+
     /// `dataset.facet.<facet>.<value>.only`
     public static func datasetFacetOnly(_ facet: String, _ value: String) -> A11yID {
         A11yID(unchecked: "dataset.facet.\(A11yID.segment(facet)).\(A11yID.segment(value)).only")
@@ -2083,6 +2114,14 @@ extension A11yID {
         A11yIDSpec(pattern: "dataset.range", surface: "Páginas"),
         A11yIDSpec(pattern: "dataset.columns", surface: "Páginas"),
         A11yIDSpec(pattern: "dataset.facet.<facet>.<value>", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.filter.add", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.pill.<index>", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.pill.<index>.remove", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.column.<name>", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.column.<name>.value.<value>", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.column.<name>.range", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.chart.window", surface: "Páginas"),
+        A11yIDSpec(pattern: "dataset.chart.window.clear", surface: "Páginas"),
         A11yIDSpec(pattern: "dataset.facet.<facet>.<value>.only", surface: "Páginas"),
         A11yIDSpec(pattern: "dataset.facet.<facet>.reset", surface: "Páginas"),
         A11yIDSpec(pattern: "dataset.facets.reset", surface: "Páginas"),

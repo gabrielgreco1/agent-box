@@ -54,6 +54,10 @@ nonisolated public struct DatasetPageSnapshot: Sendable, Equatable {
     public var perMinute: Int = 0
     public var facets: [DatasetFacet: [DatasetFacetCount]] = [:]
     public var stats = DatasetStats()
+    /// Perfil de cada coluna (preenchimento, valores, faixa, histograma) com a consulta aplicada.
+    public var profiles: [String: DatasetColumnProfile] = [:]
+    /// Janela escolhida no gráfico (o gráfico não a aplica; a grade, as facetas e os perfis sim).
+    public var window: ClosedRange<Date>?
 }
 
 /// O que o controlador pede ao loader.
@@ -63,6 +67,80 @@ nonisolated struct DatasetPageRequest: Sendable, Equatable {
     var range: DatasetRange
     var page: Int
     var pageSize: Int
+    var window: ClosedRange<Date>?
+}
+
+/// A barra de consulta como pills: cada token que o `parse` entende vira uma condição; o resto é texto livre. Funções puras sobre o texto.
+nonisolated public enum DatasetSearchText {
+    public struct Pill: Sendable, Equatable {
+        /// O token como foi digitado (aspas mantidas).
+        public var raw: String
+        public var column: String
+        public var comparison: DatasetComparison
+        public var value: String
+    }
+
+    public static func split(_ text: String, columns: [DatasetColumn]) -> (pills: [Pill], free: String) {
+        let known = DatasetLoader.knownColumns(columns)
+        var pills: [Pill] = []
+        var free: [String] = []
+        for raw in DatasetLoader.rawTokens(text) {
+            let plain = raw.replacingOccurrences(of: "\"", with: "")
+            if let c = DatasetLoader.condition(plain, known: known) {
+                pills.append(Pill(raw: raw, column: c.column, comparison: c.comparison, value: c.value))
+            } else if !plain.isEmpty {
+                free.append(plain)
+            }
+        }
+        return (pills, free.joined(separator: " "))
+    }
+
+    public static func removing(pillAt index: Int, from text: String, columns: [DatasetColumn]) -> String {
+        let known = DatasetLoader.knownColumns(columns)
+        var seen = 0
+        var kept: [String] = []
+        for raw in DatasetLoader.rawTokens(text) {
+            if DatasetLoader.condition(raw.replacingOccurrences(of: "\"", with: ""), known: known) != nil {
+                defer { seen += 1 }
+                if seen == index { continue }
+            }
+            kept.append(raw)
+        }
+        return kept.joined(separator: " ")
+    }
+
+    /// Acrescenta `coluna:op"valor"`. "Contém" some o operador em coluna de texto (é o padrão do `parse`); as outras comparações o mantêm.
+    public static func adding(column: String, comparison: DatasetComparison, value: String, to text: String, columns: [DatasetColumn] = []) -> String {
+        let textual = columns.first { $0.name == column }.map { [.string, .url, .json].contains($0.type) } ?? true
+        let op = comparison == .contains && textual ? "" : comparison.rawValue
+        let clean = value.replacingOccurrences(of: "\"", with: "")
+        let body = clean.contains(" ") ? "\"\(clean)\"" : clean
+        return append("\(column):\(op)\(body)", to: text)
+    }
+
+    /// Troca os `>`, `>=`, `<`, `<=` da coluna por `col:>=min col:<=max` (lado nil = aberto).
+    public static func replacingRange(column: String, min: Double?, max: Double?, in text: String, columns: [DatasetColumn] = []) -> String {
+        let name = columns.first { $0.name.lowercased() == column.lowercased() }?.name ?? column
+        let known = DatasetLoader.knownColumns(columns.isEmpty ? [DatasetColumn(name: column, type: .number)] : columns)
+        let bounds: Set<DatasetComparison> = [.greater, .greaterOrEqual, .less, .lessOrEqual]
+        var result = DatasetLoader.rawTokens(text).filter { raw in
+            guard let c = DatasetLoader.condition(raw.replacingOccurrences(of: "\"", with: ""), known: known) else { return true }
+            return !(c.column.lowercased() == name.lowercased() && bounds.contains(c.comparison))
+        }.joined(separator: " ")
+        if let min { result = append("\(name):>=\(number(min))", to: result) }
+        if let max { result = append("\(name):<=\(number(max))", to: result) }
+        return result
+    }
+
+    private static func append(_ token: String, to text: String) -> String {
+        let trimmed = text.trimmingCharacters(in: .whitespaces)
+        return trimmed.isEmpty ? token : trimmed + " " + token
+    }
+
+    /// `20`, `4.5` (sem `.0` no fim).
+    static func number(_ value: Double) -> String {
+        value == value.rounded() && abs(value) < 1e15 ? String(Int(value)) : String(value)
+    }
 }
 
 nonisolated enum DatasetLoader {
@@ -88,6 +166,12 @@ nonisolated enum DatasetLoader {
         }
         let start: Date = request.range.seconds.map { now.addingTimeInterval(-$0) } ?? min(first, end.addingTimeInterval(-60))
         if request.range.seconds != nil { query.since = start }
+        // O gráfico mantém o período inteiro (contexto); só linhas, facetas e perfis seguem a janela.
+        let chartQuery = query
+        if let window = request.window {
+            query.since = window.lowerBound
+            query.until = window.upperBound.addingTimeInterval(0.001)
+        }
         let rows = (try? await store.datasetRows(datasetID: id, query: query, limit: request.pageSize, offset: request.page * request.pageSize)) ?? []
         let matching = (try? await store.datasetRowCount(datasetID: id, query: query)) ?? rows.count
         let columns = summary.dataset.columns
@@ -98,14 +182,16 @@ nonisolated enum DatasetLoader {
         }
         let span = max(end.timeIntervalSince(start), 60)
         let bucket = max((span / Double(activityBuckets)).rounded(.up), 1)
-        let activity = (try? await store.datasetActivity(datasetID: id, until: end, bucket: bucket, buckets: activityBuckets, query: query)) ?? []
+        let activity = (try? await store.datasetActivity(datasetID: id, until: end, bucket: bucket, buckets: activityBuckets, query: chartQuery)) ?? []
         // Ritmo: linhas novas nos últimos 5 minutos, por minuto.
         let recent = (try? await store.datasetActivity(datasetID: id, until: now, bucket: 300, buckets: 1))?.first
         let perMinute = Int((Double((recent?.valid ?? 0) + (recent?.invalid ?? 0)) / 5).rounded())
         let facets = (try? await store.datasetFacets(datasetID: id, query: query)) ?? [:]
+        let profiles = (try? await store.datasetColumnProfiles(datasetID: id, columns: columns, query: query)) ?? [:]
         return DatasetPageSnapshot(
             summary: summary, rows: display, matching: matching, activity: activity, activityStart: end.addingTimeInterval(-bucket * Double(activityBuckets)),
-            activityEnd: end, bucketSeconds: bucket, perMinute: perMinute, facets: facets, stats: stats)
+            activityEnd: end, bucketSeconds: bucket, perMinute: perMinute, facets: facets, stats: stats,
+            profiles: profiles, window: request.window)
     }
 
     /// O período vira 48 barras.
@@ -117,32 +203,46 @@ nonisolated enum DatasetLoader {
     /// `price:>200 rating:>=4.5 Union` vira condições sobre colunas conhecidas e o texto livre que sobra. `coluna:valor` numa coluna de texto
     /// é "contém"; em número, data e booleano é "igual". Palavras com `:` que não são coluna ficam no texto.
     static func parse(_ input: String, columns: [DatasetColumn]) -> (conditions: [DatasetCondition], text: String) {
-        let known = Dictionary(columns.map { ($0.name.lowercased(), $0) }, uniquingKeysWith: { first, _ in first })
+        let known = knownColumns(columns)
         var conditions: [DatasetCondition] = []
         var free: [String] = []
         for token in tokens(input) {
-            guard let colon = token.firstIndex(of: ":"), let column = known[token[..<colon].lowercased()] else { free.append(token); continue }
-            var rest = String(token[token.index(after: colon)...])
-            var comparison: DatasetComparison?
-            for op in [DatasetComparison.greaterOrEqual, .lessOrEqual, .notEquals, .greater, .less, .equals, .contains] where rest.hasPrefix(op.rawValue) {
-                comparison = op
-                rest.removeFirst(op.rawValue.count)
-                break
-            }
-            guard !rest.isEmpty else { free.append(token); continue }
-            let fallback: DatasetComparison = column.type == .string || column.type == .url || column.type == .json ? .contains : .equals
-            conditions.append(DatasetCondition(column: column.name, comparison: comparison ?? fallback, value: rest))
+            if let condition = condition(token, known: known) { conditions.append(condition) } else { free.append(token) }
         }
         return (conditions, free.joined(separator: " "))
     }
 
-    /// Divide por espaço respeitando aspas (`name:"grand plaza"`).
+    static func knownColumns(_ columns: [DatasetColumn]) -> [String: DatasetColumn] {
+        Dictionary(columns.map { ($0.name.lowercased(), $0) }, uniquingKeysWith: { first, _ in first })
+    }
+
+    /// A condição de um token já sem aspas (`price:>200`), ou nil quando ele é texto livre.
+    static func condition(_ token: String, known: [String: DatasetColumn]) -> DatasetCondition? {
+        guard let colon = token.firstIndex(of: ":"), let column = known[token[..<colon].lowercased()] else { return nil }
+        var rest = String(token[token.index(after: colon)...])
+        var comparison: DatasetComparison?
+        for op in [DatasetComparison.greaterOrEqual, .lessOrEqual, .notEquals, .greater, .less, .equals, .contains] where rest.hasPrefix(op.rawValue) {
+            comparison = op
+            rest.removeFirst(op.rawValue.count)
+            break
+        }
+        guard !rest.isEmpty else { return nil }
+        let fallback: DatasetComparison = column.type == .string || column.type == .url || column.type == .json ? .contains : .equals
+        return DatasetCondition(column: column.name, comparison: comparison ?? fallback, value: rest)
+    }
+
+    /// Divide por espaço respeitando aspas (`name:"grand plaza"`), sem as aspas.
     static func tokens(_ input: String) -> [String] {
+        rawTokens(input).map { $0.replacingOccurrences(of: "\"", with: "") }.filter { !$0.isEmpty }
+    }
+
+    /// Como `tokens`, mas cada token como foi digitado (aspas mantidas).
+    static func rawTokens(_ input: String) -> [String] {
         var result: [String] = []
         var current = ""
         var quoted = false
         for char in input {
-            if char == "\"" { quoted.toggle(); continue }
+            if char == "\"" { quoted.toggle(); current.append(char); continue }
             if char == " ", !quoted {
                 if !current.isEmpty { result.append(current) }
                 current = ""
@@ -205,6 +305,8 @@ public final class DatasetViewModel: Identifiable {
     /// Texto da barra de consulta (`price:>200 rating:>=4.5 plaza`).
     public var search = ""
     public fileprivate(set) var range: DatasetRange = .all
+    /// Janela escolhida no gráfico (arrastar); limita grade, facetas e perfis, não o gráfico.
+    public fileprivate(set) var window: ClosedRange<Date>?
     /// Valores desmarcados por faceta e tipos de erro escolhidos.
     public fileprivate(set) var excluded: [DatasetFacet: Set<String>] = [:]
     public fileprivate(set) var errorKinds: Set<String> = []
@@ -233,7 +335,7 @@ public final class DatasetViewModel: Identifiable {
     fileprivate var request: DatasetPageRequest {
         let parsed = DatasetLoader.parse(search, columns: columns)
         let query = DatasetQuery(excluded: excluded, errorKinds: errorKinds, text: parsed.text, conditions: parsed.conditions)
-        return DatasetPageRequest(id: id, query: query, range: range, page: page, pageSize: DatasetsController.pageSize)
+        return DatasetPageRequest(id: id, query: query, range: range, page: page, pageSize: DatasetsController.pageSize, window: window)
     }
 
     fileprivate func reload(store: RackyStore, now: Date) async {
@@ -529,9 +631,58 @@ public final class DatasetsController {
             }
             guard let m = active else { return range.rawValue }
             m.range = range
+            m.window = nil
             m.page = 0
             await reload(m)
             return range.rawValue
+        }
+        try registry.register(.datasetTimeWindow, enablement: hasDataset) { [unowned self] arg in
+            let raw = arg.kind == .select ? arg.value ?? "" : "clear"
+            var window: ClosedRange<Date>?
+            if raw != "clear", !raw.isEmpty {
+                let parts = raw.split(separator: "-", omittingEmptySubsequences: false).compactMap { Double($0) }
+                guard parts.count == 2, parts[0] <= parts[1] else {
+                    throw ActionError.failed(.datasetTimeWindow, message: "expected select(<startMs>-<endMs>|clear)")
+                }
+                window = Date(timeIntervalSince1970: parts[0] / 1000)...Date(timeIntervalSince1970: parts[1] / 1000)
+            }
+            guard let m = active else { return raw }
+            m.window = window
+            m.page = 0
+            await reload(m)
+            return window == nil ? "clear" : raw
+        }
+        try registry.register(.datasetAddFilter, enablement: hasDataset) { [unowned self] arg in
+            let parts = (arg.kind == .select ? arg.value ?? "" : "").split(separator: "|", maxSplits: 2, omittingEmptySubsequences: false).map(String.init)
+            guard parts.count == 3, !parts[0].isEmpty, !parts[2].isEmpty, let op = DatasetComparison(rawValue: parts[1]) else {
+                throw ActionError.failed(.datasetAddFilter, message: "expected select(<column>|<op>|<value>)")
+            }
+            guard let m = active else { return "" }
+            m.search = DatasetSearchText.adding(column: parts[0], comparison: op, value: parts[2], to: m.search, columns: m.columns)
+            m.page = 0
+            await reload(m)
+            return m.search
+        }
+        try registry.register(.datasetRemoveFilter, enablement: hasDataset) { [unowned self] arg in
+            guard arg.kind == .select, let index = arg.value.flatMap({ Int($0) }), index >= 0 else {
+                throw ActionError.failed(.datasetRemoveFilter, message: "expected select(<index>)")
+            }
+            guard let m = active else { return "" }
+            m.search = DatasetSearchText.removing(pillAt: index, from: m.search, columns: m.columns)
+            m.page = 0
+            await reload(m)
+            return m.search
+        }
+        try registry.register(.datasetColumnRange, enablement: hasDataset) { [unowned self] arg in
+            let parts = (arg.kind == .select ? arg.value ?? "" : "").split(separator: "|", omittingEmptySubsequences: false).map(String.init)
+            guard parts.count == 3, !parts[0].isEmpty, parts[1].isEmpty || Double(parts[1]) != nil, parts[2].isEmpty || Double(parts[2]) != nil else {
+                throw ActionError.failed(.datasetColumnRange, message: "expected select(<column>|<min>|<max>)")
+            }
+            guard let m = active else { return "" }
+            m.search = DatasetSearchText.replacingRange(column: parts[0], min: Double(parts[1]), max: Double(parts[2]), in: m.search, columns: m.columns)
+            m.page = 0
+            await reload(m)
+            return m.search
         }
         try registry.register(.datasetFacet, enablement: hasDataset) { [unowned self] arg in
             guard arg.kind == .select, let raw = arg.value, let colon = raw.firstIndex(of: ":"),
