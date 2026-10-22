@@ -1,0 +1,468 @@
+import RackyCore
+import RackyDesignSystem
+import RackyProtocol
+import RackyStore
+import SwiftUI
+
+// O conteúdo de cada objeto aberto na área Data: dataset do Racky (a página de dataset), tabela de uma conexão, consulta SQL,
+// pasta de bucket, aba de planilha e webhook. Mais a folha "Add connection".
+
+struct DataObjectView: View {
+    let hub: DataHubController
+    let object: DataObject
+
+    var body: some View {
+        switch object {
+        case .dataset(let id):
+            if let model = hub.datasets.models[id] {
+                DatasetPageView(controller: hub.datasets, model: model, paneID: nil, drag: nil, showsBar: false)
+            } else {
+                Color.clear
+            }
+        case .table: TableObjectView(hub: hub, object: object)
+        case .query: QueryObjectView(hub: hub, object: object)
+        case .folder(let connection, let path): FolderObjectView(hub: hub, connection: connection, path: path)
+        case .webhook: WebhookObjectView(hub: hub, object: object)
+        case .tab: DataGridView(grid: DataHubFixtures.grid(for: object), footer: String(localized: "Columns A–C · first 10 rows", bundle: .module))
+        }
+    }
+}
+
+/// Ações à direita da barra de localização, por tipo de objeto.
+struct DataObjectActions: View {
+    let hub: DataHubController
+    let object: DataObject
+
+    var body: some View {
+        HStack(spacing: DS.Space.s2) {
+            switch object {
+            case .dataset(let id):
+                if !hub.connections.isEmpty {
+                    DSButton(.dataSendTo, id: .dataSendTo, "Copy to a connection…", variant: .outline, size: .sm, symbol: "arrow.up.right", argument: .select(id))
+                }
+                if let model = hub.datasets.models[id] { DatasetToolbar(model: model) }
+            case .table(let connection, _, _):
+                DSButton(.dataNewQuery, id: .dataQueryTarget, "New query", variant: .outline, size: .sm, symbol: "terminal", argument: .select(connection))
+            case .query:
+                DSButton(.dataQueryRun, id: .dataQueryRun, "Run", variant: .primary, size: .sm, symbol: "play.fill", keycap: "⌘↩")
+            case .webhook:
+                DSButton(.dataWebhookTest, id: .dataWebhookTest, "Send a test delivery", variant: .outline, size: .sm, symbol: "paperplane")
+            case .folder, .tab:
+                EmptyView()
+            }
+        }
+        .fixedSize()
+    }
+}
+
+// MARK: Grade
+
+/// Grade de leitura (tabela, resultado, arquivo, planilha): cabeçalho com nome e tipo, números à direita em mono, rodapé com o total.
+struct DataGridView: View {
+    let grid: DataGrid
+    var footer: String? = nil
+
+    var body: some View {
+        VStack(spacing: 0) {
+            GeometryReader { viewport in
+            ScrollView([.horizontal, .vertical]) {
+                VStack(spacing: 0) {
+                    HStack(spacing: 0) {
+                        ForEach(Array(grid.columns.enumerated()), id: \.offset) { _, column in
+                            HStack(spacing: DS.Space.s1_5) {
+                                Text(verbatim: column.name).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary).lineLimit(1).fixedSize()
+                                Text(verbatim: column.type).dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textTertiary)
+                                if column.key { Text("KEY", bundle: .module).dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.warning) }
+                            }
+                            .padding(.horizontal, DatasetMetrics.cellPadding)
+                            .frame(width: width(column), height: DatasetMetrics.headerHeight, alignment: numeric(column) ? .trailing : .leading)
+                            .overlay(alignment: .trailing) { DS.Color.border.frame(width: ComputersMetrics.separator) }
+                        }
+                    }
+                    .background(DS.Color.chrome)
+                    .overlay(alignment: .bottom) { DS.Color.borderStrong.frame(height: ComputersMetrics.separator) }
+                    ForEach(Array(grid.rows.enumerated()), id: \.offset) { _, row in
+                        HStack(spacing: 0) {
+                            ForEach(Array(grid.columns.enumerated()), id: \.offset) { index, column in
+                                let text = index < row.count ? row[index] : ""
+                                Text(verbatim: text).dsFont(numeric(column) || column.type.contains("time") ? DS.Font.monoCell : DS.Font.cell)
+                                    .foregroundStyle(column.key ? DS.Color.textSecondary : DS.Color.textPrimary)
+                                    .lineLimit(1).truncationMode(.tail)
+                                    .padding(.horizontal, DatasetMetrics.cellPadding)
+                                    .frame(width: width(column), height: DatasetMetrics.rowHeight, alignment: numeric(column) ? .trailing : .leading)
+                                    .overlay(alignment: .trailing) { DS.Color.border.frame(width: ComputersMetrics.separator) }
+                            }
+                        }
+                        .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
+                    }
+                }
+                // A grade começa no canto de cima, mesmo com poucas linhas.
+                .frame(minWidth: viewport.size.width, minHeight: viewport.size.height, alignment: .topLeading)
+            }
+            }
+            HStack {
+                Text(verbatim: footer ?? String(localized: "Showing \(grid.rows.count) of \(grid.total.formatted()) rows", bundle: .module))
+                    .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, DS.Space.s3)
+            .frame(height: DatasetMetrics.footerHeight)
+            .background(DS.Color.chrome)
+            .overlay(alignment: .top) { DS.Color.border.frame(height: ComputersMetrics.separator) }
+        }
+        .a11y(.dataTableGrid, kind: "table", value: "\(grid.rows.count)")
+    }
+
+    private func numeric(_ column: DataGrid.Column) -> Bool {
+        ["int", "numeric", "double", "number", "int4", "int8", "int32", "float"].contains { column.type.hasPrefix($0) }
+    }
+
+    private func width(_ column: DataGrid.Column) -> CGFloat {
+        if numeric(column) { return DatasetMetrics.colNumber + DS.Space.s4 }
+        if column.type.contains("time") { return DatasetMetrics.colDateTime }
+        return column.key ? DatasetMetrics.colURL : DatasetMetrics.colName
+    }
+}
+
+// MARK: Tabela
+
+/// Tabela de uma conexão: Data (grade), Structure (colunas) e Writers (quem grava aqui), com o selo de edição.
+struct TableObjectView: View {
+    let hub: DataHubController
+    let object: DataObject
+
+    var body: some View {
+        let tab = hub.tableTab(object)
+        let grid = DataHubFixtures.grid(for: object)
+        VStack(spacing: 0) {
+            HStack(spacing: DS.Space.s4) {
+                ForEach(DataTableTab.allCases, id: \.self) { item in
+                    ActionButton(.dataTableTab, id: .dataTableTab(item.rawValue), argument: .select(item.rawValue)) {
+                        VStack(spacing: DS.Space.s1) {
+                            Text(verbatim: title(item)).dsFont(tab == item ? DS.Font.tabActive : DS.Font.tab)
+                                .foregroundStyle(tab == item ? DS.Color.textPrimary : DS.Color.textTertiary)
+                            (tab == item ? DS.Color.textPrimary : Color.clear).frame(height: DS.Space.s0_5)
+                        }
+                        .padding(.top, DS.Space.s2)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .fixedSize()
+                }
+                Spacer(minLength: 0)
+                if hub.connection(object.connectionID)?.environment != .production {
+                    HStack(spacing: DS.Space.s1) {
+                        Image(systemName: "pencil").font(.system(size: DS.Space.s2_5))
+                        Text("Editable", bundle: .module).dsFont(DS.Font.small)
+                    }
+                    .foregroundStyle(DS.Color.textTertiary)
+                }
+            }
+            .padding(.horizontal, DS.Space.s4)
+            .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
+            switch tab {
+            case .data: DataGridView(grid: grid)
+            case .structure: structure(grid)
+            case .writers: writers
+            }
+        }
+    }
+
+    private func title(_ tab: DataTableTab) -> String {
+        switch tab {
+        case .data: String(localized: "Data", bundle: .module)
+        case .structure: String(localized: "Structure", bundle: .module)
+        case .writers: String(localized: "Comes from", bundle: .module) + (hub.writers(of: object).isEmpty ? "" : " \(hub.writers(of: object).count)")
+        }
+    }
+
+    private func structure(_ grid: DataGrid) -> some View {
+        DataGridView(
+            grid: DataGrid(
+                columns: [.init(name: "column", type: "name"), .init(name: "type", type: "text"), .init(name: "nullable", type: "bool"), .init(name: "key", type: "text")],
+                rows: grid.columns.map { [$0.name, $0.type, $0.nullable ? "yes" : "no", $0.key ? "primary key" : ""] },
+                total: grid.columns.count),
+            footer: String(localized: "\(grid.columns.count) columns", bundle: .module))
+    }
+
+    private var writers: some View {
+        let list = hub.writers(of: object)
+        return ScrollView {
+            VStack(alignment: .leading, spacing: DS.Space.s2) {
+                if list.isEmpty {
+                    Text("Nothing in Racky writes to this table. Pick it as the destination when you start a session, or copy a dataset here.", bundle: .module)
+                        .dsFont(DS.Font.body).foregroundStyle(DS.Color.textTertiary)
+                }
+                ForEach(list) { writer in
+                    HStack(spacing: DS.Space.s3) {
+                        Image(systemName: { if case .agent = writer.kind { "person.crop.square" } else { "arrow.triangle.2.circlepath" } }())
+                            .font(.system(size: DS.Space.s4)).foregroundStyle(DS.Color.textSecondary)
+                            .frame(width: DS.Space.s8, height: DS.Space.s8)
+                            .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.secondary))
+                        VStack(alignment: .leading, spacing: .zero) {
+                            HStack(spacing: DS.Space.s1_5) {
+                                Text(verbatim: { if case .sync = writer.kind { "Racky › \(writer.name)" } else { writer.name } }()).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary)
+                                if writer.live { LiveDot() }
+                            }
+                            Text(verbatim: detail(writer)).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                        }
+                        Spacer(minLength: 0)
+                        if writer.live || hub.paused.contains(writer.id) {
+                            DSButton(
+                                .dataPauseWriter, id: .dataWriterPause(writer.id), hub.paused.contains(writer.id) ? "Resume" : "Pause",
+                                variant: .outline, size: .xs, symbol: hub.paused.contains(writer.id) ? "play.fill" : "pause.fill", argument: .select(writer.id))
+                        }
+                    }
+                    .padding(DS.Space.s3)
+                    .background(RoundedRectangle(cornerRadius: DS.Radius.md).fill(DS.Color.panel))
+                    .overlay(RoundedRectangle(cornerRadius: DS.Radius.md).strokeBorder(DS.Color.border))
+                }
+            }
+            .padding(DS.Space.s4)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private func detail(_ writer: DataWriter) -> String {
+        switch writer.kind {
+        case .agent(let session): String(localized: "Agent in session \(session) · \(writer.detail)", bundle: .module)
+        case .sync(let from):
+            if case .dataset(let name) = from { String(localized: "Copy of the Racky dataset \(name), which is the source · \(writer.detail)", bundle: .module) } else { writer.detail }
+        }
+    }
+}
+
+// MARK: Consulta
+
+/// Editor SQL: a conexão alvo bem à vista (em âmbar se for produção), o texto e o resultado.
+struct QueryObjectView: View {
+    let hub: DataHubController
+    let object: DataObject
+
+    var body: some View {
+        let connection = hub.connection(object.connectionID)
+        // Produção já tem a faixa âmbar em cima; aqui só a conexão alvo.
+        let prod = false
+        VStack(spacing: 0) {
+            HStack(spacing: DS.Space.s1_5) {
+                Image(systemName: prod ? "exclamationmark.triangle.fill" : "play.circle").font(.system(size: DS.Space.s3))
+                Text(verbatim: connection.map { $0.kind.title == $0.name ? String(localized: "Runs on \($0.name)", bundle: .module) : String(localized: "Runs on \($0.name) · \($0.kind.title)", bundle: .module) } ?? "")
+                    .dsFont(DS.Font.label)
+                if let environment = connection?.environment { EnvironmentBadge(environment: environment) }
+                if prod {
+                    Text("Changes here affect production data.", bundle: .module).dsFont(DS.Font.small)
+                }
+                Spacer(minLength: 0)
+            }
+            .foregroundStyle(prod ? DS.Color.warning : DS.Color.textSecondary)
+            .padding(.horizontal, DS.Space.s4)
+            .frame(height: DS.Space.s8)
+            .background(prod ? DS.Color.warning.opacity(0.06) : Color.clear)
+            .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
+            .a11y(.dataQueryTarget, kind: "text", label: connection?.name ?? "")
+            TextEditor(text: Binding(get: { hub.queryText[object] ?? "" }, set: { hub.queryText[object] = $0 }))
+                .font(.system(size: DS.Space.s3 + 1, design: .monospaced))
+                .scrollContentBackground(.hidden)
+                .padding(DS.Space.s3)
+                .frame(height: DataMetrics.editorHeight)
+                .background(DS.Color.canvas)
+                .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
+                .a11y(.dataQueryEditor, kind: "textarea")
+            if let result = hub.queryResult[object] {
+                DataGridView(grid: result.grid, footer: String(localized: "\(result.grid.rows.count) rows · \(result.milliseconds) ms", bundle: .module))
+                    .a11y(.dataQueryResult, kind: "table")
+            } else {
+                Text("Run the query to see the result here.", bundle: .module).dsFont(DS.Font.body).foregroundStyle(DS.Color.textTertiary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+    }
+}
+
+// MARK: Pasta
+
+/// Pasta de um bucket: arquivos com formato, tamanho e data; clicar num arquivo de dados mostra a prévia ao lado.
+struct FolderObjectView: View {
+    let hub: DataHubController
+    let connection: String
+    let path: [String]
+    @State private var selected: String?
+
+    var body: some View {
+        let entries = DataHubFixtures.files(in: path)
+        HStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: 0) {
+                    ForEach(entries) { entry in
+                        let open: DataObject? = entry.folder ? .folder(connection: connection, path: path + [entry.name]) : nil
+                        Group {
+                            if let open {
+                                ActionButton(.dataOpen, id: .dataFolderEntry(entry.name), argument: .select(open.key)) { row(entry) }.buttonStyle(.plain)
+                            } else {
+                                // lint-ui: allow buttons escolhe o arquivo para a prévia (estado local)
+                                Button { selected = entry.name } label: { row(entry) }
+                                    .buttonStyle(.plain)
+                                    .a11y(.dataFolderEntry(entry.name), kind: "row", label: entry.name)
+                            }
+                        }
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .onAppear { if selected == nil { selected = entries.first { !$0.folder && $0.format != "JSON" }?.name } }
+            if let selected, let entry = entries.first(where: { $0.name == selected }), entry.format != "JSON" {
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack {
+                        Text(verbatim: entry.name).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary)
+                        Text(verbatim: entry.format).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.horizontal, DS.Space.s3)
+                    .frame(height: DS.Space.s8 + DS.Space.s1)
+                    .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
+                    DataGridView(grid: DataHubFixtures.grid(for: .folder(connection: connection, path: path)), footer: String(localized: "Preview · first 10 of 80 rows", bundle: .module))
+                }
+                .frame(width: DataMetrics.previewWidth)
+                .overlay(alignment: .leading) { DS.Color.border.frame(width: ComputersMetrics.separator) }
+                .a11y(.dataFolderPreview, kind: "container", label: entry.name)
+            }
+        }
+    }
+
+    private func row(_ entry: DataHubFixtures.FileEntry) -> some View {
+        HStack(spacing: DS.Space.s2) {
+            Image(systemName: entry.folder ? "folder" : "doc").font(.system(size: DataMetrics.icon)).foregroundStyle(DS.Color.textSecondary)
+                .frame(width: DS.Space.s4)
+            Text(verbatim: entry.name).dsFont(DS.Font.cell).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
+            Spacer(minLength: DS.Space.s2)
+            Text(verbatim: entry.folder ? String(localized: "Folder", bundle: .module) : entry.format).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                .frame(width: DatasetMetrics.colCount, alignment: .leading)
+            Text(verbatim: entry.folder ? "–" : ByteCountFormatter.string(fromByteCount: Int64(entry.bytes), countStyle: .file))
+                .dsFont(DS.Font.monoCell).foregroundStyle(DS.Color.textSecondary)
+                .frame(width: DatasetMetrics.colCount, alignment: .trailing)
+            Text(verbatim: entry.modified).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                .frame(width: DatasetMetrics.colCount, alignment: .trailing)
+        }
+        .padding(.horizontal, DS.Space.s4)
+        .frame(height: DatasetMetrics.rowHeight)
+        .background(selected == entry.name ? DS.Color.dataKey.opacity(0.08) : Color.clear)
+        .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
+        .contentShape(Rectangle())
+    }
+}
+
+// MARK: Webhook
+
+/// Webhook: só recebe. Mostra para onde vai, como vai e o log das entregas.
+struct WebhookObjectView: View {
+    let hub: DataHubController
+    let object: DataObject
+
+    var body: some View {
+        let connection = hub.connection(object.connectionID)
+        let deliveries = DataHubFixtures.deliveries(now: hub.now())
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: DS.Space.s6) {
+                fact(String(localized: "Endpoint", bundle: .module), "POST " + (connection?.address ?? ""))
+                fact(String(localized: "Body", bundle: .module), String(localized: "JSON array, up to 50 rows", bundle: .module))
+                fact(String(localized: "Delivered today", bundle: .module), String(localized: "\(deliveries.filter { $0.status < 300 }.count) of \(deliveries.count)", bundle: .module))
+                Spacer(minLength: 0)
+            }
+            .padding(DS.Space.s4)
+            .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
+            Text("A webhook only receives data: Racky posts rows to this address. There is nothing to browse, so this shows what each delivery carries and the log of deliveries.", bundle: .module)
+                .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                .padding(.horizontal, DS.Space.s4)
+                .padding(.top, DS.Space.s3)
+            VStack(alignment: .leading, spacing: DS.Space.s1_5) {
+                Text("Each delivery looks like this", bundle: .module).dsFont(DS.Font.label).foregroundStyle(DS.Color.textSecondary)
+                Text(verbatim: DataHubFixtures.samplePayload).dsFont(DS.Font.monoCell).foregroundStyle(DS.Color.textPrimary)
+                    .padding(DS.Space.s3)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(RoundedRectangle(cornerRadius: DS.Radius.md).fill(DS.Color.chrome))
+                    .overlay(RoundedRectangle(cornerRadius: DS.Radius.md).strokeBorder(DS.Color.border))
+            }
+            .padding(DS.Space.s4)
+            .a11y(.dataWebhookPayload, kind: "text")
+            Text("Deliveries", bundle: .module).dsFont(DS.Font.label).foregroundStyle(DS.Color.textSecondary)
+                .padding(.horizontal, DS.Space.s4)
+                .padding(.bottom, DS.Space.s2)
+            DataGridView(
+                grid: DataGrid(
+                    columns: [.init(name: "sent", type: "time"), .init(name: "status", type: "int"), .init(name: "rows", type: "int"), .init(name: "duration", type: "int")],
+                    rows: deliveries.map { [hub.datasets.clock($0.at), "\($0.status)", "\($0.rows)", "\($0.milliseconds) ms"] },
+                    total: deliveries.count),
+                footer: String(localized: "\(deliveries.count) deliveries · 1 failed, retried", bundle: .module))
+                .a11y(.dataWebhookLog, kind: "table")
+        }
+    }
+
+    private func fact(_ title: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: DS.Space.s0_5) {
+            Text(verbatim: title).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+            Text(verbatim: value).dsFont(DS.Font.monoCell).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
+        }
+    }
+}
+
+// MARK: Adicionar conexão
+
+/// Folha de tipos: agrupados por família, cada um dizendo se dá para navegar e gravar ou só gravar.
+struct DataConnectSheet: View {
+    let hub: DataHubController
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.45).ignoresSafeArea()
+            VStack(alignment: .leading, spacing: DS.Space.s4) {
+                HStack {
+                    VStack(alignment: .leading, spacing: DS.Space.s0_5) {
+                        Text("Add connection", bundle: .module).dsFont(DS.Font.dialogTitle).foregroundStyle(DS.Color.textPrimary)
+                        Text("Somewhere outside Racky to browse, and for agents to write to.", bundle: .module).dsFont(DS.Font.body).foregroundStyle(DS.Color.textTertiary)
+                    }
+                    Spacer(minLength: 0)
+                    ActionButton(.dataAddConnection, argument: .select("close"), tooltip: String(localized: "Close", bundle: .module)) { Image(systemName: "xmark") }
+                        .buttonStyle(DSIconButtonStyle(.header))
+                }
+                ForEach(DataConnectionKind.Family.allCases, id: \.self) { family in
+                    VStack(alignment: .leading, spacing: DS.Space.s2) {
+                        HStack(spacing: DS.Space.s2) {
+                            Text(verbatim: Self.title(family)).dsFont(DS.Font.sectionLabel).foregroundStyle(DS.Color.textSecondary)
+                            Text(verbatim: family == .outgoing ? String(localized: "Write only", bundle: .module) : String(localized: "Browse and write", bundle: .module))
+                                .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                        }
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: DS.Space.s2), count: 3), spacing: DS.Space.s2) {
+                            ForEach(DataConnectionKind.allCases.filter { $0.family == family }, id: \.self) { kind in
+                                HStack(spacing: DS.Space.s2) {
+                                    Image(systemName: DataSymbols.connection(kind)).font(.system(size: DS.Space.s3 + 1)).foregroundStyle(DS.Color.textSecondary)
+                                    Text(verbatim: kind.title).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary)
+                                    Spacer(minLength: 0)
+                                }
+                                .padding(.horizontal, DS.Space.s3)
+                                .frame(height: DS.Space.s10)
+                                .background(RoundedRectangle(cornerRadius: DS.Radius.md).fill(DS.Color.chrome))
+                                .overlay(RoundedRectangle(cornerRadius: DS.Radius.md).strokeBorder(DS.Color.border))
+                                .a11y(.dataConnectKind(kind.rawValue), kind: "button", label: kind.title)
+                            }
+                        }
+                    }
+                }
+            }
+            .padding(DS.Space.s6)
+            .frame(width: DataMetrics.connectWidth)
+            .background(RoundedRectangle(cornerRadius: DS.Radius.large).fill(DS.Color.panel))
+            .overlay(RoundedRectangle(cornerRadius: DS.Radius.large).strokeBorder(DS.Color.borderStrong))
+            .a11y(.dataConnectSheet, kind: "dialog")
+        }
+    }
+
+    static func title(_ family: DataConnectionKind.Family) -> String {
+        switch family {
+        case .database: String(localized: "Databases", bundle: .module)
+        case .warehouse: String(localized: "Warehouses", bundle: .module)
+        case .storage: String(localized: "Storage", bundle: .module)
+        case .spreadsheet: String(localized: "Spreadsheets", bundle: .module)
+        case .outgoing: String(localized: "Outgoing", bundle: .module)
+        }
+    }
+}

@@ -112,7 +112,7 @@ private struct StatView: View {
 }
 
 /// Botão que abre um menu do design system cujos itens levam a própria ação (marcar várias colunas, escolher formato ou período).
-private struct MenuButton<Label: View>: View {
+struct MenuButton<Label: View>: View {
     let id: A11yID
     let action: ActionID
     let entries: [DSMenuEntry]
@@ -324,6 +324,8 @@ struct DatasetPageView: View {
     /// Pane que mostra a tabela (`nil` = página do centro): o título arrasta o pane e o X fecha só ele.
     var paneID: UUID?
     var drag: PaneDragController?
+    /// Na área Data a barra de localização faz o papel do título: a página não desenha a própria barra.
+    var showsBar = true
 
     /// Página do centro: o dataset ativo.
     init(controller: DatasetsController) {
@@ -331,11 +333,12 @@ struct DatasetPageView: View {
         self.model = controller.active ?? controller.model(for: "")
     }
 
-    init(controller: DatasetsController, model: DatasetViewModel, paneID: UUID?, drag: PaneDragController?) {
+    init(controller: DatasetsController, model: DatasetViewModel, paneID: UUID?, drag: PaneDragController?, showsBar: Bool = true) {
         self.controller = controller
         self.model = model
         self.paneID = paneID
         self.drag = drag
+        self.showsBar = showsBar
     }
 
     var body: some View {
@@ -343,7 +346,7 @@ struct DatasetPageView: View {
         GeometryReader { proxy in
             let width = proxy.size.width
             VStack(spacing: 0) {
-                topBar(snapshot, width: width)
+                if showsBar { topBar(snapshot, width: width) }
                 if let snapshot {
                     DatasetOverviewTiles(snapshot: snapshot, controller: controller)
                     ActivityChart(snapshot: snapshot, controller: controller, rangeMenu: AnyView(rangeMenu))
@@ -411,14 +414,7 @@ struct DatasetPageView: View {
                     .datasetOpen, argument: .select("\(model.id)|beside"), tooltip: String(localized: "Open beside the agent", bundle: .module)
                 ) { Image(systemName: "rectangle.split.2x1") }
                     .buttonStyle(DSIconButtonStyle(.header))
-                MenuButton(id: .datasetColumns, action: .datasetColumns, entries: columnEntries) {
-                    Image(systemName: "tablecells")
-                    if width >= DatasetMetrics.buttonLabelsMinWidth { Text("Columns", bundle: .module) }
-                }
-                MenuButton(id: .datasetExport, action: .datasetExport, entries: exportEntries, primary: true) {
-                    Image(systemName: "arrow.down.to.line")
-                    if width >= DatasetMetrics.buttonLabelsMinWidth { Text("Export", bundle: .module) }
-                }
+                DatasetToolbar(model: model, labels: width >= DatasetMetrics.buttonLabelsMinWidth)
             }
         }
     }
@@ -431,25 +427,6 @@ struct DatasetPageView: View {
         if !dataset.key.isEmpty { parts.append(String(localized: "key \(dataset.key.joined(separator: ", "))", bundle: .module)) }
         parts.append(String(localized: "created \(controller.relative(dataset.createdAt))", bundle: .module))
         return parts.joined(separator: " · ")
-    }
-
-    private var columnEntries: [DSMenuEntry] {
-        model.columns.map { column in
-            .item(DSMenuItem(
-                column.name, column.name, detail: DatasetMetrics.typeLabel(column.type), detailMono: true,
-                checked: !model.hiddenColumns.contains(column.name), action: .datasetColumns, argument: .select(column.name)))
-        }
-    }
-
-    private var exportEntries: [DSMenuEntry] {
-        DatasetExportFormat.allCases.map { format in
-            let title = switch format {
-            case .csv: String(localized: "CSV", bundle: .module)
-            case .jsonl: String(localized: "JSON Lines", bundle: .module)
-            case .json: String(localized: "JSON", bundle: .module)
-            }
-            return .item(DSMenuItem(format.rawValue, title, action: .datasetExport, argument: .select(format.rawValue)))
-        }
     }
 
     // MARK: Consulta
@@ -887,4 +864,41 @@ enum GridRowText {
         for prefix in ["https://", "http://"] where url.hasPrefix(prefix) { return String(url.dropFirst(prefix.count)) }
         return url
     }
+}
+
+/// Columns e Export de um dataset (na barra da página e na barra de localização da área Data).
+struct DatasetToolbar: View {
+    let model: DatasetViewModel
+    var labels = true
+
+    var body: some View {
+        MenuButton(id: .datasetColumns, action: .datasetColumns, entries: columnEntries) {
+            Image(systemName: "tablecells")
+            if labels { Text("Columns", bundle: .module) }
+        }
+        MenuButton(id: .datasetExport, action: .datasetExport, entries: exportEntries, primary: true) {
+            Image(systemName: "arrow.down.to.line")
+            if labels { Text("Export", bundle: .module) }
+        }
+    }
+
+    private var columnEntries: [DSMenuEntry] {
+        model.columns.map { column in
+            .item(DSMenuItem(
+                column.name, column.name, detail: DatasetMetrics.typeLabel(column.type), detailMono: true,
+                checked: !model.hiddenColumns.contains(column.name), action: .datasetColumns, argument: .select(column.name)))
+        }
+    }
+
+    private var exportEntries: [DSMenuEntry] {
+        DatasetExportFormat.allCases.map { format in
+            let title = switch format {
+            case .csv: String(localized: "CSV", bundle: .module)
+            case .jsonl: String(localized: "JSON Lines", bundle: .module)
+            case .json: String(localized: "JSON", bundle: .module)
+            }
+            return .item(DSMenuItem(format.rawValue, title, action: .datasetExport, argument: .select(format.rawValue)))
+        }
+    }
+
 }

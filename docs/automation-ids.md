@@ -467,6 +467,36 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `dataset.page.next`
 - `dataset.copyRow`
 - `dataset.panel.tab.<tab>`
+- `data.page`
+- `data.explorer`
+- `data.explorer.node.<id>`
+- `data.explorer.section.<section>`
+- `data.addConnection`
+- `data.tab.<key>`
+- `data.tab.<key>.close`
+- `data.location`
+- `data.location.crumb.<index>`
+- `data.flow`
+- `data.flow.item.<id>`
+- `data.object`
+- `data.sendTo`
+- `data.table.tab.<tab>`
+- `data.table.grid`
+- `data.query.editor`
+- `data.query.run`
+- `data.query.target`
+- `data.query.result`
+- `data.folder.entry.<name>`
+- `data.folder.preview`
+- `data.webhook.log`
+- `data.webhook.test`
+- `data.connect.sheet`
+- `data.connect.kind.<kind>`
+- `data.empty`
+- `data.production`
+- `data.production.pause`
+- `data.writer.<id>.pause`
+- `data.webhook.payload`
 - `library.page`
 - `library.section`
 - `library.search`
@@ -864,6 +894,16 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `dataset.removeFilter` | Dataset: remover filtro | — | slice3 |
 | `dataset.columnRange` | Dataset: faixa da coluna | — | slice3 |
 | `dataset.facetsReset` | Dataset: limpar filtros | — | slice3 |
+| `data.open` | Data: abrir | — | slice1 |
+| `data.close` | fechar objeto | — | slice1 |
+| `data.toggleNode` | Data: expandir nó | — | slice1 |
+| `data.newQuery` | nova consulta | — | slice1 |
+| `data.tableTab` | Data: sub-aba da tabela | ⌘↩ (consulta) | slice1 |
+| `data.queryRun` | rodar consulta | ⌘↩ (consulta) | slice1 |
+| `data.addConnection` | Data: adicionar conexão | — | slice1 |
+| `data.sendTo` | enviar para | — | slice1 |
+| `data.webhookTest` | testar webhook | — | slice1 |
+| `data.pauseWriter` | Data: pausar quem grava | — | slice1 |
 | `dataset.page` | Dataset: página | — | slice3 |
 | `dataset.columns` | Dataset: colunas | — | slice3 |
 | `dataset.copyRow` | Copy Row JSON | — | slice3 |

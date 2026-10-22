@@ -519,6 +519,18 @@ public final class DatasetsController {
         return true
     }
 
+    /// Abre o dataset dentro da área Data (tab da Data, não da sessão): só carrega e ativa.
+    public func openInHub(_ id: String) async -> Bool {
+        guard let store, let dataset = try? await store.dataset(id: id) else { return false }
+        let m = model(for: id)
+        if m.snapshot == nil {
+            m.snapshot = DatasetPageSnapshot(summary: DatasetSummary(dataset: dataset, rowCount: 0, invalidCount: 0), rows: [], matching: 0)
+        }
+        currentID = id
+        await reload(m)
+        return true
+    }
+
     // MARK: Atualização
 
     /// 1 s com um computador da sessão rodando; 5 s fora disso. Só trabalha nos datasets que estão na tela.

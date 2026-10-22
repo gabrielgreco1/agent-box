@@ -11050,6 +11050,182 @@
           }
         }
       }
+    },
+    "A webhook only receives data: Racky posts rows to this address. There is nothing to browse, so this shows what each delivery carries and the log of deliveries.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A webhook only receives data: Racky posts rows to this address. There is nothing to browse, so this shows what each delivery carries and the log of deliveries."
+          }
+        }
+      }
+    },
+    "Add connection": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add connection"
+          }
+        }
+      }
+    },
+    "Changes here affect production data.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changes here affect production data."
+          }
+        }
+      }
+    },
+    "Connect a database, a bucket or a spreadsheet to browse it here and let agents write to it.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect a database, a bucket or a spreadsheet to browse it here and let agents write to it."
+          }
+        }
+      }
+    },
+    "Copy of": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy of"
+          }
+        }
+      }
+    },
+    "Deliveries": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deliveries"
+          }
+        }
+      }
+    },
+    "Each delivery looks like this": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Each delivery looks like this"
+          }
+        }
+      }
+    },
+    "Editable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editable"
+          }
+        }
+      }
+    },
+    "in this app": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "in this app"
+          }
+        }
+      }
+    },
+    "No datasets yet. Agents create them when they collect data.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No datasets yet. Agents create them when they collect data."
+          }
+        }
+      }
+    },
+    "Nothing in Racky writes to this table. Pick it as the destination when you start a session, or copy a dataset here.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing in Racky writes to this table. Pick it as the destination when you start a session, or copy a dataset here."
+          }
+        }
+      }
+    },
+    "Pick a dataset or a table on the left": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick a dataset or a table on the left"
+          }
+        }
+      }
+    },
+    "Racky holds what your agents collected on this Mac. Connections are your own databases, storage and destinations: browse them here and let agents write to them.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Racky holds what your agents collected on this Mac. Connections are your own databases, storage and destinations: browse them here and let agents write to them."
+          }
+        }
+      }
+    },
+    "Run the query to see the result here.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run the query to see the result here."
+          }
+        }
+      }
+    },
+    "Somewhere outside Racky to browse, and for agents to write to.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Somewhere outside Racky to browse, and for agents to write to."
+          }
+        }
+      }
+    },
+    "What agents collect, and the places you connect": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What agents collect, and the places you connect"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -230,6 +230,16 @@ extension ActionID {
     public static let datasetRemoveFilter = ActionID(unchecked: "dataset.removeFilter")
     public static let datasetColumnRange = ActionID(unchecked: "dataset.columnRange")
     public static let datasetFacetsReset = ActionID(unchecked: "dataset.facetsReset")
+    public static let dataOpen = ActionID(unchecked: "data.open")
+    public static let dataClose = ActionID(unchecked: "data.close")
+    public static let dataToggleNode = ActionID(unchecked: "data.toggleNode")
+    public static let dataNewQuery = ActionID(unchecked: "data.newQuery")
+    public static let dataTableTab = ActionID(unchecked: "data.tableTab")
+    public static let dataQueryRun = ActionID(unchecked: "data.queryRun")
+    public static let dataAddConnection = ActionID(unchecked: "data.addConnection")
+    public static let dataSendTo = ActionID(unchecked: "data.sendTo")
+    public static let dataWebhookTest = ActionID(unchecked: "data.webhookTest")
+    public static let dataPauseWriter = ActionID(unchecked: "data.pauseWriter")
     public static let datasetPage = ActionID(unchecked: "dataset.page")
     public static let datasetColumns = ActionID(unchecked: "dataset.columns")
     public static let datasetCopyRow = ActionID(unchecked: "dataset.copyRow")
@@ -719,6 +729,16 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "dataset.removeFilter"), label: "Dataset: remover filtro", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dataset.columnRange"), label: "Dataset: faixa da coluna", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dataset.facetsReset"), label: "Dataset: limpar filtros", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "data.open"), label: "Data: abrir", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "data.close"), label: "fechar objeto", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "data.toggleNode"), label: "Data: expandir nó", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "data.newQuery"), label: "nova consulta", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "data.tableTab"), label: "Data: sub-aba da tabela", shortcut: "⌘↩ (consulta)", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "data.queryRun"), label: "rodar consulta", shortcut: "⌘↩ (consulta)", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "data.addConnection"), label: "Data: adicionar conexão", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "data.sendTo"), label: "enviar para", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "data.webhookTest"), label: "testar webhook", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "data.pauseWriter"), label: "Data: pausar quem grava", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dataset.page"), label: "Dataset: página", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dataset.columns"), label: "Dataset: colunas", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dataset.copyRow"), label: "Copy Row JSON", shortcut: "", slice: .slice3),

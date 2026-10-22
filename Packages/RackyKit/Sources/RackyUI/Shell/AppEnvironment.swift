@@ -57,6 +57,8 @@ public final class AppEnvironment {
     public let computers = ComputersController()
     /// Datasets (Datasets v1): a lista e a tabela viva do que os subagentes de uma sessão coletam.
     public let datasets = DatasetsController()
+    /// Área Data (spec data-hub): datasets do Racky e conexões. Conexões de exemplo só com `RACKY_DATA_DEMO=1` (etapa 2).
+    public private(set) var dataHub: DataHubController!
     /// Painel direito (10-right-panel): contêiner dos módulos Files, Insights e Computers.
     public let rightPanel = RightPanelController()
     /// Módulo Files: árvore do diretório da sessão que acompanha o cwd do terminal focado.
@@ -126,6 +128,7 @@ public final class AppEnvironment {
         let flags = SliceFlags.fromEnvironment(environment)
         self.flags = flags
         self.automationEnabled = environment["RACKY_AUTOMATION"] == "1"
+        self.dataHub = DataHubController(datasets: datasets, demo: environment["RACKY_DATA_DEMO"] == "1")
         self.headless = environment["RACKY_TEST_HEADLESS"] == "1"
         self.fixture = environment["RACKY_SCREEN"]
         self.socketPath = AppSockPath.resolve(environment: environment)
@@ -449,6 +452,7 @@ public final class AppEnvironment {
         datasets.isShownInSession = { [workspace] id, sid in workspace.datasetPane(id, in: sid) != nil }
         workspace.datasetTitle = { [datasets] id in datasets.name(of: id) }
         do { try datasets.register(in: registry) } catch { log.publicError("duplicate dataset action registration") }
+        do { try dataHub.register(in: registry) } catch { log.publicError("duplicate data action registration") }
     }
 
     /// Liga o controlador de computadores: ações `computer.*`, ⌘W fecha a página do viewer e a notificação de pedido de ajuda.

@@ -65,7 +65,7 @@ struct SidebarView: View {
                 action: .pageInbox, id: .sidebarNavInbox, title: String(localized: "Inbox", bundle: .module), symbol: "tray", hideKey: "inbox",
                 badge: (model.attention?.center.badgeCount ?? 0) + (model.helpInbox?.attentionCount ?? 0), selected: model.inboxOpen)
             NavItemRow(action: .pageComputers, id: .sidebarNavComputers, title: String(localized: "Computers", bundle: .module), symbol: "display", hideKey: "computers")
-            NavItemRow(action: .pageDatasets, id: .sidebarNavDatasets, title: String(localized: "Datasets", bundle: .module), symbol: "tablecells", hideKey: "datasets")
+            NavItemRow(action: .pageDatasets, id: .sidebarNavDatasets, title: String(localized: "Data", bundle: .module), symbol: "cylinder.split.1x2", hideKey: "datasets")
             NavItemRow(action: .pageLibrary, id: .sidebarNavLibrary, title: String(localized: "Library", bundle: .module), symbol: "books.vertical", hideKey: "library")
         }
         .padding(.horizontal, SidebarMetrics.paddingH)

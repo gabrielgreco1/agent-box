@@ -1,0 +1,98 @@
+import RackyCore
+import RackyProtocol
+import RackyStore
+import AppKit
+import Foundation
+import Testing
+
+@testable import RackyUI
+
+/// Prints da área Data (spec data-hub) com as conexões de exemplo: dataset do Racky, tabela do Supabase, consulta, pasta do S3,
+/// webhook, planilha, "Add connection" e a tela vazia. Só roda com `RACKY_CAPTURE_DIR=<pasta>`.
+@MainActor
+@Suite(.serialized, .offscreenAppKit, .enabled(if: ProcessInfo.processInfo.environment["RACKY_CAPTURE_DIR"] != nil)) struct DataHubCaptureTests {
+    private func write(_ view: NSView, _ name: String) {
+        view.layoutSubtreeIfNeeded()
+        guard let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
+        view.cacheDisplay(in: view.bounds, to: rep)
+        let dir = URL(fileURLWithPath: ProcessInfo.processInfo.environment["RACKY_CAPTURE_DIR"]!)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        try? rep.representation(using: .png, properties: [:])?.write(to: dir.appendingPathComponent("\(name).png"))
+    }
+
+    @Test func captureDataScreens() async throws {
+        let home = FileManager.default.temporaryDirectory.appendingPathComponent("racky-data-capture-\(UUID().uuidString.lowercased())", isDirectory: true)
+        try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: home) }
+        let env = AppEnvironment(environment: ["RACKY_SKIP_ONBOARDING": "1", "RACKY_HOME": home.path, "RACKY_TEST_HEADLESS": "1", "RACKY_DATA_DEMO": "1"])
+        let cast = SidebarFixtures.full()
+        env.sidebar.apply(cast.snapshot)
+        let session = try #require(cast.selectedSessionID)
+        env.sidebar.select(session)
+        let c = await EmptyWindowTreeTests.host(env, size: NSSize(width: 1680, height: 980))
+        defer { c.window?.close() }
+        let store = try await RackyStore.open(paths: StorePaths(root: home))
+        defer { Task { try? await store.close() } }
+        try await store.save(Session(id: session, kind: .clean, folderPath: "/tmp/books", title: "Book prices"))
+        await env.datasets.attach(store: store)
+        let service = DatasetService(store: store)
+        _ = try await service.define(
+            session: session, name: "books2",
+            columns: [DatasetColumn(name: "title", required: true), DatasetColumn(name: "price", type: .number), DatasetColumn(name: "rating", type: .integer), DatasetColumn(name: "url", type: .url)],
+            key: ["url"])
+        let titles = ["Cometh the Hour", "Crazy Love", "Daily Fantasy Sports", "Dear Mr. Knightley", "Demigods & Magicians", "Doctor Sleep", "Don't Get Caught", "Eat Fat, Get Thin"]
+        _ = try await service.append(
+            session: session, name: "books2",
+            rows: (0..<80).map { i in
+                ["title": .string("\(titles[i % titles.count]) \(i)"), "price": .double(11.21 + Double(i * 7 % 50)), "rating": .int(1 + i % 5),
+                 "url": .string("https://books.toscrape.com/catalogue/book_\(900 + i)")]
+            }, provenance: .none)
+        try await DatasetsFixture.seedHotels(service: service, session: session)
+        await env.datasets.reloadList()
+        _ = try? await env.registry.perform(.rightPanelToggle, .press)
+
+        _ = try await env.registry.perform(.pageDatasets, .press)
+        await VisualBatchTests.settle(600)
+        write(c.window!.contentView!, "data-empty")
+
+        let books = try #require(env.datasets.summaries.first { $0.dataset.name == "books2" })
+        _ = try await env.registry.perform(.dataOpen, .select("dataset:\(books.dataset.id)"))
+        await VisualBatchTests.settle(900)
+        write(c.window!.contentView!, "data-dataset")
+
+        _ = try await env.registry.perform(.dataOpen, .select("table:\(DataHubFixtures.supabase):public:books"))
+        await VisualBatchTests.settle(500)
+        write(c.window!.contentView!, "data-table-books")
+
+        _ = try await env.registry.perform(.dataOpen, .select("table:\(DataHubFixtures.supabase):public:hotels"))
+        await VisualBatchTests.settle(500)
+        write(c.window!.contentView!, "data-table-hotels")
+        _ = try await env.registry.perform(.dataTableTab, .select("writers"))
+        await VisualBatchTests.settle(400)
+        write(c.window!.contentView!, "data-table-writers")
+
+        _ = try await env.registry.perform(.dataNewQuery, .select(DataHubFixtures.supabase))
+        _ = try await env.registry.perform(.dataQueryRun, .press)
+        await VisualBatchTests.settle(500)
+        write(c.window!.contentView!, "data-query")
+
+        _ = try await env.registry.perform(.dataToggleNode, .select(DataHubFixtures.bucket))
+        _ = try await env.registry.perform(.dataOpen, .select("folder:\(DataHubFixtures.bucket):books/2026-10-22"))
+        await VisualBatchTests.settle(500)
+        write(c.window!.contentView!, "data-folder")
+
+        _ = try await env.registry.perform(.dataOpen, .select("webhook:\(DataHubFixtures.webhook)"))
+        await VisualBatchTests.settle(500)
+        write(c.window!.contentView!, "data-webhook")
+
+        _ = try await env.registry.perform(.dataToggleNode, .select(DataHubFixtures.sheets))
+        _ = try await env.registry.perform(.dataToggleNode, .select("\(DataHubFixtures.sheets)/pricing"))
+        _ = try await env.registry.perform(.dataOpen, .select("sheet:\(DataHubFixtures.sheets):Hotel pricing:LA"))
+        await VisualBatchTests.settle(500)
+        write(c.window!.contentView!, "data-sheet")
+
+        _ = try await env.registry.perform(.dataAddConnection, .press)
+        await VisualBatchTests.settle(500)
+        write(c.window!.contentView!, "data-connect")
+    }
+}

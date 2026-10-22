@@ -416,6 +416,46 @@ extension A11yID {
     public static let datasetPageNext = A11yID(unchecked: "dataset.page.next")
     /// `dataset.copyRow`
     public static let datasetCopyRow = A11yID(unchecked: "dataset.copyRow")
+    /// `data.page`
+    public static let dataPage = A11yID(unchecked: "data.page")
+    /// `data.explorer`
+    public static let dataExplorer = A11yID(unchecked: "data.explorer")
+    /// `data.addConnection`
+    public static let dataAddConnection = A11yID(unchecked: "data.addConnection")
+    /// `data.location`
+    public static let dataLocation = A11yID(unchecked: "data.location")
+    /// `data.flow`
+    public static let dataFlow = A11yID(unchecked: "data.flow")
+    /// `data.object`
+    public static let dataObject = A11yID(unchecked: "data.object")
+    /// `data.sendTo`
+    public static let dataSendTo = A11yID(unchecked: "data.sendTo")
+    /// `data.table.grid`
+    public static let dataTableGrid = A11yID(unchecked: "data.table.grid")
+    /// `data.query.editor`
+    public static let dataQueryEditor = A11yID(unchecked: "data.query.editor")
+    /// `data.query.run`
+    public static let dataQueryRun = A11yID(unchecked: "data.query.run")
+    /// `data.query.target`
+    public static let dataQueryTarget = A11yID(unchecked: "data.query.target")
+    /// `data.query.result`
+    public static let dataQueryResult = A11yID(unchecked: "data.query.result")
+    /// `data.folder.preview`
+    public static let dataFolderPreview = A11yID(unchecked: "data.folder.preview")
+    /// `data.webhook.log`
+    public static let dataWebhookLog = A11yID(unchecked: "data.webhook.log")
+    /// `data.webhook.test`
+    public static let dataWebhookTest = A11yID(unchecked: "data.webhook.test")
+    /// `data.connect.sheet`
+    public static let dataConnectSheet = A11yID(unchecked: "data.connect.sheet")
+    /// `data.empty`
+    public static let dataEmpty = A11yID(unchecked: "data.empty")
+    /// `data.production`
+    public static let dataProduction = A11yID(unchecked: "data.production")
+    /// `data.production.pause`
+    public static let dataProductionPause = A11yID(unchecked: "data.production.pause")
+    /// `data.webhook.payload`
+    public static let dataWebhookPayload = A11yID(unchecked: "data.webhook.payload")
     /// `library.page`
     public static let libraryPage = A11yID(unchecked: "library.page")
     /// `library.section`
@@ -1646,6 +1686,56 @@ extension A11yID {
         A11yID(unchecked: "dataset.panel.tab.\(A11yID.segment(tab))")
     }
 
+    /// `data.explorer.node.<id>`
+    public static func dataExplorerNode(_ id: String) -> A11yID {
+        A11yID(unchecked: "data.explorer.node.\(A11yID.segment(id))")
+    }
+
+    /// `data.explorer.section.<section>`
+    public static func dataExplorerSection(_ section: String) -> A11yID {
+        A11yID(unchecked: "data.explorer.section.\(A11yID.segment(section))")
+    }
+
+    /// `data.tab.<key>`
+    public static func dataTab(_ key: String) -> A11yID {
+        A11yID(unchecked: "data.tab.\(A11yID.segment(key))")
+    }
+
+    /// `data.tab.<key>.close`
+    public static func dataTabClose(_ key: String) -> A11yID {
+        A11yID(unchecked: "data.tab.\(A11yID.segment(key)).close")
+    }
+
+    /// `data.location.crumb.<index>`
+    public static func dataLocationCrumb(_ index: String) -> A11yID {
+        A11yID(unchecked: "data.location.crumb.\(A11yID.segment(index))")
+    }
+
+    /// `data.flow.item.<id>`
+    public static func dataFlowItem(_ id: String) -> A11yID {
+        A11yID(unchecked: "data.flow.item.\(A11yID.segment(id))")
+    }
+
+    /// `data.table.tab.<tab>`
+    public static func dataTableTab(_ tab: String) -> A11yID {
+        A11yID(unchecked: "data.table.tab.\(A11yID.segment(tab))")
+    }
+
+    /// `data.folder.entry.<name>`
+    public static func dataFolderEntry(_ name: String) -> A11yID {
+        A11yID(unchecked: "data.folder.entry.\(A11yID.segment(name))")
+    }
+
+    /// `data.connect.kind.<kind>`
+    public static func dataConnectKind(_ kind: String) -> A11yID {
+        A11yID(unchecked: "data.connect.kind.\(A11yID.segment(kind))")
+    }
+
+    /// `data.writer.<id>.pause`
+    public static func dataWriterPause(_ id: String) -> A11yID {
+        A11yID(unchecked: "data.writer.\(A11yID.segment(id)).pause")
+    }
+
     /// `library.row.<kind>.<id>`
     public static func libraryRow(_ kind: String, _ id: String) -> A11yID {
         A11yID(unchecked: "library.row.\(A11yID.segment(kind)).\(A11yID.segment(id))")
@@ -2132,6 +2222,36 @@ extension A11yID {
         A11yIDSpec(pattern: "dataset.page.next", surface: "Páginas"),
         A11yIDSpec(pattern: "dataset.copyRow", surface: "Páginas"),
         A11yIDSpec(pattern: "dataset.panel.tab.<tab>", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.page", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.explorer", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.explorer.node.<id>", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.explorer.section.<section>", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.addConnection", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.tab.<key>", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.tab.<key>.close", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.location", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.location.crumb.<index>", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.flow", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.flow.item.<id>", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.object", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.sendTo", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.table.tab.<tab>", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.table.grid", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.query.editor", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.query.run", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.query.target", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.query.result", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.folder.entry.<name>", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.folder.preview", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.webhook.log", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.webhook.test", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.connect.sheet", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.connect.kind.<kind>", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.empty", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.production", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.production.pause", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.writer.<id>.pause", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.webhook.payload", surface: "Páginas"),
         A11yIDSpec(pattern: "library.page", surface: "Páginas"),
         A11yIDSpec(pattern: "library.section", surface: "Páginas"),
         A11yIDSpec(pattern: "library.search", surface: "Páginas"),
