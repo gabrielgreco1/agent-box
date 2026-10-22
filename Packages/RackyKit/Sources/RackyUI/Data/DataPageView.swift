@@ -170,10 +170,12 @@ struct DataExplorerHeader: View {
                         Image(systemName: "list.bullet.rectangle").font(.system(size: DS.Space.s3))
                         Text("Show Data list", bundle: .module).dsFont(DS.Font.label)
                     }
-                    .foregroundStyle(DS.Color.textSecondary)
+                    // Cara de botão (contorno, altura de controle), não de tab.
+                    .foregroundStyle(DS.Color.textPrimary)
                     .padding(.horizontal, DS.Space.s2)
                     .frame(height: DataMetrics.chipHeight)
-                    .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.secondary))
+                    .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(DS.Color.chrome))
+                    .overlay(RoundedRectangle(cornerRadius: DS.Radius.control).strokeBorder(DS.Color.borderStrong))
                     .contentShape(Rectangle())
                 }
             }
@@ -596,8 +598,16 @@ struct DataTabStrip: View {
                     ForEach(hub.tabs, id: \.self) { object in tab(object).id(object) }
                 }
             }
-            .onChange(of: hub.active) { _, active in if let active { reader.scrollTo(active, anchor: .trailing) } }
-            .onAppear { if let active = hub.active { reader.scrollTo(active, anchor: .trailing) } }
+            // As bordas esmaecem: uma tab cortada pela rolagem some aos poucos em vez de virar meia palavra.
+            .mask {
+                HStack(spacing: 0) {
+                    LinearGradient(colors: [.clear, .black], startPoint: .leading, endPoint: .trailing).frame(width: DS.Space.s6)
+                    Color.black
+                    LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing).frame(width: DS.Space.s6)
+                }
+            }
+            .onChange(of: hub.active) { _, active in if let active { reader.scrollTo(active, anchor: .center) } }
+            .onAppear { if let active = hub.active { reader.scrollTo(active, anchor: .center) } }
         }
         .padding(.trailing, showsMenu ? DataMetrics.tabsMenuWidth : .zero)
         .frame(maxWidth: .infinity, alignment: .leading)
