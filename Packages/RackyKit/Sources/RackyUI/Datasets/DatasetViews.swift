@@ -9,7 +9,7 @@ import SwiftUI
 // com abas. Tudo passa pelo `DatasetsController`; os controles são `ActionButton`/`DSButton` do registro de ações.
 
 enum DatasetMetrics {
-    static let topBar = DS.Space.s10 + DS.Space.s3
+    static let topBar: CGFloat = 60
     static let queryBar = DS.Space.s10 + DS.Space.s1_5
     static let chartHeight: CGFloat = 92
     static let chartBarGap: CGFloat = 3
@@ -345,9 +345,9 @@ struct DatasetPageView: View {
             VStack(spacing: 0) {
                 topBar(snapshot, width: width)
                 if let snapshot {
-                    MetricsStrip(snapshot: snapshot, controller: controller)
-                    DatasetQueryBar(snapshot: snapshot, controller: controller, model: model, rangeMenu: AnyView(rangeMenu))
-                    ActivityChart(snapshot: snapshot, controller: controller)
+                    DatasetOverviewTiles(snapshot: snapshot, controller: controller)
+                    ActivityChart(snapshot: snapshot, controller: controller, rangeMenu: AnyView(rangeMenu))
+                    DatasetQueryBar(snapshot: snapshot, controller: controller, model: model)
                     ZStack(alignment: .trailing) {
                         HStack(spacing: 0) {
                             if width >= DatasetMetrics.facetsMinWidth { FacetsPanel(snapshot: snapshot, controller: controller, model: model) }
@@ -382,13 +382,18 @@ struct DatasetPageView: View {
 
     private func topBar(_ snapshot: DatasetPageSnapshot?, width: CGFloat) -> some View {
         DatasetBar(closePane: paneID.map { id in { controller.closePane(id) } }) {
-            HStack(spacing: DS.Space.s2_5) {
+            HStack(spacing: DS.Space.s3) {
                 TableIcon()
-                HStack(spacing: DS.Space.s1_5) {
-                    Text(verbatim: snapshot?.summary.dataset.name ?? "").dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary)
-                    if let snapshot, width >= DatasetMetrics.sessionNameMinWidth {
-                        Text(verbatim: "· " + controller.title(of: snapshot.summary)).dsFont(DS.Font.body).foregroundStyle(DS.Color.textTertiary)
+                VStack(alignment: .leading, spacing: .zero) {
+                    HStack(spacing: DS.Space.s2) {
+                        Text(verbatim: snapshot?.summary.dataset.name ?? "").dsFont(DS.Font.composerTitle).foregroundStyle(DS.Color.textPrimary)
+                        if let snapshot {
+                            CollectionStatus(
+                                collecting: controller.isCollecting(snapshot.summary), computers: snapshot.stats.computers,
+                                lastRow: snapshot.stats.lastSeen.map { controller.relative($0) })
+                        }
                     }
+                    if let snapshot { Text(verbatim: subtitle(snapshot)).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary) }
                 }
                 .lineLimit(1)
             }
@@ -400,27 +405,32 @@ struct DatasetPageView: View {
                 }
             }
             .layoutPriority(1)
-            if let snapshot {
-                CollectionStatus(
-                    collecting: controller.isCollecting(snapshot.summary), computers: snapshot.stats.computers,
-                    lastRow: snapshot.stats.lastSeen.map { controller.relative($0) })
-                Spacer(minLength: DS.Space.s2)
+            Spacer(minLength: DS.Space.s2)
+            if snapshot != nil {
                 ActionButton(
                     .datasetOpen, argument: .select("\(model.id)|beside"), tooltip: String(localized: "Open beside the agent", bundle: .module)
                 ) { Image(systemName: "rectangle.split.2x1") }
                     .buttonStyle(DSIconButtonStyle(.header))
                 MenuButton(id: .datasetColumns, action: .datasetColumns, entries: columnEntries) {
-                    Image(systemName: "line.3.horizontal.decrease")
+                    Image(systemName: "tablecells")
                     if width >= DatasetMetrics.buttonLabelsMinWidth { Text("Columns", bundle: .module) }
                 }
                 MenuButton(id: .datasetExport, action: .datasetExport, entries: exportEntries, primary: true) {
                     Image(systemName: "arrow.down.to.line")
                     if width >= DatasetMetrics.buttonLabelsMinWidth { Text("Export", bundle: .module) }
                 }
-            } else {
-                Spacer(minLength: 0)
             }
         }
+    }
+
+    /// "Teste dos subagentes · 4 columns · key url · created 5h ago".
+    private func subtitle(_ snapshot: DatasetPageSnapshot) -> String {
+        let dataset = snapshot.summary.dataset
+        var parts = [controller.title(of: snapshot.summary)]
+        parts.append(dataset.columns.count == 1 ? String(localized: "1 column", bundle: .module) : String(localized: "\(dataset.columns.count) columns", bundle: .module))
+        if !dataset.key.isEmpty { parts.append(String(localized: "key \(dataset.key.joined(separator: ", "))", bundle: .module)) }
+        parts.append(String(localized: "created \(controller.relative(dataset.createdAt))", bundle: .module))
+        return parts.joined(separator: " · ")
     }
 
     private var columnEntries: [DSMenuEntry] {

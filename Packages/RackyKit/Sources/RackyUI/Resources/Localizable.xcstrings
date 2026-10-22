@@ -10984,6 +10984,17 @@
           }
         }
       }
+    },
+    "Rows over time": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rows over time"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

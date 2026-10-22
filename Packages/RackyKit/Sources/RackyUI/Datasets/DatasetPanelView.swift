@@ -29,7 +29,6 @@ enum DatasetPanelMetrics {
     static let numberColumn: CGFloat = 64
     static let maxColumns = 3
     static let maxRows = 50
-    static let chartHeight = DS.Space.s8
     static let stripe: CGFloat = 2
     /// Linha que chegou há menos disso fica destacada de leve.
     static let freshFor: TimeInterval = 8
@@ -74,7 +73,6 @@ private struct DatasetPanelContent: View {
             header
             if let snapshot = model.snapshot {
                 numbers(snapshot)
-                chart(snapshot)
                 table(snapshot)
             } else {
                 Spacer(minLength: 0)
@@ -135,63 +133,32 @@ private struct DatasetPanelContent: View {
 
     // MARK: Números
 
+    /// Quatro cartões compactos (2 × 2), os mesmos da página: quanto veio, ritmo, válidas e campos preenchidos.
     private func numbers(_ snapshot: DatasetPageSnapshot) -> some View {
         let s = snapshot.stats
         let valid = s.rows == 0 ? 0 : Double(s.rows - s.invalid) / Double(s.rows)
-        return HStack(spacing: 0) {
-            number(String(localized: "Rows", bundle: .module), s.rows.formatted(),
-                   s.recent > 0 ? String(localized: "+\(s.recent.formatted()) in 5 min", bundle: .module) : nil, tone: DS.Color.dataValid)
-            number(String(localized: "Rate", bundle: .module), String(localized: "\(snapshot.perMinute)/min", bundle: .module), nil)
-            number(String(localized: "Valid", bundle: .module), Self.percent(valid),
-                   s.invalid > 0 ? String(localized: "\(s.invalid.formatted()) invalid", bundle: .module) : nil, tone: DS.Color.warning)
-            number(String(localized: "Complete", bundle: .module), Self.percent(s.filled),
-                   s.weakestColumn.map { String(localized: "\($0.name) low", bundle: .module) }, tone: DS.Color.warning)
+        let columns = summary.dataset.columns.map(\.name)
+        return LazyVGrid(columns: [GridItem(.flexible(), spacing: DS.Space.s2), GridItem(.flexible())], spacing: DS.Space.s2) {
+            CompactTile(
+                title: String(localized: "Rows collected", bundle: .module), value: s.rows.formatted(), unit: nil,
+                detail: s.recent > 0 ? String(localized: "+\(s.recent.formatted()) in 5 min", bundle: .module) : nil, detailTone: DS.Color.dataValid
+            ) { CumulativeLine(values: snapshot.activity.map { $0.valid + $0.invalid }) }
+            CompactTile(
+                title: String(localized: "Throughput", bundle: .module), value: snapshot.perMinute.formatted(),
+                unit: String(localized: "rows/min", bundle: .module), detail: nil
+            ) { MiniBars(values: snapshot.activity.suffix(20).map { $0.valid + $0.invalid }) }
+            CompactTile(
+                title: String(localized: "Valid rows", bundle: .module), value: DatasetOverviewTiles.percent(valid), unit: nil,
+                detail: s.invalid > 0 ? String(localized: "\(s.invalid.formatted()) invalid", bundle: .module) : nil, detailTone: DS.Color.warning
+            ) { SegmentBar(segments: [(Double(s.rows - s.invalid), DS.Color.dataValid), (Double(s.invalid), DS.Color.warning)]) }
+            CompactTile(
+                title: String(localized: "Fields filled", bundle: .module), value: DatasetOverviewTiles.percent(s.filled), unit: nil,
+                detail: s.weakestColumn.map { "\($0.name) \(DatasetOverviewTiles.percent($0.fill))" }, detailTone: DS.Color.warning
+            ) { ColumnFillBars(names: columns, fills: columns.map { s.columnFill[$0] ?? 0 }) }
         }
-        .padding(.vertical, DS.Space.s2)
-        .overlay(alignment: .top) { DS.Color.border.frame(height: ComputersMetrics.separator) }
-        .a11y(.rightPanelDataStats, kind: "group", value: "\(s.rows)")
-    }
-
-    static func percent(_ value: Double) -> String { value >= 1 ? "100%" : value.formatted(.percent.precision(.fractionLength(0))) }
-
-    private func number(_ label: String, _ value: String, _ detail: String?, tone: Color = DS.Color.textTertiary) -> some View {
-        VStack(alignment: .leading, spacing: .zero) {
-            Text(verbatim: label).dsFont(DS.Font.micro).foregroundStyle(DS.Color.textTertiary)
-            Text(verbatim: value).dsFont(DS.Font.bodyStrong).monospacedDigit().foregroundStyle(DS.Color.textPrimary)
-                .contentTransition(.numericText())
-            Text(verbatim: detail ?? " ").dsFont(DS.Font.micro).foregroundStyle(tone).lineLimit(1)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.leading, DS.Space.s3)
-    }
-
-    // MARK: Gráfico
-
-    private func chart(_ snapshot: DatasetPageSnapshot) -> some View {
-        let values = snapshot.activity.map { (valid: $0.valid, invalid: $0.invalid) }
-        let peak = CGFloat(max(values.map { $0.valid + $0.invalid }.max() ?? 0, 1))
-        return Canvas { context, size in
-            guard !values.isEmpty else { return }
-            let gap: CGFloat = 1
-            let width = max((size.width - gap * CGFloat(values.count - 1)) / CGFloat(values.count), 1)
-            for (index, value) in values.enumerated() {
-                let x = CGFloat(index) * (width + gap)
-                let valid = size.height * CGFloat(value.valid) / peak
-                let invalid = value.invalid == 0 ? 0 : max(size.height * CGFloat(value.invalid) / peak, 2)
-                if valid + invalid == 0 {
-                    context.fill(Path(CGRect(x: x, y: size.height - 1, width: width, height: 1)), with: .color(DS.Color.border))
-                    continue
-                }
-                context.fill(Path(CGRect(x: x, y: size.height - valid, width: width, height: valid)), with: .color(DS.Color.dataValid.opacity(0.7)))
-                if invalid > 0 {
-                    context.fill(Path(CGRect(x: x, y: size.height - valid - invalid, width: width, height: invalid)), with: .color(DS.Color.warning))
-                }
-            }
-        }
-        .frame(height: DatasetPanelMetrics.chartHeight)
         .padding(.horizontal, DS.Space.s3)
-        .padding(.bottom, DS.Space.s2)
-        .accessibilityHidden(true)
+        .padding(.bottom, DS.Space.s3)
+        .a11y(.rightPanelDataStats, kind: "group", value: "\(s.rows)")
     }
 
     // MARK: Tabela
@@ -289,5 +256,35 @@ private struct PanelRow: View {
             .lineLimit(1).truncationMode(.tail)
             .frame(width: entry.isFirst ? nil : DatasetPanelMetrics.numberColumn, alignment: entry.isNumeric ? .trailing : .leading)
             .frame(maxWidth: entry.isFirst ? .infinity : nil, alignment: .leading)
+    }
+}
+
+/// Cartão pequeno do painel: nome, número e o desenho embaixo.
+private struct CompactTile<Visual: View>: View {
+    let title: String
+    let value: String
+    let unit: String?
+    let detail: String?
+    var detailTone: Color = DS.Color.textTertiary
+    @ViewBuilder var visual: () -> Visual
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DS.Space.s1) {
+            Text(verbatim: title).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary).lineLimit(1)
+            HStack(alignment: .firstTextBaseline, spacing: DS.Space.s1) {
+                Text(verbatim: value).dsFont(DS.Font.composerTitle).monospacedDigit().foregroundStyle(DS.Color.textPrimary)
+                    .contentTransition(.numericText())
+                if let unit { Text(verbatim: unit).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary) }
+                Spacer(minLength: 0)
+                if let detail { Text(verbatim: detail).dsFont(DS.Font.small).foregroundStyle(detailTone).lineLimit(1) }
+            }
+            .lineLimit(1)
+            visual().frame(height: DS.Space.s4, alignment: .bottom)
+        }
+        .padding(DS.Space.s2_5)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: DS.Radius.md).fill(DS.Color.panel))
+        .overlay(RoundedRectangle(cornerRadius: DS.Radius.md).strokeBorder(DS.Color.border))
+        .accessibilityElement(children: .combine)
     }
 }
