@@ -116,6 +116,11 @@ import Testing
         #expect(!active.layout.terminalIDs.isEmpty, "the table should now sit in the agent's tab")
         #expect(active.layout.pane(forDataset: rig.datasetID) != nil)
         #expect(rig.env.workspace.displayTitle(of: active) != "books2", "the agents' tab keeps its own name")
+        // Ao lado do agente, "Own tab" devolve a tabela para uma tab própria.
+        try click(rig, .dataOwnTab)
+        await VisualBatchTests.settle(500)
+        let own = try #require(rig.env.workspace.activeTab)
+        #expect(rig.env.workspace.datasetOnly(own) == rig.datasetID, "Own tab puts the table back in its own tab")
     }
 
     /// Na trilha da tabela dentro da sessão, clicar num lugar leva para a área Data já nele.
@@ -135,6 +140,10 @@ import Testing
         shot(rig, "flow-5-after-path-click")
         #expect(rig.env.datasets.currentPage() == .datasets, "the click should open the Data area")
         #expect(rig.env.dataHub.active == .table(connection: "conn-supabase", schema: "public", name: "books"))
+        // E volta para a sessão pelo "‹ Session" que aparece no topo da área Data.
+        try click(rig, .dataBackToSession)
+        await VisualBatchTests.settle(500)
+        #expect(rig.env.datasets.currentPage() == .workspace, "‹ Session goes back to the session")
     }
 
     /// Abre a tabela, vai para o agente e volta clicando na tab da tabela: as duas tabs têm nomes diferentes e o clique troca de tab.

@@ -27,6 +27,8 @@ public final class DataHubController {
     /// Explorer: largura arrastada pelo usuário e se está recolhido.
     public var explorerWidth: CGFloat = 268
     public private(set) var explorerHidden = false
+    /// A área Data foi aberta de dentro de uma sessão (clique na trilha): mostra "‹ Session" para voltar.
+    public var cameFromSession = false
     /// Quem o usuário pausou (agentes e cópias), por id.
     public private(set) var paused: Set<String> = []
     private var nextQuery = 1
@@ -222,6 +224,7 @@ public final class DataHubController {
             if datasets.currentPage() != .datasets {
                 await datasets.reloadList()
                 datasets.showPage(.datasets)
+                cameFromSession = true
             }
             return raw
         }

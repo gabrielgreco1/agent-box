@@ -356,7 +356,7 @@ struct DatasetPageView: View {
                     if showsBar {
                         DataLocationBar(
                             hub: hub, object: .dataset(model.id), close: paneID.map { id in { controller.closePane(id) } },
-                            drag: paneID.flatMap { id in drag.map { (id, $0) } }, besideAgent: paneID.map { controller.paneIsAlone($0) } ?? false)
+                            drag: paneID.flatMap { id in drag.map { (id, $0) } }, besideAgent: paneID.map { controller.paneIsAlone($0) })
                     }
                     // Na Overview o caminho aparece inteiro; nas outras abas, numa linha.
                     if hub.tableTab(.dataset(model.id)) != .overview { DataLineageStrip(hub: hub, object: .dataset(model.id), compact: true) }

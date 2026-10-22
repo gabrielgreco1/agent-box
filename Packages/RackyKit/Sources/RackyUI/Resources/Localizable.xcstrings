@@ -11346,7 +11346,6 @@
     },
     "Will run": {},
     "To add one, use Add connection at the bottom of the list.": {},
-    "The agent won't ask before running commands (set in the profile)": {},
     "Protected": {},
     "Copies to a protected connection": {},
     "Protected: Racky asks before anything that changes data": {},
@@ -11368,7 +11367,10 @@
     "Start in a new tab": {},
     "Open in a tab": {},
     "Beside the agent": {},
-    "Command": {}
+    "Command": {},
+    "Back to the session": {},
+    "Own tab": {},
+    "This profile skips permission prompts: the agent won't ask before running commands": {}
   },
   "version": "1.0"
 }

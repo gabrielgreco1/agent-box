@@ -141,6 +141,8 @@ struct DataPageView: View {
         .overlay {
             if hub.showingConnect { DataConnectSheet(hub: hub) }
         }
+        // Saiu da área Data: a próxima vez que abrir pela barra lateral não mostra "‹ Session".
+        .onDisappear { hub.cameFromSession = false }
         .a11y(.dataPage, kind: "page")
         .task { await hub.datasets.reloadList() }
         // Na área Data a prévia "Data" do painel direito seria a mesma coisa duas vezes: ela se recolhe.
@@ -156,6 +158,19 @@ struct DataExplorerHeader: View {
 
     var body: some View {
         HStack(spacing: DS.Space.s2) {
+            // Chegou aqui de dentro de uma sessão (a trilha da tabela): o caminho de volta fica à vista.
+            if hub.cameFromSession {
+                ActionButton(.pageClose, id: .dataBackToSession, tooltip: String(localized: "Back to the session", bundle: .module)) {
+                    HStack(spacing: DS.Space.s1) {
+                        Image(systemName: "chevron.left").font(.system(size: DS.Space.s2_5, weight: .semibold))
+                        Text("Session", bundle: .module).dsFont(DS.Font.label)
+                    }
+                    .foregroundStyle(DS.Color.textSecondary)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .fixedSize()
+            }
             if shown {
                 Text("Data", bundle: .module).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary)
                 Spacer(minLength: 0)
@@ -758,8 +773,8 @@ struct DataLocationBar: View {
     /// Num pane do workspace: o X fecha o pane e o lugar/nome arrasta o pane (como o título de um terminal).
     var close: (() -> Void)? = nil
     var drag: (paneID: UUID, controller: PaneDragController)? = nil
-    /// Numa tab sozinha da sessão: mostra "Beside the agent".
-    var besideAgent = false
+    /// Num pane da sessão: `true` sozinho numa tab, `false` ao lado do agente, `nil` fora da sessão.
+    var besideAgent: Bool? = nil
 
     var body: some View {
         // Numa linha só enquanto cabe com os botões nomeados: primeiro some a trilha (fica o nome), depois os nomes ficam curtos e o
@@ -1259,7 +1274,7 @@ struct DataProductionBanner: View {
         HStack(spacing: DS.Space.s2) {
             Image(systemName: "exclamationmark.triangle.fill").font(.system(size: DS.Space.s3))
             Text(verbatim: String(localized: "Protected · \(connection?.name ?? "")", bundle: .module)).dsFont(DS.Font.label)
-            Text(verbatim: message(object, live: live.count)).dsFont(DS.Font.small).lineLimit(1)
+            Text(verbatim: message(object, live: live.count)).dsFont(DS.Font.small).lineLimit(2).fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: DS.Space.s2)
             if !live.isEmpty {
                 DSButton(.dataPauseWriter, id: .dataProductionPause, live.count == 1 ? "Pause the agent" : "Pause agents", variant: .outline, size: .xs, symbol: "pause.fill", argument: .select("all"))
@@ -1267,7 +1282,8 @@ struct DataProductionBanner: View {
         }
         .foregroundStyle(DS.Color.warning)
         .padding(.horizontal, DS.Space.s4)
-        .frame(height: DS.Space.s8)
+        .padding(.vertical, DS.Space.s1_5)
+        .frame(minHeight: DS.Space.s8)
         .background(DS.Color.warning.opacity(0.08))
         .overlay(alignment: .bottom) { DS.Color.warning.opacity(0.3).frame(height: ComputersMetrics.separator) }
         .a11y(.dataProduction, kind: "banner", label: connection?.name ?? "")

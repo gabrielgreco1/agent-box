@@ -412,6 +412,8 @@ public final class DatasetsController {
     @ObservationIgnored public var isShownInSession: (_ datasetID: String, _ sessionID: UUID) -> Bool = { _, _ in false }
     /// O pane está sozinho na tab (sem agente ao lado); ligado pelo `AppEnvironment`.
     @ObservationIgnored public var paneIsAlone: (_ paneID: UUID) -> Bool = { _ in false }
+    /// Tira o pane do dataset da tab dividida e põe numa tab própria; ligado pelo `AppEnvironment`.
+    @ObservationIgnored public var detachDataset: (_ datasetID: String) -> Bool = { _ in false }
     /// Abrir a tabela ao lado assim que as primeiras linhas de um dataset novo chegam (uma vez por dataset).
     @ObservationIgnored public var autoOpenEnabled = true
     /// Datasets já abertos sozinhos uma vez (gravado no store: fechar a tabela não faz ela voltar).
@@ -645,6 +647,11 @@ public final class DatasetsController {
             // `<id>|beside` ao lado do agente; `|panel` (pode vir junto) diz que veio da prévia do painel Data.
             let parts = (arg.kind == .select ? arg.value ?? "" : "").split(separator: "|").map(String.init)
             let flags = Set(parts.dropFirst())
+            // `<id>|tab`: tira a tabela do lado do agente e devolve para uma tab própria.
+            if let id = parts.first, flags.contains("tab") {
+                guard detachDataset(id) else { throw ActionError.failed(.datasetOpen, message: String(localized: "No such dataset.", bundle: .module)) }
+                return id
+            }
             guard let id = parts.first, !id.isEmpty, await open(id, beside: flags.contains("beside")) else {
                 throw ActionError.failed(.datasetOpen, message: String(localized: "No such dataset.", bundle: .module))
             }

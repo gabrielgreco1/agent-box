@@ -462,6 +462,10 @@ public final class AppEnvironment {
         workspace.datasetTitle = { [datasets] id in datasets.name(of: id) }
         workspace.renameDataset = { [datasets] id, name in Task { await datasets.rename(id, to: name) } }
         datasets.paneIsAlone = { [workspace] id in workspace.paneIsAlone(id) }
+        datasets.detachDataset = { [workspace] id in
+            guard let sid = workspace.currentSessionID, let (_, pane) = workspace.datasetPane(id, in: sid) else { return false }
+            return workspace.detachPane(paneID: pane.id) == .applied
+        }
         do { try datasets.register(in: registry) } catch { log.publicError("duplicate dataset action registration") }
         do { try dataHub.register(in: registry) } catch { log.publicError("duplicate data action registration") }
     }

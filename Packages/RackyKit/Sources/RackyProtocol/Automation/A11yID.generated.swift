@@ -434,6 +434,10 @@ extension A11yID {
     public static let dataRenameButton = A11yID(unchecked: "data.rename.button")
     /// `data.beside`
     public static let dataBeside = A11yID(unchecked: "data.beside")
+    /// `data.ownTab`
+    public static let dataOwnTab = A11yID(unchecked: "data.ownTab")
+    /// `data.backToSession`
+    public static let dataBackToSession = A11yID(unchecked: "data.backToSession")
     /// `data.table.page.prev`
     public static let dataTablePagePrev = A11yID(unchecked: "data.table.page.prev")
     /// `data.table.page.next`
@@ -2267,6 +2271,8 @@ extension A11yID {
         A11yIDSpec(pattern: "data.tabs.menu", surface: "Páginas"),
         A11yIDSpec(pattern: "data.rename.button", surface: "Páginas"),
         A11yIDSpec(pattern: "data.beside", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.ownTab", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.backToSession", surface: "Páginas"),
         A11yIDSpec(pattern: "data.table.page.prev", surface: "Páginas"),
         A11yIDSpec(pattern: "data.table.page.next", surface: "Páginas"),
         A11yIDSpec(pattern: "data.moreColumns", surface: "Páginas"),

@@ -477,6 +477,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `data.tabs.menu`
 - `data.rename.button`
 - `data.beside`
+- `data.ownTab`
+- `data.backToSession`
 - `data.table.page.prev`
 - `data.table.page.next`
 - `data.moreColumns`

@@ -46,7 +46,7 @@ struct QuickLaunchModel {
     }
 
     /// Largura do popover (03 §7).
-    static let width: CGFloat = 300
+    static let width: CGFloat = 380
     static let fallbackID = "fallback"
     static let placeholder = "Start an agent or type a prompt…"
     static let footer = "↵ Open · ⌘↵ Start with prompt · ⇧↵ Split · Esc Close"
