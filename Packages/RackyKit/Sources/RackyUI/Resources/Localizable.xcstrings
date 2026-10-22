@@ -11226,6 +11226,39 @@
           }
         }
       }
+    },
+    "Data path": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Data path"
+          }
+        }
+      }
+    },
+    "saved by Racky": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "saved by Racky"
+          }
+        }
+      }
+    },
+    "You are here": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You are here"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

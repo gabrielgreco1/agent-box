@@ -669,6 +669,7 @@ public final class AppEnvironment {
             sidebar: sidebar, settings: settings, overlays: overlays, toasts: toasts, elements: elements, launcher: sessionLauncher,
             automationEnabled: automationEnabled)
         composer = composerController
+        composerController.dataDestinations = { [dataHub] in dataHub?.composerDestinations() ?? [] }
         // Um só seletor de pasta: o do composer (fake nos testes) também atende "New Clean Session in Folder…".
         clean.picker = CleanFolderPicker(base: { [weak composerController] in composerController?.picker ?? OpenPanelSessionFolderPicker() })
         do { try composerController.register(in: registry) } catch { log.publicError("duplicate composer registration") }

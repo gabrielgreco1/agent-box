@@ -64,9 +64,9 @@ import Testing
         await VisualBatchTests.settle(500)
         write(c.window!.contentView!, "data-table-books")
 
-        _ = try await env.registry.perform(.dataOpen, .select("table:\(DataHubFixtures.supabase):public:hotels"))
+        _ = try await env.registry.perform(.dataOpen, .select("table:\(DataHubFixtures.supabase):public:listings"))
         await VisualBatchTests.settle(500)
-        write(c.window!.contentView!, "data-table-hotels")
+        write(c.window!.contentView!, "data-table-listings")
         _ = try await env.registry.perform(.dataTableTab, .select("writers"))
         await VisualBatchTests.settle(400)
         write(c.window!.contentView!, "data-table-writers")
@@ -94,5 +94,13 @@ import Testing
         _ = try await env.registry.perform(.dataAddConnection, .press)
         await VisualBatchTests.settle(500)
         write(c.window!.contentView!, "data-connect")
+        _ = try await env.registry.perform(.dataAddConnection, .select("close"))
+
+        // Nova sessão gravando direto numa tabela de produção.
+        let project = try #require(cast.snapshot.projects.first { $0.archivedAt == nil })
+        _ = try await env.registry.perform(.projectNewSession, .select(project.id.uuidString))
+        _ = try? await env.registry.perform(.composerSetDataDestination, .select("table:\(DataHubFixtures.supabase):public:listings"))
+        await VisualBatchTests.settle(700)
+        write(c.window!.contentView!, "data-composer")
     }
 }

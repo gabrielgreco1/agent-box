@@ -25,6 +25,9 @@ final class ComposerModel {
     /// Recarrega o foco do Prompt (Create More limpa o campo e devolve o foco).
     private(set) var focusPromptNonce = 0
 
+    /// Lugares para onde os agentes podem gravar (área Data); ligado pelo app.
+    @ObservationIgnored var dataDestinations: () -> [ComposerDataDestination] = { [] }
+
     private(set) var defaultBranch: String?
     private(set) var branchPrefix: String?
     private(set) var createFromLookup: GitBranchLookup?
@@ -232,4 +235,13 @@ final class ComposerModel {
         await lookupTask?.value
         await branchTask?.value
     }
+}
+
+/// Uma opção de "Save data to": o lugar, o grupo (conexão) e o que acontece se escolher.
+struct ComposerDataDestination: Equatable {
+    var key: String
+    var title: String
+    var group: String
+    var production: Bool
+    var explanation: String
 }

@@ -74,7 +74,7 @@ struct DataPageView: View {
                 if let active = hub.active {
                     if hub.connection(active.connectionID)?.environment == .production { DataProductionBanner(hub: hub, object: active) }
                     DataLocationBar(hub: hub, object: active)
-                    DataFlowLine(hub: hub, object: active)
+                    DataLineageStrip(hub: hub, object: active)
                     DataObjectView(hub: hub, object: active)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .a11y(.dataObject, kind: "container", label: active.key)
@@ -108,9 +108,9 @@ struct DataExplorer: View {
                     }
                     .padding(.horizontal, DS.Space.s2)
                     .padding(.bottom, DS.Space.s3)
-                    section(String(localized: "Racky", bundle: .module), caption: String(localized: "Stored in this app, on this Mac", bundle: .module), id: "racky")
+                    section(String(localized: "On this Mac", bundle: .module), caption: String(localized: "Saved by Racky as your agents collect", bundle: .module), id: "racky")
                     racky
-                    section(String(localized: "Connections", bundle: .module), caption: String(localized: "Outside Racky: your databases, storage and endpoints", bundle: .module), id: "connections")
+                    section(String(localized: "Connections", bundle: .module), caption: String(localized: "Your own databases and services, outside Racky", bundle: .module), id: "connections")
                         .padding(.top, DS.Space.s3)
                     connections
                 }
@@ -307,10 +307,17 @@ struct DataTabStrip: View {
     @Environment(\.pageTrailingInset) private var trailingInset
 
     var body: some View {
-        HStack(spacing: 0) {
-            ForEach(hub.tabs, id: \.self) { object in tab(object) }
-            Spacer(minLength: 0)
+        // Nomes inteiros (o lugar diz qual cópia é): com muitas tabs, a faixa rola de lado em vez de cortar os nomes.
+        ScrollViewReader { reader in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 0) {
+                    ForEach(hub.tabs, id: \.self) { object in tab(object).id(object) }
+                }
+            }
+            .onChange(of: hub.active) { _, active in if let active { reader.scrollTo(active, anchor: .trailing) } }
+            .onAppear { if let active = hub.active { reader.scrollTo(active, anchor: .trailing) } }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         // Os botões do painel direito ficam por cima do canto: as tabs param antes deles.
         .padding(.trailing, trailingInset)
         .frame(height: DataMetrics.tabHeight)
@@ -328,7 +335,7 @@ struct DataTabStrip: View {
                     Text(verbatim: DataLabels.title(object, hub: hub)).dsFont(active ? DS.Font.tabActive : DS.Font.tab)
                         .foregroundStyle(active ? DS.Color.textPrimary : DS.Color.textSecondary).lineLimit(1)
                     // O lugar em letra pequena: duas tabs "books" (Racky e Supabase) não se confundem.
-                    Text(verbatim: place?.name ?? String(localized: "Racky", bundle: .module)).dsFont(DS.Font.small).foregroundStyle(DS.Color.textQuaternary).lineLimit(1)
+                    Text(verbatim: place?.name ?? String(localized: "This Mac", bundle: .module)).dsFont(DS.Font.small).foregroundStyle(DS.Color.textQuaternary).lineLimit(1)
                 }
                 .contentShape(Rectangle())
             }
@@ -341,7 +348,8 @@ struct DataTabStrip: View {
         }
         .padding(.leading, DS.Space.s3)
         .padding(.trailing, DS.Space.s1_5)
-        .frame(maxWidth: DataMetrics.tabMaxWidth, maxHeight: .infinity)
+        .frame(maxHeight: .infinity)
+        .fixedSize(horizontal: true, vertical: false)
         .background(active ? DS.Color.canvas : Color.clear)
         .overlay(alignment: .bottom) { if active { DS.Color.textPrimary.frame(height: DataMetrics.underline) } }
         .overlay(alignment: .trailing) { DS.Color.border.frame(width: ComputersMetrics.separator) }
@@ -363,7 +371,7 @@ enum DataLabels {
     /// O tipo do objeto em palavras (lado direito da barra de localização).
     @MainActor static func kind(_ object: DataObject, hub: DataHubController) -> String {
         switch object {
-        case .dataset: String(localized: "Dataset in Racky", bundle: .module)
+        case .dataset: String(localized: "Dataset on this Mac", bundle: .module)
         case .table(let c, _, _): hub.connection(c)?.kind.family == .warehouse ? String(localized: "Warehouse table", bundle: .module) : String(localized: "Database table", bundle: .module)
         case .query: String(localized: "SQL query", bundle: .module)
         case .folder: String(localized: "Storage folder", bundle: .module)
@@ -396,7 +404,7 @@ struct DataLocationBar: View {
                 Text(verbatim: DataLabels.kind(object, hub: hub)).dsFont(DS.Font.label).foregroundStyle(DS.Color.textSecondary)
                 if let source = hub.copySource(of: object) {
                     // Uma cópia diz de onde é cópia: a fonte de verdade é o dataset no Racky.
-                    Text(verbatim: String(localized: "Copy of Racky › \(source)", bundle: .module)).dsFont(DS.Font.small).foregroundStyle(DS.Color.dataKey)
+                    Text(verbatim: String(localized: "One-way copy of \(source) (this Mac)", bundle: .module)).dsFont(DS.Font.small).foregroundStyle(DS.Color.dataKey)
                 } else if let size {
                     Text(verbatim: size).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
                 }
@@ -411,7 +419,7 @@ struct DataLocationBar: View {
     }
 
     private var connection: DataConnection? { hub.connection(object.connectionID) }
-    private var placeName: String { connection?.name ?? String(localized: "Racky", bundle: .module) }
+    private var placeName: String { connection?.name ?? String(localized: "This Mac", bundle: .module) }
 
     private var placeChip: some View {
         HStack(spacing: DS.Space.s1_5) {
@@ -423,9 +431,9 @@ struct DataLocationBar: View {
                 }
                 if let environment = connection.environment { EnvironmentBadge(environment: environment) }
             } else {
-                BrandMark(size: DS.Space.s3 + DS.Space.s0_5)
-                Text("Racky", bundle: .module).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary)
-                Text("in this app", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                Image(systemName: "laptopcomputer").font(.system(size: DataMetrics.icon)).foregroundStyle(DS.Color.textSecondary)
+                Text("This Mac", bundle: .module).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary)
+                Text("saved by Racky", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
             }
         }
         .padding(.horizontal, DS.Space.s2)
@@ -465,99 +473,204 @@ struct DataLocationBar: View {
     }
 }
 
-// MARK: Fluxo
+// MARK: Linhagem
 
-/// "De onde vem e para onde vai", sempre com as mesmas duas palavras: **Comes from** (agentes que gravam aqui, cópias de um dataset
-/// do Racky, você numa consulta) e **Goes to** (cópias deste objeto em outros lugares). Cada item diz o que é e abre o lugar dele.
-struct DataFlowLine: View {
+/// O caminho do dado, da esquerda para a direita: quem coleta (agentes) → a fonte (um dataset do Racky, quando há) → as cópias fora
+/// do Racky. O objeto aberto fica marcado "You are here"; cada seta diz como o dado passa (coleta, cópia ao vivo, cópia diária, envio).
+/// Responde, sem ler mais nada: qual é a fonte, onde estão as cópias, se estão em dia e quando o dado sai do Mac.
+struct DataLineageStrip: View {
     let hub: DataHubController
     let object: DataObject
 
+    struct Node: Identifiable {
+        enum Role { case agents, source, copy, direct, query }
+        var id: String
+        var role: Role
+        var target: DataObject?
+        var place: DataConnection?
+        var title: String
+        var detail: String
+        var live = false
+        var current = false
+    }
+
     var body: some View {
-        let writers = hub.writers(of: object)
-        let destinations = hub.destinations(of: object)
-        HStack(spacing: DS.Space.s2) {
-            label("arrow.down.right", String(localized: "Comes from", bundle: .module))
-            if writers.isEmpty {
-                Text(verbatim: emptyWriters).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(1)
+        let columns = lineage
+        VStack(alignment: .leading, spacing: DS.Space.s1_5) {
+        HStack(alignment: .center, spacing: DS.Space.s2) {
+            Text("Data path", bundle: .module).dsFont(DS.Font.label).foregroundStyle(DS.Color.textTertiary).fixedSize()
+            if columns.isEmpty {
+                Text(verbatim: emptyText).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(1)
             }
-            ForEach(writers) { writer in writerChip(writer) }
-            if !destinations.isEmpty {
-                DS.Color.border.frame(width: ComputersMetrics.separator, height: DS.Space.s4).padding(.horizontal, DS.Space.s1)
-                label("arrow.up.right", String(localized: "Goes to", bundle: .module))
-                ForEach(destinations) { destination in destinationChip(destination) }
+            ForEach(Array(columns.enumerated()), id: \.offset) { index, column in
+                if index > 0 { edge(column.edge) }
+                VStack(alignment: .leading, spacing: DS.Space.s1) {
+                    ForEach(column.nodes) { node in chip(node) }
+                }
             }
             Spacer(minLength: 0)
         }
+        if let sentence = explanation {
+            Text(verbatim: sentence).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
+        }
+        }
         .padding(.horizontal, DS.Space.s4)
-        .frame(height: DataMetrics.flowHeight)
+        .padding(.vertical, DS.Space.s2)
+        .frame(minHeight: DataMetrics.flowHeight)
         .background(DS.Color.chrome.opacity(0.5))
         .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
-        .a11y(.dataFlow, kind: "group", label: (writers.map(\.name) + destinations.map { $0.target.key }).joined(separator: ", "))
+        .a11y(.dataFlow, kind: "group", label: columns.flatMap(\.nodes).map(\.title).joined(separator: " → "))
     }
 
-    private var emptyWriters: String {
+    /// Uma frase que diz qual é o original e para que lado o dado anda.
+    private var explanation: String? {
         switch object {
-        case .query: String(localized: "You, with this query", bundle: .module)
-        case .dataset: String(localized: "No agent has written here yet", bundle: .module)
-        default: String(localized: "Nothing in Racky writes here", bundle: .module)
+        case .query(let connection, _):
+            return String(localized: "This query only reads \(hub.connection(connection)?.name ?? ""). SQL that changes data asks you to confirm first.", bundle: .module)
+        case .dataset(let id):
+            guard let name = hub.summary(ofDataset: id)?.dataset.name else { return nil }
+            return hub.destinations(of: object).isEmpty
+                ? String(localized: "\(name) on this Mac is the original. Nothing is copied out yet.", bundle: .module)
+                : String(localized: "\(name) on this Mac is the original. The copies only receive from it: edits made in a copy don't come back to it.", bundle: .module)
+        case .webhook:
+            guard let source = hub.copySource(of: object) else { return nil }
+            return String(localized: "Racky posts each new row of \(source) (this Mac) to this address. Nothing comes back.", bundle: .module)
+        default:
+            if let source = hub.copySource(of: object) {
+                return String(localized: "This is a one-way copy of \(source) (this Mac). Change the data in \(source): edits made here don't go back.", bundle: .module)
+            }
+            if !hub.writers(of: object).isEmpty {
+                return String(localized: "Agents write into this table directly. Nothing is kept on this Mac.", bundle: .module)
+            }
+            return nil
         }
     }
 
-    private func label(_ symbol: String, _ title: String) -> some View {
-        HStack(spacing: DS.Space.s1) {
-            Image(systemName: symbol).font(.system(size: DS.Space.s2_5, weight: .semibold))
-            Text(verbatim: title).dsFont(DS.Font.label)
+    private var emptyText: String {
+        String(localized: "Racky doesn't write here or copy from here.", bundle: .module)
+    }
+
+    // MARK: Montagem
+
+    private struct Column { var edge: String; var nodes: [Node] }
+
+    private var lineage: [Column] {
+        switch object {
+        case .query(let connection, _):
+            let place = hub.connection(connection)
+            return [
+                Column(edge: "", nodes: [Node(id: "query", role: .query, place: nil, title: String(localized: "This query", bundle: .module), detail: String(localized: "written by you", bundle: .module), current: true)]),
+                Column(edge: String(localized: "reads", bundle: .module), nodes: [Node(id: "db", role: .direct, target: nil, place: place, title: place?.name ?? "", detail: place?.kind.title ?? "")]),
+            ]
+        case .dataset(let id):
+            return chain(sourceID: id)
+        default:
+            if let source = hub.copySource(of: object), let id = hub.datasetID(named: source) { return chain(sourceID: id) }
+            let writers = hub.writers(of: object)
+            guard !writers.isEmpty else { return [] }
+            return [
+                Column(edge: "", nodes: [agentsNode(writers)]),
+                Column(edge: String(localized: "write directly", bundle: .module), nodes: [currentNode(role: .direct, detail: String(localized: "written directly · not kept on this Mac", bundle: .module))]),
+            ]
         }
-        .foregroundStyle(DS.Color.textTertiary)
+    }
+
+    /// Agentes → dataset do Racky (fonte) → cópias.
+    private func chain(sourceID: String) -> [Column] {
+        let sourceObject = DataObject.dataset(sourceID)
+        guard let summary = hub.summary(ofDataset: sourceID) else { return [] }
+        var columns: [Column] = []
+        let writers = hub.writers(of: sourceObject)
+        if !writers.isEmpty { columns.append(Column(edge: "", nodes: [agentsNode(writers)])) }
+        columns.append(Column(
+            edge: String(localized: "collect", bundle: .module),
+            nodes: [Node(
+                id: "source", role: .source, target: sourceObject, place: nil, title: summary.dataset.name,
+                detail: String(localized: "original · \(summary.rowCount.formatted()) rows", bundle: .module), live: hub.datasets.isCollecting(summary),
+                current: object == sourceObject)]))
+        let copies = hub.destinations(of: sourceObject).map { destination in
+            Node(
+                id: destination.id, role: .copy, target: destination.target, place: hub.connection(destination.target.connectionID),
+                title: DataLabels.title(destination.target, hub: hub), detail: copyStatus(destination, rows: summary.rowCount), current: destination.target == object)
+        }
+        if !copies.isEmpty { columns.append(Column(edge: String(localized: "copied one way", bundle: .module), nodes: copies)) }
+        return columns
+    }
+
+    private func copyStatus(_ destination: DataDestination, rows: Int) -> String {
+        switch destination.detail {
+        case "live copy": String(localized: "copy, updated live · in sync, \(rows.formatted()) of \(rows.formatted()) rows", bundle: .module)
+        case "daily copy": String(localized: "copy, updated daily at 06:00 · last today", bundle: .module)
+        case "sends new rows": String(localized: "each new row is posted here", bundle: .module)
+        default: destination.detail
+        }
+    }
+
+    private func agentsNode(_ writers: [DataWriter]) -> Node {
+        let agents = writers.filter { if case .agent = $0.kind { true } else { false } }
+        let names = agents.map(\.name).joined(separator: ", ")
+        let session: String = if case .agent(let s)? = agents.first?.kind { s } else { "" }
+        return Node(
+            id: "agents", role: .agents, place: nil, title: names.isEmpty ? String(localized: "Agents", bundle: .module) : names,
+            detail: String(localized: "session \(session)", bundle: .module), live: agents.contains { $0.live })
+    }
+
+    private func currentNode(role: Node.Role, detail: String) -> Node {
+        Node(id: "current", role: role, target: object, place: hub.connection(object.connectionID), title: DataLabels.title(object, hub: hub), detail: detail, current: true)
+    }
+
+    // MARK: Desenho
+
+    private func edge(_ label: String) -> some View {
+        VStack(spacing: .zero) {
+            Text(verbatim: label).dsFont(DS.Font.micro).foregroundStyle(DS.Color.textTertiary)
+            Image(systemName: "arrow.right").font(.system(size: DS.Space.s3, weight: .semibold)).foregroundStyle(DS.Color.textTertiary)
+        }
         .fixedSize()
     }
 
-    private func writerChip(_ writer: DataWriter) -> some View {
-        let source: DataObject? = if case .sync(let from) = writer.kind, case .dataset(let name) = from, let id = hub.datasetID(named: name) { .dataset(id) } else { nil }
+    private func chip(_ node: Node) -> some View {
         let content = HStack(spacing: DS.Space.s1_5) {
-            if writer.live { LiveDot() }
-            switch writer.kind {
-            case .agent(let session):
-                Text("Agent", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
-                Text(verbatim: writer.name).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary)
-                Text(verbatim: String(localized: "in \(session)", bundle: .module) + (writer.detail.isEmpty ? "" : " · \(writer.detail)"))
-                    .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
-            case .sync:
-                Text("Copy of", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
-                BrandMark(size: DS.Space.s3)
-                Text(verbatim: "Racky › \(writer.name)").dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary)
-                Text(verbatim: writer.detail).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+            if node.live { LiveDot() }
+            switch node.role {
+            case .agents: Image(systemName: "person.2").font(.system(size: DS.Space.s2_5 + 1)).foregroundStyle(DS.Color.textSecondary)
+            case .query: Image(systemName: "terminal").font(.system(size: DS.Space.s2_5 + 1)).foregroundStyle(DS.Color.textSecondary)
+            case .source: Image(systemName: "laptopcomputer").font(.system(size: DS.Space.s2_5 + 1)).foregroundStyle(DS.Color.textSecondary)
+            case .copy, .direct:
+                Image(systemName: node.place.map { DataSymbols.connection($0.kind) } ?? "tablecells").font(.system(size: DS.Space.s2_5 + 1)).foregroundStyle(DS.Color.textSecondary)
+            }
+            VStack(alignment: .leading, spacing: .zero) {
+                HStack(spacing: DS.Space.s1) {
+                    Text(verbatim: placePrefix(node) + node.title).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
+                    if let environment = node.place?.environment { EnvironmentBadge(environment: environment) }
+                    if node.current {
+                        Text("You are here", bundle: .module).dsFont(DS.Font.keycap).foregroundStyle(DS.Color.dataKey)
+                    }
+                }
+                Text(verbatim: node.detail).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(1)
             }
         }
         .padding(.horizontal, DS.Space.s2)
-        .frame(height: DataMetrics.chipHeight)
-        .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.secondary))
+        .padding(.vertical, DS.Space.s1)
+        .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(node.current ? DS.Color.dataKey.opacity(0.1) : DS.Color.secondary))
+        .overlay(RoundedRectangle(cornerRadius: DS.Radius.sm).strokeBorder(node.current ? DS.Color.dataKey.opacity(0.55) : DS.Color.border))
         .fixedSize()
         return Group {
-            if let source {
-                ActionButton(.dataOpen, id: .dataFlowItem(writer.id), argument: .select(source.key)) { content }.buttonStyle(.plain)
+            if let target = node.target, !node.current {
+                ActionButton(.dataOpen, id: .dataFlowItem(node.id), argument: .select(target.key)) { content }.buttonStyle(.plain)
             } else {
-                content.a11y(.dataFlowItem(writer.id), kind: "text", label: writer.name)
+                content.a11y(.dataFlowItem(node.id), kind: "text", label: node.title)
             }
         }
     }
 
-    private func destinationChip(_ destination: DataDestination) -> some View {
-        let connection = hub.connection(destination.target.connectionID)
-        return ActionButton(.dataOpen, id: .dataFlowItem(destination.id), argument: .select(destination.target.key)) {
-            HStack(spacing: DS.Space.s1_5) {
-                Image(systemName: connection.map { DataSymbols.connection($0.kind) } ?? "tablecells").font(.system(size: DS.Space.s2_5)).foregroundStyle(DS.Color.textSecondary)
-                Text(verbatim: "\(connection?.name ?? "") › \(DataLabels.title(destination.target, hub: hub))").dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary)
-                if let environment = connection?.environment { EnvironmentBadge(environment: environment) }
-                Text(verbatim: destination.detail).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
-            }
-            .padding(.horizontal, DS.Space.s2)
-            .frame(height: DataMetrics.chipHeight)
-            .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.secondary))
-            .fixedSize()
+    /// "Racky › books2", "Supabase › public.books": o lugar sempre antes do nome.
+    private func placePrefix(_ node: Node) -> String {
+        switch node.role {
+        case .source: String(localized: "This Mac › ", bundle: .module)
+        case .copy, .direct: node.place.map { $0.name == node.title ? "" : "\($0.name) › " } ?? ""
+        case .agents, .query: ""
         }
-        .buttonStyle(.plain)
     }
 }
 
@@ -590,13 +703,12 @@ struct DataProductionBanner: View {
     }
 
     private func message(_ object: DataObject, live: Int) -> String {
-        let you: String = if case .query = object {
-            String(localized: "Queries that change data ask you to confirm first.", bundle: .module)
-        } else {
-            String(localized: "You're viewing it read only; edits ask you to confirm.", bundle: .module)
-        }
-        guard live > 0 else { return you }
-        return you + " " + (live == 1 ? String(localized: "1 agent is writing here now.", bundle: .module) : String(localized: "\(live) agents are writing here now.", bundle: .module))
+        // Uma frase com as regras: quem pode gravar aqui e o que você pode fazer.
+        let writers = live == 0
+            ? String(localized: "No agent is writing here now.", bundle: .module)
+            : (live == 1 ? String(localized: "1 agent is writing here now (Pause stops new writes; rows already written stay).", bundle: .module)
+                : String(localized: "\(live) agents are writing here now (Pause stops new writes; rows already written stay).", bundle: .module))
+        return writers + " " + String(localized: "You can read freely; anything that changes data asks you to confirm.", bundle: .module)
     }
 }
 

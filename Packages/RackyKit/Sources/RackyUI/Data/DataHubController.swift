@@ -126,6 +126,46 @@ public final class DataHubController {
 
     public func tableTab(_ object: DataObject) -> DataTableTab { tableTabs[object] ?? .data }
 
+    /// Opções de "Save data to" no formulário de nova sessão: o Racky e cada tabela, pasta, aba ou webhook das conexões.
+    func composerDestinations() -> [ComposerDataDestination] {
+        var out = [ComposerDataDestination(
+            key: "racky", title: String(localized: "This Mac (a dataset of this session)", bundle: .module), group: String(localized: "This Mac", bundle: .module), production: false,
+            explanation: String(localized: "Agents save what they collect in a dataset of this session, on this Mac. You can copy it to a connection later.", bundle: .module))]
+        for connection in connections {
+            let prod = connection.environment == .production
+            let place = connection.name + (prod ? " (production)" : "")
+            func add(_ object: DataObject, _ title: String, _ explanation: String) {
+                out.append(ComposerDataDestination(key: object.key, title: title, group: connection.name, production: prod, explanation: explanation))
+            }
+            switch connection.kind.family {
+            case .database, .warehouse:
+                for schema in connection.children {
+                    for table in schema.children where table.kind == .table {
+                        let object = DataObject.table(connection: connection.id, schema: schema.name, name: table.name)
+                        add(object, "\(connection.name) › \(schema.name).\(table.name)",
+                            String(localized: "Agents write each row straight into \(schema.name).\(table.name) on \(place), as they collect. Nothing is kept on this Mac.", bundle: .module))
+                    }
+                }
+            case .storage:
+                for folder in connection.children {
+                    add(.folder(connection: connection.id, path: [folder.name]), "\(connection.name) › \(folder.name)/",
+                        String(localized: "Agents write files (Parquet) into \(folder.name)/ on \(connection.name), one per run.", bundle: .module))
+                }
+            case .spreadsheet:
+                for book in connection.children {
+                    for tab in book.children {
+                        add(.tab(connection: connection.id, spreadsheet: book.name, name: tab.name), "\(connection.name) › \(tab.name)",
+                            String(localized: "Agents append rows to the \(tab.name) tab of \(book.name).", bundle: .module))
+                    }
+                }
+            case .outgoing:
+                add(.webhook(connection: connection.id), connection.name,
+                    String(localized: "Agents' rows are posted to \(connection.address) as they arrive. Nothing is kept.", bundle: .module))
+            }
+        }
+        return out
+    }
+
     // MARK: Registro
 
     public func register(in registry: ActionRegistry) throws {

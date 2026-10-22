@@ -15,7 +15,7 @@ enum DataHubFixtures {
                 id: supabase, kind: .supabase, name: "Supabase", environment: .production, address: "db.xkqzrwm.supabase.co · postgres",
                 children: [
                     DataNode(id: "\(supabase)/public", kind: .schema, name: "public", children: [
-                        DataNode(id: "\(supabase)/public/hotels", kind: .table, name: "hotels", size: 12_430),
+                        DataNode(id: "\(supabase)/public/listings", kind: .table, name: "listings", size: 12_430),
                         DataNode(id: "\(supabase)/public/books", kind: .table, name: "books", size: 80),
                         DataNode(id: "\(supabase)/public/permits", kind: .table, name: "permits", size: 3_112),
                         DataNode(id: "\(supabase)/public/hotel_prices_daily", kind: .view, name: "hotel_prices_daily", size: 941),
@@ -50,7 +50,7 @@ enum DataHubFixtures {
                         DataNode(id: "\(sheets)/pricing/NYC", kind: .sheet, name: "NYC", size: 390),
                     ]),
                 ]),
-            DataConnection(id: webhook, kind: .webhook, name: "Price alerts", environment: nil, address: "https://hooks.acme.dev/racky/price-alerts", children: []),
+            DataConnection(id: webhook, kind: .webhook, name: "Hotel feed", environment: nil, address: "https://hooks.acme.dev/racky/hotels", children: []),
         ]
     }
 
@@ -58,16 +58,16 @@ enum DataHubFixtures {
     static func writers(of object: DataObject, datasetNamed: (String) -> String?) -> [DataWriter] {
         switch object {
         case .table(supabase, "public", "books"):
-            return [DataWriter(id: "copy-books", kind: .sync(from: .dataset("books2")), name: "books2", live: false, detail: "every new row · last copy 5h ago")]
-        case .table(supabase, "public", "hotels"):
+            return [DataWriter(id: "copy-books", kind: .sync(from: .dataset("books2")), name: "books2", live: false, detail: "live copy")]
+        case .table(supabase, "public", "listings"):
             return [
                 DataWriter(id: "agent-claude", kind: .agent(session: "Hotel prices"), name: "Claude Code", live: true, detail: "writing now"),
                 DataWriter(id: "agent-codex", kind: .agent(session: "Hotel prices"), name: "Codex 1", live: true, detail: "writing now"),
             ]
         case .webhook(webhook):
-            return [DataWriter(id: "copy-hook", kind: .sync(from: .dataset("hotels")), name: "hotels", live: false, detail: "batches of 50 rows · last 2m ago")]
+            return [DataWriter(id: "copy-hook", kind: .sync(from: .dataset("hotels")), name: "hotels", live: false, detail: "sends new rows")]
         case .folder(bucket, let path) where path.first == "books":
-            return [DataWriter(id: "copy-s3", kind: .sync(from: .dataset("books2")), name: "books2", live: false, detail: "daily at 06:00 · Parquet")]
+            return [DataWriter(id: "copy-s3", kind: .sync(from: .dataset("books2")), name: "books2", live: false, detail: "daily copy")]
         default:
             return []
         }
@@ -78,11 +78,11 @@ enum DataHubFixtures {
         switch name {
         case "books2", "books":
             return [
-                DataDestination(id: "d1", target: .table(connection: supabase, schema: "public", name: "books"), detail: "copy · every new row"),
-                DataDestination(id: "d2", target: .folder(connection: bucket, path: ["books"]), detail: "copy · daily at 06:00"),
+                DataDestination(id: "d1", target: .table(connection: supabase, schema: "public", name: "books"), detail: "live copy"),
+                DataDestination(id: "d2", target: .folder(connection: bucket, path: ["books"]), detail: "daily copy"),
             ]
         case "hotels":
-            return [DataDestination(id: "d3", target: .webhook(connection: webhook), detail: "batches of 50 rows")]
+            return [DataDestination(id: "d3", target: .webhook(connection: webhook), detail: "sends new rows")]
         default:
             return []
         }
@@ -101,13 +101,13 @@ enum DataHubFixtures {
         case .table(_, _, "books"):
             return DataGrid(
                 columns: [.init(name: "url", type: "text", key: true, nullable: false), .init(name: "title", type: "text"), .init(name: "price", type: "numeric"),
-                          .init(name: "rating", type: "int4"), .init(name: "copied_at", type: "timestamptz")],
+                          .init(name: "rating", type: "int4")],
                 rows: (0..<12).map { n in
                     let b = book(79 - n)
-                    return [b.url, b.title, b.price, b.rating, "2026-10-22 07:24:16"]
+                    return [b.url, b.title, b.price, b.rating]
                 },
                 total: 80)
-        case .table(_, _, "price_history"), .table(_, _, "hotels"), .table(_, _, "hotel_prices_daily"), .table(_, _, "listings"):
+        case .table(_, _, "price_history"), .table(_, _, "listings"), .table(_, _, "hotel_prices_daily"):
             return DataGrid(
                 columns: [.init(name: "url", type: "text", key: true, nullable: false), .init(name: "name", type: "text"), .init(name: "price", type: "int4"),
                           .init(name: "rating", type: "numeric"), .init(name: "city", type: "text"), .init(name: "seen_at", type: "timestamptz")],
@@ -129,7 +129,7 @@ enum DataHubFixtures {
         case .tab:
             return DataGrid(
                 columns: [.init(name: "A · Hotel", type: "text"), .init(name: "B · Price", type: "number"), .init(name: "C · Updated", type: "date")],
-                rows: (0..<10).map { i in ["\(hotelNames[i]) \(1200 - i)", "\(140 + (i * 37) % 480)", "2026-10-22"] },
+                rows: (0..<10).map { i in [["Beverly Wilshire", "Chateau Marmont", "Sunset Tower", "Hotel Bel-Air", "The Standard", "Mondrian", "Kimpton La Peer", "NoMad LA", "Proper Santa Monica", "Hotel Casa Del Mar"][i], "\(310 + i * 23)", "2026-09-30"] },
                 total: 412)
         default:
             return DataGrid(columns: [], rows: [], total: 0)
@@ -162,22 +162,21 @@ enum DataHubFixtures {
 
     static func deliveries(now: Date) -> [DataDelivery] {
         (0..<12).map { i in
-            DataDelivery(id: i, at: now.addingTimeInterval(Double(-i * 95)), status: i == 4 ? 502 : 200, rows: i == 4 ? 0 : 50, milliseconds: 120 + (i * 37) % 300)
+            DataDelivery(id: i, at: now.addingTimeInterval(Double(-i * 95)), status: i == 4 ? 502 : 200, rows: i == 4 ? 0 : 1 + i % 3, milliseconds: 120 + (i * 37) % 300)
         }
     }
 
     /// Corpo de uma entrega ao webhook (prévia).
     static let samplePayload = """
         [
-          { "name": "Grand Plaza 1200", "price": 140, "rating": 3.6, "url": "https://booking.com/hotel/us/stay-1200" },
-          { "name": "Harbor View 1199", "price": 177, "rating": 3.7, "url": "https://booking.com/hotel/us/stay-1199" },
-          … 48 more
+          { "name": "Grand Plaza", "rating": 3.0, "price": 90, "url": "https://hotels.example.test/hotel-1" },
+          { "name": "Harbor View", "rating": 3.1, "price": 97, "url": "https://hotels.example.test/hotel-2" }
         ]
         """
 
     static let sampleQuery = """
         select city, count(*) as hotels, round(avg(price), 2) as avg_price, min(price) as min_price
-        from public.hotels
+        from public.listings
         group by city
         order by hotels desc;
         """

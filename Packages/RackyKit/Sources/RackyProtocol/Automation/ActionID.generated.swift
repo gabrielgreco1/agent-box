@@ -398,6 +398,7 @@ extension ActionID {
     public static let composerEditProfiles = ActionID(unchecked: "composer.editProfiles")
     public static let composerSetSubagentComputers = ActionID(unchecked: "composer.setSubagentComputers")
     public static let composerSetSubagentHarness = ActionID(unchecked: "composer.setSubagentHarness")
+    public static let composerSetDataDestination = ActionID(unchecked: "composer.setDataDestination")
     public static let composerSetPrompt = ActionID(unchecked: "composer.setPrompt")
     public static let composerToggleAdvanced = ActionID(unchecked: "composer.toggleAdvanced")
     public static let composerSetSessionName = ActionID(unchecked: "composer.setSessionName")
@@ -897,6 +898,7 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "composer.editProfiles"), label: "Edit Profiles… (rodapé do combobox de perfil)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "composer.setSubagentComputers"), label: "Subagent computers (segmented)", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "composer.setSubagentHarness"), label: "Subagents run as (segmented)", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "composer.setDataDestination"), label: "Save data to", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "composer.setPrompt"), label: "Prompt", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "composer.toggleAdvanced"), label: "Advanced (disclosure)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "composer.setSessionName"), label: "Session name", shortcut: "", slice: .slice1),

@@ -88,6 +88,8 @@ public struct ComposerDraft: Sendable, Equatable {
     public var subagentComputers = SubagentComputersMode.off
     /// "Subagents run as" (spec subagent-harness): quem roda os subagentes da sessão nova.
     public var subagentHarness = SubagentHarness.claude
+    /// "Save data to" (spec data-hub): `racky` (dataset da sessão) ou a chave de um lugar de uma conexão (`table:<conexão>:<schema>:<nome>`).
+    public var dataDestination = "racky"
 
     public init(projectID: UUID? = nil, whereChoice: ComposerWhere? = nil, automaticName: String = SessionNaming.automaticName()) {
         self.projectID = projectID

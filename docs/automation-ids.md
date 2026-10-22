@@ -230,6 +230,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `overlay.composer.location`
 - `overlay.composer.computers`
 - `overlay.composer.subagentHarness`
+- `overlay.composer.dataDestination`
 - `overlay.composer.proxy`
 - `overlay.composer.watchSubagents`
 - `overlay.composer.summary`
@@ -1062,6 +1063,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `composer.editProfiles` | Edit Profiles… (rodapé do combobox de perfil) | — | slice1 |
 | `composer.setSubagentComputers` | Subagent computers (segmented) | — | slice3 |
 | `composer.setSubagentHarness` | Subagents run as (segmented) | — | slice3 |
+| `composer.setDataDestination` | Save data to | — | slice1 |
 | `composer.setPrompt` | Prompt | — | slice1 |
 | `composer.toggleAdvanced` | Advanced (disclosure) | — | slice1 |
 | `composer.setSessionName` | Session name | — | slice1 |

@@ -57,6 +57,7 @@ struct ComposerView: View {
                     subagentComputers
                     if model.draft.subagentComputers.isOn { subagentHarness }
                 }
+                if model.draft.provider != .shell { dataDestination }
                 advanced
                 summary
                 if let issue = model.boxIssue { errorBox(issue) }
@@ -182,6 +183,38 @@ struct ComposerView: View {
                     .id(model.draft.subagentHarness)
                     .transition(.opacity)
                     .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.base), value: model.draft.subagentHarness)
+            }
+        }
+    }
+
+    /// "Save data to": onde os agentes gravam o que coletam (Racky por padrão, ou um lugar de uma conexão), com a frase do que acontece.
+    private var dataDestination: some View {
+        let options = model.dataDestinations()
+        let chosen = options.first { $0.key == model.draft.dataDestination } ?? options.first
+        var entries: [DSMenuEntry] = []
+        var lastGroup = ""
+        for option in options {
+            if option.group != lastGroup {
+                if !entries.isEmpty { entries.append(.separator(option.group)) }
+                entries.append(.header(option.group))
+                lastGroup = option.group
+            }
+            entries.append(.item(DSMenuItem(option.key, option.title, detail: option.production ? "PROD" : nil)))
+        }
+        return field("Save data to") {
+            VStack(alignment: .leading, spacing: DS.Space.s1_5) {
+                DSCombobox(
+                    id: .overlayComposerDataDestination, selection: chosen?.key ?? "racky", entries: entries,
+                    action: .composerSetDataDestination, searchPlaceholder: String(localized: "Search places…", bundle: .module))
+                if let chosen {
+                    HStack(alignment: .firstTextBaseline, spacing: DS.Space.s1_5) {
+                        if chosen.production { Image(systemName: "exclamationmark.triangle.fill").font(.system(size: DS.Space.s2_5)) }
+                        Text(verbatim: chosen.explanation + (chosen.production ? " " + String(localized: "This is a production database.", bundle: .module) : ""))
+                            .dsFont(DS.Font.small)
+                    }
+                    .foregroundStyle(chosen.production ? DS.Color.warning : DS.Color.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
     }

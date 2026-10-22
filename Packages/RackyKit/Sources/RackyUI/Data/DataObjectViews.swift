@@ -46,7 +46,7 @@ struct DataObjectActions: View {
             case .query:
                 DSButton(.dataQueryRun, id: .dataQueryRun, "Run", variant: .primary, size: .sm, symbol: "play.fill", keycap: "⌘↩")
             case .webhook:
-                DSButton(.dataWebhookTest, id: .dataWebhookTest, "Send a test delivery", variant: .outline, size: .sm, symbol: "paperplane")
+                DSButton(.dataWebhookTest, id: .dataWebhookTest, "Send 2 real rows as a test…", variant: .outline, size: .sm, symbol: "paperplane")
             case .folder, .tab:
                 EmptyView()
             }
@@ -172,7 +172,7 @@ struct TableObjectView: View {
         switch tab {
         case .data: String(localized: "Data", bundle: .module)
         case .structure: String(localized: "Structure", bundle: .module)
-        case .writers: String(localized: "Comes from", bundle: .module) + (hub.writers(of: object).isEmpty ? "" : " \(hub.writers(of: object).count)")
+        case .writers: String(localized: "Who writes here", bundle: .module) + (hub.writers(of: object).isEmpty ? "" : " \(hub.writers(of: object).count)")
         }
     }
 
@@ -201,7 +201,7 @@ struct TableObjectView: View {
                             .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.secondary))
                         VStack(alignment: .leading, spacing: .zero) {
                             HStack(spacing: DS.Space.s1_5) {
-                                Text(verbatim: { if case .sync = writer.kind { "Racky › \(writer.name)" } else { writer.name } }()).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary)
+                                Text(verbatim: { if case .sync = writer.kind { String(localized: "\(writer.name) (this Mac)", bundle: .module) } else { writer.name } }()).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary)
                                 if writer.live { LiveDot() }
                             }
                             Text(verbatim: detail(writer)).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
@@ -225,9 +225,9 @@ struct TableObjectView: View {
 
     private func detail(_ writer: DataWriter) -> String {
         switch writer.kind {
-        case .agent(let session): String(localized: "Agent in session \(session) · \(writer.detail)", bundle: .module)
+        case .agent(let session): String(localized: "Agent in session \(session) · \(writer.detail). Pause stops its new writes; rows already written stay.", bundle: .module)
         case .sync(let from):
-            if case .dataset(let name) = from { String(localized: "Copy of the Racky dataset \(name), which is the source · \(writer.detail)", bundle: .module) } else { writer.detail }
+            if case .dataset(let name) = from { String(localized: "One-way copy of \(name) on this Mac, the original · \(writer.detail)", bundle: .module) } else { writer.detail }
         }
     }
 }
@@ -364,8 +364,8 @@ struct WebhookObjectView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: DS.Space.s6) {
                 fact(String(localized: "Endpoint", bundle: .module), "POST " + (connection?.address ?? ""))
-                fact(String(localized: "Body", bundle: .module), String(localized: "JSON array, up to 50 rows", bundle: .module))
-                fact(String(localized: "Delivered today", bundle: .module), String(localized: "\(deliveries.filter { $0.status < 300 }.count) of \(deliveries.count)", bundle: .module))
+                fact(String(localized: "Body", bundle: .module), String(localized: "JSON array of the new rows, as they arrive", bundle: .module))
+                fact(String(localized: "Delivered today", bundle: .module), String(localized: "\(deliveries.count) of \(deliveries.count), 1 after a retry", bundle: .module))
                 Spacer(minLength: 0)
             }
             .padding(DS.Space.s4)
@@ -392,7 +392,7 @@ struct WebhookObjectView: View {
                     columns: [.init(name: "sent", type: "time"), .init(name: "status", type: "int"), .init(name: "rows", type: "int"), .init(name: "duration", type: "int")],
                     rows: deliveries.map { [hub.datasets.clock($0.at), "\($0.status)", "\($0.rows)", "\($0.milliseconds) ms"] },
                     total: deliveries.count),
-                footer: String(localized: "\(deliveries.count) deliveries · 1 failed, retried", bundle: .module))
+                footer: String(localized: "\(deliveries.count) deliveries · the 502 was retried and went through", bundle: .module))
                 .a11y(.dataWebhookLog, kind: "table")
         }
     }

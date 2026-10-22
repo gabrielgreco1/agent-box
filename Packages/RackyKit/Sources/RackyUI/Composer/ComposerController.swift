@@ -50,6 +50,8 @@ final class ComposerController {
     private let automationEnabled: Bool
     var picker: any SessionFolderPicking = OpenPanelSessionFolderPicker()
     private(set) var model: ComposerModel?
+    /// Lugares de "Save data to" (área Data).
+    @ObservationIgnored var dataDestinations: () -> [ComposerDataDestination] = { [] }
     private var store: RackyStore?
     private var registry: ActionRegistry?
     private var saved = ComposerPersistedState()
@@ -81,6 +83,7 @@ final class ComposerController {
         let current = sidebar.selectedSession.flatMap { sidebar.session($0)?.projectID }
         let model = ComposerModel(sidebar: sidebar, settings: settings, initial: saved, preferredProject: project ?? current)
         if let whereChoice, model.whereOptions.contains(whereChoice) { model.setWhere(whereChoice) }
+        model.dataDestinations = dataDestinations
         self.model = model
         return overlays.present(
             OverlaySpec(
@@ -261,6 +264,10 @@ final class ComposerController {
         try edit(.composerSetSubagentHarness) { model, arg in
             if let value = arg.value, let harness = SubagentHarness(rawValue: value) { model.draft.subagentHarness = harness }
             return model.draft.subagentHarness.rawValue
+        }
+        try edit(.composerSetDataDestination) { model, arg in
+            if let value = arg.value { model.draft.dataDestination = value }
+            return model.draft.dataDestination
         }
         try edit(.composerSetProfile) { model, arg in
             if let value = arg.value { model.draft.profileID = UUID(uuidString: value) }
