@@ -97,10 +97,16 @@ public struct DSSegmented: View {
     public struct Option: Identifiable, Equatable {
         public let id: String
         public let title: LocalizedStringKey
+        /// Logos antes do nome (ex.: o agente de cada opção); dois logos para "Mixed".
+        public let logos: [DSAgentKind]
+        /// Explica a opção no tooltip (no lugar de uma linha de texto embaixo do controle).
+        public let help: String?
 
-        public init(_ id: String, _ title: LocalizedStringKey) {
+        public init(_ id: String, _ title: LocalizedStringKey, logos: [DSAgentKind] = [], help: String? = nil) {
             self.id = id
             self.title = title
+            self.logos = logos
+            self.help = help
         }
 
         public static func == (lhs: Option, rhs: Option) -> Bool { lhs.id == rhs.id }
@@ -133,9 +139,15 @@ public struct DSSegmented: View {
             ForEach(options) { option in
                 let active = option.id == selection
                 ActionButton(action, argument: .select(option.id)) {
-                    Text(option.title, bundle: .module)
+                    HStack(spacing: DS.Space.s1_5) {
+                        if !option.logos.isEmpty {
+                            HStack(spacing: -DS.Space.s1) { ForEach(Array(option.logos.enumerated()), id: \.offset) { DSAgentLogo($0.element, size: DS.Space.s4) } }
+                        }
+                        Text(option.title, bundle: .module)
+                    }
                 }
                 .buttonStyle(DSSegmentStyle(active: active, fillWidth: fillWidth))
+                .help(option.help ?? "")
                 .background {
                     if active {
                         RoundedRectangle(cornerRadius: DS.Radius.sm)

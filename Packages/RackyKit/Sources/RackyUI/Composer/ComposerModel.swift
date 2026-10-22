@@ -244,4 +244,6 @@ struct ComposerDataDestination: Equatable {
     var group: String
     var production: Bool
     var explanation: String
+    /// Logo do lugar (nil = este Mac).
+    var brand: DSDataBrand? = nil
 }

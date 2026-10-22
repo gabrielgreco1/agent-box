@@ -11367,7 +11367,8 @@
     "table": {},
     "Start in a new tab": {},
     "Open in a tab": {},
-    "Beside the agent": {}
+    "Beside the agent": {},
+    "Command": {}
   },
   "version": "1.0"
 }

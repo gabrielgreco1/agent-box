@@ -9,6 +9,8 @@ public struct DSMenuItem: Identifiable, Equatable, Sendable {
     public enum Icon: Equatable, Sendable {
         case symbol(String)
         case agent(DSAgentKind)
+        /// Logo de um banco, bucket, planilha ou webhook (cor da marca, sem fundo).
+        case data(DSDataBrand)
     }
 
     public let id: String

@@ -35,6 +35,8 @@ public struct DSComboboxField: View {
                         .frame(width: DSMetrics.menuItemIcon, height: DSMetrics.menuItemIcon)
                 case .agent(let kind):
                     DSAgentLogo(kind, size: DSMetrics.menuItemIcon)
+                case .data(let brand):
+                    DSDataLogo(brand, size: DSMetrics.menuItemIcon)
                 }
             }
             Text(verbatim: title)

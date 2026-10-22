@@ -180,6 +180,8 @@ extension A11yID {
     public static let overlayComposerSummary = A11yID(unchecked: "overlay.composer.summary")
     /// `overlay.composer.skipPermissions`
     public static let overlayComposerSkipPermissions = A11yID(unchecked: "overlay.composer.skipPermissions")
+    /// `overlay.composer.dataNote`
+    public static let overlayComposerDataNote = A11yID(unchecked: "overlay.composer.dataNote")
     /// `overlay.composer.createMore`
     public static let overlayComposerCreateMore = A11yID(unchecked: "overlay.composer.createMore")
     /// `overlay.composer.cancel`
@@ -2047,6 +2049,7 @@ extension A11yID {
         A11yIDSpec(pattern: "overlay.composer.watchSubagents", surface: "Composer"),
         A11yIDSpec(pattern: "overlay.composer.summary", surface: "Composer"),
         A11yIDSpec(pattern: "overlay.composer.skipPermissions", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.dataNote", surface: "Composer"),
         A11yIDSpec(pattern: "overlay.composer.createMore", surface: "Composer"),
         A11yIDSpec(pattern: "overlay.composer.cancel", surface: "Composer"),
         A11yIDSpec(pattern: "overlay.composer.submit", surface: "Composer"),

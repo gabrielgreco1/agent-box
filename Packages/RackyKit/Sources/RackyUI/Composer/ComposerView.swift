@@ -45,14 +45,6 @@ struct ComposerView: View {
                         }
                     }
                 }
-                if model.draft.provider != .shell {
-                    field("Prompt") {
-                        DSPromptField(
-                            String(localized: "What should the agent do? (optional)", bundle: .module), text: Bindable(model).draft.prompt,
-                            id: .overlayComposerPrompt, action: .composerSetPrompt, submitAction: .composerSubmit, autofocus: true)
-                            .id(model.focusPromptNonce)
-                    }
-                }
                 if model.draft.provider.supportsSubagentComputers {
                     subagentComputers
                     if model.draft.subagentComputers.isOn { subagentHarness }
@@ -148,42 +140,21 @@ struct ComposerView: View {
     /// requisições) a cada subagente que vai estudar sites. A explicação muda com a escolha, com transição suave.
     private var subagentComputers: some View {
         field("Subagent computers") {
-            VStack(alignment: .leading, spacing: DS.Space.s1_5) {
-                DSSegmented(
-                    SubagentComputersMode.allCases.map { .init($0.rawValue, $0.segmentTitle) },
-                    selection: model.draft.subagentComputers.rawValue, action: .composerSetSubagentComputers, id: .overlayComposerComputers,
-                    fillWidth: true, height: DSMetrics.segmentedHeightComposer)
-                HStack(spacing: DS.Space.s1_5) {
-                    Image(systemName: model.draft.subagentComputers.isOn ? "desktopcomputer" : "desktopcomputer.trianglebadge.exclamationmark")
-                        .font(.system(size: DS.Space.s3))
-                        .foregroundStyle(model.draft.subagentComputers.isOn ? DS.Color.textSecondary : DS.Color.textQuaternary)
-                        .contentTransition(.symbolEffect(.replace))
-                    Text(verbatim: model.draft.subagentComputers.explanation)
-                        .dsFont(DS.Font.small)
-                        .foregroundStyle(DS.Color.textTertiary)
-                        .id(model.draft.subagentComputers)
-                        .transition(MotionPolicy.shared.reduceMotion ? .opacity : .opacity.combined(with: .offset(y: DS.Space.s1)))
-                }
-                .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.base), value: model.draft.subagentComputers)
-            }
+            // O que cada opção faz fica no tooltip do segmento: sem linha de texto embaixo.
+            DSSegmented(
+                SubagentComputersMode.allCases.map { .init($0.rawValue, $0.segmentTitle, help: $0.explanation) },
+                selection: model.draft.subagentComputers.rawValue, action: .composerSetSubagentComputers, id: .overlayComposerComputers,
+                fillWidth: true, height: DSMetrics.segmentedHeightComposer)
         }
     }
 
     /// "Subagents run as": Claude (os subagentes do próprio agente) ou sessões separadas de Codex / OpenCode, cada uma num pane.
     private var subagentHarness: some View {
         field("Subagents run as") {
-            VStack(alignment: .leading, spacing: DS.Space.s1_5) {
-                DSSegmented(
-                    SubagentHarness.allCases.map { .init($0.rawValue, LocalizedStringKey($0.segmentTitle)) },
-                    selection: model.draft.subagentHarness.rawValue, action: .composerSetSubagentHarness, id: .overlayComposerSubagentHarness,
-                    fillWidth: true, height: DSMetrics.segmentedHeightComposer)
-                Text(verbatim: model.draft.subagentHarness.explanation)
-                    .dsFont(DS.Font.small)
-                    .foregroundStyle(DS.Color.textTertiary)
-                    .id(model.draft.subagentHarness)
-                    .transition(.opacity)
-                    .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.base), value: model.draft.subagentHarness)
-            }
+            DSSegmented(
+                SubagentHarness.allCases.map { .init($0.rawValue, LocalizedStringKey($0.segmentTitle), logos: $0.logos, help: $0.explanation) },
+                selection: model.draft.subagentHarness.rawValue, action: .composerSetSubagentHarness, id: .overlayComposerSubagentHarness,
+                fillWidth: true, height: DSMetrics.segmentedHeightComposer)
         }
     }
 
@@ -199,43 +170,25 @@ struct ComposerView: View {
                 entries.append(.header(option.group))
                 lastGroup = option.group
             }
-            entries.append(.item(DSMenuItem(option.key, option.title, detail: option.production ? String(localized: "Protected", bundle: .module) : nil)))
+            // Cada lugar com o logo (este Mac, Supabase, S3…); protegido diz em letra pequena à direita.
+            entries.append(.item(DSMenuItem(
+                option.key, option.title, icon: option.brand.map { .data($0) } ?? .symbol("laptopcomputer"),
+                detail: option.production ? String(localized: "Protected", bundle: .module) : nil)))
         }
         return field("Save data to") {
             VStack(alignment: .leading, spacing: DS.Space.s1_5) {
                 DSCombobox(
                     id: .overlayComposerDataDestination, selection: chosen?.key ?? "racky", entries: entries,
                     action: .composerSetDataDestination, searchPlaceholder: String(localized: "Search places…", bundle: .module))
+                // Fora deste Mac: uma linha só com o caminho do dado; numa conexão protegida, em âmbar com o cadeado.
                 if let chosen, chosen.key != "racky" {
-                    // Fora do padrão: diz que mudou e como voltar.
-                    HStack(spacing: DS.Space.s1_5) {
-                        if chosen.production { ConnectionBadges(protected: true) }
-                        Text("Not the default (this Mac only).", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
-                        ActionButton(.composerSetDataDestination, argument: .select("racky")) {
-                            Text("Keep it on this Mac only", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.dataKey)
-                        }
-                        .buttonStyle(.plain)
+                    HStack(alignment: .firstTextBaseline, spacing: DS.Space.s1_5) {
+                        Image(systemName: chosen.production ? "lock.fill" : "arrow.triangle.branch")
+                            .font(.system(size: DS.Space.s2_5))
+                        Text(verbatim: chosen.explanation).dsFont(DS.Font.small).fixedSize(horizontal: false, vertical: true)
                     }
-                }
-                if let chosen {
-                    if chosen.production {
-                        // Produção: caixa de aviso com contorno, não uma linha solta fácil de passar batido.
-                        HStack(alignment: .top, spacing: DS.Space.s2) {
-                            Image(systemName: "exclamationmark.triangle.fill").font(.system(size: DS.Space.s3)).foregroundStyle(DS.Color.warning)
-                            VStack(alignment: .leading, spacing: DS.Space.s0_5) {
-                                Text("Copies to a protected connection", bundle: .module).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary)
-                                Text(verbatim: chosen.explanation).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
-                            }
-                        }
-                        .padding(DS.Space.s2_5)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(RoundedRectangle(cornerRadius: DS.Radius.md).fill(DS.Color.warningBackground))
-                        .overlay(RoundedRectangle(cornerRadius: DS.Radius.md).strokeBorder(DS.Color.warningBorder))
-                        .fixedSize(horizontal: false, vertical: true)
-                    } else {
-                        Text(verbatim: chosen.explanation).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
+                    .foregroundStyle(chosen.production ? DS.Color.warning : DS.Color.textTertiary)
+                    .a11y(.overlayComposerDataNote, kind: "text")
                 }
             }
         }
@@ -261,6 +214,7 @@ struct ComposerView: View {
             .accessibilityValue(Text(verbatim: model.advancedOpen ? "expanded" : "collapsed"))
             if model.advancedOpen {
                 VStack(alignment: .leading, spacing: DS.Space.s3) {
+                    command
                     field("Session name") {
                         DSTextField(
                             LocalizedStringKey(model.draft.sessionTitle), text: Bindable(model).draft.sessionName, id: .overlayComposerName,
@@ -294,31 +248,31 @@ struct ComposerView: View {
 
     // MARK: Resumo, erro e footer
 
-    private var summary: some View {
-        let text = model.summary
-        // O comando que vai rodar, com nome: até duas linhas (o tooltip tem o texto completo). Se o perfil pula as permissões, diz em
-        // palavras o que isso quer dizer.
-        return VStack(alignment: .leading, spacing: DS.Space.s0_5) {
-            if text.contains("--dangerously-skip-permissions") {
-                // Perfil que pula as permissões: aviso em âmbar (cor só no ícone e no texto, sem fundo), fácil de ver antes do Create.
-                HStack(spacing: DS.Space.s1) {
-                    Image(systemName: "exclamationmark.triangle.fill").font(.system(size: DS.Space.s2_5))
-                    Text("The agent won't ask before running commands (set in the profile)", bundle: .module).dsFont(DS.Font.label)
-                }
-                .foregroundStyle(DS.Color.warning)
-                .a11y(.overlayComposerSkipPermissions, kind: "text")
+    /// Fora do Advanced só fica o aviso de um perfil que pula as permissões; o comando inteiro mora no Advanced.
+    @ViewBuilder private var summary: some View {
+        if model.summary.contains("--dangerously-skip-permissions") {
+            HStack(spacing: DS.Space.s1) {
+                Image(systemName: "exclamationmark.triangle.fill").font(.system(size: DS.Space.s2_5))
+                Text("The agent won't ask before running commands (set in the profile)", bundle: .module).dsFont(DS.Font.label)
             }
-            Text("Will run", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+            .foregroundStyle(DS.Color.warning)
+            .a11y(.overlayComposerSkipPermissions, kind: "text")
+        }
+    }
+
+    private var command: some View {
+        let text = model.summary
+        return field("Command") {
             Text(verbatim: text)
                 .dsFont(DS.Font.monoMicro)
                 .foregroundStyle(DS.Color.textSecondary)
                 .lineLimit(2)
                 .truncationMode(.middle)
                 .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .dsTooltip(text, side: .top)
                 .a11y(.overlayComposerSummary, kind: "text", value: text)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func errorBox(_ issue: ComposerIssue) -> some View {

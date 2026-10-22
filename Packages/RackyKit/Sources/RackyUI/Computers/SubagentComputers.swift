@@ -271,6 +271,16 @@ extension SubagentHarness {
         }
     }
 
+    /// Logos no seletor do composer: o do agente; Mixed mostra os três.
+    var logos: [DSAgentKind] {
+        switch self {
+        case .claude: [.claude]
+        case .codex: [.codex]
+        case .opencode: [.opencode]
+        case .mixed: [.claude, .codex, .opencode]
+        }
+    }
+
     /// Logo do agente no menu (Mixed sem logo).
     var menuIcon: DSMenuItem.Icon? {
         switch self {

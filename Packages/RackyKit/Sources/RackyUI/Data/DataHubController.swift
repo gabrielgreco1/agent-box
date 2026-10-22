@@ -180,7 +180,8 @@ public final class DataHubController {
             let prod = connection.protected
             let place = connection.name + (prod ? " (protected)" : "")
             func add(_ object: DataObject, _ title: String, _ explanation: String) {
-                out.append(ComposerDataDestination(key: object.key, title: title, group: connection.name, production: prod, explanation: explanation))
+                out.append(ComposerDataDestination(
+                    key: object.key, title: title, group: connection.name, production: prod, explanation: explanation, brand: connection.kind.brand))
             }
             switch connection.kind.family {
             case .database, .warehouse:

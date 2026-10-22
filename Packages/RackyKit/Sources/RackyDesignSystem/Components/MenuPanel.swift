@@ -316,6 +316,8 @@ public struct DSMenuPanelView: View {
                 .frame(width: DSMetrics.menuItemIcon, height: DSMetrics.menuItemIcon)
         case .agent(let kind):
             DSAgentLogo(kind, size: DSMetrics.menuItemIcon)
+        case .data(let brand):
+            DSDataLogo(brand, size: DSMetrics.menuItemIcon)
         }
     }
 
