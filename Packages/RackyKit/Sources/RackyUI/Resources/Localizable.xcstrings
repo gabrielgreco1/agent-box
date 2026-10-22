@@ -11259,6 +11259,28 @@
           }
         }
       }
+    },
+    "Use this Mac instead (default)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use this Mac instead (default)"
+          }
+        }
+      }
+    },
+    "You changed this from the default.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You changed this from the default."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

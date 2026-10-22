@@ -276,6 +276,43 @@ struct DataExplorer: View {
     }
 }
 
+/// O papel do objeto no caminho do dado, grande o bastante para ser lido de relance: o original, uma cópia de mão única ou uma tabela
+/// onde os agentes gravam direto.
+struct DataRoleBadge: View {
+    enum Role {
+        case original, copy, direct
+
+        @MainActor init?(hub: DataHubController, object: DataObject) {
+            switch object {
+            case .dataset: self = .original
+            case .query, .tab: return nil
+            default:
+                if hub.copySource(of: object) != nil { self = .copy } else if !hub.writers(of: object).isEmpty { self = .direct } else { return nil }
+            }
+        }
+    }
+
+    let role: Role
+
+    var body: some View {
+        let (title, symbol, tint): (String, String, Color) = switch role {
+        case .original: (String(localized: "Original", bundle: .module), "star", DS.Color.dataValid)
+        case .copy: (String(localized: "One-way copy", bundle: .module), "arrow.right.doc.on.clipboard", DS.Color.dataKey)
+        case .direct: (String(localized: "Written by agents", bundle: .module), "person.2", DS.Color.textSecondary)
+        }
+        HStack(spacing: DS.Space.s1) {
+            Image(systemName: symbol).font(.system(size: DS.Space.s2_5, weight: .semibold))
+            Text(verbatim: title).dsFont(DS.Font.label)
+        }
+        .foregroundStyle(tint)
+        .padding(.horizontal, DS.Space.s2)
+        .frame(height: DataMetrics.chipHeight)
+        .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(tint.opacity(0.1)))
+        .overlay(RoundedRectangle(cornerRadius: DS.Radius.sm).strokeBorder(tint.opacity(0.35)))
+        .fixedSize()
+    }
+}
+
 /// `PROD` em âmbar (cuidado), `DEV` neutro.
 struct EnvironmentBadge: View {
     let environment: DataEnvironment
@@ -375,7 +412,7 @@ enum DataLabels {
         case .table(let c, _, _): hub.connection(c)?.kind.family == .warehouse ? String(localized: "Warehouse table", bundle: .module) : String(localized: "Database table", bundle: .module)
         case .query: String(localized: "SQL query", bundle: .module)
         case .folder: String(localized: "Storage folder", bundle: .module)
-        case .webhook: String(localized: "Webhook destination", bundle: .module)
+        case .webhook: String(localized: "Webhook · receives only, nothing to browse", bundle: .module)
         case .tab: String(localized: "Spreadsheet tab", bundle: .module)
         }
     }
@@ -400,6 +437,7 @@ struct DataLocationBar: View {
                     .a11y(.dataLocationCrumb("\(index)"), kind: "text", label: crumb)
             }
             Spacer(minLength: DS.Space.s3)
+            if let role = DataRoleBadge.Role(hub: hub, object: object) { DataRoleBadge(role: role) }
             VStack(alignment: .trailing, spacing: .zero) {
                 Text(verbatim: DataLabels.kind(object, hub: hub)).dsFont(DS.Font.label).foregroundStyle(DS.Color.textSecondary)
                 if let source = hub.copySource(of: object) {
@@ -547,7 +585,7 @@ struct DataLineageStrip: View {
     }
 
     private var emptyText: String {
-        String(localized: "Racky doesn't write here or copy from here.", bundle: .module)
+        String(localized: "Nothing writes here yet. To have agents write here, pick it under Save data to when you start a session.", bundle: .module)
     }
 
     // MARK: Montagem

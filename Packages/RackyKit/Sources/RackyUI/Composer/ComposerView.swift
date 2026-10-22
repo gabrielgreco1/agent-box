@@ -206,6 +206,17 @@ struct ComposerView: View {
                 DSCombobox(
                     id: .overlayComposerDataDestination, selection: chosen?.key ?? "racky", entries: entries,
                     action: .composerSetDataDestination, searchPlaceholder: String(localized: "Search places…", bundle: .module))
+                if let chosen, chosen.key != "racky" {
+                    // Fora do padrão: diz que mudou e como voltar.
+                    HStack(spacing: DS.Space.s1_5) {
+                        if chosen.production { EnvironmentBadge(environment: .production) }
+                        Text("You changed this from the default.", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                        ActionButton(.composerSetDataDestination, argument: .select("racky")) {
+                            Text("Use this Mac instead (default)", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.dataKey)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
                 if let chosen {
                     HStack(alignment: .firstTextBaseline, spacing: DS.Space.s1_5) {
                         if chosen.production { Image(systemName: "exclamationmark.triangle.fill").font(.system(size: DS.Space.s2_5)) }
