@@ -712,18 +712,13 @@ struct DataLocationBar: View {
 
     var body: some View {
         HStack(spacing: DS.Space.s2) {
-            placeChip
-            // Sem espaço para a trilha toda, fica só o nome do objeto (o lugar nunca encolhe).
+            // Sem espaço para a trilha toda, fica só o nome do objeto; com menos ainda, o lugar perde o subtítulo antes do nome encolher.
             ViewThatFits(in: .horizontal) {
-                crumbs(trail)
-                crumbs(Array(trail.suffix(1)))
+                place(compact: false, items: trail)
+                place(compact: false, items: Array(trail.suffix(1)))
+                place(compact: true, items: Array(trail.suffix(1)))
             }
             .layoutPriority(-1)
-            .overlay {
-                if let drag {
-                    PaneDragSource(controller: drag.controller, payload: .otherPane(drag.paneID), title: { trail.last ?? "" })
-                }
-            }
             Spacer(minLength: DS.Space.s3)
             // Com pouco espaço, o lado direito encolhe: primeiro some o tipo, depois os nomes dos botões.
             ViewThatFits(in: .horizontal) {
@@ -743,6 +738,18 @@ struct DataLocationBar: View {
         .frame(height: DataMetrics.locationHeight)
         .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
         .a11y(.dataLocation, kind: "group", label: ([placeName] + trail).joined(separator: " › "))
+    }
+
+    private func place(compact: Bool, items: [String]) -> some View {
+        HStack(spacing: DS.Space.s2) {
+            placeChip(compact: compact)
+            crumbs(items)
+                .overlay {
+                    if let drag {
+                        PaneDragSource(controller: drag.controller, payload: .otherPane(drag.paneID), title: { trail.last ?? "" })
+                    }
+                }
+        }
     }
 
     private func crumbs(_ items: [String]) -> some View {
@@ -776,19 +783,21 @@ struct DataLocationBar: View {
     private var connection: DataConnection? { hub.connection(object.connectionID) }
     private var placeName: String { connection?.name ?? String(localized: "This Mac", bundle: .module) }
 
-    private var placeChip: some View {
+    private func placeChip(compact: Bool) -> some View {
         HStack(spacing: DS.Space.s1_5) {
             if let connection {
                 DSDataLogo(connection.kind.brand, size: DataMetrics.markSize)
                 Text(verbatim: connection.name).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary)
-                if connection.kind.title != connection.name {
+                if !compact, connection.kind.title != connection.name {
                     Text(verbatim: connection.kind.title).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
                 }
                 if let environment = connection.environment { EnvironmentBadge(environment: environment) }
             } else {
                 Image(systemName: "laptopcomputer").font(.system(size: DataMetrics.icon)).foregroundStyle(DS.Color.textSecondary)
                 Text("This Mac", bundle: .module).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary)
-                Text("saved by Racky", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                if !compact {
+                    Text("saved by Racky", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                }
             }
         }
         .padding(.horizontal, DS.Space.s2)
@@ -874,6 +883,13 @@ struct DataLineageStrip: View {
                 }
             }
             .padding(.horizontal, DS.Space.s4)
+        }
+        // Sem espaço para a trilha toda, a ponta direita esmaece: dá para ver que continua (rola de lado) em vez de um chip cortado.
+        .mask {
+            HStack(spacing: 0) {
+                Color.black
+                LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing).frame(width: DS.Space.s6)
+            }
         }
         .frame(height: DataMetrics.pathHeight)
         .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
