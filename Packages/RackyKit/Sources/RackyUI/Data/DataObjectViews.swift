@@ -79,6 +79,7 @@ struct DataObjectActions: View {
 struct DataGridView: View {
     let grid: DataGrid
     var footer: String? = nil
+    @State private var moreColumns = false
     /// Anterior/seguinte habilitados (tabelas de conexão paginadas); `nil` = sem paginação.
     var pager: (previous: Bool, next: Bool)? = nil
 
@@ -119,7 +120,7 @@ struct DataGridView: View {
                 // A grade começa no canto de cima, mesmo com poucas linhas.
                 .frame(minWidth: viewport.size.width, minHeight: viewport.size.height, alignment: .topLeading)
             }
-            .moreColumnsCue()
+            .moreColumnsCue($moreColumns)
             }
             HStack(spacing: DS.Space.s2) {
                 if let pager {
@@ -129,6 +130,7 @@ struct DataGridView: View {
                 Text(verbatim: footer ?? String(localized: "Showing \(grid.rows.count) of \(grid.total.formatted()) rows", bundle: .module))
                     .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
                 Spacer(minLength: 0)
+                if moreColumns { MoreColumnsNote() }
             }
             .padding(.horizontal, DS.Space.s3)
             .frame(height: DatasetMetrics.footerHeight)

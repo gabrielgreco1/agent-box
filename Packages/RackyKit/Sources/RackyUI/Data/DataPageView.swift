@@ -914,31 +914,45 @@ struct DataLineageStrip: View {
 
     private var compactBody: some View {
         let columns = lineage
-        return ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: DS.Space.s1_5) {
-                if columns.isEmpty {
-                    Text("Racky doesn't write here.", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
-                }
-                ForEach(Array(columns.enumerated()), id: \.offset) { index, column in
-                    if index > 0 {
-                        Image(systemName: "arrow.right").font(.system(size: DS.Space.s2_5, weight: .semibold)).foregroundStyle(DS.Color.textQuaternary)
-                            .help(column.edge)
+        // Cabe inteiro: uma linha. Não cabe: cada grupo mostra o primeiro e "+N" (o resto fica no Overview); só então a linha rola.
+        return ViewThatFits(in: .horizontal) {
+            compactChips(columns, limit: nil)
+            compactChips(columns, limit: 1)
+            ScrollView(.horizontal, showsIndicators: false) { compactChips(columns, limit: 1) }
+                // A ponta direita esmaece: dá para ver que continua (rola de lado) em vez de um chip cortado.
+                .mask {
+                    HStack(spacing: 0) {
+                        Color.black
+                        LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing).frame(width: DS.Space.s6)
                     }
-                    ForEach(column.nodes) { node in smallChip(node) }
                 }
-            }
-            .padding(.horizontal, DS.Space.s4)
         }
-        // Sem espaço para a trilha toda, a ponta direita esmaece: dá para ver que continua (rola de lado) em vez de um chip cortado.
-        .mask {
-            HStack(spacing: 0) {
-                Color.black
-                LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing).frame(width: DS.Space.s6)
-            }
-        }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: DataMetrics.pathHeight)
         .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
         .a11y(.dataPath, kind: "group", label: columns.flatMap(\.nodes).map(\.title).joined(separator: " → "))
+    }
+
+    private func compactChips(_ columns: [Column], limit: Int?) -> some View {
+        HStack(spacing: DS.Space.s1_5) {
+            if columns.isEmpty {
+                Text("Racky doesn't write here.", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+            }
+            ForEach(Array(columns.enumerated()), id: \.offset) { index, column in
+                if index > 0 {
+                    Image(systemName: "arrow.right").font(.system(size: DS.Space.s2_5, weight: .semibold)).foregroundStyle(DS.Color.textQuaternary)
+                        .help(column.edge)
+                }
+                let shown = limit.map { column.nodes.prefix(max($0, column.nodes.firstIndex(where: \.current).map { $0 + 1 } ?? $0)) } ?? column.nodes[...]
+                ForEach(Array(shown)) { node in smallChip(node) }
+                if shown.count < column.nodes.count {
+                    Text(verbatim: "+\(column.nodes.count - shown.count)").dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                        .help(column.nodes.dropFirst(shown.count).map(\.title).joined(separator: ", "))
+                }
+            }
+        }
+        .padding(.horizontal, DS.Space.s4)
+        .fixedSize()
     }
 
     private func smallChip(_ node: Node) -> some View {

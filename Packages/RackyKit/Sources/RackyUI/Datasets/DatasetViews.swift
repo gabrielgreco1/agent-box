@@ -321,6 +321,7 @@ private struct HoverRow<Content: View>: View {
 struct DatasetPageView: View {
     let controller: DatasetsController
     @Bindable var model: DatasetViewModel
+    @State private var moreColumns = false
     /// Pane que mostra a tabela (`nil` = página do centro): o título arrasta o pane e o X fecha só ele.
     var paneID: UUID?
     var drag: PaneDragController?
@@ -520,7 +521,7 @@ struct DatasetPageView: View {
                     }
                     .frame(minWidth: viewport.size.width, minHeight: viewport.size.height, alignment: .top)
                 }
-                .moreColumnsCue()
+                .moreColumnsCue($moreColumns)
             }
             footer(snapshot)
         }
@@ -578,6 +579,7 @@ struct DatasetPageView: View {
                 .dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
                 .lineLimit(1).fixedSize()
             Spacer(minLength: DS.Space.s2)
+            if moreColumns { MoreColumnsNote() }
             Text(verbatim: footerDetail(snapshot)).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(1)
         }
         .padding(.horizontal, DS.Space.s3)
@@ -937,9 +939,9 @@ struct DatasetToolbar: View {
 
 }
 
-/// Grade mais larga que a área: a borda direita esmaece e uma seta no topo diz que há mais colunas (rola de lado). Some no fim.
+/// Grade mais larga que a área: a borda direita esmaece (as linhas continuam para o lado) e o rodapé diz "More columns →".
 struct MoreColumnsCue: ViewModifier {
-    @State private var more = false
+    @Binding var more: Bool
 
     func body(content: Content) -> some View {
         content
@@ -950,27 +952,29 @@ struct MoreColumnsCue: ViewModifier {
             }
             .overlay(alignment: .trailing) {
                 if more {
-                    LinearGradient(stops: [.init(color: DS.Color.canvas.opacity(0), location: 0), .init(color: DS.Color.canvas, location: 0.7)], startPoint: .leading, endPoint: .trailing)
-                        .frame(width: DS.Space.s10 + DS.Space.s4)
-                        .overlay(alignment: .top) {
-                            Image(systemName: "arrow.right")
-                                .font(.system(size: DS.Space.s2_5, weight: .semibold))
-                                .foregroundStyle(DS.Color.textPrimary)
-                                .frame(width: DS.Space.s6, height: DS.Space.s6)
-                                .background(Circle().fill(DS.Color.secondary))
-                                .overlay(Circle().strokeBorder(DS.Color.border))
-                                .padding(.top, DS.Space.s1_5)
-                                .padding(.trailing, DS.Space.s1)
-                                .frame(maxWidth: .infinity, alignment: .trailing)
-                                .help(String(localized: "More columns: scroll sideways", bundle: .module))
-                        }
+                    LinearGradient(stops: [.init(color: DS.Color.canvas.opacity(0), location: 0), .init(color: DS.Color.canvas, location: 0.8)], startPoint: .leading, endPoint: .trailing)
+                        .frame(width: DS.Space.s10)
                         .allowsHitTesting(false)
-                        .a11y(.dataMoreColumns, kind: "hint")
                 }
             }
     }
 }
 
+/// A nota do rodapé quando há colunas fora da área (no lugar de uma seta por cima dos cabeçalhos).
+struct MoreColumnsNote: View {
+    var body: some View {
+        HStack(spacing: DS.Space.s1) {
+            Text("More columns", bundle: .module)
+            Image(systemName: "arrow.right").font(.system(size: DS.Space.s2_5, weight: .semibold))
+        }
+        .dsFont(DS.Font.small)
+        .foregroundStyle(DS.Color.textSecondary)
+        .fixedSize()
+        .help(String(localized: "More columns: scroll sideways", bundle: .module))
+        .a11y(.dataMoreColumns, kind: "hint")
+    }
+}
+
 extension View {
-    func moreColumnsCue() -> some View { modifier(MoreColumnsCue()) }
+    func moreColumnsCue(_ more: Binding<Bool>) -> some View { modifier(MoreColumnsCue(more: more)) }
 }
