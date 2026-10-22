@@ -918,7 +918,8 @@ struct DataLineageStrip: View {
         return ViewThatFits(in: .horizontal) {
             compactChips(columns, limit: nil)
             compactChips(columns, limit: 1)
-            ScrollView(.horizontal, showsIndicators: false) { compactChips(columns, limit: 1) }
+            compactChips(columns, limit: 1, terse: true)
+            ScrollView(.horizontal, showsIndicators: false) { compactChips(columns, limit: 1, terse: true) }
                 // A ponta direita esmaece: dá para ver que continua (rola de lado) em vez de um chip cortado.
                 .mask {
                     HStack(spacing: 0) {
@@ -933,7 +934,7 @@ struct DataLineageStrip: View {
         .a11y(.dataPath, kind: "group", label: columns.flatMap(\.nodes).map(\.title).joined(separator: " → "))
     }
 
-    private func compactChips(_ columns: [Column], limit: Int?) -> some View {
+    private func compactChips(_ columns: [Column], limit: Int?, terse: Bool = false) -> some View {
         HStack(spacing: DS.Space.s1_5) {
             if columns.isEmpty {
                 Text("Racky doesn't write here.", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
@@ -946,7 +947,7 @@ struct DataLineageStrip: View {
                 let shown = limit.map { column.nodes.prefix(max($0, column.nodes.firstIndex(where: \.current).map { $0 + 1 } ?? $0)) } ?? column.nodes[...]
                 ForEach(Array(shown)) { node in smallChip(node) }
                 if shown.count < column.nodes.count {
-                    Text(verbatim: String(localized: "+\(column.nodes.count - shown.count) more", bundle: .module)).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                    Text(verbatim: terse ? "+\(column.nodes.count - shown.count)" : String(localized: "+\(column.nodes.count - shown.count) more", bundle: .module)).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
                         .help(column.nodes.dropFirst(shown.count).map(\.title).joined(separator: ", "))
                 }
             }
