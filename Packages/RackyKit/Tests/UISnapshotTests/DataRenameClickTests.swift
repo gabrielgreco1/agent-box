@@ -29,10 +29,13 @@ import Testing
     /// A mesma coisa com o dataset aberto como tab da sessão (pane do workspace), onde a barra também arrasta o pane.
     @Test func pencilWorksInADatasetTabOfTheSession() async throws { try await run(inSessionTab: true) }
 
+    /// Ao lado do agente (pane dividido): a barra também arrasta o pane.
+    @Test func pencilWorksBesideTheAgent() async throws { try await run(inSessionTab: true, beside: true) }
+
     /// Aberto antes na página Data e depois como tab da sessão: o nome existe em dois lugares montados ao mesmo tempo.
     @Test func pencilWorksWhenTheDatasetIsAlsoOpenInTheDataPage() async throws { try await run(inSessionTab: true, alsoInDataPage: true) }
 
-    private func run(inSessionTab: Bool, alsoInDataPage: Bool = false) async throws {
+    private func run(inSessionTab: Bool, alsoInDataPage: Bool = false, beside: Bool = false) async throws {
         let home = FileManager.default.temporaryDirectory.appendingPathComponent("racky-rename-click-\(UUID().uuidString.lowercased())", isDirectory: true)
         try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: home) }
@@ -60,7 +63,7 @@ import Testing
             await VisualBatchTests.settle(500)
         }
         if inSessionTab {
-            _ = try await env.registry.perform(.datasetOpen, .select(books.dataset.id))
+            _ = try await env.registry.perform(.datasetOpen, .select(beside ? "\(books.dataset.id)|beside" : books.dataset.id))
         } else {
             _ = try await env.registry.perform(.pageDatasets, .press)
             _ = try await env.registry.perform(.dataOpen, .select("dataset:\(books.dataset.id)"))

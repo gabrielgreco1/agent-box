@@ -158,7 +158,10 @@ final class WorkspaceRootView: NSView {
         landing.frame = bounds
         pending.frame = bounds
         tabRow.frame = NSRect(x: 0, y: 0, width: bounds.width, height: TabMetrics.chromeHeight)
-        area.frame = NSRect(x: 0, y: contentTop, width: bounds.width, height: max(0, bounds.height - contentTop))
+        // Com a faixa "agents stopped" à mostra, os panes começam abaixo dela (antes ela cobria o topo de cada pane: o cabeçalho do
+        // terminal e a barra do dataset com o nome e o lápis).
+        let areaTop = contentTop + (stoppedBannerVisible && stoppedBanner != nil ? PaneMetrics.banner : 0)
+        area.frame = NSRect(x: 0, y: areaTop, width: bounds.width, height: max(0, bounds.height - areaTop))
         if let subTabs, subTabsVisible { addSubview(subTabs, positioned: .above, relativeTo: nil) }
         if stoppedBannerVisible, let stoppedBanner {
             stoppedBanner.frame = NSRect(x: 0, y: contentTop, width: bounds.width, height: PaneMetrics.banner)

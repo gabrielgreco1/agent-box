@@ -786,13 +786,14 @@ struct DataLocationBar: View {
 
     private func place(compact: Bool, items: [String]) -> some View {
         HStack(spacing: DS.Space.s2) {
+            // O chip do lugar é a alça que arrasta o pane; o nome e o lápis ficam livres para os cliques (renomear).
             placeChip(compact: compact)
-            crumbs(items)
                 .overlay {
                     if let drag {
                         PaneDragSource(controller: drag.controller, payload: .otherPane(drag.paneID), title: { trail.last ?? "" })
                     }
                 }
+            crumbs(items)
         }
     }
 

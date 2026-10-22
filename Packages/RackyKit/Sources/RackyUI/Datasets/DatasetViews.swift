@@ -377,6 +377,9 @@ struct DatasetPageView: View {
                     dataTab(snapshot, width: width)
                 }
             }
+            // Presa no topo: num pane baixo o que sobra corta embaixo (a grade), nunca a barra com o nome e o lápis em cima.
+            .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
+            .clipped()
         }
         .background(DS.Color.canvas)
         .contentShape(Rectangle())
