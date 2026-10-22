@@ -133,7 +133,7 @@ enum DataHubFixtures {
         case .query:
             return DataGrid(
                 columns: [.init(name: "city", type: "text"), .init(name: "hotels", type: "int8"), .init(name: "avg_price", type: "numeric"), .init(name: "min_price", type: "int4")],
-                rows: [["Los Angeles", "8,212", "312.40", "89"], ["New York", "4,104", "388.15", "121"], ["San Francisco", "114", "296.02", "140"]],
+                rows: [["Los Angeles", 8_212.formatted(), "312.40", "89"], ["New York", 4_104.formatted(), "388.15", "121"], ["San Francisco", "114", "296.02", "140"]],
                 total: 3)
         case .folder:
             return DataGrid(
