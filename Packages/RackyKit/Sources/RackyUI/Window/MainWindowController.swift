@@ -313,7 +313,13 @@ public final class MainWindowController: NSWindowController, NSWindowDelegate {
 
     private func currentStripWidth() -> CGFloat {
         if env.settings.isOpen { return SettingsMetrics.navWidth }
-        return env.shell.sidebarCollapsed ? strip.fittingSize.width : split.sidebarWidth
+        let width = env.shell.sidebarCollapsed ? strip.fittingSize.width : split.sidebarWidth
+        // As páginas (área Data) deixam esse espaço livre no topo quando a faixa flutua sobre elas.
+        if env.shell.sidebarCollapsed, abs(env.shell.titlebarStripWidth - width) > 0.5 {
+            let shell = env.shell
+            DispatchQueue.main.async { shell.titlebarStripWidth = width }
+        }
+        return width
     }
 
     private func registerActions() {

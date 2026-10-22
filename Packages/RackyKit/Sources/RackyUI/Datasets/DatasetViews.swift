@@ -539,10 +539,12 @@ struct DatasetPageView: View {
             pageButton("chevron.right", id: .datasetPageNext, argument: "next", enabled: model.page + 1 < model.pageCount)
             Text(verbatim: String(localized: "Page \(model.page + 1) of \(model.pageCount)", bundle: .module))
                 .dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
+                .lineLimit(1).fixedSize()
                 .padding(.leading, DS.Space.s1)
             Text(verbatim: "·").dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
             Text(verbatim: String(localized: "\(snapshot.matching.formatted()) records", bundle: .module))
                 .dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
+                .lineLimit(1).fixedSize()
             Spacer(minLength: DS.Space.s2)
             Text(verbatim: footerDetail(snapshot)).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(1)
         }

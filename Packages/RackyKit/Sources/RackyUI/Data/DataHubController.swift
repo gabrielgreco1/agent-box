@@ -20,6 +20,9 @@ public final class DataHubController {
     public var queryText: [DataObject: String] = [:]
     public private(set) var queryResult: [DataObject: (grid: DataGrid, milliseconds: Int)] = [:]
     public private(set) var showingConnect = false
+    /// Explorer: largura arrastada pelo usuário e se está recolhido.
+    public var explorerWidth: CGFloat = 268
+    public private(set) var explorerHidden = false
     /// Quem o usuário pausou (agentes e cópias), por id.
     public private(set) var paused: Set<String> = []
     private var nextQuery = 1
@@ -209,6 +212,10 @@ public final class DataHubController {
             return showingConnect ? "open" : "closed"
         }
         try registry.register(.dataSendTo) { _ in "" }
+        try registry.register(.dataToggleExplorer) { [unowned self] _ in
+            explorerHidden.toggle()
+            return explorerHidden ? "hidden" : "shown"
+        }
         try registry.register(.dataPauseWriter) { [unowned self] arg in
             guard let active else { return "" }
             let ids = arg.value == "all" || arg.value == nil ? writers(of: active).filter(\.live).map(\.id) : [arg.value ?? ""]

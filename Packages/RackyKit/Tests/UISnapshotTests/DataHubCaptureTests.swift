@@ -60,6 +60,20 @@ import Testing
         await VisualBatchTests.settle(900)
         write(c.window!.contentView!, "data-dataset")
 
+        // Janela estreita com o painel direito aberto: nada sai da tela, o lado direito encolhe.
+        c.window?.setContentSize(NSSize(width: 1180, height: 860))
+        _ = try? await env.registry.perform(.rightPanelToggle, .press)
+        await VisualBatchTests.settle(700)
+        write(c.window!.contentView!, "data-narrow-panel")
+        _ = try? await env.registry.perform(.rightPanelToggle, .press)
+        // Sidebar recolhida: o topo da área Data deixa o canto para os botões da janela.
+        _ = try await env.registry.perform(.viewToggleSidebar, .press)
+        await VisualBatchTests.settle(700)
+        write(c.window!.contentView!, "data-sidebar-collapsed")
+        _ = try await env.registry.perform(.viewToggleSidebar, .press)
+        c.window?.setContentSize(NSSize(width: 1680, height: 980))
+        await VisualBatchTests.settle(500)
+
         _ = try await env.registry.perform(.dataOpen, .select("table:\(DataHubFixtures.supabase):public:books"))
         await VisualBatchTests.settle(500)
         write(c.window!.contentView!, "data-table-books")

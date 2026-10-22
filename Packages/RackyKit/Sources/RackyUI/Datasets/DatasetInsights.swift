@@ -213,11 +213,20 @@ struct ActivityChart: View {
         return value.formatted(.number.precision(.fractionLength(0...1)))
     }
 
+    /// 5 marcas; estreito, 3; mais estreito, só as pontas.
     private var xAxis: some View {
-        HStack(spacing: 0) {
-            ForEach(0..<5, id: \.self) { index in
-                Text(verbatim: label(index)).dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textTertiary)
-                if index < 4 { Spacer(minLength: 0) }
+        ViewThatFits(in: .horizontal) {
+            marks([0, 1, 2, 3, 4])
+            marks([0, 2, 4])
+            marks([0, 4])
+        }
+    }
+
+    private func marks(_ indexes: [Int]) -> some View {
+        HStack(spacing: DS.Space.s3) {
+            ForEach(Array(indexes.enumerated()), id: \.offset) { position, index in
+                Text(verbatim: label(index)).dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textTertiary).fixedSize()
+                if position < indexes.count - 1 { Spacer(minLength: 0) }
             }
         }
     }

@@ -32,26 +32,42 @@ struct DataObjectView: View {
 struct DataObjectActions: View {
     let hub: DataHubController
     let object: DataObject
+    /// Pouco espaço: só os ícones (o nome vai no tooltip).
+    var compact = false
 
     var body: some View {
         HStack(spacing: DS.Space.s2) {
             switch object {
             case .dataset(let id):
                 if !hub.connections.isEmpty {
-                    DSButton(.dataSendTo, id: .dataSendTo, "Copy to a connection…", variant: .outline, size: .sm, symbol: "arrow.up.right", argument: .select(id))
+                    button(.dataSendTo, id: .dataSendTo, String(localized: "Copy to a connection…", bundle: .module), "arrow.up.right", .select(id))
                 }
-                if let model = hub.datasets.models[id] { DatasetToolbar(model: model) }
+                if let model = hub.datasets.models[id] { DatasetToolbar(model: model, labels: !compact) }
             case .table(let connection, _, _):
-                DSButton(.dataNewQuery, id: .dataQueryTarget, "New query", variant: .outline, size: .sm, symbol: "terminal", argument: .select(connection))
+                button(.dataNewQuery, id: .dataQueryTarget, String(localized: "New query", bundle: .module), "terminal", .select(connection))
             case .query:
-                DSButton(.dataQueryRun, id: .dataQueryRun, "Run", variant: .primary, size: .sm, symbol: "play.fill", keycap: "⌘↩")
+                if compact {
+                    button(.dataQueryRun, id: .dataQueryRun, String(localized: "Run", bundle: .module), "play.fill", .press)
+                } else {
+                    DSButton(.dataQueryRun, id: .dataQueryRun, "Run", variant: .primary, size: .sm, symbol: "play.fill", keycap: "⌘↩")
+                }
             case .webhook:
-                DSButton(.dataWebhookTest, id: .dataWebhookTest, "Send 2 real rows as a test…", variant: .outline, size: .sm, symbol: "paperplane")
+                button(.dataWebhookTest, id: .dataWebhookTest, String(localized: "Send 2 real rows as a test…", bundle: .module), "paperplane", .press)
             case .folder, .tab:
                 EmptyView()
             }
         }
         .fixedSize()
+    }
+
+    @ViewBuilder
+    private func button(_ action: ActionID, id: A11yID, _ title: String, _ symbol: String, _ argument: ActionArgument) -> some View {
+        if compact {
+            ActionButton(action, id: id, argument: argument, tooltip: title) { Image(systemName: symbol) }
+                .buttonStyle(DSIconButtonStyle(.header))
+        } else {
+            DSButton(action, id: id, LocalizedStringKey(title), variant: .outline, size: .sm, symbol: symbol, argument: argument)
+        }
     }
 }
 

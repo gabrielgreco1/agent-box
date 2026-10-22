@@ -14,6 +14,8 @@ public final class ShellModel {
     public var appNameHidden = false
     /// Sidebar recolhida (⌘B): a faixa da titlebar vira flutuante (03 §1.3).
     public var sidebarCollapsed = false
+    /// Largura da faixa da titlebar (semáforos, nome, voltar/avançar) quando flutua sobre o conteúdo (sidebar recolhida).
+    public var titlebarStripWidth: CGFloat = 0
     /// Tela cheia: semáforos somem e o pad de 80 vira 0 (03 §1.2).
     public var isFullScreen = false
     /// Histórico de navegação (⌥⌘←/→). Sem páginas ainda: os dois lados ficam desabilitados com motivo.
@@ -440,7 +442,9 @@ public final class AppEnvironment {
         datasets.closePane = { [workspace] paneID in workspace.closePane(id: paneID) }
         datasets.currentSession = { [workspace] in workspace.currentSessionID }
         // Os dados entram em cima e com mais espaço: a tabela precisa de altura, o outro módulo fica como resumo embaixo.
-        datasets.showDataPanel = { [rightPanel] in
+        datasets.showDataPanel = { [rightPanel, weak datasets] in
+            // Já na área Data, a prévia não abre.
+            if let page = datasets?.currentPage(), page == .datasets || page.datasetID != nil { return }
             rightPanel.show(.data)
             if rightPanel.layout.visible.count == 2 {
                 if rightPanel.layout.visible.first != .data { rightPanel.swapVisible() }

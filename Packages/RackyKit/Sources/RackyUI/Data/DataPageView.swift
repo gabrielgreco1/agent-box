@@ -8,7 +8,11 @@ import SwiftUI
 // barra de localização (onde estou, o que é) e a linha de fluxo (quem grava aqui, para onde isto vai).
 
 enum DataMetrics {
-    static let explorerWidth: CGFloat = 268
+    static let explorerMin: CGFloat = 200
+    static let contentMin: CGFloat = 640
+    static let explorerTitleMin: CGFloat = 100
+    static let explorerMax: CGFloat = 520
+    static let resizeHandle: CGFloat = 2
     static let rowHeight = DS.Space.s6 + DS.Space.s0_5
     static let indent = DS.Space.s3 + DS.Space.s0_5
     static let tabHeight = DS.Space.s8 + DS.Space.s1
@@ -65,31 +69,112 @@ enum DataSymbols {
 
 struct DataPageView: View {
     let hub: DataHubController
+    var shell: ShellModel?
+
+    /// Com a sidebar recolhida, a faixa da janela (semáforos, nome) flutua no canto: o topo começa depois dela.
+    private var topLeading: CGFloat { shell.map { $0.sidebarCollapsed ? $0.titlebarStripWidth : 0 } ?? 0 }
+
+    @State private var width: CGFloat = .infinity
+
+    /// Pouco espaço para o conteúdo: o explorer se recolhe sozinho (volta quando a janela abre).
+    private var explorerShown: Bool { !hub.explorerHidden && width - hub.explorerWidth >= DataMetrics.contentMin }
 
     var body: some View {
-        HStack(spacing: 0) {
-            DataExplorer(hub: hub)
-            VStack(spacing: 0) {
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                DataExplorerHeader(hub: hub, leading: topLeading, shown: explorerShown)
                 DataTabStrip(hub: hub)
-                if let active = hub.active {
-                    if hub.connection(active.connectionID)?.environment == .production { DataProductionBanner(hub: hub, object: active) }
-                    DataLocationBar(hub: hub, object: active)
-                    DataLineageStrip(hub: hub, object: active)
-                    DataObjectView(hub: hub, object: active)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .a11y(.dataObject, kind: "container", label: active.key)
-                } else {
-                    DataEmptyState(hub: hub)
-                }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(height: DataMetrics.tabHeight)
+            .background(DS.Color.chrome)
+            .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
+            HStack(spacing: 0) {
+                if explorerShown {
+                    DataExplorer(hub: hub)
+                        .frame(width: max(hub.explorerWidth, topLeading + DataMetrics.explorerTitleMin))
+                        .overlay(alignment: .trailing) { DataExplorerResizeHandle(hub: hub) }
+                        .transition(.move(edge: .leading).combined(with: .opacity))
+                }
+                VStack(spacing: 0) {
+                    if let active = hub.active {
+                        if hub.connection(active.connectionID)?.environment == .production { DataProductionBanner(hub: hub, object: active) }
+                        DataLocationBar(hub: hub, object: active)
+                        DataLineageStrip(hub: hub, object: active)
+                        DataObjectView(hub: hub, object: active)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .a11y(.dataObject, kind: "container", label: active.key)
+                    } else {
+                        DataEmptyState(hub: hub)
+                    }
+                }
+                .frame(minWidth: .zero, maxWidth: .infinity, maxHeight: .infinity)
+                .clipped()
+            }
         }
+        .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.base), value: explorerShown)
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
         .background(DS.Color.canvas)
         .overlay {
             if hub.showingConnect { DataConnectSheet(hub: hub) }
         }
         .a11y(.dataPage, kind: "page")
         .task { await hub.datasets.reloadList() }
+        // Na área Data a prévia "Data" do painel direito seria a mesma coisa duas vezes: ela se recolhe.
+        .onAppear { hub.datasets.hideDataPanel() }
+    }
+}
+
+/// Topo do explorer, na mesma faixa das tabs: o título "Data" e o botão de recolher. Recolhido, sobra só o botão.
+struct DataExplorerHeader: View {
+    let hub: DataHubController
+    let leading: CGFloat
+    var shown = true
+
+    var body: some View {
+        HStack(spacing: DS.Space.s2) {
+            if shown {
+                Text("Data", bundle: .module).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary)
+                Spacer(minLength: 0)
+            }
+            ActionButton(
+                .dataToggleExplorer, id: .dataExplorerToggle,
+                tooltip: !shown ? String(localized: "Show explorer", bundle: .module) : String(localized: "Hide explorer", bundle: .module)
+            ) { Image(systemName: "sidebar.left") }
+                .buttonStyle(DSIconButtonStyle(.header))
+        }
+        .padding(.leading, max(leading, DS.Space.s3))
+        .padding(.trailing, DS.Space.s1_5)
+        .frame(width: shown ? max(hub.explorerWidth, leading + DataMetrics.explorerTitleMin) : nil, alignment: .leading)
+        .frame(maxHeight: .infinity)
+        .overlay(alignment: .trailing) { DS.Color.border.frame(width: ComputersMetrics.separator) }
+    }
+}
+
+/// Borda do explorer: arrastar muda a largura (200 a 520 pt).
+struct DataExplorerResizeHandle: View {
+    let hub: DataHubController
+    @State private var start: CGFloat?
+    @State private var hovering = false
+
+    var body: some View {
+        Rectangle()
+            .fill(hovering || start != nil ? DS.Color.borderStrong : Color.clear)
+            .frame(width: DataMetrics.resizeHandle)
+            .contentShape(Rectangle().inset(by: -DataMetrics.resizeHandle))
+            .onHover { inside in
+                hovering = inside
+                if inside { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() }
+            }
+            .gesture(
+                DragGesture(minimumDistance: 1, coordinateSpace: .global)
+                    .onChanged { drag in
+                        let base = start ?? hub.explorerWidth
+                        if start == nil { start = base }
+                        hub.explorerWidth = min(max(base + drag.translation.width, DataMetrics.explorerMin), DataMetrics.explorerMax)
+                    }
+                    .onEnded { _ in start = nil }
+            )
+            .a11y(.dataExplorerResize, kind: "splitter", value: "\(Int(hub.explorerWidth))")
     }
 }
 
@@ -102,12 +187,6 @@ struct DataExplorer: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: DS.Space.s1) {
-                    VStack(alignment: .leading, spacing: DS.Space.s0_5) {
-                        Text("Data", bundle: .module).dsFont(DS.Font.composerTitle).foregroundStyle(DS.Color.textPrimary)
-                        Text("What agents collect, and the places you connect", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
-                    }
-                    .padding(.horizontal, DS.Space.s2)
-                    .padding(.bottom, DS.Space.s3)
                     section(String(localized: "On this Mac", bundle: .module), caption: String(localized: "Saved by Racky as your agents collect", bundle: .module), id: "racky")
                     racky
                     section(String(localized: "Connections", bundle: .module), caption: String(localized: "Your own databases and services, outside Racky", bundle: .module), id: "connections")
@@ -131,7 +210,6 @@ struct DataExplorer: View {
             .buttonStyle(.plain)
             .overlay(alignment: .top) { DS.Color.border.frame(height: ComputersMetrics.separator) }
         }
-        .frame(width: DataMetrics.explorerWidth)
         .background(DS.Color.chrome)
         .overlay(alignment: .trailing) { DS.Color.border.frame(width: ComputersMetrics.separator) }
         .a11y(.dataExplorer, kind: "tree")
@@ -429,31 +507,59 @@ struct DataLocationBar: View {
     var body: some View {
         HStack(spacing: DS.Space.s2) {
             placeChip
-            ForEach(Array(trail.enumerated()), id: \.offset) { index, crumb in
-                Image(systemName: "chevron.right").font(.system(size: DS.Space.s2, weight: .semibold)).foregroundStyle(DS.Color.textQuaternary)
-                Text(verbatim: crumb).dsFont(index == trail.count - 1 ? DS.Font.composerTitle : DS.Font.body)
-                    .foregroundStyle(index == trail.count - 1 ? DS.Color.textPrimary : DS.Color.textSecondary)
-                    .lineLimit(1)
-                    .a11y(.dataLocationCrumb("\(index)"), kind: "text", label: crumb)
+            // Sem espaço para a trilha toda, fica só o nome do objeto (o lugar nunca encolhe).
+            ViewThatFits(in: .horizontal) {
+                crumbs(trail)
+                crumbs(Array(trail.suffix(1)))
             }
+            .layoutPriority(-1)
             Spacer(minLength: DS.Space.s3)
-            if let role = DataRoleBadge.Role(hub: hub, object: object) { DataRoleBadge(role: role) }
-            VStack(alignment: .trailing, spacing: .zero) {
-                Text(verbatim: DataLabels.kind(object, hub: hub)).dsFont(DS.Font.label).foregroundStyle(DS.Color.textSecondary)
-                if let source = hub.copySource(of: object) {
-                    // Uma cópia diz de onde é cópia: a fonte de verdade é o dataset no Racky.
-                    Text(verbatim: String(localized: "One-way copy of \(source) (this Mac)", bundle: .module)).dsFont(DS.Font.small).foregroundStyle(DS.Color.dataKey)
-                } else if let size {
-                    Text(verbatim: size).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
-                }
+            // Com pouco espaço, o lado direito encolhe: primeiro some o tipo, depois os nomes dos botões.
+            ViewThatFits(in: .horizontal) {
+                trailing(kind: true, compact: false)
+                trailing(kind: false, compact: false)
+                trailing(kind: false, compact: true)
+                DataObjectActions(hub: hub, object: object, compact: true)
             }
-            .fixedSize()
-            DataObjectActions(hub: hub, object: object)
+            .layoutPriority(1)
         }
         .padding(.horizontal, DS.Space.s4)
         .frame(height: DataMetrics.locationHeight)
         .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
         .a11y(.dataLocation, kind: "group", label: ([placeName] + trail).joined(separator: " › "))
+    }
+
+    private func crumbs(_ items: [String]) -> some View {
+        HStack(spacing: DS.Space.s2) {
+            ForEach(Array(items.enumerated()), id: \.offset) { index, crumb in
+                Image(systemName: "chevron.right").font(.system(size: DS.Space.s2, weight: .semibold)).foregroundStyle(DS.Color.textQuaternary)
+                Text(verbatim: crumb).dsFont(index == items.count - 1 ? DS.Font.composerTitle : DS.Font.body)
+                    .foregroundStyle(index == items.count - 1 ? DS.Color.textPrimary : DS.Color.textSecondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .a11y(.dataLocationCrumb("\(index)"), kind: "text", label: crumb)
+            }
+        }
+    }
+
+    private func trailing(kind: Bool, compact: Bool) -> some View {
+        HStack(spacing: DS.Space.s2) {
+            if let role = DataRoleBadge.Role(hub: hub, object: object) { DataRoleBadge(role: role) }
+            if kind {
+                VStack(alignment: .trailing, spacing: .zero) {
+                    Text(verbatim: DataLabels.kind(object, hub: hub)).dsFont(DS.Font.label).foregroundStyle(DS.Color.textSecondary)
+                    if let source = hub.copySource(of: object) {
+                        // Uma cópia diz de onde é cópia: a fonte de verdade é o dataset no Mac.
+                        Text(verbatim: String(localized: "One-way copy of \(source) (this Mac)", bundle: .module)).dsFont(DS.Font.small).foregroundStyle(DS.Color.dataKey)
+                    } else if let size {
+                        Text(verbatim: size).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                    }
+                }
+                .fixedSize()
+            }
+            DataObjectActions(hub: hub, object: object, compact: compact)
+        }
+        .fixedSize()
     }
 
     private var connection: DataConnection? { hub.connection(object.connectionID) }
@@ -476,6 +582,7 @@ struct DataLocationBar: View {
         }
         .padding(.horizontal, DS.Space.s2)
         .frame(height: DataMetrics.chipHeight + DS.Space.s1)
+        .lineLimit(1)
         .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.secondary))
         .overlay(RoundedRectangle(cornerRadius: DS.Radius.sm).strokeBorder(DS.Color.border))
         .fixedSize()
@@ -535,6 +642,8 @@ struct DataLineageStrip: View {
     var body: some View {
         let columns = lineage
         VStack(alignment: .leading, spacing: DS.Space.s1_5) {
+        // Caminho longo numa janela estreita: rola de lado em vez de empurrar a página.
+        ScrollView(.horizontal, showsIndicators: false) {
         HStack(alignment: .center, spacing: DS.Space.s2) {
             Text("Data path", bundle: .module).dsFont(DS.Font.label).foregroundStyle(DS.Color.textTertiary).fixedSize()
             if columns.isEmpty {
@@ -546,7 +655,7 @@ struct DataLineageStrip: View {
                     ForEach(column.nodes) { node in chip(node) }
                 }
             }
-            Spacer(minLength: 0)
+        }
         }
         if let sentence = explanation {
             Text(verbatim: sentence).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)

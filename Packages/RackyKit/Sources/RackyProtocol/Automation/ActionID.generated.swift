@@ -240,6 +240,7 @@ extension ActionID {
     public static let dataSendTo = ActionID(unchecked: "data.sendTo")
     public static let dataWebhookTest = ActionID(unchecked: "data.webhookTest")
     public static let dataPauseWriter = ActionID(unchecked: "data.pauseWriter")
+    public static let dataToggleExplorer = ActionID(unchecked: "data.toggleExplorer")
     public static let datasetPage = ActionID(unchecked: "dataset.page")
     public static let datasetColumns = ActionID(unchecked: "dataset.columns")
     public static let datasetCopyRow = ActionID(unchecked: "dataset.copyRow")
@@ -740,6 +741,7 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "data.sendTo"), label: "enviar para", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "data.webhookTest"), label: "testar webhook", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "data.pauseWriter"), label: "Data: pausar quem grava", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "data.toggleExplorer"), label: "Data: mostrar/recolher o explorer", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dataset.page"), label: "Dataset: página", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dataset.columns"), label: "Dataset: colunas", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dataset.copyRow"), label: "Copy Row JSON", shortcut: "", slice: .slice3),

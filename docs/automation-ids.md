@@ -470,6 +470,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `dataset.panel.tab.<tab>`
 - `data.page`
 - `data.explorer`
+- `data.explorer.toggle`
+- `data.explorer.resize`
 - `data.explorer.node.<id>`
 - `data.explorer.section.<section>`
 - `data.addConnection`
@@ -905,6 +907,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `data.sendTo` | enviar para | — | slice1 |
 | `data.webhookTest` | testar webhook | — | slice1 |
 | `data.pauseWriter` | Data: pausar quem grava | — | slice1 |
+| `data.toggleExplorer` | Data: mostrar/recolher o explorer | — | slice1 |
 | `dataset.page` | Dataset: página | — | slice3 |
 | `dataset.columns` | Dataset: colunas | — | slice3 |
 | `dataset.copyRow` | Copy Row JSON | — | slice3 |

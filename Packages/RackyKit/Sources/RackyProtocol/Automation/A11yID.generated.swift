@@ -422,6 +422,10 @@ extension A11yID {
     public static let dataPage = A11yID(unchecked: "data.page")
     /// `data.explorer`
     public static let dataExplorer = A11yID(unchecked: "data.explorer")
+    /// `data.explorer.toggle`
+    public static let dataExplorerToggle = A11yID(unchecked: "data.explorer.toggle")
+    /// `data.explorer.resize`
+    public static let dataExplorerResize = A11yID(unchecked: "data.explorer.resize")
     /// `data.addConnection`
     public static let dataAddConnection = A11yID(unchecked: "data.addConnection")
     /// `data.location`
@@ -2227,6 +2231,8 @@ extension A11yID {
         A11yIDSpec(pattern: "dataset.panel.tab.<tab>", surface: "Páginas"),
         A11yIDSpec(pattern: "data.page", surface: "Páginas"),
         A11yIDSpec(pattern: "data.explorer", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.explorer.toggle", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.explorer.resize", surface: "Páginas"),
         A11yIDSpec(pattern: "data.explorer.node.<id>", surface: "Páginas"),
         A11yIDSpec(pattern: "data.explorer.section.<section>", surface: "Páginas"),
         A11yIDSpec(pattern: "data.addConnection", surface: "Páginas"),

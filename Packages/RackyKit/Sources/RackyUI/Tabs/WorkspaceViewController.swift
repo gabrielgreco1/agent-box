@@ -293,11 +293,11 @@ final class WorkspaceViewController: NSViewController {
         case .computers: content = AnyView(ComputersPageView(controller: controller, settings: env.settings))
         case .batch(let id): content = AnyView(BatchPageView(controller: controller, batchID: id))
         case .library: content = AnyView(LibraryPageView(controller: env.library))
-        case .datasets: content = AnyView(DataPageView(hub: env.dataHub))
+        case .datasets: content = AnyView(DataPageView(hub: env.dataHub, shell: env.shell))
         case .dataset(let id):
             // Dataset aberto fora da sessão: vira uma tab da área Data.
             env.dataHub.open(.dataset(id))
-            content = AnyView(DataPageView(hub: env.dataHub))
+            content = AnyView(DataPageView(hub: env.dataHub, shell: env.shell))
         case .viewer(let name):
             guard let viewer = controller.ensureViewer(name) else { return nil }
             let origin = env.sidebar.selectedSession.flatMap { env.sidebar.session($0)?.title }
