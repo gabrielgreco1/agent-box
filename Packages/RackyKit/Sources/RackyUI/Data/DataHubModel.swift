@@ -1,4 +1,5 @@
 import Foundation
+import RackyDesignSystem
 import RackyStore
 
 // Área Data (spec data-hub): o que está no Racky (datasets dos agentes) e o que está fora (conexões). Estes tipos descrevem lugares
@@ -42,6 +43,48 @@ public enum DataConnectionKind: String, CaseIterable, Sendable, Codable {
         case .googleSheets: "Google Sheets"
         case .airtable: "Airtable"
         case .webhook: "Webhook"
+        }
+    }
+
+    /// O logo do tipo (cor da marca).
+    public var brand: DSDataBrand {
+        switch self {
+        case .postgres: .postgres
+        case .supabase: .supabase
+        case .mysql: .mysql
+        case .sqlServer: .sqlServer
+        case .sqlite: .sqlite
+        case .bigQuery: .bigQuery
+        case .snowflake: .snowflake
+        case .clickHouse: .clickHouse
+        case .databricks: .databricks
+        case .s3: .s3
+        case .gcs: .gcs
+        case .r2: .r2
+        case .googleSheets: .googleSheets
+        case .airtable: .airtable
+        case .webhook: .webhook
+        }
+    }
+
+    /// Uma linha que diz o que é ("Postgres hosted by Supabase").
+    public var tagline: String {
+        switch self {
+        case .postgres: String(localized: "Any Postgres database (RDS, Neon, your own)", bundle: .module)
+        case .supabase: String(localized: "Postgres hosted by Supabase", bundle: .module)
+        case .mysql: String(localized: "MySQL or MariaDB", bundle: .module)
+        case .sqlServer: String(localized: "Microsoft SQL Server or Azure SQL", bundle: .module)
+        case .sqlite: String(localized: "A database file on this Mac", bundle: .module)
+        case .bigQuery: String(localized: "Google Cloud data warehouse", bundle: .module)
+        case .snowflake: String(localized: "Snowflake data warehouse", bundle: .module)
+        case .clickHouse: String(localized: "Fast analytics database", bundle: .module)
+        case .databricks: String(localized: "Lakehouse tables", bundle: .module)
+        case .s3: String(localized: "Files in an AWS bucket", bundle: .module)
+        case .gcs: String(localized: "Files in a Google Cloud bucket", bundle: .module)
+        case .r2: String(localized: "Files in a Cloudflare bucket", bundle: .module)
+        case .googleSheets: String(localized: "Rows in a spreadsheet tab", bundle: .module)
+        case .airtable: String(localized: "Rows in an Airtable base", bundle: .module)
+        case .webhook: String(localized: "Post new rows to a URL", bundle: .module)
         }
     }
 

@@ -423,52 +423,75 @@ struct WebhookObjectView: View {
 
 // MARK: Adicionar conexão
 
-/// Folha de tipos: agrupados por família, cada um dizendo se dá para navegar e gravar ou só gravar.
+/// Folha de tipos: agrupados por família, cada um com o logo, o nome e o que é; o grupo diz se dá para navegar e gravar ou só gravar.
 struct DataConnectSheet: View {
     let hub: DataHubController
 
     var body: some View {
+        GeometryReader { geo in
         ZStack {
-            Color.black.opacity(0.45).ignoresSafeArea()
-            VStack(alignment: .leading, spacing: DS.Space.s4) {
-                HStack {
-                    VStack(alignment: .leading, spacing: DS.Space.s0_5) {
+            Color.black.opacity(0.5).ignoresSafeArea()
+            VStack(alignment: .leading, spacing: DS.Space.s6) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: DS.Space.s1) {
                         Text("Add connection", bundle: .module).dsFont(DS.Font.dialogTitle).foregroundStyle(DS.Color.textPrimary)
-                        Text("Somewhere outside Racky to browse, and for agents to write to.", bundle: .module).dsFont(DS.Font.body).foregroundStyle(DS.Color.textTertiary)
+                        Text("A place outside Racky: browse it here, and let agents write to it.", bundle: .module).dsFont(DS.Font.body).foregroundStyle(DS.Color.textTertiary)
                     }
                     Spacer(minLength: 0)
                     ActionButton(.dataAddConnection, argument: .select("close"), tooltip: String(localized: "Close", bundle: .module)) { Image(systemName: "xmark") }
                         .buttonStyle(DSIconButtonStyle(.header))
                 }
-                ForEach(DataConnectionKind.Family.allCases, id: \.self) { family in
-                    VStack(alignment: .leading, spacing: DS.Space.s2) {
-                        HStack(spacing: DS.Space.s2) {
-                            Text(verbatim: Self.title(family)).dsFont(DS.Font.sectionLabel).foregroundStyle(DS.Color.textSecondary)
-                            Text(verbatim: family == .outgoing ? String(localized: "Write only", bundle: .module) : String(localized: "Browse and write", bundle: .module))
-                                .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
-                        }
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: DS.Space.s2), count: 3), spacing: DS.Space.s2) {
-                            ForEach(DataConnectionKind.allCases.filter { $0.family == family }, id: \.self) { kind in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: DS.Space.s6) {
+                        ForEach(DataConnectionKind.Family.allCases, id: \.self) { family in
+                            VStack(alignment: .leading, spacing: DS.Space.s2) {
                                 HStack(spacing: DS.Space.s2) {
-                                    Image(systemName: DataSymbols.connection(kind)).font(.system(size: DS.Space.s3 + 1)).foregroundStyle(DS.Color.textSecondary)
-                                    Text(verbatim: kind.title).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary)
-                                    Spacer(minLength: 0)
+                                    Text(verbatim: Self.title(family)).dsFont(DS.Font.sectionLabel).foregroundStyle(DS.Color.textPrimary)
+                                    Text(verbatim: family == .outgoing ? String(localized: "Write only", bundle: .module) : String(localized: "Browse and write", bundle: .module))
+                                        .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
                                 }
-                                .padding(.horizontal, DS.Space.s3)
-                                .frame(height: DS.Space.s10)
-                                .background(RoundedRectangle(cornerRadius: DS.Radius.md).fill(DS.Color.chrome))
-                                .overlay(RoundedRectangle(cornerRadius: DS.Radius.md).strokeBorder(DS.Color.border))
-                                .a11y(.dataConnectKind(kind.rawValue), kind: "button", label: kind.title)
+                                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: DS.Space.s2), count: 3), spacing: DS.Space.s2) {
+                                    ForEach(DataConnectionKind.allCases.filter { $0.family == family }, id: \.self) { kind in KindCard(kind: kind) }
+                                }
                             }
                         }
                     }
                 }
             }
             .padding(DS.Space.s6)
-            .frame(width: DataMetrics.connectWidth)
+            // Cabe tudo quando a janela deixa; senão, a lista rola dentro da folha.
+            .frame(width: DataMetrics.connectWidth, height: min(DataMetrics.connectHeight, geo.size.height - DataMetrics.connectMargin))
             .background(RoundedRectangle(cornerRadius: DS.Radius.large).fill(DS.Color.panel))
             .overlay(RoundedRectangle(cornerRadius: DS.Radius.large).strokeBorder(DS.Color.borderStrong))
+            .shadow(color: .black.opacity(0.45), radius: DS.Space.s6, y: DS.Space.s2)
             .a11y(.dataConnectSheet, kind: "dialog")
+        }
+        .frame(width: geo.size.width, height: geo.size.height)
+        }
+    }
+
+    /// Um tipo: logo da marca num ladrilho, o nome e uma linha do que é.
+    private struct KindCard: View {
+        let kind: DataConnectionKind
+        @State private var hovering = false
+
+        var body: some View {
+            HStack(spacing: DS.Space.s2_5) {
+                DSDataLogo(kind.brand, size: DataMetrics.connectLogo, tile: true)
+                VStack(alignment: .leading, spacing: .zero) {
+                    Text(verbatim: kind.title).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
+                    Text(verbatim: kind.tagline).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(1)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, DS.Space.s3)
+            .frame(height: DataMetrics.connectCard)
+            .background(RoundedRectangle(cornerRadius: DS.Radius.md).fill(hovering ? DS.Color.secondary : DS.Color.chrome))
+            .overlay(RoundedRectangle(cornerRadius: DS.Radius.md).strokeBorder(hovering ? kind.brand.color.opacity(0.45) : DS.Color.border))
+            .onHover { hovering = $0 }
+            .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: hovering)
+            .help(kind.tagline)
+            .a11y(.dataConnectKind(kind.rawValue), kind: "button", label: kind.title)
         }
     }
 

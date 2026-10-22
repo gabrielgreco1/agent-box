@@ -61,8 +61,8 @@ enum DataHubFixtures {
             return [DataWriter(id: "copy-books", kind: .sync(from: .dataset("books2")), name: "books2", live: false, detail: "live copy")]
         case .table(supabase, "public", "listings"):
             return [
-                DataWriter(id: "agent-claude", kind: .agent(session: "Hotel prices"), name: "Claude Code", live: true, detail: "writing now"),
-                DataWriter(id: "agent-codex", kind: .agent(session: "Hotel prices"), name: "Codex 1", live: true, detail: "writing now"),
+                DataWriter(id: "Claude Code", kind: .agent(session: "Hotel prices"), name: "Claude Code", live: true, detail: "writing now"),
+                DataWriter(id: "listings-la-1", kind: .agent(session: "Hotel prices"), name: "Codex 1", live: true, detail: "writing now"),
             ]
         case .webhook(webhook):
             return [DataWriter(id: "copy-hook", kind: .sync(from: .dataset("hotels")), name: "hotels", live: false, detail: "sends new rows")]

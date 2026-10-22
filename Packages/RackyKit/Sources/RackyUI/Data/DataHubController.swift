@@ -28,8 +28,12 @@ public final class DataHubController {
     private var nextQuery = 1
     @ObservationIgnored var now: () -> Date = { Date() }
 
+    /// Conexões de exemplo (RACKY_DATA_DEMO=1): a página avisa que nada está conectado.
+    public let isDemo: Bool
+
     public init(datasets: DatasetsController, demo: Bool) {
         self.datasets = datasets
+        isDemo = demo
         if demo {
             connections = DataHubFixtures.connections
             expanded = [DataHubFixtures.supabase, "\(DataHubFixtures.supabase)/public"]
@@ -59,14 +63,15 @@ public final class DataHubController {
     public func writers(of object: DataObject) -> [DataWriter] {
         if case .dataset(let id) = object, let summary = summary(ofDataset: id) {
             // Os agentes da sessão que coletaram (computadores do dataset).
-            let agents = (datasets.models[id]?.snapshot?.facets[.computer] ?? []).map { datasets.computerLabel($0.value) ?? $0.value }
+            // Cada computador que coletou, com o nome do agente que o usou ("Codex 1"; id = o computador).
+            let agents = (datasets.models[id]?.snapshot?.facets[.computer] ?? []).map { (computer: $0.value, name: datasets.computerLabel($0.value) ?? $0.value) }
             let live = datasets.isCollecting(summary)
             let session = datasets.title(of: summary)
             guard !agents.isEmpty else {
                 // Sem o nome do agente (dataset antigo): pelo menos a sessão que coletou.
                 return summary.rowCount == 0 ? [] : [DataWriter(id: "session", kind: .agent(session: session), name: String(localized: "Agents", bundle: .module), live: live, detail: live ? "writing now" : "")]
             }
-            return agents.map { DataWriter(id: $0, kind: .agent(session: session), name: $0, live: live && !paused.contains($0), detail: live ? "writing now" : "") }
+            return agents.map { DataWriter(id: $0.computer, kind: .agent(session: session), name: $0.name, live: live && !paused.contains($0.computer), detail: live ? "writing now" : "") }
         }
         return DataHubFixtures.writers(of: object) { [weak self] in self?.datasetID(named: $0) }.map { writer in
             var writer = writer

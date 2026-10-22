@@ -265,7 +265,7 @@ final class WorkspaceViewController: NSViewController {
             guard let env, case .dataset(let id) = pane.content else { return NSView() }
             let model = env.datasets.model(for: id)
             let host = ChromeHostingView(
-                content: DatasetPageView(controller: env.datasets, model: model, paneID: pane.id, drag: env.workspace.dragController)
+                content: DatasetPageView(controller: env.datasets, model: model, paneID: pane.id, drag: env.workspace.dragController, hub: env.dataHub)
                     .environment(\.elementStore, env.elements).environment(\.actionRegistry, env.registry)
                     .environment(\.overlayRouter, env.overlays).environment(\.a11yParent, .windowMain))
             host.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }

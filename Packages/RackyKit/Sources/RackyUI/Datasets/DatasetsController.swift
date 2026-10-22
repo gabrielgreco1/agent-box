@@ -384,6 +384,9 @@ public final class DatasetsController {
     @ObservationIgnored public private(set) var store: RackyStore?
     /// Título da sessão (sidebar) e se algum computador dela está rodando (atualização a cada 1 s); ligados pelo `AppEnvironment`.
     @ObservationIgnored public var sessionTitle: (UUID) -> String? = { _ in nil }
+    /// Agente principal da sessão (o logo e o nome no caminho do dado) e o terminal do worker de um computador ("Codex 1").
+    @ObservationIgnored public var sessionAgent: (UUID) -> TerminalProvider? = { _ in nil }
+    @ObservationIgnored public var workerTerminal: (String) -> UUID? = { _ in nil }
     @ObservationIgnored public var isRunning: (UUID) -> Bool = { _ in false }
     @ObservationIgnored public var currentPage: () -> CenterPage = { .workspace }
     @ObservationIgnored public var showPage: (CenterPage) -> Void = { _ in }

@@ -11281,6 +11281,39 @@
           }
         }
       }
+    },
+    "A place outside Racky: browse it here, and let agents write to it.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A place outside Racky: browse it here, and let agents write to it."
+          }
+        }
+      }
+    },
+    "Example data": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Example data"
+          }
+        }
+      }
+    },
+    "Nothing is connected. The connections, tables and agents below are samples that show how these screens work.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing is connected. The connections, tables and agents below are samples that show how these screens work."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

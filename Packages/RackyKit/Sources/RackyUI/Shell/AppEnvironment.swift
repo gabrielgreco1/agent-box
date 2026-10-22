@@ -420,6 +420,11 @@ public final class AppEnvironment {
         datasets.hidePage = { [computers] in computers.closePage() }
         datasets.automationEnabled = automationEnabled
         datasets.sessionTitle = { [sidebar] id in sidebar.session(id)?.title }
+        datasets.sessionAgent = { [sidebar] id in
+            let tabs = Set(sidebar.snapshot.tabs.filter { $0.sessionID == id }.map(\.id))
+            return sidebar.snapshot.terminals.first { tabs.contains($0.tabID) && $0.provider.isAgent && $0.launchSpec.workerChildID == nil }?.provider
+        }
+        datasets.workerTerminal = { [weak model = computers.model] computer in model?.workerComputers.first { $0.value == computer }?.key }
         datasets.isRunning = { [computers] session in
             computers.model.rows.contains { row in
                 computers.model.sessionIDs[row.id] == session && [.inUse, .ready, .provisioning, .queued].contains(row.snapshot.state)

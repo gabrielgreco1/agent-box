@@ -24,6 +24,18 @@ extension WorkspaceModelTests {
         #expect(stored.contains { $0.layout.datasetIDs == ["DS1"] }, "the dataset tab is saved with the session")
     }
 
+    @Test func aDatasetTabRenamesLikeAnyTab() async throws {
+        let rig = try await make(tabs: 1)
+        defer { Task { await cleanup(rig) } }
+        rig.model.contentSize = CGSize(width: 1400, height: 800)
+        rig.model.datasetTitle = { $0 == "DS1" ? "books2" : nil }
+        _ = rig.model.openDataset("DS1")
+        let tab = try #require(rig.model.activeTab)
+        #expect(rig.model.beginRename(tab.id))
+        rig.model.commitRename("Livros do teste")
+        #expect(rig.model.activeTab.map { rig.model.displayTitle(of: $0) } == "Livros do teste")
+    }
+
     @Test func besideTheAgentSplitsTheActiveTabAndMovesAnExistingDatasetTabIn() async throws {
         let rig = try await make(tabs: 1)
         defer { Task { await cleanup(rig) } }

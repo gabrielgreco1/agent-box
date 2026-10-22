@@ -22,11 +22,17 @@ enum DataMetrics {
     static let icon: CGFloat = 12
     static let chipHeight = DS.Space.s6
     static let liveDot: CGFloat = 6
+    static let markSize: CGFloat = 18
+    static let logoTile: CGFloat = 20
     static let badgePadding: CGFloat = 1
     static let underline: CGFloat = 2
     static let emptyTextWidth: CGFloat = 440
     static let previewWidth: CGFloat = 460
-    static let connectWidth: CGFloat = 660
+    static let connectWidth: CGFloat = 760
+    static let connectHeight: CGFloat = 820
+    static let connectMargin: CGFloat = 80
+    static let connectCard: CGFloat = 56
+    static let connectLogo: CGFloat = 32
     static let editorHeight: CGFloat = 160
 }
 
@@ -88,6 +94,7 @@ struct DataPageView: View {
             .frame(height: DataMetrics.tabHeight)
             .background(DS.Color.chrome)
             .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
+            if hub.isDemo { DataDemoBanner() }
             HStack(spacing: 0) {
                 if explorerShown {
                     DataExplorer(hub: hub)
@@ -237,11 +244,11 @@ struct DataExplorer: View {
         ForEach(groups, id: \.session) { group in
             let node = "racky/\(group.session)"
             let open = !hub.expanded.contains(node)  // sessões abertas por padrão
-            row(id: node, depth: 0, symbol: "bubble.left.and.text.bubble.right", title: group.session, detail: nil, chevron: open, toggle: node, live: false, selected: false, open: nil)
+            row(id: node, depth: 0, mark: .agent(QuickLaunchModel.kind(group.datasets.first.flatMap { hub.datasets.sessionAgent($0.dataset.sessionID) } ?? .claude)), title: group.session, detail: nil, chevron: open, toggle: node, live: false, selected: false, open: nil)
             if open {
                 ForEach(group.datasets, id: \.dataset.id) { summary in
                     let object = DataObject.dataset(summary.dataset.id)
-                    row(id: object.key, depth: 1, symbol: "tablecells", title: summary.dataset.name, detail: summary.rowCount.formatted(),
+                    row(id: object.key, depth: 1, mark: .symbol("tablecells", DS.Color.dataValid), title: summary.dataset.name, detail: summary.rowCount.formatted(),
                         chevron: nil, toggle: nil, live: hub.datasets.isCollecting(summary), selected: hub.active == object, open: object)
                 }
             }
@@ -260,7 +267,7 @@ struct DataExplorer: View {
             let open = hub.expanded.contains(connection.id)
             let target: DataObject? = connection.kind == .webhook ? .webhook(connection: connection.id) : nil
             HStack(spacing: 0) {
-                row(id: connection.id, depth: 0, symbol: DataSymbols.connection(connection.kind), title: connection.name, detail: nil,
+                row(id: connection.id, depth: 0, mark: .brand(connection.kind.brand), title: connection.name, detail: nil,
                     chevron: connection.kind.canBrowse ? open : nil, toggle: connection.kind.canBrowse ? connection.id : nil,
                     live: target.map(hub.isLive) ?? false, selected: target != nil && hub.active == target, open: target,
                     badge: connection.environment, subtitle: connection.kind.title == connection.name ? nil : connection.kind.title)
@@ -269,7 +276,7 @@ struct DataExplorer: View {
                 ForEach(connection.children) { child in nodeRows(child, connection: connection, depth: 1, path: []) }
                 if connection.kind.speaksSQL {
                     ActionButton(.dataNewQuery, id: .dataExplorerNode("\(connection.id)/query"), argument: .select(connection.id)) {
-                        rowLabel(depth: 1, symbol: "plus.rectangle", title: String(localized: "New SQL query", bundle: .module), detail: nil, chevron: nil,
+                        rowLabel(depth: 1, mark: .symbol("plus.rectangle", nil), title: String(localized: "New SQL query", bundle: .module), detail: nil, chevron: nil,
                                  live: false, selected: false, badge: nil, subtitle: nil, muted: true)
                     }
                     .buttonStyle(.plain)
@@ -283,7 +290,7 @@ struct DataExplorer: View {
         let object = Self.object(for: node, connection: connection, path: path)
         let expandable = !node.children.isEmpty
         return AnyView(VStack(alignment: .leading, spacing: 0) {
-            row(id: node.id, depth: depth, symbol: DataSymbols.node(node.kind), title: node.name, detail: node.size.map { $0.formatted() },
+            row(id: node.id, depth: depth, mark: .symbol(DataSymbols.node(node.kind), nil), title: node.name, detail: node.size.map { $0.formatted() },
                 chevron: expandable ? open : nil, toggle: expandable && object == nil ? node.id : nil,
                 live: object.map(hub.isLive) ?? false, selected: object != nil && hub.active == object, open: object)
             if open {
@@ -304,10 +311,10 @@ struct DataExplorer: View {
 
     @ViewBuilder
     private func row(
-        id: String, depth: Int, symbol: String, title: String, detail: String?, chevron: Bool?, toggle: String?, live: Bool, selected: Bool,
+        id: String, depth: Int, mark: DataMark, title: String, detail: String?, chevron: Bool?, toggle: String?, live: Bool, selected: Bool,
         open: DataObject?, badge: DataEnvironment? = nil, subtitle: String? = nil
     ) -> some View {
-        let label = rowLabel(depth: depth, symbol: symbol, title: title, detail: detail, chevron: chevron, live: live, selected: selected, badge: badge, subtitle: subtitle)
+        let label = rowLabel(depth: depth, mark: mark, title: title, detail: detail, chevron: chevron, live: live, selected: selected, badge: badge, subtitle: subtitle)
         HStack(spacing: 0) {
             if let open {
                 ActionButton(.dataOpen, id: .dataExplorerNode(id), argument: .select(open.key)) { label }
@@ -323,7 +330,7 @@ struct DataExplorer: View {
     }
 
     private func rowLabel(
-        depth: Int, symbol: String, title: String, detail: String?, chevron: Bool?, live: Bool, selected: Bool, badge: DataEnvironment?,
+        depth: Int, mark: DataMark, title: String, detail: String?, chevron: Bool?, live: Bool, selected: Bool, badge: DataEnvironment?,
         subtitle: String?, muted: Bool = false
     ) -> some View {
         HStack(spacing: DS.Space.s1_5) {
@@ -337,8 +344,7 @@ struct DataExplorer: View {
             }
             .foregroundStyle(DS.Color.textTertiary)
             .frame(width: DS.Space.s2_5)
-            Image(systemName: symbol).font(.system(size: DataMetrics.icon)).foregroundStyle(muted ? DS.Color.textTertiary : DS.Color.textSecondary)
-                .frame(width: DS.Space.s4)
+            DataMarkView(mark: mark, muted: muted)
             Text(verbatim: title).dsFont(DS.Font.cell).foregroundStyle(muted ? DS.Color.textTertiary : DS.Color.textPrimary).lineLimit(1).truncationMode(.middle)
             if let subtitle { Text(verbatim: subtitle).dsFont(DS.Font.small).foregroundStyle(DS.Color.textQuaternary).lineLimit(1) }
             if let badge { EnvironmentBadge(environment: badge) }
@@ -388,6 +394,49 @@ struct DataRoleBadge: View {
         .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(tint.opacity(0.1)))
         .overlay(RoundedRectangle(cornerRadius: DS.Radius.sm).strokeBorder(tint.opacity(0.35)))
         .fixedSize()
+    }
+}
+
+/// Conexões de exemplo ligadas: diz com todas as letras que nada está conectado.
+struct DataDemoBanner: View {
+    var body: some View {
+        HStack(spacing: DS.Space.s2) {
+            Image(systemName: "eye").font(.system(size: DS.Space.s3))
+            Text("Example data", bundle: .module).dsFont(DS.Font.label)
+            Text("Nothing is connected. The connections, tables and agents below are samples that show how these screens work.", bundle: .module)
+                .dsFont(DS.Font.small).lineLimit(1)
+            Spacer(minLength: 0)
+        }
+        .foregroundStyle(DS.Color.dataKey)
+        .padding(.horizontal, DS.Space.s4)
+        .frame(height: DS.Space.s8)
+        .background(DS.Color.dataKey.opacity(0.1))
+        .overlay(alignment: .bottom) { DS.Color.dataKey.opacity(0.3).frame(height: ComputersMetrics.separator) }
+        .a11y(.dataDemo, kind: "banner")
+    }
+}
+
+/// O ícone de uma linha do explorer: o logo do agente (sessões), o logo da marca (conexões) ou um símbolo.
+enum DataMark {
+    case symbol(String, Color?)
+    case agent(DSAgentKind)
+    case brand(DSDataBrand)
+}
+
+struct DataMarkView: View {
+    let mark: DataMark
+    var muted = false
+
+    var body: some View {
+        Group {
+            switch mark {
+            case .symbol(let name, let tint):
+                Image(systemName: name).font(.system(size: DataMetrics.icon)).foregroundStyle(muted ? DS.Color.textTertiary : (tint ?? DS.Color.textSecondary))
+            case .agent(let kind): DSAgentLogo(kind, size: DataMetrics.markSize - DS.Space.s0_5)
+            case .brand(let brand): DSDataLogo(brand, size: DataMetrics.logoTile, tile: true)
+            }
+        }
+        .frame(width: DataMetrics.logoTile, height: DataMetrics.logoTile)
     }
 }
 
@@ -446,7 +495,11 @@ struct DataTabStrip: View {
         return HStack(spacing: DS.Space.s1_5) {
             ActionButton(.dataOpen, id: .dataTab(object.key), argument: .select(object.key)) {
                 HStack(spacing: DS.Space.s1_5) {
-                    Image(systemName: DataSymbols.object(object)).font(.system(size: DataMetrics.icon)).foregroundStyle(DS.Color.textTertiary)
+                    if let place {
+                        DSDataLogo(place.kind.brand, size: DataMetrics.icon + DS.Space.s0_5)
+                    } else {
+                        Image(systemName: "laptopcomputer").font(.system(size: DataMetrics.icon)).foregroundStyle(DS.Color.textSecondary)
+                    }
                     Text(verbatim: DataLabels.title(object, hub: hub)).dsFont(active ? DS.Font.tabActive : DS.Font.tab)
                         .foregroundStyle(active ? DS.Color.textPrimary : DS.Color.textSecondary).lineLimit(1)
                     // O lugar em letra pequena: duas tabs "books" (Racky e Supabase) não se confundem.
@@ -503,6 +556,9 @@ enum DataLabels {
 struct DataLocationBar: View {
     let hub: DataHubController
     let object: DataObject
+    /// Num pane do workspace: o X fecha o pane e o lugar/nome arrasta o pane (como o título de um terminal).
+    var close: (() -> Void)? = nil
+    var drag: (paneID: UUID, controller: PaneDragController)? = nil
 
     var body: some View {
         HStack(spacing: DS.Space.s2) {
@@ -513,6 +569,11 @@ struct DataLocationBar: View {
                 crumbs(Array(trail.suffix(1)))
             }
             .layoutPriority(-1)
+            .overlay {
+                if let drag {
+                    PaneDragSource(controller: drag.controller, payload: .otherPane(drag.paneID), title: { trail.last ?? "" })
+                }
+            }
             Spacer(minLength: DS.Space.s3)
             // Com pouco espaço, o lado direito encolhe: primeiro some o tipo, depois os nomes dos botões.
             ViewThatFits(in: .horizontal) {
@@ -522,6 +583,12 @@ struct DataLocationBar: View {
                 DataObjectActions(hub: hub, object: object, compact: true)
             }
             .layoutPriority(1)
+            if let close {
+                // lint-ui: allow buttons fecha o pane do dataset (layout do workspace, sem ação de registro própria)
+                Button(action: close) { Image(systemName: "xmark") }
+                    .buttonStyle(DSIconButtonStyle(.header))
+                    .dsTooltip(String(localized: "Close", bundle: .module), shortcut: nil)
+            }
         }
         .padding(.horizontal, DS.Space.s4)
         .frame(height: DataMetrics.locationHeight)
@@ -568,7 +635,7 @@ struct DataLocationBar: View {
     private var placeChip: some View {
         HStack(spacing: DS.Space.s1_5) {
             if let connection {
-                Image(systemName: DataSymbols.connection(connection.kind)).font(.system(size: DataMetrics.icon)).foregroundStyle(DS.Color.textSecondary)
+                DSDataLogo(connection.kind.brand, size: DataMetrics.markSize)
                 Text(verbatim: connection.name).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary)
                 if connection.kind.title != connection.name {
                     Text(verbatim: connection.kind.title).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
@@ -620,53 +687,57 @@ struct DataLocationBar: View {
 
 // MARK: Linhagem
 
-/// O caminho do dado, da esquerda para a direita: quem coleta (agentes) → a fonte (um dataset do Racky, quando há) → as cópias fora
-/// do Racky. O objeto aberto fica marcado "You are here"; cada seta diz como o dado passa (coleta, cópia ao vivo, cópia diária, envio).
-/// Responde, sem ler mais nada: qual é a fonte, onde estão as cópias, se estão em dia e quando o dado sai do Mac.
+/// O caminho do dado, da esquerda para a direita, com os logos: o agente da sessão (Claude Code, na sessão de origem) → os
+/// subagentes que coletaram (Codex 1, Codex 2) → o original (no Mac ou direto numa conexão) → as cópias. O objeto aberto fica
+/// marcado "You are here"; cada nó leva ao lugar dele (a sessão, o pane do subagente, a tabela).
 struct DataLineageStrip: View {
     let hub: DataHubController
     let object: DataObject
 
     struct Node: Identifiable {
-        enum Role { case agents, source, copy, direct, query }
+        enum Mark { case agent(DSAgentKind), brand(DSDataBrand), mac, query, people }
         var id: String
-        var role: Role
-        var target: DataObject?
-        var place: DataConnection?
+        var mark: Mark
         var title: String
         var detail: String
+        var action: (ActionID, ActionArgument)?
+        var badge: DataEnvironment?
         var live = false
         var current = false
     }
 
+    private struct Column { var edge: String; var nodes: [Node] }
+
     var body: some View {
         let columns = lineage
-        VStack(alignment: .leading, spacing: DS.Space.s1_5) {
-        // Caminho longo numa janela estreita: rola de lado em vez de empurrar a página.
-        ScrollView(.horizontal, showsIndicators: false) {
-        HStack(alignment: .center, spacing: DS.Space.s2) {
-            Text("Data path", bundle: .module).dsFont(DS.Font.label).foregroundStyle(DS.Color.textTertiary).fixedSize()
-            if columns.isEmpty {
-                Text(verbatim: emptyText).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(1)
-            }
-            ForEach(Array(columns.enumerated()), id: \.offset) { index, column in
-                if index > 0 { edge(column.edge) }
-                VStack(alignment: .leading, spacing: DS.Space.s1) {
-                    ForEach(column.nodes) { node in chip(node) }
+        VStack(alignment: .leading, spacing: DS.Space.s2) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(alignment: .center, spacing: DS.Space.s2) {
+                    if columns.isEmpty {
+                        Text(verbatim: emptyText).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(1)
+                    }
+                    ForEach(Array(columns.enumerated()), id: \.offset) { index, column in
+                        if index > 0 { edge(column.edge) }
+                        VStack(alignment: .leading, spacing: DS.Space.s1) {
+                            ForEach(column.nodes) { node in chip(node) }
+                        }
+                    }
                 }
             }
-        }
-        }
-        if let sentence = explanation {
-            Text(verbatim: sentence).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
-        }
+            if let sentence = explanation {
+                Text(verbatim: sentence).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
+            }
         }
         .padding(.horizontal, DS.Space.s4)
-        .padding(.vertical, DS.Space.s2)
-        .frame(minHeight: DataMetrics.flowHeight)
+        .padding(.vertical, DS.Space.s2_5)
+        .frame(maxWidth: .infinity, minHeight: DataMetrics.flowHeight, alignment: .leading)
         .background(DS.Color.chrome.opacity(0.5))
         .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
         .a11y(.dataFlow, kind: "group", label: columns.flatMap(\.nodes).map(\.title).joined(separator: " → "))
+    }
+
+    private var emptyText: String {
+        String(localized: "Nothing writes here yet. To have agents write here, pick it under Save data to when you start a session.", bundle: .module)
     }
 
     /// Uma frase que diz qual é o original e para que lado o dado anda.
@@ -693,55 +764,107 @@ struct DataLineageStrip: View {
         }
     }
 
-    private var emptyText: String {
-        String(localized: "Nothing writes here yet. To have agents write here, pick it under Save data to when you start a session.", bundle: .module)
-    }
-
     // MARK: Montagem
-
-    private struct Column { var edge: String; var nodes: [Node] }
 
     private var lineage: [Column] {
         switch object {
         case .query(let connection, _):
             let place = hub.connection(connection)
             return [
-                Column(edge: "", nodes: [Node(id: "query", role: .query, place: nil, title: String(localized: "This query", bundle: .module), detail: String(localized: "written by you", bundle: .module), current: true)]),
-                Column(edge: String(localized: "reads", bundle: .module), nodes: [Node(id: "db", role: .direct, target: nil, place: place, title: place?.name ?? "", detail: place?.kind.title ?? "")]),
+                Column(edge: "", nodes: [Node(id: "query", mark: .query, title: String(localized: "This query", bundle: .module), detail: String(localized: "written by you", bundle: .module), current: true)]),
+                Column(edge: String(localized: "reads", bundle: .module), nodes: place.map { [placeNode($0, title: $0.name, detail: $0.kind.title, target: nil)] } ?? []),
             ]
         case .dataset(let id):
             return chain(sourceID: id)
         default:
             if let source = hub.copySource(of: object), let id = hub.datasetID(named: source) { return chain(sourceID: id) }
             let writers = hub.writers(of: object)
-            guard !writers.isEmpty else { return [] }
-            return [
-                Column(edge: "", nodes: [agentsNode(writers)]),
-                Column(edge: String(localized: "write directly", bundle: .module), nodes: [currentNode(role: .direct, detail: String(localized: "written directly · not kept on this Mac", bundle: .module))]),
-            ]
+            guard !writers.isEmpty, let place = hub.connection(object.connectionID) else { return [] }
+            var columns = agentColumns(writers: writers, session: nil)
+            columns.append(Column(
+                edge: String(localized: "write directly", bundle: .module),
+                nodes: [placeNode(place, title: DataLabels.title(object, hub: hub), detail: String(localized: "written directly · not kept on this Mac", bundle: .module), target: object)]))
+            return columns
         }
     }
 
-    /// Agentes → dataset do Racky (fonte) → cópias.
+    /// Agente da sessão → subagentes → dataset no Mac (original) → cópias.
     private func chain(sourceID: String) -> [Column] {
         let sourceObject = DataObject.dataset(sourceID)
         guard let summary = hub.summary(ofDataset: sourceID) else { return [] }
-        var columns: [Column] = []
-        let writers = hub.writers(of: sourceObject)
-        if !writers.isEmpty { columns.append(Column(edge: "", nodes: [agentsNode(writers)])) }
+        var columns = agentColumns(writers: hub.writers(of: sourceObject), session: summary.dataset.sessionID)
         columns.append(Column(
-            edge: String(localized: "collect", bundle: .module),
+            edge: columns.isEmpty ? "" : String(localized: "collect", bundle: .module),
             nodes: [Node(
-                id: "source", role: .source, target: sourceObject, place: nil, title: summary.dataset.name,
-                detail: String(localized: "original · \(summary.rowCount.formatted()) rows", bundle: .module), live: hub.datasets.isCollecting(summary),
-                current: object == sourceObject)]))
-        let copies = hub.destinations(of: sourceObject).map { destination in
-            Node(
-                id: destination.id, role: .copy, target: destination.target, place: hub.connection(destination.target.connectionID),
-                title: DataLabels.title(destination.target, hub: hub), detail: copyStatus(destination, rows: summary.rowCount), current: destination.target == object)
+                id: "source", mark: .mac, title: String(localized: "This Mac › \(summary.dataset.name)", bundle: .module),
+                detail: String(localized: "original · \(summary.rowCount.formatted()) rows", bundle: .module),
+                action: (.dataOpen, .select(sourceObject.key)), live: hub.datasets.isCollecting(summary), current: object == sourceObject)]))
+        let copies = hub.destinations(of: sourceObject).compactMap { destination -> Node? in
+            guard let place = hub.connection(destination.target.connectionID) else { return nil }
+            var node = placeNode(place, title: DataLabels.title(destination.target, hub: hub), detail: copyStatus(destination, rows: summary.rowCount), target: destination.target)
+            node.current = destination.target == object
+            return node
         }
         if !copies.isEmpty { columns.append(Column(edge: String(localized: "copied one way", bundle: .module), nodes: copies)) }
         return columns
+    }
+
+    /// O agente principal da sessão (com o logo e a sessão) e, se houver, os subagentes que coletaram.
+    private func agentColumns(writers: [DataWriter], session: UUID?) -> [Column] {
+        let agents = writers.filter { if case .agent = $0.kind { true } else { false } }
+        guard !agents.isEmpty else { return [] }
+        let sessionTitle: String = if case .agent(let s)? = agents.first?.kind { s } else { "" }
+        let mainProvider = session.flatMap { hub.datasets.sessionAgent($0) }
+        // Nos exemplos, o agente principal vem pelo nome ("Claude Code"); no app, pela sessão.
+        let mainIndex = agents.firstIndex { Self.provider(named: $0.name) == .claude && mainProvider == nil }
+        let main = mainIndex.map { agents[$0] }
+        let subagents = agents.enumerated().filter { $0.offset != mainIndex }.map(\.element)
+        let provider = mainProvider ?? main.flatMap { Self.provider(named: $0.name) } ?? .claude
+        var columns: [Column] = []
+        let sessionAction: (ActionID, ActionArgument)? = session.map { (.sessionSelect, .select($0.uuidString)) }
+        columns.append(Column(edge: "", nodes: [Node(
+            id: "session", mark: .agent(QuickLaunchModel.kind(provider)), title: Self.agentTitle(provider),
+            detail: String(localized: "session \(sessionTitle)", bundle: .module), action: sessionAction, live: main?.live ?? false)]))
+        let subs = subagents.filter { $0.name != String(localized: "Agents", bundle: .module) }
+        if !subs.isEmpty {
+            columns.append(Column(edge: String(localized: "subagents", bundle: .module), nodes: subs.map { writer in
+                // Subagente sem CLI próprio no nome: é um subagente do agente principal (o mesmo logo).
+                let kind = (Self.provider(named: writer.name) ?? provider).map(QuickLaunchModel.kind) as DSAgentKind?
+                let terminal = hub.datasets.workerTerminal(computerName(of: writer) ?? "")
+                return Node(
+                    id: "sub-\(writer.id)", mark: kind.map { .agent($0) } ?? .people, title: writer.name,
+                    detail: computerName(of: writer).map { String(localized: "subagent · computer \($0)", bundle: .module) } ?? String(localized: "subagent", bundle: .module),
+                    action: terminal.map { (.paneShow, .select($0.uuidString)) }, live: writer.live)
+            }))
+        }
+        return columns
+    }
+
+    private func computerName(of writer: DataWriter) -> String? {
+        writer.id == writer.name ? nil : writer.id
+    }
+
+    static func provider(named name: String) -> TerminalProvider? {
+        let lower = name.lowercased()
+        if lower.hasPrefix("codex") { return .codex }
+        if lower.hasPrefix("opencode") { return .opencode }
+        if lower.hasPrefix("claude") { return .claude }
+        return nil
+    }
+
+    static func agentTitle(_ provider: TerminalProvider) -> String {
+        switch provider {
+        case .claude: "Claude Code"
+        case .codex: "Codex"
+        case .opencode: "OpenCode"
+        default: String(localized: "Agent", bundle: .module)
+        }
+    }
+
+    private func placeNode(_ place: DataConnection, title: String, detail: String, target: DataObject?) -> Node {
+        Node(
+            id: "place-\(place.id)-\(title)", mark: .brand(place.kind.brand), title: place.name == title ? title : "\(place.name) › \(title)", detail: detail,
+            action: target.map { (.dataOpen, .select($0.key)) }, badge: place.environment, current: target == object)
     }
 
     private func copyStatus(_ destination: DataDestination, rows: Int) -> String {
@@ -751,19 +874,6 @@ struct DataLineageStrip: View {
         case "sends new rows": String(localized: "each new row is posted here", bundle: .module)
         default: destination.detail
         }
-    }
-
-    private func agentsNode(_ writers: [DataWriter]) -> Node {
-        let agents = writers.filter { if case .agent = $0.kind { true } else { false } }
-        let names = agents.map(\.name).joined(separator: ", ")
-        let session: String = if case .agent(let s)? = agents.first?.kind { s } else { "" }
-        return Node(
-            id: "agents", role: .agents, place: nil, title: names.isEmpty ? String(localized: "Agents", bundle: .module) : names,
-            detail: String(localized: "session \(session)", bundle: .module), live: agents.contains { $0.live })
-    }
-
-    private func currentNode(role: Node.Role, detail: String) -> Node {
-        Node(id: "current", role: role, target: object, place: hub.connection(object.connectionID), title: DataLabels.title(object, hub: hub), detail: detail, current: true)
     }
 
     // MARK: Desenho
@@ -777,46 +887,38 @@ struct DataLineageStrip: View {
     }
 
     private func chip(_ node: Node) -> some View {
-        let content = HStack(spacing: DS.Space.s1_5) {
-            if node.live { LiveDot() }
-            switch node.role {
-            case .agents: Image(systemName: "person.2").font(.system(size: DS.Space.s2_5 + 1)).foregroundStyle(DS.Color.textSecondary)
-            case .query: Image(systemName: "terminal").font(.system(size: DS.Space.s2_5 + 1)).foregroundStyle(DS.Color.textSecondary)
-            case .source: Image(systemName: "laptopcomputer").font(.system(size: DS.Space.s2_5 + 1)).foregroundStyle(DS.Color.textSecondary)
-            case .copy, .direct:
-                Image(systemName: node.place.map { DataSymbols.connection($0.kind) } ?? "tablecells").font(.system(size: DS.Space.s2_5 + 1)).foregroundStyle(DS.Color.textSecondary)
+        let content = HStack(spacing: DS.Space.s2) {
+            Group {
+                switch node.mark {
+                case .agent(let kind): DSAgentLogo(kind, size: DataMetrics.markSize)
+                case .brand(let brand): DSDataLogo(brand, size: DataMetrics.markSize)
+                case .mac: Image(systemName: "laptopcomputer").font(.system(size: DataMetrics.markSize * 0.8)).foregroundStyle(DS.Color.textSecondary)
+                case .query: Image(systemName: "terminal").font(.system(size: DataMetrics.markSize * 0.8)).foregroundStyle(DS.Color.textSecondary)
+                case .people: Image(systemName: "person.2").font(.system(size: DataMetrics.markSize * 0.75)).foregroundStyle(DS.Color.textSecondary)
+                }
             }
+            .frame(width: DataMetrics.markSize, height: DataMetrics.markSize)
             VStack(alignment: .leading, spacing: .zero) {
                 HStack(spacing: DS.Space.s1) {
-                    Text(verbatim: placePrefix(node) + node.title).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
-                    if let environment = node.place?.environment { EnvironmentBadge(environment: environment) }
-                    if node.current {
-                        Text("You are here", bundle: .module).dsFont(DS.Font.keycap).foregroundStyle(DS.Color.dataKey)
-                    }
+                    Text(verbatim: node.title).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
+                    if let badge = node.badge { EnvironmentBadge(environment: badge) }
+                    if node.live { LiveDot() }
+                    if node.current { Text("You are here", bundle: .module).dsFont(DS.Font.keycap).foregroundStyle(DS.Color.dataKey) }
                 }
                 Text(verbatim: node.detail).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(1)
             }
         }
-        .padding(.horizontal, DS.Space.s2)
-        .padding(.vertical, DS.Space.s1)
-        .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(node.current ? DS.Color.dataKey.opacity(0.1) : DS.Color.secondary))
-        .overlay(RoundedRectangle(cornerRadius: DS.Radius.sm).strokeBorder(node.current ? DS.Color.dataKey.opacity(0.55) : DS.Color.border))
+        .padding(.horizontal, DS.Space.s2_5)
+        .padding(.vertical, DS.Space.s1_5)
+        .background(RoundedRectangle(cornerRadius: DS.Radius.md).fill(node.current ? DS.Color.dataKey.opacity(0.1) : DS.Color.secondary))
+        .overlay(RoundedRectangle(cornerRadius: DS.Radius.md).strokeBorder(node.current ? DS.Color.dataKey.opacity(0.55) : DS.Color.border))
         .fixedSize()
         return Group {
-            if let target = node.target, !node.current {
-                ActionButton(.dataOpen, id: .dataFlowItem(node.id), argument: .select(target.key)) { content }.buttonStyle(.plain)
+            if let action = node.action, !node.current {
+                ActionButton(action.0, id: .dataFlowItem(node.id), argument: action.1) { content }.buttonStyle(.plain)
             } else {
                 content.a11y(.dataFlowItem(node.id), kind: "text", label: node.title)
             }
-        }
-    }
-
-    /// "Racky › books2", "Supabase › public.books": o lugar sempre antes do nome.
-    private func placePrefix(_ node: Node) -> String {
-        switch node.role {
-        case .source: String(localized: "This Mac › ", bundle: .module)
-        case .copy, .direct: node.place.map { $0.name == node.title ? "" : "\($0.name) › " } ?? ""
-        case .agents, .query: ""
         }
     }
 }

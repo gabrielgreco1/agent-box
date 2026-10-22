@@ -469,6 +469,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `dataset.copyRow`
 - `dataset.panel.tab.<tab>`
 - `data.page`
+- `data.demo`
 - `data.explorer`
 - `data.explorer.toggle`
 - `data.explorer.resize`

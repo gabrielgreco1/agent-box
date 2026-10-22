@@ -345,6 +345,11 @@ struct TabItemView: View {
         }
         if let terminal {
             DSAgentLogo(terminal.provider, size: TabMetrics.logo, dimmed: !isActive)
+        } else if !tab.layout.datasetIDs.isEmpty {
+            // Tab de dataset: o lugar onde o dado está (um Mac: dataset local do Racky).
+            Image(systemName: "laptopcomputer").font(.system(size: TabMetrics.logo * 0.8))
+                .foregroundStyle(isActive ? DS.Color.textSecondary : DS.Color.textTertiary)
+                .frame(width: TabMetrics.logo, height: TabMetrics.logo)
         }
     }
 

@@ -333,12 +333,16 @@ struct DatasetPageView: View {
         self.model = controller.active ?? controller.model(for: "")
     }
 
-    init(controller: DatasetsController, model: DatasetViewModel, paneID: UUID?, drag: PaneDragController?, showsBar: Bool = true) {
+    /// Com a área Data por perto, o pane usa a mesma barra de lugar e o mesmo caminho do dado que ela.
+    var hub: DataHubController?
+
+    init(controller: DatasetsController, model: DatasetViewModel, paneID: UUID?, drag: PaneDragController?, showsBar: Bool = true, hub: DataHubController? = nil) {
         self.controller = controller
         self.model = model
         self.paneID = paneID
         self.drag = drag
         self.showsBar = showsBar
+        self.hub = hub
     }
 
     var body: some View {
@@ -346,7 +350,16 @@ struct DatasetPageView: View {
         GeometryReader { proxy in
             let width = proxy.size.width
             VStack(spacing: 0) {
-                if showsBar { topBar(snapshot, width: width) }
+                if showsBar {
+                    if let hub {
+                        DataLocationBar(
+                            hub: hub, object: .dataset(model.id), close: paneID.map { id in { controller.closePane(id) } },
+                            drag: paneID.flatMap { id in drag.map { (id, $0) } })
+                        DataLineageStrip(hub: hub, object: .dataset(model.id))
+                    } else {
+                        topBar(snapshot, width: width)
+                    }
+                }
                 if let snapshot {
                     DatasetOverviewTiles(snapshot: snapshot, controller: controller)
                     ActivityChart(snapshot: snapshot, controller: controller, rangeMenu: AnyView(rangeMenu))

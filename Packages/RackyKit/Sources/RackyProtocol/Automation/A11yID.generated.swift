@@ -420,6 +420,8 @@ extension A11yID {
     public static let datasetCopyRow = A11yID(unchecked: "dataset.copyRow")
     /// `data.page`
     public static let dataPage = A11yID(unchecked: "data.page")
+    /// `data.demo`
+    public static let dataDemo = A11yID(unchecked: "data.demo")
     /// `data.explorer`
     public static let dataExplorer = A11yID(unchecked: "data.explorer")
     /// `data.explorer.toggle`
@@ -2230,6 +2232,7 @@ extension A11yID {
         A11yIDSpec(pattern: "dataset.copyRow", surface: "Páginas"),
         A11yIDSpec(pattern: "dataset.panel.tab.<tab>", surface: "Páginas"),
         A11yIDSpec(pattern: "data.page", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.demo", surface: "Páginas"),
         A11yIDSpec(pattern: "data.explorer", surface: "Páginas"),
         A11yIDSpec(pattern: "data.explorer.toggle", surface: "Páginas"),
         A11yIDSpec(pattern: "data.explorer.resize", surface: "Páginas"),
