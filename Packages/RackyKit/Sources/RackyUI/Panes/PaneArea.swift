@@ -550,10 +550,22 @@ final class PaneAreaView: NSView {
         return nil
     }
 
+    /// Zona sob o cursor sobre a área de panes inteira (tab ativa arrastada sobre o próprio conteúdo).
+    func selfDropHit(atWindowPoint point: NSPoint) -> (zone: PaneDropZone, frame: CGRect)? {
+        guard model.isLoaded else { return nil }
+        let local = convert(point, from: nil)
+        guard bounds.contains(local) else { return nil }
+        return (PaneDropZone.zone(at: local, in: bounds), bounds)
+    }
+
     private func dragChanged() {
         let drag = model.dragController
         var hover: (zone: PaneDropZone, outcome: DropOutcome, frame: CGRect)?
-        if case .pane(_, let zone, let outcome, let frame)? = drag.session?.target { hover = (zone, outcome, frame) }
+        switch drag.session?.target {
+        case .pane(_, let zone, let outcome, let frame)?: hover = (zone, outcome, frame)
+        case .selfTab(let zone, let outcome, let frame)?: hover = (zone, outcome, frame)
+        default: break
+        }
         if let hover {
             if dropOverlay.superview == nil { addSubview(dropOverlay) }
             dropOverlay.frame = bounds

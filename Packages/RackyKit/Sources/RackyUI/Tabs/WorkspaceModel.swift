@@ -1571,6 +1571,49 @@ extension WorkspaceModel {
         }
     }
 
+    // MARK: Tab ativa arrastada sobre o próprio conteúdo
+
+    /// Parceira do arrasto da tab ativa: a outra tab da sessão usada há menos tempo; sem histórico, a vizinha na tab row.
+    func selfDropPartner(of tabID: UUID) -> Tab? {
+        guard let (sid, source) = locate(tab: tabID), let state = states[sid], let i = state.tabs.firstIndex(where: { $0.id == source.id }) else { return nil }
+        let others = state.recent.filter { $0 != tabID }
+        for id in others { if let tab = state.tabs.first(where: { $0.id == id }) { return tab } }
+        if state.tabs.indices.contains(i + 1) { return state.tabs[i + 1] }
+        return i > 0 ? state.tabs[i - 1] : nil
+    }
+
+    /// Plano do drop da tab ativa sobre o próprio conteúdo: os panes dela entram no lado `zone` do layout inteiro da parceira
+    /// (50/50) e a tab some. Nil sem parceira, no centro, ou se a tab arrastada não é a ativa.
+    func planSelfDrop(_ tabID: UUID, zone: PaneDropZone) -> DropPlan? {
+        guard tabID == activeTabID, let axis = zone.axis, let (sid, source) = locate(tab: tabID), let partner = selfDropPartner(of: tabID),
+              source.layout.isValid
+        else { return nil }
+        let moving = source.layout.terminalIDs
+        guard Set(partner.layout.panes.map(\.id)).isDisjoint(with: Set(source.layout.panes.map(\.id))),
+              Set(partner.layout.terminalIDs).isDisjoint(with: Set(moving))
+        else { return nil }
+        let layout: PaneLayout = zone.insertsFirst
+            ? .split(axis: axis, ratio: 0.5, first: source.layout, second: partner.layout)
+            : .split(axis: axis, ratio: 0.5, first: partner.layout, second: source.layout)
+        return DropPlan(
+            sid: sid, targetTabID: partner.id, targetLayout: layout, targetFocus: source.focusedTerminalID ?? moving.first,
+            sourceTabID: source.id, sourceLayout: nil, sourceFocus: nil,
+            retargeted: Dictionary(uniqueKeysWithValues: moving.map { ($0, partner.id) }), roomCheck: nil)
+    }
+
+    /// Prévia do drop da tab ativa sobre o próprio conteúdo: `.invalid` esconde as zonas.
+    func evaluateSelfDrop(_ tabID: UUID, zone: PaneDropZone) -> DropOutcome {
+        planSelfDrop(tabID, zone: zone) == nil ? .invalid : .applied
+    }
+
+    /// Aplica pelo mesmo caminho do drop de tab em tab (`apply`): terminais e processos seguem, a parceira vira a ativa.
+    @discardableResult
+    func performSelfDrop(_ tabID: UUID, zone: PaneDropZone) -> DropOutcome {
+        guard let plan = planSelfDrop(tabID, zone: zone) else { return .invalid }
+        apply(plan)
+        return .applied
+    }
+
     private func hasRoom(_ plan: DropPlan) -> Bool {
         guard let check = plan.roomCheck, contentSize != .zero else { return true }
         return check.layout.canSplit(paneID: check.paneID, axis: check.axis, in: CGRect(origin: .zero, size: contentSize))

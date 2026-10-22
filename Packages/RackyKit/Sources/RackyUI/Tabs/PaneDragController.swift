@@ -18,6 +18,8 @@ final class PaneDragController {
         case pane(paneID: UUID, zone: PaneDropZone, outcome: DropOutcome, frame: CGRect)
         /// Pane arrastado sobre a tab row: vira tab na posição `index`.
         case tabRow(index: Int)
+        /// Tab ativa arrastada sobre o próprio conteúdo: vira split com a tab parceira; `frame` é a área de panes inteira.
+        case selfTab(zone: PaneDropZone, outcome: DropOutcome, frame: CGRect)
     }
 
     struct Session: Equatable {
@@ -101,6 +103,8 @@ final class PaneDragController {
             return .applied
         case (let payload, .pane(let paneID, let zone, _, _)?):
             return model.performDrop(payload, onPane: paneID, zone: zone)
+        case (.tab(let id), .selfTab(let zone, _, _)?):
+            return model.performSelfDrop(id, zone: zone)
         case (.pane(let terminalID), .tabRow(let index)?):
             return model.detachPane(terminalID, toIndex: index)
         case (.otherPane(let paneID), .tabRow(let index)?):
@@ -176,6 +180,12 @@ final class PaneDragController {
             switch s.payload {
             case .pane, .otherPane: s.target = .tabRow(index: insertionIndex(atX: s.point.x, in: model))
             case .tab: break
+            }
+        } else if case .tab(let id) = s.payload, id == model.activeTabID {
+            // Tab ativa sobre o próprio conteúdo: zonas sobre a área inteira, parceira = outra tab da sessão.
+            if let hit = paneArea?.selfDropHit(atWindowPoint: s.point) {
+                let outcome = model.evaluateSelfDrop(id, zone: hit.zone)
+                if outcome != .invalid { s.target = .selfTab(zone: hit.zone, outcome: outcome, frame: hit.frame) }
             }
         } else if let hit = paneArea?.dropHit(atWindowPoint: s.point) {
             let outcome = model.evaluateDrop(s.payload, onPane: hit.paneID, zone: hit.zone)
