@@ -296,16 +296,26 @@ struct ComposerView: View {
 
     private var summary: some View {
         let text = model.summary
-        // Até duas linhas: o comando inteiro fica legível (o tooltip tem o texto completo).
-        return Text(verbatim: text)
-            .dsFont(DS.Font.monoMicro)
-            .foregroundStyle(DS.Color.textSecondary)
-            .lineLimit(2)
-            .truncationMode(.middle)
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .dsTooltip(text, side: .top)
-            .a11y(.overlayComposerSummary, kind: "text", value: text)
+        // O comando que vai rodar, com nome: até duas linhas (o tooltip tem o texto completo). Se o perfil pula as permissões, diz em
+        // palavras o que isso quer dizer.
+        return VStack(alignment: .leading, spacing: DS.Space.s0_5) {
+            HStack(spacing: DS.Space.s1) {
+                Text("Will run", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                if text.contains("--dangerously-skip-permissions") {
+                    Text("· the agent won't ask before running commands (set in the profile)", bundle: .module)
+                        .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(1)
+                }
+            }
+            Text(verbatim: text)
+                .dsFont(DS.Font.monoMicro)
+                .foregroundStyle(DS.Color.textSecondary)
+                .lineLimit(2)
+                .truncationMode(.middle)
+                .fixedSize(horizontal: false, vertical: true)
+                .dsTooltip(text, side: .top)
+                .a11y(.overlayComposerSummary, kind: "text", value: text)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func errorBox(_ issue: ComposerIssue) -> some View {

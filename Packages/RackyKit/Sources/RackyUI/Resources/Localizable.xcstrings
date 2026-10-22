@@ -11376,7 +11376,10 @@
           }
         }
       }
-    }
+    },
+    "Will run": {},
+    "· the agent won't ask before running commands (set in the profile)": {},
+    "To add one, use Add connection at the bottom of the list.": {}
   },
   "version": "1.0"
 }

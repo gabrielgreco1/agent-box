@@ -164,7 +164,9 @@ nonisolated enum DatasetLoader {
         } else {
             end = now
         }
-        let start: Date = request.range.seconds.map { now.addingTimeInterval(-$0) } ?? min(first, end.addingTimeInterval(-60))
+        // Dataset novo: o eixo começa logo antes da primeira linha (6% de folga), sem minutos vazios à esquerda.
+        let lead = max(end.timeIntervalSince(first) * 0.06, 1)
+        let start: Date = request.range.seconds.map { now.addingTimeInterval(-$0) } ?? first.addingTimeInterval(-lead)
         if request.range.seconds != nil { query.since = start }
         // O gráfico mantém o período inteiro (contexto); só linhas, facetas e perfis seguem a janela.
         let chartQuery = query
@@ -180,8 +182,9 @@ nonisolated enum DatasetLoader {
             let problems = Self.problems(row.error)
             return DatasetDisplayRow(row: row, cells: columns.map { Self.text(object[$0.name]) }, problems: columns.map { problems[$0.name] })
         }
-        let span = max(end.timeIntervalSince(start), 60)
-        let bucket = max((span / Double(activityBuckets)).rounded(.up), 1)
+        let span = max(end.timeIntervalSince(start), minimumSpan)
+        // Períodos curtos usam faixas fracionárias (arredondar para segundos inteiros esticaria o eixo além dos dados).
+        let bucket = span >= Double(activityBuckets) ? (span / Double(activityBuckets)).rounded(.up) : span / Double(activityBuckets)
         let activity = (try? await store.datasetActivity(datasetID: id, until: end, bucket: bucket, buckets: activityBuckets, query: chartQuery)) ?? []
         // Ritmo: linhas novas nos últimos 5 minutos, por minuto.
         let recent = (try? await store.datasetActivity(datasetID: id, until: now, bucket: 300, buckets: 1))?.first
@@ -196,6 +199,8 @@ nonisolated enum DatasetLoader {
 
     /// O período vira 48 barras.
     static let activityBuckets = 48
+    /// Menor período do gráfico (segundos): poucas linhas num instante não viram uma barra só.
+    static let minimumSpan: TimeInterval = 12
     /// "+N" do topo: linhas dos últimos 5 minutos. Sem linha nova há 10 minutos, o gráfico de "All time" para na última.
     static let recentWindow: TimeInterval = 300
     static let idleAfter: TimeInterval = 600

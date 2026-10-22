@@ -41,12 +41,16 @@ import Testing
             columns: [DatasetColumn(name: "title", required: true), DatasetColumn(name: "price", type: .number), DatasetColumn(name: "rating", type: .integer), DatasetColumn(name: "url", type: .url)],
             key: ["url"])
         let titles = ["Cometh the Hour", "Crazy Love", "Daily Fantasy Sports", "Dear Mr. Knightley", "Demigods & Magicians", "Doctor Sleep", "Don't Get Caught", "Eat Fat, Get Thin"]
-        _ = try await service.append(
-            session: session, name: "books2",
-            rows: (0..<80).map { i in
-                ["title": .string("\(titles[i % titles.count]) \(i)"), "price": .double(11.21 + Double(i * 7 % 50)), "rating": .int(1 + i % 5),
-                 "url": .string("https://books.toscrape.com/catalogue/book_\(900 + i)")]
-            }, provenance: .none)
+        // Em lotes ao longo do tempo, como uma coleta de verdade: o gráfico do Overview mostra a curva, não um degrau só.
+        for batch in 0..<8 {
+            _ = try await service.append(
+                session: session, name: "books2",
+                rows: (batch * 10..<batch * 10 + 10).map { i in
+                    ["title": .string("\(titles[i % titles.count]) \(i)"), "price": .double(11.21 + Double(i * 7 % 50)), "rating": .int(1 + i % 5),
+                     "url": .string("https://books.toscrape.com/catalogue/book_\(900 + i)")]
+                }, provenance: .none)
+            try await Task.sleep(for: .milliseconds(1500))
+        }
         try await DatasetsFixture.seedHotels(service: service, session: session)
         await env.datasets.reloadList()
         _ = try? await env.registry.perform(.rightPanelToggle, .press)

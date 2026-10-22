@@ -1256,7 +1256,9 @@ struct DataEmptyState: View {
             Text("Racky holds what your agents collected on this Mac. Connections are your own databases, storage and destinations: browse them here and let agents write to them.", bundle: .module)
                 .dsFont(DS.Font.body).foregroundStyle(DS.Color.textTertiary).multilineTextAlignment(.center)
                 .frame(maxWidth: DataMetrics.emptyTextWidth)
-            DSButton(.dataAddConnection, "Add connection", variant: .outline, size: .sm, symbol: "plus")
+            // Um só "Add connection": o do pé da lista (aqui só aponta para ele).
+            Text("To add one, use Add connection at the bottom of the list.", bundle: .module)
+                .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
         }
         .padding(DS.Space.s8)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
