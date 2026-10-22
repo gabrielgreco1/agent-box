@@ -946,7 +946,7 @@ struct DataLineageStrip: View {
                 let shown = limit.map { column.nodes.prefix(max($0, column.nodes.firstIndex(where: \.current).map { $0 + 1 } ?? $0)) } ?? column.nodes[...]
                 ForEach(Array(shown)) { node in smallChip(node) }
                 if shown.count < column.nodes.count {
-                    Text(verbatim: "+\(column.nodes.count - shown.count)").dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                    Text(verbatim: String(localized: "+\(column.nodes.count - shown.count) more", bundle: .module)).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
                         .help(column.nodes.dropFirst(shown.count).map(\.title).joined(separator: ", "))
                 }
             }

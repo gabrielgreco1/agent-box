@@ -210,9 +210,9 @@ struct ComposerView: View {
                     // Fora do padrão: diz que mudou e como voltar.
                     HStack(spacing: DS.Space.s1_5) {
                         if chosen.production { EnvironmentBadge(environment: .production) }
-                        Text("You changed this from the default.", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                        Text("Not the default (this Mac only).", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
                         ActionButton(.composerSetDataDestination, argument: .select("racky")) {
-                            Text("Use this Mac instead (default)", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.dataKey)
+                            Text("Keep it on this Mac only", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.dataKey)
                         }
                         .buttonStyle(.plain)
                     }

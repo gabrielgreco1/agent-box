@@ -11260,28 +11260,6 @@
         }
       }
     },
-    "Use this Mac instead (default)": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Use this Mac instead (default)"
-          }
-        }
-      }
-    },
-    "You changed this from the default.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "You changed this from the default."
-          }
-        }
-      }
-    },
     "A place outside Racky: browse it here, and let agents write to it.": {
       "extractionState": "manual",
       "localizations": {
@@ -11376,7 +11354,29 @@
         }
       }
     },
-    "More columns": {}
+    "More columns": {},
+    "Not the default (this Mac only).": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not the default (this Mac only)."
+          }
+        }
+      }
+    },
+    "Keep it on this Mac only": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep it on this Mac only"
+          }
+        }
+      }
+    }
   },
   "version": "1.0"
 }
