@@ -285,6 +285,8 @@ struct SidebarInput {
     var workerComputers: [UUID: String] = [:]
     /// Workers que já entregaram o resultado: aparecem como concluídos mesmo com o CLI aberto esperando input.
     var finishedWorkers: Set<UUID> = []
+    /// Nome de cada worker vindo do Store ("Codex 1"), para terminais abertos antes do nome entrar no título.
+    var workerNames: [UUID: String] = [:]
     /// Status Git por pasta de worktree, PR por sessão (T2-05) e a sessão com a nota em edição.
     var gitStatus: [String: GitStatus] = [:]
     var pullRequests: [UUID: PullRequestChipModel] = [:]
@@ -393,7 +395,7 @@ enum SidebarProjector {
         }
         // O título do worker é "<agente> · <tarefa>" ("Codex 1 · books p1–4"): o nome do agente lidera, a tarefa vem ao lado.
         let split = w.title.range(of: " · ")
-        let name = split.map { String(w.title[..<$0.lowerBound]) } ?? w.title
+        let name = input.workerNames[w.id] ?? split.map { String(w.title[..<$0.lowerBound]) } ?? w.title
         let task = split.map { String(w.title[$0.upperBound...]) }
         return SubagentRowData(
             id: "worker-\(w.id.uuidString)", title: name, phase: phase, startedAt: w.startedAt ?? w.createdAt, endedAt: w.endedAt,

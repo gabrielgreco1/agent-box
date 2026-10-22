@@ -303,7 +303,7 @@ struct ActivityChart: View {
                 if let hover, hover < buckets.count {
                     tooltip(buckets[hover])
                         .offset(x: tooltipX(index: hover, barWidth: width, gap: gap, total: geo.size.width))
-                        .offset(y: -geo.size.height)
+                        .frame(maxHeight: .infinity, alignment: .topLeading)
                         .transition(.opacity)
                         .allowsHitTesting(false)
                 }
@@ -623,6 +623,7 @@ struct FacetsPanel: View {
                     Text(verbatim: Self.label(facet, value.value, controller: controller)).dsFont(DS.Font.cell)
                         .foregroundStyle(on || facet == .error ? DS.Color.textPrimary : DS.Color.textTertiary)
                         .lineLimit(1).truncationMode(.middle)
+                        .help(facet == .computer ? value.value : "")
                     Spacer(minLength: DS.Space.s1)
                 }
                 .contentShape(Rectangle())
@@ -661,7 +662,7 @@ struct FacetsPanel: View {
         case (.evidence, "observed"): String(localized: "Seen in network", bundle: .module)
         case (.evidence, "reported"): String(localized: "Agent-reported", bundle: .module)
         case (.evidence, "none"): String(localized: "No source", bundle: .module)
-        case (.computer, _): controller.computerLabel(value).map { "\($0) · \(value)" } ?? value
+        case (.computer, _): controller.computerLabel(value) ?? value
         case (_, ""): String(localized: "None", bundle: .module)
         default: value
         }

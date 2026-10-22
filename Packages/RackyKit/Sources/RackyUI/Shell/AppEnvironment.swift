@@ -436,7 +436,14 @@ public final class AppEnvironment {
         }
         datasets.closePane = { [workspace] paneID in workspace.closePane(id: paneID) }
         datasets.currentSession = { [workspace] in workspace.currentSessionID }
-        datasets.showDataPanel = { [rightPanel] in rightPanel.show(.data) }
+        // Os dados entram em cima e com mais espaço: a tabela precisa de altura, o outro módulo fica como resumo embaixo.
+        datasets.showDataPanel = { [rightPanel] in
+            rightPanel.show(.data)
+            if rightPanel.layout.visible.count == 2 {
+                if rightPanel.layout.visible.first != .data { rightPanel.swapVisible() }
+                rightPanel.setTopFraction(0.64)
+            }
+        }
         datasets.hideDataPanel = { [rightPanel] in rightPanel.hide(.data) }
         datasets.computerLabel = { [weak model = computers.model] name in model?.computerAgentNames[name] }
         datasets.isShownInSession = { [workspace] id, sid in workspace.datasetPane(id, in: sid) != nil }

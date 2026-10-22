@@ -109,8 +109,13 @@ final class SidebarModel {
             expandedSummaries: expandedSummaries, selectedSession: selectedSession, pending: pending, now: clock(),
             attention: attention?.center ?? AttentionCenter(), computers: computerRows, restartPending: restartPendingSessions,
             offersSubagentToggle: toggleSessions, collapsedChildren: collapsedChildren, agentComputers: helpInbox?.agentComputers ?? [:],
-            workerComputers: helpInbox?.workerComputers ?? [:], finishedWorkers: helpInbox?.finishedWorkers ?? [],
+            workerComputers: helpInbox?.workerComputers ?? [:], finishedWorkers: helpInbox?.finishedWorkers ?? [], workerNames: workerNames,
             gitStatus: gitStatus, pullRequests: pullRequests, editingNote: editingNote)
+    }
+
+    private var workerNames: [UUID: String] {
+        guard let helpInbox else { return [:] }
+        return helpInbox.workerComputers.compactMapValues { helpInbox.computerAgentNames[$0] }
     }
 
     /// Linhas filhas por sessão (nome, estado, miniatura) a partir do diretório de computadores.
