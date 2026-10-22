@@ -992,7 +992,9 @@ struct DataLineageStrip: View {
     private var fullBody: some View {
         let columns = lineage
         return VStack(alignment: .leading, spacing: DS.Space.s2) {
-            ScrollView(.horizontal, showsIndicators: false) {
+            // Cabe de lado: a cadeia numa linha. Não cabe: de cima para baixo (cada passo numa linha, com a seta ↓ e o nome do passo),
+            // em vez de cortar os últimos chips na borda.
+            ViewThatFits(in: .horizontal) {
                 HStack(alignment: .center, spacing: DS.Space.s2) {
                     if columns.isEmpty {
                         Text(verbatim: emptyText).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(1)
@@ -1001,6 +1003,26 @@ struct DataLineageStrip: View {
                         if index > 0 { edge(column.edge) }
                         VStack(alignment: .leading, spacing: DS.Space.s1) {
                             ForEach(column.nodes) { node in chip(node) }
+                        }
+                    }
+                }
+                .fixedSize()
+                VStack(alignment: .leading, spacing: DS.Space.s1) {
+                    if columns.isEmpty {
+                        Text(verbatim: emptyText).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                    }
+                    ForEach(Array(columns.enumerated()), id: \.offset) { index, column in
+                        if index > 0 {
+                            HStack(spacing: DS.Space.s1) {
+                                Image(systemName: "arrow.down").font(.system(size: DS.Space.s2_5, weight: .semibold))
+                                Text(verbatim: column.edge).dsFont(DS.Font.micro)
+                            }
+                            .foregroundStyle(DS.Color.textTertiary)
+                            .padding(.leading, DS.Space.s3)
+                        }
+                        ViewThatFits(in: .horizontal) {
+                            HStack(spacing: DS.Space.s1) { ForEach(column.nodes) { node in chip(node) } }.fixedSize()
+                            VStack(alignment: .leading, spacing: DS.Space.s1) { ForEach(column.nodes) { node in chip(node) } }
                         }
                     }
                 }
