@@ -583,7 +583,7 @@ Overlay DS §12.17, **560** de largura (máx. janela − 32). Abre por ⌘N, `+`
 | Worktree location (New Worktree) | texto read-only mono `textSecondary` + `[Change…]` | `<worktree root>/<repo>/<session name>` (padrão `~/Racky/worktrees`, P21) | `overlay.composer.location` |
 | Subagent computers (Fatia 3) | `DSSegmented`: `Off` · `On This Mac` · `In Container` (v1.1; na v1 o segmento não existe) | `On This Mac` | `overlay.composer.computers` |
 | Subagents run as | `DSSegmented`: `Claude` · `Codex` · `OpenCode` · `Mixed` (só com Subagent computers ligado) | `Claude` | `overlay.composer.subagentHarness` |
-| Save data to | `DSCombobox`: `Racky dataset (this app)` ou um lugar de uma conexão (tabela, nova tabela, pasta, aba, webhook), agrupado por conexão; texto embaixo diz o que acontece (âmbar em produção) | `Racky` | `overlay.composer.dataDestination` |
+| Save data to | `DSCombobox`: `Racky dataset (this app)` ou um lugar de uma conexão (tabela, nova tabela, pasta, aba, webhook), agrupado por conexão; texto embaixo diz o que acontece (âmbar numa conexão protegida) | `Racky` | `overlay.composer.dataDestination` |
 | Computer proxy (Fatia 3, P13) | `DSCombobox`: `Default (<nome>)` · `None` · proxies de Settings › Computers › Proxies | o padrão de Settings | `overlay.composer.proxy` |
 | Watch Claude subagents (Fatia 2) | switch | On (Claude) | `overlay.composer.watchSubagents` |
 
@@ -1533,7 +1533,7 @@ Atalhos reservados para o terminal (nunca capturados pelo app): ⌃ + letra, ⌥
 | Find | `find.field`, `find.count`, `find.caseSensitive`, `find.regex`, `find.previous`, `find.next`, `find.close` |
 | Status bar | `statusBar`, `statusBar.usage.claude`, `statusBar.usage.codex`, `statusBar.agents`, `statusBar.computers`, `statusBar.proxyUsage`, `statusBar.docker`, `statusBar.background`, `statusBar.popover.<segment>`, `statusBar.popover.computers.stop.<computer>`, `statusBar.popover.openComputers`, `statusBar.popover.proxySettings`, `statusBar.popover.startDocker` |
 | Overlays (geral) | `overlay.scrim`, `overlay.<name>`, `overlay.<name>.advanced`, `overlay.<name>.<field>.error`, `overlay.<name>.submit`, `overlay.<name>.cancel` |
-| Composer | `overlay.composer`, `.project`, `.where`, `.createFrom`, `.baseRef`, `.reuseBranch`, `.worktree`, `.folder`, `.agent`, `.profile`, `.prompt`, `.advanced`, `.name`, `.branch`, `.location`, `.computers`, `.subagentHarness`, `.dataDestination`, `.proxy`, `.watchSubagents`, `.summary`, `.createMore`, `.cancel`, `.submit`, `.launchChip`, `.<field>.error` |
+| Composer | `overlay.composer`, `.project`, `.where`, `.createFrom`, `.baseRef`, `.reuseBranch`, `.worktree`, `.folder`, `.agent`, `.profile`, `.prompt`, `.advanced`, `.name`, `.branch`, `.location`, `.computers`, `.subagentHarness`, `.dataDestination`, `.proxy`, `.watchSubagents`, `.summary`, `.skipPermissions`, `.createMore`, `.cancel`, `.submit`, `.launchChip`, `.<field>.error` |
 | Quick launch | `overlay.quickLaunch`, `overlay.quickLaunch.input`, `overlay.quickLaunch.item.<agent>`, `overlay.quickLaunch.profile.<id>`, `overlay.quickLaunch.resume`, `overlay.quickLaunch.openComputer`, `overlay.quickLaunch.agentSettings` |
 | Palette | `overlay.palette`, `overlay.palette.input`, `overlay.palette.row.<kind>.<id>`, `overlay.palette.filter`, `overlay.palette.insertMode` |
 | Inbox | `inbox`, `inbox.filter`, `inbox.markAllRead`, `inbox.empty`, `inbox.item.<eventId>[.markRead/.takeOver/.allow/.deny/.open]` (lote concluído: `eventId` = `batch.<batchId>`) |

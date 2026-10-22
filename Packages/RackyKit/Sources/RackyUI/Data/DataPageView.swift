@@ -115,7 +115,7 @@ struct DataPageView: View {
                 }
                 VStack(spacing: 0) {
                     if let active = hub.active {
-                        if hub.connection(active.connectionID)?.environment == .production { DataProductionBanner(hub: hub, object: active) }
+                        if hub.connection(active.connectionID)?.protected == true { DataProductionBanner(hub: hub, object: active) }
                         DataLocationBar(hub: hub, object: active)
                         switch active {
                         case .dataset: EmptyView()  // a página do dataset desenha o caminho e as abas
@@ -330,7 +330,7 @@ struct DataExplorer: View {
                 row(id: connection.id, depth: 0, mark: .brand(connection.kind.brand), title: connection.name, detail: nil,
                     chevron: connection.kind.canBrowse ? open : nil, toggle: connection.kind.canBrowse ? connection.id : nil,
                     live: target.map(hub.isLive) ?? false, selected: target != nil && hub.active == target, open: target,
-                    badge: connection.environment, subtitle: connection.kind.title == connection.name ? nil : connection.kind.title)
+                    badge: connection, subtitle: connection.kind.title == connection.name ? nil : connection.kind.title)
             }
             if open {
                 ForEach(connection.children) { child in nodeRows(child, connection: connection, depth: 1, path: []) }
@@ -372,7 +372,7 @@ struct DataExplorer: View {
     @ViewBuilder
     private func row(
         id: String, depth: Int, mark: DataMark, title: String, detail: String?, chevron: Bool?, toggle: String?, live: Bool, selected: Bool,
-        open: DataObject?, badge: DataEnvironment? = nil, subtitle: String? = nil
+        open: DataObject?, badge: DataConnection? = nil, subtitle: String? = nil
     ) -> some View {
         let label = rowLabel(depth: depth, mark: mark, title: title, detail: detail, chevron: chevron, live: live, selected: selected, badge: badge, subtitle: subtitle)
         HStack(spacing: 0) {
@@ -390,7 +390,7 @@ struct DataExplorer: View {
     }
 
     private func rowLabel(
-        depth: Int, mark: DataMark, title: String, detail: String?, chevron: Bool?, live: Bool, selected: Bool, badge: DataEnvironment?,
+        depth: Int, mark: DataMark, title: String, detail: String?, chevron: Bool?, live: Bool, selected: Bool, badge: DataConnection?,
         subtitle: String?, muted: Bool = false
     ) -> some View {
         HStack(spacing: DS.Space.s1_5) {
@@ -413,7 +413,7 @@ struct DataExplorer: View {
                 }
                 Text(verbatim: title).dsFont(DS.Font.cell).foregroundStyle(muted ? DS.Color.textTertiary : DS.Color.textPrimary).lineLimit(1).truncationMode(.tail)
             }
-            if let badge { EnvironmentBadge(environment: badge) }
+            if let badge { ConnectionBadges(badge) }
             Spacer(minLength: DS.Space.s1)
             if live { LiveDot() }
             if let detail { Text(verbatim: detail).dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textTertiary) }
@@ -475,7 +475,7 @@ struct DataDemoBanner: View {
         HStack(spacing: DS.Space.s2) {
             Image(systemName: "eye").font(.system(size: DS.Space.s3))
             Text("Example data", bundle: .module).dsFont(DS.Font.label)
-            Text("These connections are samples, not yours: nothing is connected. PROD and DEV only show how they would look.", bundle: .module)
+            Text("These connections are samples, not yours: nothing is connected.", bundle: .module)
                 .dsFont(DS.Font.small).lineLimit(2).fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
@@ -578,20 +578,38 @@ struct DataMarkView: View {
     }
 }
 
-/// `PROD` em âmbar (cuidado), `DEV` neutro.
-struct EnvironmentBadge: View {
-    let environment: DataEnvironment
+/// O cadeado de uma conexão protegida (cor só no ícone) e as etiquetas que o usuário criou, em chips neutros.
+struct ConnectionBadges: View {
+    let tags: [String]
+    let protected: Bool
+
+    init(_ connection: DataConnection) {
+        tags = connection.tags
+        protected = connection.protected
+    }
+
+    init(tags: [String] = [], protected: Bool) {
+        self.tags = tags
+        self.protected = protected
+    }
 
     var body: some View {
-        let prod = environment == .production
-        Text(verbatim: prod ? "PROD" : "DEV")
-            .dsFont(DS.Font.keycap)
-            .foregroundStyle(prod ? DS.Color.warning : DS.Color.textTertiary)
-            .padding(.horizontal, DS.Space.s1)
-            .padding(.vertical, DataMetrics.badgePadding)
-            .background(RoundedRectangle(cornerRadius: DS.Radius.xs).fill(prod ? DS.Color.warning.opacity(0.12) : DS.Color.secondary))
-            .overlay(RoundedRectangle(cornerRadius: DS.Radius.xs).strokeBorder(prod ? DS.Color.warning.opacity(0.35) : DS.Color.border))
-            .fixedSize()
+        HStack(spacing: DS.Space.s1) {
+            if protected {
+                Image(systemName: "lock.fill").font(.system(size: DS.Space.s2_5)).foregroundStyle(DS.Color.warning)
+                    .help(String(localized: "Protected: Racky asks before anything that changes data", bundle: .module))
+            }
+            ForEach(tags, id: \.self) { tag in
+                Text(verbatim: tag)
+                    .dsFont(DS.Font.keycap)
+                    .foregroundStyle(DS.Color.textTertiary)
+                    .padding(.horizontal, DS.Space.s1)
+                    .padding(.vertical, DataMetrics.badgePadding)
+                    .background(RoundedRectangle(cornerRadius: DS.Radius.xs).fill(DS.Color.secondary))
+                    .overlay(RoundedRectangle(cornerRadius: DS.Radius.xs).strokeBorder(DS.Color.border))
+            }
+        }
+        .fixedSize()
     }
 }
 
@@ -610,10 +628,9 @@ struct DataTabStrip: View {
     @Environment(\.pageTrailingInset) private var trailingInset
 
     var body: some View {
-        // Nomes inteiros, nunca cortados. Sem espaço: primeiro as tabs inativas escondem o lugar em letra pequena; só então a faixa rola.
+        // Nomes inteiros, nunca cortados. Sem espaço: os nomes das tabs inativas encurtam com "…"; só então a faixa rola.
         ViewThatFits(in: .horizontal) {
             row(compact: false)
-            row(compact: true)
             // Ainda sem espaço: os nomes encurtam com "…" (como no Chrome) antes de a faixa rolar.
             row(compact: true, short: true)
             scrolling
@@ -672,7 +689,11 @@ struct DataTabStrip: View {
         let active = hub.active == object
         let place = hub.connection(object.connectionID)
         return HStack(spacing: DS.Space.s1_5) {
-            ActionButton(.dataOpen, id: .dataTab(object.key), argument: .select(object.key)) {
+            // O lugar fica no logo (e no tooltip): o nome da tab é só o objeto, para caberem mais tabs inteiras.
+            ActionButton(
+                .dataOpen, id: .dataTab(object.key), argument: .select(object.key),
+                tooltip: "\(DataLabels.title(object, hub: hub)) · \(place?.name ?? String(localized: "This Mac", bundle: .module))"
+            ) {
                 HStack(spacing: DS.Space.s1_5) {
                     if let place {
                         DSDataLogo(place.kind.brand, size: DataMetrics.icon + DS.Space.s0_5)
@@ -682,10 +703,6 @@ struct DataTabStrip: View {
                     Text(verbatim: DataLabels.title(object, hub: hub)).dsFont(active ? DS.Font.tabActive : DS.Font.tab)
                         .foregroundStyle(active ? DS.Color.textPrimary : DS.Color.textSecondary).lineLimit(1).truncationMode(.tail)
                         .frame(maxWidth: short && !active ? DataMetrics.tabTitleShort : nil, alignment: .leading)
-                    // O lugar em letra pequena: duas tabs "books" (Racky e Supabase) não se confundem (o logo já diz, quando falta espaço).
-                    if !compact || active {
-                        Text(verbatim: place?.name ?? String(localized: "This Mac", bundle: .module)).dsFont(DS.Font.small).foregroundStyle(DS.Color.textQuaternary).lineLimit(1)
-                    }
                 }
                 .contentShape(Rectangle())
             }
@@ -837,7 +854,7 @@ struct DataLocationBar: View {
                 if !compact, connection.kind.title != connection.name {
                     Text(verbatim: connection.kind.title).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
                 }
-                if let environment = connection.environment { EnvironmentBadge(environment: environment) }
+                ConnectionBadges(connection)
             } else {
                 Image(systemName: "laptopcomputer").font(.system(size: DataMetrics.icon)).foregroundStyle(DS.Color.textSecondary)
                 Text("This Mac", bundle: .module).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary)
@@ -902,7 +919,7 @@ struct DataLineageStrip: View {
         var title: String
         var detail: String
         var action: (ActionID, ActionArgument)?
-        var badge: DataEnvironment?
+        var badge: DataConnection?
         var live = false
         var current = false
     }
@@ -962,7 +979,7 @@ struct DataLineageStrip: View {
             markView(node.mark, size: DataMetrics.icon + DS.Space.s0_5)
             Text(verbatim: node.title).dsFont(node.current ? DS.Font.label : DS.Font.small)
                 .foregroundStyle(node.current ? DS.Color.textPrimary : DS.Color.textSecondary).lineLimit(1)
-            if let badge = node.badge { EnvironmentBadge(environment: badge) }
+            if let badge = node.badge { ConnectionBadges(badge) }
             if node.live { LiveDot() }
         }
         .padding(.horizontal, DS.Space.s1_5)
@@ -1168,7 +1185,7 @@ struct DataLineageStrip: View {
     private func placeNode(_ place: DataConnection, title: String, detail: String, target: DataObject?) -> Node {
         Node(
             id: "place-\(place.id)-\(title)", mark: .brand(place.kind.brand), title: place.name == title ? title : "\(place.name) › \(title)", detail: detail,
-            action: target.map { (.dataOpen, .select($0.key)) }, badge: place.environment, current: target == object)
+            action: target.map { (.dataOpen, .select($0.key)) }, badge: place, current: target == object)
     }
 
     private func copyStatus(_ destination: DataDestination, rows: Int) -> String {
@@ -1205,7 +1222,7 @@ struct DataLineageStrip: View {
             VStack(alignment: .leading, spacing: .zero) {
                 HStack(spacing: DS.Space.s1) {
                     Text(verbatim: node.title).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
-                    if let badge = node.badge { EnvironmentBadge(environment: badge) }
+                    if let badge = node.badge { ConnectionBadges(badge) }
                     if node.live { LiveDot() }
                     if node.current { Text("You are here", bundle: .module).dsFont(DS.Font.keycap).foregroundStyle(DS.Color.dataKey) }
                 }
@@ -1240,7 +1257,7 @@ struct DataProductionBanner: View {
         let live = hub.writers(of: object).filter(\.live)
         HStack(spacing: DS.Space.s2) {
             Image(systemName: "exclamationmark.triangle.fill").font(.system(size: DS.Space.s3))
-            Text(verbatim: String(localized: "Production · \(connection?.name ?? "")", bundle: .module)).dsFont(DS.Font.label)
+            Text(verbatim: String(localized: "Protected · \(connection?.name ?? "")", bundle: .module)).dsFont(DS.Font.label)
             Text(verbatim: message(object, live: live.count)).dsFont(DS.Font.small).lineLimit(1)
             Spacer(minLength: DS.Space.s2)
             if !live.isEmpty {

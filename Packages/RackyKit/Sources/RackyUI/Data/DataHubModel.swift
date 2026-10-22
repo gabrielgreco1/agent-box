@@ -93,14 +93,15 @@ public enum DataConnectionKind: String, CaseIterable, Sendable, Codable {
     public var speaksSQL: Bool { family == .database || family == .warehouse }
 }
 
-public enum DataEnvironment: String, Sendable, Codable { case production, development }
-
 public struct DataConnection: Identifiable, Equatable, Sendable {
     public var id: String
     public var kind: DataConnectionKind
     /// Nome que o usuário deu ("Supabase", "Analytics").
     public var name: String
-    public var environment: DataEnvironment?
+    /// Etiquetas que o usuário cria (prod, cliente-x, teste…): só identificam, não mudam comportamento.
+    public var tags: [String] = []
+    /// Protegida: o Racky pede confirmação antes de qualquer coisa que altere dados e mostra os avisos (faixa, formulário de sessão).
+    public var protected = false
     /// Onde fica (host, projeto, bucket, URL), sem segredo.
     public var address: String
     public var children: [DataNode]

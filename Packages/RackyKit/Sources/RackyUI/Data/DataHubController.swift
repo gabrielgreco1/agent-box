@@ -177,8 +177,8 @@ public final class DataHubController {
             key: "racky", title: String(localized: "This Mac (a dataset of this session)", bundle: .module), group: String(localized: "This Mac", bundle: .module), production: false,
             explanation: String(localized: "Agents save what they collect in a dataset of this session, on this Mac. You can copy it to a connection later.", bundle: .module))]
         for connection in connections {
-            let prod = connection.environment == .production
-            let place = connection.name + (prod ? " (production)" : "")
+            let prod = connection.protected
+            let place = connection.name + (prod ? " (protected)" : "")
             func add(_ object: DataObject, _ title: String, _ explanation: String) {
                 out.append(ComposerDataDestination(key: object.key, title: title, group: connection.name, production: prod, explanation: explanation))
             }

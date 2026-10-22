@@ -371,9 +371,9 @@ struct QueryObjectView: View {
                 Image(systemName: prod ? "exclamationmark.triangle.fill" : "play.circle").font(.system(size: DS.Space.s3))
                 Text(verbatim: connection.map { $0.kind.title == $0.name ? String(localized: "Runs on \($0.name)", bundle: .module) : String(localized: "Runs on \($0.name) · \($0.kind.title)", bundle: .module) } ?? "")
                     .dsFont(DS.Font.label)
-                if let environment = connection?.environment { EnvironmentBadge(environment: environment) }
+                if let connection { ConnectionBadges(connection) }
                 if prod {
-                    Text("Changes here affect production data.", bundle: .module).dsFont(DS.Font.small)
+                    Text("This connection is protected: changes ask you to confirm.", bundle: .module).dsFont(DS.Font.small)
                 }
                 Spacer(minLength: 0)
             }

@@ -199,7 +199,7 @@ struct ComposerView: View {
                 entries.append(.header(option.group))
                 lastGroup = option.group
             }
-            entries.append(.item(DSMenuItem(option.key, option.title, detail: option.production ? "PROD" : nil)))
+            entries.append(.item(DSMenuItem(option.key, option.title, detail: option.production ? String(localized: "Protected", bundle: .module) : nil)))
         }
         return field("Save data to") {
             VStack(alignment: .leading, spacing: DS.Space.s1_5) {
@@ -209,7 +209,7 @@ struct ComposerView: View {
                 if let chosen, chosen.key != "racky" {
                     // Fora do padrão: diz que mudou e como voltar.
                     HStack(spacing: DS.Space.s1_5) {
-                        if chosen.production { EnvironmentBadge(environment: .production) }
+                        if chosen.production { ConnectionBadges(protected: true) }
                         Text("Not the default (this Mac only).", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
                         ActionButton(.composerSetDataDestination, argument: .select("racky")) {
                             Text("Keep it on this Mac only", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.dataKey)
@@ -223,7 +223,7 @@ struct ComposerView: View {
                         HStack(alignment: .top, spacing: DS.Space.s2) {
                             Image(systemName: "exclamationmark.triangle.fill").font(.system(size: DS.Space.s3)).foregroundStyle(DS.Color.warning)
                             VStack(alignment: .leading, spacing: DS.Space.s0_5) {
-                                Text("Copies to a production database", bundle: .module).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary)
+                                Text("Copies to a protected connection", bundle: .module).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary)
                                 Text(verbatim: chosen.explanation).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
                             }
                         }
@@ -299,13 +299,16 @@ struct ComposerView: View {
         // O comando que vai rodar, com nome: até duas linhas (o tooltip tem o texto completo). Se o perfil pula as permissões, diz em
         // palavras o que isso quer dizer.
         return VStack(alignment: .leading, spacing: DS.Space.s0_5) {
-            HStack(spacing: DS.Space.s1) {
-                Text("Will run", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
-                if text.contains("--dangerously-skip-permissions") {
-                    Text("· the agent won't ask before running commands (set in the profile)", bundle: .module)
-                        .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(1)
+            if text.contains("--dangerously-skip-permissions") {
+                // Perfil que pula as permissões: aviso em âmbar (cor só no ícone e no texto, sem fundo), fácil de ver antes do Create.
+                HStack(spacing: DS.Space.s1) {
+                    Image(systemName: "exclamationmark.triangle.fill").font(.system(size: DS.Space.s2_5))
+                    Text("The agent won't ask before running commands (set in the profile)", bundle: .module).dsFont(DS.Font.label)
                 }
+                .foregroundStyle(DS.Color.warning)
+                .a11y(.overlayComposerSkipPermissions, kind: "text")
             }
+            Text("Will run", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
             Text(verbatim: text)
                 .dsFont(DS.Font.monoMicro)
                 .foregroundStyle(DS.Color.textSecondary)

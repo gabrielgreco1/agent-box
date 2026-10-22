@@ -31,12 +31,12 @@ O usuário vai lidar com dados em lugares diferentes: o que os agentes coletaram
 │     ▦ books2  ●live  │ │ ← Codex 1, Codex 2 (live)   → Supabase prod › public.books (sync on)  │ │
 │  ▸ Hotel prices      │ └───────────────────────────────────────────────────────────────────────┘ │
 │ CONNECTIONS          │  conteúdo do objeto (dataset, tabela, query, bucket, webhook)             │
-│  ▾ ⛁ Supabase  PROD  │                                                                           │
+│  ▾ ⛁ Supabase 🔒 prod│                                                                           │
 │     ▾ public         │                                                                           │
 │        ▦ hotels      │                                                                           │
 │        ▦ books ●live │                                                                           │
 │     ⌘ New query      │                                                                           │
-│  ▸ ⛁ Analytics  DEV  │                                                                           │
+│  ▸ ⛁ Analytics  dev  │                                                                           │
 │  ▸ ☁ scrapes-raw (S3)│                                                                           │
 │  ▸ ⤴ Orders webhook  │                                                                           │
 │ + Add connection     │                                                                           │
@@ -46,7 +46,7 @@ O usuário vai lidar com dados em lugares diferentes: o que os agentes coletaram
 - **Explorer** (esquerda, sempre visível na área Data): duas seções com título fixo, **Racky** e **Connections**. No Racky, os datasets agrupados por sessão. Em Connections, cada conexão com ícone do tipo, nome e selo de ambiente; expande para schemas → tabelas, buckets → pastas, planilhas → abas. Webhook não expande. Um ponto verde "live" em todo lugar onde algo está gravando agora. Rodapé: `+ Add connection`.
 - **Tabs**: cada objeto aberto é uma tab (como editores no DBeaver). O ícone da tab diz o tipo (dataset, tabela, query, pasta, webhook).
 - **Location bar** (topo do conteúdo, em toda tela): o lugar como trilha clicável — chip do lugar (`Racky` ou o tipo + nome da conexão + ambiente) › schema/sessão › objeto — e à direita o tipo do objeto e o tamanho. Embaixo, uma linha de **fluxo**: `←` quem grava ali (agentes, syncs) e `→` para onde aquilo vai. É a linha que responde "de onde vem e para onde vai".
-- **Ambiente**: `PROD` em âmbar, `DEV` neutro. Em `PROD`, ações que escrevem pedem confirmação e o editor SQL mostra "Running on Supabase · PROD" em âmbar.
+- **Tags e proteção**: não existe "ambiente" fixo. O usuário cria tags livres (prod, dev, cliente-x…), mostradas em chips neutros, que só identificam. Separado delas, cada conexão tem **Protected** (cadeado âmbar): numa conexão protegida, ações que escrevem pedem confirmação, aparece a faixa "Protected · <nome>" e o formulário de sessão avisa "Copies to a protected connection".
 
 ## Telas de objeto
 

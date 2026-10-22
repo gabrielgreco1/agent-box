@@ -11073,17 +11073,6 @@
         }
       }
     },
-    "Changes here affect production data.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Changes here affect production data."
-          }
-        }
-      }
-    },
     "Connect a database, a bucket or a spreadsheet to browse it here and let agents write to it.": {
       "extractionState": "manual",
       "localizations": {
@@ -11326,34 +11315,12 @@
         }
       }
     },
-    "Copies to a production database": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Copies to a production database"
-          }
-        }
-      }
-    },
     "Copy…": {},
     "Your databases and services": {},
     "Test: post 2 sample rows to this URL…": {},
     "More columns: scroll sideways": {},
     "Any Postgres (RDS, Neon, self-hosted)": {},
     "SQL Server or Azure SQL": {},
-    "These connections are samples, not yours: nothing is connected. PROD and DEV only show how they would look.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "These connections are samples, not yours: nothing is connected. PROD and DEV only show how they would look."
-          }
-        }
-      }
-    },
     "More columns": {},
     "Not the default (this Mac only).": {
       "extractionState": "manual",
@@ -11378,8 +11345,23 @@
       }
     },
     "Will run": {},
-    "· the agent won't ask before running commands (set in the profile)": {},
-    "To add one, use Add connection at the bottom of the list.": {}
+    "To add one, use Add connection at the bottom of the list.": {},
+    "The agent won't ask before running commands (set in the profile)": {},
+    "Protected": {},
+    "Copies to a protected connection": {},
+    "Protected: Racky asks before anything that changes data": {},
+    "These connections are samples, not yours: nothing is connected.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "These connections are samples, not yours: nothing is connected."
+          }
+        }
+      }
+    },
+    "This connection is protected: changes ask you to confirm.": {}
   },
   "version": "1.0"
 }

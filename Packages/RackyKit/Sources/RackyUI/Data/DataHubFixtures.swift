@@ -12,7 +12,7 @@ enum DataHubFixtures {
     static var connections: [DataConnection] {
         [
             DataConnection(
-                id: supabase, kind: .supabase, name: "Supabase", environment: .production, address: "db.xkqzrwm.supabase.co · postgres",
+                id: supabase, kind: .supabase, name: "Supabase", tags: ["prod"], protected: true, address: "db.xkqzrwm.supabase.co · postgres",
                 children: [
                     DataNode(id: "\(supabase)/public", kind: .schema, name: "public", children: [
                         DataNode(id: "\(supabase)/public/listings", kind: .table, name: "listings", size: 12_430),
@@ -25,7 +25,7 @@ enum DataHubFixtures {
                     ]),
                 ]),
             DataConnection(
-                id: analytics, kind: .postgres, name: "Analytics", environment: .development,
+                id: analytics, kind: .postgres, name: "Analytics", tags: ["dev"],
                 address: "analytics-dev.c9x2.us-east-1.rds.amazonaws.com",
                 children: [
                     DataNode(id: "\(analytics)/public", kind: .schema, name: "public", children: [
@@ -34,7 +34,7 @@ enum DataHubFixtures {
                     ]),
                 ]),
             DataConnection(
-                id: bucket, kind: .s3, name: "scrapes-raw", environment: nil, address: "s3://scrapes-raw · us-east-1",
+                id: bucket, kind: .s3, name: "scrapes-raw", address: "s3://scrapes-raw · us-east-1",
                 children: [
                     DataNode(id: "\(bucket)/books", kind: .folder, name: "books", children: [
                         DataNode(id: "\(bucket)/books/2026-10-21", kind: .folder, name: "2026-10-21"),
@@ -43,14 +43,14 @@ enum DataHubFixtures {
                     DataNode(id: "\(bucket)/hotels", kind: .folder, name: "hotels"),
                 ]),
             DataConnection(
-                id: sheets, kind: .googleSheets, name: "Pricing", environment: nil, address: "docs.google.com · Hotel pricing",
+                id: sheets, kind: .googleSheets, name: "Pricing", address: "docs.google.com · Hotel pricing",
                 children: [
                     DataNode(id: "\(sheets)/pricing", kind: .spreadsheet, name: "Hotel pricing", children: [
                         DataNode(id: "\(sheets)/pricing/LA", kind: .sheet, name: "LA", size: 412),
                         DataNode(id: "\(sheets)/pricing/NYC", kind: .sheet, name: "NYC", size: 390),
                     ]),
                 ]),
-            DataConnection(id: webhook, kind: .webhook, name: "Hotel feed", environment: nil, address: "https://hooks.acme.dev/racky/hotels", children: []),
+            DataConnection(id: webhook, kind: .webhook, name: "Hotel feed", address: "https://hooks.acme.dev/racky/hotels", children: []),
         ]
     }
 
