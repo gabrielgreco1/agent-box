@@ -347,7 +347,7 @@ struct DatasetPageView: View {
                 if let snapshot {
                     DatasetOverviewTiles(snapshot: snapshot, controller: controller)
                     ActivityChart(snapshot: snapshot, controller: controller, rangeMenu: AnyView(rangeMenu))
-                    DatasetQueryBar(snapshot: snapshot, controller: controller, model: model)
+                    DatasetFilterBar(snapshot: snapshot, controller: controller, model: model)
                     ZStack(alignment: .trailing) {
                         HStack(spacing: 0) {
                             if width >= DatasetMetrics.facetsMinWidth { FacetsPanel(snapshot: snapshot, controller: controller, model: model) }

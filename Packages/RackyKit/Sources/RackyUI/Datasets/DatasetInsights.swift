@@ -78,6 +78,9 @@ struct ActivityChart: View {
     let controller: DatasetsController
     let rangeMenu: AnyView
     @State private var hover: Int?
+    /// Arrasto no gráfico: faixas de início e fim (escolher um período filtra a tabela).
+    @State private var brush: (start: Int, end: Int)?
+    @Environment(\.actionRegistry) private var registry
     /// Sem movimento (preferência do sistema, testes) as barras já nascem no tamanho certo.
     @State private var grown = MotionPolicy.shared.animation(MotionTokens.Easing.expoOut, MotionTokens.Duration.ripple) == nil
 
@@ -103,6 +106,12 @@ struct ActivityChart: View {
                     ? String(localized: "\(total.formatted()) matching", bundle: .module)
                     : String(localized: "\(total.formatted()) rows", bundle: .module))
                     .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                if let window = snapshot.window {
+                    windowPill(window)
+                } else if total > 0 {
+                    Text("Drag across the chart to zoom into a period", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textQuaternary)
+                        .lineLimit(1)
+                }
                 Spacer(minLength: DS.Space.s2)
                 legend(DS.Color.dataValid, String(localized: "Valid", bundle: .module))
                 legend(DS.Color.warning, String(localized: "Invalid", bundle: .module))
@@ -158,7 +167,17 @@ struct ActivityChart: View {
                         bar(bucket, index: index, height: geo.size.height).frame(width: width)
                     }
                 }
-                if let hover, hover < buckets.count {
+                if let range = shadedRange {
+                    let span = CGFloat(range.count) * (width + gap) - gap
+                    RoundedRectangle(cornerRadius: InsightMetrics.barRadius)
+                        .fill(DS.Color.dataKey.opacity(0.12))
+                        .overlay(RoundedRectangle(cornerRadius: InsightMetrics.barRadius).strokeBorder(DS.Color.dataKey.opacity(0.5)))
+                        .frame(width: span)
+                        .offset(x: CGFloat(range.lowerBound) * (width + gap))
+                        .allowsHitTesting(false)
+                        .a11y(.datasetChartWindow, kind: "region")
+                }
+                if let hover, hover < buckets.count, brush == nil {
                     tooltip(buckets[hover])
                         .offset(x: tooltipX(index: hover, barWidth: width, gap: gap, total: geo.size.width), y: DS.Space.s1)
                         .transition(.opacity)
@@ -166,6 +185,14 @@ struct ActivityChart: View {
                 }
             }
             .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: DS.Space.s1)
+                    .onChanged { drag in
+                        let first = index(at: drag.startLocation.x, width: width, gap: gap)
+                        brush = (first, index(at: drag.location.x, width: width, gap: gap))
+                    }
+                    .onEnded { _ in commitBrush() }
+            )
             .onContinuousHover { phase in
                 switch phase {
                 case .active(let point):
@@ -176,6 +203,51 @@ struct ActivityChart: View {
             }
         }
         .frame(height: InsightMetrics.chartHeight)
+    }
+
+    private func index(at x: CGFloat, width: CGFloat, gap: CGFloat) -> Int {
+        min(max(Int(x / (width + gap)), 0), max(buckets.count - 1, 0))
+    }
+
+    /// O que fica destacado: o arrasto em curso, senão o período escolhido.
+    private var shadedRange: ClosedRange<Int>? {
+        if let brush { return min(brush.start, brush.end)...max(brush.start, brush.end) }
+        guard let window = snapshot.window, let start = snapshot.activityStart, snapshot.bucketSeconds > 0, !buckets.isEmpty else { return nil }
+        let first = Int((window.lowerBound.timeIntervalSince(start) / snapshot.bucketSeconds).rounded(.down))
+        let last = Int((window.upperBound.timeIntervalSince(start) / snapshot.bucketSeconds).rounded(.up)) - 1
+        let low = max(first, 0), high = min(last, buckets.count - 1)
+        return low <= high ? low...high : nil
+    }
+
+    private func commitBrush() {
+        guard let brush, let registry, !buckets.isEmpty else { self.brush = nil; return }
+        let low = min(brush.start, brush.end), high = max(brush.start, brush.end)
+        let start = buckets[low].start
+        let end = buckets[high].start.addingTimeInterval(snapshot.bucketSeconds)
+        let argument = "\(Int64(start.timeIntervalSince1970 * 1000))-\(Int64(end.timeIntervalSince1970 * 1000))"
+        Task {
+            _ = try? await registry.perform(.datasetTimeWindow, .select(argument))
+            self.brush = nil
+        }
+    }
+
+    private func windowPill(_ window: ClosedRange<Date>) -> some View {
+        let seconds = snapshot.bucketSeconds < 60
+        return HStack(spacing: DS.Space.s1) {
+            Image(systemName: "clock").font(.system(size: DS.Space.s2_5)).foregroundStyle(DS.Color.dataKey)
+            Text(verbatim: "\(controller.clock(window.lowerBound, seconds: seconds)) – \(controller.clock(window.upperBound, seconds: seconds))")
+                .dsFont(DS.Font.small).foregroundStyle(DS.Color.textPrimary)
+            ActionButton(.datasetTimeWindow, id: .datasetChartWindowClear, argument: .select("clear"), tooltip: String(localized: "Show the whole period", bundle: .module)) {
+                Image(systemName: "xmark").font(.system(size: DS.Space.s2, weight: .semibold)).foregroundStyle(DS.Color.textTertiary)
+                    .frame(width: DS.Space.s4, height: DS.Space.s4).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.leading, DS.Space.s2)
+        .padding(.trailing, DS.Space.s0_5)
+        .frame(height: FilterBarMetrics.pillHeight)
+        .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.dataKey.opacity(0.1)))
+        .overlay(RoundedRectangle(cornerRadius: DS.Radius.sm).strokeBorder(DS.Color.dataKey.opacity(0.3)))
     }
 
     private func gridLine(dashed: Bool) -> some View {
@@ -276,129 +348,6 @@ struct Line: Shape {
     }
 }
 
-// MARK: Consulta
-
-/// Busca com lupa, os filtros das facetas em chips (cada um some com o x) e o período.
-struct DatasetQueryBar: View {
-    let snapshot: DatasetPageSnapshot
-    let controller: DatasetsController
-    @Bindable var model: DatasetViewModel
-    @FocusState private var focused: Bool
-    @Environment(\.actionRegistry) private var registry
-
-    var body: some View {
-        HStack(spacing: DS.Space.s2) {
-            HStack(spacing: DS.Space.s2) {
-                Image(systemName: "magnifyingglass").font(.system(size: DS.Space.s3)).foregroundStyle(DS.Color.textTertiary)
-                ZStack(alignment: .leading) {
-                    if model.search.isEmpty {
-                        Text(verbatim: placeholder).dsFont(DS.Font.inputCompact).foregroundStyle(DS.Color.textQuaternary).lineLimit(1)
-                            .allowsHitTesting(false)
-                    }
-                    TextField("", text: $model.search)
-                        .textFieldStyle(.plain)
-                        .dsFont(DS.Font.inputCompact)
-                        .foregroundStyle(DS.Color.textPrimary)
-                        .focused($focused)
-                        .onChange(of: model.search) { _, new in
-                            guard let registry else { return }
-                            Task { _ = try? await registry.perform(.datasetSearch, .set(new)) }
-                        }
-                        .a11y(.datasetSearch, kind: "textfield", value: model.search, action: .datasetSearch)
-                }
-                if !model.search.isEmpty {
-                    ActionButton(.datasetSearch, id: .datasetSearchClear, argument: .set(""), tooltip: String(localized: "Clear", bundle: .module)) {
-                        Image(systemName: "xmark.circle.fill").font(.system(size: DS.Space.s3)).foregroundStyle(DS.Color.textTertiary)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(.horizontal, DS.Space.s2_5)
-            .frame(height: InsightMetrics.queryHeight)
-            .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(DS.Color.chrome))
-            .overlay(
-                RoundedRectangle(cornerRadius: DS.Radius.control)
-                    .strokeBorder(focused ? DS.Color.textTertiary : DS.Color.borderStrong, lineWidth: ComputersMetrics.separator))
-            .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: focused)
-        }
-        .padding(.horizontal, DS.Space.s4)
-        .padding(.top, DS.Space.s2_5)
-        .padding(.bottom, chips.isEmpty ? DS.Space.s2_5 : DS.Space.s1_5)
-        .overlay(alignment: .bottom) { if chips.isEmpty { DS.Color.border.frame(height: ComputersMetrics.separator) } }
-        if !chips.isEmpty { chipRow }
-    }
-
-    /// Exemplo com as colunas de verdade do dataset (`price:>20 title:love`).
-    private var placeholder: String {
-        let columns = snapshot.summary.dataset.columns
-        let numeric = columns.first { $0.type == .integer || $0.type == .number }
-        let text = columns.first { $0.type == .string }
-        var example: [String] = []
-        if let numeric { example.append("\(numeric.name):>10") }
-        if let text { example.append("\(text.name):love") }
-        guard !example.isEmpty else { return String(localized: "Search rows", bundle: .module) }
-        return String(localized: "Search rows, or filter by column: \(example.joined(separator: " "))", bundle: .module)
-    }
-
-    struct Chip: Identifiable {
-        var id: String
-        var title: String
-        var value: String
-        var clear: String
-    }
-
-    private var chips: [Chip] {
-        var out: [Chip] = []
-        for facet in DatasetFacet.allCases where facet != .error {
-            guard let excluded = model.excluded[facet], !excluded.isEmpty else { continue }
-            let all = (snapshot.facets[facet] ?? []).map(\.value)
-            let kept = all.filter { !excluded.contains($0) }
-            let label = { (value: String) in FacetsPanel.label(facet, value, controller: controller) }
-            let value = kept.count == 1 && all.count > 2
-                ? label(kept[0])
-                : String(localized: "not \(excluded.sorted().map(label).joined(separator: ", "))", bundle: .module)
-            out.append(Chip(id: facet.rawValue, title: FacetsPanel.title(facet), value: value, clear: "\(facet.rawValue):*"))
-        }
-        if !model.errorKinds.isEmpty {
-            out.append(Chip(id: "error", title: FacetsPanel.title(.error), value: model.errorKinds.sorted().joined(separator: ", "), clear: "error:*"))
-        }
-        return out
-    }
-
-    private var chipRow: some View {
-        HStack(spacing: DS.Space.s1_5) {
-            ForEach(chips) { chip in
-                HStack(spacing: DS.Space.s1) {
-                    Text(verbatim: chip.title).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
-                    Text(verbatim: chip.value).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
-                    ActionButton(.datasetFacet, id: .datasetChipClear(chip.id), argument: .select(chip.clear), tooltip: String(localized: "Remove filter", bundle: .module)) {
-                        Image(systemName: "xmark").font(.system(size: DS.Space.s2, weight: .semibold)).foregroundStyle(DS.Color.textTertiary)
-                            .frame(width: DS.Space.s4, height: DS.Space.s4).contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(.leading, DS.Space.s2)
-                .padding(.trailing, DS.Space.s0_5)
-                .frame(height: InsightMetrics.chipHeight)
-                .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.secondary))
-                .overlay(RoundedRectangle(cornerRadius: DS.Radius.sm).strokeBorder(DS.Color.border))
-                .transition(.opacity.combined(with: .scale(scale: 0.96)))
-            }
-            if chips.count > 1 {
-                ActionButton(.datasetFacetsReset, id: .datasetFacetsReset, argument: .press) {
-                    Text("Clear all", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
-                }
-                .buttonStyle(.plain)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, DS.Space.s4)
-        .padding(.bottom, DS.Space.s2)
-        .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
-        .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.fast), value: chips.map(\.id))
-    }
-}
-
 // MARK: Facetas
 
 /// Caixa de seleção: vazia = fora; marcada = verde com o visto.
@@ -435,6 +384,7 @@ struct FacetsPanel: View {
                     let values = snapshot.facets[facet] ?? []
                     if !values.isEmpty { group(facet, values) }
                 }
+                ColumnFacets(snapshot: snapshot, model: model)
             }
             .padding(.horizontal, DS.Space.s2)
             .padding(.vertical, DS.Space.s2)

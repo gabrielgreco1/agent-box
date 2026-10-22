@@ -93,6 +93,12 @@ import Testing
         // Filtro de faceta ativo: o chip aparece embaixo da busca.
         _ = try await env.registry.perform(.datasetSelectRow, .press)
         _ = try await env.registry.perform(.datasetFacet, .select("computer:=booking-la"))
+        _ = try await env.registry.perform(.datasetAddFilter, .select("price|>|300"))
+        _ = try await env.registry.perform(.datasetAddFilter, .select("name|~|plaza"))
+        if let snap = env.datasets.snapshot, let start = snap.activityStart {
+            let from = start.addingTimeInterval(snap.bucketSeconds * 20), to = start.addingTimeInterval(snap.bucketSeconds * 34)
+            _ = try await env.registry.perform(.datasetTimeWindow, .select("\(Int64(from.timeIntervalSince1970 * 1000))-\(Int64(to.timeIntervalSince1970 * 1000))"))
+        }
         await VisualBatchTests.settle(600)
         write(c.window!.contentView!, "dataset-page-filtered")
 
