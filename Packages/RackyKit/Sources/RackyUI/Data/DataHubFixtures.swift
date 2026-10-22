@@ -50,7 +50,7 @@ enum DataHubFixtures {
                         DataNode(id: "\(sheets)/pricing/NYC", kind: .sheet, name: "NYC", size: 390),
                     ]),
                 ]),
-            DataConnection(id: webhook, kind: .webhook, name: "Hotel feed", environment: nil, address: "https://hooks.acme.dev/racky/hotels", children: []),
+            DataConnection(id: webhook, kind: .webhook, name: "Book feed", environment: nil, address: "https://hooks.acme.dev/racky/books", children: []),
         ]
     }
 
@@ -59,13 +59,8 @@ enum DataHubFixtures {
         switch object {
         case .table(supabase, "public", "books"):
             return [DataWriter(id: "copy-books", kind: .sync(from: .dataset("books2")), name: "books2", live: false, detail: "live copy")]
-        case .table(supabase, "public", "listings"):
-            return [
-                DataWriter(id: "Claude Code", kind: .agent(session: "Hotel prices"), name: "Claude Code", live: true, detail: "writing now"),
-                DataWriter(id: "listings-la-1", kind: .agent(session: "Hotel prices"), name: "Codex 1", live: true, detail: "writing now"),
-            ]
         case .webhook(webhook):
-            return [DataWriter(id: "copy-hook", kind: .sync(from: .dataset("hotels")), name: "hotels", live: false, detail: "sends new rows")]
+            return [DataWriter(id: "copy-hook", kind: .sync(from: .dataset("books")), name: "books", live: false, detail: "sends new rows")]
         case .folder(bucket, let path) where path.first == "books":
             return [DataWriter(id: "copy-s3", kind: .sync(from: .dataset("books2")), name: "books2", live: false, detail: "daily copy")]
         default:
@@ -76,12 +71,12 @@ enum DataHubFixtures {
     /// Para onde um dataset do Racky vai (pelo nome).
     static func destinations(ofDataset name: String) -> [DataDestination] {
         switch name {
-        case "books2", "books":
+        case "books2":
             return [
                 DataDestination(id: "d1", target: .table(connection: supabase, schema: "public", name: "books"), detail: "live copy"),
                 DataDestination(id: "d2", target: .folder(connection: bucket, path: ["books"]), detail: "daily copy"),
             ]
-        case "hotels":
+        case "hotels", "books":
             return [DataDestination(id: "d3", target: .webhook(connection: webhook), detail: "sends new rows")]
         default:
             return []

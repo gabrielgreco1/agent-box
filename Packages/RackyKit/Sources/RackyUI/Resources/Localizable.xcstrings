@@ -11314,6 +11314,28 @@
           }
         }
       }
+    },
+    "Racky doesn't write here.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Racky doesn't write here."
+          }
+        }
+      }
+    },
+    "Nothing in Racky writes here. Pick it under Save data to when you start a session.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing in Racky writes here. Pick it under Save data to when you start a session."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

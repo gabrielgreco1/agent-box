@@ -431,7 +431,23 @@ public final class DatasetsController {
 
     public func attach(store: RackyStore) async {
         self.store = store
+        displayNames = (try? await store.uiState(Self.displayNamesKey, as: [String: String].self)) ?? [:]
         await reloadList()
+    }
+
+    // MARK: Nome mostrado
+
+    /// Nome que o usuário deu ao dataset (renomear com dois cliques). Os agentes continuam gravando no nome original.
+    public private(set) var displayNames: [String: String] = [:]
+    static let displayNamesKey = "datasets.displayNames"
+
+    public func displayName(_ summary: DatasetSummary) -> String { displayNames[summary.dataset.id] ?? summary.dataset.name }
+
+    public func rename(_ id: String, to text: String) async {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let original = summaries.first { $0.dataset.id == id }?.dataset.name
+        if trimmed.isEmpty || trimmed == original { displayNames[id] = nil } else { displayNames[id] = trimmed }
+        try? await store?.setUIState(Self.displayNamesKey, displayNames)
     }
 
     // MARK: Datas
@@ -469,7 +485,7 @@ public final class DatasetsController {
 
     /// Nome do dataset (título da tab), da lista já carregada ou do snapshot de um aberto.
     public func name(of id: String) -> String? {
-        summaries.first { $0.dataset.id == id }?.dataset.name ?? models[id]?.snapshot?.summary.dataset.name
+        displayNames[id] ?? summaries.first { $0.dataset.id == id }?.dataset.name ?? models[id]?.snapshot?.summary.dataset.name
     }
 
     public func reloadList() async {
@@ -520,6 +536,12 @@ public final class DatasetsController {
         await reload(m)
         if !openInSession(id, dataset.sessionID, beside) { showPage(.dataset(id)) }
         return true
+    }
+
+    /// Carrega o dataset sem abrir nada (a visão geral de uma tabela alimentada por ele precisa dos números).
+    public func prepare(_ id: String) async {
+        let m = model(for: id)
+        if m.snapshot == nil { await reload(m) }
     }
 
     /// Abre o dataset dentro da área Data (tab da Data, não da sessão): só carrega e ativa.

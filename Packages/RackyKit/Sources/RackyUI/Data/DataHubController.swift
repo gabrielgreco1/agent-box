@@ -100,7 +100,8 @@ public final class DataHubController {
         if !tabs.contains(object) { tabs.append(object) }
         active = object
         if case .dataset(let id) = object { Task { _ = await datasets.openInHub(id) } }
-        if case .table = object, tableTabs[object] == nil { tableTabs[object] = .data }
+        if tableTabs[object] == nil { tableTabs[object] = .data }
+        if let feeding = feedingDataset(of: object) { Task { await datasets.prepare(feeding) } }
         if case .query = object, queryText[object] == nil { queryText[object] = DataHubFixtures.sampleQuery }
     }
 
@@ -132,7 +133,34 @@ public final class DataHubController {
         queryResult[object] = (DataHubFixtures.grid(for: object), 42)
     }
 
-    public func tableTab(_ object: DataObject) -> DataTableTab { tableTabs[object] ?? .data }
+    public func tableTab(_ object: DataObject) -> DataTableTab {
+        let tab = tableTabs[object] ?? .data
+        return tabs(for: object).contains(tab) ? tab : .data
+    }
+
+    /// Mesmas abas para o que os agentes alimentam, no Mac ou numa conexão; tabela que o Racky não alimenta é só navegação.
+    public func tabs(for object: DataObject) -> [DataTableTab] {
+        switch object {
+        case .dataset: return [.data, .overview, .structure, .writers]
+        case .table: return copySource(of: object) != nil ? [.data, .overview, .structure, .writers] : [.data, .structure]
+        default: return []
+        }
+    }
+
+    /// O dataset do Mac que alimenta este objeto (ele mesmo, se for um dataset).
+    public func feedingDataset(of object: DataObject) -> String? {
+        if case .dataset(let id) = object { return id }
+        return copySource(of: object).flatMap(datasetID(named:))
+    }
+
+    /// Dataset sendo renomeado no lugar (título da barra ou linha do explorer).
+    public private(set) var renaming: String?
+    /// Onde a edição começou (`title` na barra, `explorer` na lista): só ali aparece o campo.
+    public private(set) var renamingIn = "title"
+    public func beginRename(_ id: String?, in place: String = "title") {
+        renaming = id
+        renamingIn = place
+    }
 
     /// Opções de "Save data to" no formulário de nova sessão: o Racky e cada tabela, pasta, aba ou webhook das conexões.
     func composerDestinations() -> [ComposerDataDestination] {
@@ -151,24 +179,24 @@ public final class DataHubController {
                     for table in schema.children where table.kind == .table {
                         let object = DataObject.table(connection: connection.id, schema: schema.name, name: table.name)
                         add(object, "\(connection.name) › \(schema.name).\(table.name)",
-                            String(localized: "Agents write each row straight into \(schema.name).\(table.name) on \(place), as they collect. Nothing is kept on this Mac.", bundle: .module))
+                            String(localized: "Agents collect into a dataset on this Mac (the original, with checks and history) and Racky copies each new row to \(schema.name).\(table.name) on \(place), live. If it's down, Racky retries; nothing is lost.", bundle: .module))
                     }
                 }
             case .storage:
                 for folder in connection.children {
                     add(.folder(connection: connection.id, path: [folder.name]), "\(connection.name) › \(folder.name)/",
-                        String(localized: "Agents write files (Parquet) into \(folder.name)/ on \(connection.name), one per run.", bundle: .module))
+                        String(localized: "Agents collect into a dataset on this Mac and Racky writes it as Parquet files into \(folder.name)/ on \(connection.name).", bundle: .module))
                 }
             case .spreadsheet:
                 for book in connection.children {
                     for tab in book.children {
                         add(.tab(connection: connection.id, spreadsheet: book.name, name: tab.name), "\(connection.name) › \(tab.name)",
-                            String(localized: "Agents append rows to the \(tab.name) tab of \(book.name).", bundle: .module))
+                            String(localized: "Agents collect into a dataset on this Mac and Racky appends each new row to the \(tab.name) tab of \(book.name).", bundle: .module))
                     }
                 }
             case .outgoing:
                 add(.webhook(connection: connection.id), connection.name,
-                    String(localized: "Agents' rows are posted to \(connection.address) as they arrive. Nothing is kept.", bundle: .module))
+                    String(localized: "Agents collect into a dataset on this Mac and Racky posts each new row to \(connection.address).", bundle: .module))
             }
         }
         return out
@@ -201,8 +229,8 @@ public final class DataHubController {
             return newQuery(on: id).key
         }
         try registry.register(.dataTableTab) { [unowned self] arg in
-            guard let active, case .table = active, let raw = arg.value, let tab = DataTableTab(rawValue: raw) else {
-                throw ActionError.failed(.dataTableTab, message: "expected select(data|structure|writers) with a table open")
+            guard let active, let raw = arg.value, let tab = DataTableTab(rawValue: raw), tabs(for: active).contains(tab) else {
+                throw ActionError.failed(.dataTableTab, message: "expected select(data|overview|structure|writers) with a dataset or table open")
             }
             tableTabs[active] = tab
             return raw
@@ -217,6 +245,23 @@ public final class DataHubController {
             return showingConnect ? "open" : "closed"
         }
         try registry.register(.dataSendTo) { _ in "" }
+        try registry.register(.dataRenameDataset) { [unowned self] arg in
+            // `@explorer:<id>`: a edição começa na linha do explorer (não no título).
+            if let raw = arg.value, raw.hasPrefix("@explorer:") {
+                let id = String(raw.dropFirst("@explorer:".count))
+                guard summary(ofDataset: id) != nil else { throw ActionError.failed(.dataRenameDataset, message: String(localized: "No such dataset.", bundle: .module)) }
+                beginRename(id, in: "explorer")
+                return "editing"
+            }
+            let parts = (arg.value ?? "").split(separator: "|", maxSplits: 1, omittingEmptySubsequences: false).map(String.init)
+            guard let id = parts.first, summary(ofDataset: id) != nil else {
+                throw ActionError.failed(.dataRenameDataset, message: String(localized: "No such dataset.", bundle: .module))
+            }
+            guard parts.count == 2 else { beginRename(id); return "editing" }
+            renaming = nil
+            await datasets.rename(id, to: parts[1])
+            return datasets.name(of: id) ?? ""
+        }
         try registry.register(.dataToggleExplorer) { [unowned self] _ in
             explorerHidden.toggle()
             return explorerHidden ? "hidden" : "shown"
@@ -231,7 +276,8 @@ public final class DataHubController {
     }
 }
 
-public enum DataTableTab: String, CaseIterable, Sendable { case data, structure, writers }
+/// Abas de um dataset ou tabela: os dados (padrão, ocupa a tela), a visão geral (números, gráfico, caminho), as colunas e quem grava.
+public enum DataTableTab: String, CaseIterable, Sendable { case data, overview, structure, writers }
 
 extension DataObject {
     /// Chave estável (argumento das ações e sufixo dos IDs de acessibilidade).

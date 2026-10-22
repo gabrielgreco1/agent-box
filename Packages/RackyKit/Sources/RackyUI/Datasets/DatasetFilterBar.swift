@@ -22,6 +22,8 @@ struct DatasetFilterBar: View {
     let snapshot: DatasetPageSnapshot
     let controller: DatasetsController
     @Bindable var model: DatasetViewModel
+    /// À direita do campo (o período, quando o gráfico está em outra aba).
+    var trailing: AnyView? = nil
     @FocusState private var focused: Bool
     @State private var addAnchor: CGRect = .zero
     @Environment(\.actionRegistry) private var registry
@@ -88,6 +90,8 @@ struct DatasetFilterBar: View {
                 .strokeBorder(focused ? DS.Color.textTertiary : DS.Color.borderStrong, lineWidth: ComputersMetrics.separator))
         .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: focused)
         .animation(MotionPolicy.shared.animation(MotionTokens.Easing.standard, MotionTokens.Duration.fast), value: parts.pills.count + facetPills.count)
+        .overlay(alignment: .trailing) { EmptyView() }
+        .modifier(TrailingAccessory(view: trailing))
         .padding(.horizontal, DS.Space.s4)
         .padding(.vertical, DS.Space.s2_5)
         .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
@@ -621,5 +625,21 @@ private struct RangeFacet: View {
 enum AddFilterPopoverNumber {
     static func text(_ value: Double) -> String {
         value.rounded() == value ? String(Int(value)) : String(format: "%.2f", value)
+    }
+}
+
+/// Coloca uma view ao lado direito do campo (mesma linha).
+private struct TrailingAccessory: ViewModifier {
+    let view: AnyView?
+
+    func body(content: Content) -> some View {
+        if let view {
+            HStack(spacing: DS.Space.s2) {
+                content
+                view
+            }
+        } else {
+            content
+        }
     }
 }

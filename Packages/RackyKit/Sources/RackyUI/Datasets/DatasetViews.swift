@@ -350,20 +350,48 @@ struct DatasetPageView: View {
         GeometryReader { proxy in
             let width = proxy.size.width
             VStack(spacing: 0) {
-                if showsBar {
-                    if let hub {
+                if let hub {
+                    // Com a área Data: barra do lugar, o caminho numa linha e as abas; "Data" (a grade) ocupa a tela.
+                    if showsBar {
                         DataLocationBar(
                             hub: hub, object: .dataset(model.id), close: paneID.map { id in { controller.closePane(id) } },
                             drag: paneID.flatMap { id in drag.map { (id, $0) } })
-                        DataLineageStrip(hub: hub, object: .dataset(model.id))
-                    } else {
-                        topBar(snapshot, width: width)
                     }
+                    DataLineageStrip(hub: hub, object: .dataset(model.id), compact: true)
+                    DataTabsBar(hub: hub, object: .dataset(model.id))
+                    switch hub.tableTab(.dataset(model.id)) {
+                    case .data: dataTab(snapshot, width: width)
+                    case .overview: DataOverviewView(hub: hub, object: .dataset(model.id))
+                    case .structure:
+                        if let dataset = snapshot?.summary.dataset { DataColumnsView(dataset: dataset) } else { Spacer(minLength: 0) }
+                    case .writers: DataWritersView(hub: hub, object: .dataset(model.id))
+                    }
+                } else {
+                    if showsBar { topBar(snapshot, width: width) }
+                    if let snapshot {
+                        DatasetOverviewTiles(snapshot: snapshot, controller: controller)
+                        ActivityChart(snapshot: snapshot, controller: controller, rangeMenu: AnyView(rangeMenu))
+                    }
+                    dataTab(snapshot, width: width)
                 }
+            }
+        }
+        .background(DS.Color.canvas)
+        .contentShape(Rectangle())
+        .onHover { if $0 { controller.activate(model.id) } }
+        .onAppear {
+            controller.activate(model.id)
+            controller.noteVisible(model.id, true)
+        }
+        .onDisappear { controller.noteVisible(model.id, false) }
+        .a11y(.datasetPage, kind: "page")
+    }
+
+    /// A aba dos dados: filtro (com o período) e a grade com as facetas e o painel da linha.
+    @ViewBuilder
+    private func dataTab(_ snapshot: DatasetPageSnapshot?, width: CGFloat) -> some View {
                 if let snapshot {
-                    DatasetOverviewTiles(snapshot: snapshot, controller: controller)
-                    ActivityChart(snapshot: snapshot, controller: controller, rangeMenu: AnyView(rangeMenu))
-                    DatasetFilterBar(snapshot: snapshot, controller: controller, model: model)
+                    DatasetFilterBar(snapshot: snapshot, controller: controller, model: model, trailing: hub == nil ? nil : AnyView(rangeMenu))
                     ZStack(alignment: .trailing) {
                         HStack(spacing: 0) {
                             if width >= DatasetMetrics.facetsMinWidth { FacetsPanel(snapshot: snapshot, controller: controller, model: model) }
@@ -381,17 +409,6 @@ struct DatasetPageView: View {
                 } else {
                     Spacer(minLength: 0)
                 }
-            }
-        }
-        .background(DS.Color.canvas)
-        .contentShape(Rectangle())
-        .onHover { if $0 { controller.activate(model.id) } }
-        .onAppear {
-            controller.activate(model.id)
-            controller.noteVisible(model.id, true)
-        }
-        .onDisappear { controller.noteVisible(model.id, false) }
-        .a11y(.datasetPage, kind: "page")
     }
 
     // MARK: Topo

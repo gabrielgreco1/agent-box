@@ -15,7 +15,7 @@ struct DataObjectView: View {
         switch object {
         case .dataset(let id):
             if let model = hub.datasets.models[id] {
-                DatasetPageView(controller: hub.datasets, model: model, paneID: nil, drag: nil, showsBar: false)
+                DatasetPageView(controller: hub.datasets, model: model, paneID: nil, drag: nil, showsBar: false, hub: hub)
             } else {
                 Color.clear
             }
@@ -148,76 +148,115 @@ struct TableObjectView: View {
     let object: DataObject
 
     var body: some View {
-        let tab = hub.tableTab(object)
         let grid = DataHubFixtures.grid(for: object)
         VStack(spacing: 0) {
-            HStack(spacing: DS.Space.s4) {
-                ForEach(DataTableTab.allCases, id: \.self) { item in
-                    ActionButton(.dataTableTab, id: .dataTableTab(item.rawValue), argument: .select(item.rawValue)) {
-                        VStack(spacing: DS.Space.s1) {
-                            Text(verbatim: title(item)).dsFont(tab == item ? DS.Font.tabActive : DS.Font.tab)
-                                .foregroundStyle(tab == item ? DS.Color.textPrimary : DS.Color.textTertiary)
-                            (tab == item ? DS.Color.textPrimary : Color.clear).frame(height: DS.Space.s0_5)
-                        }
-                        .padding(.top, DS.Space.s2)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .fixedSize()
-                }
-                Spacer(minLength: 0)
-                if hub.connection(object.connectionID)?.environment != .production {
-                    HStack(spacing: DS.Space.s1) {
-                        Image(systemName: "pencil").font(.system(size: DS.Space.s2_5))
-                        Text("Editable", bundle: .module).dsFont(DS.Font.small)
-                    }
-                    .foregroundStyle(DS.Color.textTertiary)
-                }
-            }
-            .padding(.horizontal, DS.Space.s4)
-            .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
-            switch tab {
+            DataTabsBar(hub: hub, object: object)
+            switch hub.tableTab(object) {
             case .data: DataGridView(grid: grid)
-            case .structure: structure(grid)
-            case .writers: writers
+            case .overview: DataOverviewView(hub: hub, object: object)
+            case .structure:
+                DataGridView(
+                    grid: DataGrid(
+                        columns: [.init(name: "column", type: "name"), .init(name: "type", type: "text"), .init(name: "nullable", type: "bool"), .init(name: "key", type: "text")],
+                        rows: grid.columns.map { [$0.name, $0.type, $0.nullable ? "yes" : "no", $0.key ? "primary key" : ""] },
+                        total: grid.columns.count),
+                    footer: String(localized: "\(grid.columns.count) columns", bundle: .module))
+            case .writers: DataWritersView(hub: hub, object: object)
             }
         }
+    }
+}
+
+/// As abas de um dataset ou tabela, sempre as mesmas para o que os agentes alimentam. À direita, uma linha sobre o que dá para fazer.
+struct DataTabsBar: View {
+    let hub: DataHubController
+    let object: DataObject
+
+    var body: some View {
+        let tab = hub.tableTab(object)
+        HStack(spacing: DS.Space.s4) {
+            ForEach(hub.tabs(for: object), id: \.self) { item in
+                ActionButton(.dataTableTab, id: .dataTableTab(item.rawValue), argument: .select(item.rawValue)) {
+                    VStack(spacing: DS.Space.s1) {
+                        Text(verbatim: title(item)).dsFont(tab == item ? DS.Font.tabActive : DS.Font.tab)
+                            .foregroundStyle(tab == item ? DS.Color.textPrimary : DS.Color.textTertiary)
+                        (tab == item ? DS.Color.textPrimary : Color.clear).frame(height: DS.Space.s0_5)
+                    }
+                    .padding(.top, DS.Space.s2)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .fixedSize()
+            }
+            Spacer(minLength: DS.Space.s2)
+            if let note { Text(verbatim: note).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(1) }
+        }
+        .padding(.horizontal, DS.Space.s4)
+        .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
+    }
+
+    /// Tabela que o Racky não alimenta: dizer que é só navegação.
+    private var note: String? {
+        guard case .table = object, hub.copySource(of: object) == nil else { return nil }
+        return String(localized: "Browsing your database · Racky doesn't write here", bundle: .module)
     }
 
     private func title(_ tab: DataTableTab) -> String {
         switch tab {
         case .data: String(localized: "Data", bundle: .module)
+        case .overview: String(localized: "Overview", bundle: .module)
         case .structure: String(localized: "Structure", bundle: .module)
         case .writers: String(localized: "Who writes here", bundle: .module) + (hub.writers(of: object).isEmpty ? "" : " \(hub.writers(of: object).count)")
         }
     }
+}
 
-    private func structure(_ grid: DataGrid) -> some View {
-        DataGridView(
-            grid: DataGrid(
-                columns: [.init(name: "column", type: "name"), .init(name: "type", type: "text"), .init(name: "nullable", type: "bool"), .init(name: "key", type: "text")],
-                rows: grid.columns.map { [$0.name, $0.type, $0.nullable ? "yes" : "no", $0.key ? "primary key" : ""] },
-                total: grid.columns.count),
-            footer: String(localized: "\(grid.columns.count) columns", bundle: .module))
+/// Visão geral: o caminho inteiro do dado e os números da coleta (os mesmos no Mac e na cópia, porque vêm da coleta no Mac).
+struct DataOverviewView: View {
+    let hub: DataHubController
+    let object: DataObject
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                DataLineageStrip(hub: hub, object: object)
+                if let id = hub.feedingDataset(of: object), let snapshot = hub.datasets.models[id]?.snapshot {
+                    if case .dataset = object {} else {
+                        Text(verbatim: String(localized: "Numbers of the collection on this Mac that feeds this table (\(hub.datasets.name(of: id) ?? "")).", bundle: .module))
+                            .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                            .padding(.horizontal, DS.Space.s4)
+                            .padding(.top, DS.Space.s3)
+                    }
+                    DatasetOverviewTiles(snapshot: snapshot, controller: hub.datasets)
+                    ActivityChart(snapshot: snapshot, controller: hub.datasets, rangeMenu: AnyView(EmptyView()))
+                }
+            }
+        }
     }
+}
 
-    private var writers: some View {
+/// Quem grava aqui: agentes (com a sessão) e cópias, com pausar.
+struct DataWritersView: View {
+    let hub: DataHubController
+    let object: DataObject
+
+    var body: some View {
         let list = hub.writers(of: object)
-        return ScrollView {
+        ScrollView {
             VStack(alignment: .leading, spacing: DS.Space.s2) {
                 if list.isEmpty {
-                    Text("Nothing in Racky writes to this table. Pick it as the destination when you start a session, or copy a dataset here.", bundle: .module)
+                    Text("Nothing in Racky writes here. Pick it under Save data to when you start a session.", bundle: .module)
                         .dsFont(DS.Font.body).foregroundStyle(DS.Color.textTertiary)
                 }
                 ForEach(list) { writer in
                     HStack(spacing: DS.Space.s3) {
-                        Image(systemName: { if case .agent = writer.kind { "person.crop.square" } else { "arrow.triangle.2.circlepath" } }())
-                            .font(.system(size: DS.Space.s4)).foregroundStyle(DS.Color.textSecondary)
+                        mark(writer)
                             .frame(width: DS.Space.s8, height: DS.Space.s8)
                             .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.secondary))
                         VStack(alignment: .leading, spacing: .zero) {
                             HStack(spacing: DS.Space.s1_5) {
-                                Text(verbatim: { if case .sync = writer.kind { String(localized: "\(writer.name) (this Mac)", bundle: .module) } else { writer.name } }()).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary)
+                                Text(verbatim: { if case .sync = writer.kind { String(localized: "\(writer.name) (this Mac)", bundle: .module) } else { writer.name } }())
+                                    .dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary)
                                 if writer.live { LiveDot() }
                             }
                             Text(verbatim: detail(writer)).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
@@ -239,12 +278,38 @@ struct TableObjectView: View {
         }
     }
 
+    @ViewBuilder private func mark(_ writer: DataWriter) -> some View {
+        switch writer.kind {
+        case .agent:
+            if let provider = DataLineageStrip.provider(named: writer.name) {
+                DSAgentLogo(QuickLaunchModel.kind(provider), size: DS.Space.s4)
+            } else {
+                DSAgentLogo(QuickLaunchModel.kind(TerminalProvider.claude), size: DS.Space.s4)
+            }
+        case .sync: Image(systemName: "laptopcomputer").font(.system(size: DS.Space.s3 + 2)).foregroundStyle(DS.Color.textSecondary)
+        }
+    }
+
     private func detail(_ writer: DataWriter) -> String {
         switch writer.kind {
         case .agent(let session): String(localized: "Agent in session \(session) · \(writer.detail). Pause stops its new writes; rows already written stay.", bundle: .module)
         case .sync(let from):
-            if case .dataset(let name) = from { String(localized: "One-way copy of \(name) on this Mac, the original · \(writer.detail)", bundle: .module) } else { writer.detail }
+            if case .dataset(let name) = from { String(localized: "Live one-way copy of \(name) on this Mac, the original · \(writer.detail)", bundle: .module) } else { writer.detail }
         }
+    }
+}
+
+/// Colunas de um dataset do Mac: nome, tipo, obrigatória, chave.
+struct DataColumnsView: View {
+    let dataset: Dataset
+
+    var body: some View {
+        DataGridView(
+            grid: DataGrid(
+                columns: [.init(name: "column", type: "name"), .init(name: "type", type: "text"), .init(name: "required", type: "bool"), .init(name: "key", type: "text")],
+                rows: dataset.columns.map { [$0.name, DatasetMetrics.typeLabel($0.type), $0.required ? "yes" : "no", dataset.key.contains($0.name) ? "key" : ""] },
+                total: dataset.columns.count),
+            footer: String(localized: "\(dataset.columns.count) columns", bundle: .module))
     }
 }
 

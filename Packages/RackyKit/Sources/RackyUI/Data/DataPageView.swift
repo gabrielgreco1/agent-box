@@ -24,6 +24,8 @@ enum DataMetrics {
     static let chipHeight = DS.Space.s6
     static let liveDot: CGFloat = 6
     static let markSize: CGFloat = 18
+    static let pathHeight: CGFloat = 34
+    static let renameInset: CGFloat = 64
     static let logoTile: CGFloat = 20
     static let badgePadding: CGFloat = 1
     static let underline: CGFloat = 2
@@ -111,7 +113,11 @@ struct DataPageView: View {
                     if let active = hub.active {
                         if hub.connection(active.connectionID)?.environment == .production { DataProductionBanner(hub: hub, object: active) }
                         DataLocationBar(hub: hub, object: active)
-                        DataLineageStrip(hub: hub, object: active)
+                        switch active {
+                        case .dataset: EmptyView()  // a página do dataset desenha o caminho e as abas
+                        case .table: DataLineageStrip(hub: hub, object: active, compact: true)
+                        default: DataLineageStrip(hub: hub, object: active)
+                        }
                         DataObjectView(hub: hub, object: active)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .a11y(.dataObject, kind: "container", label: active.key)
@@ -197,6 +203,7 @@ struct DataExplorerResizeHandle: View {
 
 struct DataExplorer: View {
     let hub: DataHubController
+    @Environment(\.actionRegistry) private var registry
 
     var body: some View {
         VStack(spacing: 0) {
@@ -256,8 +263,16 @@ struct DataExplorer: View {
             if open {
                 ForEach(group.datasets, id: \.dataset.id) { summary in
                     let object = DataObject.dataset(summary.dataset.id)
-                    row(id: object.key, depth: 1, mark: .symbol("tablecells", DS.Color.dataValid), title: summary.dataset.name, detail: summary.rowCount.formatted(),
-                        chevron: nil, toggle: nil, live: hub.datasets.isCollecting(summary), selected: hub.active == object, open: object)
+                    if hub.renaming == summary.dataset.id, hub.renamingIn == "explorer" {
+                        DatasetRenameField(hub: hub, id: summary.dataset.id, initial: hub.datasets.displayName(summary))
+                            .padding(.leading, DataMetrics.renameInset)
+                            .frame(height: DataMetrics.rowHeight)
+                    } else {
+                        row(id: object.key, depth: 1, mark: .symbol("tablecells", DS.Color.dataValid), title: hub.datasets.displayName(summary), detail: summary.rowCount.formatted(),
+                            chevron: nil, toggle: nil, live: hub.datasets.isCollecting(summary), selected: hub.active == object, open: object)
+                            .simultaneousGesture(TapGesture(count: 2).onEnded { _ = registry.map { r in Task { _ = try? await r.perform(.dataRenameDataset, .select("@explorer:\(summary.dataset.id)")) } } })
+                            .help(summary.dataset.name == hub.datasets.displayName(summary) ? "" : String(localized: "Agents write to it as \(summary.dataset.name)", bundle: .module))
+                    }
                 }
             }
         }
@@ -353,8 +368,14 @@ struct DataExplorer: View {
             .foregroundStyle(DS.Color.textTertiary)
             .frame(width: DS.Space.s2_5)
             DataMarkView(mark: mark, muted: muted)
-            Text(verbatim: title).dsFont(DS.Font.cell).foregroundStyle(muted ? DS.Color.textTertiary : DS.Color.textPrimary).lineLimit(1).truncationMode(.middle)
-            if let subtitle { Text(verbatim: subtitle).dsFont(DS.Font.small).foregroundStyle(DS.Color.textQuaternary).lineLimit(1) }
+            // O nome vem primeiro e corta no fim; o tipo da conexão some antes de cortar o nome.
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: DS.Space.s1_5) {
+                    Text(verbatim: title).dsFont(DS.Font.cell).foregroundStyle(muted ? DS.Color.textTertiary : DS.Color.textPrimary).lineLimit(1).fixedSize()
+                    if let subtitle { Text(verbatim: subtitle).dsFont(DS.Font.small).foregroundStyle(DS.Color.textQuaternary).lineLimit(1).fixedSize() }
+                }
+                Text(verbatim: title).dsFont(DS.Font.cell).foregroundStyle(muted ? DS.Color.textTertiary : DS.Color.textPrimary).lineLimit(1).truncationMode(.tail)
+            }
             if let badge { EnvironmentBadge(environment: badge) }
             Spacer(minLength: DS.Space.s1)
             if live { LiveDot() }
@@ -421,6 +442,64 @@ struct DataDemoBanner: View {
         .background(DS.Color.dataKey.opacity(0.1))
         .overlay(alignment: .bottom) { DS.Color.dataKey.opacity(0.3).frame(height: ComputersMetrics.separator) }
         .a11y(.dataDemo, kind: "banner")
+    }
+}
+
+/// Nome do dataset que vira campo com dois cliques.
+struct DatasetNameLabel: View {
+    let hub: DataHubController
+    let id: String
+    let text: String
+    let font: DSTextStyle
+    @Environment(\.actionRegistry) private var registry
+
+    var body: some View {
+        if hub.renaming == id, hub.renamingIn == "title" {
+            DatasetRenameField(hub: hub, id: id, initial: text)
+        } else {
+            Text(verbatim: text).dsFont(font).foregroundStyle(DS.Color.textPrimary).lineLimit(1).truncationMode(.tail)
+                .contentShape(Rectangle())
+                .onTapGesture(count: 2) { _ = registry.map { r in Task { _ = try? await r.perform(.dataRenameDataset, .select(id)) } } }
+                .help(String(localized: "Double-click to rename", bundle: .module))
+                .a11y(.dataLocationCrumb("name"), kind: "text", label: text)
+        }
+    }
+}
+
+/// Campo de renomear: Enter grava (vazio volta ao nome original), Esc cancela.
+struct DatasetRenameField: View {
+    let hub: DataHubController
+    let id: String
+    let initial: String
+    @State private var text = ""
+    @FocusState private var focused: Bool
+    @Environment(\.actionRegistry) private var registry
+
+    var body: some View {
+        TextField("", text: $text)
+            .textFieldStyle(.plain)
+            .dsFont(DS.Font.bodyStrong)
+            .foregroundStyle(DS.Color.textPrimary)
+            .padding(.horizontal, DS.Space.s1_5)
+            .frame(minWidth: DataMetrics.explorerTitleMin, maxWidth: DataMetrics.explorerMin)
+            .frame(height: DataMetrics.chipHeight)
+            .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.chrome))
+            .overlay(RoundedRectangle(cornerRadius: DS.Radius.sm).strokeBorder(DS.Color.textTertiary))
+            .focused($focused)
+            .onAppear {
+                text = initial
+                focused = true
+            }
+            .onSubmit(commit)
+            .onExitCommand { hub.beginRename(nil) }
+            .onChange(of: focused) { _, now in if !now, hub.renaming == id { commit() } }
+            .a11y(.dataRenameField, kind: "textfield", value: text, action: .dataRenameDataset)
+    }
+
+    private func commit() {
+        guard let registry, hub.renaming == id else { return }
+        let value = text
+        Task { _ = try? await registry.perform(.dataRenameDataset, .select("\(id)|\(value)")) }
     }
 }
 
@@ -535,7 +614,7 @@ struct DataTabStrip: View {
 enum DataLabels {
     @MainActor static func title(_ object: DataObject, hub: DataHubController) -> String {
         switch object {
-        case .dataset(let id): hub.summary(ofDataset: id)?.dataset.name ?? String(localized: "Dataset", bundle: .module)
+        case .dataset(let id): hub.summary(ofDataset: id).map { hub.datasets.displayName($0) } ?? String(localized: "Dataset", bundle: .module)
         case .table(_, let schema, let name): "\(schema).\(name)"
         case .query(_, let n): String(localized: "Query \(n)", bundle: .module)
         case .folder(_, let path): path.joined(separator: "/")
@@ -585,9 +664,8 @@ struct DataLocationBar: View {
             Spacer(minLength: DS.Space.s3)
             // Com pouco espaço, o lado direito encolhe: primeiro some o tipo, depois os nomes dos botões.
             ViewThatFits(in: .horizontal) {
-                trailing(kind: true, compact: false)
-                trailing(kind: false, compact: false)
-                trailing(kind: false, compact: true)
+                trailing(compact: false)
+                trailing(compact: true)
                 DataObjectActions(hub: hub, object: object, compact: true)
             }
             .layoutPriority(1)
@@ -608,29 +686,24 @@ struct DataLocationBar: View {
         HStack(spacing: DS.Space.s2) {
             ForEach(Array(items.enumerated()), id: \.offset) { index, crumb in
                 Image(systemName: "chevron.right").font(.system(size: DS.Space.s2, weight: .semibold)).foregroundStyle(DS.Color.textQuaternary)
-                Text(verbatim: crumb).dsFont(index == items.count - 1 ? DS.Font.composerTitle : DS.Font.body)
-                    .foregroundStyle(index == items.count - 1 ? DS.Color.textPrimary : DS.Color.textSecondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-                    .a11y(.dataLocationCrumb("\(index)"), kind: "text", label: crumb)
+                if index == items.count - 1, case .dataset(let id) = object {
+                    // O nome do dataset: dois cliques renomeiam (como no VS Code).
+                    DatasetNameLabel(hub: hub, id: id, text: crumb, font: DS.Font.composerTitle)
+                } else {
+                    Text(verbatim: crumb).dsFont(index == items.count - 1 ? DS.Font.composerTitle : DS.Font.body)
+                        .foregroundStyle(index == items.count - 1 ? DS.Color.textPrimary : DS.Color.textSecondary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .a11y(.dataLocationCrumb("\(index)"), kind: "text", label: crumb)
+                }
             }
         }
     }
 
-    private func trailing(kind: Bool, compact: Bool) -> some View {
+    private func trailing(compact: Bool) -> some View {
         HStack(spacing: DS.Space.s2) {
-            if let role = DataRoleBadge.Role(hub: hub, object: object) { DataRoleBadge(role: role) }
-            if kind {
-                VStack(alignment: .trailing, spacing: .zero) {
-                    Text(verbatim: DataLabels.kind(object, hub: hub)).dsFont(DS.Font.label).foregroundStyle(DS.Color.textSecondary)
-                    if let source = hub.copySource(of: object) {
-                        // Uma cópia diz de onde é cópia: a fonte de verdade é o dataset no Mac.
-                        Text(verbatim: String(localized: "One-way copy of \(source) (this Mac)", bundle: .module)).dsFont(DS.Font.small).foregroundStyle(DS.Color.dataKey)
-                    } else if let size {
-                        Text(verbatim: size).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
-                    }
-                }
-                .fixedSize()
+            if let role = DataRoleBadge.Role(hub: hub, object: object) {
+                DataRoleBadge(role: role).help(DataLabels.kind(object, hub: hub) + (size.map { " · \($0)" } ?? ""))
             }
             DataObjectActions(hub: hub, object: object, compact: compact)
         }
@@ -668,7 +741,7 @@ struct DataLocationBar: View {
         switch object {
         case .dataset(let id):
             guard let summary = hub.summary(ofDataset: id) else { return [] }
-            return [hub.datasets.title(of: summary), summary.dataset.name]
+            return [hub.datasets.title(of: summary), hub.datasets.displayName(summary)]
         case .table(_, let schema, let name): return [schema, name]
         case .query(_, let n): return [String(localized: "Query \(n)", bundle: .module)]
         case .folder(_, let path): return path
@@ -701,6 +774,8 @@ struct DataLocationBar: View {
 struct DataLineageStrip: View {
     let hub: DataHubController
     let object: DataObject
+    /// Uma linha só, em cima dos dados: logo e nome de cada passo (o detalhe fica no hover). A versão inteira fica em Overview.
+    var compact = false
 
     struct Node: Identifiable {
         enum Mark { case agent(DSAgentKind), brand(DSDataBrand), mac, query, people }
@@ -717,8 +792,67 @@ struct DataLineageStrip: View {
     private struct Column { var edge: String; var nodes: [Node] }
 
     var body: some View {
+        if compact { compactBody } else { fullBody }
+    }
+
+    private var compactBody: some View {
         let columns = lineage
-        VStack(alignment: .leading, spacing: DS.Space.s2) {
+        return ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: DS.Space.s1_5) {
+                if columns.isEmpty {
+                    Text("Racky doesn't write here.", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                }
+                ForEach(Array(columns.enumerated()), id: \.offset) { index, column in
+                    if index > 0 {
+                        Image(systemName: "arrow.right").font(.system(size: DS.Space.s2_5, weight: .semibold)).foregroundStyle(DS.Color.textQuaternary)
+                            .help(column.edge)
+                    }
+                    ForEach(column.nodes) { node in smallChip(node) }
+                }
+            }
+            .padding(.horizontal, DS.Space.s4)
+        }
+        .frame(height: DataMetrics.pathHeight)
+        .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
+        .a11y(.dataPath, kind: "group", label: columns.flatMap(\.nodes).map(\.title).joined(separator: " → "))
+    }
+
+    private func smallChip(_ node: Node) -> some View {
+        let content = HStack(spacing: DS.Space.s1) {
+            markView(node.mark, size: DataMetrics.icon + DS.Space.s0_5)
+            Text(verbatim: node.title).dsFont(node.current ? DS.Font.label : DS.Font.small)
+                .foregroundStyle(node.current ? DS.Color.textPrimary : DS.Color.textSecondary).lineLimit(1)
+            if let badge = node.badge { EnvironmentBadge(environment: badge) }
+            if node.live { LiveDot() }
+        }
+        .padding(.horizontal, DS.Space.s1_5)
+        .frame(height: DataMetrics.chipHeight - DS.Space.s0_5)
+        .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(node.current ? DS.Color.secondary : Color.clear))
+        .contentShape(Rectangle())
+        .fixedSize()
+        .help(node.detail)
+        return Group {
+            if let action = node.action, !node.current {
+                ActionButton(action.0, id: .dataFlowItem(node.id), argument: action.1) { content }.buttonStyle(.plain)
+            } else {
+                content
+            }
+        }
+    }
+
+    @ViewBuilder private func markView(_ mark: Node.Mark, size: CGFloat) -> some View {
+        switch mark {
+        case .agent(let kind): DSAgentLogo(kind, size: size)
+        case .brand(let brand): DSDataLogo(brand, size: size)
+        case .mac: Image(systemName: "laptopcomputer").font(.system(size: size * 0.8)).foregroundStyle(DS.Color.textSecondary)
+        case .query: Image(systemName: "terminal").font(.system(size: size * 0.8)).foregroundStyle(DS.Color.textSecondary)
+        case .people: Image(systemName: "person.2").font(.system(size: size * 0.75)).foregroundStyle(DS.Color.textSecondary)
+        }
+    }
+
+    private var fullBody: some View {
+        let columns = lineage
+        return VStack(alignment: .leading, spacing: DS.Space.s2) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(alignment: .center, spacing: DS.Space.s2) {
                     if columns.isEmpty {
@@ -754,7 +888,7 @@ struct DataLineageStrip: View {
         case .query(let connection, _):
             return String(localized: "This query only reads \(hub.connection(connection)?.name ?? ""). SQL that changes data asks you to confirm first.", bundle: .module)
         case .dataset(let id):
-            guard let name = hub.summary(ofDataset: id)?.dataset.name else { return nil }
+            guard let name = hub.summary(ofDataset: id).map({ hub.datasets.displayName($0) }) else { return nil }
             return hub.destinations(of: object).isEmpty
                 ? String(localized: "\(name) on this Mac is the original. Nothing is copied out yet.", bundle: .module)
                 : String(localized: "\(name) on this Mac is the original. The copies only receive from it: edits made in a copy don't come back to it.", bundle: .module)
@@ -804,7 +938,7 @@ struct DataLineageStrip: View {
         columns.append(Column(
             edge: columns.isEmpty ? "" : String(localized: "collect", bundle: .module),
             nodes: [Node(
-                id: "source", mark: .mac, title: String(localized: "This Mac › \(summary.dataset.name)", bundle: .module),
+                id: "source", mark: .mac, title: String(localized: "This Mac › \(hub.datasets.displayName(summary))", bundle: .module),
                 detail: String(localized: "original · \(summary.rowCount.formatted()) rows", bundle: .module),
                 action: (.dataOpen, .select(sourceObject.key)), live: hub.datasets.isCollecting(summary), current: object == sourceObject)]))
         let copies = hub.destinations(of: sourceObject).compactMap { destination -> Node? in
