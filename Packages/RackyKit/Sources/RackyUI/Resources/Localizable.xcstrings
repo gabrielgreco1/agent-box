@@ -11347,6 +11347,28 @@
           }
         }
       }
+    },
+    "Copies to a production database": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copies to a production database"
+          }
+        }
+      }
+    },
+    "Nothing here is connected: these are samples.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing here is connected: these are samples."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

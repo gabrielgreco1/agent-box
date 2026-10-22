@@ -218,13 +218,24 @@ struct ComposerView: View {
                     }
                 }
                 if let chosen {
-                    HStack(alignment: .firstTextBaseline, spacing: DS.Space.s1_5) {
-                        if chosen.production { Image(systemName: "exclamationmark.triangle.fill").font(.system(size: DS.Space.s2_5)) }
-                        Text(verbatim: chosen.explanation)
-                            .dsFont(DS.Font.small)
+                    if chosen.production {
+                        // Produção: caixa de aviso com contorno, não uma linha solta fácil de passar batido.
+                        HStack(alignment: .top, spacing: DS.Space.s2) {
+                            Image(systemName: "exclamationmark.triangle.fill").font(.system(size: DS.Space.s3)).foregroundStyle(DS.Color.warning)
+                            VStack(alignment: .leading, spacing: DS.Space.s0_5) {
+                                Text("Copies to a production database", bundle: .module).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary)
+                                Text(verbatim: chosen.explanation).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
+                            }
+                        }
+                        .padding(DS.Space.s2_5)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(RoundedRectangle(cornerRadius: DS.Radius.md).fill(DS.Color.warningBackground))
+                        .overlay(RoundedRectangle(cornerRadius: DS.Radius.md).strokeBorder(DS.Color.warningBorder))
+                        .fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        Text(verbatim: chosen.explanation).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
-                    .foregroundStyle(chosen.production ? DS.Color.warning : DS.Color.textTertiary)
-                    .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }
@@ -285,11 +296,13 @@ struct ComposerView: View {
 
     private var summary: some View {
         let text = model.summary
+        // Até duas linhas: o comando inteiro fica legível (o tooltip tem o texto completo).
         return Text(verbatim: text)
             .dsFont(DS.Font.monoMicro)
             .foregroundStyle(DS.Color.textSecondary)
-            .lineLimit(1)
+            .lineLimit(2)
             .truncationMode(.middle)
+            .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
             .dsTooltip(text, side: .top)
             .a11y(.overlayComposerSummary, kind: "text", value: text)

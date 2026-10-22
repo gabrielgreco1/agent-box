@@ -14,6 +14,10 @@ public final class DataHubController {
     public private(set) var tabs: [DataObject] = []
     public private(set) var active: DataObject?
     public private(set) var expanded: Set<String> = []
+    /// Página da grade de cada tabela de conexão.
+    public private(set) var tablePages: [DataObject: Int] = [:]
+    public func tablePage(_ object: DataObject) -> Int { tablePages[object] ?? 0 }
+
     /// Sub-aba de cada tabela aberta (`data`, `structure`, `writers`).
     public private(set) var tableTabs: [DataObject: DataTableTab] = [:]
     /// Texto de cada consulta aberta e o resultado da última execução.
@@ -250,6 +254,17 @@ public final class DataHubController {
             return showingConnect ? "open" : "closed"
         }
         try registry.register(.dataSendTo) { _ in "" }
+        try registry.register(.dataTablePage) { [unowned self] arg in
+            guard let active, case .table = active else { throw ActionError.failed(.dataTablePage, message: "no table open") }
+            let pages = DataHubFixtures.pageCount(for: active)
+            let page = tablePage(active)
+            switch arg.value {
+            case "next": tablePages[active] = min(page + 1, pages - 1)
+            case "prev": tablePages[active] = max(page - 1, 0)
+            default: throw ActionError.failed(.dataTablePage, message: "expected select(next|prev)")
+            }
+            return "\(tablePage(active) + 1)"
+        }
         try registry.register(.dataRenameDataset) { [unowned self] arg in
             // `@explorer:<id>`: a edição começa na linha do explorer (não no título).
             if let raw = arg.value, raw.hasPrefix("@explorer:") {

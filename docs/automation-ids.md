@@ -471,6 +471,9 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `data.page`
 - `data.demo`
 - `data.tabs.menu`
+- `data.rename.button`
+- `data.table.page.prev`
+- `data.table.page.next`
 - `data.rename.field`
 - `data.path`
 - `data.explorer`
@@ -913,6 +916,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `data.pauseWriter` | Data: pausar quem grava | — | slice1 |
 | `data.toggleExplorer` | Data: mostrar/recolher o explorer | — | slice1 |
 | `data.renameDataset` | Data: renomear dataset | — | slice1 |
+| `data.tablePage` | Data: página da tabela | — | slice1 |
 | `dataset.page` | Dataset: página | — | slice3 |
 | `dataset.columns` | Dataset: colunas | — | slice3 |
 | `dataset.copyRow` | Copy Row JSON | — | slice3 |

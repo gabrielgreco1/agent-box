@@ -424,6 +424,12 @@ extension A11yID {
     public static let dataDemo = A11yID(unchecked: "data.demo")
     /// `data.tabs.menu`
     public static let dataTabsMenu = A11yID(unchecked: "data.tabs.menu")
+    /// `data.rename.button`
+    public static let dataRenameButton = A11yID(unchecked: "data.rename.button")
+    /// `data.table.page.prev`
+    public static let dataTablePagePrev = A11yID(unchecked: "data.table.page.prev")
+    /// `data.table.page.next`
+    public static let dataTablePageNext = A11yID(unchecked: "data.table.page.next")
     /// `data.rename.field`
     public static let dataRenameField = A11yID(unchecked: "data.rename.field")
     /// `data.path`
@@ -2240,6 +2246,9 @@ extension A11yID {
         A11yIDSpec(pattern: "data.page", surface: "Páginas"),
         A11yIDSpec(pattern: "data.demo", surface: "Páginas"),
         A11yIDSpec(pattern: "data.tabs.menu", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.rename.button", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.table.page.prev", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.table.page.next", surface: "Páginas"),
         A11yIDSpec(pattern: "data.rename.field", surface: "Páginas"),
         A11yIDSpec(pattern: "data.path", surface: "Páginas"),
         A11yIDSpec(pattern: "data.explorer", surface: "Páginas"),

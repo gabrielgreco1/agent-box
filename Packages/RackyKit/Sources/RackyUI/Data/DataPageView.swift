@@ -463,7 +463,7 @@ struct DataDemoBanner: View {
         HStack(spacing: DS.Space.s2) {
             Image(systemName: "eye").font(.system(size: DS.Space.s3))
             Text("Example data", bundle: .module).dsFont(DS.Font.label)
-            Text("Nothing is connected. The connections, tables and agents below are samples that show how these screens work.", bundle: .module)
+            Text("Nothing here is connected: these are samples.", bundle: .module)
                 .dsFont(DS.Font.small).lineLimit(1)
             Spacer(minLength: 0)
         }
@@ -488,11 +488,18 @@ struct DatasetNameLabel: View {
         if hub.renaming == id, hub.renamingIn == "title" {
             DatasetRenameField(hub: hub, id: id, initial: text)
         } else {
-            Text(verbatim: text).dsFont(font).foregroundStyle(DS.Color.textPrimary).lineLimit(1).truncationMode(.tail)
-                .contentShape(Rectangle())
-                .onTapGesture(count: 2) { _ = registry.map { r in Task { _ = try? await r.perform(.dataRenameDataset, .select(id)) } } }
-                .help(String(localized: "Double-click to rename", bundle: .module))
-                .a11y(.dataLocationCrumb("name"), kind: "text", label: text)
+            HStack(spacing: DS.Space.s1) {
+                Text(verbatim: text).dsFont(font).foregroundStyle(DS.Color.textPrimary).lineLimit(1).truncationMode(.tail)
+                    .contentShape(Rectangle())
+                    .onTapGesture(count: 2) { _ = registry.map { r in Task { _ = try? await r.perform(.dataRenameDataset, .select(id)) } } }
+                    .help(String(localized: "Double-click to rename", bundle: .module))
+                    .a11y(.dataLocationCrumb("name"), kind: "text", label: text)
+                // O lápis mostra que dá para renomear (os dois cliques no nome fazem o mesmo).
+                ActionButton(.dataRenameDataset, id: .dataRenameButton, argument: .select(id), tooltip: String(localized: "Rename (or double-click the name)", bundle: .module)) {
+                    Image(systemName: "pencil")
+                }
+                .buttonStyle(DSIconButtonStyle(.row))
+            }
         }
     }
 }

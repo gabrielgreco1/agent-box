@@ -91,6 +91,25 @@ enum DataHubFixtures {
 
     static let hotelNames = ["Grand Plaza", "Harbor View", "The Ritz", "Shutters on the Beach", "Hotel Figueroa", "The Hoxton", "Ace Hotel", "Freehand LA", "Line Hotel", "Hotel Erwin"]
 
+    static let pageSize = 14
+
+    static func pageCount(for object: DataObject) -> Int {
+        max(Int((Double(grid(for: object).total) / Double(pageSize)).rounded(.up)), 1)
+    }
+
+    /// Uma página da grade de exemplo: as linhas mudam com a página (o número no fim do nome e da URL).
+    static func grid(for object: DataObject, page: Int) -> DataGrid {
+        var grid = grid(for: object)
+        guard page > 0 else { return grid }
+        grid.rows = grid.rows.enumerated().map { index, row in
+            row.map { cell in
+                guard let match = cell.range(of: #"\d{3,4}$"#, options: .regularExpression), let n = Int(cell[match]) else { return cell }
+                return cell.replacingCharacters(in: match, with: "\(max(n - page * pageSize, index))")
+            }
+        }
+        return grid
+    }
+
     static func grid(for object: DataObject) -> DataGrid {
         switch object {
         case .table(_, _, "books"):

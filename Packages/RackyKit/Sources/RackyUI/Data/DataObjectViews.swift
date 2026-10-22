@@ -77,6 +77,8 @@ struct DataObjectActions: View {
 struct DataGridView: View {
     let grid: DataGrid
     var footer: String? = nil
+    /// Anterior/seguinte habilitados (tabelas de conexão paginadas); `nil` = sem paginação.
+    var pager: (previous: Bool, next: Bool)? = nil
 
     var body: some View {
         VStack(spacing: 0) {
@@ -116,7 +118,11 @@ struct DataGridView: View {
                 .frame(minWidth: viewport.size.width, minHeight: viewport.size.height, alignment: .topLeading)
             }
             }
-            HStack {
+            HStack(spacing: DS.Space.s2) {
+                if let pager {
+                    pageButton("chevron.left", id: .dataTablePagePrev, argument: "prev", enabled: pager.previous)
+                    pageButton("chevron.right", id: .dataTablePageNext, argument: "next", enabled: pager.next)
+                }
                 Text(verbatim: footer ?? String(localized: "Showing \(grid.rows.count) of \(grid.total.formatted()) rows", bundle: .module))
                     .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
                 Spacer(minLength: 0)
@@ -127,6 +133,18 @@ struct DataGridView: View {
             .overlay(alignment: .top) { DS.Color.border.frame(height: ComputersMetrics.separator) }
         }
         .a11y(.dataTableGrid, kind: "table", value: "\(grid.rows.count)")
+    }
+
+    private func pageButton(_ symbol: String, id: A11yID, argument: String, enabled: Bool) -> some View {
+        ActionButton(.dataTablePage, id: id, argument: .select(argument)) {
+            Image(systemName: symbol).font(.system(size: DS.Space.s2_5, weight: .semibold))
+                .foregroundStyle(enabled ? DS.Color.textSecondary : DS.Color.textQuaternary)
+                .frame(width: DS.Space.s6, height: DS.Space.s6)
+                .background(RoundedRectangle(cornerRadius: DS.Radius.sm).strokeBorder(DS.Color.borderStrong))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
     }
 
     private func numeric(_ column: DataGrid.Column) -> Bool {
@@ -153,7 +171,13 @@ struct TableObjectView: View {
         VStack(spacing: 0) {
             DataTabsBar(hub: hub, object: object)
             switch hub.tableTab(object) {
-            case .data: DataGridView(grid: grid)
+            case .data:
+                let page = hub.tablePage(object)
+                let pages = DataHubFixtures.pageCount(for: object)
+                DataGridView(
+                    grid: DataHubFixtures.grid(for: object, page: page),
+                    footer: String(localized: "Page \(page + 1) of \(pages.formatted()) · \(grid.total.formatted()) rows", bundle: .module),
+                    pager: (page > 0, page + 1 < pages))
             case .overview: DataOverviewView(hub: hub, object: object)
             case .structure:
                 DataGridView(
