@@ -520,6 +520,7 @@ struct DatasetPageView: View {
                     }
                     .frame(minWidth: viewport.size.width, minHeight: viewport.size.height, alignment: .top)
                 }
+                .moreColumnsCue()
             }
             footer(snapshot)
         }
@@ -934,4 +935,42 @@ struct DatasetToolbar: View {
         }
     }
 
+}
+
+/// Grade mais larga que a área: a borda direita esmaece e uma seta no topo diz que há mais colunas (rola de lado). Some no fim.
+struct MoreColumnsCue: ViewModifier {
+    @State private var more = false
+
+    func body(content: Content) -> some View {
+        content
+            .onScrollGeometryChange(for: Bool.self) { geo in
+                geo.contentSize.width - geo.contentOffset.x - geo.containerSize.width > 1
+            } action: { _, value in
+                more = value
+            }
+            .overlay(alignment: .trailing) {
+                if more {
+                    LinearGradient(stops: [.init(color: DS.Color.canvas.opacity(0), location: 0), .init(color: DS.Color.canvas, location: 0.7)], startPoint: .leading, endPoint: .trailing)
+                        .frame(width: DS.Space.s10 + DS.Space.s4)
+                        .overlay(alignment: .top) {
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: DS.Space.s2_5, weight: .semibold))
+                                .foregroundStyle(DS.Color.textPrimary)
+                                .frame(width: DS.Space.s6, height: DS.Space.s6)
+                                .background(Circle().fill(DS.Color.secondary))
+                                .overlay(Circle().strokeBorder(DS.Color.border))
+                                .padding(.top, DS.Space.s1_5)
+                                .padding(.trailing, DS.Space.s1)
+                                .frame(maxWidth: .infinity, alignment: .trailing)
+                                .help(String(localized: "More columns: scroll sideways", bundle: .module))
+                        }
+                        .allowsHitTesting(false)
+                        .a11y(.dataMoreColumns, kind: "hint")
+                }
+            }
+    }
+}
+
+extension View {
+    func moreColumnsCue() -> some View { modifier(MoreColumnsCue()) }
 }

@@ -70,10 +70,10 @@ public enum DataConnectionKind: String, CaseIterable, Sendable, Codable {
     /// Uma linha que diz o que é ("Postgres hosted by Supabase").
     public var tagline: String {
         switch self {
-        case .postgres: String(localized: "Any Postgres database (RDS, Neon, your own)", bundle: .module)
+        case .postgres: String(localized: "Any Postgres (RDS, Neon, self-hosted)", bundle: .module)
         case .supabase: String(localized: "Postgres hosted by Supabase", bundle: .module)
         case .mysql: String(localized: "MySQL or MariaDB", bundle: .module)
-        case .sqlServer: String(localized: "Microsoft SQL Server or Azure SQL", bundle: .module)
+        case .sqlServer: String(localized: "SQL Server or Azure SQL", bundle: .module)
         case .sqlite: String(localized: "A database file on this Mac", bundle: .module)
         case .bigQuery: String(localized: "Google Cloud data warehouse", bundle: .module)
         case .snowflake: String(localized: "Snowflake data warehouse", bundle: .module)

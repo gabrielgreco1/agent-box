@@ -51,7 +51,7 @@ struct DataObjectActions: View {
                 if compact {
                     button(.dataQueryRun, id: .dataQueryRun, String(localized: "Run", bundle: .module), "play.fill", .press)
                 } else {
-                    DSButton(.dataQueryRun, id: .dataQueryRun, "Run", variant: .primary, size: .sm, symbol: "play.fill", keycap: "⌘↩")
+                    DSButton(.dataQueryRun, id: .dataQueryRun, "Run", variant: .primary, size: .sm, symbol: "play.fill", keycap: "⌘Return")
                 }
             case .webhook:
                 button(.dataWebhookTest, id: .dataWebhookTest, String(localized: "Test: post 2 sample rows to this URL…", bundle: .module), "paperplane", .press)
@@ -119,6 +119,7 @@ struct DataGridView: View {
                 // A grade começa no canto de cima, mesmo com poucas linhas.
                 .frame(minWidth: viewport.size.width, minHeight: viewport.size.height, alignment: .topLeading)
             }
+            .moreColumnsCue()
             }
             HStack(spacing: DS.Space.s2) {
                 if let pager {
@@ -587,7 +588,7 @@ struct DataConnectSheet: View {
                 DSDataLogo(kind.brand, size: DataMetrics.connectLogo, tile: true)
                 VStack(alignment: .leading, spacing: .zero) {
                     Text(verbatim: kind.title).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
-                    Text(verbatim: kind.tagline).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(2)
+                    Text(verbatim: kind.tagline).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(2, reservesSpace: true)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 0)

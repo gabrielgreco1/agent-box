@@ -26,6 +26,8 @@ enum DataMetrics {
     static let markSize: CGFloat = 18
     static let pathHeight: CGFloat = 34
     static let tabsMenuWidth: CGFloat = 64
+    /// Nome de uma tab inativa quando a faixa não cabe (encurta com "…" antes de rolar).
+    static let tabTitleShort: CGFloat = 76
     static let tabsBeforeMenu = 3
     static let renameInset: CGFloat = 64
     static let logoTile: CGFloat = 20
@@ -473,13 +475,14 @@ struct DataDemoBanner: View {
         HStack(spacing: DS.Space.s2) {
             Image(systemName: "eye").font(.system(size: DS.Space.s3))
             Text("Example data", bundle: .module).dsFont(DS.Font.label)
-            Text("Nothing here is connected: these are samples.", bundle: .module)
-                .dsFont(DS.Font.small).lineLimit(1)
+            Text("These connections are samples, not yours: nothing is connected. PROD and DEV only show how they would look.", bundle: .module)
+                .dsFont(DS.Font.small).lineLimit(2).fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
         .foregroundStyle(DS.Color.dataKey)
         .padding(.horizontal, DS.Space.s4)
-        .frame(height: DS.Space.s8)
+        .padding(.vertical, DS.Space.s1_5)
+        .frame(minHeight: DS.Space.s8)
         .background(DS.Color.dataKey.opacity(0.1))
         .overlay(alignment: .bottom) { DS.Color.dataKey.opacity(0.3).frame(height: ComputersMetrics.separator) }
         .a11y(.dataDemo, kind: "banner")
@@ -611,6 +614,8 @@ struct DataTabStrip: View {
         ViewThatFits(in: .horizontal) {
             row(compact: false)
             row(compact: true)
+            // Ainda sem espaço: os nomes encurtam com "…" (como no Chrome) antes de a faixa rolar.
+            row(compact: true, short: true)
             scrolling
         }
         .padding(.trailing, showsMenu ? DataMetrics.tabsMenuWidth : .zero)
@@ -637,9 +642,9 @@ struct DataTabStrip: View {
         .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
     }
 
-    private func row(compact: Bool) -> some View {
+    private func row(compact: Bool, short: Bool = false) -> some View {
         HStack(spacing: 0) {
-            ForEach(hub.tabs, id: \.self) { object in tab(object, compact: compact) }
+            ForEach(hub.tabs, id: \.self) { object in tab(object, compact: compact, short: short) }
         }
     }
 
@@ -647,7 +652,7 @@ struct DataTabStrip: View {
         ScrollViewReader { reader in
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 0) {
-                    ForEach(hub.tabs, id: \.self) { object in tab(object, compact: true).id(object) }
+                    ForEach(hub.tabs, id: \.self) { object in tab(object, compact: true, short: true).id(object) }
                 }
             }
             // As bordas esmaecem: uma tab cortada pela rolagem some aos poucos em vez de virar meia palavra.
@@ -663,7 +668,7 @@ struct DataTabStrip: View {
         }
     }
 
-    private func tab(_ object: DataObject, compact: Bool) -> some View {
+    private func tab(_ object: DataObject, compact: Bool, short: Bool = false) -> some View {
         let active = hub.active == object
         let place = hub.connection(object.connectionID)
         return HStack(spacing: DS.Space.s1_5) {
@@ -675,7 +680,8 @@ struct DataTabStrip: View {
                         Image(systemName: "laptopcomputer").font(.system(size: DataMetrics.icon)).foregroundStyle(DS.Color.textSecondary)
                     }
                     Text(verbatim: DataLabels.title(object, hub: hub)).dsFont(active ? DS.Font.tabActive : DS.Font.tab)
-                        .foregroundStyle(active ? DS.Color.textPrimary : DS.Color.textSecondary).lineLimit(1)
+                        .foregroundStyle(active ? DS.Color.textPrimary : DS.Color.textSecondary).lineLimit(1).truncationMode(.tail)
+                        .frame(maxWidth: short && !active ? DataMetrics.tabTitleShort : nil, alignment: .leading)
                     // O lugar em letra pequena: duas tabs "books" (Racky e Supabase) não se confundem (o logo já diz, quando falta espaço).
                     if !compact || active {
                         Text(verbatim: place?.name ?? String(localized: "This Mac", bundle: .module)).dsFont(DS.Font.small).foregroundStyle(DS.Color.textQuaternary).lineLimit(1)
@@ -737,36 +743,45 @@ struct DataLocationBar: View {
     var drag: (paneID: UUID, controller: PaneDragController)? = nil
 
     var body: some View {
-        HStack(spacing: DS.Space.s2) {
-            // Sem espaço para a trilha toda, fica só o nome do objeto; com menos ainda, o lugar perde o subtítulo antes do nome encolher.
-            ViewThatFits(in: .horizontal) {
-                place(compact: false, items: trail)
-                place(compact: false, items: Array(trail.suffix(1)))
-                // O nome do objeto não encolhe: quem cede espaço é o lado direito (nomes curtos, depois só ícones).
-                place(compact: true, items: Array(trail.suffix(1))).fixedSize(horizontal: true, vertical: false)
-            }
-            .layoutPriority(-1)
-            Spacer(minLength: DS.Space.s3)
-            // Com pouco espaço, o lado direito encolhe aos poucos: nomes curtos, o papel só com o ícone e, por último, botões só com ícone.
-            ViewThatFits(in: .horizontal) {
-                trailing(compact: false)
+        // Numa linha só enquanto cabe com os botões nomeados: primeiro some a trilha (fica o nome), depois os nomes ficam curtos e o
+        // papel fica só com o ícone. Sem espaço nem assim, as ações descem para uma segunda linha (sempre com nome, nunca só ícones).
+        ViewThatFits(in: .horizontal) {
+            row(compact: false, items: trail, trailing: trailing(compact: false))
+            row(compact: false, items: Array(trail.suffix(1)), trailing: trailing(compact: false))
+            row(compact: false, items: Array(trail.suffix(1)), trailing: trailing(compact: false, short: true))
+            row(compact: true, items: Array(trail.suffix(1)), trailing: trailing(compact: false, short: true, iconBadge: true))
+            VStack(alignment: .leading, spacing: DS.Space.s2) {
+                HStack(spacing: DS.Space.s2) {
+                    place(compact: true, items: Array(trail.suffix(1)))
+                    Spacer(minLength: DS.Space.s3)
+                    closeButton
+                }
                 trailing(compact: false, short: true)
-                trailing(compact: false, short: true, iconBadge: true)
-                trailing(compact: true, iconBadge: true)
-                DataObjectActions(hub: hub, object: object, compact: true)
             }
-            .layoutPriority(1)
-            if let close {
-                // lint-ui: allow buttons fecha o pane do dataset (layout do workspace, sem ação de registro própria)
-                Button(action: close) { Image(systemName: "xmark") }
-                    .buttonStyle(DSIconButtonStyle(.header))
-                    .dsTooltip(String(localized: "Close", bundle: .module), shortcut: nil)
-            }
+            .padding(.vertical, DS.Space.s2_5)
         }
         .padding(.horizontal, DS.Space.s4)
-        .frame(height: DataMetrics.locationHeight)
+        .frame(minHeight: DataMetrics.locationHeight)
         .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
         .a11y(.dataLocation, kind: "group", label: ([placeName] + trail).joined(separator: " › "))
+    }
+
+    private func row(compact: Bool, items: [String], trailing: some View) -> some View {
+        HStack(spacing: DS.Space.s2) {
+            place(compact: compact, items: items)
+            Spacer(minLength: DS.Space.s3)
+            trailing
+            closeButton
+        }
+    }
+
+    @ViewBuilder private var closeButton: some View {
+        if let close {
+            // lint-ui: allow buttons fecha o pane do dataset (layout do workspace, sem ação de registro própria)
+            Button(action: close) { Image(systemName: "xmark") }
+                .buttonStyle(DSIconButtonStyle(.header))
+                .dsTooltip(String(localized: "Close", bundle: .module), shortcut: nil)
+        }
     }
 
     private func place(compact: Bool, items: [String]) -> some View {

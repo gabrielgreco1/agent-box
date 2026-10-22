@@ -474,6 +474,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `data.rename.button`
 - `data.table.page.prev`
 - `data.table.page.next`
+- `data.moreColumns`
 - `data.rename.field`
 - `data.path`
 - `data.explorer`
