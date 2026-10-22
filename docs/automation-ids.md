@@ -470,6 +470,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `dataset.panel.tab.<tab>`
 - `data.page`
 - `data.demo`
+- `data.tabs.menu`
 - `data.rename.field`
 - `data.path`
 - `data.explorer`

@@ -22,6 +22,8 @@ enum OverviewMetrics {
 struct DatasetOverviewTiles: View {
     let snapshot: DatasetPageSnapshot
     let controller: DatasetsController
+    /// Numa página que rola (Overview): sem espaço para os 6 lado a lado, quebra em 3 + 3 ou 2 + 2 + 2 em vez de rolar de lado.
+    var wrap = false
 
     @State private var width: CGFloat = 0
 
@@ -29,7 +31,7 @@ struct DatasetOverviewTiles: View {
 
     /// Os 6 cabem lado a lado?
     private var fits: Bool {
-        width - DS.Space.s4 * 2 >= 6 * OverviewMetrics.tileMinWidth + 5 * OverviewMetrics.tileSpacing
+        width - DS.Space.s4 * 2 >= CGFloat(tileCount) * OverviewMetrics.tileMinWidth + CGFloat(tileCount - 1) * OverviewMetrics.tileSpacing
     }
 
     var body: some View {
@@ -37,6 +39,10 @@ struct DatasetOverviewTiles: View {
         Group {
             if fits {
                 HStack(spacing: OverviewMetrics.tileSpacing) { tiles }
+                    .padding(.horizontal, DS.Space.s4)
+            } else if wrap {
+                let count = tileCount == 4 ? 2 : (width - DS.Space.s4 * 2 >= 3 * OverviewMetrics.tileMinWidth + 2 * OverviewMetrics.tileSpacing ? 3 : 2)
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: OverviewMetrics.tileSpacing), count: count), spacing: OverviewMetrics.tileSpacing) { tiles }
                     .padding(.horizontal, DS.Space.s4)
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -58,13 +64,19 @@ struct DatasetOverviewTiles: View {
         .a11y(.datasetStats, kind: "group", value: "\(s.rows)")
     }
 
+    /// Requests e Sources só aparecem quando há o que mostrar (coleta sem rede registrada não ganha cartões vazios).
+    private var hasNetwork: Bool { s.requests > 0 || !(snapshot.facets[.source] ?? []).filter { !$0.value.isEmpty }.isEmpty }
+    private var tileCount: Int { hasNetwork ? 6 : 4 }
+
     @ViewBuilder private var tiles: some View {
         rowsTile
         throughputTile
         qualityTile
         completenessTile
-        requestsTile
-        sourcesTile
+        if hasNetwork {
+            requestsTile
+            sourcesTile
+        }
     }
 
     // MARK: Cartões

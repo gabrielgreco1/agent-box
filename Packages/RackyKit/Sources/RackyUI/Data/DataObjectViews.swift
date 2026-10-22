@@ -87,7 +87,7 @@ struct DataGridView: View {
                         ForEach(Array(grid.columns.enumerated()), id: \.offset) { _, column in
                             HStack(spacing: DS.Space.s1_5) {
                                 Text(verbatim: column.name).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary).lineLimit(1).fixedSize()
-                                Text(verbatim: column.type).dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textTertiary)
+                                Text(verbatim: column.type).dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textTertiary).lineLimit(1).fixedSize()
                                 if column.key { Text("KEY", bundle: .module).dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.warning) }
                             }
                             .padding(.horizontal, DatasetMetrics.cellPadding)
@@ -134,8 +134,9 @@ struct DataGridView: View {
     }
 
     private func width(_ column: DataGrid.Column) -> CGFloat {
-        if numeric(column) { return DatasetMetrics.colNumber + DS.Space.s4 }
-        if column.type.contains("time") { return DatasetMetrics.colDateTime }
+        // Largo o bastante para "avg_price numeric" e "2026-10-22 11:59:04" numa linha.
+        if numeric(column) { return DatasetMetrics.colNumber + DS.Space.s10 }
+        if column.type.contains("time") { return DatasetMetrics.colDateTime + DS.Space.s8 }
         return column.key ? DatasetMetrics.colURL : DatasetMetrics.colName
     }
 }
@@ -178,8 +179,16 @@ struct DataTabsBar: View {
             ForEach(hub.tabs(for: object), id: \.self) { item in
                 ActionButton(.dataTableTab, id: .dataTableTab(item.rawValue), argument: .select(item.rawValue)) {
                     VStack(spacing: DS.Space.s1) {
-                        Text(verbatim: title(item)).dsFont(tab == item ? DS.Font.tabActive : DS.Font.tab)
-                            .foregroundStyle(tab == item ? DS.Color.textPrimary : DS.Color.textTertiary)
+                        HStack(spacing: DS.Space.s1) {
+                            Text(verbatim: title(item)).dsFont(tab == item ? DS.Font.tabActive : DS.Font.tab)
+                                .foregroundStyle(tab == item ? DS.Color.textPrimary : DS.Color.textTertiary)
+                            if item == .writers, !hub.writers(of: object).isEmpty {
+                                // A contagem num selinho, separada do nome da aba.
+                                Text(verbatim: "\(hub.writers(of: object).count)").dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textSecondary)
+                                    .padding(.horizontal, DS.Space.s1)
+                                    .background(Capsule().fill(DS.Color.secondary))
+                            }
+                        }
                         (tab == item ? DS.Color.textPrimary : Color.clear).frame(height: DS.Space.s0_5)
                     }
                     .padding(.top, DS.Space.s2)
@@ -206,7 +215,7 @@ struct DataTabsBar: View {
         case .data: String(localized: "Data", bundle: .module)
         case .overview: String(localized: "Overview", bundle: .module)
         case .structure: String(localized: "Structure", bundle: .module)
-        case .writers: String(localized: "Who writes here", bundle: .module) + (hub.writers(of: object).isEmpty ? "" : " \(hub.writers(of: object).count)")
+        case .writers: String(localized: "Who writes here", bundle: .module)
         }
     }
 }
@@ -222,12 +231,16 @@ struct DataOverviewView: View {
                 DataLineageStrip(hub: hub, object: object)
                 if let id = hub.feedingDataset(of: object), let snapshot = hub.datasets.models[id]?.snapshot {
                     if case .dataset = object {} else {
-                        Text(verbatim: String(localized: "Numbers of the collection on this Mac that feeds this table (\(hub.datasets.name(of: id) ?? "")).", bundle: .module))
-                            .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
-                            .padding(.horizontal, DS.Space.s4)
-                            .padding(.top, DS.Space.s3)
+                        // Os números são da coleta no Mac que alimenta esta cópia (não do banco): dito como título da seção.
+                        HStack(spacing: DS.Space.s1_5) {
+                            Image(systemName: "laptopcomputer").font(.system(size: DS.Space.s3)).foregroundStyle(DS.Color.textSecondary)
+                            Text(verbatim: String(localized: "Collection on this Mac that feeds this table: \(hub.datasets.name(of: id) ?? "")", bundle: .module))
+                                .dsFont(DS.Font.sectionLabel).foregroundStyle(DS.Color.textPrimary)
+                        }
+                        .padding(.horizontal, DS.Space.s4)
+                        .padding(.top, DS.Space.s4)
                     }
-                    DatasetOverviewTiles(snapshot: snapshot, controller: hub.datasets)
+                    DatasetOverviewTiles(snapshot: snapshot, controller: hub.datasets, wrap: true)
                     ActivityChart(snapshot: snapshot, controller: hub.datasets, rangeMenu: AnyView(EmptyView()))
                 }
             }
@@ -255,7 +268,7 @@ struct DataWritersView: View {
                             .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.secondary))
                         VStack(alignment: .leading, spacing: .zero) {
                             HStack(spacing: DS.Space.s1_5) {
-                                Text(verbatim: { if case .sync = writer.kind { String(localized: "\(writer.name) (this Mac)", bundle: .module) } else { writer.name } }())
+                                Text(verbatim: { if case .sync = writer.kind { String(localized: "\(hub.displayName(ofDatasetNamed: writer.name)) (this Mac)", bundle: .module) } else { writer.name } }())
                                     .dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary)
                                 if writer.live { LiveDot() }
                             }
@@ -294,7 +307,7 @@ struct DataWritersView: View {
         switch writer.kind {
         case .agent(let session): String(localized: "Agent in session \(session) · \(writer.detail). Pause stops its new writes; rows already written stay.", bundle: .module)
         case .sync(let from):
-            if case .dataset(let name) = from { String(localized: "Live one-way copy of \(name) on this Mac, the original · \(writer.detail)", bundle: .module) } else { writer.detail }
+            if case .dataset(let name) = from { String(localized: "Live one-way copy of \(hub.displayName(ofDatasetNamed: name)) on this Mac, the original · \(writer.detail)", bundle: .module) } else { writer.detail }
         }
     }
 }
@@ -525,7 +538,10 @@ struct DataConnectSheet: View {
             }
             .padding(DS.Space.s6)
             // Cabe tudo quando a janela deixa; senão, a lista rola dentro da folha.
-            .frame(width: DataMetrics.connectWidth, height: min(DataMetrics.connectHeight, geo.size.height - DataMetrics.connectMargin))
+            .frame(width: DataMetrics.connectWidth)
+            // Do tamanho do conteúdo; numa janela baixa, para na altura disponível e a lista rola.
+            .frame(maxHeight: min(DataMetrics.connectHeight, geo.size.height - DataMetrics.connectMargin))
+            .fixedSize(horizontal: false, vertical: true)
             .background(RoundedRectangle(cornerRadius: DS.Radius.large).fill(DS.Color.panel))
             .overlay(RoundedRectangle(cornerRadius: DS.Radius.large).strokeBorder(DS.Color.borderStrong))
             .shadow(color: .black.opacity(0.45), radius: DS.Space.s6, y: DS.Space.s2)

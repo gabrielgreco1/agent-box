@@ -91,6 +91,11 @@ public final class DataHubController {
         return nil
     }
 
+    /// Nome mostrado de um dataset do Mac a partir do nome original (depois de renomear, os textos usam o novo).
+    public func displayName(ofDatasetNamed name: String) -> String {
+        datasetID(named: name).flatMap { datasets.name(of: $0) } ?? name
+    }
+
     /// Algo está gravando neste nó agora (ponto "live" no explorer)?
     public func isLive(_ object: DataObject) -> Bool { writers(of: object).contains { $0.live } }
 
@@ -179,7 +184,7 @@ public final class DataHubController {
                     for table in schema.children where table.kind == .table {
                         let object = DataObject.table(connection: connection.id, schema: schema.name, name: table.name)
                         add(object, "\(connection.name) › \(schema.name).\(table.name)",
-                            String(localized: "Agents collect into a dataset on this Mac (the original, with checks and history) and Racky copies each new row to \(schema.name).\(table.name) on \(place), live. If it's down, Racky retries; nothing is lost.", bundle: .module))
+                            String(localized: "Collected on this Mac first, then copied live to \(schema.name).\(table.name) on \(place).", bundle: .module))
                     }
                 }
             case .storage:

@@ -11336,6 +11336,17 @@
           }
         }
       }
+    },
+    "Show Data list": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Data list"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -25,6 +25,8 @@ enum DataMetrics {
     static let liveDot: CGFloat = 6
     static let markSize: CGFloat = 18
     static let pathHeight: CGFloat = 34
+    static let tabsMenuWidth: CGFloat = 64
+    static let tabsBeforeMenu = 3
     static let renameInset: CGFloat = 64
     static let logoTile: CGFloat = 20
     static let badgePadding: CGFloat = 1
@@ -115,7 +117,9 @@ struct DataPageView: View {
                         DataLocationBar(hub: hub, object: active)
                         switch active {
                         case .dataset: EmptyView()  // a página do dataset desenha o caminho e as abas
-                        case .table: DataLineageStrip(hub: hub, object: active, compact: true)
+                        case .table:
+                            // Tabela que o Racky não alimenta não tem caminho: a frase ao lado das abas já diz isso.
+                            if hub.copySource(of: active) != nil, hub.tableTab(active) != .overview { DataLineageStrip(hub: hub, object: active, compact: true) }
                         default: DataLineageStrip(hub: hub, object: active)
                         }
                         DataObjectView(hub: hub, object: active)
@@ -157,8 +161,24 @@ struct DataExplorerHeader: View {
             ActionButton(
                 .dataToggleExplorer, id: .dataExplorerToggle,
                 tooltip: !shown ? String(localized: "Show explorer", bundle: .module) : String(localized: "Hide explorer", bundle: .module)
-            ) { Image(systemName: "sidebar.left") }
-                .buttonStyle(DSIconButtonStyle(.header))
+            ) {
+                if shown {
+                    Image(systemName: "list.bullet.rectangle")
+                } else {
+                    // Recolhido: o botão diz o que volta ("Data", a lista de datasets e conexões).
+                    HStack(spacing: DS.Space.s1) {
+                        Image(systemName: "list.bullet.rectangle").font(.system(size: DS.Space.s3))
+                        Text("Show Data list", bundle: .module).dsFont(DS.Font.label)
+                    }
+                    .foregroundStyle(DS.Color.textSecondary)
+                    .padding(.horizontal, DS.Space.s2)
+                    .frame(height: DataMetrics.chipHeight)
+                    .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.secondary))
+                    .contentShape(Rectangle())
+                }
+            }
+                .buttonStyle(ExplorerToggleStyle(shown: shown))
+                .fixedSize()
         }
         .padding(.leading, max(leading, DS.Space.s3))
         .padding(.trailing, DS.Space.s1_5)
@@ -168,6 +188,19 @@ struct DataExplorerHeader: View {
         .fixedSize(horizontal: true, vertical: false)
         .layoutPriority(2)
         .overlay(alignment: .trailing) { DS.Color.border.frame(width: ComputersMetrics.separator) }
+    }
+}
+
+/// Aberto, o botão é um ícone como os outros do cabeçalho; recolhido, é um botão com rótulo (o estilo de ícone cortaria o texto).
+private struct ExplorerToggleStyle: ButtonStyle {
+    let shown: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        if shown {
+            DSIconButtonStyle(.header).makeBody(configuration: configuration)
+        } else {
+            configuration.label.opacity(configuration.isPressed ? 0.7 : 1)
+        }
     }
 }
 
@@ -417,11 +450,8 @@ struct DataRoleBadge: View {
             Image(systemName: symbol).font(.system(size: DS.Space.s2_5, weight: .semibold))
             Text(verbatim: title).dsFont(DS.Font.label)
         }
+        // Um rótulo de estado, não um botão: sem moldura.
         .foregroundStyle(tint)
-        .padding(.horizontal, DS.Space.s2)
-        .frame(height: DataMetrics.chipHeight)
-        .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.secondary))
-        .overlay(RoundedRectangle(cornerRadius: DS.Radius.sm).strokeBorder(DS.Color.border))
         .fixedSize()
     }
 }
@@ -555,6 +585,7 @@ struct LiveDot: View {
 
 struct DataTabStrip: View {
     let hub: DataHubController
+    private var showsMenu: Bool { hub.tabs.count > DataMetrics.tabsBeforeMenu }
     @Environment(\.pageTrailingInset) private var trailingInset
 
     var body: some View {
@@ -568,7 +599,23 @@ struct DataTabStrip: View {
             .onChange(of: hub.active) { _, active in if let active { reader.scrollTo(active, anchor: .trailing) } }
             .onAppear { if let active = hub.active { reader.scrollTo(active, anchor: .trailing) } }
         }
+        .padding(.trailing, showsMenu ? DataMetrics.tabsMenuWidth : .zero)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(alignment: .trailing) {
+            // Mais tabs do que cabem: um menu com todas (as que rolaram para fora da faixa também).
+            if showsMenu {
+                MenuButton(id: .dataTabsMenu, action: .dataOpen, entries: hub.tabs.map { object in
+                    .item(DSMenuItem(object.key, DataLabels.title(object, hub: hub), detail: hub.connection(object.connectionID)?.name ?? String(localized: "This Mac", bundle: .module),
+                                     checked: hub.active == object, action: .dataOpen, argument: .select(object.key)))
+                }) {
+                    Image(systemName: "chevron.down").font(.system(size: DS.Space.s2_5, weight: .semibold))
+                    Text(verbatim: "\(hub.tabs.count)").dsFont(DS.Font.small)
+                }
+                .padding(.trailing, DS.Space.s1)
+                .background(DS.Color.chrome)
+                .help(String(localized: "All open tabs", bundle: .module))
+            }
+        }
         // Os botões do painel direito ficam por cima do canto: as tabs param antes deles.
         .padding(.trailing, trailingInset)
         .frame(height: DataMetrics.tabHeight)
@@ -893,10 +940,10 @@ struct DataLineageStrip: View {
                 ? String(localized: "\(name) on this Mac is the original. Nothing is copied out yet.", bundle: .module)
                 : String(localized: "\(name) on this Mac is the original. The copies only receive from it: edits made in a copy don't come back to it.", bundle: .module)
         case .webhook:
-            guard let source = hub.copySource(of: object) else { return nil }
+            guard let source = hub.copySource(of: object).map(hub.displayName(ofDatasetNamed:)) else { return nil }
             return String(localized: "Racky posts each new row of \(source) (this Mac) to this address. Nothing comes back.", bundle: .module)
         default:
-            if let source = hub.copySource(of: object) {
+            if let source = hub.copySource(of: object).map(hub.displayName(ofDatasetNamed:)) {
                 return String(localized: "This is a one-way copy of \(source) (this Mac). Change the data in \(source): edits made here don't go back.", bundle: .module)
             }
             if !hub.writers(of: object).isEmpty {

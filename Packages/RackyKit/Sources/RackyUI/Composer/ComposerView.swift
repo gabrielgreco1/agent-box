@@ -220,7 +220,7 @@ struct ComposerView: View {
                 if let chosen {
                     HStack(alignment: .firstTextBaseline, spacing: DS.Space.s1_5) {
                         if chosen.production { Image(systemName: "exclamationmark.triangle.fill").font(.system(size: DS.Space.s2_5)) }
-                        Text(verbatim: chosen.explanation + (chosen.production ? " " + String(localized: "This is a production database.", bundle: .module) : ""))
+                        Text(verbatim: chosen.explanation)
                             .dsFont(DS.Font.small)
                     }
                     .foregroundStyle(chosen.production ? DS.Color.warning : DS.Color.textTertiary)
