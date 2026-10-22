@@ -449,6 +449,14 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `dataset.range`
 - `dataset.columns`
 - `dataset.facet.<facet>.<value>`
+- `dataset.filter.add`
+- `dataset.pill.<index>`
+- `dataset.pill.<index>.remove`
+- `dataset.column.<name>`
+- `dataset.column.<name>.value.<value>`
+- `dataset.column.<name>.range`
+- `dataset.chart.window`
+- `dataset.chart.window.clear`
 - `dataset.facet.<facet>.<value>.only`
 - `dataset.facet.<facet>.reset`
 - `dataset.facets.reset`
@@ -851,6 +859,10 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `dataset.openSource` | Open Source URL | — | slice3 |
 | `dataset.range` | Dataset: período | — | slice3 |
 | `dataset.facet` | Dataset: faceta | — | slice3 |
+| `dataset.timeWindow` | Dataset: janela do gráfico | — | slice3 |
+| `dataset.addFilter` | Dataset: adicionar filtro | — | slice3 |
+| `dataset.removeFilter` | Dataset: remover filtro | — | slice3 |
+| `dataset.columnRange` | Dataset: faixa da coluna | — | slice3 |
 | `dataset.facetsReset` | Dataset: limpar filtros | — | slice3 |
 | `dataset.page` | Dataset: página | — | slice3 |
 | `dataset.columns` | Dataset: colunas | — | slice3 |

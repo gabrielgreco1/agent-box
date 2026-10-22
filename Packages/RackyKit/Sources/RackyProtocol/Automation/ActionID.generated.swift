@@ -225,6 +225,10 @@ extension ActionID {
     public static let datasetOpenSource = ActionID(unchecked: "dataset.openSource")
     public static let datasetRange = ActionID(unchecked: "dataset.range")
     public static let datasetFacet = ActionID(unchecked: "dataset.facet")
+    public static let datasetTimeWindow = ActionID(unchecked: "dataset.timeWindow")
+    public static let datasetAddFilter = ActionID(unchecked: "dataset.addFilter")
+    public static let datasetRemoveFilter = ActionID(unchecked: "dataset.removeFilter")
+    public static let datasetColumnRange = ActionID(unchecked: "dataset.columnRange")
     public static let datasetFacetsReset = ActionID(unchecked: "dataset.facetsReset")
     public static let datasetPage = ActionID(unchecked: "dataset.page")
     public static let datasetColumns = ActionID(unchecked: "dataset.columns")
@@ -710,6 +714,10 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "dataset.openSource"), label: "Open Source URL", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dataset.range"), label: "Dataset: período", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dataset.facet"), label: "Dataset: faceta", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dataset.timeWindow"), label: "Dataset: janela do gráfico", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dataset.addFilter"), label: "Dataset: adicionar filtro", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dataset.removeFilter"), label: "Dataset: remover filtro", shortcut: "", slice: .slice3),
+        ActionSpec(id: ActionID(unchecked: "dataset.columnRange"), label: "Dataset: faixa da coluna", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dataset.facetsReset"), label: "Dataset: limpar filtros", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dataset.page"), label: "Dataset: página", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dataset.columns"), label: "Dataset: colunas", shortcut: "", slice: .slice3),
