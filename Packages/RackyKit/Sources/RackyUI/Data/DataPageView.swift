@@ -1204,8 +1204,10 @@ struct DataProductionBanner: View {
 
     private func message(_ object: DataObject, live: Int) -> String {
         // Uma frase com as regras: quem pode gravar aqui e o que você pode fazer.
+        let source = hub.copySource(of: object).map { hub.displayName(ofDatasetNamed: $0) }
         let writers = live == 0
-            ? String(localized: "No agent is writing here now.", bundle: .module)
+            ? (source.map { String(localized: "No agent writes here directly: Racky copies \($0) from this Mac.", bundle: .module) }
+                ?? String(localized: "No agent is writing here now.", bundle: .module))
             : (live == 1 ? String(localized: "1 agent is writing here now (Pause stops new writes; rows already written stay).", bundle: .module)
                 : String(localized: "\(live) agents are writing here now (Pause stops new writes; rows already written stay).", bundle: .module))
         return writers + " " + String(localized: "You can read freely; anything that changes data asks you to confirm.", bundle: .module)
