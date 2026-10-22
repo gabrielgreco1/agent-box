@@ -219,6 +219,11 @@ public final class DataHubController {
                 throw ActionError.failed(.dataOpen, message: String(localized: "No such object.", bundle: .module))
             }
             open(object)
+            // Clicado de dentro de uma sessão (a trilha do dataset numa tab): leva para a área Data, já no lugar.
+            if datasets.currentPage() != .datasets {
+                await datasets.reloadList()
+                datasets.showPage(.datasets)
+            }
             return raw
         }
         try registry.register(.dataClose) { [unowned self] arg in

@@ -36,14 +36,18 @@ struct DataObjectActions: View {
     var compact = false
     /// Um pouco de espaço a menos: nomes curtos ("Copy…") antes de virar só ícones.
     var short = false
+    /// Mostra "Beside the agent" (o dataset está numa tab sozinho da sessão).
+    var besideAgent = false
 
     var body: some View {
         HStack(spacing: DS.Space.s2) {
             switch object {
             case .dataset(let id):
-                if !hub.connections.isEmpty {
-                    button(.dataSendTo, id: .dataSendTo, short ? String(localized: "Copy…", bundle: .module) : String(localized: "Copy to a connection…", bundle: .module), "arrow.up.right", .select(id))
+                // Numa tab sozinha da sessão: leva a tabela para o lado do agente (os dois juntos na tela).
+                if besideAgent {
+                    button(.datasetOpen, id: .dataBeside, String(localized: "Beside the agent", bundle: .module), "rectangle.split.2x1", .select("\(id)|beside"))
                 }
+                // "Copy to…" volta com a etapa de entrega (cópias de verdade para um banco); um botão que não faz nada não fica na tela.
                 if let model = hub.datasets.models[id] { DatasetToolbar(model: model, labels: !compact) }
             case .table(let connection, _, _):
                 button(.dataNewQuery, id: .dataQueryTarget, String(localized: "New query", bundle: .module), "terminal", .select(connection))

@@ -339,6 +339,8 @@ final class WorkspaceModel {
 
     /// Título mostrado: o fixado pelo usuário, senão o dinâmico do terminal focado (OSC 0/2), senão o da tab (03 §3.2).
     func displayTitle(of tab: Tab) -> String {
+        // Tab só com um dataset: sempre o nome atual do dataset (renomear a tab renomeia o dataset; nada fica preso na tab).
+        if let id = datasetOnly(tab) { return datasetTitle(id) ?? tab.title }
         if tab.titleLocked { return tab.title }
         if let id = tab.focusedTerminalID ?? tab.layout.terminalIDs.first, let t = terminal(id), !t.title.isEmpty { return t.title }
         return tab.title
@@ -502,9 +504,17 @@ final class WorkspaceModel {
 
     /// Vazio volta ao título dinâmico; texto fixa o título (03 §2.11).
     func commitRename(_ text: String, tabID: UUID? = nil) {
-        guard let id = tabID ?? renamingTab, tab(id) != nil else { return }
+        guard let id = tabID ?? renamingTab, let current = tab(id) else { return }
         renamingTab = nil
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let dataset = datasetOnly(current) {
+            // A tab de um dataset é o dataset: o nome novo vai para ele (aparece em todo lugar) e a tab não fixa título.
+            renameDataset(dataset, trimmed)
+            update(tab: id) { $0.titleLocked = false }
+            save(tab: id)
+            notify()
+            return
+        }
         if trimmed.isEmpty { resetTitle(id) } else {
             update(tab: id) { $0.title = trimmed; $0.titleLocked = true }
             save(tab: id)
@@ -593,6 +603,14 @@ final class WorkspaceModel {
     var autoFocusAllowed: () -> Bool = { true }
     /// Nome de um dataset (título da tab e do pane); ligado pelo `AppEnvironment`.
     @ObservationIgnored var datasetTitle: (String) -> String? = { _ in nil }
+    /// Renomeia um dataset (o nome mostrado); ligado pelo `AppEnvironment`.
+    @ObservationIgnored var renameDataset: (String, String) -> Void = { _, _ in }
+
+    /// O dataset de uma tab que só tem ele (sem terminal), ou `nil`.
+    func datasetOnly(_ tab: Tab) -> String? {
+        guard tab.layout.terminalIDs.isEmpty, tab.layout.leafCount == 1, case .dataset(let id) = tab.layout.firstPane.content else { return nil }
+        return id
+    }
     /// View de um pane sem terminal (tabela do dataset), já com o ambiente do app; ligado pela janela.
     @ObservationIgnored var makePaneView: ((Pane) -> NSView)?
 
@@ -1477,6 +1495,9 @@ extension WorkspaceModel {
     }
 
     /// Tab (e sessão) que contém o pane.
+    /// O pane está sozinho na tab dele.
+    func paneIsAlone(_ paneID: UUID) -> Bool { locate(paneID: paneID)?.tab.layout.leafCount == 1 }
+
     private func locate(paneID: UUID) -> (sid: UUID, tab: Tab)? {
         for (sid, state) in states {
             if let tab = state.tabs.first(where: { $0.layout.contains(paneID: paneID) }) { return (sid, tab) }
@@ -1651,6 +1672,13 @@ extension WorkspaceModel {
 
     private func apply(_ plan: DropPlan) {
         guard var state = states[plan.sid], let ti = state.tabs.firstIndex(where: { $0.id == plan.targetTabID }) else { return }
+        // Uma tab que era só de um dataset e passa a ter agentes (troca no centro) não leva o nome do dataset: volta ao automático.
+        let wasDatasetOnly = Set(state.tabs.filter { datasetOnly($0) != nil }.map(\.id))
+        defer {
+            for id in [plan.targetTabID, plan.sourceTabID] where wasDatasetOnly.contains(id) {
+                if let t = tab(id), !t.layout.terminalIDs.isEmpty, t.titleLocked { resetTitle(id) }
+            }
+        }
         state.tabs[ti].layout = plan.targetLayout
         state.tabs[ti].focusedTerminalID = plan.targetFocus
         var closed: Tab?
@@ -1775,7 +1803,11 @@ extension WorkspaceModel {
     func openDataset(_ datasetID: String, beside: Bool = false) -> UUID? {
         guard let sid = currentSessionID, states[sid] != nil else { return nil }
         if let (tab, pane) = datasetPane(datasetID, in: sid) {
-            if beside, let active = activeTab, active.id != tab.id, tab.layout.leafCount == 1,
+            // Ao lado do agente: a tab ativa, ou (se a ativa é a do próprio dataset) a tab de agentes usada por último.
+            let agents = activeTab.flatMap { $0.id != tab.id ? $0 : nil }
+                ?? states[sid]?.recent.lazy.compactMap { id in self.states[sid]?.tabs.first { $0.id == id && !$0.layout.terminalIDs.isEmpty } }.first
+                ?? states[sid]?.tabs.first { !$0.layout.terminalIDs.isEmpty }
+            if beside, let active = agents, active.id != tab.id, tab.layout.leafCount == 1,
                let target = focusedPaneID(of: active), performDrop(.tab(tab.id), onPane: target, zone: .right) == .applied {
                 return pane.id
             }

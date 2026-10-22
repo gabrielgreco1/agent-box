@@ -47,6 +47,7 @@ private struct QuickLaunchPanelView: View {
         if itemID.hasPrefix("item.") { return .overlayQuickLaunchItem(String(itemID.dropFirst(5))) }
         if itemID.hasPrefix("profile.") { return .overlayQuickLaunchProfile(String(itemID.dropFirst(8))) }
         if itemID == "settings" { return .overlayQuickLaunchAgentSettings }
+        if itemID.hasPrefix("dataset.") { return .overlayQuickLaunchDataset(String(itemID.dropFirst(8))) }
         if itemID == QuickLaunchModel.fallbackID { return .overlayQuickLaunchItem("prompt") }
         return nil
     }
@@ -68,6 +69,8 @@ private struct QuickLaunchPanelView: View {
             }
         case .settings(let provider):
             _ = try? await registry.perform(.agentOpenSettings, .select(provider.rawValue))
+        case .dataset(let id, let beside):
+            _ = try? await registry.perform(.datasetOpen, .select(beside ? "\(id)|beside" : id))
         }
     }
 }
@@ -80,6 +83,8 @@ final class QuickLaunchController {
     private let overlays: OverlayRouter
     private let elements: UIElementStore
     private let settings: SettingsModel
+    /// Datasets da sessão atual (id, nome mostrado); ligado pelo `AppEnvironment`.
+    var sessionDatasets: () -> [(id: String, name: String)] = { [] }
 
     init(workspace: WorkspaceModel, overlays: OverlayRouter, elements: UIElementStore, settings: SettingsModel) {
         self.workspace = workspace
@@ -92,7 +97,7 @@ final class QuickLaunchController {
     func model() -> QuickLaunchModel {
         QuickLaunchModel(
             defaultAgent: settings.settings.agents.defaultAgent, installed: { [settings] in settings.agent($0)?.installedState },
-            profiles: settings.catalog.profiles)
+            profiles: settings.catalog.profiles, datasets: sessionDatasets())
     }
 
     func register(in registry: ActionRegistry) throws {
@@ -100,7 +105,10 @@ final class QuickLaunchController {
         let ready: ActionRegistry.Enablement = { [workspace] in workspace.isLoaded ? .enabled : .disabled(reason: noSession) }
         try registry.register(.tabQuickLaunch, enablement: ready) { [unowned self, unowned registry] _ in
             // O "+" é a âncora também quando o painel abre por atalho (03 §7).
-            let anchor = elements.frame(of: .tabsNew) ?? .zero
+            // Sem o "+" na tela (página do centro aberta), o menu desce do topo, no meio da janela, nunca do canto.
+            let anchor = elements.frame(of: .tabsNew) ?? elements.windowInfo().map {
+                CGRect(x: ($0.width - QuickLaunchModel.width) / 2, y: TabMetrics.chromeHeight - 1, width: QuickLaunchModel.width, height: 1)
+            } ?? .zero
             let model = model()
             let spec = PopoverSpec(
                 name: "quickLaunch", id: .overlayQuickLaunch, anchor: anchor, width: QuickLaunchModel.width, alignment: .leading

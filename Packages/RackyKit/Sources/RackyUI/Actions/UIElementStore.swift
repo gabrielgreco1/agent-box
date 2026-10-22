@@ -100,7 +100,11 @@ public final class UIElementStore {
             title: w.title, width: size.width, height: size.height, scale: w.backingScaleFactor, isKey: w.isKeyWindow)
     }
 
-    public func frame(of id: A11yID) -> CGRect? { elements.values.first { $0.id == id }?.frame }
+    /// O frame de um controle na janela. Pode haver mais de um registro com o mesmo id (uma view que ainda não saiu da árvore): vale
+    /// o mais recente com um frame de verdade, não um qualquer (antes o "+" às vezes ancorava o menu no canto da janela).
+    public func frame(of id: A11yID) -> CGRect? {
+        elements.values.filter { $0.id == id && ($0.frame.map { !$0.isEmpty } ?? false) }.max { $0.order < $1.order }?.frame
+    }
 }
 
 // MARK: Ambiente e modificador

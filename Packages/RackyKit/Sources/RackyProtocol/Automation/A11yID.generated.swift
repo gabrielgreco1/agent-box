@@ -286,6 +286,8 @@ extension A11yID {
     public static let rightPanelDataEmpty = A11yID(unchecked: "rightPanel.data.empty")
     /// `rightPanel.data.open`
     public static let rightPanelDataOpen = A11yID(unchecked: "rightPanel.data.open")
+    /// `rightPanel.data.beside`
+    public static let rightPanelDataBeside = A11yID(unchecked: "rightPanel.data.beside")
     /// `rightPanel.data.pick`
     public static let rightPanelDataPick = A11yID(unchecked: "rightPanel.data.pick")
     /// `rightPanel.data.stats`
@@ -428,6 +430,8 @@ extension A11yID {
     public static let dataTabsMenu = A11yID(unchecked: "data.tabs.menu")
     /// `data.rename.button`
     public static let dataRenameButton = A11yID(unchecked: "data.rename.button")
+    /// `data.beside`
+    public static let dataBeside = A11yID(unchecked: "data.beside")
     /// `data.table.page.prev`
     public static let dataTablePagePrev = A11yID(unchecked: "data.table.page.prev")
     /// `data.table.page.next`
@@ -1275,6 +1279,11 @@ extension A11yID {
         A11yID(unchecked: "overlay.quickLaunch.profile.\(A11yID.segment(id))")
     }
 
+    /// `overlay.quickLaunch.dataset.<id>`
+    public static func overlayQuickLaunchDataset(_ id: String) -> A11yID {
+        A11yID(unchecked: "overlay.quickLaunch.dataset.\(A11yID.segment(id))")
+    }
+
     /// `overlay.palette.row.<kind>.<id>`
     public static func overlayPaletteRow(_ kind: String, _ id: String) -> A11yID {
         A11yID(unchecked: "overlay.palette.row.\(A11yID.segment(kind)).\(A11yID.segment(id))")
@@ -2047,6 +2056,7 @@ extension A11yID {
         A11yIDSpec(pattern: "overlay.quickLaunch.input", surface: "Quick launch"),
         A11yIDSpec(pattern: "overlay.quickLaunch.item.<agent>", surface: "Quick launch"),
         A11yIDSpec(pattern: "overlay.quickLaunch.profile.<id>", surface: "Quick launch"),
+        A11yIDSpec(pattern: "overlay.quickLaunch.dataset.<id>", surface: "Quick launch"),
         A11yIDSpec(pattern: "overlay.quickLaunch.resume", surface: "Quick launch"),
         A11yIDSpec(pattern: "overlay.quickLaunch.openComputer", surface: "Quick launch"),
         A11yIDSpec(pattern: "overlay.quickLaunch.agentSettings", surface: "Quick launch"),
@@ -2123,6 +2133,7 @@ extension A11yID {
         A11yIDSpec(pattern: "rightPanel.data", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
         A11yIDSpec(pattern: "rightPanel.data.empty", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
         A11yIDSpec(pattern: "rightPanel.data.open", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
+        A11yIDSpec(pattern: "rightPanel.data.beside", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
         A11yIDSpec(pattern: "rightPanel.data.pick", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
         A11yIDSpec(pattern: "rightPanel.data.stats", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
         A11yIDSpec(pattern: "rightPanel.data.row.<key>", surface: "Painel direito (contêiner e módulos, 10-right-panel)"),
@@ -2252,6 +2263,7 @@ extension A11yID {
         A11yIDSpec(pattern: "data.demo", surface: "Páginas"),
         A11yIDSpec(pattern: "data.tabs.menu", surface: "Páginas"),
         A11yIDSpec(pattern: "data.rename.button", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.beside", surface: "Páginas"),
         A11yIDSpec(pattern: "data.table.page.prev", surface: "Páginas"),
         A11yIDSpec(pattern: "data.table.page.next", surface: "Páginas"),
         A11yIDSpec(pattern: "data.moreColumns", surface: "Páginas"),

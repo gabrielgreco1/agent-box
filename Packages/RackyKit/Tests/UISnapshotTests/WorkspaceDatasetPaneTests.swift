@@ -28,12 +28,37 @@ extension WorkspaceModelTests {
         let rig = try await make(tabs: 1)
         defer { Task { await cleanup(rig) } }
         rig.model.contentSize = CGSize(width: 1400, height: 800)
-        rig.model.datasetTitle = { $0 == "DS1" ? "books2" : nil }
+        var names = ["DS1": "books2"]
+        rig.model.datasetTitle = { names[$0] }
+        rig.model.renameDataset = { id, name in names[id] = name }
         _ = rig.model.openDataset("DS1")
         let tab = try #require(rig.model.activeTab)
         #expect(rig.model.beginRename(tab.id))
         rig.model.commitRename("Livros do teste")
+        // Renomear a tab de um dataset renomeia o dataset; a tab não fixa o título (segue o nome do dataset).
+        #expect(names["DS1"] == "Livros do teste")
+        #expect(rig.model.activeTab?.titleLocked == false)
         #expect(rig.model.activeTab.map { rig.model.displayTitle(of: $0) } == "Livros do teste")
+    }
+
+    /// Soltar a tab do dataset no centro do pane do agente troca os dois de tab: a tab que fica com o agente não herda o nome do dataset.
+    @Test func swappingADatasetTabWithTheAgentDoesNotLeaveTheDatasetNameOnTheAgentTab() async throws {
+        let rig = try await make(tabs: 1)
+        defer { Task { await cleanup(rig) } }
+        rig.model.contentSize = CGSize(width: 1400, height: 800)
+        rig.model.datasetTitle = { $0 == "DS1" ? "books2" : nil }
+        let agentTab = try #require(rig.model.activeTab)
+        let agentPane = agentTab.layout.firstPane.id
+        _ = rig.model.openDataset("DS1")
+        let datasetTab = try #require(rig.model.activeTab)
+        // Um título fixado antes (como faziam as versões antigas ao renomear a tab do dataset).
+        #expect(rig.model.beginRename(datasetTab.id))
+        rig.model.commitRename("books2")
+        _ = rig.model.performDrop(.tab(datasetTab.id), onPane: agentPane, zone: .center)
+        for tab in rig.model.tabs where !tab.layout.terminalIDs.isEmpty {
+            #expect(rig.model.displayTitle(of: tab) != "books2", "the tab with the agent must not be called books2")
+            #expect(!tab.titleLocked)
+        }
     }
 
     @Test func besideTheAgentSplitsTheActiveTabAndMovesAnExistingDatasetTabIn() async throws {

@@ -94,9 +94,15 @@ private struct DatasetPanelContent: View {
             HStack(spacing: DS.Space.s2) {
                 pickerOrName
                 Spacer(minLength: DS.Space.s1)
+                // A tabela inteira numa tab da sessão, ou ao lado do agente (tela dividida, os dois juntos).
                 DSButton(
-                    .datasetOpen, id: .rightPanelDataOpen, "Open table", variant: .outline, size: .xs, symbol: "arrow.up.right",
+                    .datasetOpen, id: .rightPanelDataOpen, "Open in a tab", variant: .outline, size: .xs, symbol: "arrow.up.right",
                     argument: .select("\(summary.dataset.id)|panel"))
+                ActionButton(
+                    .datasetOpen, id: .rightPanelDataBeside, argument: .select("\(summary.dataset.id)|beside|panel"),
+                    tooltip: String(localized: "Open beside the agent", bundle: .module)
+                ) { Image(systemName: "rectangle.split.2x1") }
+                    .buttonStyle(DSIconButtonStyle(.header))
             }
             HStack(spacing: DS.Space.s2) {
                 CollectionStatus(
@@ -117,11 +123,11 @@ private struct DatasetPanelContent: View {
         if list.count > 1 {
             DSCombobox(
                 id: .rightPanelDataPick, selection: summary.dataset.id,
-                entries: list.map { .item(DSMenuItem($0.dataset.id, $0.dataset.name, detail: $0.rowCount.formatted(), detailMono: true)) },
+                entries: list.map { .item(DSMenuItem($0.dataset.id, controller.displayName($0), detail: $0.rowCount.formatted(), detailMono: true)) },
                 action: .rightPanelDataPick, height: DSMetrics.fieldHeightComposer - DS.Space.s1)
                 .fixedSize()
         } else {
-            Text(verbatim: summary.dataset.name).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
+            Text(verbatim: controller.displayName(summary)).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
         }
     }
 

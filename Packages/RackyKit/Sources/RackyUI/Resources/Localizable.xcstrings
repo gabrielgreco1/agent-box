@@ -11361,7 +11361,13 @@
         }
       }
     },
-    "This connection is protected: changes ask you to confirm.": {}
+    "This connection is protected: changes ask you to confirm.": {},
+    "Saved profiles (agent with extra flags)": {},
+    "This session's data": {},
+    "table": {},
+    "Start in a new tab": {},
+    "Open in a tab": {},
+    "Beside the agent": {}
   },
   "version": "1.0"
 }

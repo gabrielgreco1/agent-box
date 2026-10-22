@@ -247,6 +247,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `overlay.quickLaunch.input`
 - `overlay.quickLaunch.item.<agent>`
 - `overlay.quickLaunch.profile.<id>`
+- `overlay.quickLaunch.dataset.<id>`
 - `overlay.quickLaunch.resume`
 - `overlay.quickLaunch.openComputer`
 - `overlay.quickLaunch.agentSettings`
@@ -335,6 +336,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `rightPanel.data`
 - `rightPanel.data.empty`
 - `rightPanel.data.open`
+- `rightPanel.data.beside`
 - `rightPanel.data.pick`
 - `rightPanel.data.stats`
 - `rightPanel.data.row.<key>`
@@ -473,6 +475,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `data.demo`
 - `data.tabs.menu`
 - `data.rename.button`
+- `data.beside`
 - `data.table.page.prev`
 - `data.table.page.next`
 - `data.moreColumns`

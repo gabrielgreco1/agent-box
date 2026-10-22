@@ -758,6 +758,8 @@ struct DataLocationBar: View {
     /// Num pane do workspace: o X fecha o pane e o lugar/nome arrasta o pane (como o título de um terminal).
     var close: (() -> Void)? = nil
     var drag: (paneID: UUID, controller: PaneDragController)? = nil
+    /// Numa tab sozinha da sessão: mostra "Beside the agent".
+    var besideAgent = false
 
     var body: some View {
         // Numa linha só enquanto cabe com os botões nomeados: primeiro some a trilha (fica o nome), depois os nomes ficam curtos e o
@@ -834,11 +836,12 @@ struct DataLocationBar: View {
 
     private func trailing(compact: Bool, short: Bool = false, iconBadge: Bool = false) -> some View {
         HStack(spacing: DS.Space.s2) {
-            if let role = DataRoleBadge.Role(hub: hub, object: object) {
+            // Num dataset do Mac o papel não diz nada (todo dataset aqui é o original): só nas tabelas e cópias das conexões.
+            if let role = DataRoleBadge.Role(hub: hub, object: object), role != .original {
                 let badge = DataRoleBadge(role: role, iconOnly: iconBadge)
                 badge.help((iconBadge ? badge.title + " · " : "") + DataLabels.kind(object, hub: hub) + (size.map { " · \($0)" } ?? ""))
             }
-            DataObjectActions(hub: hub, object: object, compact: compact, short: short)
+            DataObjectActions(hub: hub, object: object, compact: compact, short: short, besideAgent: besideAgent)
         }
         .fixedSize()
     }
@@ -858,9 +861,7 @@ struct DataLocationBar: View {
             } else {
                 Image(systemName: "laptopcomputer").font(.system(size: DataMetrics.icon)).foregroundStyle(DS.Color.textSecondary)
                 Text("This Mac", bundle: .module).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary)
-                if !compact {
-                    Text("saved by Racky", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
-                }
+
             }
         }
         .padding(.horizontal, DS.Space.s2)

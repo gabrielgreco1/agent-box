@@ -410,6 +410,8 @@ public final class DatasetsController {
     /// Nome do agente que usa um computador ("Codex 1"), para a faceta Computer.
     @ObservationIgnored public var computerLabel: (String) -> String? = { _ in nil }
     @ObservationIgnored public var isShownInSession: (_ datasetID: String, _ sessionID: UUID) -> Bool = { _, _ in false }
+    /// O pane está sozinho na tab (sem agente ao lado); ligado pelo `AppEnvironment`.
+    @ObservationIgnored public var paneIsAlone: (_ paneID: UUID) -> Bool = { _ in false }
     /// Abrir a tabela ao lado assim que as primeiras linhas de um dataset novo chegam (uma vez por dataset).
     @ObservationIgnored public var autoOpenEnabled = true
     /// Datasets já abertos sozinhos uma vez (gravado no store: fechar a tabela não faz ela voltar).
@@ -640,12 +642,14 @@ public final class DatasetsController {
         }
         try registry.register(.datasetOpen) { [unowned self] arg in
             // `select(<id>)` abre a tab do dataset; `select(<id>|beside)` coloca a tabela ao lado do agente.
+            // `<id>|beside` ao lado do agente; `|panel` (pode vir junto) diz que veio da prévia do painel Data.
             let parts = (arg.kind == .select ? arg.value ?? "" : "").split(separator: "|").map(String.init)
-            guard let id = parts.first, !id.isEmpty, await open(id, beside: parts.dropFirst().first == "beside") else {
+            let flags = Set(parts.dropFirst())
+            guard let id = parts.first, !id.isEmpty, await open(id, beside: flags.contains("beside")) else {
                 throw ActionError.failed(.datasetOpen, message: String(localized: "No such dataset.", bundle: .module))
             }
             // Aberta pelo painel Data: a tabela inteira toma o lugar da prévia, não ficam as duas.
-            if parts.dropFirst().first == "panel" { hideDataPanel() }
+            if flags.contains("panel") { hideDataPanel() }
             return id
         }
         try registry.register(.datasetFilter, enablement: hasDataset) { [unowned self] arg in

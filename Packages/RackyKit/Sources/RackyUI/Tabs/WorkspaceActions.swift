@@ -197,6 +197,11 @@ extension WorkspaceModel {
             return nil
         }
         try reg(.paneShow, enablement: hasSession) { [unowned self] arg in
+            // Uma tab sem terminal (só a tabela de um dataset) chega aqui com o id da própria tab: o clique seleciona a tab.
+            if let id = uuid(arg), tab(id) != nil {
+                selectTab(id)
+                return id.uuidString
+            }
             guard let id = uuid(arg), tabContaining(terminalID: id) != nil else { throw ActionError.failed(.paneShow, message: "Pane not found") }
             show(terminalID: id)
             return id.uuidString

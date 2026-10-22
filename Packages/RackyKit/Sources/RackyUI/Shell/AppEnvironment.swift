@@ -460,6 +460,8 @@ public final class AppEnvironment {
         datasets.computerLabel = { [weak model = computers.model] name in model?.computerAgentNames[name] }
         datasets.isShownInSession = { [workspace] id, sid in workspace.datasetPane(id, in: sid) != nil }
         workspace.datasetTitle = { [datasets] id in datasets.name(of: id) }
+        workspace.renameDataset = { [datasets] id, name in Task { await datasets.rename(id, to: name) } }
+        datasets.paneIsAlone = { [workspace] id in workspace.paneIsAlone(id) }
         do { try datasets.register(in: registry) } catch { log.publicError("duplicate dataset action registration") }
         do { try dataHub.register(in: registry) } catch { log.publicError("duplicate data action registration") }
     }
@@ -673,6 +675,10 @@ public final class AppEnvironment {
         do { try open.register(in: registry) } catch { log.publicError("duplicate open-in registration") }
         let quick = QuickLaunchController(workspace: workspace, overlays: overlays, elements: elements, settings: settings)
         quickLaunch = quick
+        quick.sessionDatasets = { [datasets, workspace] in
+            guard let sid = workspace.currentSessionID else { return [] }
+            return datasets.summaries.filter { $0.dataset.sessionID == sid }.map { ($0.dataset.id, datasets.displayName($0)) }
+        }
         do { try quick.register(in: registry) } catch { log.publicError("duplicate quick launch registration") }
         let composerController = ComposerController(
             sidebar: sidebar, settings: settings, overlays: overlays, toasts: toasts, elements: elements, launcher: sessionLauncher,
