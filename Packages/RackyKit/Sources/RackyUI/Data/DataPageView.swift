@@ -449,11 +449,10 @@ struct DataRoleBadge: View {
         case .direct: (String(localized: "Written by agents", bundle: .module), "person.2", DS.Color.textSecondary)
         }
         HStack(spacing: DS.Space.s1) {
-            Image(systemName: symbol).font(.system(size: DS.Space.s2_5, weight: .semibold))
-            Text(verbatim: title).dsFont(DS.Font.label)
+            Image(systemName: symbol).font(.system(size: DS.Space.s2_5, weight: .semibold)).foregroundStyle(tint)
+            // Um rótulo de estado, não um link nem um botão: texto neutro, a cor fica só no ícone.
+            Text(verbatim: title).dsFont(DS.Font.label).foregroundStyle(DS.Color.textSecondary)
         }
-        // Um rótulo de estado, não um botão: sem moldura.
-        .foregroundStyle(tint)
         .fixedSize()
     }
 }

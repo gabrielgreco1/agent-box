@@ -561,7 +561,8 @@ struct DataConnectSheet: View {
                 DSDataLogo(kind.brand, size: DataMetrics.connectLogo, tile: true)
                 VStack(alignment: .leading, spacing: .zero) {
                     Text(verbatim: kind.title).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
-                    Text(verbatim: kind.tagline).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(1)
+                    Text(verbatim: kind.tagline).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 0)
             }
