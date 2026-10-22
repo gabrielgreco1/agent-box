@@ -607,23 +607,11 @@ struct DataTabStrip: View {
     @Environment(\.pageTrailingInset) private var trailingInset
 
     var body: some View {
-        // Nomes inteiros (o lugar diz qual cópia é): com muitas tabs, a faixa rola de lado em vez de cortar os nomes.
-        ScrollViewReader { reader in
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 0) {
-                    ForEach(hub.tabs, id: \.self) { object in tab(object).id(object) }
-                }
-            }
-            // As bordas esmaecem: uma tab cortada pela rolagem some aos poucos em vez de virar meia palavra.
-            .mask {
-                HStack(spacing: 0) {
-                    LinearGradient(colors: [.clear, .black], startPoint: .leading, endPoint: .trailing).frame(width: DS.Space.s6)
-                    Color.black
-                    LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing).frame(width: DS.Space.s6)
-                }
-            }
-            .onChange(of: hub.active) { _, active in if let active { reader.scrollTo(active) } }
-            .onAppear { if let active = hub.active { reader.scrollTo(active) } }
+        // Nomes inteiros, nunca cortados. Sem espaço: primeiro as tabs inativas escondem o lugar em letra pequena; só então a faixa rola.
+        ViewThatFits(in: .horizontal) {
+            row(compact: false)
+            row(compact: true)
+            scrolling
         }
         .padding(.trailing, showsMenu ? DataMetrics.tabsMenuWidth : .zero)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -649,7 +637,33 @@ struct DataTabStrip: View {
         .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
     }
 
-    private func tab(_ object: DataObject) -> some View {
+    private func row(compact: Bool) -> some View {
+        HStack(spacing: 0) {
+            ForEach(hub.tabs, id: \.self) { object in tab(object, compact: compact) }
+        }
+    }
+
+    private var scrolling: some View {
+        ScrollViewReader { reader in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 0) {
+                    ForEach(hub.tabs, id: \.self) { object in tab(object, compact: true).id(object) }
+                }
+            }
+            // As bordas esmaecem: uma tab cortada pela rolagem some aos poucos em vez de virar meia palavra.
+            .mask {
+                HStack(spacing: 0) {
+                    LinearGradient(colors: [.clear, .black], startPoint: .leading, endPoint: .trailing).frame(width: DS.Space.s6)
+                    Color.black
+                    LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing).frame(width: DS.Space.s6)
+                }
+            }
+            .onChange(of: hub.active) { _, active in if let active { reader.scrollTo(active) } }
+            .onAppear { if let active = hub.active { reader.scrollTo(active) } }
+        }
+    }
+
+    private func tab(_ object: DataObject, compact: Bool) -> some View {
         let active = hub.active == object
         let place = hub.connection(object.connectionID)
         return HStack(spacing: DS.Space.s1_5) {
@@ -662,8 +676,10 @@ struct DataTabStrip: View {
                     }
                     Text(verbatim: DataLabels.title(object, hub: hub)).dsFont(active ? DS.Font.tabActive : DS.Font.tab)
                         .foregroundStyle(active ? DS.Color.textPrimary : DS.Color.textSecondary).lineLimit(1)
-                    // O lugar em letra pequena: duas tabs "books" (Racky e Supabase) não se confundem.
-                    Text(verbatim: place?.name ?? String(localized: "This Mac", bundle: .module)).dsFont(DS.Font.small).foregroundStyle(DS.Color.textQuaternary).lineLimit(1)
+                    // O lugar em letra pequena: duas tabs "books" (Racky e Supabase) não se confundem (o logo já diz, quando falta espaço).
+                    if !compact || active {
+                        Text(verbatim: place?.name ?? String(localized: "This Mac", bundle: .module)).dsFont(DS.Font.small).foregroundStyle(DS.Color.textQuaternary).lineLimit(1)
+                    }
                 }
                 .contentShape(Rectangle())
             }

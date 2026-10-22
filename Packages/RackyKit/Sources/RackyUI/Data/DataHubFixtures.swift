@@ -50,7 +50,7 @@ enum DataHubFixtures {
                         DataNode(id: "\(sheets)/pricing/NYC", kind: .sheet, name: "NYC", size: 390),
                     ]),
                 ]),
-            DataConnection(id: webhook, kind: .webhook, name: "Book feed", environment: nil, address: "https://hooks.acme.dev/racky/books", children: []),
+            DataConnection(id: webhook, kind: .webhook, name: "Hotel feed", environment: nil, address: "https://hooks.acme.dev/racky/hotels", children: []),
         ]
     }
 
@@ -60,7 +60,7 @@ enum DataHubFixtures {
         case .table(supabase, "public", "books"):
             return [DataWriter(id: "copy-books", kind: .sync(from: .dataset("books2")), name: "books2", live: false, detail: "live copy")]
         case .webhook(webhook):
-            return [DataWriter(id: "copy-hook", kind: .sync(from: .dataset("books")), name: "books", live: false, detail: "sends new rows")]
+            return [DataWriter(id: "copy-hook", kind: .sync(from: .dataset("hotels")), name: "hotels", live: false, detail: "sends new rows")]
         case .folder(bucket, let path) where path.first == "books":
             return [DataWriter(id: "copy-s3", kind: .sync(from: .dataset("books2")), name: "books2", live: false, detail: "daily copy")]
         default:
@@ -76,7 +76,7 @@ enum DataHubFixtures {
                 DataDestination(id: "d1", target: .table(connection: supabase, schema: "public", name: "books"), detail: "live copy"),
                 DataDestination(id: "d2", target: .folder(connection: bucket, path: ["books"]), detail: "daily copy"),
             ]
-        case "hotels", "books":
+        case "hotels":
             return [DataDestination(id: "d3", target: .webhook(connection: webhook), detail: "sends new rows")]
         default:
             return []

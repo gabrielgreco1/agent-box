@@ -294,7 +294,7 @@ struct DataWritersView: View {
                             .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.secondary))
                         VStack(alignment: .leading, spacing: .zero) {
                             HStack(spacing: DS.Space.s1_5) {
-                                Text(verbatim: { if case .sync = writer.kind { String(localized: "\(hub.displayName(ofDatasetNamed: writer.name)) (this Mac)", bundle: .module) } else { writer.name } }())
+                                Text(verbatim: { if case .sync = writer.kind { String(localized: "Racky, copying from \(hub.displayName(ofDatasetNamed: writer.name)) (this Mac)", bundle: .module) } else { writer.name } }())
                                     .dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary)
                                 if writer.live { LiveDot() }
                             }
@@ -333,7 +333,7 @@ struct DataWritersView: View {
         switch writer.kind {
         case .agent(let session): String(localized: "Agent in session \(session) · \(writer.detail). Pause stops its new writes; rows already written stay.", bundle: .module)
         case .sync(let from):
-            if case .dataset(let name) = from { String(localized: "Live one-way copy of \(hub.displayName(ofDatasetNamed: name)) on this Mac, the original · \(writer.detail)", bundle: .module) } else { writer.detail }
+            if case .dataset(let name) = from { String(localized: "One-way: rows go from \(hub.displayName(ofDatasetNamed: name)) on this Mac (the original) to here · \(writer.detail)", bundle: .module) } else { writer.detail }
         }
     }
 }
