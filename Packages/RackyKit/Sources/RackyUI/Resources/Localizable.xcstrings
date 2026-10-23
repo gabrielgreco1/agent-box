@@ -11400,7 +11400,10 @@
     "admin": {},
     "pnu_…": {},
     "Data connection credential: only Racky reads it, never an agent's terminal.": {},
-    "prefect.yourcompany.com": {}
+    "prefect.yourcompany.com": {},
+    "Connect now": {},
+    "Coming soon": {},
+    "Fill in the server URL": {}
   },
   "version": "1.0"
 }

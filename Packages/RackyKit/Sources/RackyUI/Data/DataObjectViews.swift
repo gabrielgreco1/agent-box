@@ -567,7 +567,21 @@ struct DataConnectSheet: View {
                 } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: DS.Space.s6) {
-                        ForEach(DataConnectionKind.Family.allCases, id: \.self) { family in
+                        // O que conecta de verdade hoje vem primeiro (antes ficava no fim da lista, cortado, e parecia que nada funcionava).
+                        VStack(alignment: .leading, spacing: DS.Space.s2) {
+                            Text("Connect now", bundle: .module).dsFont(DS.Font.sectionLabel).foregroundStyle(DS.Color.textPrimary)
+                            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: DS.Space.s2), count: 3), spacing: DS.Space.s2) {
+                                ForEach(DataConnectionKind.allCases.filter(\.connectable), id: \.self) { kind in
+                                    ActionButton(.dataConnectStart, id: .dataConnectKind(kind.rawValue), argument: .select(kind.rawValue)) {
+                                        KindCard(kind: kind)
+                                            .overlay(RoundedRectangle(cornerRadius: DS.Radius.md).strokeBorder(DS.Color.textTertiary))
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        }
+                        Text("Coming soon", bundle: .module).dsFont(DS.Font.sectionLabel).foregroundStyle(DS.Color.textTertiary)
+                        ForEach(DataConnectionKind.Family.allCases.filter { f in DataConnectionKind.allCases.contains { $0.family == f && !$0.connectable } }, id: \.self) { family in
                             VStack(alignment: .leading, spacing: DS.Space.s2) {
                                 HStack(spacing: DS.Space.s2) {
                                     Text(verbatim: Self.title(family)).dsFont(DS.Font.sectionLabel).foregroundStyle(DS.Color.textPrimary)
@@ -575,14 +589,9 @@ struct DataConnectSheet: View {
                                         .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
                                 }
                                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: DS.Space.s2), count: 3), spacing: DS.Space.s2) {
-                                    ForEach(DataConnectionKind.allCases.filter { $0.family == family }, id: \.self) { kind in
-                                        // Só o que já conecta de verdade é clicável; o resto diz "Soon" (nada de card que não faz nada).
-                                        if kind.connectable {
-                                            ActionButton(.dataConnectStart, id: .dataConnectKind(kind.rawValue), argument: .select(kind.rawValue)) { KindCard(kind: kind) }
-                                                .buttonStyle(.plain)
-                                        } else {
-                                            KindCard(kind: kind)
-                                        }
+                                    // Ainda de exemplo: o card diz "Soon" (nada de card que parece clicável e não faz nada).
+                                    ForEach(DataConnectionKind.allCases.filter { $0.family == family && !$0.connectable }, id: \.self) { kind in
+                                        KindCard(kind: kind)
                                     }
                                 }
                             }
@@ -774,12 +783,14 @@ struct ConnectFormView: View {
                 DSTextField("prefect.yourcompany.com", text: $url, id: .dataConnectUrl, compact: true, mono: true)
             }
             field("Authentication") {
-                Picker(selection: $auth) {
-                    Text("Basic auth (self-hosted)", bundle: .module).tag(SavedConnection.AuthKind.basic)
-                    Text("API key (Prefect Cloud)", bundle: .module).tag(SavedConnection.AuthKind.apiKey)
-                    Text("None", bundle: .module).tag(SavedConnection.AuthKind.none)
-                } label: { EmptyView() }
-                .pickerStyle(.segmented)
+                // Segmentos do próprio DS (o segmentado do sistema tinha um divisor solto e a seleção quase não aparecia).
+                HStack(spacing: .zero) {
+                    authChoice(.basic, String(localized: "Basic auth (self-hosted)", bundle: .module))
+                    authChoice(.apiKey, String(localized: "API key (Prefect Cloud)", bundle: .module))
+                    authChoice(.none, String(localized: "None", bundle: .module))
+                }
+                .padding(DSMetrics.segmentedPadding)
+                .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(DS.Color.fg6))
                 .a11y(.dataConnectAuth, kind: "segmented", value: auth.rawValue)
             }
             if auth == .basic {
@@ -804,6 +815,9 @@ struct ConnectFormView: View {
                 DSButton(.dataConnectStart, id: nil, "Back", variant: .ghost, size: .sm, symbol: "chevron.left", argument: .select("close"))
                 Spacer(minLength: 0)
                 if hub.connectBusy { ProgressView().controlSize(.small) }
+                if url.isEmpty {
+                    Text("Fill in the server URL", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                }
                 DSButton(.dataConnectSave, id: .dataConnectSave, "Test and connect", variant: .primary, size: .sm, argument: .set(payload))
                     .disabled(url.isEmpty || hub.connectBusy)
             }
@@ -816,5 +830,14 @@ struct ConnectFormView: View {
             Text(title, bundle: .module).dsFont(DS.Font.label).foregroundStyle(DS.Color.textSecondary)
             content()
         }
+    }
+
+    private func authChoice(_ kind: SavedConnection.AuthKind, _ title: String) -> some View {
+        // lint-ui: allow buttons escolha local do formulário (estado da folha, sem ação de registro; o salvar passa pela ação)
+        Button { auth = kind } label: { Text(verbatim: title) }
+            .buttonStyle(DSSegmentStyle(active: auth == kind, fillWidth: true))
+            .background {
+                if auth == kind { RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.accent) }
+            }
     }
 }
