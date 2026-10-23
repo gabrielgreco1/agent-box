@@ -10,10 +10,10 @@ import RackyStore
 @Observable
 public final class DataHubController {
     public let datasets: DatasetsController
-    public private(set) var connections: [DataConnection] = []
+    public internal(set) var connections: [DataConnection] = []
     public private(set) var tabs: [DataObject] = []
     public private(set) var active: DataObject?
-    public private(set) var expanded: Set<String> = []
+    public internal(set) var expanded: Set<String> = []
     /// Página da grade de cada tabela de conexão.
     public private(set) var tablePages: [DataObject: Int] = [:]
     public func tablePage(_ object: DataObject) -> Int { tablePages[object] ?? 0 }
@@ -23,7 +23,7 @@ public final class DataHubController {
     /// Texto de cada consulta aberta e o resultado da última execução.
     public var queryText: [DataObject: String] = [:]
     public private(set) var queryResult: [DataObject: (grid: DataGrid, milliseconds: Int)] = [:]
-    public private(set) var showingConnect = false
+    public internal(set) var showingConnect = false
     /// Explorer: largura arrastada pelo usuário e se está recolhido.
     public var explorerWidth: CGFloat = 268
     public private(set) var explorerHidden = false
@@ -36,6 +36,22 @@ public final class DataHubController {
 
     /// Conexões de exemplo (RACKY_DATA_DEMO=1): a página avisa que nada está conectado.
     public let isDemo: Bool
+
+    // MARK: Conexões de verdade (etapa 3)
+
+    /// As que o usuário adicionou (salvas no app; a senha no cofre).
+    public internal(set) var saved: [SavedConnection] = []
+    /// Formulário de conexão aberto (o tipo escolhido no "Add connection").
+    public internal(set) var connecting: DataConnectionKind?
+    public internal(set) var connectError: String?
+    public internal(set) var connectBusy = false
+    /// Flow runs de cada orquestrador aberto e o filtro escolhido.
+    public internal(set) var runs: [String: PrefectRunsState] = [:]
+    public internal(set) var runsFilter: [String: PrefectRunsFilter] = [:]
+    @ObservationIgnored var store: RackyStore?
+    @ObservationIgnored var vault: SecretVault?
+    /// Leitura do Prefect (trocável nos testes por um servidor falso).
+    @ObservationIgnored var prefectTransport: (@Sendable (URLRequest) async throws -> (Data, HTTPURLResponse))?
 
     public init(datasets: DatasetsController, demo: Bool) {
         self.datasets = datasets
@@ -204,6 +220,9 @@ public final class DataHubController {
                             String(localized: "Agents collect into a dataset on this Mac and Racky appends each new row to the \(tab.name) tab of \(book.name).", bundle: .module))
                     }
                 }
+            case .orchestrator:
+                // Orquestrador (Prefect): só se lê o que roda; agentes não gravam lá.
+                break
             case .outgoing:
                 add(.webhook(connection: connection.id), connection.name,
                     String(localized: "Agents collect into a dataset on this Mac and Racky posts each new row to \(connection.address).", bundle: .module))
@@ -261,6 +280,33 @@ public final class DataHubController {
             return showingConnect ? "open" : "closed"
         }
         try registry.register(.dataSendTo) { _ in "" }
+        try registry.register(.dataConnectStart) { [unowned self] arg in
+            guard let raw = arg.value, raw != "close" else { startConnecting(nil); return "closed" }
+            guard let kind = DataConnectionKind(rawValue: raw), kind.connectable else {
+                throw ActionError.failed(.dataConnectStart, message: String(localized: "This connection type is not available yet.", bundle: .module))
+            }
+            startConnecting(kind)
+            return kind.rawValue
+        }
+        try registry.register(.dataConnectSave) { [unowned self] arg in
+            guard arg.kind == .set, let raw = arg.value, let form = try? JSONDecoder().decode(ConnectForm.self, from: Data(raw.utf8)) else {
+                throw ActionError.failed(.dataConnectSave, message: "expected set({\"name\",\"url\",\"auth\",\"user\",\"secret\"})")
+            }
+            guard await saveConnection(form) else { throw ActionError.failed(.dataConnectSave, message: connectError ?? "") }
+            return "saved"
+        }
+        try registry.register(.dataConnectionRemove) { [unowned self] arg in
+            guard let id = arg.value else { throw ActionError.failed(.dataConnectionRemove, message: "expected select(<id>)") }
+            await removeConnection(id)
+            return id
+        }
+        try registry.register(.dataRunsFilter) { [unowned self] arg in
+            guard case .runs(let connection) = active, let raw = arg.value, let filter = PrefectRunsFilter(rawValue: raw) else {
+                throw ActionError.failed(.dataRunsFilter, message: "expected select(running|scheduled|failed) with flow runs open")
+            }
+            await setRunsFilter(filter, for: connection)
+            return raw
+        }
         try registry.register(.dataTablePage) { [unowned self] arg in
             guard let active, case .table = active else { throw ActionError.failed(.dataTablePage, message: "no table open") }
             let pages = DataHubFixtures.pageCount(for: active)
@@ -316,6 +362,7 @@ extension DataObject {
         case .folder(let c, let path): "folder:\(c):\(path.joined(separator: "/"))"
         case .webhook(let c): "webhook:\(c)"
         case .tab(let c, let s, let n): "sheet:\(c):\(s):\(n)"
+        case .runs(let c): "runs:\(c)"
         }
     }
 
@@ -329,6 +376,7 @@ extension DataObject {
         case ("folder", 3): self = .folder(connection: parts[1], path: parts[2].split(separator: "/").map(String.init))
         case ("webhook", 2): self = .webhook(connection: parts[1])
         case ("sheet", 4): self = .tab(connection: parts[1], spreadsheet: parts[2], name: parts[3])
+        case ("runs", 2): self = .runs(connection: parts[1])
         default: return nil
         }
     }

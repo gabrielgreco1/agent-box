@@ -9,6 +9,7 @@ public enum DSDataBrand: String, CaseIterable, Sendable {
     case s3, gcs, r2
     case googleSheets, airtable
     case webhook
+    case prefect
 
     var file: String? {
         switch self {
@@ -27,6 +28,7 @@ public enum DSDataBrand: String, CaseIterable, Sendable {
         case .googleSheets: "data-googlesheets"
         case .airtable: "data-airtable"
         case .webhook: nil
+        case .prefect: "data-prefect"
         }
     }
 
@@ -48,6 +50,7 @@ public enum DSDataBrand: String, CaseIterable, Sendable {
         case .googleSheets: 0x34A853
         case .airtable: 0x18BFFF
         case .webhook: 0xD5568C
+        case .prefect: 0x7DA2F5
         }
         return DSRGBA(hex: hex).color
     }

@@ -24,6 +24,7 @@ struct DataObjectView: View {
         case .folder(let connection, let path): FolderObjectView(hub: hub, connection: connection, path: path)
         case .webhook: WebhookObjectView(hub: hub, object: object)
         case .tab: DataGridView(grid: DataHubFixtures.grid(for: object), footer: String(localized: "Columns A–C · first 10 rows", bundle: .module))
+        case .runs(let connection): PrefectRunsView(hub: hub, connectionID: connection)
         }
     }
 }
@@ -68,7 +69,7 @@ struct DataObjectActions: View {
                 }
             case .webhook:
                 button(.dataWebhookTest, id: .dataWebhookTest, String(localized: "Test: post 2 sample rows to this URL…", bundle: .module), "paperplane", .press)
-            case .folder, .tab:
+            case .folder, .tab, .runs:
                 EmptyView()
             }
         }
@@ -561,6 +562,9 @@ struct DataConnectSheet: View {
                     ActionButton(.dataAddConnection, argument: .select("close"), tooltip: String(localized: "Close", bundle: .module)) { Image(systemName: "xmark") }
                         .buttonStyle(DSIconButtonStyle(.header))
                 }
+                if let kind = hub.connecting {
+                    ConnectFormView(hub: hub, kind: kind)
+                } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: DS.Space.s6) {
                         ForEach(DataConnectionKind.Family.allCases, id: \.self) { family in
@@ -571,11 +575,20 @@ struct DataConnectSheet: View {
                                         .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
                                 }
                                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: DS.Space.s2), count: 3), spacing: DS.Space.s2) {
-                                    ForEach(DataConnectionKind.allCases.filter { $0.family == family }, id: \.self) { kind in KindCard(kind: kind) }
+                                    ForEach(DataConnectionKind.allCases.filter { $0.family == family }, id: \.self) { kind in
+                                        // Só o que já conecta de verdade é clicável; o resto diz "Soon" (nada de card que não faz nada).
+                                        if kind.connectable {
+                                            ActionButton(.dataConnectStart, id: .dataConnectKind(kind.rawValue), argument: .select(kind.rawValue)) { KindCard(kind: kind) }
+                                                .buttonStyle(.plain)
+                                        } else {
+                                            KindCard(kind: kind)
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
+                }
                 }
             }
             .padding(DS.Space.s6)
@@ -602,7 +615,14 @@ struct DataConnectSheet: View {
             HStack(spacing: DS.Space.s2_5) {
                 DSDataLogo(kind.brand, size: DataMetrics.connectLogo, tile: true)
                 VStack(alignment: .leading, spacing: .zero) {
-                    Text(verbatim: kind.title).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
+                    HStack(spacing: DS.Space.s1_5) {
+                        Text(verbatim: kind.title).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
+                        if !kind.connectable {
+                            Text("Soon", bundle: .module).dsFont(DS.Font.keycap).foregroundStyle(DS.Color.textTertiary)
+                                .padding(.horizontal, DS.Space.s1).padding(.vertical, DataMetrics.badgePadding)
+                                .background(RoundedRectangle(cornerRadius: DS.Radius.xs).fill(DS.Color.secondary))
+                        }
+                    }
                     Text(verbatim: kind.tagline).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(2, reservesSpace: true)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -614,8 +634,8 @@ struct DataConnectSheet: View {
             .overlay(RoundedRectangle(cornerRadius: DS.Radius.md).strokeBorder(hovering ? DS.Color.borderStrong : DS.Color.border))
             .onHover { hovering = $0 }
             .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: hovering)
-            .help(kind.tagline)
-            .a11y(.dataConnectKind(kind.rawValue), kind: "button", label: kind.title)
+            .opacity(kind.connectable ? 1 : 0.55)
+            .help(kind.connectable ? kind.tagline : String(localized: "Coming soon: for now this one is a sample.", bundle: .module))
         }
     }
 
@@ -626,6 +646,175 @@ struct DataConnectSheet: View {
         case .storage: String(localized: "Storage", bundle: .module)
         case .spreadsheet: String(localized: "Spreadsheets", bundle: .module)
         case .outgoing: String(localized: "Outgoing", bundle: .module)
+        case .orchestrator: String(localized: "Orchestrators", bundle: .module)
+        }
+    }
+}
+
+// MARK: Prefect
+
+/// O que está rodando no Prefect: filtro (rodando, agendados, falhas das últimas 24 h) e a tabela, relida a cada 5 s enquanto está na
+/// tela. Só lê: nada aqui muda o Prefect.
+struct PrefectRunsView: View {
+    let hub: DataHubController
+    let connectionID: String
+
+    static let refreshEvery: Duration = .seconds(5)
+
+    var body: some View {
+        let state = hub.runs[connectionID] ?? PrefectRunsState()
+        let filter = hub.filter(of: connectionID)
+        VStack(spacing: 0) {
+            HStack(spacing: DS.Space.s3) {
+                DSSegmented(
+                    PrefectRunsFilter.allCases.map { .init($0.rawValue, LocalizedStringKey(Self.title($0))) },
+                    selection: filter.rawValue, action: .dataRunsFilter, id: .dataRunsFilter)
+                Spacer(minLength: DS.Space.s2)
+                if let at = state.loadedAt {
+                    Text(verbatim: String(localized: "Updated \(at.formatted(date: .omitted, time: .standard))", bundle: .module))
+                        .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                }
+                if let saved = hub.saved.first(where: { $0.id == connectionID }) {
+                    DSButton(.dataConnectionRemove, id: .dataConnectionRemove, "Remove connection", variant: .ghost, size: .xs, symbol: "trash",
+                             argument: .select(saved.id))
+                }
+            }
+            .padding(.horizontal, DS.Space.s4)
+            .frame(height: DataMetrics.locationHeight)
+            .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
+            if let error = state.error {
+                HStack(spacing: DS.Space.s2) {
+                    Image(systemName: "exclamationmark.triangle.fill").font(.system(size: DS.Space.s3))
+                    Text(verbatim: error).dsFont(DS.Font.small)
+                    Spacer(minLength: 0)
+                }
+                .foregroundStyle(DS.Color.warning)
+                .padding(.horizontal, DS.Space.s4)
+                .padding(.vertical, DS.Space.s2)
+                .a11y(.dataRunsError, kind: "text", label: error)
+            }
+            if state.rows.isEmpty, state.error == nil {
+                Text(verbatim: state.loadedAt == nil ? String(localized: "Reading the server…", bundle: .module) : Self.empty(filter))
+                    .dsFont(DS.Font.body).foregroundStyle(DS.Color.textTertiary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                DataGridView(grid: Self.grid(state), footer: String(localized: "\(state.rows.count) flow runs · read only", bundle: .module))
+            }
+        }
+        .a11y(.dataRuns, kind: "table", value: "\(state.rows.count)")
+        .task(id: "\(connectionID)-\(filter.rawValue)") {
+            while !Task.isCancelled {
+                await hub.refreshRuns(connectionID)
+                try? await Task.sleep(for: Self.refreshEvery)
+            }
+        }
+    }
+
+    static func title(_ filter: PrefectRunsFilter) -> String {
+        switch filter {
+        case .running: String(localized: "Running", bundle: .module)
+        case .scheduled: String(localized: "Scheduled", bundle: .module)
+        case .failed: String(localized: "Failed (24 h)", bundle: .module)
+        }
+    }
+
+    static func empty(_ filter: PrefectRunsFilter) -> String {
+        switch filter {
+        case .running: String(localized: "Nothing is running right now.", bundle: .module)
+        case .scheduled: String(localized: "Nothing is scheduled.", bundle: .module)
+        case .failed: String(localized: "No failures in the last 24 hours.", bundle: .module)
+        }
+    }
+
+    /// Estado, run, deployment, início, duração, pool e tags; o mais recente em cima.
+    static func grid(_ state: PrefectRunsState) -> DataGrid {
+        let columns: [DataGrid.Column] = [
+            .init(name: "state", type: "text"), .init(name: "flow run", type: "text"), .init(name: "deployment", type: "text"),
+            .init(name: "started", type: "timestamptz"), .init(name: "duration", type: "text"), .init(name: "work pool", type: "text"),
+            .init(name: "tags", type: "text"),
+        ]
+        let rows = state.rows.map { run -> [String] in
+            let started = (run.start ?? run.expectedStart).map { $0.formatted(date: .abbreviated, time: .shortened) } ?? ""
+            let seconds = run.end.flatMap { end in run.start.map { end.timeIntervalSince($0) } } ?? run.start.map { Date().timeIntervalSince($0) } ?? run.totalRunTime
+            let duration = run.start == nil ? "" : Duration.seconds(seconds).formatted(.units(allowed: [.hours, .minutes, .seconds], width: .narrow, maximumUnitCount: 2))
+            return [run.stateName, run.name, run.deploymentID.flatMap { state.deployments[$0] } ?? "", started, duration, run.workPool ?? "", run.tags.joined(separator: ", ")]
+        }
+        return DataGrid(columns: columns, rows: rows, total: rows.count)
+    }
+}
+
+/// Formulário de uma conexão de verdade (hoje: Prefect). Testa antes de salvar; a senha vai para o cofre do app.
+struct ConnectFormView: View {
+    let hub: DataHubController
+    let kind: DataConnectionKind
+    @State private var name = ""
+    @State private var url = ""
+    @State private var auth = SavedConnection.AuthKind.basic
+    @State private var user = ""
+    @State private var secret = ""
+
+    private var payload: String {
+        let form: [String: String] = ["name": name, "url": url, "auth": auth.rawValue, "user": user, "secret": secret]
+        return (try? String(data: JSONSerialization.data(withJSONObject: form), encoding: .utf8)) ?? "{}"
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DS.Space.s4) {
+            HStack(spacing: DS.Space.s2_5) {
+                DSDataLogo(kind.brand, size: DataMetrics.connectLogo, tile: true)
+                VStack(alignment: .leading, spacing: .zero) {
+                    Text(verbatim: kind.title).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary)
+                    Text(verbatim: kind.tagline).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                }
+            }
+            field("Name") {
+                DSTextField("Prefect", text: $name, id: .dataConnectName, compact: true)
+            }
+            field("Server URL") {
+                DSTextField("prefect.yourcompany.com", text: $url, id: .dataConnectUrl, compact: true, mono: true)
+            }
+            field("Authentication") {
+                Picker(selection: $auth) {
+                    Text("Basic auth (self-hosted)", bundle: .module).tag(SavedConnection.AuthKind.basic)
+                    Text("API key (Prefect Cloud)", bundle: .module).tag(SavedConnection.AuthKind.apiKey)
+                    Text("None", bundle: .module).tag(SavedConnection.AuthKind.none)
+                } label: { EmptyView() }
+                .pickerStyle(.segmented)
+                .a11y(.dataConnectAuth, kind: "segmented", value: auth.rawValue)
+            }
+            if auth == .basic {
+                HStack(spacing: DS.Space.s2) {
+                    field("User") { DSTextField("admin", text: $user, id: .dataConnectUser, compact: true) }
+                    field("Password") { DSTextField("", text: $secret, id: .dataConnectSecret, compact: true, secure: true) }
+                }
+            } else if auth == .apiKey {
+                field("API key") { DSTextField("pnu_…", text: $secret, id: .dataConnectSecret, compact: true, secure: true) }
+            }
+            Text("Racky only reads from Prefect (what runs, when, and how it ended). The password stays in this Mac's secure vault.", bundle: .module)
+                .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).fixedSize(horizontal: false, vertical: true)
+            if let error = hub.connectError {
+                HStack(spacing: DS.Space.s1_5) {
+                    Image(systemName: "exclamationmark.circle").font(.system(size: DS.Space.s3))
+                    Text(verbatim: error).dsFont(DS.Font.small).fixedSize(horizontal: false, vertical: true)
+                }
+                .foregroundStyle(DS.Color.destructive)
+                .a11y(.dataConnectError, kind: "text", label: error)
+            }
+            HStack(spacing: DS.Space.s2) {
+                DSButton(.dataConnectStart, id: nil, "Back", variant: .ghost, size: .sm, symbol: "chevron.left", argument: .select("close"))
+                Spacer(minLength: 0)
+                if hub.connectBusy { ProgressView().controlSize(.small) }
+                DSButton(.dataConnectSave, id: .dataConnectSave, "Test and connect", variant: .primary, size: .sm, argument: .set(payload))
+                    .disabled(url.isEmpty || hub.connectBusy)
+            }
+        }
+        .a11y(.dataConnectForm, kind: "form", label: kind.title)
+    }
+
+    private func field(_ title: LocalizedStringKey, @ViewBuilder content: () -> some View) -> some View {
+        VStack(alignment: .leading, spacing: DS.Space.s1) {
+            Text(title, bundle: .module).dsFont(DS.Font.label).foregroundStyle(DS.Color.textSecondary)
+            content()
         }
     }
 }

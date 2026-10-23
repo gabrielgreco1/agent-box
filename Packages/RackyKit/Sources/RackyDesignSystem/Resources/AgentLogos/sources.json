@@ -175,6 +175,12 @@
       "source": "https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/microsoftsqlserver/microsoftsqlserver-plain.svg",
       "member": "Devicon (MIT); mark belongs to Microsoft",
       "sha256": "b49115d6dc952690790cea30383a41a7cc8923cd8b7dd070b2e3fb71e1a04d8d"
+    },
+    {
+      "file": "data-prefect.svg",
+      "source": "https://cdn.jsdelivr.net/npm/simple-icons@13.21.0/icons/prefect.svg",
+      "member": "Simple Icons prefect (CC0 icon data; mark belongs to its owner, identifies a connection type)",
+      "sha256": "3bf1928838632541fd4058fce5feaf1993adedfc2b459c0061adcb5c75dc427b"
     }
   ]
 }

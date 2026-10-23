@@ -243,6 +243,10 @@ extension ActionID {
     public static let dataToggleExplorer = ActionID(unchecked: "data.toggleExplorer")
     public static let dataRenameDataset = ActionID(unchecked: "data.renameDataset")
     public static let dataTablePage = ActionID(unchecked: "data.tablePage")
+    public static let dataConnectStart = ActionID(unchecked: "data.connectStart")
+    public static let dataConnectSave = ActionID(unchecked: "data.connectSave")
+    public static let dataConnectionRemove = ActionID(unchecked: "data.connectionRemove")
+    public static let dataRunsFilter = ActionID(unchecked: "data.runsFilter")
     public static let datasetPage = ActionID(unchecked: "dataset.page")
     public static let datasetColumns = ActionID(unchecked: "dataset.columns")
     public static let datasetCopyRow = ActionID(unchecked: "dataset.copyRow")
@@ -747,6 +751,10 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "data.toggleExplorer"), label: "Data: mostrar/recolher o explorer", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "data.renameDataset"), label: "Data: renomear dataset", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "data.tablePage"), label: "Data: página da tabela", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "data.connectStart"), label: "Data: conectar (começar)", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "data.connectSave"), label: "Data: conectar (salvar)", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "data.connectionRemove"), label: "Data: remover conexão", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "data.runsFilter"), label: "Data: filtro dos flow runs", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dataset.page"), label: "Dataset: página", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dataset.columns"), label: "Dataset: colunas", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dataset.copyRow"), label: "Copy Row JSON", shortcut: "", slice: .slice3),

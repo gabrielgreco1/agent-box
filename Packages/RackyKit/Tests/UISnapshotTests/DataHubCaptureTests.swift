@@ -148,5 +148,23 @@ import Testing
         _ = try? await env.registry.perform(.composerSetDataDestination, .select("table:\(DataHubFixtures.supabase):public:listings"))
         await VisualBatchTests.settle(700)
         write(c.window!.contentView!, "data-composer")
+
+        // Conexão de verdade: o formulário do Prefect e a tela de flow runs (servidor falso).
+        _ = try? await env.registry.perform(.composerCancel, .press)
+        await VisualBatchTests.settle(300)
+        _ = try? await env.registry.perform(.dataAddConnection, .press)
+        _ = try? await env.registry.perform(.dataConnectStart, .select("prefect"))
+        await VisualBatchTests.settle(500)
+        write(c.window!.contentView!, "data-connect-prefect")
+        env.dataHub.prefectTransport = { request in
+            let path = request.url?.path ?? ""
+            let json = path.hasSuffix("/deployments/filter")
+                ? #"[{"id":"d1","name":"austin-permits-daily"},{"id":"d2","name":"nyc-permits-backfill"}]"#
+                : #"[{"id":"r1","name":"brave-otter","state_type":"RUNNING","state_name":"Running","deployment_id":"d1","work_pool_name":"rti-ecs-pool","tags":["permits","us"],"start_time":"2026-10-22T20:00:00+00:00"},{"id":"r2","name":"calm-heron","state_type":"PENDING","state_name":"Pending","deployment_id":"d2","work_pool_name":"rti-ecs-pool","tags":["permits"],"expected_start_time":"2026-10-22T20:05:00+00:00"}]"#
+            return (Data(json.utf8), HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!)
+        }
+        _ = try? await env.registry.perform(.dataConnectSave, .set(#"{"name":"RTI Prefect","url":"prefect.example.com","auth":"none"}"#))
+        await VisualBatchTests.settle(900)
+        write(c.window!.contentView!, "data-prefect-runs")
     }
 }

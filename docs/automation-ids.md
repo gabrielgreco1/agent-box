@@ -515,6 +515,19 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `data.webhook.test`
 - `data.connect.sheet`
 - `data.connect.kind.<kind>`
+- `data.connect.form`
+- `data.connect.name`
+- `data.connect.url`
+- `data.connect.auth`
+- `data.connect.user`
+- `data.connect.secret`
+- `data.connect.save`
+- `data.connect.error`
+- `data.runs`
+- `data.runs.filter`
+- `data.runs.row.<id>`
+- `data.runs.error`
+- `data.connection.remove`
 - `data.empty`
 - `data.production`
 - `data.production.pause`
@@ -930,6 +943,10 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `data.toggleExplorer` | Data: mostrar/recolher o explorer | — | slice1 |
 | `data.renameDataset` | Data: renomear dataset | — | slice1 |
 | `data.tablePage` | Data: página da tabela | — | slice1 |
+| `data.connectStart` | Data: conectar (começar) | — | slice1 |
+| `data.connectSave` | Data: conectar (salvar) | — | slice1 |
+| `data.connectionRemove` | Data: remover conexão | — | slice1 |
+| `data.runsFilter` | Data: filtro dos flow runs | — | slice1 |
 | `dataset.page` | Dataset: página | — | slice3 |
 | `dataset.columns` | Dataset: colunas | — | slice3 |
 | `dataset.copyRow` | Copy Row JSON | — | slice3 |

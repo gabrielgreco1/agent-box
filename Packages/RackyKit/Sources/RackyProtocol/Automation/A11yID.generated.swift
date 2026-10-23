@@ -490,6 +490,30 @@ extension A11yID {
     public static let dataWebhookTest = A11yID(unchecked: "data.webhook.test")
     /// `data.connect.sheet`
     public static let dataConnectSheet = A11yID(unchecked: "data.connect.sheet")
+    /// `data.connect.form`
+    public static let dataConnectForm = A11yID(unchecked: "data.connect.form")
+    /// `data.connect.name`
+    public static let dataConnectName = A11yID(unchecked: "data.connect.name")
+    /// `data.connect.url`
+    public static let dataConnectUrl = A11yID(unchecked: "data.connect.url")
+    /// `data.connect.auth`
+    public static let dataConnectAuth = A11yID(unchecked: "data.connect.auth")
+    /// `data.connect.user`
+    public static let dataConnectUser = A11yID(unchecked: "data.connect.user")
+    /// `data.connect.secret`
+    public static let dataConnectSecret = A11yID(unchecked: "data.connect.secret")
+    /// `data.connect.save`
+    public static let dataConnectSave = A11yID(unchecked: "data.connect.save")
+    /// `data.connect.error`
+    public static let dataConnectError = A11yID(unchecked: "data.connect.error")
+    /// `data.runs`
+    public static let dataRuns = A11yID(unchecked: "data.runs")
+    /// `data.runs.filter`
+    public static let dataRunsFilter = A11yID(unchecked: "data.runs.filter")
+    /// `data.runs.error`
+    public static let dataRunsError = A11yID(unchecked: "data.runs.error")
+    /// `data.connection.remove`
+    public static let dataConnectionRemove = A11yID(unchecked: "data.connection.remove")
     /// `data.empty`
     public static let dataEmpty = A11yID(unchecked: "data.empty")
     /// `data.production`
@@ -1783,6 +1807,11 @@ extension A11yID {
         A11yID(unchecked: "data.connect.kind.\(A11yID.segment(kind))")
     }
 
+    /// `data.runs.row.<id>`
+    public static func dataRunsRow(_ id: String) -> A11yID {
+        A11yID(unchecked: "data.runs.row.\(A11yID.segment(id))")
+    }
+
     /// `data.writer.<id>.pause`
     public static func dataWriterPause(_ id: String) -> A11yID {
         A11yID(unchecked: "data.writer.\(A11yID.segment(id)).pause")
@@ -2322,6 +2351,19 @@ extension A11yID {
         A11yIDSpec(pattern: "data.webhook.test", surface: "Páginas"),
         A11yIDSpec(pattern: "data.connect.sheet", surface: "Páginas"),
         A11yIDSpec(pattern: "data.connect.kind.<kind>", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.connect.form", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.connect.name", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.connect.url", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.connect.auth", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.connect.user", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.connect.secret", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.connect.save", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.connect.error", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.runs", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.runs.filter", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.runs.row.<id>", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.runs.error", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.connection.remove", surface: "Páginas"),
         A11yIDSpec(pattern: "data.empty", surface: "Páginas"),
         A11yIDSpec(pattern: "data.production", surface: "Páginas"),
         A11yIDSpec(pattern: "data.production.pause", surface: "Páginas"),

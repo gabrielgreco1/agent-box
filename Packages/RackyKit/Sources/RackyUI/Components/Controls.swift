@@ -281,15 +281,18 @@ public struct DSTextField: View {
     private let autofocus: Bool
     private let compact: Bool
     private let mono: Bool
+    /// Senha ou chave: digitação escondida e o valor nunca vai para a árvore de acessibilidade (nem para o `ctl ui tree`).
+    private let secure: Bool
     @FocusState private var focused: Bool
     @Environment(\.actionRegistry) private var registry
     @Environment(\.isEnabled) private var isEnabled
 
     public init(
         _ placeholder: LocalizedStringKey, text: Binding<String>, id: A11yID, action: ActionID? = nil, error: String? = nil,
-        multiline: Bool = false, autofocus: Bool = false, compact: Bool = false, mono: Bool = false
+        multiline: Bool = false, autofocus: Bool = false, compact: Bool = false, mono: Bool = false, secure: Bool = false
     ) {
         self.mono = mono
+        self.secure = secure
         self.placeholder = placeholder
         self._text = text
         self.id = id
@@ -319,7 +322,7 @@ public struct DSTextField: View {
                     await Task.yield()
                     focused = true
                 }
-                .a11y(id, kind: multiline ? "textarea" : "textfield", value: text, action: action)
+                .a11y(id, kind: multiline ? "textarea" : (secure ? "securefield" : "textfield"), value: secure ? nil : text, action: action)
             if let error {
                 HStack(spacing: DS.Space.s1) {
                     Image(systemName: "exclamationmark.circle").font(.system(size: DS.Space.s3))
@@ -339,7 +342,9 @@ public struct DSTextField: View {
                     .allowsHitTesting(false)
                     .accessibilityHidden(true)
             }
-            if multiline {
+            if secure {
+                SecureField(text: $text) { EmptyView() }
+            } else if multiline {
                 TextField(text: $text, axis: .vertical) { EmptyView() }.lineLimit(3...10)
             } else {
                 TextField(text: $text) { EmptyView() }

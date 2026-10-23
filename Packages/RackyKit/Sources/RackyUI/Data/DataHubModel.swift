@@ -13,8 +13,9 @@ public enum DataConnectionKind: String, CaseIterable, Sendable, Codable {
     case s3, gcs, r2
     case googleSheets, airtable
     case webhook
+    case prefect
 
-    public enum Family: String, CaseIterable, Sendable { case database, warehouse, storage, spreadsheet, outgoing }
+    public enum Family: String, CaseIterable, Sendable { case database, warehouse, storage, spreadsheet, outgoing, orchestrator }
 
     public var family: Family {
         switch self {
@@ -23,6 +24,7 @@ public enum DataConnectionKind: String, CaseIterable, Sendable, Codable {
         case .s3, .gcs, .r2: .storage
         case .googleSheets, .airtable: .spreadsheet
         case .webhook: .outgoing
+        case .prefect: .orchestrator
         }
     }
 
@@ -43,6 +45,7 @@ public enum DataConnectionKind: String, CaseIterable, Sendable, Codable {
         case .googleSheets: "Google Sheets"
         case .airtable: "Airtable"
         case .webhook: "Webhook"
+        case .prefect: "Prefect"
         }
     }
 
@@ -64,6 +67,7 @@ public enum DataConnectionKind: String, CaseIterable, Sendable, Codable {
         case .googleSheets: .googleSheets
         case .airtable: .airtable
         case .webhook: .webhook
+        case .prefect: .prefect
         }
     }
 
@@ -85,11 +89,14 @@ public enum DataConnectionKind: String, CaseIterable, Sendable, Codable {
         case .googleSheets: String(localized: "Rows in a spreadsheet tab", bundle: .module)
         case .airtable: String(localized: "Rows in an Airtable base", bundle: .module)
         case .webhook: String(localized: "Post new rows to a URL", bundle: .module)
+        case .prefect: String(localized: "See what your flows are running now", bundle: .module)
         }
     }
 
     /// Webhook só recebe; o resto dá para navegar e gravar.
     public var canBrowse: Bool { self != .webhook }
+    /// Dá para conectar de verdade hoje (os outros tipos ainda são de exemplo; o card diz "Soon").
+    public var connectable: Bool { self == .prefect }
     public var speaksSQL: Bool { family == .database || family == .warehouse }
 }
 
@@ -109,7 +116,7 @@ public struct DataConnection: Identifiable, Equatable, Sendable {
 
 /// Um nó do explorer dentro de uma conexão.
 public struct DataNode: Identifiable, Equatable, Sendable {
-    public enum Kind: String, Sendable { case schema, table, view, bucket, folder, file, spreadsheet, sheet }
+    public enum Kind: String, Sendable { case schema, table, view, bucket, folder, file, spreadsheet, sheet, runs }
     public var id: String
     public var kind: Kind
     public var name: String
@@ -126,11 +133,13 @@ public enum DataObject: Hashable, Sendable {
     case folder(connection: String, path: [String])
     case webhook(connection: String)
     case tab(connection: String, spreadsheet: String, name: String)
+    /// Flow runs de um orquestrador (Prefect): o que está rodando, agendado e o que falhou.
+    case runs(connection: String)
 
     public var connectionID: String? {
         switch self {
         case .dataset: nil
-        case .table(let c, _, _), .query(let c, _), .folder(let c, _), .webhook(let c), .tab(let c, _, _): c
+        case .table(let c, _, _), .query(let c, _), .folder(let c, _), .webhook(let c), .tab(let c, _, _), .runs(let c): c
         }
     }
 }
@@ -174,4 +183,23 @@ public struct DataDelivery: Identifiable, Equatable, Sendable {
     public var status: Int
     public var rows: Int
     public var milliseconds: Int
+}
+
+/// Uma conexão que o usuário adicionou (não de exemplo): o que fica salvo no app. A senha ou chave fica no cofre (`SecretVault`),
+/// aqui só o id dela.
+nonisolated public struct SavedConnection: Codable, Equatable, Sendable, Identifiable {
+    public enum AuthKind: String, Codable, Sendable { case none, basic, apiKey }
+    public var id: String
+    public var kind: DataConnectionKind
+    public var name: String
+    /// URL do servidor (Prefect: a base da API, `…/api`).
+    public var url: String
+    public var auth: AuthKind
+    public var secretID: UUID?
+    public var tags: [String] = []
+    public var protected = false
+
+    public var connection: DataConnection {
+        DataConnection(id: id, kind: kind, name: name, tags: tags, protected: protected, address: url, children: [])
+    }
 }

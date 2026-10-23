@@ -52,6 +52,7 @@ enum DataSymbols {
         case .storage: "archivebox"
         case .spreadsheet: "tablecells.badge.ellipsis"
         case .outgoing: "paperplane"
+        case .orchestrator: "flowchart"
         }
     }
 
@@ -65,6 +66,7 @@ enum DataSymbols {
         case .file: "doc"
         case .spreadsheet: "doc.richtext"
         case .sheet: "tablecells"
+        case .runs: "flowchart"
         }
     }
 
@@ -76,6 +78,7 @@ enum DataSymbols {
         case .folder: "folder"
         case .webhook: "paperplane"
         case .tab: "tablecells"
+        case .runs: "flowchart"
         }
     }
 }
@@ -119,6 +122,7 @@ struct DataPageView: View {
                         DataLocationBar(hub: hub, object: active)
                         switch active {
                         case .dataset: EmptyView()  // a página do dataset desenha o caminho e as abas
+                        case .runs: EmptyView()  // orquestrador: só leitura do que roda, não há caminho de dado
                         case .table:
                             // Tabela que o Racky não alimenta não tem caminho: a frase ao lado das abas já diz isso.
                             if hub.copySource(of: active) != nil, hub.tableTab(active) != .overview { DataLineageStrip(hub: hub, object: active, compact: true) }
@@ -380,6 +384,7 @@ struct DataExplorer: View {
         case .table, .view: .table(connection: connection.id, schema: path.last ?? "", name: node.name)
         case .folder, .bucket: .folder(connection: connection.id, path: path + [node.name])
         case .sheet: .tab(connection: connection.id, spreadsheet: path.last ?? "", name: node.name)
+        case .runs: .runs(connection: connection.id)
         case .schema, .spreadsheet, .file: nil
         }
     }
@@ -747,6 +752,7 @@ enum DataLabels {
         case .folder(_, let path): path.joined(separator: "/")
         case .webhook(let c): hub.connection(c)?.name ?? String(localized: "Webhook", bundle: .module)
         case .tab(_, _, let name): name
+        case .runs: String(localized: "Flow runs", bundle: .module)
         }
     }
 
@@ -759,6 +765,7 @@ enum DataLabels {
         case .folder: String(localized: "Storage folder", bundle: .module)
         case .webhook: String(localized: "Webhook · receives only, nothing to browse", bundle: .module)
         case .tab: String(localized: "Spreadsheet tab", bundle: .module)
+        case .runs: String(localized: "Orchestrator · read only", bundle: .module)
         }
     }
 }
@@ -898,6 +905,7 @@ struct DataLocationBar: View {
         case .folder(_, let path): return path
         case .webhook: return [connection?.address ?? ""]
         case .tab(_, let spreadsheet, let name): return [spreadsheet, name]
+        case .runs: return [String(localized: "Flow runs", bundle: .module)]
         }
     }
 
@@ -911,7 +919,7 @@ struct DataLocationBar: View {
         case .folder(_, let path):
             let count = DataHubFixtures.files(in: path).count
             return String(localized: "\(count) items", bundle: .module)
-        case .query, .webhook:
+        case .query, .webhook, .runs:
             return nil
         }
     }

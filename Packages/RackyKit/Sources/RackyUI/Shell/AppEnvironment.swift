@@ -964,6 +964,7 @@ public final class AppEnvironment {
             await rightPanel.attach(store: opened)
             await library.attach(store: opened)
             await datasets.attach(store: opened)
+            await dataHub?.attach(store: opened)
             await startCatalog(store: opened)
             await statusBar.attach(store: opened)
             await insights.service?.attach(
