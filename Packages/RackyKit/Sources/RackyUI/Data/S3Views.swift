@@ -258,5 +258,9 @@ struct S3ConnectFormView: View {
             .background {
                 if mode == value { RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.accent) }
             }
+            // Borda na opção ativa: só o fundo um pouco mais claro não deixava claro qual estava escolhida.
+            .overlay {
+                if mode == value { RoundedRectangle(cornerRadius: DS.Radius.sm).strokeBorder(DS.Color.borderStrong) }
+            }
     }
 }

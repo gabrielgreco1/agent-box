@@ -137,8 +137,11 @@ struct DataGridView: View {
                         HStack(spacing: 0) {
                             ForEach(Array(grid.columns.enumerated()), id: \.offset) { index, column in
                                 let text = index < row.count ? row[index] : ""
+                                // NULL do banco aparece apagado e em itálico, para não parecer o texto "NULL".
+                                let isNull = text == "NULL"
                                 Text(verbatim: text).dsFont(numeric(column) || column.type.contains("time") ? DS.Font.monoCell : DS.Font.cell)
-                                    .foregroundStyle(column.key ? DS.Color.textSecondary : DS.Color.textPrimary)
+                                    .italic(isNull)
+                                    .foregroundStyle(isNull ? DS.Color.textTertiary : column.key ? DS.Color.textSecondary : DS.Color.textPrimary)
                                     .lineLimit(1).truncationMode(.tail)
                                     .padding(.horizontal, DatasetMetrics.cellPadding)
                                     .frame(width: width(column, scale, bonus), height: DatasetMetrics.rowHeight, alignment: numeric(column) ? .trailing : .leading)
@@ -1002,6 +1005,10 @@ struct ConnectFormView: View {
             .buttonStyle(DSSegmentStyle(active: auth == kind, fillWidth: true))
             .background {
                 if auth == kind { RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.accent) }
+            }
+            // Borda na opção ativa: só o fundo um pouco mais claro não deixava claro qual estava escolhida.
+            .overlay {
+                if auth == kind { RoundedRectangle(cornerRadius: DS.Radius.sm).strokeBorder(DS.Color.borderStrong) }
             }
     }
 }
