@@ -271,6 +271,9 @@ final class WorkspaceViewController: NSViewController {
                     return ChromeHostingView(
                         content: GoneComputerPane(
                             name: name, close: { workspace.closePane(id: pane.id) },
+                            showAgent: workspace.terminalsInCurrentSession.first(where: { $0.provider.isAgent }).map { agent in
+                                { workspace.show(terminalID: agent.id) }
+                            },
                             showRuns: {
                                 let runs = StorePaths.default(environment: ProcessInfo.processInfo.environment).root
                                     .appendingPathComponent("computers/runs", isDirectory: true)

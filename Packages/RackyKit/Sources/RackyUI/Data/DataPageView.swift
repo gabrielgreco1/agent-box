@@ -8,6 +8,8 @@ import SwiftUI
 // barra de localização (onde estou, o que é) e a linha de fluxo (quem grava aqui, para onde isto vai).
 
 enum DataMetrics {
+    /// Traço do colchete que liga a seta do fluxo a cada destino.
+    static let branchLine: CGFloat = 1
     static let explorerMin: CGFloat = 200
     static let contentMin: CGFloat = 640
     static let explorerTitleMin: CGFloat = 100
@@ -1092,8 +1094,10 @@ struct DataLineageStrip: View {
                     }
                     ForEach(Array(columns.enumerated()), id: \.offset) { index, column in
                         if index > 0 { edge(column.edge) }
-                        VStack(alignment: .leading, spacing: DS.Space.s1) {
-                            ForEach(column.nodes) { node in chip(node) }
+                        VStack(alignment: .leading, spacing: .zero) {
+                            ForEach(Array(column.nodes.enumerated()), id: \.element.id) { row, node in
+                                branch(row, of: column.nodes.count) { chip(node) }
+                            }
                         }
                     }
                 }
@@ -1276,10 +1280,29 @@ struct DataLineageStrip: View {
 
     private func edge(_ label: String) -> some View {
         VStack(spacing: .zero) {
-            Text(verbatim: label).dsFont(DS.Font.micro).foregroundStyle(DS.Color.textTertiary)
-            Image(systemName: "arrow.right").font(.system(size: DS.Space.s3, weight: .semibold)).foregroundStyle(DS.Color.textTertiary)
+            Text(verbatim: label).dsFont(DS.Font.micro).foregroundStyle(DS.Color.textSecondary)
+            Image(systemName: "arrow.right").font(.system(size: DS.Space.s3, weight: .semibold)).foregroundStyle(DS.Color.textSecondary)
         }
         .fixedSize()
+    }
+
+    /// Coluna com vários nós: um colchete fino liga a seta (no meio da coluna) a cada card, senão ela aponta para o vão entre eles.
+    @ViewBuilder private func branch(_ row: Int, of count: Int, @ViewBuilder _ content: () -> some View) -> some View {
+        if count < 2 {
+            content()
+        } else {
+            HStack(spacing: .zero) {
+                Rectangle().fill(DS.Color.textQuaternary).frame(width: DS.Space.s2, height: DataMetrics.branchLine)
+                content()
+            }
+            .padding(.vertical, DS.Space.s0_5)
+            .overlay(alignment: .leading) {
+                VStack(spacing: .zero) {
+                    Rectangle().fill(row == 0 ? Color.clear : DS.Color.textQuaternary).frame(width: DataMetrics.branchLine)
+                    Rectangle().fill(row == count - 1 ? Color.clear : DS.Color.textQuaternary).frame(width: DataMetrics.branchLine)
+                }
+            }
+        }
     }
 
     private func chip(_ node: Node) -> some View {

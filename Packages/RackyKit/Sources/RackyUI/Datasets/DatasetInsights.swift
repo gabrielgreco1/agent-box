@@ -16,6 +16,7 @@ enum InsightMetrics {
     static let chartHeight: CGFloat = 112
     /// A aba Overview só tem o gráfico abaixo dos números: ele ganha a altura que sobraria vazia.
     static let overviewChartHeight: CGFloat = 280
+    static let tallChartMinRows = 10
     static let chartBarGap: CGFloat = 2
     static let chartTooltipWidth: CGFloat = 188
     static let barRadius: CGFloat = 1.5
@@ -127,7 +128,7 @@ struct ActivityChart: View {
         while unit > peak { unit /= 10 }
         let top = [1, 2, 2.5, 3, 4, 5, 6, 8, 10].map { unit * $0 }.first { $0 >= peak } ?? peak
         // Contagem é inteira: o meio do eixo também ("1 / 0.5 / 0" não faz sentido para linhas).
-        return mode == .total && top < 10 ? (top / 2).rounded(.up) * 2 : top
+        return top < 10 ? (top / 2).rounded(.up) * 2 : top
     }
 
     var body: some View {
@@ -266,6 +267,13 @@ struct ActivityChart: View {
                     if hasInvalid { AreaSeries(values: invalid, top: top, color: DS.Color.warning) }
                 }
                 .mask(alignment: .leading) { Rectangle().frame(width: size.width * reveal) }
+                // Ponto no valor mais recente: com poucas linhas a curva é só um degrau na borda e passava despercebida.
+                if hover == nil, reveal == 1, let last = main.last, last > 0 {
+                    dot(DS.Color.dataValid)
+                        .offset(x: x(main.count - 1, width: size.width) - InsightMetrics.dot / 2,
+                                y: size.height - 1 - (size.height - 2) * CGFloat(last / top) - InsightMetrics.dot / 2)
+                        .allowsHitTesting(false)
+                }
                 if let range = shadedRange { shade(range, width: size.width) }
                 if let hover, hover < buckets.count, brush == nil {
                     cursor(hover, main: main, invalid: invalid, top: top, size: size)

@@ -51,7 +51,8 @@ nonisolated public struct DatasetPageSnapshot: Sendable, Equatable {
     /// Fim do gráfico e largura de cada barra (s): "All time" acaba na última linha quando a coleta parou, não em "agora".
     public var activityEnd: Date?
     public var bucketSeconds: TimeInterval = 60
-    public var perMinute: Int = 0
+    /// Fracionário: 1 linha em 5 min é "0.2/min", não "0" ao lado de "+1 in 5 min".
+    public var perMinute: Double = 0
     public var facets: [DatasetFacet: [DatasetFacetCount]] = [:]
     public var stats = DatasetStats()
     /// Perfil de cada coluna (preenchimento, valores, faixa, histograma) com a consulta aplicada.
@@ -192,7 +193,7 @@ nonisolated enum DatasetLoader {
         let activity = (try? await store.datasetActivity(datasetID: id, until: end, bucket: bucket, buckets: activityBuckets, query: chartQuery)) ?? []
         // Ritmo: linhas novas nos últimos 5 minutos, por minuto.
         let recent = (try? await store.datasetActivity(datasetID: id, until: now, bucket: 300, buckets: 1))?.first
-        let perMinute = Int((Double((recent?.valid ?? 0) + (recent?.invalid ?? 0)) / 5).rounded())
+        let perMinute = Double((recent?.valid ?? 0) + (recent?.invalid ?? 0)) / 5
         let facets = if let reuse { reuse.facets } else { (try? await store.datasetFacets(datasetID: id, query: query)) ?? [:] }
         let profiles = if let reuse { reuse.profiles } else { (try? await store.datasetColumnProfiles(datasetID: id, columns: columns, query: query)) ?? [:] }
         return DatasetPageSnapshot(

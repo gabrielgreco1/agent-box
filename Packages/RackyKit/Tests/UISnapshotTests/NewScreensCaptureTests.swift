@@ -22,7 +22,7 @@ import Testing
 
     @Test func captureNewScreens() async throws {
         guard ProcessInfo.processInfo.environment["RACKY_CAPTURE_DIR"] != nil else { return }
-        let gone = NSHostingView(rootView: GoneComputerPane(name: "email-tabacaria-green", close: {}, showRuns: {}).frame(width: 900, height: 560))
+        let gone = NSHostingView(rootView: GoneComputerPane(name: "email-tabacaria-green", close: {}, showAgent: {}, showRuns: {}).frame(width: 900, height: 560))
         gone.frame = NSRect(x: 0, y: 0, width: 900, height: 560)
         let w1 = NSWindow(contentRect: gone.frame, styleMask: [.borderless], backing: .buffered, defer: false)
         w1.appearance = NSAppearance(named: .darkAqua)

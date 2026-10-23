@@ -102,7 +102,7 @@ struct DatasetOverviewTiles: View {
         OverviewTile(
             icon: "speedometer", title: String(localized: "Throughput", bundle: .module),
             help: String(localized: "New rows per minute over the last 5 minutes.", bundle: .module),
-            value: snapshot.perMinute.formatted(), unit: String(localized: "rows/min", bundle: .module), badge: nil,
+            value: ActivityChart.short(snapshot.perMinute), unit: String(localized: "rows/min", bundle: .module), badge: nil,
             footer: peakFooter
         ) {
             MiniBars(values: snapshot.activity.suffix(24).map { $0.valid + $0.invalid })
@@ -117,7 +117,7 @@ struct DatasetOverviewTiles: View {
         let peak = window > 1
             ? counts.indices.map { counts[$0..<min($0 + window, counts.count)].reduce(0, +) }.max() ?? 0
             : Int((Double(counts.max() ?? 0) / (snapshot.bucketSeconds / 60)).rounded())
-        return String(localized: "Peak \(peak.formatted()) rows/min", bundle: .module)
+        return peak == 1 ? String(localized: "Peak 1 row/min", bundle: .module) : String(localized: "Peak \(peak.formatted()) rows/min", bundle: .module)
     }
 
     private var qualityTile: some View {

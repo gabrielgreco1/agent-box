@@ -84,6 +84,7 @@ import Testing
         try click(rig, .dataTableTab("overview"))
         await VisualBatchTests.settle(300)
         #expect(rig.env.dataHub.tableTab(object) == .overview)
+        await VisualBatchTests.settle(1200)  // o gráfico termina de se desenhar antes da foto
         shot(rig, "flow-6-dataset-overview")
         try click(rig, .dataTableTab("structure"))
         await VisualBatchTests.settle(300)

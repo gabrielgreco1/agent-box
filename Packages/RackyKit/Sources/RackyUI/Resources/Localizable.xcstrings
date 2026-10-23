@@ -11481,6 +11481,28 @@
           }
         }
       }
+    },
+    "Go to Agent": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Go to Agent"
+          }
+        }
+      }
+    },
+    "Peak 1 row/min": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Peak 1 row/min"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

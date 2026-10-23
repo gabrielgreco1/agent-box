@@ -575,6 +575,8 @@ struct ViewerStartingView: View {
 struct GoneComputerPane: View {
     let name: String
     let close: () -> Void
+    /// Volta ao terminal do agente da sessão (quem criou o computador), quando há um.
+    var showAgent: (() -> Void)? = nil
     /// Abre no Finder a pasta das execuções (screenshots e logs dos computadores).
     var showRuns: (() -> Void)? = nil
 
@@ -590,6 +592,11 @@ struct GoneComputerPane: View {
                     Button(action: showRuns) { Text("Show Screenshots and Logs", bundle: .module) }
                         .buttonStyle(DSButtonStyle(.primary, .sm))
                         .help(Text("Opens the run folder in Finder", bundle: .module))
+                }
+                if let showAgent {
+                    // lint-ui: allow buttons mostra o terminal do agente da sessão (layout do workspace, sem ação de registro própria)
+                    Button(action: showAgent) { Text("Go to Agent", bundle: .module) }
+                        .buttonStyle(DSButtonStyle(.outline, .sm))
                 }
                 // lint-ui: allow buttons fecha o pane deste computador (layout do workspace, sem ação de registro própria)
                 Button(action: close) { Text("Close Tab", bundle: .module) }

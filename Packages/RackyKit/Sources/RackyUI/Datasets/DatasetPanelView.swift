@@ -155,7 +155,7 @@ private struct DatasetPanelContent: View {
                 detail: s.recent > 0 ? String(localized: "+\(s.recent.formatted()) in 5 min", bundle: .module) : nil, detailTone: DS.Color.dataValid
             ) { CumulativeLine(values: snapshot.activity.map { $0.valid + $0.invalid }) }
             CompactTile(
-                title: String(localized: "Throughput", bundle: .module), value: snapshot.perMinute.formatted(),
+                title: String(localized: "Throughput", bundle: .module), value: ActivityChart.short(snapshot.perMinute),
                 unit: String(localized: "rows/min", bundle: .module), detail: nil
             ) { MiniBars(values: snapshot.activity.suffix(20).map { $0.valid + $0.invalid }) }
             CompactTile(

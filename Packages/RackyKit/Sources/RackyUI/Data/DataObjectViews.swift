@@ -372,7 +372,10 @@ struct DataOverviewView: View {
                         .padding(.top, DS.Space.s4)
                     }
                     DatasetOverviewTiles(snapshot: snapshot, controller: hub.datasets, wrap: true)
-                    ActivityChart(snapshot: snapshot, controller: hub.datasets, rangeMenu: AnyView(EmptyView()), height: InsightMetrics.overviewChartHeight)
+                    // Poucas linhas não desenham curva nenhuma: o gráfico fica baixo em vez de ocupar meia página quase vazio.
+                    ActivityChart(
+                        snapshot: snapshot, controller: hub.datasets, rangeMenu: AnyView(EmptyView()),
+                        height: snapshot.stats.rows < InsightMetrics.tallChartMinRows ? InsightMetrics.chartHeight : InsightMetrics.overviewChartHeight)
                 }
             }
         }
