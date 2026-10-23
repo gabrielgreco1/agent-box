@@ -1125,6 +1125,11 @@ struct DataLineageStrip: View {
             if let sentence = explanation {
                 Text(verbatim: sentence).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
             }
+            // A seta nos cards sozinha não bastava: testers não sabiam o que o clique abre.
+            if columns.flatMap(\.nodes).contains(where: { $0.action != nil && !$0.current }) {
+                Text("Click a card with › to open it: the agent opens its terminal, a table opens its rows.", bundle: .module)
+                    .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+            }
         }
         .padding(.horizontal, DS.Space.s4)
         .padding(.vertical, DS.Space.s2_5)
@@ -1328,7 +1333,7 @@ struct DataLineageStrip: View {
             }
             // Card que leva a algum lugar: a seta diz que é clicável (sem ela parecia só um diagrama).
             if node.action != nil, !node.current {
-                Image(systemName: "chevron.right").font(.system(size: DS.Space.s2_5, weight: .semibold)).foregroundStyle(DS.Color.textTertiary)
+                Image(systemName: "chevron.right").font(.system(size: DS.Space.s3, weight: .semibold)).foregroundStyle(DS.Color.textSecondary)
             }
         }
         .padding(.horizontal, DS.Space.s2_5)

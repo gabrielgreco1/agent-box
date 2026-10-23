@@ -11503,6 +11503,17 @@
           }
         }
       }
+    },
+    "Click a card with › to open it: the agent opens its terminal, a table opens its rows.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Click a card with › to open it: the agent opens its terminal, a table opens its rows."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

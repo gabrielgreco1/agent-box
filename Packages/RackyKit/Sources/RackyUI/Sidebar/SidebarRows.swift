@@ -347,6 +347,8 @@ struct SessionCardView: View {
                             text: data.title, query: query, style: DS.Font.body,
                             color: data.unread ? DS.Color.textPrimary : DS.Color.textPrimary.opacity(0.8))
                             .fontWeight(data.unread ? .semibold : .regular)
+                            // Nome cortado ("Detached…"): o hover mostra inteiro.
+                            .help(data.title)
                             .a11y(.sidebarSessionName(sid), kind: "text", label: data.title)
                             .simultaneousGesture(
                                 TapGesture(count: 2).onEnded {
@@ -553,6 +555,7 @@ struct AgentRowView: View {
             HStack(spacing: DS.Space.s1) {
                 HighlightedText(text: row.lead, query: query, style: DS.Font.small, color: DS.Color.textSecondary.opacity(0.9))
                     .a11y(.sidebarSessionAgentLastMessage(sid, tid), kind: "text", label: row.lead)
+                    .help([row.lead, row.trail].compactMap { $0 }.joined(separator: " · "))
                 if let trail = row.trail {
                     Text(verbatim: trail).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary.opacity(0.65)).lineLimit(1)
                 }
@@ -661,7 +664,7 @@ struct SessionDatasetRowView: View {
                 Image(systemName: "tablecells")
                     .font(.system(size: SidebarMetrics.line2Icon + DS.Space.s0_5))
                     .foregroundStyle(DS.Color.dataValid)
-                Text(verbatim: row.name).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary).lineLimit(1)
+                Text(verbatim: row.name).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary).lineLimit(1).help(row.name)
                 Spacer(minLength: DS.Space.s1)
                 Text(verbatim: row.rows.formatted()).dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textTertiary).fixedSize()
             }
