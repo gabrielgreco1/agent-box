@@ -522,7 +522,10 @@ struct DatasetPageView: View {
                             }
                         }
                     }
-                    .frame(minWidth: viewport.size.width, minHeight: viewport.size.height, alignment: .top)
+                    // Largura fixa (a soma das colunas, ou a da tela se for maior): dentro do scroll horizontal a largura proposta
+                    // era infinita e o LazyVStack media todas as linhas a cada mudança (o hover de uma linha refazia a grade
+                    // inteira; era o lag de mexer o mouse sobre uma tabela grande). Com largura conhecida só as visíveis entram.
+                    .frame(width: max(viewport.size.width, Self.gridWidth(columns)), height: viewport.size.height, alignment: .top)
                 }
                 .moreColumnsCue($moreColumns)
             }
@@ -530,6 +533,12 @@ struct DatasetPageView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .a11y(.datasetTable, kind: "table")
+    }
+
+    /// Largura natural da grade: seleção, faixa de estado, cada coluna e a hora de captura.
+    static func gridWidth(_ columns: [DatasetColumn]) -> CGFloat {
+        let cells = columns.enumerated().reduce(CGFloat.zero) { $0 + DatasetMetrics.width($1.element.type, first: $1.offset == 0) }
+        return DatasetMetrics.checkColumn + DatasetMetrics.stripeColumn + cells + DatasetMetrics.colCaptured
     }
 
     private func emptyMessage(_ snapshot: DatasetPageSnapshot) -> LocalizedStringKey {
