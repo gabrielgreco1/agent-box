@@ -11464,7 +11464,8 @@
     "Fill in the access key and secret": {},
     "Fill in the profile name": {},
     "Sign in to AWS with SSO? Run aws sso login --profile <name> in a terminal, then choose AWS CLI profile (SSO), type the profile name and click Test and connect.": {},
-    "Two risks together: this agent won't ask before running commands, and what it collects is copied to a protected table. Go back to pick another profile or another place to save data.": {}
+    "Two risks together: this agent won't ask before running commands, and what it collects is copied to a protected table. Go back to pick another profile or another place to save data.": {},
+    "Racky only reads from S3. No key is stored: the AWS CLI hands Racky short-lived credentials each time.": {}
   },
   "version": "1.0"
 }

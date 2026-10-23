@@ -219,7 +219,10 @@ struct S3ConnectFormView: View {
                 field("Default region") { DSTextField("us-east-1", text: $region, id: .dataConnectRegion, compact: true, mono: true) }
                 field("Bucket (optional)") { DSTextField("Only this bucket", text: $bucket, id: .dataConnectBucket, compact: true, mono: true) }
             }
-            Text("Racky only reads from S3. The secret key stays in this Mac's secure vault.", bundle: .module)
+            // No modo perfil não há chave guardada: o AWS CLI entrega credenciais temporárias a cada vez.
+            Text(mode == .keys
+                 ? "Racky only reads from S3. The secret key stays in this Mac's secure vault."
+                 : "Racky only reads from S3. No key is stored: the AWS CLI hands Racky short-lived credentials each time.", bundle: .module)
                 .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).fixedSize(horizontal: false, vertical: true)
             if let error = hub.connectError {
                 HStack(spacing: DS.Space.s1_5) {
