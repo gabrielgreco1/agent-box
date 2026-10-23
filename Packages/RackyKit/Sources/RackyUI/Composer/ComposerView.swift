@@ -307,6 +307,22 @@ struct ComposerView: View {
                 DSButton(.composerKeepEditing, "Keep Editing", variant: .outline, size: .compact)
                 DSButton(.composerDiscard, "Discard", variant: .destructive, size: .compact)
             }
+        } else if model.confirmingRisk {
+            VStack(alignment: .leading, spacing: DS.Space.s2) {
+                HStack(alignment: .top, spacing: DS.Space.s1) {
+                    Image(systemName: "exclamationmark.triangle.fill").font(.system(size: DS.Space.s2_5))
+                    Text("This agent won't ask before running commands, and what it collects is copied to a protected place.", bundle: .module)
+                        .dsFont(DS.Font.label).fixedSize(horizontal: false, vertical: true)
+                }
+                .foregroundStyle(DS.Color.warning)
+                .a11y(.overlayComposerRiskNote, kind: "text")
+                HStack(spacing: DS.Space.s2) {
+                    Spacer(minLength: DS.Space.s2)
+                    DSButton(.composerKeepEditing, "Back", variant: .outline, size: .compact)
+                    DSButton(.composerSubmit, id: .overlayComposerSubmit, "Create anyway", variant: .destructive, size: .compact, keycap: "⌘↵")
+                        .keyboardShortcut(.return, modifiers: .command)
+                }
+            }
         } else {
             HStack(spacing: DS.Space.s2) {
                 DSSwitch(isOn: model.draft.createMore, action: .composerCreateMore, id: .overlayComposerCreateMore, "Create More", compact: true)

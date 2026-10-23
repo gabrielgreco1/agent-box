@@ -246,6 +246,7 @@ extension ActionID {
     public static let dataConnectStart = ActionID(unchecked: "data.connectStart")
     public static let dataConnectSave = ActionID(unchecked: "data.connectSave")
     public static let dataConnectionRemove = ActionID(unchecked: "data.connectionRemove")
+    public static let dataS3Page = ActionID(unchecked: "data.s3Page")
     public static let dataRunsFilter = ActionID(unchecked: "data.runsFilter")
     public static let datasetPage = ActionID(unchecked: "dataset.page")
     public static let datasetColumns = ActionID(unchecked: "dataset.columns")
@@ -754,6 +755,7 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "data.connectStart"), label: "Data: conectar (começar)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "data.connectSave"), label: "Data: conectar (salvar)", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "data.connectionRemove"), label: "Data: remover conexão", shortcut: "", slice: .slice1),
+        ActionSpec(id: ActionID(unchecked: "data.s3Page"), label: "Data: página da pasta S3", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "data.runsFilter"), label: "Data: filtro dos flow runs", shortcut: "", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "dataset.page"), label: "Dataset: página", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dataset.columns"), label: "Dataset: colunas", shortcut: "", slice: .slice3),

@@ -107,6 +107,37 @@ import Testing
         #expect(model.draft.projectID == rig.project.id && model.draft.provider == .shell)
     }
 
+    /// Perfil que pula permissões + destino protegido: o primeiro Create só pede confirmação; Back volta; Create anyway cria.
+    @Test func riskyCombinationAsksBeforeCreating() async throws {
+        let rig = try await makeRig()
+        defer { Task { await finish(rig) } }
+        _ = try await rig.registry.perform(.sessionNew, .press)
+        try await select(rig, .composerSetWhere, "mainCheckout")
+        let model = try #require(rig.env.composer?.model)
+        model.dataDestinations = {
+            [ComposerDataDestination(key: "prod/public.listings", title: "public.listings", group: "Prod", production: true, explanation: "")]
+        }
+        model.draft.dataDestination = "prod/public.listings"
+        try #require(model.summary.contains("--dangerously-skip-permissions"), "o perfil padrão do Claude pula as permissões")
+        #expect(model.needsRiskConfirmation)
+
+        let first = try await rig.registry.perform(.composerSubmit, .press)
+        #expect(first.message == "confirming risk" && model.confirmingRisk && overlayOpen(rig))
+        _ = try await rig.registry.perform(.composerKeepEditing, .press)
+        #expect(!model.confirmingRisk && overlayOpen(rig))
+
+        _ = try await rig.registry.perform(.composerSubmit, .press)
+        #expect(model.confirmingRisk)
+        _ = try await rig.registry.perform(.composerSubmit, .press)
+        try await wait("closed") { !overlayOpen(rig) }
+
+        // Destino deste Mac: nada a confirmar.
+        _ = try await rig.registry.perform(.sessionNew, .press)
+        let next = try #require(rig.env.composer?.model)
+        next.draft.dataDestination = "racky"
+        #expect(!next.needsRiskConfirmation)
+    }
+
     // MARK: Criar (P9)
 
     @Test func submitClosesTheOverlayAtOnceShowsAPendingRowAndThenCreatesTheWorktreeSession() async throws {

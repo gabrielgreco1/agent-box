@@ -21,7 +21,8 @@ struct DataObjectView: View {
             }
         case .table: TableObjectView(hub: hub, object: object)
         case .query: QueryObjectView(hub: hub, object: object)
-        case .folder(let connection, let path): FolderObjectView(hub: hub, connection: connection, path: path)
+        case .folder(let connection, let path):
+            if hub.isLiveS3(connection) { S3FolderView(hub: hub, object: object, connection: connection, path: path) } else { FolderObjectView(hub: hub, connection: connection, path: path) }
         case .webhook: WebhookObjectView(hub: hub, object: object)
         case .tab: DataGridView(grid: DataHubFixtures.grid(for: object), footer: String(localized: "Columns A–C · first 10 rows", bundle: .module))
         case .runs(let connection): PrefectRunsView(hub: hub, connectionID: connection)
@@ -641,7 +642,7 @@ struct DataConnectSheet: View {
                         .buttonStyle(DSIconButtonStyle(.header))
                 }
                 if let kind = hub.connecting {
-                    ConnectFormView(hub: hub, kind: kind)
+                    if kind == .s3 { S3ConnectFormView(hub: hub, kind: kind) } else { ConnectFormView(hub: hub, kind: kind) }
                 } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: DS.Space.s6) {

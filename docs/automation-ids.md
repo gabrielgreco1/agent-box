@@ -239,6 +239,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `overlay.composer.watchSubagents`
 - `overlay.composer.summary`
 - `overlay.composer.skipPermissions`
+- `overlay.composer.riskNote`
 - `overlay.composer.dataNote`
 - `overlay.composer.createMore`
 - `overlay.composer.cancel`
@@ -525,6 +526,16 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `data.connect.secret`
 - `data.connect.save`
 - `data.connect.error`
+- `data.connect.s3mode`
+- `data.connect.region`
+- `data.connect.accessKey`
+- `data.connect.sessionToken`
+- `data.connect.profile`
+- `data.connect.bucket`
+- `data.s3.page.prev`
+- `data.s3.page.next`
+- `data.s3.error`
+- `data.s3.preview`
 - `data.runs`
 - `data.runs.filter`
 - `data.runs.row.<id>`
@@ -948,6 +959,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `data.connectStart` | Data: conectar (começar) | — | slice1 |
 | `data.connectSave` | Data: conectar (salvar) | — | slice1 |
 | `data.connectionRemove` | Data: remover conexão | — | slice1 |
+| `data.s3Page` | Data: página da pasta S3 | — | slice1 |
 | `data.runsFilter` | Data: filtro dos flow runs | — | slice1 |
 | `dataset.page` | Dataset: página | — | slice3 |
 | `dataset.columns` | Dataset: colunas | — | slice3 |

@@ -58,6 +58,7 @@ extension DataHubController {
         } else if s.kind.speaksPostgres {
             c.children = postgresChildren(of: s)
         }
+        if s.kind == .s3 { c.children = s3RootChildren(s) }
         return c
     }
 
@@ -126,6 +127,7 @@ extension DataHubController {
         for object in tabs where object.connectionID == id { close(object) }
         runs[id] = nil
         forgetPostgres(id)
+        forgetS3(id)
         rebuildConnections()
     }
 

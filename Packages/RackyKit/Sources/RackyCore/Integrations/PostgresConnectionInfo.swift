@@ -152,9 +152,10 @@ public enum PostgresSQL {
 
     /// Uma página da tabela com todas as colunas como texto (`col::text`), na ordem pedida (a chave primária; sem ela, `ctid`).
     public static func selectPage(schema: String, table: String, columns: [String], limit: Int, offset: Int, orderBy: [String]) -> String {
-        let list = columns.isEmpty ? "*" : columns.map { "\(quoteIdentifier($0))::text AS \(quoteIdentifier($0))" }.joined(separator: ", ")
-        var sql = "SELECT \(list) FROM \(quoteIdentifier(schema)).\(quoteIdentifier(table))"
-        if !orderBy.isEmpty { sql += " ORDER BY " + orderBy.map(quoteIdentifier).joined(separator: ", ") }
+        let list = columns.isEmpty ? "*" : columns.map { "t.\(quoteIdentifier($0))::text AS \(quoteIdentifier($0))" }.joined(separator: ", ")
+        var sql = "SELECT \(list) FROM \(quoteIdentifier(schema)).\(quoteIdentifier(table)) AS t"
+        // `t.` ordena pela coluna original: sem ele o ORDER BY pegava o apelido em texto e o id 101 vinha depois do 19.
+        if !orderBy.isEmpty { sql += " ORDER BY " + orderBy.map { "t." + quoteIdentifier($0) }.joined(separator: ", ") }
         return sql + " LIMIT \(max(limit, 1)) OFFSET \(max(offset, 0))"
     }
 

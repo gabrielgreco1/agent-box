@@ -186,6 +186,8 @@ extension A11yID {
     public static let overlayComposerSummary = A11yID(unchecked: "overlay.composer.summary")
     /// `overlay.composer.skipPermissions`
     public static let overlayComposerSkipPermissions = A11yID(unchecked: "overlay.composer.skipPermissions")
+    /// `overlay.composer.riskNote`
+    public static let overlayComposerRiskNote = A11yID(unchecked: "overlay.composer.riskNote")
     /// `overlay.composer.dataNote`
     public static let overlayComposerDataNote = A11yID(unchecked: "overlay.composer.dataNote")
     /// `overlay.composer.createMore`
@@ -510,6 +512,26 @@ extension A11yID {
     public static let dataConnectSave = A11yID(unchecked: "data.connect.save")
     /// `data.connect.error`
     public static let dataConnectError = A11yID(unchecked: "data.connect.error")
+    /// `data.connect.s3mode`
+    public static let dataConnectS3mode = A11yID(unchecked: "data.connect.s3mode")
+    /// `data.connect.region`
+    public static let dataConnectRegion = A11yID(unchecked: "data.connect.region")
+    /// `data.connect.accessKey`
+    public static let dataConnectAccessKey = A11yID(unchecked: "data.connect.accessKey")
+    /// `data.connect.sessionToken`
+    public static let dataConnectSessionToken = A11yID(unchecked: "data.connect.sessionToken")
+    /// `data.connect.profile`
+    public static let dataConnectProfile = A11yID(unchecked: "data.connect.profile")
+    /// `data.connect.bucket`
+    public static let dataConnectBucket = A11yID(unchecked: "data.connect.bucket")
+    /// `data.s3.page.prev`
+    public static let dataS3PagePrev = A11yID(unchecked: "data.s3.page.prev")
+    /// `data.s3.page.next`
+    public static let dataS3PageNext = A11yID(unchecked: "data.s3.page.next")
+    /// `data.s3.error`
+    public static let dataS3Error = A11yID(unchecked: "data.s3.error")
+    /// `data.s3.preview`
+    public static let dataS3Preview = A11yID(unchecked: "data.s3.preview")
     /// `data.runs`
     public static let dataRuns = A11yID(unchecked: "data.runs")
     /// `data.runs.filter`
@@ -2103,6 +2125,7 @@ extension A11yID {
         A11yIDSpec(pattern: "overlay.composer.watchSubagents", surface: "Composer"),
         A11yIDSpec(pattern: "overlay.composer.summary", surface: "Composer"),
         A11yIDSpec(pattern: "overlay.composer.skipPermissions", surface: "Composer"),
+        A11yIDSpec(pattern: "overlay.composer.riskNote", surface: "Composer"),
         A11yIDSpec(pattern: "overlay.composer.dataNote", surface: "Composer"),
         A11yIDSpec(pattern: "overlay.composer.createMore", surface: "Composer"),
         A11yIDSpec(pattern: "overlay.composer.cancel", surface: "Composer"),
@@ -2365,6 +2388,16 @@ extension A11yID {
         A11yIDSpec(pattern: "data.connect.secret", surface: "Páginas"),
         A11yIDSpec(pattern: "data.connect.save", surface: "Páginas"),
         A11yIDSpec(pattern: "data.connect.error", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.connect.s3mode", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.connect.region", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.connect.accessKey", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.connect.sessionToken", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.connect.profile", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.connect.bucket", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.s3.page.prev", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.s3.page.next", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.s3.error", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.s3.preview", surface: "Páginas"),
         A11yIDSpec(pattern: "data.runs", surface: "Páginas"),
         A11yIDSpec(pattern: "data.runs.filter", surface: "Páginas"),
         A11yIDSpec(pattern: "data.runs.row.<id>", surface: "Páginas"),

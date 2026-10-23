@@ -63,8 +63,8 @@ struct PostgresConnectorTests {
 
     @Test func buildsAStablePageOfTextCells() {
         let sql = PostgresSQL.selectPage(schema: "public", table: "my\"t", columns: ["id", "Name"], limit: 100, offset: 200, orderBy: ["id"])
-        #expect(sql == "SELECT \"id\"::text AS \"id\", \"Name\"::text AS \"Name\" FROM \"public\".\"my\"\"t\" ORDER BY \"id\" LIMIT 100 OFFSET 200")
-        #expect(PostgresSQL.selectPage(schema: "s", table: "t", columns: [], limit: 0, offset: -5, orderBy: []) == "SELECT * FROM \"s\".\"t\" LIMIT 1 OFFSET 0")
+        #expect(sql == "SELECT t.\"id\"::text AS \"id\", t.\"Name\"::text AS \"Name\" FROM \"public\".\"my\"\"t\" AS t ORDER BY t.\"id\" LIMIT 100 OFFSET 200")
+        #expect(PostgresSQL.selectPage(schema: "s", table: "t", columns: [], limit: 0, offset: -5, orderBy: []) == "SELECT * FROM \"s\".\"t\" AS t LIMIT 1 OFFSET 0")
     }
 
     @Test func cleansTrailingSemicolons() {

@@ -104,6 +104,11 @@ final class ComposerController {
         await model.settle()
         guard self.model === model, isOpen else { throw ActionError.failed(.composerSubmit, message: "The composer isn't open") }
         let context = model.context
+        if model.needsRiskConfirmation, !model.confirmingRisk {
+            model.confirmingRisk = true
+            return "confirming risk"
+        }
+        model.confirmingRisk = false
         guard let request = model.draft.request(context) else {
             throw ActionError.failed(.composerSubmit, message: model.issues.first?.message ?? "Fill in the required fields")
         }
@@ -320,8 +325,9 @@ final class ComposerController {
                 overlays.dismiss(.action)
                 return nil
             }
-            if model.confirmingDiscard {
+            if model.confirmingDiscard || model.confirmingRisk {
                 model.confirmingDiscard = false
+                model.confirmingRisk = false
                 return "keep editing"
             }
             if model.draft.hasData {
@@ -334,6 +340,7 @@ final class ComposerController {
         }
         try registry.register(.composerKeepEditing) { [unowned self] _ in
             model?.confirmingDiscard = false
+            model?.confirmingRisk = false
             return nil
         }
         try registry.register(.composerDiscard) { [unowned self] _ in

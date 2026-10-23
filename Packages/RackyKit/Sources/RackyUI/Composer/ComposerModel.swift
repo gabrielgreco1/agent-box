@@ -22,6 +22,14 @@ final class ComposerModel {
     var draft: ComposerDraft
     var advancedOpen: Bool
     var confirmingDiscard = false
+    /// Create pediu confirmação: a sessão grava num lugar protegido com um perfil que não pede permissão antes de rodar comandos.
+    var confirmingRisk = false
+
+    /// Os dois riscos juntos (pedido de todas as rodadas de testers): o primeiro Create mostra o aviso e pede "Create anyway".
+    var needsRiskConfirmation: Bool {
+        guard summary.contains("--dangerously-skip-permissions") else { return false }
+        return dataDestinations().first { $0.key == draft.dataDestination }?.production == true
+    }
     /// Recarrega o foco do Prompt (Create More limpa o campo e devolve o foco).
     private(set) var focusPromptNonce = 0
 

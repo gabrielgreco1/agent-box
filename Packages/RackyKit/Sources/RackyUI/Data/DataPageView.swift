@@ -391,10 +391,11 @@ struct DataExplorer: View {
     private func nodeRows(_ node: DataNode, connection: DataConnection, depth: Int, path: [String]) -> AnyView {
         let open = hub.expanded.contains(node.id)
         let object = Self.object(for: node, connection: connection, path: path)
-        let expandable = !node.children.isEmpty
+        let expandable = node.lazy || !node.children.isEmpty
+        let liveS3 = hub.isLiveS3(connection.id)
         return AnyView(VStack(alignment: .leading, spacing: 0) {
             row(id: node.id, depth: depth, mark: .symbol(DataSymbols.node(node.kind), nil), title: node.name, detail: node.size.map { $0.formatted() },
-                chevron: expandable ? open : nil, toggle: expandable && object == nil ? node.id : nil,
+                chevron: expandable ? open : nil, toggle: expandable && (object == nil || liveS3) ? node.id : nil,
                 live: object.map(hub.isLive) ?? false, selected: object != nil && hub.active == object, open: object)
             if open {
                 ForEach(node.children) { child in nodeRows(child, connection: connection, depth: depth + 1, path: path + [node.name]) }
@@ -964,6 +965,10 @@ struct DataLocationBar: View {
             let total = DataHubFixtures.grid(for: object).total
             return String(localized: "\(total.formatted()) rows", bundle: .module)
         case .folder(_, let path):
+            if hub.isLiveS3(object.connectionID) {
+                guard let state = hub.s3Folders[object], state.loaded else { return nil }
+                return String(localized: "\(state.entries.count) items", bundle: .module) + (state.hasNext ? "+" : "")
+            }
             let count = DataHubFixtures.files(in: path).count
             return String(localized: "\(count) items", bundle: .module)
         case .query, .webhook, .runs:
