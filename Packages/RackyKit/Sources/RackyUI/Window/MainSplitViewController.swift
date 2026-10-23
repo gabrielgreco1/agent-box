@@ -24,7 +24,18 @@ final class ChromeHostingView: NSHostingView<AnyView> {
     /// Enquanto há overlay, estas views recusam o foco: Tab e cliques ficam dentro do overlay (02 §12.17).
     var inputBlocked: () -> Bool = { false }
 
-    override var acceptsFirstResponder: Bool { inputBlocked() ? false : super.acceptsFirstResponder }
+    override var acceptsFirstResponder: Bool {
+        if inputBlocked() { return false }
+        if let cachedAccepts { return cachedAccepts }
+        let value = super.acceptsFirstResponder
+        cachedAccepts = value
+        DispatchQueue.main.async { [weak self] in self?.cachedAccepts = nil }
+        return value
+    }
+    /// A resposta do SwiftUI vale pela volta do run loop. O AppKit pergunta a cada hosting view várias vezes por quadro ao refazer as
+    /// regiões arrastáveis da titlebar (conteúdo sob a titlebar), e cada pergunta varre a árvore de foco do SwiftUI: na troca de
+    /// sessão isso era a maior parte do tempo da main thread.
+    private var cachedAccepts: Bool?
 
     init(content: some View) {
         super.init(rootView: AnyView(content))

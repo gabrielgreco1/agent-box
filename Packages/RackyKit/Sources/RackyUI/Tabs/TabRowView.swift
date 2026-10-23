@@ -34,6 +34,8 @@ enum TabMetrics {
 final class TabRowState {
     var canScrollLeading = false
     var canScrollTrailing = false
+    /// Sessão da última rolagem até a tab ativa: mudou de sessão, rola sem animação.
+    @ObservationIgnored var session: UUID?
 }
 
 /// Tab row (03 §3): tabs da sessão selecionada, `+`, menu de panes. Fundo `chrome`, borda inferior de 1 pt.
@@ -70,6 +72,9 @@ struct TabRowView: View {
             .padding(.top, TabMetrics.dragStrip)
         }
         .frame(height: TabMetrics.chromeHeight)
+        // Trocar de sessão troca a faixa inteira de uma vez: sem entrada animada das tabs, sem o indicador deslizando e sem rolagem
+        // animada (cada animação era mais quadros de layout e a troca parecia lenta).
+        .transaction(value: model.currentSessionID) { $0.disablesAnimations = true; $0.animation = nil }
         .overlay(alignment: .topLeading) { dropIndicator }
         .background(TabRowBackground())
         .background(DS.Color.chrome)
@@ -131,6 +136,11 @@ struct TabRowView: View {
             .overlay(alignment: .trailing) { overflowEdge(leading: false, proxy: proxy) }
             .onChange(of: model.activeTabID) { _, id in
                 guard let id else { return }
+                if state.session != model.currentSessionID {
+                    state.session = model.currentSessionID
+                    proxy.scrollTo(id, anchor: nil)
+                    return
+                }
                 withAnimation(MotionPolicy.shared.animation(MotionTokens.Easing.drawer, MotionTokens.Duration.medium)) {
                     proxy.scrollTo(id, anchor: nil)
                 }
