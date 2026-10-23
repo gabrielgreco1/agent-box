@@ -11371,7 +11371,8 @@
     "Back to the session": {},
     "Own tab": {},
     "This profile skips permission prompts: the agent won't ask before running commands": {},
-    "Open the table in a tab": {}
+    "Open the table in a tab": {},
+    "Open in session": {}
   },
   "version": "1.0"
 }

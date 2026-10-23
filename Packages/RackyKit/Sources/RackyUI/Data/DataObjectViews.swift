@@ -44,6 +44,10 @@ struct DataObjectActions: View {
             switch object {
             case .dataset(let id):
                 // Numa tab sozinha da sessão: leva a tabela para o lado do agente (os dois juntos na tela).
+                if besideAgent == nil {
+                    // Na área Data: leva a tabela para uma tab da sessão que a coletou (lá ela divide a tela com o agente).
+                    button(.datasetOpen, id: .dataOpenInSession, String(localized: "Open in session", bundle: .module), "rectangle.stack", .select(id))
+                }
                 if let besideAgent {
                     // Sozinha numa tab: leva para o lado do agente. Já ao lado: devolve para uma tab própria.
                     if besideAgent {

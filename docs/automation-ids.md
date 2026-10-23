@@ -483,6 +483,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `data.beside`
 - `data.ownTab`
 - `data.backToSession`
+- `data.openInSession`
 - `data.table.page.prev`
 - `data.table.page.next`
 - `data.moreColumns`

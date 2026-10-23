@@ -177,4 +177,18 @@ import Testing
         let active = try #require(rig.env.workspace.activeTab)
         #expect(rig.env.workspace.datasetOnly(active) == rig.datasetID, "the sidebar row opens the table in a session tab")
     }
+
+    /// Vendo a tabela na área Data, "Open in session" leva para uma tab da sessão que a coletou.
+    @Test func openInSessionFromTheDataArea() async throws {
+        let rig = try await make()
+        defer { Task { await close(rig) } }
+        _ = try await rig.env.registry.perform(.pageDatasets, .press)
+        _ = try await rig.env.registry.perform(.dataOpen, .select("dataset:\(rig.datasetID)"))
+        await VisualBatchTests.settle(600)
+        try click(rig, .dataOpenInSession)
+        await VisualBatchTests.settle(600)
+        #expect(rig.env.datasets.currentPage() == .workspace, "goes back to the session")
+        let active = try #require(rig.env.workspace.activeTab)
+        #expect(rig.env.workspace.datasetOnly(active) == rig.datasetID)
+    }
 }
