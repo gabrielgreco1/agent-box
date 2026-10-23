@@ -644,6 +644,8 @@ struct WebhookObjectView: View {
 /// Folha de tipos: agrupados por família, cada um com o logo, o nome e o que é; o grupo diz se dá para navegar e gravar ou só gravar.
 struct DataConnectSheet: View {
     let hub: DataHubController
+    /// "Coming soon" começa recolhido: 12 cards desabilitados ocupavam mais que os que conectam de verdade.
+    @State private var showSoon = false
 
     var body: some View {
         GeometryReader { geo in
@@ -677,7 +679,19 @@ struct DataConnectSheet: View {
                                 }
                             }
                         }
-                        Text("Coming soon", bundle: .module).dsFont(DS.Font.sectionLabel).foregroundStyle(DS.Color.textSecondary)
+                        let soonCount = DataConnectionKind.allCases.filter { !$0.connectable }.count
+                        // lint-ui: allow buttons abre/fecha a lista de "Coming soon" (estado local da folha, sem ação de registro)
+                        Button { showSoon.toggle() } label: {
+                            HStack(spacing: DS.Space.s1_5) {
+                                Image(systemName: showSoon ? "chevron.down" : "chevron.right").font(.system(size: DS.Space.s2_5, weight: .semibold))
+                                Text(verbatim: String(localized: "Coming soon (\(soonCount))", bundle: .module)).dsFont(DS.Font.sectionLabel)
+                                Text(verbatim: soonPreview).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(1)
+                            }
+                            .foregroundStyle(DS.Color.textSecondary)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        if showSoon {
                         ForEach(DataConnectionKind.Family.allCases.filter { f in DataConnectionKind.allCases.contains { $0.family == f && !$0.connectable } }, id: \.self) { family in
                             VStack(alignment: .leading, spacing: DS.Space.s2) {
                                 HStack(spacing: DS.Space.s2) {
@@ -693,6 +707,7 @@ struct DataConnectSheet: View {
                                     }
                                 }
                             }
+                        }
                         }
                     }
                     .padding(.bottom, DS.Space.s6)
@@ -756,6 +771,12 @@ struct DataConnectSheet: View {
             .opacity(kind.connectable ? 1 : 0.8)
             .help(kind.connectable ? kind.tagline : kind.tagline + " · " + String(localized: "Coming soon: for now this one is a sample.", bundle: .module))
         }
+    }
+
+    /// "MySQL, BigQuery, Snowflake, Google Sheets…": o que vem, numa linha, com a lista recolhida.
+    private var soonPreview: String {
+        let names = DataConnectionKind.allCases.filter { !$0.connectable }.map(\.title)
+        return names.prefix(5).joined(separator: ", ") + (names.count > 5 ? "…" : "")
     }
 
     static func title(_ family: DataConnectionKind.Family) -> String {
@@ -899,8 +920,8 @@ struct ConnectFormView: View {
             field("Connection string (required)") {
                 DSTextField(
                     kind == .supabase
-                        ? "postgresql://postgres.[ref]:[password]@aws-0-us-east-1.pooler.supabase.com:6543/postgres"
-                        : "postgresql://user:password@mydb.xxxx.us-east-1.rds.amazonaws.com:5432/postgres",
+                        ? "postgresql://postgres.[ref]:[password]@…pooler.supabase.com:6543/postgres"
+                        : "postgresql://user:password@host:5432/postgres",
                     text: $secret, id: .dataConnectSecret, compact: true, mono: true, secure: true)
             }
             Text(kind == .supabase

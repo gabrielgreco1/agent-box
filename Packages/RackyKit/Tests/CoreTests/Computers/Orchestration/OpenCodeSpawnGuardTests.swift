@@ -34,7 +34,7 @@ private func evidenceURL(_ relative: String, file: String = #filePath) -> URL? {
     return nil
 }
 
-@Suite("BK-13 gatilho de spawn no OpenCode", .serialized) struct OpenCodeSpawnGuardTests {
+@Suite("BK-13 gatilho de spawn no OpenCode", .tags(.integration), .serialized) struct OpenCodeSpawnGuardTests {
     @Test(arguments: [SubagentComputersMode.ask, .full]) func pluginIsInjectedOnlyWhenTheModeIsOn(mode: SubagentComputersMode) throws {
         let injection = try parentBundle(mode).applied(to: nil)
         let guardConfig = try #require(injection.openCodeOrchestration?.spawnGuard)

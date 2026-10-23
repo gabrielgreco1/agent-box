@@ -19,7 +19,7 @@ final class FakePicker: FolderPicking {
 
 /// Fluxo de projetos ligado ao Store real e a repositórios temporários (nunca toca em repositórios do usuário).
 @MainActor
-@Suite(.serialized, .offscreenAppKit) struct ProjectsControllerTests {
+@Suite(.tags(.integration), .serialized, .offscreenAppKit) struct ProjectsControllerTests {
     struct Rig {
         let env: AppEnvironment
         let store: RackyStore

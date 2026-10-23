@@ -6,7 +6,7 @@ import Testing
 @testable import RackyCore
 
 /// `ProxyTester` contra proxies falsos em loopback: HTTP CONNECT (200 e 407) e SOCKS5 com usuário e senha.
-@Suite("Test connection do proxy", .serialized) struct ProxyTesterTests {
+@Suite("Test connection do proxy", .tags(.integration), .serialized) struct ProxyTesterTests {
     /// Uma conexão do proxy falso: responde a cada leitura com o que `handler` devolve para (bytes, passo).
     final class Session: @unchecked Sendable {
         let connection: NWConnection

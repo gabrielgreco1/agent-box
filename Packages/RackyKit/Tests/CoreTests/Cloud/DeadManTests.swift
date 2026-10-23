@@ -5,7 +5,7 @@ import Testing
 
 /// A chave morta é o que impede a VM esquecida de cobrar para sempre (estudo 6.1). Aqui o SCRIPT que vai para a VM roda de verdade
 /// (bash, `RACKY_DRY_RUN=1`: nunca chama `shutdown`) e é comparado com a decisão pura em Swift.
-@Suite("BK-12 - chave morta (política, script e cloud-init)")
+@Suite("BK-12 - chave morta (política, script e cloud-init)", .tags(.integration))
 struct DeadManTests {
     private let policy = DeadManPolicy(heartbeatInterval: .seconds(60), missedLimit: 20, bootGrace: .seconds(900), maxLifetime: .seconds(8 * 3600), idleShutdown: .seconds(900))
     private let boot = Date(timeIntervalSince1970: 1_000_000)

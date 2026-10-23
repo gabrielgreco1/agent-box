@@ -173,7 +173,7 @@ private func rpc(_ method: String, id: JSON? = 1, params: JSON? = nil) -> Data {
 }
 
 /// O helper REAL `racky mcp` como processo filho: é o que o Claude Code sobe por subagente.
-@Suite struct McpHelperProcessTests {
+@Suite(.tags(.integration)) struct McpHelperProcessTests {
     static func binary() -> URL {
         for bundle in Bundle.allBundles where bundle.bundleURL.pathExtension == "xctest" {
             return bundle.bundleURL.deletingLastPathComponent().appendingPathComponent("racky")

@@ -38,7 +38,7 @@ private let repoRoot: URL = {
     return url
 }()
 
-@Suite struct BuildContextTests {
+@Suite(.tags(.integration)) struct BuildContextTests {
     private let sample: [String: (String, Bool)] = [
         "Dockerfile": ("FROM scratch\n", false), "entrypoint.sh": ("#!/bin/sh\n", true), "pkg/data/a.txt": ("a", false),
     ]
