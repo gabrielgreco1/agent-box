@@ -193,13 +193,16 @@ struct S3ConnectFormView: View {
             field("Credentials") {
                 HStack(spacing: .zero) {
                     choice(.keys, String(localized: "Access keys", bundle: .module))
-                    choice(.profile, String(localized: "AWS CLI profile", bundle: .module))
+                    choice(.profile, String(localized: "AWS CLI profile (SSO)", bundle: .module))
                 }
                 .padding(DSMetrics.segmentedPadding)
                 .background(RoundedRectangle(cornerRadius: DS.Radius.control).fill(DS.Color.fg6))
                 .a11y(.dataConnectS3mode, kind: "segmented", value: mode.rawValue)
             }
             if mode == .keys {
+                // Quem entra na AWS por SSO não tem chaves: a rodada de testers não achava o caminho.
+                Text("Sign in to AWS with SSO? Run aws sso login --profile <name> in a terminal, then choose AWS CLI profile (SSO), type the profile name and click Test and connect.", bundle: .module)
+                    .dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary).fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: DS.Space.s2) {
                     field("Access key ID") { DSTextField("AKIA…", text: $accessKey, id: .dataConnectAccessKey, compact: true, mono: true) }
                     field("Secret access key") { DSTextField("Secret access key", text: $secret, id: .dataConnectSecret, compact: true, secure: true) }
@@ -228,6 +231,12 @@ struct S3ConnectFormView: View {
                 DSButton(.dataConnectStart, id: nil, "Back", variant: .ghost, size: .sm, symbol: "chevron.left", argument: .select("close"))
                 Spacer(minLength: 0)
                 if hub.connectBusy { ProgressView().controlSize(.small) }
+                if !ready {
+                    Label {
+                        Text(mode == .keys ? "Fill in the access key and secret" : "Fill in the profile name", bundle: .module)
+                    } icon: { Image(systemName: "info.circle") }
+                        .dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary)
+                }
                 DSButton(.dataConnectSave, id: .dataConnectSave, "Test and connect", variant: .primary, size: .sm, argument: .set(payload))
                     .disabled(!ready || hub.connectBusy)
             }

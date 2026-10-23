@@ -1,4 +1,5 @@
 import RackyCore
+import RackyPlatform
 import RackyProtocol
 import RackyStore
 import AppKit
@@ -148,6 +149,11 @@ import Testing
         _ = try? await env.registry.perform(.composerSetDataDestination, .select("table:\(DataHubFixtures.supabase):public:listings"))
         await VisualBatchTests.settle(700)
         write(c.window!.contentView!, "data-composer")
+        // Perfil que pula permissões + destino protegido: o primeiro Create pede confirmação.
+        _ = try? await env.registry.perform(.composerSubmit, .press)
+        await VisualBatchTests.settle(500)
+        write(c.window!.contentView!, "data-composer-risk")
+        _ = try? await env.registry.perform(.composerKeepEditing, .press)
 
         // Conexão de verdade: o formulário do Prefect e a tela de flow runs (servidor falso).
         _ = try? await env.registry.perform(.composerCancel, .press)
@@ -166,5 +172,35 @@ import Testing
         _ = try? await env.registry.perform(.dataConnectSave, .set(#"{"name":"RTI Prefect","url":"prefect.example.com","auth":"none"}"#))
         await VisualBatchTests.settle(900)
         write(c.window!.contentView!, "data-prefect-runs")
+
+        // Supabase de verdade (banco falso): o formulário e uma tabela aberta.
+        _ = try? await env.registry.perform(.dataAddConnection, .press)
+        _ = try? await env.registry.perform(.dataConnectStart, .select("supabase"))
+        await VisualBatchTests.settle(500)
+        write(c.window!.contentView!, "data-connect-supabase")
+        // O app de verdade tem o cofre do Keychain; aqui um cofre em memória num banco temporário.
+        let vaultHome = FileManager.default.temporaryDirectory.appendingPathComponent("racky-cap-vault-\(UUID().uuidString.lowercased())", isDirectory: true)
+        try FileManager.default.createDirectory(at: vaultHome, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: vaultHome) }
+        let vaultStore = try await RackyStore.open(paths: StorePaths(root: vaultHome))
+        await env.dataHub.attach(store: vaultStore, vault: SecretVault(store: vaultStore, keyring: VaultKeyring(backend: InMemoryMasterKeyBackend())))
+        let database = DataPostgresConnectionTests.FakeDatabase()
+        env.dataHub.postgresFactory = { _ in database }
+        _ = try? await env.registry.perform(
+            .dataConnectSave, .set(#"{"name":"Prod DB","url":"","auth":"connectionString","user":"","secret":"postgresql://postgres.abcd:pw@aws-0-us-east-1.pooler.supabase.com:6543/postgres"}"#))
+        await VisualBatchTests.settle(800)
+        if let saved = env.dataHub.saved.first(where: { $0.kind == .supabase }) {
+            let table = DataObject.table(connection: saved.id, schema: "public", name: "listings")
+            _ = try? await env.registry.perform(.dataOpen, .select(table.key))
+            await env.dataHub.loadTable(table)
+            await VisualBatchTests.settle(800)
+            write(c.window!.contentView!, "data-postgres-table")
+        }
+
+        // S3: o formulário.
+        _ = try? await env.registry.perform(.dataAddConnection, .press)
+        _ = try? await env.registry.perform(.dataConnectStart, .select("s3"))
+        await VisualBatchTests.settle(500)
+        write(c.window!.contentView!, "data-connect-s3")
     }
 }

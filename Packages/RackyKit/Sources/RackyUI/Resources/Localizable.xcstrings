@@ -11459,8 +11459,12 @@
     "Page %lld": {},
     "Preview · %lld rows from the first 256 KB": {},
     "%lld items": {},
-    "This agent won't ask before running commands, and what it collects is copied to a protected place.": {},
-    "Create anyway": {}
+    "Create anyway": {},
+    "AWS CLI profile (SSO)": {},
+    "Fill in the access key and secret": {},
+    "Fill in the profile name": {},
+    "Sign in to AWS with SSO? Run aws sso login --profile <name> in a terminal, then choose AWS CLI profile (SSO), type the profile name and click Test and connect.": {},
+    "Two risks together: this agent won't ask before running commands, and what it collects is copied to a protected table. Go back to pick another profile or another place to save data.": {}
   },
   "version": "1.0"
 }

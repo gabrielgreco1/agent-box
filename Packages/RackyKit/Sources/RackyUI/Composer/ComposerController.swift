@@ -99,12 +99,13 @@ final class ComposerController {
 
     /// ⌘↵ de qualquer campo. Fecha o overlay na hora (ou limpa para o próximo com Create More) e entrega ao launcher.
     @discardableResult
-    func submit() async throws -> String {
+    func submit(_ arg: ActionArgument = .press) async throws -> String {
         guard let model, isOpen else { throw ActionError.failed(.composerSubmit, message: "The composer isn't open") }
         await model.settle()
         guard self.model === model, isOpen else { throw ActionError.failed(.composerSubmit, message: "The composer isn't open") }
         let context = model.context
-        if model.needsRiskConfirmation, !model.confirmingRisk {
+        // O risco só passa pelo botão "Create anyway" (`select("anyway")`); ⌘↵ de novo mantém a pergunta.
+        if model.needsRiskConfirmation, !(model.confirmingRisk && arg == .select("anyway")) {
             model.confirmingRisk = true
             return "confirming risk"
         }
@@ -319,7 +320,7 @@ final class ComposerController {
             model.draft.createMore = arg.value == "on"
             return model.draft.createMore ? "on" : "off"
         }
-        try registry.register(.composerSubmit) { [unowned self] _ in try await submit() }
+        try registry.register(.composerSubmit) { [unowned self] arg in try await submit(arg) }
         try registry.register(.composerCancel) { [unowned self] _ in
             guard let model, isOpen else {
                 overlays.dismiss(.action)

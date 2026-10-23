@@ -174,7 +174,9 @@ final class FakePicker: FolderPicking {
         #expect(try await rig.env.registry.perform(.projectRename, .select(id.uuidString)).message == "renaming")
         #expect(rig.env.sidebar.renamingProject == id)
         _ = try await rig.env.registry.perform(.projectRename, .set("Pretty Name"))
-        #expect(rig.env.sidebar.renamingProject == nil && rig.env.sidebar.project(id)?.name == "Pretty Name")
+        #expect(rig.env.sidebar.renamingProject == nil)
+        // Um snapshot do store ainda em trânsito (o do projectAdd) pode chegar depois; o nome converge para o novo.
+        try await wait("renamed in the sidebar") { rig.env.sidebar.project(id)?.name == "Pretty Name" }
         for _ in 0..<100 {
             if try await rig.store.project(id: id)?.name == "Pretty Name" { break }
             try await Task.sleep(for: .milliseconds(20))

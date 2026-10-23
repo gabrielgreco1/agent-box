@@ -252,7 +252,7 @@ struct ComposerView: View {
 
     /// Fora do Advanced só fica o aviso de um perfil que pula as permissões (sob o campo Profile); o comando inteiro mora no Advanced.
     @ViewBuilder private var summary: some View {
-        if model.summary.contains("--dangerously-skip-permissions") {
+        if model.summary.contains("--dangerously-skip-permissions"), !model.confirmingRisk {
             HStack(spacing: DS.Space.s1) {
                 Image(systemName: "exclamationmark.triangle.fill").font(.system(size: DS.Space.s2_5))
                 // Diz o nome do perfil: "Default" que pula as permissões parecia contradição.
@@ -311,16 +311,17 @@ struct ComposerView: View {
             VStack(alignment: .leading, spacing: DS.Space.s2) {
                 HStack(alignment: .top, spacing: DS.Space.s1) {
                     Image(systemName: "exclamationmark.triangle.fill").font(.system(size: DS.Space.s2_5))
-                    Text("This agent won't ask before running commands, and what it collects is copied to a protected place.", bundle: .module)
+                    Text("Two risks together: this agent won't ask before running commands, and what it collects is copied to a protected table. Go back to pick another profile or another place to save data.", bundle: .module)
                         .dsFont(DS.Font.label).fixedSize(horizontal: false, vertical: true)
                 }
                 .foregroundStyle(DS.Color.warning)
                 .a11y(.overlayComposerRiskNote, kind: "text")
                 HStack(spacing: DS.Space.s2) {
                     Spacer(minLength: DS.Space.s2)
-                    DSButton(.composerKeepEditing, "Back", variant: .outline, size: .compact)
-                    DSButton(.composerSubmit, id: .overlayComposerSubmit, "Create anyway", variant: .destructive, size: .compact, keycap: "⌘↵")
-                        .keyboardShortcut(.return, modifiers: .command)
+                    // O caminho seguro é o destacado; criar mesmo assim fica no botão de contorno.
+                    DSButton(.composerKeepEditing, "Back", variant: .primary, size: .compact)
+                    // Sem atalho: ⌘↵ de novo não confirma o risco sem querer (precisa do clique).
+                    DSButton(.composerSubmit, id: .overlayComposerSubmit, "Create anyway", variant: .outline, size: .compact, argument: .select("anyway"))
                 }
             }
         } else {

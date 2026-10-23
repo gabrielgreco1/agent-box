@@ -74,7 +74,7 @@ actor ProcessWorkerLauncher: WorkerLauncher {
     func terminateAll() { for process in processes.values where process.isRunning { kill(process.processIdentifier, SIGKILL) } }
 }
 
-@Suite("Subagent harness: CLI de mentira de ponta a ponta", .serialized, .enabled(if: FileManager.default.isExecutableFile(atPath: python)))
+@Suite("Subagent harness: CLI de mentira de ponta a ponta", .tags(.integration), .serialized, .enabled(if: FileManager.default.isExecutableFile(atPath: python)))
 struct FakeCLIWorkerE2ETests {
     struct World {
         let rig: SchedulerRig

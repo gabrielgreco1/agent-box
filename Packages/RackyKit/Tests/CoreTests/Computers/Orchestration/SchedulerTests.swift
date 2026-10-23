@@ -111,7 +111,7 @@ struct SchedulerRig {
     }
 }
 
-@Suite("T3-04 ComputerScheduler", .serialized) struct SchedulerTests {
+@Suite("T3-04 ComputerScheduler", .tags(.integration), .serialized) struct SchedulerTests {
     @Test func eightGBVMRunsFourHeadlessAndQueuesTheFifthWithVisiblePosition() async throws {
         let rig = try await SchedulerRig.make(vm: SchedulerRig.eightGB, workers: 8)
         defer { rig.cleanup() }

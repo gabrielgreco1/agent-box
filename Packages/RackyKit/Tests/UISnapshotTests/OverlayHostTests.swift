@@ -160,6 +160,23 @@ import Testing
         r.env.overlays.present(spec("a"))
         #expect(r.host.hitTest(p) != nil, "com overlay o scrim engole o clique")
     }
+
+    /// Bug real: o toast fechado ainda anima e o `onGeometryChange` regravava o quadro dele; a área ficava morta para sempre (o
+    /// header da tabela não respondia a clique nenhum).
+    @Test func aDismissedToastNeverKeepsSwallowingClicks() async {
+        let r = await rig()
+        defer { r.window.close() }
+        let content = r.window.contentView!
+        let p = NSPoint(x: 400, y: 200)
+        let top = CGRect(x: 0, y: 0, width: content.bounds.width, height: content.bounds.height)
+        let id = r.env.toasts.show(kind: .info, title: "Opened beside the agent")
+        r.env.toasts.setCardFrame(id, top)
+        #expect(r.host.hitTest(p) != nil, "o card visível recebe o clique")
+        r.env.toasts.dismiss(id)
+        r.env.toasts.setCardFrame(id, top)  // a animação de saída ainda reporta geometria
+        #expect(r.env.toasts.cardFrames.isEmpty)
+        #expect(r.host.hitTest(p) == nil, "toast fechado não pode deixar uma área sem clique")
+    }
 }
 
 @MainActor

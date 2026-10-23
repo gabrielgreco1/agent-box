@@ -105,12 +105,18 @@ struct DataGridView: View {
     var pager: (previous: Bool, next: Bool)? = nil
     /// Colunas encolhem para caber na largura (até um mínimo) em vez de cortar à direita (tabelas de leitura, como os flow runs).
     var fit = false
+    /// Poucas colunas: elas alargam até ocupar a largura (no máximo 3×), em vez de deixar o resto da tela vazio.
+    var fill = false
 
     var body: some View {
         VStack(spacing: 0) {
             GeometryReader { viewport in
             let natural = grid.columns.reduce(0) { $0 + width($1) }
-            let scale = fit && natural > 0 ? min(1, viewport.size.width / natural) : 1
+            let ratio = natural > 0 ? viewport.size.width / natural : 1
+            let scale = fit && ratio < 1 ? ratio : 1
+            // Sobra de largura vai para as colunas de texto (números e datas ficam no tamanho natural), até 2× a largura natural.
+            let textColumns = grid.columns.filter { !numeric($0) && !$0.type.contains("time") }.count
+            let bonus = fill && ratio > 1 && textColumns > 0 ? min(viewport.size.width - natural, natural * 2) / CGFloat(textColumns) : 0
             ScrollView([.horizontal, .vertical]) {
                 VStack(spacing: 0) {
                     HStack(spacing: 0) {
@@ -121,7 +127,7 @@ struct DataGridView: View {
                                 if column.key { Text("KEY", bundle: .module).dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.warning) }
                             }
                             .padding(.horizontal, DatasetMetrics.cellPadding)
-                            .frame(width: width(column, scale), height: DatasetMetrics.headerHeight, alignment: numeric(column) ? .trailing : .leading)
+                            .frame(width: width(column, scale, bonus), height: DatasetMetrics.headerHeight, alignment: numeric(column) ? .trailing : .leading)
                             .overlay(alignment: .trailing) { DS.Color.border.frame(width: ComputersMetrics.separator) }
                         }
                     }
@@ -135,7 +141,7 @@ struct DataGridView: View {
                                     .foregroundStyle(column.key ? DS.Color.textSecondary : DS.Color.textPrimary)
                                     .lineLimit(1).truncationMode(.tail)
                                     .padding(.horizontal, DatasetMetrics.cellPadding)
-                                    .frame(width: width(column, scale), height: DatasetMetrics.rowHeight, alignment: numeric(column) ? .trailing : .leading)
+                                    .frame(width: width(column, scale, bonus), height: DatasetMetrics.rowHeight, alignment: numeric(column) ? .trailing : .leading)
                                     .overlay(alignment: .trailing) { DS.Color.border.frame(width: ComputersMetrics.separator) }
                             }
                         }
@@ -181,7 +187,12 @@ struct DataGridView: View {
         ["int", "numeric", "double", "number", "int4", "int8", "int32", "float"].contains { column.type.hasPrefix($0) }
     }
 
-    private func width(_ column: DataGrid.Column, _ scale: CGFloat) -> CGFloat {
+    private func width(_ column: DataGrid.Column, _ scale: CGFloat, _ bonus: CGFloat = 0) -> CGFloat {
+        let extra = numeric(column) || column.type.contains("time") ? 0 : bonus.rounded(.down)
+        return extra + base(column, scale)
+    }
+
+    private func base(_ column: DataGrid.Column, _ scale: CGFloat) -> CGFloat {
         scale >= 1 ? width(column) : max(width(column) * scale, DatasetMetrics.colNumber)
     }
 
@@ -251,12 +262,16 @@ struct LiveTableData: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 let total = state.total.formatted()
+                // "Rows 101–200 of 250": quantas linhas a página mostra (só "page 2 of 3" não dizia).
+                let rowCount = hub.tableGrid(object).rows.count
+                let first = rowCount == 0 ? 0 : page * DataHubController.livePageSize + 1
+                let last = page * DataHubController.livePageSize + rowCount
                 DataGridView(
                     grid: hub.tableGrid(object),
                     footer: state.approximate
-                        ? String(localized: "Page \(page + 1) of \(pages.formatted()) · about \(total) rows", bundle: .module)
-                        : String(localized: "Page \(page + 1) of \(pages.formatted()) · \(total) rows", bundle: .module),
-                    pager: (page > 0, page + 1 < pages))
+                        ? String(localized: "Rows \(first)–\(last) of about \(total) · page \(page + 1) of \(pages.formatted())", bundle: .module)
+                        : String(localized: "Rows \(first)–\(last) of \(total) · page \(page + 1) of \(pages.formatted())", bundle: .module),
+                    pager: (page > 0, page + 1 < pages), fill: true)
             }
         }
     }

@@ -114,7 +114,12 @@ public final class ToastCenter {
         return max(0, min(1, deadline.timeIntervalSince(date) / total))
     }
 
-    func setCardFrame(_ id: UUID, _ frame: CGRect) { cardFrames[id] = frame }
+    /// Só de toast ainda na lista: na animação de saída o card ainda muda de lugar e regravava o quadro depois do `dismiss`, e o
+    /// quadro fantasma ficava engolindo os cliques daquela área da janela para sempre.
+    func setCardFrame(_ id: UUID, _ frame: CGRect) {
+        guard items.contains(where: { $0.id == id }) else { cardFrames[id] = nil; return }
+        cardFrames[id] = frame
+    }
 
     private func startTimer(_ id: UUID, _ seconds: Double) {
         deadlines[id] = Date().addingTimeInterval(seconds)

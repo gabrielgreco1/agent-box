@@ -128,7 +128,10 @@ import Testing
 
         _ = try await rig.registry.perform(.composerSubmit, .press)
         #expect(model.confirmingRisk)
-        _ = try await rig.registry.perform(.composerSubmit, .press)
+        // ⌘↵ de novo não confirma: só o botão "Create anyway".
+        let again = try await rig.registry.perform(.composerSubmit, .press)
+        #expect(again.message == "confirming risk" && overlayOpen(rig))
+        _ = try await rig.registry.perform(.composerSubmit, .select("anyway"))
         try await wait("closed") { !overlayOpen(rig) }
 
         // Destino deste Mac: nada a confirmar.

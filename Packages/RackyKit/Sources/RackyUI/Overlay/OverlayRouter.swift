@@ -217,7 +217,11 @@ public final class OverlayRouter {
         dismiss(.scrim)
     }
 
-    func setCardFrame(_ id: UUID, _ frame: CGRect) { cardFrames[id] = frame }
+    /// Só de overlay ainda na pilha (mesma razão do `ToastCenter.setCardFrame`: a animação de saída regravava o quadro).
+    func setCardFrame(_ id: UUID, _ frame: CGRect) {
+        guard stack.contains(where: { $0.id == id }) else { cardFrames[id] = nil; return }
+        cardFrames[id] = frame
+    }
 
     // MARK: Tempo
 
