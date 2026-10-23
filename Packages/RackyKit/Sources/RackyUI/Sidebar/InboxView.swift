@@ -99,6 +99,12 @@ struct HelpRequestRowView: View {
     @State private var hovering = false
 
     var body: some View {
+        // A linha inteira abre o computador (o Take Over continua no botão).
+        ActionButton(.computerOpenViewer, argument: .select(item.computer), tooltip: item.message) { content }
+            .buttonStyle(.plain)
+    }
+
+    private var content: some View {
         VStack(alignment: .leading, spacing: DS.Space.s0_5) {
             HStack(spacing: DS.Space.s1_5) {
                 DSAgentIndicator(.needsInput, size: .sm)

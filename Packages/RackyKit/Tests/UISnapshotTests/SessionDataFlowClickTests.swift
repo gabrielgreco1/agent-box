@@ -70,6 +70,33 @@ import Testing
         }
     }
 
+    /// Bug do dono: com o dataset numa tab da sessão e a área Data sem nada aberto (o app recém-aberto), as abas Overview e
+    /// Structure e o item do agente no caminho não respondiam. As abas agiam no objeto da área Data; o agente só selecionava a
+    /// sessão que já estava selecionada.
+    @Test func datasetTabControlsWorkWithNothingOpenInTheDataArea() async throws {
+        let rig = try await make()
+        defer { Task { await close(rig) } }
+        _ = try await rig.env.registry.perform(.datasetOpen, .select(rig.datasetID))
+        await VisualBatchTests.settle(500)
+        let object = DataObject.dataset(rig.datasetID)
+        if rig.env.dataHub.active != nil { _ = try await rig.env.registry.perform(.dataClose, .select(rig.env.dataHub.active!.key)) }
+        #expect(rig.env.dataHub.active == nil, "a área Data sem nada aberto, como ao reabrir o app")
+        try click(rig, .dataTableTab("overview"))
+        await VisualBatchTests.settle(300)
+        #expect(rig.env.dataHub.tableTab(object) == .overview)
+        try click(rig, .dataTableTab("structure"))
+        await VisualBatchTests.settle(300)
+        #expect(rig.env.dataHub.tableTab(object) == .structure)
+        try click(rig, .dataTableTab("data"))
+        await VisualBatchTests.settle(300)
+        // O agente no caminho leva ao terminal dele (a tab dos agentes), mesmo já estando na sessão.
+        try click(rig, .dataFlowItem("session"))
+        await VisualBatchTests.settle(500)
+        let active = try #require(rig.env.workspace.activeTab)
+        #expect(rig.env.workspace.datasetOnly(active) == nil, "saiu da tab da tabela e mostrou o agente")
+        #expect(!active.layout.terminalIDs.isEmpty)
+    }
+
     /// O "+" abre o menu logo abaixo dele (não no canto da janela), com seções nomeadas e o dataset da sessão.
     @Test func plusOpensTheMenuUnderItAndOffersTheSessionData() async throws {
         let rig = try await make()

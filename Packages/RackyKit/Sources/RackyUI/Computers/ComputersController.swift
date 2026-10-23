@@ -333,7 +333,12 @@ public final class ComputersController {
         }
         // ⇧⌘R: Take Over e Hand Back. De fora do viewer (Inbox, miniatura, notificação) abre o viewer antes.
         try registry.register(.computerTakeOver, enablement: hasComputer) { [unowned self] arg in
-            if let name = arg.value, viewers[name] == nil, popOuts[name] == nil { openViewer(name) }
+            if let name = arg.value, viewers[name] == nil, popOuts[name] == nil {
+                openViewer(name)
+                // Computador de sessão abre como pane, que só nasce no próximo layout: o viewer é criado já, senão a ação não
+                // achava viewer nenhum (Take Over do "Needs You" na sidebar não fazia nada).
+                _ = ensureViewer(name)
+            }
             guard let controller = viewer(for: arg) ?? activeViewer else { throw ActionError.failed(.computerTakeOver, message: "no viewer is open") }
             lastPaneViewer = controller.name
             await controller.toggleControl()

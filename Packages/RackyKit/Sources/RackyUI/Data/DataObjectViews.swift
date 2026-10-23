@@ -307,7 +307,8 @@ struct DataTabsBar: View {
         let tab = hub.tableTab(object)
         HStack(spacing: DS.Space.s4) {
             ForEach(hub.tabs(for: object), id: \.self) { item in
-                ActionButton(.dataTableTab, id: .dataTableTab(item.rawValue), argument: .select(item.rawValue)) {
+                // O objeto vai junto: num pane da sessão a aba é deste dataset, não do que a área Data tem aberto (antes nada mudava).
+                ActionButton(.dataTableTab, id: .dataTableTab(item.rawValue), argument: .select("\(item.rawValue)|\(object.key)")) {
                     VStack(spacing: DS.Space.s1) {
                         HStack(spacing: DS.Space.s1) {
                             Text(verbatim: title(item)).dsFont(tab == item ? DS.Font.tabActive : DS.Font.tab)

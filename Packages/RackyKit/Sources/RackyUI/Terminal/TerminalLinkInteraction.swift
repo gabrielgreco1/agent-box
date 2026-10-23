@@ -45,6 +45,12 @@ final class TerminalLinkInteraction: NSResponder {
     private var probedCell: (row: Int, col: Int, text: String)?
     private var monitor: Any?
     private var claimed: Hover?
+    /// Mouse parado sobre um caminho por `dwell`: o cartão aparece sem precisar do ⌘.
+    private var dwellTask: Task<Void, Never>?
+    /// Saiu do caminho: espera um pouco antes de esconder, para dar tempo de levar o mouse até o cartão.
+    private var hideTask: Task<Void, Never>?
+    static let dwell: Duration = .milliseconds(200)
+    static let hideGrace: Duration = .milliseconds(350)
 
     init(surface: TerminalSurfaceView) {
         self.surface = surface
@@ -53,6 +59,10 @@ final class TerminalLinkInteraction: NSResponder {
         underline.layer?.backgroundColor = DS.ColorSpec.textPrimary.nsColor.cgColor
         underline.isHidden = true
         tip.isHidden = true
+        tip.onPick = { [weak self] mode in self?.openFromTip(mode) }
+        tip.onHoverChange = { [weak self] inside in
+            if inside { self?.cancelHide() } else { self?.scheduleHide() }
+        }
         surface.addSubview(underline)
         surface.addSubview(tip)
         surface.addTrackingArea(
@@ -72,9 +82,50 @@ final class TerminalLinkInteraction: NSResponder {
 
     // MARK: Mouse
 
-    override func mouseMoved(with event: NSEvent) { update(at: event.locationInWindow, flags: event.modifierFlags) }
+    override func mouseMoved(with event: NSEvent) {
+        // Sobre o cartão: ele cuida do próprio hover; o caminho continua sublinhado.
+        if !tip.isHidden, tip.frame.contains(surface.convert(event.locationInWindow, from: nil)) {
+            cancelHide()
+            return
+        }
+        if event.modifierFlags.contains(.command) { return update(at: event.locationInWindow, flags: event.modifierFlags) }
+        // Sem ⌘: ainda sobre o caminho mostrado, nada muda; fora dele, some depois da folga; parado num lugar novo por `dwell`,
+        // procura um caminho ali.
+        if let hover, let hit = cell(at: event.locationInWindow), hit.row == hover.row, hover.columns.contains(hit.col) {
+            cancelHide()
+            return
+        }
+        if hover != nil { scheduleHide() }
+        dwellTask?.cancel()
+        let point = event.locationInWindow
+        // Cada movimento reinicia a espera: só dispara com o mouse parado `dwell` no mesmo lugar.
+        dwellTask = Task { [weak self] in
+            try? await Task.sleep(for: Self.dwell)
+            guard !Task.isCancelled, let self else { return }
+            self.update(at: point, flags: .command)
+        }
+    }
 
-    override func mouseExited(with event: NSEvent) { clear() }
+    override func mouseExited(with event: NSEvent) {
+        dwellTask?.cancel()
+        scheduleHide()
+    }
+
+    private func cancelHide() {
+        hideTask?.cancel()
+        hideTask = nil
+    }
+
+    private func scheduleHide() {
+        guard hover != nil, hideTask == nil else { return }
+        hideTask = Task { [weak self] in
+            try? await Task.sleep(for: Self.hideGrace)
+            guard !Task.isCancelled, let self else { return }
+            self.hideTask = nil
+            if self.tip.isMouseInside { return }
+            self.clear()
+        }
+    }
 
     private func modifiersChanged(_ event: NSEvent) {
         guard event.window != nil, event.window === surface.window else { return }
@@ -84,6 +135,9 @@ final class TerminalLinkInteraction: NSResponder {
 
     private func clear() {
         probe?.cancel()
+        dwellTask?.cancel()
+        hideTask?.cancel()
+        hideTask = nil
         probedCell = nil
         guard hover != nil || !underline.isHidden else { return }
         hover = nil
@@ -180,16 +234,30 @@ final class TerminalLinkInteraction: NSResponder {
 
     var hasClaimedClick: Bool { claimed != nil }
 
+    /// Clique numa ação do cartão (abrir no app ou no app padrão).
+    func openFromTip(_ mode: TerminalLinkOpenMode) {
+        guard let target = hover?.target else { return }
+        clear()
+        onOpen?(target, mode)
+    }
+
+    /// O cartão está na tela (testes).
+    var tipVisible: Bool { !tip.isHidden }
+
     /// Caminho sob o mouse neste instante (já resolvido em disco); usado pelos testes.
     var hoveredTarget: TerminalFileTarget? { hover?.target }
 }
 
-/// Dica ao passar o mouse sobre um caminho: duas linhas "ação  atalho" (como no Orca). Não recebe cliques.
+/// Cartão sobre um caminho: duas ações clicáveis ("Open file", "Open with default app"), com o atalho ao lado. Aparece com o
+/// mouse parado no caminho e fica enquanto o mouse está nele ou no cartão.
 @MainActor
 private final class LinkTipView: NSView {
     private let stack = NSStackView()
-    private let primaryTitle = NSTextField(labelWithString: "")
-    private let secondaryTitle = NSTextField(labelWithString: "")
+    private let primary = TipRow()
+    private let secondary = TipRow()
+    var onPick: ((TerminalLinkOpenMode) -> Void)?
+    var onHoverChange: ((Bool) -> Void)?
+    private(set) var isMouseInside = false
 
     init() {
         super.init(frame: .zero)
@@ -197,40 +265,97 @@ private final class LinkTipView: NSView {
         layer?.backgroundColor = DS.ColorSpec.menuSolid.nsColor.cgColor
         layer?.borderColor = DS.ColorSpec.borderStrong.nsColor.cgColor
         layer?.borderWidth = 1
-        layer?.cornerRadius = DS.Radius.sm
+        layer?.cornerRadius = DS.Radius.md
+        shadow = NSShadow()
+        layer?.shadowColor = NSColor.black.cgColor
+        layer?.shadowOpacity = 0.35
+        layer?.shadowRadius = DS.Space.s2
+        layer?.shadowOffset = CGSize(width: 0, height: -DS.Space.s0_5)
         stack.orientation = .vertical
-        stack.alignment = .leading
-        stack.spacing = DS.Space.s0_5
-        stack.edgeInsets = NSEdgeInsets(top: DS.Space.s1_5, left: DS.Space.s2, bottom: DS.Space.s1_5, right: DS.Space.s2)
+        stack.alignment = .width
+        stack.spacing = 0
+        stack.edgeInsets = NSEdgeInsets(top: DS.Space.s1, left: DS.Space.s1, bottom: DS.Space.s1, right: DS.Space.s1)
         stack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(stack)
         NSLayoutConstraint.activate([
             stack.leadingAnchor.constraint(equalTo: leadingAnchor), stack.trailingAnchor.constraint(equalTo: trailingAnchor),
             stack.topAnchor.constraint(equalTo: topAnchor), stack.bottomAnchor.constraint(equalTo: bottomAnchor),
         ])
-        stack.addArrangedSubview(row(primaryTitle, shortcut: "⌘" + String(localized: "Click", bundle: .module)))
-        stack.addArrangedSubview(row(secondaryTitle, shortcut: "⇧⌘" + String(localized: "Click", bundle: .module)))
+        primary.onClick = { [weak self] in self?.onPick?(.inApp) }
+        secondary.onClick = { [weak self] in self?.onPick?(.system) }
+        stack.addArrangedSubview(primary)
+        stack.addArrangedSubview(secondary)
+        addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect], owner: self, userInfo: nil))
     }
 
     @available(*, unavailable) required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }  // required init?(coder:) não usado
 
-    private func row(_ title: NSTextField, shortcut: String) -> NSView {
-        title.font = DS.Font.small.nsFont
+    func configure(isDirectory: Bool) {
+        primary.configure(
+            symbol: isDirectory ? "folder" : "doc.text",
+            title: isDirectory ? String(localized: "Open folder", bundle: .module) : String(localized: "Open file", bundle: .module),
+            shortcut: "⌘" + String(localized: "Click", bundle: .module))
+        secondary.configure(
+            symbol: isDirectory ? "magnifyingglass" : "arrow.up.forward.app",
+            title: isDirectory ? String(localized: "Reveal in Finder", bundle: .module) : String(localized: "Open with default app", bundle: .module),
+            shortcut: "⇧⌘" + String(localized: "Click", bundle: .module))
+    }
+
+    override func mouseEntered(with event: NSEvent) { isMouseInside = true; onHoverChange?(true) }
+    override func mouseExited(with event: NSEvent) { isMouseInside = false; onHoverChange?(false) }
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    override func resetCursorRects() { addCursorRect(bounds, cursor: .pointingHand) }
+}
+
+/// Uma ação do cartão: ícone, título e atalho; destaca no hover e age no clique.
+@MainActor
+private final class TipRow: NSView {
+    private let icon = NSImageView()
+    private let title = NSTextField(labelWithString: "")
+    private let key = NSTextField(labelWithString: "")
+    var onClick: (() -> Void)?
+
+    init() {
+        super.init(frame: .zero)
+        wantsLayer = true
+        layer?.cornerRadius = DS.Radius.sm
+        icon.contentTintColor = DS.ColorSpec.textSecondary.nsColor
+        title.font = DS.Font.label.nsFont
         title.textColor = DS.ColorSpec.textPrimary.nsColor
-        let key = NSTextField(labelWithString: shortcut)
         key.font = DS.Font.small.nsFont
         key.textColor = DS.ColorSpec.textTertiary.nsColor
-        let row = NSStackView(views: [title, key])
+        let spacer = NSView()
+        spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        let row = NSStackView(views: [icon, title, spacer, key])
         row.orientation = .horizontal
-        row.spacing = DS.Space.s4
-        return row
+        row.spacing = DS.Space.s2
+        row.edgeInsets = NSEdgeInsets(top: DS.Space.s1_5, left: DS.Space.s2, bottom: DS.Space.s1_5, right: DS.Space.s2)
+        row.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(row)
+        NSLayoutConstraint.activate([
+            row.leadingAnchor.constraint(equalTo: leadingAnchor), row.trailingAnchor.constraint(equalTo: trailingAnchor),
+            row.topAnchor.constraint(equalTo: topAnchor), row.bottomAnchor.constraint(equalTo: bottomAnchor),
+            row.widthAnchor.constraint(greaterThanOrEqualToConstant: DS.Space.s8 * 7),
+        ])
+        addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect], owner: self, userInfo: nil))
     }
 
-    func configure(isDirectory: Bool) {
-        primaryTitle.stringValue = isDirectory ? String(localized: "Open folder", bundle: .module) : String(localized: "Open file", bundle: .module)
-        secondaryTitle.stringValue =
-            isDirectory ? String(localized: "Reveal in Finder", bundle: .module) : String(localized: "Open with default app", bundle: .module)
+    @available(*, unavailable) required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }  // required init?(coder:) não usado
+
+    func configure(symbol: String, title text: String, shortcut: String) {
+        icon.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)
+        title.stringValue = text
+        key.stringValue = shortcut
+        setAccessibilityLabel(text)
+        setAccessibilityRole(.button)
     }
 
-    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+    override func mouseEntered(with event: NSEvent) { layer?.backgroundColor = DS.ColorSpec.secondary.nsColor.cgColor }
+    override func mouseExited(with event: NSEvent) { layer?.backgroundColor = nil }
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    override func mouseDown(with event: NSEvent) {}
+    override func mouseUp(with event: NSEvent) {
+        layer?.backgroundColor = nil
+        if bounds.contains(convert(event.locationInWindow, from: nil)) { onClick?() }
+    }
 }

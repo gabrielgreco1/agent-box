@@ -295,10 +295,13 @@ public final class DataHubController {
             return newQuery(on: id).key
         }
         try registry.register(.dataTableTab) { [unowned self] arg in
-            guard let active, let raw = arg.value, let tab = DataTableTab(rawValue: raw), tabs(for: active).contains(tab) else {
+            // `select(<aba>)` age no objeto aberto na área Data; `select(<aba>|<objeto>)` no objeto do pane que foi clicado.
+            let parts = (arg.value ?? "").split(separator: "|", maxSplits: 1).map(String.init)
+            let target = parts.count > 1 ? DataObject(key: parts[1]) : active
+            guard let target, let raw = parts.first, let tab = DataTableTab(rawValue: raw), tabs(for: target).contains(tab) else {
                 throw ActionError.failed(.dataTableTab, message: "expected select(data|overview|structure|writers) with a dataset or table open")
             }
-            tableTabs[active] = tab
+            tableTabs[target] = tab
             return raw
         }
         try registry.register(.dataQueryRun) { [unowned self] _ in

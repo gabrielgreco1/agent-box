@@ -570,3 +570,23 @@ struct ViewerStartingView: View {
         .frame(width: ViewerMetrics.progressWidth, height: ViewerMetrics.progressHeight)
     }
 }
+
+/// Pane de um computador que não existe mais (encerrado e limpo depois que a sessão o usou).
+struct GoneComputerPane: View {
+    let name: String
+    let close: () -> Void
+
+    var body: some View {
+        VStack(spacing: DS.Space.s3) {
+            Image(systemName: "desktopcomputer.trianglebadge.exclamationmark").font(.system(size: DS.Space.s8)).foregroundStyle(DS.Color.textQuaternary)
+            Text(verbatim: String(localized: "\(name) is no longer running", bundle: .module)).dsFont(DS.Font.composerTitle).foregroundStyle(DS.Color.textPrimary)
+            Text("The subagent's computer was stopped and cleaned up. Its screenshots and logs stay in the session's run folder.", bundle: .module)
+                .dsFont(DS.Font.body).foregroundStyle(DS.Color.textTertiary).multilineTextAlignment(.center).frame(maxWidth: DataMetrics.emptyTextWidth)
+            // lint-ui: allow buttons fecha o pane deste computador (layout do workspace, sem ação de registro própria)
+            Button(action: close) { Text("Close Tab", bundle: .module) }
+                .buttonStyle(DSButtonStyle(.outline, .sm))
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(DS.Color.canvas)
+    }
+}

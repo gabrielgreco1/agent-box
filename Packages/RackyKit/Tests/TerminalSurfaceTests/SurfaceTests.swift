@@ -267,6 +267,12 @@ import Testing
         host.surface.mouseDown(with: mouse(.leftMouseDown, col: 5, row: 0, in: host, window: window, flags: [.command]))
         host.surface.mouseUp(with: mouse(.leftMouseUp, col: 5, row: 0, in: host, window: window, flags: [.command]))
         #expect(opened.count == 2 && opened[1].1 == .inApp)
+        // Sem ⌘: o mouse parado ~0,2 s sobre o caminho mostra o cartão, e clicar nele abre.
+        host.surface.links.mouseMoved(with: mouse(.mouseMoved, col: 6, row: 0, in: host, window: window, flags: []))
+        for _ in 0..<100 where host.surface.links.hoveredTarget == nil { try? await Task.sleep(for: .milliseconds(10)) }
+        #expect(host.surface.links.hoveredTarget?.path == cwd + "/a.txt" && host.surface.links.tipVisible)
+        host.surface.links.openFromTip(.inApp)
+        #expect(opened.count == 3 && opened[2].1 == .inApp && !host.surface.links.tipVisible)
         // Caminho que não existe nunca vira link.
         host.surface.links.mouseMoved(with: mouse(.mouseMoved, col: 20, row: 0, in: host, window: window, flags: [.command]))
         try? await Task.sleep(for: .milliseconds(150))

@@ -44,6 +44,8 @@ final class SidebarModel {
     @ObservationIgnored var sessionDatasets: (UUID) -> [SessionDatasetRow] = { _ in [] }
     /// Toda seleção de sessão (mesmo repetida): quem estava numa página do centro (viewer, Computers) volta ao terminal.
     @ObservationIgnored var onSelected: ((UUID) -> Void)?
+    /// Mostra o terminal do agente principal da sessão (o item do agente no caminho de dados leva até ele).
+    @ObservationIgnored var onShowAgent: ((UUID) -> Void)?
     /// Histórico de navegação: seleção ou Inbox mudou.
     @ObservationIgnored var onNavigate: (() -> Void)?
     /// Avisa a cada snapshot novo do Store (o workspace carrega a sessão selecionada quando ela chega).

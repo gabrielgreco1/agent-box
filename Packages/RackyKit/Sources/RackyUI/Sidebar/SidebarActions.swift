@@ -31,6 +31,13 @@ extension SidebarModel {
         func path(of id: UUID) -> String? { project(id)?.rootPath ?? session(id)?.folderPath }
 
         try registry.register(.sessionSelect) { [unowned self] arg in
+            // `select(<id>|agent)`: além de abrir a sessão, mostra o terminal do agente (com uma tab de dados na frente, só
+            // selecionar a sessão não mudava nada na tela).
+            if arg.kind == .select, let raw = arg.value, raw.hasSuffix("|agent"), let id = UUID(uuidString: String(raw.dropLast(6))) {
+                guard select(id) else { throw ActionError.failed(.sessionSelect, message: "Session not found") }
+                onShowAgent?(id)
+                return "agent"
+            }
             let id = try uuid(arg, .sessionSelect)
             if pending(id) != nil, session(id) == nil {
                 focus(pending: id)

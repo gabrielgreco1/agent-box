@@ -1215,7 +1215,7 @@ struct DataLineageStrip: View {
         let subagents = agents.enumerated().filter { $0.offset != mainIndex }.map(\.element)
         let provider = mainProvider ?? main.flatMap { Self.provider(named: $0.name) } ?? .claude
         var columns: [Column] = []
-        let sessionAction: (ActionID, ActionArgument)? = session.map { (.sessionSelect, .select($0.uuidString)) }
+        let sessionAction: (ActionID, ActionArgument)? = session.map { (.sessionSelect, .select("\($0.uuidString)|agent")) }
         columns.append(Column(edge: "", nodes: [Node(
             id: "session", mark: .agent(QuickLaunchModel.kind(provider)), title: Self.agentTitle(provider),
             detail: String(localized: "session \(sessionTitle)", bundle: .module), action: sessionAction, live: main?.live ?? false)]))

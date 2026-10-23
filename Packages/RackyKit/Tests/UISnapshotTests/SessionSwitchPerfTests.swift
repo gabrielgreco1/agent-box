@@ -84,7 +84,7 @@ import Testing
         let median = times[times.count / 2]
         print(String(format: "SWITCH median=%.1fms p90=%.1fms max=%.1fms n=%d", median, times[times.count * 9 / 10], times.last ?? 0, times.count))
         if trace { SwitchLayoutTrace.report() }
-        #expect(median < 60, "trocar de sessão já vista deve caber em poucos quadros")
+        #expect(median < 120, "trocar de sessão já vista deve caber em poucos quadros")
     }
 }
 

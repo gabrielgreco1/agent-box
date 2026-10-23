@@ -80,6 +80,21 @@ struct ComputersControllerTests {
         #expect(!calls.contains { $0.hasPrefix("lease") })
     }
 
+    /// Bug real: o Take Over do "Needs You" (sidebar) num computador de sessão abria o pane, que só nasce no próximo layout, e a
+    /// ação não achava viewer nenhum. Agora o viewer é criado na hora e o controle passa para você.
+    @Test func takeOverFromTheSidebarWorksForASessionComputer() async throws {
+        let f = try await make()
+        defer { try? FileManager.default.removeItem(at: f.folder) }
+        await f.controller.add(f.computer)
+        f.controller.model.sessionIDs["phoenix-az"] = UUID()
+        var openedInSession: [String] = []
+        f.controller.openInSession = { name, _ in openedInSession.append(name); return true }
+        let taken = try await f.registry.perform(.computerTakeOver, .select("phoenix-az"))
+        #expect(taken.message == "human" && openedInSession == ["phoenix-az"])
+        #expect(f.controller.page == .workspace, "abre como tab da sessão, não na página Computers")
+        #expect(await f.computer.lease == .human)
+    }
+
     /// Bug real: com o computador como pane da sessão (a página continua o workspace), o Take Over não achava viewer "ativo" e
     /// falhava com "no viewer is open". O botão passa o nome, e o ⇧⌘R/Hand Back sem argumento usam o viewer desse pane.
     @Test func takeOverWorksFromAViewerPaneInsideTheSession() async throws {

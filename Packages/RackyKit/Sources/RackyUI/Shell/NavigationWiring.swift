@@ -6,6 +6,10 @@ import Foundation
 extension AppEnvironment {
     func wireNavigation() {
         sidebar.onSelected = { [computers] _ in computers.closePage() }
+        sidebar.onShowAgent = { [workspace] _ in
+            guard let agent = workspace.terminalsInCurrentSession.first(where: { $0.provider.isAgent }) else { return }
+            workspace.show(terminalID: agent.id)
+        }
         workspace.onShowTerminal = { [computers, sidebar] in
             computers.closePage()
             sidebar.setInbox(open: false)

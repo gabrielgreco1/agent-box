@@ -88,7 +88,16 @@ final class PaneContainerView: NSView {
     func setTreeVisible(_ visible: Bool) {
         if !visible {
             teardown()
-        } else if registrations.isEmpty {
+            // O chrome SwiftUI (cabeçalho, botões, banner, cartão) sai da hierarquia enquanto o pane está escondido: escondido ele
+            // continuava observando o modelo e refazendo layout a cada mudança, para os panes de todas as sessões abertas.
+            for h in hosts.values where h.superview != nil { h.removeFromSuperview() }
+            return
+        }
+        if hosts.values.contains(where: { $0.superview == nil }) {
+            raiseChrome()
+            needsLayout = true
+        }
+        if registrations.isEmpty {
             let id = terminalID.uuidString
             registrations = [
                 ElementRegistration(store: elements, id: .pane(id), kind: "pane", label: nil, parent: .windowMain),
@@ -623,9 +632,12 @@ final class PaneAreaView: NSView {
         var shown: Set<UUID> = []
         var visibleDividers: Set<UUID> = []
         defer {
+            // Pane fora de cena sai da janela (fica guardado em `containers`): o SwiftTerm só para de desenhar quando a view sai da
+            // janela, e escondido ele seguia renderizando cada saída dos agentes de todas as sessões abertas. A saída continua
+            // sendo processada; ao voltar para a mesma janela o terminal retoma sem recriar nada (como o "suspend" do Orca).
             for (id, c) in containers where !shown.contains(id) {
-                c.isHidden = true
                 c.setTreeVisible(false)
+                if c.superview != nil { c.removeFromSuperview() }
             }
             for (id, d) in dividers where !visibleDividers.contains(id) {
                 d.isHidden = true
@@ -638,7 +650,8 @@ final class PaneAreaView: NSView {
             let alive = model.allPaneIDs
             for (id, host) in otherHosts where !shownOther.contains(id) {
                 if alive.contains(id) {
-                    host.isHidden = true
+                    // Fora da janela enquanto escondido (como os terminais): escondido ele seguia atualizando o SwiftUI.
+                    if host.superview != nil { host.removeFromSuperview() }
                 } else {
                     host.removeFromSuperview()
                     otherHosts[id] = nil
@@ -657,6 +670,7 @@ final class PaneAreaView: NSView {
             let frame = expandedPane == nil ? (arrangement.panes[pane.id] ?? .zero) : bounds
             guard frame.width > 0, frame.height > 0 else { continue }
             shown.insert(terminalID)
+            if container.superview == nil { addSubview(container, positioned: .below, relativeTo: nil) }
             container.isHidden = false
             container.setTreeVisible(true)
             if container.frame != frame { container.frame = frame }
@@ -688,6 +702,7 @@ final class PaneAreaView: NSView {
                 otherHosts[pane.id] = host
             }
             shownOther.insert(pane.id)
+            if host.superview == nil { addSubview(host, positioned: .below, relativeTo: nil) }
             host.isHidden = false
             if host.frame != frame { host.frame = frame }
         }

@@ -264,7 +264,13 @@ final class WorkspaceViewController: NSViewController {
             guard let env else { return NSView() }
             if case .computer(let name) = pane.content {
                 // A tela do computador de um subagente como pane da sessão (arrasta, divide, fica ao lado da tabela ou do agente).
-                guard let viewer = env.computers.ensureViewer(name) else { return NSView() }
+                guard let viewer = env.computers.ensureViewer(name) else {
+                    // O computador já foi encerrado e limpo: em vez de um pane preto e mudo, diz o que houve e oferece fechar a tab.
+                    let workspace = env.workspace
+                    return ChromeHostingView(
+                        content: GoneComputerPane(name: name, close: { workspace.closePane(id: pane.id) })
+                            .environment(\.elementStore, env.elements).environment(\.a11yParent, .windowMain))
+                }
                 let workspace = env.workspace
                 let host = ChromeHostingView(
                     content: ComputerViewerView(
