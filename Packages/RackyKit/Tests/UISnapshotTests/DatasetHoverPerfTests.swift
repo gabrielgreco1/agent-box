@@ -59,7 +59,20 @@ import Testing
         times.sort()
         let median = times[times.count / 2]
         print(String(format: "ROWSTATE median=%.2fms p90=%.2fms max=%.2fms n=%d", median, times[times.count * 9 / 10], times.last ?? 0, times.count))
-        #expect(median < 16, "um movimento do mouse cabe num quadro")
+        #expect(median < 16, "uma mudança de linha cabe num quadro")
+
+        // Redimensionar a janela com a tabela aberta (o pico real do dono: relayout da tabela inteira quadro a quadro).
+        var resize: [Double] = []
+        for step in 0 ..< 30 {
+            let width = 1500 - CGFloat(step % 15) * 20
+            let t0 = CFAbsoluteTimeGetCurrent()
+            window.setContentSize(NSSize(width: width, height: 900))
+            content.layoutSubtreeIfNeeded()
+            window.displayIfNeeded()
+            resize.append((CFAbsoluteTimeGetCurrent() - t0) * 1000)
+        }
+        resize.sort()
+        print(String(format: "RESIZE median=%.2fms p90=%.2fms max=%.2fms", resize[resize.count / 2], resize[resize.count * 9 / 10], resize.last ?? 0))
         try? await store.close()
     }
 }
