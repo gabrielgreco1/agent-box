@@ -125,8 +125,9 @@ struct ActivityChart: View {
         var unit = 1.0
         while unit * 10 <= peak { unit *= 10 }
         while unit > peak { unit /= 10 }
-        for step in [1, 2, 2.5, 3, 4, 5, 6, 8, 10] where unit * step >= peak { return unit * step }
-        return peak
+        let top = [1, 2, 2.5, 3, 4, 5, 6, 8, 10].map { unit * $0 }.first { $0 >= peak } ?? peak
+        // Contagem é inteira: o meio do eixo também ("1 / 0.5 / 0" não faz sentido para linhas).
+        return mode == .total && top < 10 ? (top / 2).rounded(.up) * 2 : top
     }
 
     var body: some View {
@@ -159,7 +160,7 @@ struct ActivityChart: View {
             Text("Rows over time", bundle: .module).dsFont(DS.Font.sectionLabel).foregroundStyle(DS.Color.textPrimary)
             Text(verbatim: filtered
                 ? String(localized: "\(total.formatted()) matching", bundle: .module)
-                : String(localized: "\(total.formatted()) rows", bundle: .module))
+                : total == 1 ? String(localized: "1 row", bundle: .module) : String(localized: "\(total.formatted()) rows", bundle: .module))
                 .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
             if let window = snapshot.window { windowPill(window) }
             Spacer(minLength: DS.Space.s2)
@@ -211,9 +212,11 @@ struct ActivityChart: View {
         .offset(y: -DS.Space.s1_5)
     }
 
+    /// A interface é em inglês: o separador decimal segue ela, não a região do Mac ("0,5" ao lado de "1.2k").
     static func short(_ value: Double) -> String {
-        if value >= 1000 { return (value / 1000).formatted(.number.precision(.fractionLength(0...1))) + "k" }
-        return value.formatted(.number.precision(.fractionLength(0...1)))
+        let style = FloatingPointFormatStyle<Double>.number.precision(.fractionLength(0...1)).locale(Locale(identifier: "en_US"))
+        if value >= 1000 { return (value / 1000).formatted(style) + "k" }
+        return value.formatted(style)
     }
 
     /// 5 marcas; estreito, 3; mais estreito, só as pontas.

@@ -84,6 +84,7 @@ import Testing
         try click(rig, .dataTableTab("overview"))
         await VisualBatchTests.settle(300)
         #expect(rig.env.dataHub.tableTab(object) == .overview)
+        shot(rig, "flow-6-dataset-overview")
         try click(rig, .dataTableTab("structure"))
         await VisualBatchTests.settle(300)
         #expect(rig.env.dataHub.tableTab(object) == .structure)

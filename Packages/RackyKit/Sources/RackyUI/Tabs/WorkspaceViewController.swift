@@ -1,5 +1,6 @@
 import RackyDesignSystem
 import RackyProtocol
+import RackyStore
 import AppKit
 import SwiftUI
 
@@ -268,7 +269,13 @@ final class WorkspaceViewController: NSViewController {
                     // O computador já foi encerrado e limpo: em vez de um pane preto e mudo, diz o que houve e oferece fechar a tab.
                     let workspace = env.workspace
                     return ChromeHostingView(
-                        content: GoneComputerPane(name: name, close: { workspace.closePane(id: pane.id) })
+                        content: GoneComputerPane(
+                            name: name, close: { workspace.closePane(id: pane.id) },
+                            showRuns: {
+                                let runs = StorePaths.default(environment: ProcessInfo.processInfo.environment).root
+                                    .appendingPathComponent("computers/runs", isDirectory: true)
+                                NSWorkspace.shared.open(runs)
+                            })
                             .environment(\.elementStore, env.elements).environment(\.a11yParent, .windowMain))
                 }
                 let workspace = env.workspace

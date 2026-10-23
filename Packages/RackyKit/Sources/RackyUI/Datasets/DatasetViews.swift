@@ -925,6 +925,8 @@ struct DatasetToolbar: View {
             Image(systemName: "tablecells")
             if labels { Text("Columns", bundle: .module) }
         }
+        // O menu lista cada coluna com o tipo e mostra/esconde na grade; a aba Structure tem o detalhe completo.
+        .help(String(localized: "Each column with its type; click one to show or hide it. The Structure tab has the full details.", bundle: .module))
         MenuButton(id: .datasetExport, action: .datasetExport, entries: exportEntries, primary: true) {
             Image(systemName: "arrow.down.to.line")
             if labels { Text("Export", bundle: .module) }

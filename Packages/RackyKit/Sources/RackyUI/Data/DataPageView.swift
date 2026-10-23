@@ -957,7 +957,7 @@ struct DataLocationBar: View {
     private var size: String? {
         switch object {
         case .dataset(let id):
-            return hub.summary(ofDataset: id).map { String(localized: "\($0.rowCount.formatted()) rows", bundle: .module) }
+            return hub.summary(ofDataset: id).map { $0.rowCount == 1 ? String(localized: "1 row", bundle: .module) : String(localized: "\($0.rowCount.formatted()) rows", bundle: .module) }
         case .table where hub.isLivePostgres(object.connectionID):
             let rows = hub.rowTotal(object)
             return rows.approximate ? String(localized: "about \(rows.total.formatted()) rows", bundle: .module) : String(localized: "\(rows.total.formatted()) rows", bundle: .module)
@@ -1191,7 +1191,8 @@ struct DataLineageStrip: View {
             edge: columns.isEmpty ? "" : String(localized: "collect", bundle: .module),
             nodes: [Node(
                 id: "source", mark: .mac, title: String(localized: "This Mac › \(hub.datasets.displayName(summary))", bundle: .module),
-                detail: String(localized: "original · \(summary.rowCount.formatted()) rows", bundle: .module),
+                detail: summary.rowCount == 1 ? String(localized: "original · 1 row", bundle: .module)
+                    : String(localized: "original · \(summary.rowCount.formatted()) rows", bundle: .module),
                 action: (.dataOpen, .select(sourceObject.key)), live: hub.datasets.isCollecting(summary), current: object == sourceObject)]))
         let copies = hub.destinations(of: sourceObject).compactMap { destination -> Node? in
             guard let place = hub.connection(destination.target.connectionID) else { return nil }
@@ -1263,7 +1264,8 @@ struct DataLineageStrip: View {
 
     private func copyStatus(_ destination: DataDestination, rows: Int) -> String {
         switch destination.detail {
-        case "live copy": String(localized: "copy, updated live · in sync, \(rows.formatted()) of \(rows.formatted()) rows", bundle: .module)
+        case "live copy": rows == 1 ? String(localized: "copy, updated live · in sync, 1 row", bundle: .module)
+            : String(localized: "copy, updated live · in sync, \(rows.formatted()) of \(rows.formatted()) rows", bundle: .module)
         case "daily copy": String(localized: "copy, updated daily at 06:00 · last today", bundle: .module)
         case "sends new rows": String(localized: "each new row is posted here", bundle: .module)
         default: destination.detail

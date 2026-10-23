@@ -28,6 +28,10 @@ public struct InboxItem: Identifiable, Sendable, Equatable {
     public var phase: Phase = .needsYou
     /// Linha 2 do item: `<computer> needs you · CAPTCHA on <host>`.
     public var message: String { "\(computer) needs you · \(summary.headline)" }
+
+    public init(id: String, computer: String, summary: HelpSummary, createdAt: Date, read: Bool = false, phase: Phase = .needsYou) {
+        self.id = id; self.computer = computer; self.summary = summary; self.createdAt = createdAt; self.read = read; self.phase = phase
+    }
 }
 
 /// Texto da notificação do macOS para um pedido de ajuda (CS-433): sem conteúdo de página nem dado sensível.

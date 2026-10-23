@@ -575,16 +575,26 @@ struct ViewerStartingView: View {
 struct GoneComputerPane: View {
     let name: String
     let close: () -> Void
+    /// Abre no Finder a pasta das execuções (screenshots e logs dos computadores).
+    var showRuns: (() -> Void)? = nil
 
     var body: some View {
         VStack(spacing: DS.Space.s3) {
             Image(systemName: "desktopcomputer.trianglebadge.exclamationmark").font(.system(size: DS.Space.s8)).foregroundStyle(DS.Color.textQuaternary)
             Text(verbatim: String(localized: "\(name) is no longer running", bundle: .module)).dsFont(DS.Font.composerTitle).foregroundStyle(DS.Color.textPrimary)
             Text("The subagent's computer was stopped and cleaned up. Its screenshots and logs stay in the session's run folder.", bundle: .module)
-                .dsFont(DS.Font.body).foregroundStyle(DS.Color.textTertiary).multilineTextAlignment(.center).frame(maxWidth: DataMetrics.emptyTextWidth)
-            // lint-ui: allow buttons fecha o pane deste computador (layout do workspace, sem ação de registro própria)
-            Button(action: close) { Text("Close Tab", bundle: .module) }
-                .buttonStyle(DSButtonStyle(.outline, .sm))
+                .dsFont(DS.Font.body).foregroundStyle(DS.Color.textSecondary).multilineTextAlignment(.center).frame(maxWidth: DataMetrics.emptyTextWidth)
+            HStack(spacing: DS.Space.s2) {
+                if let showRuns {
+                    // lint-ui: allow buttons abre a pasta das execuções no Finder (sem ação de registro própria)
+                    Button(action: showRuns) { Text("Show Screenshots and Logs", bundle: .module) }
+                        .buttonStyle(DSButtonStyle(.primary, .sm))
+                        .help(Text("Opens the run folder in Finder", bundle: .module))
+                }
+                // lint-ui: allow buttons fecha o pane deste computador (layout do workspace, sem ação de registro própria)
+                Button(action: close) { Text("Close Tab", bundle: .module) }
+                    .buttonStyle(DSButtonStyle(.outline, .sm))
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(DS.Color.canvas)
