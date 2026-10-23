@@ -1322,9 +1322,13 @@ struct DataLineageStrip: View {
                     Text(verbatim: node.title).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
                     if let badge = node.badge { ConnectionBadges(badge) }
                     if node.live { LiveDot() }
-                    if node.current { Text("You are here", bundle: .module).dsFont(DS.Font.keycap).foregroundStyle(DS.Color.dataKey) }
+                    if node.current { Text("You are here", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.dataKey) }
                 }
-                Text(verbatim: node.detail).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(1)
+                Text(verbatim: node.detail).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary).lineLimit(1)
+            }
+            // Card que leva a algum lugar: a seta diz que é clicável (sem ela parecia só um diagrama).
+            if node.action != nil, !node.current {
+                Image(systemName: "chevron.right").font(.system(size: DS.Space.s2_5, weight: .semibold)).foregroundStyle(DS.Color.textTertiary)
             }
         }
         .padding(.horizontal, DS.Space.s2_5)

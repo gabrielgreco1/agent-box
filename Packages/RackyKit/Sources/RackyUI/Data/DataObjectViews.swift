@@ -312,10 +312,10 @@ struct DataTabsBar: View {
                     VStack(spacing: DS.Space.s1) {
                         HStack(spacing: DS.Space.s1) {
                             Text(verbatim: title(item)).dsFont(tab == item ? DS.Font.tabActive : DS.Font.tab)
-                                .foregroundStyle(tab == item ? DS.Color.textPrimary : DS.Color.textTertiary)
+                                .foregroundStyle(tab == item ? DS.Color.textPrimary : DS.Color.textSecondary)
                             if item == .writers, !hub.writers(of: object).isEmpty {
                                 // A contagem num selinho, separada do nome da aba.
-                                Text(verbatim: "\(hub.writers(of: object).count)").dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textSecondary)
+                                Text(verbatim: "\(hub.writers(of: object).count)").dsFont(DS.Font.small).monospacedDigit().foregroundStyle(DS.Color.textSecondary)
                                     .padding(.horizontal, DS.Space.s1)
                                     .background(Capsule().fill(DS.Color.secondary))
                             }

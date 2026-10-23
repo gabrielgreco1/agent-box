@@ -587,16 +587,16 @@ struct GoneComputerPane: View {
             Text("The subagent's computer was stopped and cleaned up. Its screenshots and logs stay in the session's run folder.", bundle: .module)
                 .dsFont(DS.Font.body).foregroundStyle(DS.Color.textSecondary).multilineTextAlignment(.center).frame(maxWidth: DataMetrics.emptyTextWidth)
             HStack(spacing: DS.Space.s2) {
-                if let showRuns {
-                    // lint-ui: allow buttons abre a pasta das execuções no Finder (sem ação de registro própria)
-                    Button(action: showRuns) { Text("Show Screenshots and Logs", bundle: .module) }
-                        .buttonStyle(DSButtonStyle(.primary, .sm))
-                        .help(Text("Opens the run folder in Finder", bundle: .module))
-                }
                 if let showAgent {
                     // lint-ui: allow buttons mostra o terminal do agente da sessão (layout do workspace, sem ação de registro própria)
                     Button(action: showAgent) { Text("Go to Agent", bundle: .module) }
-                        .buttonStyle(DSButtonStyle(.outline, .sm))
+                        .buttonStyle(DSButtonStyle(.primary, .sm))
+                }
+                if let showRuns {
+                    // lint-ui: allow buttons abre a pasta das execuções no Finder (sem ação de registro própria)
+                    Button(action: showRuns) { Text("Show Screenshots and Logs", bundle: .module) }
+                        .buttonStyle(DSButtonStyle(showAgent == nil ? .primary : .outline, .sm))
+                        .help(Text("Opens the run folder in Finder", bundle: .module))
                 }
                 // lint-ui: allow buttons fecha o pane deste computador (layout do workspace, sem ação de registro própria)
                 Button(action: close) { Text("Close Tab", bundle: .module) }
