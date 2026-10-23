@@ -1281,7 +1281,10 @@ struct DataProductionBanner: View {
         let live = hub.writers(of: object).filter(\.live)
         HStack(spacing: DS.Space.s2) {
             Image(systemName: "exclamationmark.triangle.fill").font(.system(size: DS.Space.s3))
-            Text(verbatim: String(localized: "Protected · \(connection?.name ?? "")", bundle: .module)).dsFont(DS.Font.label)
+            // Conexão de exemplo: a faixa diz que é exemplo (não contradiz a faixa azul "nada está conectado").
+            Text(verbatim: hub.isDemo && !hub.saved.contains(where: { $0.id == connection?.id })
+                ? String(localized: "Example · Protected · \(connection?.name ?? "")", bundle: .module)
+                : String(localized: "Protected · \(connection?.name ?? "")", bundle: .module)).dsFont(DS.Font.label)
             Text(verbatim: message(object, live: live.count)).dsFont(DS.Font.small).lineLimit(2).fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: DS.Space.s2)
             if !live.isEmpty {

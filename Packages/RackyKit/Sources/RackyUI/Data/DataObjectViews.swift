@@ -96,10 +96,14 @@ struct DataGridView: View {
     @State private var moreColumns = false
     /// Anterior/seguinte habilitados (tabelas de conexão paginadas); `nil` = sem paginação.
     var pager: (previous: Bool, next: Bool)? = nil
+    /// Colunas encolhem para caber na largura (até um mínimo) em vez de cortar à direita (tabelas de leitura, como os flow runs).
+    var fit = false
 
     var body: some View {
         VStack(spacing: 0) {
             GeometryReader { viewport in
+            let natural = grid.columns.reduce(0) { $0 + width($1) }
+            let scale = fit && natural > 0 ? min(1, viewport.size.width / natural) : 1
             ScrollView([.horizontal, .vertical]) {
                 VStack(spacing: 0) {
                     HStack(spacing: 0) {
@@ -110,7 +114,7 @@ struct DataGridView: View {
                                 if column.key { Text("KEY", bundle: .module).dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.warning) }
                             }
                             .padding(.horizontal, DatasetMetrics.cellPadding)
-                            .frame(width: width(column), height: DatasetMetrics.headerHeight, alignment: numeric(column) ? .trailing : .leading)
+                            .frame(width: width(column, scale), height: DatasetMetrics.headerHeight, alignment: numeric(column) ? .trailing : .leading)
                             .overlay(alignment: .trailing) { DS.Color.border.frame(width: ComputersMetrics.separator) }
                         }
                     }
@@ -124,7 +128,7 @@ struct DataGridView: View {
                                     .foregroundStyle(column.key ? DS.Color.textSecondary : DS.Color.textPrimary)
                                     .lineLimit(1).truncationMode(.tail)
                                     .padding(.horizontal, DatasetMetrics.cellPadding)
-                                    .frame(width: width(column), height: DatasetMetrics.rowHeight, alignment: numeric(column) ? .trailing : .leading)
+                                    .frame(width: width(column, scale), height: DatasetMetrics.rowHeight, alignment: numeric(column) ? .trailing : .leading)
                                     .overlay(alignment: .trailing) { DS.Color.border.frame(width: ComputersMetrics.separator) }
                             }
                         }
@@ -168,6 +172,10 @@ struct DataGridView: View {
 
     private func numeric(_ column: DataGrid.Column) -> Bool {
         ["int", "numeric", "double", "number", "int4", "int8", "int32", "float"].contains { column.type.hasPrefix($0) }
+    }
+
+    private func width(_ column: DataGrid.Column, _ scale: CGFloat) -> CGFloat {
+        scale >= 1 ? width(column) : max(width(column) * scale, DatasetMetrics.colNumber)
     }
 
     private func width(_ column: DataGrid.Column) -> CGFloat {
@@ -580,7 +588,7 @@ struct DataConnectSheet: View {
                                 }
                             }
                         }
-                        Text("Coming soon", bundle: .module).dsFont(DS.Font.sectionLabel).foregroundStyle(DS.Color.textTertiary)
+                        Text("Coming soon", bundle: .module).dsFont(DS.Font.sectionLabel).foregroundStyle(DS.Color.textSecondary)
                         ForEach(DataConnectionKind.Family.allCases.filter { f in DataConnectionKind.allCases.contains { $0.family == f && !$0.connectable } }, id: \.self) { family in
                             VStack(alignment: .leading, spacing: DS.Space.s2) {
                                 HStack(spacing: DS.Space.s2) {
@@ -643,7 +651,7 @@ struct DataConnectSheet: View {
             .overlay(RoundedRectangle(cornerRadius: DS.Radius.md).strokeBorder(hovering ? DS.Color.borderStrong : DS.Color.border))
             .onHover { hovering = $0 }
             .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: hovering)
-            .opacity(kind.connectable ? 1 : 0.55)
+            .opacity(kind.connectable ? 1 : 0.8)
             .help(kind.connectable ? kind.tagline : String(localized: "Coming soon: for now this one is a sample.", bundle: .module))
         }
     }
@@ -680,7 +688,7 @@ struct PrefectRunsView: View {
                     selection: filter.rawValue, action: .dataRunsFilter, id: .dataRunsFilter)
                 Spacer(minLength: DS.Space.s2)
                 if let at = state.loadedAt {
-                    Text(verbatim: String(localized: "Updated \(at.formatted(date: .omitted, time: .standard))", bundle: .module))
+                    Text(verbatim: String(localized: "Updated \(at.formatted(.dateTime.hour(.twoDigits(amPM: .abbreviated)).minute(.twoDigits).second(.twoDigits)))", bundle: .module))
                         .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
                 }
                 if let saved = hub.saved.first(where: { $0.id == connectionID }) {
@@ -707,7 +715,7 @@ struct PrefectRunsView: View {
                     .dsFont(DS.Font.body).foregroundStyle(DS.Color.textTertiary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                DataGridView(grid: Self.grid(state), footer: String(localized: "\(state.rows.count) flow runs · read only", bundle: .module))
+                DataGridView(grid: Self.grid(state), footer: String(localized: "\(state.rows.count) flow runs · read only", bundle: .module), fit: true)
             }
         }
         .a11y(.dataRuns, kind: "table", value: "\(state.rows.count)")
@@ -743,7 +751,7 @@ struct PrefectRunsView: View {
             .init(name: "tags", type: "text"),
         ]
         let rows = state.rows.map { run -> [String] in
-            let started = (run.start ?? run.expectedStart).map { $0.formatted(date: .abbreviated, time: .shortened) } ?? ""
+            let started = (run.start ?? run.expectedStart).map { $0.formatted(.dateTime.day().month(.abbreviated).hour().minute()) } ?? ""
             let seconds = run.end.flatMap { end in run.start.map { end.timeIntervalSince($0) } } ?? run.start.map { Date().timeIntervalSince($0) } ?? run.totalRunTime
             let duration = run.start == nil ? "" : Duration.seconds(seconds).formatted(.units(allowed: [.hours, .minutes, .seconds], width: .narrow, maximumUnitCount: 2))
             return [run.stateName, run.name, run.deploymentID.flatMap { state.deployments[$0] } ?? "", started, duration, run.workPool ?? "", run.tags.joined(separator: ", ")]
@@ -777,7 +785,7 @@ struct ConnectFormView: View {
                 }
             }
             field("Name") {
-                DSTextField("Prefect", text: $name, id: .dataConnectName, compact: true)
+                DSTextField("e.g. Prefect prod", text: $name, id: .dataConnectName, compact: true)
             }
             field("Server URL") {
                 DSTextField("prefect.yourcompany.com", text: $url, id: .dataConnectUrl, compact: true, mono: true)
@@ -796,7 +804,7 @@ struct ConnectFormView: View {
             if auth == .basic {
                 HStack(spacing: DS.Space.s2) {
                     field("User") { DSTextField("admin", text: $user, id: .dataConnectUser, compact: true) }
-                    field("Password") { DSTextField("", text: $secret, id: .dataConnectSecret, compact: true, secure: true) }
+                    field("Password") { DSTextField("Password", text: $secret, id: .dataConnectSecret, compact: true, secure: true) }
                 }
             } else if auth == .apiKey {
                 field("API key") { DSTextField("pnu_…", text: $secret, id: .dataConnectSecret, compact: true, secure: true) }
@@ -816,7 +824,7 @@ struct ConnectFormView: View {
                 Spacer(minLength: 0)
                 if hub.connectBusy { ProgressView().controlSize(.small) }
                 if url.isEmpty {
-                    Text("Fill in the server URL", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                    Text("Fill in the server URL", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
                 }
                 DSButton(.dataConnectSave, id: .dataConnectSave, "Test and connect", variant: .primary, size: .sm, argument: .set(payload))
                     .disabled(url.isEmpty || hub.connectBusy)

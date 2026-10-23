@@ -160,10 +160,14 @@ struct PaneBannerView: View {
     var body: some View {
         let arg = ActionArgument.select(model.id)
         HStack(spacing: DS.Space.s2) {
-            Text(verbatim: text)
-                .dsFont(DS.Font.small)
-                .foregroundStyle(isWarning ? DS.Color.warning : DS.Color.textSecondary)
-                .lineLimit(1)
+            // Pane estreito: a frase inteira não cabe ao lado dos botões, então vira uma palavra (a frase fica no tooltip).
+            ViewThatFits(in: .horizontal) {
+                Text(verbatim: text).lineLimit(1).fixedSize()
+                Text(verbatim: shortText).lineLimit(1).fixedSize()
+            }
+            .dsFont(DS.Font.small)
+            .foregroundStyle(isWarning ? DS.Color.warning : DS.Color.textSecondary)
+            .help(text)
             Spacer(minLength: DS.Space.s2)
             switch model.state {
             case .closing:
@@ -190,6 +194,14 @@ struct PaneBannerView: View {
     }
 
     private var isWarning: Bool { if case .closing = model.state { true } else { false } }
+
+    private var shortText: String {
+        switch model.state {
+        case .closing: String(localized: "Not exiting", bundle: .module)
+        case .interrupted: String(localized: "Stopped", bundle: .module)
+        default: String(localized: "Exited", bundle: .module)
+        }
+    }
 
     private var bannerID: A11yID {
         switch model.state {
@@ -309,7 +321,10 @@ struct StoppedAgentsBanner: View {
                 .lineLimit(1)
             Spacer(minLength: DS.Space.s2)
             if lost {
-                DSButton(.sessionResumeAgents, "Resume Agents…", variant: .primary, size: .xs)   // abre o overlay §16.7
+                // Só com agente que dá para retomar pelo ID; sem ele o botão ficava cinza e parecia quebrado (cada painel tem Continue Last).
+                if model.hasInterruptedAgents(in: nil) {
+                    DSButton(.sessionResumeAgents, "Resume Agents…", variant: .primary, size: .xs)   // abre o overlay §16.7
+                }
             } else {
                 DSButton(.sessionResumeStopped, "Resume All", variant: .primary, size: .xs)
             }

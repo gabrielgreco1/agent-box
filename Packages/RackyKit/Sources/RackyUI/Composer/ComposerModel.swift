@@ -120,6 +120,8 @@ final class ComposerModel {
     }
 
     var providerProfiles: [LaunchProfile] { settings.profiles(for: draft.provider) }
+    /// Nome do perfil escolhido (o aviso de permissões diz qual é).
+    var profileName: String { providerProfiles.first { $0.id == draft.profileID }?.name ?? String(localized: "selected", bundle: .module) }
 
     func agentInfo(_ provider: TerminalProvider) -> AgentInfo? { settings.agent(provider) }
 

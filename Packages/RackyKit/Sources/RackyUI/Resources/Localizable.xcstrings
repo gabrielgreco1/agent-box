@@ -11403,7 +11403,10 @@
     "prefect.yourcompany.com": {},
     "Connect now": {},
     "Coming soon": {},
-    "Fill in the server URL": {}
+    "Fill in the server URL": {},
+    "Not exiting": {},
+    "e.g. Prefect prod": {},
+    "selected": {}
   },
   "version": "1.0"
 }

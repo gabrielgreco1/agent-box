@@ -487,8 +487,9 @@ public final class DatasetsController {
 
     /// Hora na grade e no eixo do gráfico (`22:51:08`, `22:50`).
     public func clock(_ date: Date, seconds: Bool = true) -> String {
-        if seconds { return date.formatted(Date.FormatStyle(date: .omitted, time: .standard, locale: locale, timeZone: timeZone)) }
-        return date.formatted(Date.FormatStyle(date: .omitted, time: .shortened, locale: locale, timeZone: timeZone))
+        // Hora com dois dígitos: "0:08:15" parecia uma duração.
+        let style = Date.FormatStyle(locale: locale, timeZone: timeZone).hour(.twoDigits(amPM: .abbreviated)).minute(.twoDigits)
+        return date.formatted(seconds ? style.second(.twoDigits) : style)
     }
 
     public func absolute(_ date: Date) -> String {

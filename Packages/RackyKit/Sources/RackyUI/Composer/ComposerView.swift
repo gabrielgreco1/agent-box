@@ -254,7 +254,9 @@ struct ComposerView: View {
         if model.summary.contains("--dangerously-skip-permissions") {
             HStack(spacing: DS.Space.s1) {
                 Image(systemName: "exclamationmark.triangle.fill").font(.system(size: DS.Space.s2_5))
-                Text("This profile skips permission prompts: the agent won't ask before running commands", bundle: .module).dsFont(DS.Font.label)
+                // Diz o nome do perfil: "Default" que pula as permissões parecia contradição.
+                Text(verbatim: String(localized: "The \(model.profileName) profile skips permission prompts: the agent won't ask before running commands", bundle: .module))
+                    .dsFont(DS.Font.label)
             }
             .foregroundStyle(DS.Color.warning)
             .a11y(.overlayComposerSkipPermissions, kind: "text")
