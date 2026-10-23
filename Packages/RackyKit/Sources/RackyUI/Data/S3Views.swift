@@ -261,11 +261,11 @@ struct S3ConnectFormView: View {
         Button { mode = value } label: { Text(verbatim: title) }
             .buttonStyle(DSSegmentStyle(active: mode == value, fillWidth: true))
             .background {
-                if mode == value { RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.accent) }
+                if mode == value { RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.textPrimary.opacity(0.16)) }
             }
             // Borda na opção ativa: só o fundo um pouco mais claro não deixava claro qual estava escolhida.
             .overlay {
-                if mode == value { RoundedRectangle(cornerRadius: DS.Radius.sm).strokeBorder(DS.Color.borderStrong) }
+                if mode == value { RoundedRectangle(cornerRadius: DS.Radius.sm).strokeBorder(DS.Color.textSecondary) }
             }
     }
 }

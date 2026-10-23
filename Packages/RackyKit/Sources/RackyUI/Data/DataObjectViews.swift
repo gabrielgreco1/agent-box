@@ -1025,11 +1025,11 @@ struct ConnectFormView: View {
         Button { auth = kind } label: { Text(verbatim: title) }
             .buttonStyle(DSSegmentStyle(active: auth == kind, fillWidth: true))
             .background {
-                if auth == kind { RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.accent) }
+                if auth == kind { RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.textPrimary.opacity(0.16)) }
             }
             // Borda na opção ativa: só o fundo um pouco mais claro não deixava claro qual estava escolhida.
             .overlay {
-                if auth == kind { RoundedRectangle(cornerRadius: DS.Radius.sm).strokeBorder(DS.Color.borderStrong) }
+                if auth == kind { RoundedRectangle(cornerRadius: DS.Radius.sm).strokeBorder(DS.Color.textSecondary) }
             }
     }
 }
