@@ -11406,7 +11406,12 @@
     "Fill in the server URL": {},
     "Not exiting": {},
     "e.g. Prefect prod": {},
-    "selected": {}
+    "selected": {},
+    "Besides the ones you added, these connections are samples: they are not connected.": {},
+    "Name (optional)": {},
+    "Server URL (required)": {},
+    "Changes ask you to confirm.": {},
+    "1 record": {}
   },
   "version": "1.0"
 }

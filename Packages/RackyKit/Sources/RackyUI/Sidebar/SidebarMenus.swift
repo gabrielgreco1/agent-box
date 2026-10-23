@@ -13,7 +13,7 @@ struct MenuEntry: Identifiable {
     var argument: ActionArgument = .press
 }
 
-private func optionHeld() -> Bool { NSEvent.modifierFlags.contains(.option) }
+private func optionHeld() -> Bool { EventModifiers.held(.option) }
 
 struct ProjectMenuItems {
     let model: SidebarModel

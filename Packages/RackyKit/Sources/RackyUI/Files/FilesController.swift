@@ -497,7 +497,7 @@ final class FilesController {
                 return tree?.isExpanded(target) == true ? "expanded" : "collapsed"
             }
             // ⌘-clique abre no editor externo (10-right-panel §2).
-            if NSEvent.modifierFlags.contains(.command) {
+            if EventModifiers.held(.command) {
                 return try await openExternally(target)
             }
             open(target)

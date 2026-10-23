@@ -63,7 +63,7 @@ private func spooledLines(_ home: ActivityHome, run: String) throws -> [Data] {
     return try HookSpool.readLines(file)
 }
 
-@Suite struct HookCLITests {
+@Suite(.tags(.integration)) struct HookCLITests {
     @Test func appClosedEventGoesToTheSpoolAndTheAgentSeesEmptyJSONAndExitZero() async throws {
         let home = try ActivityHome(); defer { home.remove() }
         let stop = try #require(try RealHooks.events(RealHooks.claudeBasic).first { $0.name == "Stop" })

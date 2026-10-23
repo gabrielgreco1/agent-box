@@ -488,8 +488,14 @@ public final class DatasetsController {
     /// Hora na grade e no eixo do gráfico (`22:51:08`, `22:50`).
     public func clock(_ date: Date, seconds: Bool = true) -> String {
         // Hora com dois dígitos: "0:08:15" parecia uma duração.
-        let style = Date.FormatStyle(locale: locale, timeZone: timeZone).hour(.twoDigits(amPM: .abbreviated)).minute(.twoDigits)
+        let style = Date.FormatStyle(locale: locale, timeZone: timeZone).hour(Self.hourStyle(locale)).minute(.twoDigits)
         return date.formatted(seconds ? style.second(.twoDigits) : style)
+    }
+
+    /// 24 h: dois dígitos ("00:08"). 12 h: como o sistema escreve ("7:59 AM").
+    static func hourStyle(_ locale: Locale) -> Date.FormatStyle.Symbol.Hour {
+        let pattern = DateFormatter.dateFormat(fromTemplate: "j", options: 0, locale: locale) ?? ""
+        return pattern.contains("a") ? .defaultDigits(amPM: .abbreviated) : .twoDigits(amPM: .omitted)
     }
 
     public func absolute(_ date: Date) -> String {

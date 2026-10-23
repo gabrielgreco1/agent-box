@@ -11,7 +11,7 @@ private func tempRoot() throws -> URL {
     return url
 }
 
-@Suite("T3-02 - config do egress, segredos em arquivo e integridade do reqlog")
+@Suite("T3-02 - config do egress, segredos em arquivo e integridade do reqlog", .tags(.integration))
 struct EgressUnitTests {
     private func json(_ config: EgressConfigFile) throws -> [String: Any] {
         try #require(JSONSerialization.jsonObject(with: try config.jsonData()) as? [String: Any])

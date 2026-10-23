@@ -5,7 +5,7 @@ import Testing
 @testable import RackyDocker
 
 /// Cliente contra um daemon Docker de brincadeira (sem Docker real): framing HTTP, erros, streams, hijack e prazos.
-@Suite struct ClientAgainstFakeDaemonTests {
+@Suite(.tags(.integration)) struct ClientAgainstFakeDaemonTests {
     @Test func pingVersionInfoAndApiVersionInPath() async throws {
         let daemon = try await FakeDockerDaemon { request, connection in
             switch request.path {

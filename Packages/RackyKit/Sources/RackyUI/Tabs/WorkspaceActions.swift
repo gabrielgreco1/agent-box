@@ -178,10 +178,10 @@ extension WorkspaceModel {
 
         // Panes
         try reg(.paneSplitRight, enablement: hasTab) { [unowned self] arg in
-            try splitResult(split(.horizontal, source: uuid(arg), shell: NSEvent.modifierFlags.contains(.option)), .paneSplitRight)
+            try splitResult(split(.horizontal, source: uuid(arg), shell: EventModifiers.held(.option)), .paneSplitRight)
         }
         try reg(.paneSplitDown, enablement: hasTab) { [unowned self] arg in
-            try splitResult(split(.vertical, source: uuid(arg), shell: NSEvent.modifierFlags.contains(.option)), .paneSplitDown)
+            try splitResult(split(.vertical, source: uuid(arg), shell: EventModifiers.held(.option)), .paneSplitDown)
         }
         try reg(.paneNext, enablement: hasPanes) { [unowned self] _ in focusNextPane(delta: 1) ? focusedTerminalID?.uuidString : nil }
         try reg(.panePrevious, enablement: hasPanes) { [unowned self] _ in focusNextPane(delta: -1) ? focusedTerminalID?.uuidString : nil }
@@ -353,7 +353,7 @@ extension WorkspaceModel {
 
     /// Menu de contexto do pane (03 §4.5, F17): `DSMenuPanel` na posição do clique, com as ações que têm dono. O pane já recebeu o foco.
     func presentPaneContextMenu(registry: ActionRegistry, terminalID: UUID, at point: CGPoint) {
-        let option = NSEvent.modifierFlags.contains(.option)
+        let option = EventModifiers.held(.option)
         let arg = ActionArgument.select(terminalID.uuidString)
         func e(_ action: ActionID, _ title: String, _ argument: ActionArgument = .press) -> MenuEntry { MenuEntry(action: action, title: title, argument: argument) }
         var groups: [[MenuEntry]] = [

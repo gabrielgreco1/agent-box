@@ -4,7 +4,7 @@ import Testing
 
 @testable import RackyPlatform
 
-@Suite struct FramedDaemonTransportTests {
+@Suite(.tags(.integration)) struct FramedDaemonTransportTests {
     private func connect(_ dir: TempSocketDir) async throws -> FramedConnection {
         FramedConnection(try await UDSClient.connect(path: dir.socketPath))
     }

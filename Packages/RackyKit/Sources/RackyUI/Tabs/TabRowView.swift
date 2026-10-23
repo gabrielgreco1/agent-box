@@ -385,7 +385,7 @@ struct TabMenuItems {
                 MenuEntry(action: .tabCloseOthers, title: String(localized: "Close Other Tabs", bundle: .module), argument: arg),
                 MenuEntry(action: .tabCloseRight, title: String(localized: "Close Tabs to the Right", bundle: .module), argument: arg),
             ],
-            NSEvent.modifierFlags.contains(.option)
+            EventModifiers.held(.option)
                 ? [MenuEntry(action: .terminalCopyId, title: String(localized: "Copy Terminal ID", bundle: .module), argument: terminalArgument)] : [],
         ]
     }

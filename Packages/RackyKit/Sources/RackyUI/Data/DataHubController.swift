@@ -205,7 +205,7 @@ public final class DataHubController {
                     for table in schema.children where table.kind == .table {
                         let object = DataObject.table(connection: connection.id, schema: schema.name, name: table.name)
                         add(object, "\(connection.name) › \(schema.name).\(table.name)",
-                            String(localized: "Collected on this Mac first, then copied live to \(schema.name).\(table.name) on \(place).", bundle: .module))
+                            String(localized: "Collected on this Mac first, then copied one way to \(schema.name).\(table.name) on \(place) as rows arrive.", bundle: .module))
                     }
                 }
             case .storage:

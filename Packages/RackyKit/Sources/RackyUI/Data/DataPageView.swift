@@ -28,6 +28,7 @@ enum DataMetrics {
     static let tabsMenuWidth: CGFloat = 64
     /// Nome de uma tab inativa quando a faixa não cabe (encurta com "…" antes de rolar).
     static let tabTitleShort: CGFloat = 76
+    static let tabTitleTiny: CGFloat = 40
     static let tabsBeforeMenu = 3
     static let renameInset: CGFloat = 64
     static let logoTile: CGFloat = 20
@@ -39,6 +40,7 @@ enum DataMetrics {
     static let connectHeight: CGFloat = 820
     static let connectMargin: CGFloat = 80
     static let connectCard: CGFloat = 56
+    static let connectCardCompact: CGFloat = 40
     static let connectLogo: CGFloat = 32
     static let editorHeight: CGFloat = 160
 }
@@ -97,6 +99,11 @@ struct DataPageView: View {
     @State private var width: CGFloat = .infinity
 
     /// Pouco espaço para o conteúdo: o explorer se recolhe sozinho (volta quando a janela abre).
+    private var activeIsDemoProtected: Bool {
+        guard let active = hub.active, let connection = hub.connection(active.connectionID) else { return false }
+        return connection.protected && !hub.saved.contains { $0.id == connection.id }
+    }
+
     private var explorerShown: Bool { !hub.explorerHidden && width - hub.explorerWidth >= DataMetrics.contentMin }
 
     var body: some View {
@@ -108,7 +115,8 @@ struct DataPageView: View {
             .frame(height: DataMetrics.tabHeight)
             .background(DS.Color.chrome)
             .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
-            if hub.isDemo { DataDemoBanner() }
+            // Na tabela de exemplo protegida a faixa âmbar já diz "Example · Protected": as duas faixas não se empilham.
+            if hub.isDemo, !activeIsDemoProtected { DataDemoBanner(hasOwn: !hub.saved.isEmpty) }
             HStack(spacing: 0) {
                 if explorerShown {
                     DataExplorer(hub: hub)
@@ -491,11 +499,16 @@ struct DataRoleBadge: View {
 
 /// Conexões de exemplo ligadas: diz com todas as letras que nada está conectado.
 struct DataDemoBanner: View {
+    /// Já há conexão de verdade (Prefect): a faixa não pode dizer que nada está conectado.
+    var hasOwn = false
+
     var body: some View {
         HStack(spacing: DS.Space.s2) {
             Image(systemName: "eye").font(.system(size: DS.Space.s3))
             Text("Example data", bundle: .module).dsFont(DS.Font.label)
-            Text("These connections are samples, not yours: nothing is connected.", bundle: .module)
+            Text(hasOwn
+                 ? "Besides the ones you added, these connections are samples: they are not connected."
+                 : "These connections are samples, not yours: nothing is connected.", bundle: .module)
                 .dsFont(DS.Font.small).lineLimit(2).fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
@@ -653,6 +666,8 @@ struct DataTabStrip: View {
             row(compact: false)
             // Ainda sem espaço: os nomes encurtam com "…" (como no Chrome) antes de a faixa rolar.
             row(compact: true, short: true)
+            // Muitas tabs: as inativas ficam só com o logo e o começo do nome, sem o X (como o Chrome), antes de a faixa rolar.
+            row(compact: true, short: true, tiny: true)
             scrolling
         }
         .padding(.trailing, showsMenu ? DataMetrics.tabsMenuWidth : .zero)
@@ -679,9 +694,9 @@ struct DataTabStrip: View {
         .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
     }
 
-    private func row(compact: Bool, short: Bool = false) -> some View {
+    private func row(compact: Bool, short: Bool = false, tiny: Bool = false) -> some View {
         HStack(spacing: 0) {
-            ForEach(hub.tabs, id: \.self) { object in tab(object, compact: compact, short: short) }
+            ForEach(hub.tabs, id: \.self) { object in tab(object, compact: compact, short: short, tiny: tiny) }
         }
     }
 
@@ -689,7 +704,7 @@ struct DataTabStrip: View {
         ScrollViewReader { reader in
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 0) {
-                    ForEach(hub.tabs, id: \.self) { object in tab(object, compact: true, short: true).id(object) }
+                    ForEach(hub.tabs, id: \.self) { object in tab(object, compact: true, short: true, tiny: true).id(object) }
                 }
             }
             // As bordas esmaecem: uma tab cortada pela rolagem some aos poucos em vez de virar meia palavra.
@@ -705,7 +720,7 @@ struct DataTabStrip: View {
         }
     }
 
-    private func tab(_ object: DataObject, compact: Bool, short: Bool = false) -> some View {
+    private func tab(_ object: DataObject, compact: Bool, short: Bool = false, tiny: Bool = false) -> some View {
         let active = hub.active == object
         let place = hub.connection(object.connectionID)
         return HStack(spacing: DS.Space.s1_5) {
@@ -720,21 +735,25 @@ struct DataTabStrip: View {
                     } else {
                         Image(systemName: "laptopcomputer").font(.system(size: DataMetrics.icon)).foregroundStyle(DS.Color.textSecondary)
                     }
-                    Text(verbatim: DataLabels.title(object, hub: hub)).dsFont(active ? DS.Font.tabActive : DS.Font.tab)
+                    // Encurtada, a tabela mostra só o nome (sem "public."): duas tabs do mesmo schema não viram dois "publi…".
+                    Text(verbatim: short && !active ? DataLabels.shortTitle(object, hub: hub) : DataLabels.title(object, hub: hub))
+                        .dsFont(active ? DS.Font.tabActive : DS.Font.tab)
                         .foregroundStyle(active ? DS.Color.textPrimary : DS.Color.textSecondary).lineLimit(1).truncationMode(.tail)
-                        .frame(maxWidth: short && !active ? DataMetrics.tabTitleShort : nil, alignment: .leading)
+                        .frame(maxWidth: short && !active ? (tiny ? DataMetrics.tabTitleTiny : DataMetrics.tabTitleShort) : nil, alignment: .leading)
                 }
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            ActionButton(.dataClose, id: .dataTabClose(object.key), argument: .select(object.key), tooltip: String(localized: "Close", bundle: .module)) {
-                Image(systemName: "xmark").font(.system(size: DS.Space.s2, weight: .semibold))
+            if active || !tiny {
+                ActionButton(.dataClose, id: .dataTabClose(object.key), argument: .select(object.key), tooltip: String(localized: "Close", bundle: .module)) {
+                    Image(systemName: "xmark").font(.system(size: DS.Space.s2, weight: .semibold))
+                }
+                .buttonStyle(DSIconButtonStyle(.tabClose))
+                .opacity(active ? 1 : 0.6)
             }
-            .buttonStyle(DSIconButtonStyle(.tabClose))
-            .opacity(active ? 1 : 0.6)
         }
-        .padding(.leading, DS.Space.s3)
-        .padding(.trailing, DS.Space.s1_5)
+        .padding(.leading, tiny ? DS.Space.s2 : DS.Space.s3)
+        .padding(.trailing, tiny && !active ? DS.Space.s2 : DS.Space.s1_5)
         .frame(maxHeight: .infinity)
         .fixedSize(horizontal: true, vertical: false)
         .background(active ? DS.Color.canvas : Color.clear)
@@ -753,6 +772,15 @@ enum DataLabels {
         case .webhook(let c): hub.connection(c)?.name ?? String(localized: "Webhook", bundle: .module)
         case .tab(_, _, let name): name
         case .runs: String(localized: "Flow runs", bundle: .module)
+        }
+    }
+
+    /// Título de tab encurtada: o último pedaço do nome (tabela sem schema, pasta só com a última parte).
+    @MainActor static func shortTitle(_ object: DataObject, hub: DataHubController) -> String {
+        switch object {
+        case .table(_, _, let name): name
+        case .folder(_, let path): path.last ?? title(object, hub: hub)
+        default: title(object, hub: hub)
         }
     }
 
@@ -956,28 +984,28 @@ struct DataLineageStrip: View {
 
     private var compactBody: some View {
         let columns = lineage
-        // Cabe inteiro: uma linha. Não cabe: cada grupo mostra o primeiro e "+N" (o resto fica no Overview); só então a linha rola.
+        // Cabe inteiro: uma linha. Não cabe: cada grupo mostra o primeiro e "+N" (o resto fica no Overview); só então quebra em linhas.
         return ViewThatFits(in: .horizontal) {
             compactChips(columns, limit: nil)
             compactChips(columns, limit: 1)
             compactChips(columns, limit: 1, terse: true)
-            ScrollView(.horizontal, showsIndicators: false) { compactChips(columns, limit: 1, terse: true) }
-                // A ponta direita esmaece: dá para ver que continua (rola de lado) em vez de um chip cortado.
-                .mask {
-                    HStack(spacing: 0) {
-                        Color.black
-                        LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing).frame(width: DS.Space.s6)
-                    }
-                }
+            // Nem assim cabe (pane estreito ao lado do agente): os chips quebram em linhas, nada fica cortado na borda.
+            ChipFlow(spacing: DS.Space.s1_5) { chipItems(columns, limit: 1, terse: false) }  // com quebra cabe "+1 more"
+                .padding(.horizontal, DS.Space.s4)
+                .padding(.vertical, DS.Space.s1_5)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .frame(height: DataMetrics.pathHeight)
+        .frame(maxWidth: .infinity, minHeight: DataMetrics.pathHeight, alignment: .leading)
         .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
         .a11y(.dataPath, kind: "group", label: columns.flatMap(\.nodes).map(\.title).joined(separator: " → "))
     }
 
     private func compactChips(_ columns: [Column], limit: Int?, terse: Bool = false) -> some View {
-        HStack(spacing: DS.Space.s1_5) {
+        HStack(spacing: DS.Space.s1_5) { chipItems(columns, limit: limit, terse: terse) }
+            .padding(.horizontal, DS.Space.s4)
+            .fixedSize()
+    }
+
+    @ViewBuilder private func chipItems(_ columns: [Column], limit: Int?, terse: Bool) -> some View {
             if columns.isEmpty {
                 Text("Racky doesn't write here.", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
             }
@@ -993,9 +1021,6 @@ struct DataLineageStrip: View {
                         .help(column.nodes.dropFirst(shown.count).map(\.title).joined(separator: ", "))
                 }
             }
-        }
-        .padding(.horizontal, DS.Space.s4)
-        .fixedSize()
     }
 
     private func smallChip(_ node: Node) -> some View {
@@ -1304,11 +1329,11 @@ struct DataProductionBanner: View {
         // Uma frase com as regras: quem pode gravar aqui e o que você pode fazer.
         let source = hub.copySource(of: object).map { hub.displayName(ofDatasetNamed: $0) }
         let writers = live == 0
-            ? (source.map { String(localized: "No agent writes here directly: Racky copies \($0) from this Mac.", bundle: .module) }
+            ? (source.map { String(localized: "Copied from \($0) on this Mac.", bundle: .module) }
                 ?? String(localized: "No agent is writing here now.", bundle: .module))
             : (live == 1 ? String(localized: "1 agent is writing here now (Pause stops new writes; rows already written stay).", bundle: .module)
                 : String(localized: "\(live) agents are writing here now (Pause stops new writes; rows already written stay).", bundle: .module))
-        return writers + " " + String(localized: "You can read freely; anything that changes data asks you to confirm.", bundle: .module)
+        return writers + " " + String(localized: "Changes ask you to confirm.", bundle: .module)
     }
 }
 

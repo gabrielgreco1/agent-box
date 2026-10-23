@@ -8,7 +8,7 @@ import Testing
 
 /// Módulo Files (10-right-panel §2): seguimento do cwd, pin, árvore, FSEvents, marcação de git e visualizador.
 @MainActor
-@Suite(.serialized) struct FilesControllerTests {
+@Suite(.tags(.integration), .serialized) struct FilesControllerTests {  // FSEvents e disco de verdade: na fase serial
     // MARK: Seguimento do cwd (AC-RP01)
 
     @Test func startsOnTheSessionFolderAndFollowsTheAgentCwd() async throws {

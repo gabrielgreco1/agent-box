@@ -225,7 +225,10 @@ import Testing
         try await withDaemon(sessionLeader: launchdLike) { harness in
             let client = harness.makeClient()
             try await client.start()
-            let script = "trap 'echo WINCH-$(stty size)' WINCH; echo TTY-$(ps -o tty= -p $$); while :; do sleep 0.05; done"
+            // O trap só marca; o laço lê o tamanho atual. Com `$(stty size)` dentro do trap, o SIGWINCH do attach ocupava o
+            // handler e o `sh` descartava o do resize (o teste falhava em ~metade das vezes, sem bug no daemon).
+            let script = "trap 'w=1' WINCH; echo TTY-$(ps -o tty= -p $$); "
+                + "while :; do if [ -n \"$w\" ]; then w=; echo WINCH-$(stty size); fi; sleep 0.05; done"
             let create = makeCreate(["/bin/sh", "-c", script])
             _ = try await client.create(create)
             let attachment = try await client.attach(sessionID: create.sessionID, cols: 100, rows: 30)

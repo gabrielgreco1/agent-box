@@ -45,13 +45,14 @@ struct ComposerView: View {
                         }
                     }
                 }
+                // Logo abaixo do perfil que causa o aviso (no fim do formulário parecia solto, longe do campo).
+                summary
                 if model.draft.provider.supportsSubagentComputers {
                     subagentComputers
                     if model.draft.subagentComputers.isOn { subagentHarness }
                 }
                 if model.draft.provider != .shell { dataDestination }
                 advanced
-                summary
                 if let issue = model.boxIssue { errorBox(issue) }
                 footer
             }
@@ -249,7 +250,7 @@ struct ComposerView: View {
 
     // MARK: Resumo, erro e footer
 
-    /// Fora do Advanced só fica o aviso de um perfil que pula as permissões; o comando inteiro mora no Advanced.
+    /// Fora do Advanced só fica o aviso de um perfil que pula as permissões (sob o campo Profile); o comando inteiro mora no Advanced.
     @ViewBuilder private var summary: some View {
         if model.summary.contains("--dangerously-skip-permissions") {
             HStack(spacing: DS.Space.s1) {

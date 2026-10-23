@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import RackyPlatform
 
-@Suite struct ProcessRunnerTests {
+@Suite(.tags(.integration)) struct ProcessRunnerTests {
     private func request(_ exe: String, _ args: [String], timeout: Duration = .seconds(10),
                          max: Int = 1_000_000, env: [String: String] = [:]) -> ProcessRequest {
         ProcessRequest(executable: URL(fileURLWithPath: exe), arguments: args, environment: env,

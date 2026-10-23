@@ -17,7 +17,7 @@ struct StubProxies: ProxyDirectory {
     func globalDefault() async -> String? { global }
 }
 
-@Suite("F29 - proxy na reserva", .serialized) struct ProxyReserveTests {
+@Suite("F29 - proxy na reserva", .tags(.integration), .serialized) struct ProxyReserveTests {
     func proxy(of rig: SchedulerRig, _ name: String) async -> String? {
         #expect(await rig.wait(name, .ready))
         return await rig.provisioning.specs[name]?.proxy

@@ -80,7 +80,7 @@ private func waitForFile(_ box: Sandbox, _ name: String, deadline: Duration = .s
     return box.read(name)
 }
 
-@Suite struct LoginShellEnvTests {
+@Suite(.tags(.integration)) struct LoginShellEnvTests {
     // MARK: Shell sintético rápido
 
     @Test func syntheticFastShellCapturesInteractiveFilteredEnv() async throws {

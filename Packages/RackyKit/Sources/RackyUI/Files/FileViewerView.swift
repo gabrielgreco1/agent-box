@@ -186,7 +186,7 @@ private struct FindField: View {
         .frame(height: DS.Space.s6)
         .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.fg6))
         .overlay(RoundedRectangle(cornerRadius: DS.Radius.sm).strokeBorder(focused ? DS.Color.ring : DS.Color.border, lineWidth: FilesMetrics.hairline))
-        .onSubmit { controller.stepSearch(NSEvent.modifierFlags.contains(.shift) ? -1 : 1) }
+        .onSubmit { controller.stepSearch(EventModifiers.held(.shift) ? -1 : 1) }
         .onExitCommand { controller.setSearchActive(false) }
         .onAppear { focused = true }
         .a11y(.rightPanelFilesViewerFindField, kind: "textField", label: "Find in file")

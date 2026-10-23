@@ -30,7 +30,7 @@ private func sampleEnvelope(run: UUID = UUID(), id: String = UUID().uuidString.l
     HookEnvelope(id: id, provider: .claude, event: "Stop", runID: run.uuidString, atNs: HookTransport.realtimeNs(), payload: .init(lastAssistantMessage: "DONE"))
 }
 
-@Suite struct HookTransportTests {
+@Suite(.tags(.integration)) struct HookTransportTests {
     @Test func hookAndCtlServicesShareOneAppSock() async throws {
         let home = try ActivityHome(); defer { home.remove() }
         let store = try await home.openStore()

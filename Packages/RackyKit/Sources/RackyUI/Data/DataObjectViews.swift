@@ -596,14 +596,24 @@ struct DataConnectSheet: View {
                                     Text(verbatim: family == .outgoing ? String(localized: "Write only", bundle: .module) : String(localized: "Browse and write", bundle: .module))
                                         .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
                                 }
+                                // Ainda de exemplo: cards baixos (logo, nome, "Soon"; o que é fica no tooltip) para a lista inteira caber
+                                // sem rolar; antes a última seção ficava cortada no pé da folha.
                                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: DS.Space.s2), count: 3), spacing: DS.Space.s2) {
-                                    // Ainda de exemplo: o card diz "Soon" (nada de card que parece clicável e não faz nada).
                                     ForEach(DataConnectionKind.allCases.filter { $0.family == family && !$0.connectable }, id: \.self) { kind in
-                                        KindCard(kind: kind)
+                                        KindCard(kind: kind, compact: true)
                                     }
                                 }
                             }
                         }
+                    }
+                    .padding(.bottom, DS.Space.s6)
+                }
+                // A lista continua abaixo da borda: o pé esmaece (antes a seção "Outgoing" parecia cortada, sem sinal de rolagem).
+                .scrollIndicators(.visible)
+                .mask {
+                    VStack(spacing: 0) {
+                        Color.black
+                        LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom).frame(height: DS.Space.s6)
                     }
                 }
                 }
@@ -626,6 +636,7 @@ struct DataConnectSheet: View {
     /// Um tipo: logo da marca num ladrilho, o nome e uma linha do que é.
     private struct KindCard: View {
         let kind: DataConnectionKind
+        var compact = false
         @State private var hovering = false
 
         var body: some View {
@@ -640,19 +651,21 @@ struct DataConnectSheet: View {
                                 .background(RoundedRectangle(cornerRadius: DS.Radius.xs).fill(DS.Color.secondary))
                         }
                     }
-                    Text(verbatim: kind.tagline).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(2, reservesSpace: true)
-                        .fixedSize(horizontal: false, vertical: true)
+                    if !compact {
+                        Text(verbatim: kind.tagline).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(2, reservesSpace: true)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, DS.Space.s3)
-            .frame(height: DataMetrics.connectCard)
+            .padding(.horizontal, compact ? DS.Space.s2_5 : DS.Space.s3)
+            .frame(height: compact ? DataMetrics.connectCardCompact : DataMetrics.connectCard)
             .background(RoundedRectangle(cornerRadius: DS.Radius.md).fill(hovering ? DS.Color.secondary : DS.Color.chrome))
             .overlay(RoundedRectangle(cornerRadius: DS.Radius.md).strokeBorder(hovering ? DS.Color.borderStrong : DS.Color.border))
             .onHover { hovering = $0 }
             .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: hovering)
             .opacity(kind.connectable ? 1 : 0.8)
-            .help(kind.connectable ? kind.tagline : String(localized: "Coming soon: for now this one is a sample.", bundle: .module))
+            .help(kind.connectable ? kind.tagline : kind.tagline + " · " + String(localized: "Coming soon: for now this one is a sample.", bundle: .module))
         }
     }
 
@@ -688,7 +701,7 @@ struct PrefectRunsView: View {
                     selection: filter.rawValue, action: .dataRunsFilter, id: .dataRunsFilter)
                 Spacer(minLength: DS.Space.s2)
                 if let at = state.loadedAt {
-                    Text(verbatim: String(localized: "Updated \(at.formatted(.dateTime.hour(.twoDigits(amPM: .abbreviated)).minute(.twoDigits).second(.twoDigits)))", bundle: .module))
+                    Text(verbatim: String(localized: "Updated \(at.formatted(.dateTime.hour(DatasetsController.hourStyle(.current)).minute(.twoDigits).second(.twoDigits)))", bundle: .module))
                         .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
                 }
                 if let saved = hub.saved.first(where: { $0.id == connectionID }) {
@@ -784,10 +797,10 @@ struct ConnectFormView: View {
                     Text(verbatim: kind.tagline).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
                 }
             }
-            field("Name") {
+            field("Name (optional)") {
                 DSTextField("e.g. Prefect prod", text: $name, id: .dataConnectName, compact: true)
             }
-            field("Server URL") {
+            field("Server URL (required)") {
                 DSTextField("prefect.yourcompany.com", text: $url, id: .dataConnectUrl, compact: true, mono: true)
             }
             field("Authentication") {
@@ -824,7 +837,9 @@ struct ConnectFormView: View {
                 Spacer(minLength: 0)
                 if hub.connectBusy { ProgressView().controlSize(.small) }
                 if url.isEmpty {
-                    Text("Fill in the server URL", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
+                    // O porquê do botão apagado, no tom do texto (antes era cinza claro e passava despercebido).
+                    Label { Text("Fill in the server URL", bundle: .module) } icon: { Image(systemName: "info.circle") }
+                        .dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary)
                 }
                 DSButton(.dataConnectSave, id: .dataConnectSave, "Test and connect", variant: .primary, size: .sm, argument: .set(payload))
                     .disabled(url.isEmpty || hub.connectBusy)

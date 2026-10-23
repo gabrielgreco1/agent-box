@@ -464,7 +464,9 @@ final class PTYSession: @unchecked Sendable {
             applySize(cols: cols - 1, rows: rows, ptyOnly: true)
             queue.asyncAfter(deadline: .now() + .milliseconds(50)) { [self] in
                 guard state == .running else { return }
-                applySize(cols: cols, rows: rows, ptyOnly: true)
+                // O tamanho de agora, não o de 50 ms atrás: um resize nesse meio-tempo (aba abrindo, split) era desfeito e o PTY
+                // voltava à largura antiga, com o TUI desenhando na largura errada até o próximo resize.
+                applySize(cols: currentCols, rows: currentRows, ptyOnly: true)
             }
         }
     }

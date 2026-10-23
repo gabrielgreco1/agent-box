@@ -5,7 +5,7 @@ import Testing
 
 @testable import RackyPlatform
 
-@Suite struct UDSTransportTests {
+@Suite(.tags(.integration)) struct UDSTransportTests {
     // MARK: Bytes crus
 
     @Test func echoesLargePayloadThroughPartialWrites() async throws {

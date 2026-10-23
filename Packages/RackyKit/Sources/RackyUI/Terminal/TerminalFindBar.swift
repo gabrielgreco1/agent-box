@@ -108,7 +108,7 @@ struct TerminalFindBar: View {
                 .font(DS.Font.small.font)
                 .foregroundStyle(DS.Color.textPrimary)
                 .focused($fieldFocused)
-                .onSubmit { _ = NSEvent.modifierFlags.contains(.shift) ? model.previous() : model.next() }
+                .onSubmit { _ = EventModifiers.held(.shift) ? model.previous() : model.next() }
                 .onKeyPress(.escape) {
                     model.close()
                     return .handled

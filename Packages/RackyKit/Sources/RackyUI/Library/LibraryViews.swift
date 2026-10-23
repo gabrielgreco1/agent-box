@@ -235,16 +235,28 @@ struct ChipFlow: Layout {
         }
     }
 
+    /// Itens de alturas diferentes (seta e chip) ficam centrados na linha.
     private func arrange(_ width: CGFloat, _ subviews: Subviews) -> (size: CGSize, origins: [CGPoint]) {
         var origins: [CGPoint] = []
-        var x: CGFloat = 0, y: CGFloat = 0, rowHeight: CGFloat = 0, maxX: CGFloat = 0
-        for view in subviews {
+        var rows: [(start: Int, height: CGFloat)] = []
+        var sizes: [CGSize] = []
+        var x: CGFloat = 0, y: CGFloat = 0, rowHeight: CGFloat = 0, maxX: CGFloat = 0, rowStart = 0
+        for (index, view) in subviews.enumerated() {
             let size = view.sizeThatFits(.unspecified)
-            if x > 0, x + size.width > width { x = 0; y += rowHeight + spacing; rowHeight = 0 }
+            if x > 0, x + size.width > width {
+                rows.append((rowStart, rowHeight)); rowStart = index
+                x = 0; y += rowHeight + spacing; rowHeight = 0
+            }
             origins.append(CGPoint(x: x, y: y))
+            sizes.append(size)
             x += size.width + spacing
             rowHeight = max(rowHeight, size.height)
             maxX = max(maxX, x - spacing)
+        }
+        rows.append((rowStart, rowHeight))
+        for (r, row) in rows.enumerated() {
+            let end = r + 1 < rows.count ? rows[r + 1].start : origins.count
+            for i in row.start ..< end { origins[i].y += (row.height - sizes[i].height) / 2 }
         }
         return (CGSize(width: maxX, height: y + rowHeight), origins)
     }
