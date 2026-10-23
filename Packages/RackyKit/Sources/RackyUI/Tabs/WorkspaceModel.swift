@@ -1386,6 +1386,20 @@ final class WorkspaceModel {
     // MARK: Títulos (aviso agrupado)
 
     @ObservationIgnored private var titleNotifyPending = false
+    /// Últimos títulos OSC recebidos e ainda não aplicados ao estado (entram todos de uma vez no próximo tique).
+    @ObservationIgnored private var pendingTitles: [UUID: String] = [:]
+
+    /// Aplica os títulos do buffer ao estado (uma mutação por tique, não por quadro do spinner).
+    func flushPendingTitles() {
+        guard !pendingTitles.isEmpty else { return }
+        let titles = pendingTitles
+        pendingTitles = [:]
+        for (id, text) in titles {
+            guard let t = terminal(id), t.titleSource != .user, t.title != text || t.titleSource != .osc else { continue }
+            update(terminal: id) { $0.title = text; $0.titleSource = .osc }
+            debouncedSave(id)
+        }
+    }
     static let titleNotifyInterval: Duration = .milliseconds(500)
 
     /// Junta as mudanças de título de todos os terminais num aviso só a cada meio segundo.
@@ -1396,6 +1410,7 @@ final class WorkspaceModel {
             try? await Task.sleep(for: Self.titleNotifyInterval)
             guard let self else { return }
             self.titleNotifyPending = false
+            self.flushPendingTitles()
             self.notify()
         }
     }
@@ -1408,11 +1423,12 @@ final class WorkspaceModel {
         case .exit(let info):
             markExited(terminalID, info: info)
         case .title(let e):
-            // O título do Claude Code anima (spinner) várias vezes por segundo: igual não faz nada, e o aviso geral (que refaz a
-            // área dos panes, a sidebar e as tabs) sai no máximo a cada `titleNotifyInterval`, com o último título.
-            guard let t = terminal(terminalID), t.titleSource != .user, !e.text.isEmpty, e.text != t.title || t.titleSource != .osc else { return }
-            update(terminal: terminalID) { $0.title = e.text; $0.titleSource = .osc }
-            debouncedSave(terminalID)
+            // O título do Claude Code anima (spinner) várias vezes por segundo. O título novo espera no buffer (fora da observação) e entra no estado junto com os outros a cada intervalo: mudar
+            // `states` a cada quadro do spinner redesenhava a sidebar e os panes dezenas de vezes por segundo com vários agentes.
+            guard let t = terminal(terminalID), t.titleSource != .user, !e.text.isEmpty else { return }
+            let current = pendingTitles[terminalID] ?? (t.titleSource == .osc ? t.title : nil)
+            guard e.text != current else { return }
+            pendingTitles[terminalID] = e.text
             scheduleTitleNotify()
         case .cwd(let e):
             update(terminal: terminalID) { $0.cwd = e.path }
@@ -1474,13 +1490,15 @@ final class WorkspaceModel {
         }
     }
 
+    /// Título e cwd vão para o banco no máximo a cada 3 s por terminal (o último valor). Cada gravação acorda a observação do store, que
+    /// refaz a projeção da sidebar: com o spinner do Claude no título isso rodava sem parar.
     private func debouncedSave(_ id: UUID) {
-        titleTasks[id]?.cancel()
+        guard titleTasks[id] == nil else { return }
         titleTasks[id] = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .milliseconds(500))
+            try? await Task.sleep(for: .seconds(3))
             guard !Task.isCancelled, let self else { return }
-            self.save(terminal: id)
             self.titleTasks[id] = nil
+            self.save(terminal: id)
         }
     }
 }

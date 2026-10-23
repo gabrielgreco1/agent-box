@@ -177,7 +177,10 @@ struct SchedulerRig {
         let reply = await rig.parentCall("boxes_reserve", ["names": .array(names.map { .string($0) })])
         let took = started.duration(to: .now)
         #expect(took < .seconds(1), "boxes_reserve must not wait for the containers")
-        #expect(rig.states(reply.json).allSatisfy { $0 == "provisioning" })
+        // Sob carga a resposta pode sair depois de uma caixa já ter subido (o atraso falso é 120 ms): nenhuma fica na fila e o
+        // limite de tempo acima garante que a resposta não esperou as criações.
+        #expect(rig.states(reply.json).allSatisfy { $0 == "provisioning" || $0 == "ready" })
+        #expect(rig.states(reply.json).contains("provisioning"))
         for n in names { #expect(await rig.wait(n, .ready, timeout: .seconds(10))) }
         let peak = await rig.provisioning.peak
         #expect(peak > 1 && peak <= 4, "peak simultaneous creations: \(peak)")
