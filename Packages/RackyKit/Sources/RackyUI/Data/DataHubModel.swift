@@ -96,7 +96,9 @@ public enum DataConnectionKind: String, CaseIterable, Sendable, Codable {
     /// Webhook só recebe; o resto dá para navegar e gravar.
     public var canBrowse: Bool { self != .webhook }
     /// Dá para conectar de verdade hoje (os outros tipos ainda são de exemplo; o card diz "Soon").
-    public var connectable: Bool { self == .prefect }
+    public var connectable: Bool { self == .prefect || speaksPostgres }
+    /// Fala o protocolo do Postgres (PostgreSQL puro, RDS, Neon, Supabase): conecta de verdade com uma connection string.
+    public var speaksPostgres: Bool { self == .postgres || self == .supabase }
     public var speaksSQL: Bool { family == .database || family == .warehouse }
 }
 
@@ -188,11 +190,15 @@ public struct DataDelivery: Identifiable, Equatable, Sendable {
 /// Uma conexão que o usuário adicionou (não de exemplo): o que fica salvo no app. A senha ou chave fica no cofre (`SecretVault`),
 /// aqui só o id dela.
 nonisolated public struct SavedConnection: Codable, Equatable, Sendable, Identifiable {
-    public enum AuthKind: String, Codable, Sendable { case none, basic, apiKey }
+    public enum AuthKind: String, Codable, Sendable {
+        case none, basic, apiKey
+        /// Postgres/Supabase: a connection string inteira (com a senha) é o segredo do cofre.
+        case connectionString
+    }
     public var id: String
     public var kind: DataConnectionKind
     public var name: String
-    /// URL do servidor (Prefect: a base da API, `…/api`).
+    /// URL do servidor (Prefect: a base da API, `…/api`; Postgres: só `host:porta/banco`, a string de conexão fica no cofre).
     public var url: String
     public var auth: AuthKind
     public var secretID: UUID?

@@ -1,5 +1,5 @@
 {
-  "originHash" : "c656b03385999e22764ff55f9c3abfa3740c5d4ee505c7367074b3a6011ddca6",
+  "originHash" : "103120abb1d0d2f5ffa2f76174149b6e71880c630886704943f6c9a49e72d109",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -62,6 +62,15 @@
       "state" : {
         "revision" : "aa3626829160917d4378330617971977cbd78f5b",
         "version" : "1.0.1"
+      }
+    },
+    {
+      "identity" : "postgres-nio",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor/postgres-nio.git",
+      "state" : {
+        "revision" : "649adba966158859f4fb1767e4d11802966d3fb4",
+        "version" : "1.33.2"
       }
     },
     {
@@ -188,6 +197,15 @@
       "state" : {
         "revision" : "4038b6a4f74a1426f47eb1dd5b4bb5628a15d597",
         "version" : "1.16.1"
+      }
+    },
+    {
+      "identity" : "swift-metrics",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-metrics.git",
+      "state" : {
+        "revision" : "9467f9cc3c32b4386fad1ecc4618328887ef5758",
+        "version" : "2.12.0"
       }
     },
     {

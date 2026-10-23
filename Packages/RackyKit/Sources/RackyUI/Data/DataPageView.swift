@@ -361,6 +361,12 @@ struct DataExplorer: View {
             }
             if open {
                 ForEach(connection.children) { child in nodeRows(child, connection: connection, depth: 1, path: []) }
+                if let status = catalogStatus(connection) {
+                    Text(verbatim: status.text).dsFont(DS.Font.small).foregroundStyle(status.error ? DS.Color.warning : DS.Color.textTertiary)
+                        .lineLimit(3).fixedSize(horizontal: false, vertical: true)
+                        .padding(.leading, DS.Space.s1 + (DataMetrics.indent + DataMetrics.indent)).padding(.trailing, DS.Space.s2).padding(.vertical, DS.Space.s1)
+                        .a11y(.dataExplorerNode("\(connection.id)/status"), kind: "text", label: status.text)
+                }
                 if connection.kind.speaksSQL {
                     ActionButton(.dataNewQuery, id: .dataExplorerNode("\(connection.id)/query"), argument: .select(connection.id)) {
                         rowLabel(depth: 1, mark: .symbol("plus.rectangle", nil), title: String(localized: "New SQL query", bundle: .module), detail: nil, chevron: nil,
@@ -370,6 +376,16 @@ struct DataExplorer: View {
                 }
             }
         }
+    }
+
+    /// O que dizer sob uma conexão Postgres aberta: lendo, erro ou vazia.
+    private func catalogStatus(_ connection: DataConnection) -> (text: String, error: Bool)? {
+        guard hub.isLivePostgres(connection.id) else { return nil }
+        let state = hub.catalogs[connection.id]
+        if let error = state?.error { return (error, true) }
+        if state?.schemas == nil { return (String(localized: "Reading schemas…", bundle: .module), false) }
+        if connection.children.allSatisfy({ $0.children.isEmpty }) { return (String(localized: "No tables in this database.", bundle: .module), false) }
+        return nil
     }
 
     private func nodeRows(_ node: DataNode, connection: DataConnection, depth: Int, path: [String]) -> AnyView {
@@ -941,6 +957,9 @@ struct DataLocationBar: View {
         switch object {
         case .dataset(let id):
             return hub.summary(ofDataset: id).map { String(localized: "\($0.rowCount.formatted()) rows", bundle: .module) }
+        case .table where hub.isLivePostgres(object.connectionID):
+            let rows = hub.rowTotal(object)
+            return rows.approximate ? String(localized: "about \(rows.total.formatted()) rows", bundle: .module) : String(localized: "\(rows.total.formatted()) rows", bundle: .module)
         case .table, .tab:
             let total = DataHubFixtures.grid(for: object).total
             return String(localized: "\(total.formatted()) rows", bundle: .module)

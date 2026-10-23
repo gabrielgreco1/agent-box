@@ -15,6 +15,7 @@ let nonisolatedSettings: [SwiftSetting] = [
 let swiftTerm: Target.Dependency = .product(name: "SwiftTerm", package: "SwiftTerm")
 let grdb: Target.Dependency = .product(name: "GRDB", package: "GRDB.swift")
 let argumentParser: Target.Dependency = .product(name: "ArgumentParser", package: "swift-argument-parser")
+let postgresNIO: Target.Dependency = .product(name: "PostgresNIO", package: "postgres-nio")
 let snapshotTesting: Target.Dependency = .product(name: "SnapshotTesting", package: "swift-snapshot-testing")
 
 let containerization: Target.Dependency = .product(name: "Containerization", package: "containerization")
@@ -56,6 +57,8 @@ let package = Package(
         .package(url: "https://github.com/groue/GRDB.swift.git", exact: "7.11.1"),
         .package(url: "https://github.com/apple/swift-argument-parser.git", exact: "1.8.2"),
         .package(url: "https://github.com/pointfreeco/swift-snapshot-testing.git", exact: "1.19.6"),
+        // Conector PostgreSQL/Supabase/RDS da área Data (só leitura). Exata; só o RackyCore a importa.
+        .package(url: "https://github.com/vapor/postgres-nio.git", exact: "1.33.2"),
         // Runtime sem Docker (RackyVZ): VMs Linux leves sobre Virtualization.framework. Exata; só o alvo RackyVZ a importa.
         .package(url: "https://github.com/apple/containerization.git", exact: "0.52.1"),
     ],
@@ -65,7 +68,7 @@ let package = Package(
         lib("RackyTerminalCore", [swiftTerm]),
         lib("RackyStore", ["RackyPlatform", "RackyProtocol", grdb]),
         lib("RackyDocker", ["RackyPlatform", "RackyProtocol"]),
-        lib("RackyCore", ["RackyProtocol", "RackyPlatform", "RackyStore", "RackyDocker"]),
+        lib("RackyCore", ["RackyProtocol", "RackyPlatform", "RackyStore", "RackyDocker", postgresNIO]),
         // Backend de computadores sem Docker (VMs via apple/containerization). Isolado: RackyDocker e RackyCore não o importam.
         lib("RackyVZ", ["RackyProtocol", "RackyPlatform", "RackyDocker", "RackyCore", containerization, containerizationOCI, containerizationExtras, containerizationOS, containerizationEXT4]),
         lib("RackyDesignSystem", ["RackyProtocol"], ui: true, resources: [.copy("Resources/Fonts"), .copy("Resources/AgentLogos")]),
@@ -103,7 +106,7 @@ let package = Package(
         tests("StoreTests", ["RackyStore", "RackyProtocol", "RackyPlatform", grdb]),
         .testTarget(
             name: "CoreTests",
-            dependencies: ["RackyCore", "RackyProtocol", "RackyPlatform", "RackyStore", "RackyDocker", "racky"],
+            dependencies: ["RackyCore", "RackyProtocol", "RackyPlatform", "RackyStore", "RackyDocker", "racky", postgresNIO],
             exclude: ["Launch/Fixtures", "Launch/Golden", "GitHub/Fixtures", "Computers/Orchestration/Fixtures"], // lidos por caminho (#filePath); golden gravado com RACKY_UPDATE_GOLDEN=1
             swiftSettings: nonisolatedSettings
         ),

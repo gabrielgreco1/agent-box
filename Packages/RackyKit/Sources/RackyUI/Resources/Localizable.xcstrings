@@ -11411,7 +11411,27 @@
     "Name (optional)": {},
     "Server URL (required)": {},
     "Changes ask you to confirm.": {},
-    "1 record": {}
+    "1 record": {},
+    "The connection string is not in the vault. Remove the connection and add it again.": {},
+    "The secure vault is not available, so the connection string cannot be stored.": {},
+    "The connection string could not be stored in the vault.": {},
+    "Reading the table…": {},
+    "Page %lld of %@ · about %@ rows": {},
+    "Page %lld of %@ · %@ rows": {},
+    "about %@ rows": {},
+    "First %@ rows only · %lld ms": {},
+    "Running…": {},
+    "Reading schemas…": {},
+    "No tables in this database.": {},
+    "Connection string (required)": {},
+    "Fill in the connection string": {},
+    "Supabase: Project Settings → Database → Connection string (Session pooler).": {},
+    "Any Postgres, RDS included. Add ?sslmode=require (TLS is always on unless the string says sslmode=disable).": {},
+    "Racky only reads: every query runs in a read-only transaction. The connection string stays in this Mac's secure vault.": {},
+    "e.g. Supabase prod": {},
+    "e.g. Analytics": {},
+    "postgresql://postgres.[ref]:[password]@aws-0-us-east-1.pooler.supabase.com:6543/postgres": {},
+    "postgresql://user:password@mydb.xxxx.us-east-1.rds.amazonaws.com:5432/postgres": {}
   },
   "version": "1.0"
 }

@@ -509,6 +509,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `data.query.run`
 - `data.query.target`
 - `data.query.result`
+- `data.query.error`
+- `data.table.error`
 - `data.folder.entry.<name>`
 - `data.folder.preview`
 - `data.webhook.log`

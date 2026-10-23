@@ -61,7 +61,13 @@ struct DataObjectActions: View {
                 if let model = hub.datasets.models[id] { DatasetToolbar(model: model, labels: !compact) }
             case .table(let connection, _, _):
                 button(.dataNewQuery, id: .dataQueryTarget, String(localized: "New query", bundle: .module), "terminal", .select(connection))
-            case .query:
+                if hub.isLivePostgres(connection) {
+                    button(.dataConnectionRemove, id: .dataConnectionRemove, String(localized: "Remove connection", bundle: .module), "trash", .select(connection))
+                }
+            case .query(let connection, _):
+                if hub.isLivePostgres(connection) {
+                    button(.dataConnectionRemove, id: .dataConnectionRemove, String(localized: "Remove connection", bundle: .module), "trash", .select(connection))
+                }
                 if compact {
                     button(.dataQueryRun, id: .dataQueryRun, String(localized: "Run", bundle: .module), "play.fill", .press)
                 } else {
@@ -194,28 +200,82 @@ struct TableObjectView: View {
     let object: DataObject
 
     var body: some View {
-        let grid = DataHubFixtures.grid(for: object)
+        let live = hub.isLivePostgres(object.connectionID)
+        let grid = live ? hub.tableGrid(object) : DataHubFixtures.grid(for: object)
         VStack(spacing: 0) {
             DataTabsBar(hub: hub, object: object)
             switch hub.tableTab(object) {
             case .data:
                 let page = hub.tablePage(object)
-                let pages = DataHubFixtures.pageCount(for: object)
-                DataGridView(
-                    grid: DataHubFixtures.grid(for: object, page: page),
-                    footer: String(localized: "Page \(page + 1) of \(pages.formatted()) · \(grid.total.formatted()) rows", bundle: .module),
-                    pager: (page > 0, page + 1 < pages))
+                let pages = hub.pageCount(for: object)
+                if live {
+                    LiveTableData(hub: hub, object: object, page: page, pages: pages)
+                } else {
+                    DataGridView(
+                        grid: DataHubFixtures.grid(for: object, page: page),
+                        footer: String(localized: "Page \(page + 1) of \(pages.formatted()) · \(grid.total.formatted()) rows", bundle: .module),
+                        pager: (page > 0, page + 1 < pages))
+                }
             case .overview: DataOverviewView(hub: hub, object: object)
             case .structure:
-                DataGridView(
-                    grid: DataGrid(
-                        columns: [.init(name: "column", type: "name"), .init(name: "type", type: "text"), .init(name: "nullable", type: "bool"), .init(name: "key", type: "text")],
-                        rows: grid.columns.map { [$0.name, $0.type, $0.nullable ? "yes" : "no", $0.key ? "primary key" : ""] },
-                        total: grid.columns.count),
-                    footer: String(localized: "\(grid.columns.count) columns", bundle: .module))
+                VStack(spacing: 0) {
+                    if live, let error = hub.tableStates[object]?.error { DataErrorBanner(error: error, id: .dataTableError) }
+                    DataGridView(
+                        grid: DataGrid(
+                            columns: [.init(name: "column", type: "name"), .init(name: "type", type: "text"), .init(name: "nullable", type: "bool"), .init(name: "key", type: "text")],
+                            rows: grid.columns.map { [$0.name, $0.type, $0.nullable ? "yes" : "no", $0.key ? "primary key" : ""] },
+                            total: grid.columns.count),
+                        footer: String(localized: "\(grid.columns.count) columns", bundle: .module))
+                }
             case .writers: DataWritersView(hub: hub, object: object)
             }
         }
+    }
+}
+
+/// Dados de uma tabela de uma conexão Postgres de verdade: a página lida do servidor (100 linhas), o erro se a leitura falhou.
+struct LiveTableData: View {
+    let hub: DataHubController
+    let object: DataObject
+    let page: Int
+    let pages: Int
+
+    var body: some View {
+        let state = hub.tableStates[object] ?? PostgresTableState()
+        VStack(spacing: 0) {
+            if let error = state.error { DataErrorBanner(error: error, id: .dataTableError) }
+            if !state.loaded {
+                Text(verbatim: state.error == nil ? String(localized: "Reading the table…", bundle: .module) : "")
+                    .dsFont(DS.Font.body).foregroundStyle(DS.Color.textTertiary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                let total = state.total.formatted()
+                DataGridView(
+                    grid: hub.tableGrid(object),
+                    footer: state.approximate
+                        ? String(localized: "Page \(page + 1) of \(pages.formatted()) · about \(total) rows", bundle: .module)
+                        : String(localized: "Page \(page + 1) of \(pages.formatted()) · \(total) rows", bundle: .module),
+                    pager: (page > 0, page + 1 < pages))
+            }
+        }
+    }
+}
+
+/// Faixa de erro de leitura (conexão, SQL): em âmbar, sem derrubar a tela.
+struct DataErrorBanner: View {
+    let error: String
+    let id: A11yID
+
+    var body: some View {
+        HStack(spacing: DS.Space.s2) {
+            Image(systemName: "exclamationmark.triangle.fill").font(.system(size: DS.Space.s3))
+            Text(verbatim: error).dsFont(DS.Font.small).fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+        .foregroundStyle(DS.Color.warning)
+        .padding(.horizontal, DS.Space.s4)
+        .padding(.vertical, DS.Space.s2)
+        .a11y(id, kind: "text", label: error)
     }
 }
 
@@ -413,9 +473,19 @@ struct QueryObjectView: View {
                 .background(DS.Color.canvas)
                 .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
                 .a11y(.dataQueryEditor, kind: "textarea")
-            if let result = hub.queryResult[object] {
-                DataGridView(grid: result.grid, footer: String(localized: "\(result.grid.rows.count) rows · \(result.milliseconds) ms", bundle: .module))
+            if let error = hub.queryErrors[object] {
+                DataErrorBanner(error: error, id: .dataQueryError)
+                Spacer(minLength: 0)
+            } else if let result = hub.queryResult[object] {
+                DataGridView(
+                    grid: result.grid,
+                    footer: hub.queryTruncated.contains(object)
+                        ? String(localized: "First \(result.grid.rows.count.formatted()) rows only · \(result.milliseconds) ms", bundle: .module)
+                        : String(localized: "\(result.grid.rows.count) rows · \(result.milliseconds) ms", bundle: .module))
                     .a11y(.dataQueryResult, kind: "table")
+            } else if hub.queryBusy.contains(object) {
+                Text("Running…", bundle: .module).dsFont(DS.Font.body).foregroundStyle(DS.Color.textTertiary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 Text("Run the query to see the result here.", bundle: .module).dsFont(DS.Font.body).foregroundStyle(DS.Color.textTertiary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -788,7 +858,62 @@ struct ConnectFormView: View {
         return (try? String(data: JSONSerialization.data(withJSONObject: form), encoding: .utf8)) ?? "{}"
     }
 
-    var body: some View {
+    @ViewBuilder var body: some View {
+        if kind.speaksPostgres { postgresBody } else { prefectBody }
+    }
+
+    /// Postgres, RDS e Supabase: uma connection string, que é o segredo inteiro (vai para o cofre; o estado do app só guarda host e banco).
+    private var postgresBody: some View {
+        let form: [String: String] = ["name": name, "url": "", "auth": SavedConnection.AuthKind.connectionString.rawValue, "user": "", "secret": secret]
+        let payload = (try? String(data: JSONSerialization.data(withJSONObject: form), encoding: .utf8)) ?? "{}"
+        return VStack(alignment: .leading, spacing: DS.Space.s4) {
+            HStack(spacing: DS.Space.s2_5) {
+                DSDataLogo(kind.brand, size: DataMetrics.connectLogo, tile: true)
+                VStack(alignment: .leading, spacing: .zero) {
+                    Text(verbatim: kind.title).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary)
+                    Text(verbatim: kind.tagline).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                }
+            }
+            field("Name (optional)") {
+                DSTextField(kind == .supabase ? "e.g. Supabase prod" : "e.g. Analytics", text: $name, id: .dataConnectName, compact: true)
+            }
+            field("Connection string (required)") {
+                DSTextField(
+                    kind == .supabase
+                        ? "postgresql://postgres.[ref]:[password]@aws-0-us-east-1.pooler.supabase.com:6543/postgres"
+                        : "postgresql://user:password@mydb.xxxx.us-east-1.rds.amazonaws.com:5432/postgres",
+                    text: $secret, id: .dataConnectSecret, compact: true, mono: true, secure: true)
+            }
+            Text(kind == .supabase
+                 ? "Supabase: Project Settings → Database → Connection string (Session pooler)."
+                 : "Any Postgres, RDS included. Add ?sslmode=require (TLS is always on unless the string says sslmode=disable).", bundle: .module)
+                .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).fixedSize(horizontal: false, vertical: true)
+            Text("Racky only reads: every query runs in a read-only transaction. The connection string stays in this Mac's secure vault.", bundle: .module)
+                .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).fixedSize(horizontal: false, vertical: true)
+            if let error = hub.connectError {
+                HStack(spacing: DS.Space.s1_5) {
+                    Image(systemName: "exclamationmark.circle").font(.system(size: DS.Space.s3))
+                    Text(verbatim: error).dsFont(DS.Font.small).fixedSize(horizontal: false, vertical: true)
+                }
+                .foregroundStyle(DS.Color.destructive)
+                .a11y(.dataConnectError, kind: "text", label: error)
+            }
+            HStack(spacing: DS.Space.s2) {
+                DSButton(.dataConnectStart, id: nil, "Back", variant: .ghost, size: .sm, symbol: "chevron.left", argument: .select("close"))
+                Spacer(minLength: 0)
+                if hub.connectBusy { ProgressView().controlSize(.small) }
+                if secret.isEmpty {
+                    Label { Text("Fill in the connection string", bundle: .module) } icon: { Image(systemName: "info.circle") }
+                        .dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary)
+                }
+                DSButton(.dataConnectSave, id: .dataConnectSave, "Test and connect", variant: .primary, size: .sm, argument: .set(payload))
+                    .disabled(secret.isEmpty || hub.connectBusy)
+            }
+        }
+        .a11y(.dataConnectForm, kind: "form", label: kind.title)
+    }
+
+    private var prefectBody: some View {
         VStack(alignment: .leading, spacing: DS.Space.s4) {
             HStack(spacing: DS.Space.s2_5) {
                 DSDataLogo(kind.brand, size: DataMetrics.connectLogo, tile: true)

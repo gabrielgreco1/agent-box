@@ -55,6 +55,8 @@ extension DataHubController {
         var c = s.connection
         if s.kind == .prefect {
             c.children = [DataNode(id: "\(s.id)/runs", kind: .runs, name: String(localized: "Flow runs", bundle: .module))]
+        } else if s.kind.speaksPostgres {
+            c.children = postgresChildren(of: s)
         }
         return c
     }
@@ -76,6 +78,7 @@ extension DataHubController {
     }
 
     func saveConnection(_ form: ConnectForm) async -> Bool {
+        if let kind = connecting, kind.speaksPostgres { return await savePostgres(form, kind: kind) }
         guard let kind = connecting, kind == .prefect else { connectError = String(localized: "This connection type is not available yet.", bundle: .module); return false }
         guard let url = PrefectClient.apiURL(from: form.url) else { connectError = String(localized: "The server URL is not valid.", bundle: .module); return false }
         let auth: PrefectClient.Auth
@@ -83,6 +86,7 @@ extension DataHubController {
         case .none: auth = .none
         case .basic: auth = .basic("\(form.user ?? ""):\(form.secret ?? "")")
         case .apiKey: auth = .apiKey(form.secret ?? "")
+        case .connectionString: auth = .none
         }
         connectBusy = true
         defer { connectBusy = false }
@@ -121,6 +125,7 @@ extension DataHubController {
         try? await store?.setUIState(Self.savedKey, saved)
         for object in tabs where object.connectionID == id { close(object) }
         runs[id] = nil
+        forgetPostgres(id)
         rebuildConnections()
     }
 

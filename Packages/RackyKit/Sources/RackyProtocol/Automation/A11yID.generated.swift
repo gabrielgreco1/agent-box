@@ -482,6 +482,10 @@ extension A11yID {
     public static let dataQueryTarget = A11yID(unchecked: "data.query.target")
     /// `data.query.result`
     public static let dataQueryResult = A11yID(unchecked: "data.query.result")
+    /// `data.query.error`
+    public static let dataQueryError = A11yID(unchecked: "data.query.error")
+    /// `data.table.error`
+    public static let dataTableError = A11yID(unchecked: "data.table.error")
     /// `data.folder.preview`
     public static let dataFolderPreview = A11yID(unchecked: "data.folder.preview")
     /// `data.webhook.log`
@@ -2345,6 +2349,8 @@ extension A11yID {
         A11yIDSpec(pattern: "data.query.run", surface: "Páginas"),
         A11yIDSpec(pattern: "data.query.target", surface: "Páginas"),
         A11yIDSpec(pattern: "data.query.result", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.query.error", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.table.error", surface: "Páginas"),
         A11yIDSpec(pattern: "data.folder.entry.<name>", surface: "Páginas"),
         A11yIDSpec(pattern: "data.folder.preview", surface: "Páginas"),
         A11yIDSpec(pattern: "data.webhook.log", surface: "Páginas"),

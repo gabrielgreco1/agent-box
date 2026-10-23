@@ -15,14 +15,14 @@ public final class DataHubController {
     public private(set) var active: DataObject?
     public internal(set) var expanded: Set<String> = []
     /// Página da grade de cada tabela de conexão.
-    public private(set) var tablePages: [DataObject: Int] = [:]
+    public internal(set) var tablePages: [DataObject: Int] = [:]
     public func tablePage(_ object: DataObject) -> Int { tablePages[object] ?? 0 }
 
     /// Sub-aba de cada tabela aberta (`data`, `structure`, `writers`).
     public private(set) var tableTabs: [DataObject: DataTableTab] = [:]
     /// Texto de cada consulta aberta e o resultado da última execução.
     public var queryText: [DataObject: String] = [:]
-    public private(set) var queryResult: [DataObject: (grid: DataGrid, milliseconds: Int)] = [:]
+    public internal(set) var queryResult: [DataObject: (grid: DataGrid, milliseconds: Int)] = [:]
     public internal(set) var showingConnect = false
     /// Explorer: largura arrastada pelo usuário e se está recolhido.
     public var explorerWidth: CGFloat = 268
@@ -48,6 +48,15 @@ public final class DataHubController {
     /// Flow runs de cada orquestrador aberto e o filtro escolhido.
     public internal(set) var runs: [String: PrefectRunsState] = [:]
     public internal(set) var runsFilter: [String: PrefectRunsFilter] = [:]
+    /// Postgres/Supabase de verdade: o catálogo (schemas e tabelas) de cada conexão, a última leitura de cada tabela aberta e o erro
+    /// da última consulta de cada query.
+    public internal(set) var catalogs: [String: PostgresCatalogState] = [:]
+    public internal(set) var tableStates: [DataObject: PostgresTableState] = [:]
+    public internal(set) var queryErrors: [DataObject: String] = [:]
+    public internal(set) var queryTruncated: Set<DataObject> = []
+    public internal(set) var queryBusy: Set<DataObject> = []
+    /// Abre o conector de uma conexão (trocável nos testes por um servidor falso; nunca toca a rede).
+    @ObservationIgnored var postgresFactory: @Sendable (PostgresConnectionInfo) -> any PostgresBrowsing = { PostgresConnector(info: $0) }
     @ObservationIgnored var store: RackyStore?
     @ObservationIgnored var vault: SecretVault?
     /// Leitura do Prefect (trocável nos testes por um servidor falso).
@@ -129,7 +138,10 @@ public final class DataHubController {
         if case .dataset(let id) = object { Task { _ = await datasets.openInHub(id) } }
         if tableTabs[object] == nil { tableTabs[object] = .data }
         if let feeding = feedingDataset(of: object) { Task { await datasets.prepare(feeding) } }
-        if case .query = object, queryText[object] == nil { queryText[object] = DataHubFixtures.sampleQuery }
+        if case .query = object, queryText[object] == nil {
+            queryText[object] = isLivePostgres(object.connectionID) ? PostgresStarter.query : DataHubFixtures.sampleQuery
+        }
+        if case .table = object, isLivePostgres(object.connectionID) { Task { await loadTable(object) } }
     }
 
     public func close(_ object: DataObject) {
@@ -145,7 +157,11 @@ public final class DataHubController {
     }
 
     public func toggle(_ node: String) {
-        if expanded.contains(node) { expanded.remove(node) } else { expanded.insert(node) }
+        if expanded.contains(node) { expanded.remove(node) } else {
+            expanded.insert(node)
+            // Abrir uma conexão Postgres lê os schemas e tabelas dela (uma vez; de novo se a leitura falhou).
+            if isLivePostgres(node), catalogs[node]?.schemas == nil { Task { await loadCatalog(node) } }
+        }
     }
 
     public func newQuery(on connection: String) -> DataObject {
@@ -157,6 +173,7 @@ public final class DataHubController {
 
     public func run(_ object: DataObject) {
         guard case .query = object else { return }
+        if isLivePostgres(object.connectionID) { Task { await runQuery(object) }; return }
         queryResult[object] = (DataHubFixtures.grid(for: object), 42)
     }
 
@@ -201,6 +218,8 @@ public final class DataHubController {
             }
             switch connection.kind.family {
             case .database, .warehouse:
+                // Conexão Postgres de verdade é só leitura: ninguém grava nela, então não é destino de "Save data to".
+                if isLivePostgres(connection.id) { break }
                 for schema in connection.children {
                     for table in schema.children where table.kind == .table {
                         let object = DataObject.table(connection: connection.id, schema: schema.name, name: table.name)
@@ -272,7 +291,7 @@ public final class DataHubController {
         }
         try registry.register(.dataQueryRun) { [unowned self] _ in
             guard let active, case .query = active else { throw ActionError.failed(.dataQueryRun, message: "no query open") }
-            run(active)
+            if isLivePostgres(active.connectionID) { await runQuery(active) } else { run(active) }
             return "ok"
         }
         try registry.register(.dataAddConnection) { [unowned self] arg in
@@ -309,13 +328,14 @@ public final class DataHubController {
         }
         try registry.register(.dataTablePage) { [unowned self] arg in
             guard let active, case .table = active else { throw ActionError.failed(.dataTablePage, message: "no table open") }
-            let pages = DataHubFixtures.pageCount(for: active)
+            let pages = pageCount(for: active)
             let page = tablePage(active)
             switch arg.value {
             case "next": tablePages[active] = min(page + 1, pages - 1)
             case "prev": tablePages[active] = max(page - 1, 0)
             default: throw ActionError.failed(.dataTablePage, message: "expected select(next|prev)")
             }
+            if isLivePostgres(active.connectionID), tablePage(active) != page { await loadTable(active) }
             return "\(tablePage(active) + 1)"
         }
         try registry.register(.dataRenameDataset) { [unowned self] arg in
