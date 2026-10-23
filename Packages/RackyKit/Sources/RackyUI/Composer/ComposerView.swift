@@ -311,7 +311,8 @@ struct ComposerView: View {
             VStack(alignment: .leading, spacing: DS.Space.s2) {
                 HStack(alignment: .top, spacing: DS.Space.s1) {
                     Image(systemName: "exclamationmark.triangle.fill").font(.system(size: DS.Space.s2_5))
-                    Text("Two risks together: this agent won't ask before running commands, and what it collects is copied to a protected table. Go back to pick another profile or another place to save data.", bundle: .module)
+                    // Diz qual campo causa cada risco (Profile e Save data to): sem isso os testers não sabiam o que mudar.
+                    Text(verbatim: String(localized: "Two risks together: the \(model.profileName) profile skips permission prompts, and Save data to copies what the agent collects to a protected table. Go back to change the profile or Save data to.", bundle: .module))
                         .dsFont(DS.Font.label).fixedSize(horizontal: false, vertical: true)
                 }
                 .foregroundStyle(DS.Color.warning)

@@ -669,15 +669,10 @@ struct DataConnectSheet: View {
                         // O que conecta de verdade hoje vem primeiro (antes ficava no fim da lista, cortado, e parecia que nada funcionava).
                         VStack(alignment: .leading, spacing: DS.Space.s2) {
                             Text("Connect now", bundle: .module).dsFont(DS.Font.sectionLabel).foregroundStyle(DS.Color.textPrimary)
-                            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: DS.Space.s2), count: 3), spacing: DS.Space.s2) {
-                                ForEach(DataConnectionKind.allCases.filter(\.connectable), id: \.self) { kind in
-                                    ActionButton(.dataConnectStart, id: .dataConnectKind(kind.rawValue), argument: .select(kind.rawValue)) {
-                                        KindCard(kind: kind)
-                                            .overlay(RoundedRectangle(cornerRadius: DS.Radius.md).strokeBorder(DS.Color.textTertiary))
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                            }
+                            // Lugares de dados numa linha; orquestradores (só acompanhar o que roda) num grupo próprio, em vez do Prefect
+                            // sozinho numa segunda linha parecendo mais um banco.
+                            connectGroup(String(localized: "Data", bundle: .module), DataConnectionKind.allCases.filter { $0.connectable && $0.family != .orchestrator })
+                            connectGroup(String(localized: "Monitor runs", bundle: .module), DataConnectionKind.allCases.filter { $0.connectable && $0.family == .orchestrator })
                         }
                         let soonCount = DataConnectionKind.allCases.filter { !$0.connectable }.count
                         // lint-ui: allow buttons abre/fecha a lista de "Coming soon" (estado local da folha, sem ação de registro)
@@ -770,6 +765,21 @@ struct DataConnectSheet: View {
             .animation(MotionPolicy.shared.animation(MotionTokens.Easing.ease, MotionTokens.Duration.hover), value: hovering)
             .opacity(kind.connectable ? 1 : 0.8)
             .help(kind.connectable ? kind.tagline : kind.tagline + " · " + String(localized: "Coming soon: for now this one is a sample.", bundle: .module))
+        }
+    }
+
+    @ViewBuilder private func connectGroup(_ title: String, _ kinds: [DataConnectionKind]) -> some View {
+        if !kinds.isEmpty {
+            Text(verbatim: title).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: DS.Space.s2), count: 3), spacing: DS.Space.s2) {
+                ForEach(kinds, id: \.self) { kind in
+                    ActionButton(.dataConnectStart, id: .dataConnectKind(kind.rawValue), argument: .select(kind.rawValue)) {
+                        KindCard(kind: kind)
+                            .overlay(RoundedRectangle(cornerRadius: DS.Radius.md).strokeBorder(DS.Color.textTertiary))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
         }
     }
 

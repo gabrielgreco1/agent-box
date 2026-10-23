@@ -28,7 +28,7 @@ enum DataMetrics {
     static let tabsMenuWidth: CGFloat = 64
     /// Nome de uma tab inativa quando a faixa não cabe (encurta com "…" antes de rolar).
     static let tabTitleShort: CGFloat = 76
-    static let tabTitleTiny: CGFloat = 40
+    static let tabTitleTiny: CGFloat = 60
     static let tabsBeforeMenu = 3
     static let renameInset: CGFloat = 64
     static let logoTile: CGFloat = 20
