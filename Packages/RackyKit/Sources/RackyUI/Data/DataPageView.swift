@@ -10,6 +10,9 @@ import SwiftUI
 enum DataMetrics {
     /// Traço do colchete que liga a seta do fluxo a cada destino.
     static let branchLine: CGFloat = 1
+    /// Painel de Overview/Structure/Who writes here aberto em cima da grade (a grade continua visível embaixo).
+    static let panelHeight: CGFloat = 360
+    static let panelMinHeight: CGFloat = 160
     static let explorerMin: CGFloat = 200
     static let contentMin: CGFloat = 640
     static let explorerTitleMin: CGFloat = 100
@@ -135,7 +138,7 @@ struct DataPageView: View {
                         case .runs: EmptyView()  // orquestrador: só leitura do que roda, não há caminho de dado
                         case .table:
                             // Tabela que o Racky não alimenta não tem caminho: a frase ao lado das abas já diz isso.
-                            if hub.copySource(of: active) != nil, hub.tableTab(active) != .overview { DataLineageStrip(hub: hub, object: active, compact: true) }
+                            if hub.copySource(of: active) != nil { DataLineageStrip(hub: hub, object: active, compact: true) }
                         default: DataLineageStrip(hub: hub, object: active)
                         }
                         DataObjectView(hub: hub, object: active)
@@ -1144,7 +1147,7 @@ struct DataLineageStrip: View {
     }
 
     /// Uma frase que diz qual é o original e para que lado o dado anda.
-    private var explanation: String? {
+    var explanation: String? {
         switch object {
         case .query(let connection, _):
             return String(localized: "This query only reads \(hub.connection(connection)?.name ?? ""). SQL that changes data asks you to confirm first.", bundle: .module)

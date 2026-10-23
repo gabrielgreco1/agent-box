@@ -86,11 +86,28 @@ import Testing
         #expect(rig.env.dataHub.tableTab(object) == .overview)
         await VisualBatchTests.settle(1200)  // o gráfico termina de se desenhar antes da foto
         shot(rig, "flow-6-dataset-overview")
+        #expect(rig.env.elements.frame(of: .datasetTable) != nil, "a grade continua na tela com o painel aberto")
         try click(rig, .dataTableTab("structure"))
         await VisualBatchTests.settle(300)
         #expect(rig.env.dataHub.tableTab(object) == .structure)
-        try click(rig, .dataTableTab("data"))
+        shot(rig, "flow-7-dataset-structure")
+        // Clicar de novo no mesmo botão recolhe o painel; o botão de minimizar faz o mesmo.
+        try click(rig, .dataTableTab("structure"))
         await VisualBatchTests.settle(300)
+        #expect(rig.env.dataHub.tableTab(object) == .data)
+        try click(rig, .dataTableTab("writers"))
+        await VisualBatchTests.settle(300)
+        #expect(rig.env.dataHub.tableTab(object) == .writers)
+        shot(rig, "flow-8-dataset-writers")
+        try click(rig, .dataPanelCollapse)
+        await VisualBatchTests.settle(300)
+        #expect(rig.env.dataHub.tableTab(object) == .data)
+        // Bug do dono: com título longo o ✕ da tab ativa ficava em cima das letras; o título corta antes dele.
+        if let tab = rig.env.workspace.activeTab {
+            rig.env.workspace.commitRename("confirmar-estrutura-do-projeto-e-mediadores", tabID: tab.id)
+            await VisualBatchTests.settle(300)
+            shot(rig, "flow-9-long-tab-title")
+        }
         // O agente no caminho leva ao terminal dele (a tab dos agentes), mesmo já estando na sessão.
         try click(rig, .dataFlowItem("session"))
         await VisualBatchTests.settle(500)

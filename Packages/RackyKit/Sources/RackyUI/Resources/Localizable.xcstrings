@@ -11536,6 +11536,94 @@
           }
         }
       }
+    },
+    "Agent in session %@. Pause stops its new writes; rows already written stay.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agent in session %@. Pause stops its new writes; rows already written stay."
+          }
+        }
+      }
+    },
+    "1 column": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 column"
+          }
+        }
+      }
+    },
+    "time · added by Racky": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "time · added by Racky"
+          }
+        }
+      }
+    },
+    "%@ in session %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ in session %@"
+          }
+        }
+      }
+    },
+    "Open its terminal": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open its terminal"
+          }
+        }
+      }
+    },
+    "Open the original": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open the original"
+          }
+        }
+      }
+    },
+    "Writes the rows it collects into this table. Pause stops its new writes; rows already written stay.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Writes the rows it collects into this table. Pause stops its new writes; rows already written stay."
+          }
+        }
+      }
+    },
+    "Writes the rows it collects into this table.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Writes the rows it collects into this table."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

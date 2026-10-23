@@ -474,6 +474,8 @@ extension A11yID {
     public static let dataObject = A11yID(unchecked: "data.object")
     /// `data.sendTo`
     public static let dataSendTo = A11yID(unchecked: "data.sendTo")
+    /// `data.panel.collapse`
+    public static let dataPanelCollapse = A11yID(unchecked: "data.panel.collapse")
     /// `data.table.grid`
     public static let dataTableGrid = A11yID(unchecked: "data.table.grid")
     /// `data.query.editor`
@@ -1843,6 +1845,11 @@ extension A11yID {
         A11yID(unchecked: "data.writer.\(A11yID.segment(id)).pause")
     }
 
+    /// `data.writer.<id>.open`
+    public static func dataWriterOpen(_ id: String) -> A11yID {
+        A11yID(unchecked: "data.writer.\(A11yID.segment(id)).open")
+    }
+
     /// `library.row.<kind>.<id>`
     public static func libraryRow(_ kind: String, _ id: String) -> A11yID {
         A11yID(unchecked: "library.row.\(A11yID.segment(kind)).\(A11yID.segment(id))")
@@ -2367,6 +2374,7 @@ extension A11yID {
         A11yIDSpec(pattern: "data.object", surface: "Páginas"),
         A11yIDSpec(pattern: "data.sendTo", surface: "Páginas"),
         A11yIDSpec(pattern: "data.table.tab.<tab>", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.panel.collapse", surface: "Páginas"),
         A11yIDSpec(pattern: "data.table.grid", surface: "Páginas"),
         A11yIDSpec(pattern: "data.query.editor", surface: "Páginas"),
         A11yIDSpec(pattern: "data.query.run", surface: "Páginas"),
@@ -2407,6 +2415,7 @@ extension A11yID {
         A11yIDSpec(pattern: "data.production", surface: "Páginas"),
         A11yIDSpec(pattern: "data.production.pause", surface: "Páginas"),
         A11yIDSpec(pattern: "data.writer.<id>.pause", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.writer.<id>.open", surface: "Páginas"),
         A11yIDSpec(pattern: "data.webhook.payload", surface: "Páginas"),
         A11yIDSpec(pattern: "library.page", surface: "Páginas"),
         A11yIDSpec(pattern: "library.section", surface: "Páginas"),

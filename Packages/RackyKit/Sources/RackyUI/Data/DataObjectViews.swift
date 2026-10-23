@@ -217,10 +217,16 @@ struct TableObjectView: View {
     var body: some View {
         let live = hub.isLivePostgres(object.connectionID)
         let grid = live ? hub.tableGrid(object) : DataHubFixtures.grid(for: object)
+        let open = hub.tableTab(object)
         VStack(spacing: 0) {
             DataTabsBar(hub: hub, object: object)
-            switch hub.tableTab(object) {
-            case .data:
+            if open != .data {
+                DataInlinePanel(hub: hub, object: object, natural: open == .structure ? DataInlinePanel<EmptyView>.gridHeight(rows: grid.columns.count) : nil) {
+                    panel(open, live: live, grid: grid)
+                }
+            }
+            // A grade fica sempre na tela; o painel aberto só a empurra para baixo.
+            Group {
                 let page = hub.tablePage(object)
                 let pages = hub.pageCount(for: object)
                 if live {
@@ -231,6 +237,13 @@ struct TableObjectView: View {
                         footer: String(localized: "Page \(page + 1) of \(pages.formatted()) · \(grid.total.formatted()) rows", bundle: .module),
                         pager: (page > 0, page + 1 < pages))
                 }
+            }
+        }
+    }
+
+    @ViewBuilder private func panel(_ open: DataTableTab, live: Bool, grid: DataGrid) -> some View {
+            switch open {
+            case .data: EmptyView()
             case .overview: DataOverviewView(hub: hub, object: object)
             case .structure:
                 VStack(spacing: 0) {
@@ -240,11 +253,10 @@ struct TableObjectView: View {
                             columns: [.init(name: "column", type: "name"), .init(name: "type", type: "text"), .init(name: "nullable", type: "bool"), .init(name: "key", type: "text")],
                             rows: grid.columns.map { [$0.name, $0.type, $0.nullable ? "yes" : "no", $0.key ? "primary key" : ""] },
                             total: grid.columns.count),
-                        footer: String(localized: "\(grid.columns.count) columns", bundle: .module))
+                        footer: grid.columns.count == 1 ? String(localized: "1 column", bundle: .module) : String(localized: "\(grid.columns.count) columns", bundle: .module), fit: true)
                 }
             case .writers: DataWritersView(hub: hub, object: object)
             }
-        }
     }
 }
 
@@ -304,25 +316,42 @@ struct DataTabsBar: View {
     let object: DataObject
 
     var body: some View {
-        let tab = hub.tableTab(object)
-        HStack(spacing: DS.Space.s4) {
-            ForEach(hub.tabs(for: object), id: \.self) { item in
-                // O objeto vai junto: num pane da sessão a aba é deste dataset, não do que a área Data tem aberto (antes nada mudava).
-                ActionButton(.dataTableTab, id: .dataTableTab(item.rawValue), argument: .select("\(item.rawValue)|\(object.key)")) {
-                    VStack(spacing: DS.Space.s1) {
-                        HStack(spacing: DS.Space.s1) {
-                            Text(verbatim: title(item)).dsFont(tab == item ? DS.Font.tabActive : DS.Font.tab)
-                                .foregroundStyle(tab == item ? DS.Color.textPrimary : DS.Color.textSecondary)
-                            if item == .writers, !hub.writers(of: object).isEmpty {
-                                // A contagem num selinho, separada do nome da aba.
-                                Text(verbatim: "\(hub.writers(of: object).count)").dsFont(DS.Font.small).monospacedDigit().foregroundStyle(DS.Color.textSecondary)
-                                    .padding(.horizontal, DS.Space.s1)
-                                    .background(Capsule().fill(DS.Color.secondary))
-                            }
+        let open = hub.tableTab(object)
+        HStack(spacing: DS.Space.s1_5) {
+            // A grade fica sempre na tela: Overview, Structure e Who writes here abrem um painel em cima dela e fecham no mesmo botão
+            // (antes cada um trocava a tela inteira).
+            ForEach(hub.tabs(for: object).filter { $0 != .data }, id: \.self) { item in
+                let isOpen = open == item
+                // O objeto vai junto: num pane da sessão o painel é deste dataset, não do que a área Data tem aberto.
+                ActionButton(.dataTableTab, id: .dataTableTab(item.rawValue), argument: .select("\(isOpen ? DataTableTab.data.rawValue : item.rawValue)|\(object.key)")) {
+                    HStack(spacing: DS.Space.s1) {
+                        Text(verbatim: title(item)).dsFont(DS.Font.label)
+                            .foregroundStyle(isOpen ? DS.Color.textPrimary : DS.Color.textSecondary)
+                        if item == .writers, !hub.writers(of: object).isEmpty {
+                            Text(verbatim: "\(hub.writers(of: object).count)").dsFont(DS.Font.small).monospacedDigit().foregroundStyle(DS.Color.textTertiary)
                         }
-                        (tab == item ? DS.Color.textPrimary : Color.clear).frame(height: DS.Space.s0_5)
+                        Image(systemName: isOpen ? "chevron.up" : "chevron.down")
+                            .font(.system(size: DS.Space.s2_5, weight: .semibold)).foregroundStyle(DS.Color.textTertiary)
                     }
-                    .padding(.top, DS.Space.s2)
+                    .padding(.horizontal, DS.Space.s2)
+                    .frame(height: DataMetrics.chipHeight)
+                    .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(isOpen ? DS.Color.secondary : Color.clear))
+                    .overlay(RoundedRectangle(cornerRadius: DS.Radius.sm).strokeBorder(DS.Color.border))
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .fixedSize()
+            }
+            if open != .data {
+                // Recolhe o painel aberto (o mesmo que clicar de novo no botão dele); fica na barra, nunca em cima do conteúdo.
+                ActionButton(.dataTableTab, id: .dataPanelCollapse, argument: .select("\(DataTableTab.data.rawValue)|\(object.key)"), tooltip: String(localized: "Minimize", bundle: .module)) {
+                    HStack(spacing: DS.Space.s1) {
+                        Image(systemName: "chevron.up").font(.system(size: DS.Space.s2_5, weight: .semibold))
+                        Text("Minimize", bundle: .module).dsFont(DS.Font.small)
+                    }
+                    .foregroundStyle(DS.Color.textSecondary)
+                    .padding(.horizontal, DS.Space.s1_5)
+                    .frame(height: DataMetrics.chipHeight)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -332,6 +361,7 @@ struct DataTabsBar: View {
             if let note { Text(verbatim: note).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(1) }
         }
         .padding(.horizontal, DS.Space.s4)
+        .padding(.vertical, DS.Space.s1_5)
         .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
     }
 
@@ -351,15 +381,64 @@ struct DataTabsBar: View {
     }
 }
 
+/// O painel aberto pela barra (Overview, Structure ou Who writes here) em cima da grade: altura fixa, rola por dentro, e um botão
+/// no canto recolhe de volta (o mesmo que clicar de novo no botão da barra).
+struct DataInlinePanel<Content: View>: View {
+    let hub: DataHubController
+    let object: DataObject
+    var available: CGFloat?
+    /// Altura já conhecida (Structure: cabeçalho, uma linha por coluna e rodapé); sem ela o painel mede o conteúdo.
+    var natural: CGFloat? = nil
+    @ViewBuilder let content: Content
+    @State private var measured: CGFloat = 0
+
+    /// Teto: até metade do que o pane tem (num pane baixo a grade ainda aparece), nunca menos que o mínimo legível.
+    private var cap: CGFloat {
+        guard let available else { return DataMetrics.panelHeight }
+        return min(DataMetrics.panelHeight, max(available / 2, DataMetrics.panelMinHeight))
+    }
+
+    private var measuredHeight: CGFloat { measured > .zero ? min(measured, cap) : cap }
+
+    /// Altura de uma grade de `rows` linhas (a de Structure), com a folga das bordas e do espaço entre a grade e o rodapé.
+    static func gridHeight(rows: Int) -> CGFloat {
+        DatasetMetrics.headerHeight + CGFloat(rows) * DatasetMetrics.rowHeight + DatasetMetrics.footerHeight + DS.Space.s4 + DS.Space.s1
+    }
+
+    var body: some View {
+        // Do tamanho do conteúdo (Who writes here com uma linha fica baixo); passou do teto, rola por dentro.
+        Group {
+            if let natural {
+                content.frame(height: min(natural, cap))
+            } else {
+                ScrollView {
+                    content.frame(maxWidth: .infinity, alignment: .topLeading)
+                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { measured = $0 }
+                }
+                .frame(height: measuredHeight)
+            }
+        }
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+            .clipped()
+            .background(DS.Color.chrome.opacity(0.5))
+            .overlay(alignment: .bottom) { DS.Color.border.frame(height: ComputersMetrics.separator) }
+    }
+}
+
 /// Visão geral: o caminho inteiro do dado e os números da coleta (os mesmos no Mac e na cópia, porque vêm da coleta no Mac).
 struct DataOverviewView: View {
     let hub: DataHubController
     let object: DataObject
 
     var body: some View {
-        ScrollView {
+        Group {  // quem rola é o painel (DataInlinePanel), só quando não cabe
             VStack(alignment: .leading, spacing: 0) {
-                DataLineageStrip(hub: hub, object: object)
+                // O caminho já está em cima (numa linha); aqui fica só a frase de qual é o original e para que lado o dado anda.
+                if let sentence = DataLineageStrip(hub: hub, object: object).explanation {
+                    Text(verbatim: sentence).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
+                        .padding(.horizontal, DS.Space.s4).padding(.top, DS.Space.s3)
+                        .padding(.trailing, DS.Space.s8)
+                }
                 if let id = hub.feedingDataset(of: object), let snapshot = hub.datasets.models[id]?.snapshot {
                     if case .dataset = object {} else {
                         // Os números são da coleta no Mac que alimenta esta cópia (não do banco): dito como título da seção.
@@ -372,10 +451,10 @@ struct DataOverviewView: View {
                         .padding(.top, DS.Space.s4)
                     }
                     DatasetOverviewTiles(snapshot: snapshot, controller: hub.datasets, wrap: true)
-                    // Poucas linhas não desenham curva nenhuma: o gráfico fica baixo em vez de ocupar meia página quase vazio.
-                    ActivityChart(
-                        snapshot: snapshot, controller: hub.datasets, rangeMenu: AnyView(EmptyView()),
-                        height: snapshot.stats.rows < InsightMetrics.tallChartMinRows ? InsightMetrics.chartHeight : InsightMetrics.overviewChartHeight)
+                    // Poucas linhas não desenham curva nenhuma: o painel fica só com os números e a tabela continua com espaço.
+                    if snapshot.stats.rows >= InsightMetrics.tallChartMinRows {
+                        ActivityChart(snapshot: snapshot, controller: hub.datasets, rangeMenu: AnyView(EmptyView()), height: InsightMetrics.chartHeight)
+                    }
                 }
             }
         }
@@ -389,7 +468,7 @@ struct DataWritersView: View {
 
     var body: some View {
         let list = hub.writers(of: object)
-        ScrollView {
+        Group {  // quem rola é o painel (DataInlinePanel), só quando não cabe
             VStack(alignment: .leading, spacing: DS.Space.s2) {
                 if list.isEmpty {
                     Text("Nothing in Racky writes here. Pick it under Save data to when you start a session.", bundle: .module)
@@ -397,18 +476,34 @@ struct DataWritersView: View {
                 }
                 ForEach(list) { writer in
                     HStack(spacing: DS.Space.s3) {
-                        mark(writer)
-                            .frame(width: DS.Space.s8, height: DS.Space.s8)
-                            .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.secondary))
-                        VStack(alignment: .leading, spacing: .zero) {
-                            HStack(spacing: DS.Space.s1_5) {
-                                Text(verbatim: { if case .sync = writer.kind { String(localized: "Racky, copying from \(hub.displayName(ofDatasetNamed: writer.name)) (this Mac)", bundle: .module) } else { writer.name } }())
-                                    .dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary)
-                                if writer.live { LiveDot() }
+                        let info = HStack(spacing: DS.Space.s3) {
+                            mark(writer)
+                                .frame(width: DS.Space.s8, height: DS.Space.s8)
+                                .background(RoundedRectangle(cornerRadius: DS.Radius.sm).fill(DS.Color.secondary))
+                            VStack(alignment: .leading, spacing: .zero) {
+                                HStack(spacing: DS.Space.s1_5) {
+                                    Text(verbatim: name(writer))
+                                        .dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary)
+                                    if writer.live { LiveDot() }
+                                }
+                                Text(verbatim: detail(writer)).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
                             }
-                            Text(verbatim: detail(writer)).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                            Spacer(minLength: 0)
                         }
-                        Spacer(minLength: 0)
+                        // A linha leva a quem grava: o agente abre o terminal dele, a cópia abre o original no Mac (antes clicar não fazia nada).
+                        if let action = open(writer) {
+                            ActionButton(action.0, id: .dataWriterOpen(writer.id), argument: action.1) {
+                                HStack(spacing: DS.Space.s2) {
+                                    info
+                                    Text(verbatim: goLabel(writer)).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
+                                    Image(systemName: "chevron.right").font(.system(size: DS.Space.s3, weight: .semibold)).foregroundStyle(DS.Color.textSecondary)
+                                }
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                        } else {
+                            info
+                        }
                         if writer.live || hub.paused.contains(writer.id) {
                             DSButton(
                                 .dataPauseWriter, id: .dataWriterPause(writer.id), hub.paused.contains(writer.id) ? "Resume" : "Pause",
@@ -422,6 +517,33 @@ struct DataWritersView: View {
             }
             .padding(DS.Space.s4)
             .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    /// "Agents" sozinho não dizia quem: o CLI da sessão (Claude Code, Codex…) e a sessão.
+    private func name(_ writer: DataWriter) -> String {
+        switch writer.kind {
+        case .sync: return String(localized: "Racky, copying from \(hub.displayName(ofDatasetNamed: writer.name)) (this Mac)", bundle: .module)
+        case .agent(let session):
+            guard writer.name == String(localized: "Agents", bundle: .module) else { return writer.name }
+            let provider = hub.feedingDataset(of: object).flatMap { hub.summary(ofDataset: $0) }.flatMap { hub.datasets.sessionAgent($0.dataset.sessionID) } ?? .claude
+            return String(localized: "\(DataLineageStrip.agentTitle(provider)) in session \(session)", bundle: .module)
+        }
+    }
+
+    private func goLabel(_ writer: DataWriter) -> String {
+        if case .agent = writer.kind { return String(localized: "Open its terminal", bundle: .module) }
+        return String(localized: "Open the original", bundle: .module)
+    }
+
+    private func open(_ writer: DataWriter) -> (ActionID, ActionArgument)? {
+        switch writer.kind {
+        case .agent:
+            guard let id = hub.feedingDataset(of: object), let session = hub.summary(ofDataset: id)?.dataset.sessionID else { return nil }
+            return (.sessionSelect, .select("\(session.uuidString)|agent"))
+        case .sync(let from):
+            if case .dataset(let name) = from, let id = hub.datasetID(named: name) { return (.dataOpen, .select(DataObject.dataset(id).key)) }
+            return (.dataOpen, .select(from.key))
         }
     }
 
@@ -439,7 +561,13 @@ struct DataWritersView: View {
 
     private func detail(_ writer: DataWriter) -> String {
         switch writer.kind {
-        case .agent(let session): String(localized: "Agent in session \(session) · \(writer.detail). Pause stops its new writes; rows already written stay.", bundle: .module)
+        case .agent(let session):
+            writer.detail.isEmpty
+                // "Pause" só aparece com o agente gravando agora; sem o botão, a frase não fala dele.
+                ? (writer.live || hub.paused.contains(writer.id)
+                    ? String(localized: "Writes the rows it collects into this table. Pause stops its new writes; rows already written stay.", bundle: .module)
+                    : String(localized: "Writes the rows it collects into this table.", bundle: .module))
+                : String(localized: "Agent in session \(session) · \(writer.detail). Pause stops its new writes; rows already written stay.", bundle: .module)
         case .sync(let from):
             if case .dataset(let name) = from { String(localized: "One-way: rows go from \(hub.displayName(ofDatasetNamed: name)) on this Mac (the original) to here · \(writer.detail)", bundle: .module) } else { writer.detail }
         }
@@ -454,9 +582,11 @@ struct DataColumnsView: View {
         DataGridView(
             grid: DataGrid(
                 columns: [.init(name: "column", type: "name"), .init(name: "type", type: "text"), .init(name: "required", type: "bool"), .init(name: "key", type: "text")],
-                rows: dataset.columns.map { [$0.name, DatasetMetrics.typeLabel($0.type), $0.required ? "yes" : "no", dataset.key.contains($0.name) ? "key" : ""] },
-                total: dataset.columns.count),
-            footer: String(localized: "\(dataset.columns.count) columns", bundle: .module))
+                rows: dataset.columns.map { [$0.name, DatasetMetrics.typeLabel($0.type), $0.required ? "yes" : "no", dataset.key.contains($0.name) ? "key" : ""] }
+                    // A grade mostra também "captured" (quando a linha chegou); sem ela aqui, Structure dizia 1 coluna e a grade tinha 2.
+                    + [["captured", String(localized: "time · added by Racky", bundle: .module), "yes", ""]],
+                total: dataset.columns.count + 1),
+            footer: String(localized: "\(dataset.columns.count + 1) columns", bundle: .module), fit: true)
     }
 }
 

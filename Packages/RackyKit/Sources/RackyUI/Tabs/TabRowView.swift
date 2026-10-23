@@ -324,7 +324,9 @@ struct TabItemView: View {
                         }
                         Spacer(minLength: 0)
                     }
-                    .padding(.horizontal, TabMetrics.paddingH)
+                    .padding(.leading, TabMetrics.paddingH)
+                    // Com o ✕ à mostra o título corta ("…") antes dele, como no Orca; antes o ✕ ficava em cima das letras.
+                    .padding(.trailing, showClose ? TabMetrics.closeInset : TabMetrics.paddingH)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
                 }

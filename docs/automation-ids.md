@@ -505,6 +505,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `data.object`
 - `data.sendTo`
 - `data.table.tab.<tab>`
+- `data.panel.collapse`
 - `data.table.grid`
 - `data.query.editor`
 - `data.query.run`
@@ -545,6 +546,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `data.production`
 - `data.production.pause`
 - `data.writer.<id>.pause`
+- `data.writer.<id>.open`
 - `data.webhook.payload`
 - `library.page`
 - `library.section`

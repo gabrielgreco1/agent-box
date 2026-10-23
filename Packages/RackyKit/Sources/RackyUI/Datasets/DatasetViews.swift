@@ -358,16 +358,26 @@ struct DatasetPageView: View {
                             hub: hub, object: .dataset(model.id), close: paneID.map { id in { controller.closePane(id) } },
                             drag: paneID.flatMap { id in drag.map { (id, $0) } }, besideAgent: paneID.map { controller.paneIsAlone($0) })
                     }
-                    // Na Overview o caminho aparece inteiro; nas outras abas, numa linha.
-                    if hub.tableTab(.dataset(model.id)) != .overview { DataLineageStrip(hub: hub, object: .dataset(model.id), compact: true) }
-                    DataTabsBar(hub: hub, object: .dataset(model.id))
-                    switch hub.tableTab(.dataset(model.id)) {
-                    case .data: dataTab(snapshot, width: width)
-                    case .overview: DataOverviewView(hub: hub, object: .dataset(model.id))
-                    case .structure:
-                        if let dataset = snapshot?.summary.dataset { DataColumnsView(dataset: dataset) } else { Spacer(minLength: 0) }
-                    case .writers: DataWritersView(hub: hub, object: .dataset(model.id))
+                    // Um caminho só (numa linha), igual em qualquer estado; o painel aberto fica em cima da grade, que nunca sai da tela.
+                    let object = DataObject.dataset(model.id)
+                    DataLineageStrip(hub: hub, object: object, compact: true)
+                    DataTabsBar(hub: hub, object: object)
+                    let open = hub.tableTab(object)
+                    if open != .data {
+                        DataInlinePanel(
+                            hub: hub, object: object, available: proxy.size.height,
+                            natural: open == .structure ? DataInlinePanel<EmptyView>.gridHeight(rows: (snapshot?.summary.dataset.columns.count ?? 0) + 1) : nil
+                        ) {
+                            switch open {
+                            case .overview: DataOverviewView(hub: hub, object: object)
+                            case .structure:
+                                if let dataset = snapshot?.summary.dataset { DataColumnsView(dataset: dataset) } else { Spacer(minLength: 0) }
+                            case .writers: DataWritersView(hub: hub, object: object)
+                            case .data: EmptyView()
+                            }
+                        }
                     }
+                    dataTab(snapshot, width: width)
                 } else {
                     if showsBar { topBar(snapshot, width: width) }
                     if let snapshot {
