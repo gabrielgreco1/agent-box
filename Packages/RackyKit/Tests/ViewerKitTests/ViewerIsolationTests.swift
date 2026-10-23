@@ -4,7 +4,7 @@ import Testing
 
 @testable import RackyViewerKit
 
-@Suite("T3-05 - viewer isolado")
+@Suite("T3-05 - viewer isolado", .tags(.integration))
 @MainActor
 struct ViewerIsolationTests {
     @Test func schemeServesOnlyFilesInsideTheVendoredFolder() {
