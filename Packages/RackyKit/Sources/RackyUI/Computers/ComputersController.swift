@@ -256,8 +256,15 @@ public final class ComputersController {
     /// O viewer no centro, ou o da janela própria.
     public var activeViewer: ComputerViewerController? {
         if case .viewer(let name) = page { return viewers[name] }
-        return popOuts.values.first?.controller
+        if let popOut = popOuts.values.first?.controller { return popOut }
+        // Viewer como pane da sessão: não é página nem janela, então vale o último em que se pegou o controle (ou o único aberto).
+        // Sem isso o Take Over/Hand Back de um computador ao lado do agente falhava com "no viewer is open".
+        if let name = lastPaneViewer, let controller = viewers[name] { return controller }
+        return viewers.count == 1 ? viewers.values.first : nil
     }
+
+    /// Último viewer usado por nome (Take Over de um pane da sessão): o alvo do ⇧⌘R e do Hand Back sem argumento.
+    @ObservationIgnored private var lastPaneViewer: String?
 
     func viewer(for argument: ActionArgument) -> ComputerViewerController? {
         if let name = argument.value, !name.isEmpty, let controller = viewers[name] ?? popOuts[name]?.controller { return controller }
@@ -328,6 +335,7 @@ public final class ComputersController {
         try registry.register(.computerTakeOver, enablement: hasComputer) { [unowned self] arg in
             if let name = arg.value, viewers[name] == nil, popOuts[name] == nil { openViewer(name) }
             guard let controller = viewer(for: arg) ?? activeViewer else { throw ActionError.failed(.computerTakeOver, message: "no viewer is open") }
+            lastPaneViewer = controller.name
             await controller.toggleControl()
             return controller.model.control.rawValue
         }

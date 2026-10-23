@@ -208,7 +208,7 @@ struct ComputerViewerView: View {
                     .lineLimit(1)
                 Spacer(minLength: DS.Space.s2)
                 if model.control == .agent {
-                    DSButton(.computerTakeOver, "Take Over", variant: .primary, size: .xs, symbol: "cursorarrow.click")
+                    DSButton(.computerTakeOver, "Take Over", variant: .primary, size: .xs, symbol: "cursorarrow.click", argument: .select(controller.name))
                 }
                 DSButton(.computerDeclineHelp, id: .viewerHelpBannerDecline(id), "Decline…", variant: .ghost, size: .xs)
             }
@@ -428,12 +428,12 @@ struct ViewerHeader: View {
     private var controls: some View {
         switch model.control {
         case .agent:
-            DSButton(.computerTakeOver, id: .viewerTakeOver(id), "Take Over", variant: .primary, size: .xs, symbol: "cursorarrow.click", keycap: "⇧⌘R")
+            DSButton(.computerTakeOver, id: .viewerTakeOver(id), "Take Over", variant: .primary, size: .xs, symbol: "cursorarrow.click", keycap: "⇧⌘R", argument: .select(controller.name))
         case .revoking:
             DSButton(
-                .computerTakeOver, id: .viewerTakeOver(id), "Take Over", variant: .primary, size: .xs, loading: "Requesting control…")
+                .computerTakeOver, id: .viewerTakeOver(id), "Take Over", variant: .primary, size: .xs, loading: "Requesting control…", argument: .select(controller.name))
             if model.forceAvailable {
-                DSButton(.computerForceTakeOver, id: .viewerForceTakeOver(id), "Force Take Over", variant: .destructive, size: .xs)
+                DSButton(.computerForceTakeOver, id: .viewerForceTakeOver(id), "Force Take Over", variant: .destructive, size: .xs, argument: .select(controller.name))
             }
         case .human:
             DSButton(.computerHandBack, id: .viewerHandBack(id), "Hand Back", variant: .primary, size: .xs, symbol: "hand.raised", keycap: "⇧⌘R")

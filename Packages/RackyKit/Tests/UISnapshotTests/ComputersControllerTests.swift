@@ -80,6 +80,23 @@ struct ComputersControllerTests {
         #expect(!calls.contains { $0.hasPrefix("lease") })
     }
 
+    /// Bug real: com o computador como pane da sessão (a página continua o workspace), o Take Over não achava viewer "ativo" e
+    /// falhava com "no viewer is open". O botão passa o nome, e o ⇧⌘R/Hand Back sem argumento usam o viewer desse pane.
+    @Test func takeOverWorksFromAViewerPaneInsideTheSession() async throws {
+        let f = try await make()
+        defer { try? FileManager.default.removeItem(at: f.folder) }
+        await f.controller.add(f.computer)
+        let pane = try #require(f.controller.ensureViewer("phoenix-az"))
+        #expect(f.controller.page == .workspace)
+        let taken = try await f.registry.perform(.computerTakeOver, .select("phoenix-az"))
+        #expect(taken.message == "human" && f.controller.page == .workspace, "o pane continua na sessão, sem abrir a página")
+        #expect(await f.computer.lease == .human)
+        #expect(f.controller.activeViewer === pane)
+        // ⇧⌘R de novo (sem argumento) devolve pelo mesmo viewer.
+        _ = try await f.registry.perform(.computerHandBack, nil)
+        #expect(pane.model.handBackNoteVisible)
+    }
+
     @Test func takeOverFromOutsideOpensTheViewerThenTakesControlAndHandBackReturnsIt() async throws {
         let f = try await make()
         defer { try? FileManager.default.removeItem(at: f.folder) }
