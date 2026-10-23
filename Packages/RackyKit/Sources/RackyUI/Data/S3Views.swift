@@ -162,7 +162,9 @@ struct S3ConnectFormView: View {
     let hub: DataHubController
     let kind: DataConnectionKind
     @State private var name = ""
-    @State private var mode = S3Settings.Mode.keys
+    /// Abre no perfil do AWS CLI: em empresa o acesso costuma ser por SSO, e com "Access keys" selecionado o campo do perfil ficava
+    /// escondido (a última rodada de testers não o achava).
+    @State private var mode = S3Settings.Mode.profile
     @State private var accessKey = ""
     @State private var secret = ""
     @State private var sessionToken = ""
