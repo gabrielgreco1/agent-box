@@ -190,7 +190,9 @@ public final class ComputersModel {
                 snapshot: snapshot, thumbnail: thumbnails[name]?.data, sessionTitle: sessionTitle(name), owner: nil,
                 lastActivity: activity[name] ?? .distantPast))
         }
-        rows = Self.sorted(next)
+        // Só troca quando algo mudou: atribuir a mesma lista a cada segundo refazia a sidebar inteira (ela observa `rows`).
+        let sorted = Self.sorted(next)
+        if sorted != rows { rows = sorted }
     }
 
     /// "Precisa de você" primeiro, depois atividade recente, depois nome (audit/10 R4.8).

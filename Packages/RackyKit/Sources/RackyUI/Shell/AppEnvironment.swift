@@ -458,6 +458,19 @@ public final class AppEnvironment {
         }
         datasets.hideDataPanel = { [rightPanel] in rightPanel.hide(.data) }
         datasets.computerLabel = { [weak model = computers.model] name in model?.computerAgentNames[name] }
+        sidebar.sessionDatasets = { [datasets] sid in
+            datasets.summaries.filter { $0.dataset.sessionID == sid }.map { SessionDatasetRow(id: $0.dataset.id, name: datasets.displayName($0), rows: $0.rowCount) }
+        }
+        // Tela do computador como tab da sessão: o título é o subagente ("Codex 1 · computer") e abrir leva para a sessão dona.
+        workspace.computerTitle = { [weak model = computers.model] name in
+            let agent = model?.computerAgentNames[name] ?? name
+            return String(localized: "\(agent) · computer", bundle: .module)
+        }
+        computers.openInSession = { [weak sidebar, workspace] name, sid in
+            if workspace.currentSessionID != sid { sidebar?.select(sid) }
+            guard workspace.currentSessionID == sid else { return false }
+            return workspace.openComputer(name) != nil
+        }
         datasets.isShownInSession = { [workspace] id, sid in workspace.datasetPane(id, in: sid) != nil }
         workspace.datasetTitle = { [datasets] id in datasets.name(of: id) }
         workspace.renameDataset = { [datasets] id, name in Task { await datasets.rename(id, to: name) } }

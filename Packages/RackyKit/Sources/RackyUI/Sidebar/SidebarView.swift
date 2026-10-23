@@ -61,9 +61,10 @@ struct SidebarView: View {
             if let registry, registry.isRendered(.sidebarSearch) {
                 SidebarSearchField(model: model)
             }
+            // "Sessions" no lugar do Inbox: leva às sessões; o número diz quantas coisas pedem você (estão no topo da lista).
             NavItemRow(
-                action: .pageInbox, id: .sidebarNavInbox, title: String(localized: "Inbox", bundle: .module), symbol: "tray", hideKey: "inbox",
-                badge: (model.attention?.center.badgeCount ?? 0) + (model.helpInbox?.attentionCount ?? 0), selected: model.inboxOpen)
+                action: .pageSessions, id: .sidebarNavSessions, title: String(localized: "Sessions", bundle: .module), symbol: "rectangle.stack",
+                hideKey: "inbox", badge: (model.attention?.center.badgeCount ?? 0) + (model.helpInbox?.attentionCount ?? 0))
             NavItemRow(action: .pageComputers, id: .sidebarNavComputers, title: String(localized: "Computers", bundle: .module), symbol: "display", hideKey: "computers")
             NavItemRow(action: .pageDatasets, id: .sidebarNavDatasets, title: String(localized: "Data", bundle: .module), symbol: "cylinder.split.1x2", hideKey: "datasets")
             NavItemRow(action: .pageLibrary, id: .sidebarNavLibrary, title: String(localized: "Library", bundle: .module), symbol: "books.vertical", hideKey: "library")
@@ -88,6 +89,7 @@ struct SidebarView: View {
         case .workspace:
             emptyWorkspace(archived: projection.archivedHidden)
         default:
+            needsYou
             Section {
                 if projection.empty == .searchNoResults {
                     searchEmpty
@@ -112,6 +114,25 @@ struct SidebarView: View {
                     sessionsHeader
                 }
             }
+        }
+    }
+
+    /// Pedidos que esperam você (aprovar um computer, ajudar um agente): no topo da lista, só quando existem.
+    @ViewBuilder private var needsYou: some View {
+        let help = model.helpItems
+        let approvals = model.approvalItems
+        if !help.isEmpty || !approvals.isEmpty {
+            Section {
+                ForEach(approvals) { ComputerApprovalRowView(request: $0) }
+                ForEach(help) { HelpRequestRowView(item: $0) }
+            } header: {
+                Text("Needs You", bundle: .module)
+                    .dsFont(DS.Font.sectionLabel)
+                    .foregroundStyle(DS.Color.warning)
+                    .padding(.horizontal, SidebarMetrics.sectionPaddingH)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .a11y(.sidebarNeedsYou, kind: "container")
         }
     }
 
@@ -415,7 +436,7 @@ struct NavItemRow: View {
                         .frame(width: SidebarMetrics.navIcon, height: SidebarMetrics.navIcon)
                     Text(verbatim: title).dsFont(DS.Font.nav).foregroundStyle(selected ? DS.Color.textPrimary : DS.Color.navText)
                     Spacer(minLength: .zero)
-                    if badge > 0 { NavBadge(count: badge).a11y(.sidebarNavInboxBadge, kind: "badge", label: "\(badge)") }
+                    if badge > 0 { NavBadge(count: badge).a11y(.sidebarNavSessionsBadge, kind: "badge", label: "\(badge)") }
                 }
                 .padding(.horizontal, SidebarMetrics.navPaddingH)
                 .frame(height: SidebarMetrics.navHeight)

@@ -180,8 +180,14 @@ private struct DatasetPanelContent: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, DS.Space.s6)
         } else {
-            ForEach(snapshot.rows.prefix(DatasetPanelMetrics.maxRows)) { row in
-                PanelRow(row: row, columns: columns, datasetID: summary.dataset.id)
+            // Um relógio só para a lista (antes era um por linha): o destaque de "acabou de chegar" some sozinho.
+            let rows = Array(snapshot.rows.prefix(DatasetPanelMetrics.maxRows))
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                LazyVStack(spacing: 0) {
+                    ForEach(rows) { row in
+                        PanelRow(row: row, columns: columns, datasetID: summary.dataset.id, now: context.date)
+                    }
+                }
             }
             footer(snapshot)
         }
@@ -228,11 +234,12 @@ private struct PanelRow: View {
     let row: DatasetDisplayRow
     let columns: [PanelColumn]
     let datasetID: String
+    let now: Date
     @State private var hovering = false
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 1)) { context in
-            let fresh = context.date.timeIntervalSince(row.row.firstSeen) < DatasetPanelMetrics.freshFor
+        do {
+            let fresh = now.timeIntervalSince(row.row.firstSeen) < DatasetPanelMetrics.freshFor
             ActionButton(.datasetOpen, id: .rightPanelDataRow(row.id), argument: .select("\(datasetID)|panel")) {
                 HStack(spacing: DS.Space.s2) {
                     RoundedRectangle(cornerRadius: DatasetPanelMetrics.stripe / 2)

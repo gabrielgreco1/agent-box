@@ -211,8 +211,18 @@ extension RackyStore {
         }
     }
 
+    /// O resumo de um dataset só (antes somava as linhas de todos os datasets para ler um, a cada segundo).
     public func datasetSummary(id: String) async throws -> DatasetSummary? {
-        try await datasetSummaries().first { $0.dataset.id == id }
+        try await read { db in
+            try Row.fetchOne(
+                db,
+                sql: """
+                SELECT d.*, COUNT(r.row_key) AS row_count, COALESCE(SUM(1 - r.valid), 0) AS invalid_count FROM dataset d
+                LEFT JOIN dataset_row r ON r.dataset_id = d.id
+                WHERE d.id = ?1 GROUP BY d.id
+                """, arguments: [id]
+            ).map { DatasetSummary(dataset: try Dataset(row: $0), rowCount: $0["row_count"], invalidCount: $0["invalid_count"]) }
+        }
     }
 
     // MARK: Linhas

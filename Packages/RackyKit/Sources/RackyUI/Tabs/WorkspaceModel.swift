@@ -341,6 +341,7 @@ final class WorkspaceModel {
     func displayTitle(of tab: Tab) -> String {
         // Tab só com um dataset: sempre o nome atual do dataset (renomear a tab renomeia o dataset; nada fica preso na tab).
         if let id = datasetOnly(tab) { return datasetTitle(id) ?? tab.title }
+        if tab.layout.terminalIDs.isEmpty, tab.layout.leafCount == 1, case .computer(let name) = tab.layout.firstPane.content { return computerTitle(name) }
         if tab.titleLocked { return tab.title }
         if let id = tab.focusedTerminalID ?? tab.layout.terminalIDs.first, let t = terminal(id), !t.title.isEmpty { return t.title }
         return tab.title
@@ -603,6 +604,8 @@ final class WorkspaceModel {
     var autoFocusAllowed: () -> Bool = { true }
     /// Nome de um dataset (título da tab e do pane); ligado pelo `AppEnvironment`.
     @ObservationIgnored var datasetTitle: (String) -> String? = { _ in nil }
+    /// Título da tab de um computador ("Codex 1 · computer"); ligado pelo `AppEnvironment`.
+    @ObservationIgnored var computerTitle: (String) -> String = { $0 }
     /// Renomeia um dataset (o nome mostrado); ligado pelo `AppEnvironment`.
     @ObservationIgnored var renameDataset: (String, String) -> Void = { _, _ in }
 
@@ -1380,6 +1383,23 @@ final class WorkspaceModel {
         if let fresh = terminal(terminalID) { launch(fresh) } else { launch(t) }
     }
 
+    // MARK: Títulos (aviso agrupado)
+
+    @ObservationIgnored private var titleNotifyPending = false
+    static let titleNotifyInterval: Duration = .milliseconds(500)
+
+    /// Junta as mudanças de título de todos os terminais num aviso só a cada meio segundo.
+    private func scheduleTitleNotify() {
+        guard !titleNotifyPending else { return }
+        titleNotifyPending = true
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: Self.titleNotifyInterval)
+            guard let self else { return }
+            self.titleNotifyPending = false
+            self.notify()
+        }
+    }
+
     // MARK: Eventos do daemon
 
     private func handle(_ event: EventPayload, terminalID: UUID) {
@@ -1388,10 +1408,12 @@ final class WorkspaceModel {
         case .exit(let info):
             markExited(terminalID, info: info)
         case .title(let e):
-            guard let t = terminal(terminalID), t.titleSource != .user, !e.text.isEmpty else { return }
+            // O título do Claude Code anima (spinner) várias vezes por segundo: igual não faz nada, e o aviso geral (que refaz a
+            // área dos panes, a sidebar e as tabs) sai no máximo a cada `titleNotifyInterval`, com o último título.
+            guard let t = terminal(terminalID), t.titleSource != .user, !e.text.isEmpty, e.text != t.title || t.titleSource != .osc else { return }
             update(terminal: terminalID) { $0.title = e.text; $0.titleSource = .osc }
             debouncedSave(terminalID)
-            notify()
+            scheduleTitleNotify()
         case .cwd(let e):
             update(terminal: terminalID) { $0.cwd = e.path }
             debouncedSave(terminalID)
@@ -1785,6 +1807,7 @@ extension WorkspaceModel {
     func paneTitle(_ pane: Pane) -> String {
         switch pane.content {
         case .dataset(let id): datasetTitle(id) ?? String(localized: "Dataset", bundle: .module)
+        case .computer(let name): computerTitle(name)
         default: ""
         }
     }
@@ -1852,6 +1875,37 @@ extension WorkspaceModel {
         }
         toasts?.show(kind: .info, title: String(localized: "Not enough room to split. Close a pane or widen the window.", bundle: .module))
         return false
+    }
+
+    /// Tab e pane que já mostram a tela de um computador nesta sessão.
+    func computerPane(_ name: String, in sid: UUID) -> (tab: Tab, pane: Pane)? {
+        for tab in states[sid]?.tabs ?? [] {
+            if let pane = tab.layout.panes.first(where: { $0.content == .computer(name) }) { return (tab, pane) }
+        }
+        return nil
+    }
+
+    /// Abre a tela de um computador na sessão atual como uma tab (ou ao lado do agente): foca a que já existe.
+    @discardableResult
+    func openComputer(_ name: String, beside: Bool = false) -> UUID? {
+        guard let sid = currentSessionID, var state = states[sid] else { return nil }
+        if let (tab, pane) = computerPane(name, in: sid) {
+            if beside, let active = activeTab, active.id != tab.id, tab.layout.leafCount == 1, !active.layout.terminalIDs.isEmpty,
+               placeBeside(tab.id, in: active) { return pane.id }
+            selectTab(tab.id)
+            return pane.id
+        }
+        let pane = Pane(content: .computer(name))
+        let agents = activeTab.flatMap { $0.layout.terminalIDs.isEmpty ? nil : $0 }
+        let own = Tab(sessionID: sid, title: computerTitle(name), sortIndex: state.tabs.count, layout: .leaf(pane), focusedTerminalID: nil)
+        state.tabs.append(own)
+        states[sid] = state
+        let saved = own
+        persist { try await $0.save(saved) }
+        if beside, let agents, placeBeside(own.id, in: agents) { return pane.id }
+        recentlyOpenedTab = own.id
+        selectTab(own.id)
+        return pane.id
     }
 
     /// Pane focado da tab: o do terminal focado, senão o primeiro.

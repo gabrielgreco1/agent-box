@@ -38,6 +38,12 @@ extension A11yID {
     public static let sidebarNavInbox = A11yID(unchecked: "sidebar.nav.inbox")
     /// `sidebar.nav.inbox.badge`
     public static let sidebarNavInboxBadge = A11yID(unchecked: "sidebar.nav.inbox.badge")
+    /// `sidebar.nav.sessions`
+    public static let sidebarNavSessions = A11yID(unchecked: "sidebar.nav.sessions")
+    /// `sidebar.nav.sessions.badge`
+    public static let sidebarNavSessionsBadge = A11yID(unchecked: "sidebar.nav.sessions.badge")
+    /// `sidebar.needsYou`
+    public static let sidebarNeedsYou = A11yID(unchecked: "sidebar.needsYou")
     /// `sidebar.nav.computers`
     public static let sidebarNavComputers = A11yID(unchecked: "sidebar.nav.computers")
     /// `sidebar.nav.datasets`
@@ -995,6 +1001,11 @@ extension A11yID {
         A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).child.\(A11yID.segment(childId)).handBack")
     }
 
+    /// `sidebar.session.<id>.dataset.<datasetId>`
+    public static func sidebarSessionDataset(_ id: String, _ datasetId: String) -> A11yID {
+        A11yID(unchecked: "sidebar.session.\(A11yID.segment(id)).dataset.\(A11yID.segment(datasetId))")
+    }
+
     /// `sidebar.pending.<id>`
     public static func sidebarPending(_ id: String) -> A11yID {
         A11yID(unchecked: "sidebar.pending.\(A11yID.segment(id))")
@@ -1887,6 +1898,9 @@ extension A11yID {
         A11yIDSpec(pattern: "sidebar.search.empty.clear", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.nav.inbox", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.nav.inbox.badge", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.nav.sessions", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.nav.sessions.badge", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.needsYou", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.nav.computers", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.nav.datasets", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.nav.library", surface: "Sidebar"),
@@ -1934,6 +1948,7 @@ extension A11yID {
         A11yIDSpec(pattern: "sidebar.session.<id>.child.<childId>.openViewer", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.session.<id>.child.<childId>.control", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.session.<id>.child.<childId>.handBack", surface: "Sidebar"),
+        A11yIDSpec(pattern: "sidebar.session.<id>.dataset.<datasetId>", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.pending.<id>", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.pending.<id>.cancel", surface: "Sidebar"),
         A11yIDSpec(pattern: "sidebar.cleanSessions", surface: "Sidebar"),

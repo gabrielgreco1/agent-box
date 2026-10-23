@@ -82,7 +82,7 @@ Coluna Terminal: `PTY` = a tecla é reservada ao terminal (03 §21) e o app não
 | ⇧⌘G | global | Source Control | `panel.sourceControl` | View ▸ Source Control | - |
 | ⇧⌘C | global | Computers panel | `panel.computers` | View ▸ Computers Panel | - |
 | ⇧⌘H | global | Conversations | `panel.conversations` | View ▸ Conversations | - |
-| ⇧⌘I | global | Inbox | `page.inbox` | View ▸ Inbox | - |
+| ⇧⌘I | global | Sessions | `page.sessions` | View ▸ Sessions | - |
 | ⇧⌘L | global | Library | `page.library` | - | - |
 | ⎋ | app | Close page | `page.close` | - | - |
 | ⇧⌘R | global | Take Over / Hand Back | `computer.takeOver` | Computer ▸ Take Over / Hand Back | - |

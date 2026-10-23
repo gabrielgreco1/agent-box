@@ -164,4 +164,17 @@ import Testing
         await VisualBatchTests.settle(400)
         #expect(rig.env.workspace.activeTab?.id == datasetTab.id, "clicking the table's tab goes back to the table")
     }
+
+    /// A tabela que a sessão coletou aparece no card dela na sidebar; um clique abre a tabela numa tab da sessão.
+    @Test func theSessionCardListsItsTableAndOpensIt() async throws {
+        let rig = try await make()
+        defer { Task { await close(rig) } }
+        await rig.env.datasets.reloadList()
+        await VisualBatchTests.settle(400)
+        let session = try #require(rig.env.workspace.currentSessionID)
+        try click(rig, .sidebarSessionDataset(session.uuidString, rig.datasetID))
+        await VisualBatchTests.settle(500)
+        let active = try #require(rig.env.workspace.activeTab)
+        #expect(rig.env.workspace.datasetOnly(active) == rig.datasetID, "the sidebar row opens the table in a session tab")
+    }
 }

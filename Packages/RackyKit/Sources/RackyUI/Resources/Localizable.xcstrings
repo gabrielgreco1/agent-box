@@ -11370,7 +11370,8 @@
     "Command": {},
     "Back to the session": {},
     "Own tab": {},
-    "This profile skips permission prompts: the agent won't ask before running commands": {}
+    "This profile skips permission prompts: the agent won't ask before running commands": {},
+    "Open the table in a tab": {}
   },
   "version": "1.0"
 }

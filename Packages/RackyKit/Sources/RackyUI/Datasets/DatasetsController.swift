@@ -149,8 +149,12 @@ nonisolated enum DatasetLoader {
         (try? await store.datasetSummaries()) ?? []
     }
 
+    /// `reuse`: facetas e perfis das colunas da última leitura completa com o mesmo pedido (as consultas mais caras); com eles a
+    /// atualização de cada segundo só lê linhas, contagens e o gráfico.
     @concurrent
-    static func page(store: RackyStore, request: DatasetPageRequest, now: Date = Date()) async -> DatasetPageSnapshot? {
+    static func page(
+        store: RackyStore, request: DatasetPageRequest, now: Date = Date(), reuse: DatasetPageSnapshot? = nil
+    ) async -> DatasetPageSnapshot? {
         guard let summary = try? await store.datasetSummary(id: request.id) else { return nil }
         let id = request.id
         var query = request.query
@@ -189,8 +193,8 @@ nonisolated enum DatasetLoader {
         // Ritmo: linhas novas nos últimos 5 minutos, por minuto.
         let recent = (try? await store.datasetActivity(datasetID: id, until: now, bucket: 300, buckets: 1))?.first
         let perMinute = Int((Double((recent?.valid ?? 0) + (recent?.invalid ?? 0)) / 5).rounded())
-        let facets = (try? await store.datasetFacets(datasetID: id, query: query)) ?? [:]
-        let profiles = (try? await store.datasetColumnProfiles(datasetID: id, columns: columns, query: query)) ?? [:]
+        let facets = if let reuse { reuse.facets } else { (try? await store.datasetFacets(datasetID: id, query: query)) ?? [:] }
+        let profiles = if let reuse { reuse.profiles } else { (try? await store.datasetColumnProfiles(datasetID: id, columns: columns, query: query)) ?? [:] }
         return DatasetPageSnapshot(
             summary: summary, rows: display, matching: matching, activity: activity, activityStart: end.addingTimeInterval(-bucket * Double(activityBuckets)),
             activityEnd: end, bucketSeconds: bucket, perMinute: perMinute, facets: facets, stats: stats,
@@ -343,9 +347,15 @@ public final class DatasetViewModel: Identifiable {
         return DatasetPageRequest(id: id, query: query, range: range, page: page, pageSize: DatasetsController.pageSize, window: window)
     }
 
+    /// Última leitura completa (com facetas e perfis) e o pedido dela: até `fullEvery` depois, com o mesmo pedido, a leitura é leve.
+    @ObservationIgnored private var lastFull: (at: Date, request: DatasetPageRequest)?
+    static let fullEvery: TimeInterval = 10
+
     fileprivate func reload(store: RackyStore, now: Date) async {
         let wanted = request
-        let loaded = await DatasetLoader.page(store: store, request: wanted, now: now)
+        let light = lastFull.map { $0.request == wanted && now.timeIntervalSince($0.at) < Self.fullEvery } ?? false
+        let loaded = await DatasetLoader.page(store: store, request: wanted, now: now, reuse: light ? snapshot : nil)
+        if !light { lastFull = (now, wanted) }
         // Uma consulta lenta não sobrescreve o que o usuário mudou enquanto ela rodava.
         guard request == wanted else { return }
         loadedSearch = search
@@ -584,7 +594,9 @@ public final class DatasetsController {
     public func stopRefreshing() { refresher?.cancel() }
 
     func refreshVisible(tick: Int) async {
-        if tick % 2 == 0 { await autoOpenNewData() } else if currentPage() == .datasets, !listLoaded { await reloadList() }
+        // A lista inteira (todas as sessões) a cada 10 s; o "abre sozinho" a cada 2 s olha só a sessão aberta.
+        if tick % 2 == 0 { await autoOpenNewData() }
+        if tick == 1 || tick % 10 == 0 || (currentPage() == .datasets && !listLoaded) { await reloadList() }
         let pageID = currentPage().datasetID
         for m in models.values where m.visibleCount > 0 || m.id == pageID {
             let running = m.snapshot.map { isRunning($0.summary.dataset.sessionID) } ?? false
@@ -600,14 +612,15 @@ public final class DatasetsController {
             autoOpened = Set((try? await store.uiState(Self.autoOpenedKey, as: [String].self)) ?? [])
             autoOpenedLoaded = true
         }
-        await reloadList()
+        let mine = (try? await store.datasetSummaries(sessionID: session)) ?? []
         let now = now()
-        for summary in summaries where summary.dataset.sessionID == session && summary.rowCount > 0 && !autoOpened.contains(summary.dataset.id) {
+        for summary in mine where summary.rowCount > 0 && !autoOpened.contains(summary.dataset.id) {
             guard now.timeIntervalSince(summary.dataset.createdAt) <= Self.autoOpenWindow else { continue }
             autoOpened.insert(summary.dataset.id)
             let saved = Array(autoOpened).sorted()
             try? await store.setUIState(Self.autoOpenedKey, saved)
             if isShownInSession(summary.dataset.id, session) { continue }
+            await reloadList()
             // No painel direito, no lugar dos Insights: a tela do usuário não muda.
             let m = model(for: summary.dataset.id)
             await reload(m)
@@ -634,12 +647,10 @@ public final class DatasetsController {
         let noDataset = String(localized: "Open a dataset first.", bundle: .module)
         let hasDataset: ActionRegistry.Enablement = { [unowned self] in active == nil ? .disabled(reason: noDataset) : .enabled }
         try registry.register(.pageDatasets) { [unowned self] _ in
-            if currentPage() == .datasets {
-                hidePage()
-                return "workspace"
-            }
-            await reloadList()
+            guard currentPage() != .datasets else { return "datasets" }
+            // Abre na hora; a lista chega logo depois (antes o clique esperava uma varredura de todas as linhas).
             showPage(.datasets)
+            Task { [weak self] in await self?.reloadList() }
             return "datasets"
         }
         try registry.register(.datasetOpen) { [unowned self] arg in

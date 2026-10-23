@@ -40,6 +40,8 @@ final class SidebarModel {
     }
     /// Avisa quem mostra o conteúdo da sessão (tabs e panes, T1-14) quando a seleção muda.
     @ObservationIgnored var onSelectionChange: ((UUID?) -> Void)?
+    /// Tabelas que a sessão coletou (id, nome, linhas), listadas no card dela; ligado pelo `AppEnvironment`.
+    @ObservationIgnored var sessionDatasets: (UUID) -> [SessionDatasetRow] = { _ in [] }
     /// Toda seleção de sessão (mesmo repetida): quem estava numa página do centro (viewer, Computers) volta ao terminal.
     @ObservationIgnored var onSelected: ((UUID) -> Void)?
     /// Histórico de navegação: seleção ou Inbox mudou.
@@ -533,4 +535,11 @@ final class SidebarModel {
         reveal = (id, (reveal?.nonce ?? 0) + 1)
         return true
     }
+}
+
+/// Uma tabela coletada por uma sessão, como linha do card dela na sidebar.
+struct SessionDatasetRow: Identifiable, Equatable {
+    let id: String
+    let name: String
+    let rows: Int
 }

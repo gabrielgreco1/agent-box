@@ -33,8 +33,8 @@ struct StatusBarView: View {
 
     @ViewBuilder private func segment(_ segment: StatusBarSegment) -> some View {
         if controller.shows(segment), segment == .agents {
-            // Clique abre o Inbox (03 §5).
-            ActionButton(.pageInbox, id: segment.a11yID) { StatusBarSegmentLabel(controller: controller, segment: segment) }
+            // Clique leva às sessões (o item Sessions substituiu o Inbox).
+            ActionButton(.pageSessions, id: segment.a11yID) { StatusBarSegmentLabel(controller: controller, segment: segment) }
                 .buttonStyle(.plain)
         } else if controller.shows(segment) {
             ActionButton(.statusBarOpenSegment, id: segment.a11yID, argument: .select(segment.rawValue)) {

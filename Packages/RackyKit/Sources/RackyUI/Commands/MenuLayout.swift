@@ -105,7 +105,7 @@ enum MenuLayout {
                     .action(.panelConversations, title: "Conversations"),
                     .action(.panelContext, title: "Context"),
                     .separator,
-                    .action(.pageInbox, title: "Inbox"),
+                    .action(.pageSessions, title: "Sessions"),
                     .action(.pageLibrary, title: "Library"),
                     .action(.pageComputers, title: "Computers"),
                     .separator,

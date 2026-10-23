@@ -135,7 +135,10 @@ struct ComputersControllerTests {
         defer { try? FileManager.default.removeItem(at: f.folder) }
         _ = try await f.registry.perform(.pageComputers, nil)
         #expect(f.controller.page == .computers)
+        // Clicar de novo no item não volta para a sessão: a página continua aberta (page.close fecha).
         _ = try await f.registry.perform(.pageComputers, nil)
+        #expect(f.controller.page == .computers)
+        _ = try await f.registry.perform(.pageClose, nil)
         #expect(f.controller.page == .workspace)
         var opened: [Bool] = []
         f.controller.onPanelChange = { opened.append($0) }

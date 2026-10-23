@@ -243,8 +243,32 @@ public actor InsightsService {
         return ok
     }
 
+    /// Menor intervalo entre duas varreduras disparadas por mudança de transcript (com agentes trabalhando elas chegavam a cada 2 s,
+    /// e cada uma lista todo o `~/.claude/projects`).
+    static let usageScanInterval: TimeInterval = 30
+    private var lastUsageScan: Date?
+    private var deferredUsageScan: Task<Void, Never>?
+
     private func usageChanged() async {
-        // Mudança em transcript: relê mesmo fora de vista (barato, incremental) para o número estar certo ao abrir.
+        // Mudança em transcript: relê mesmo fora de vista, mas no máximo uma vez a cada `usageScanInterval` (as mudanças do meio
+        // entram na próxima varredura, que é incremental).
+        let now = clock()
+        if let last = lastUsageScan, now.timeIntervalSince(last) < Self.usageScanInterval {
+            guard deferredUsageScan == nil else { return }
+            let wait = Self.usageScanInterval - now.timeIntervalSince(last)
+            deferredUsageScan = Task { [weak self] in
+                try? await Task.sleep(for: .seconds(wait))
+                await self?.runDeferredUsageScan()
+            }
+            return
+        }
+        lastUsageScan = now
+        await refreshUsage()
+    }
+
+    private func runDeferredUsageScan() async {
+        deferredUsageScan = nil
+        lastUsageScan = clock()
         await refreshUsage()
     }
 
@@ -316,7 +340,8 @@ public actor InsightsService {
             Self.scan(ledger: work, config: cfg, cutoff: cutoff)
         }.value
         ledger = updated
-        try? UsageLedgerStore.save(ledger, to: config.ledgerURL)
+        // Nada novo lido: não regrava o livro-razão inteiro (era a cada varredura).
+        if report.filesRead > 0 || report.messagesAdded > 0 { try? UsageLedgerStore.save(ledger, to: config.ledgerURL) }
         if let agents { agentRefs = await agents.agentSessions() }
         if let proxies { proxySummaries = await proxies.proxyUsage(since: now.addingTimeInterval(-30 * 86_400), calendar: calendar) }
         await refreshPlansIfNeeded(now: now)

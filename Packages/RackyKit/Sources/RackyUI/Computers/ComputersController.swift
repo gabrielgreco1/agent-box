@@ -238,8 +238,17 @@ public final class ComputersController {
         viewers[name] = nil
     }
 
+    /// Abre a tela de um computador como tab da sessão dona dele; ligado pelo `AppEnvironment`. `false` = sem sessão (vai para a página).
+    @ObservationIgnored public var openInSession: (_ name: String, _ sessionID: UUID) -> Bool = { _, _ in false }
+
     public func openViewer(_ name: String) {
         guard model.computer(named: name) != nil else { return }
+        // Computador de um subagente: abre como tab da sessão (mesmo nível do agente e das tabelas), não numa página à parte.
+        if let sid = model.sessionIDs[name], openInSession(name, sid) {
+            closePage()
+            model.markReadForComputer(name)
+            return
+        }
         show(.viewer(name))
         model.markReadForComputer(name)
     }
@@ -292,9 +301,10 @@ public final class ComputersController {
         let viewerOpen: ActionRegistry.Enablement = { [unowned self] in
             activeViewer == nil ? .disabled(reason: String(localized: "Open a computer first.", bundle: .module)) : .enabled
         }
+        // Clicar de novo no item da página aberta não volta para a sessão (era um vai-e-volta confuso): fica onde está.
         try registry.register(.pageComputers) { [unowned self] _ in
-            show(page == .computers ? .workspace : .computers)
-            return page == .computers ? "computers" : "workspace"
+            if page != .computers { show(.computers) }
+            return "computers"
         }
         try registry.register(.panelComputers) { [unowned self] _ in
             togglePanel()

@@ -197,12 +197,8 @@ final class WorkspaceViewController: NSViewController {
 
     /// A faixa de sub-tabs aparece quando a sessão selecionada tem algum computador de subagente.
     private func trackSubTabs() {
-        let visible = withObservationTracking {
-            !SessionSubTabs.computerNames(workspace: env.workspace, computers: env.computers).isEmpty
-        } onChange: { [weak self] in
-            Task { @MainActor in self?.trackSubTabs() }
-        }
-        root?.setSubTabsVisible(visible)
+        // Os computadores dos subagentes agora são tabs da sessão (panes como o agente e as tabelas): a faixa de sub-tabs saiu.
+        root?.setSubTabsVisible(false)
     }
 
     private func refreshApprovals() {
@@ -265,7 +261,21 @@ final class WorkspaceViewController: NSViewController {
         root.onTabRowClickWhilePage = { [weak env] in env?.computers.closePage() }
         // Pane de dataset: a tabela com o estado do dataset, o título que arrasta o pane e o ambiente completo (menus, registro).
         env.workspace.makePaneView = { [weak env] pane in
-            guard let env, case .dataset(let id) = pane.content else { return NSView() }
+            guard let env else { return NSView() }
+            if case .computer(let name) = pane.content {
+                // A tela do computador de um subagente como pane da sessão (arrasta, divide, fica ao lado da tabela ou do agente).
+                guard let viewer = env.computers.ensureViewer(name) else { return NSView() }
+                let workspace = env.workspace
+                let host = ChromeHostingView(
+                    content: ComputerViewerView(
+                        controller: viewer, computers: env.computers, backTitle: nil, showsStrip: false, showsHeader: true,
+                        pane: ViewerPane(id: pane.id, drag: workspace.dragController, title: workspace.computerTitle(name), close: { workspace.closePane(id: pane.id) }))
+                        .environment(\.elementStore, env.elements).environment(\.actionRegistry, env.registry)
+                        .environment(\.overlayRouter, env.overlays).environment(\.a11yParent, .windowMain))
+                host.inputBlocked = { [overlays = env.overlays] in overlays.blocksTerminalInput }
+                return host
+            }
+            guard case .dataset(let id) = pane.content else { return NSView() }
             let model = env.datasets.model(for: id)
             let host = ChromeHostingView(
                 content: DatasetPageView(controller: env.datasets, model: model, paneID: pane.id, drag: env.workspace.dragController, hub: env.dataHub)

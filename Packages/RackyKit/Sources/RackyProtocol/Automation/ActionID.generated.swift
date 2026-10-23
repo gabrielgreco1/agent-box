@@ -247,6 +247,7 @@ extension ActionID {
     public static let datasetColumns = ActionID(unchecked: "dataset.columns")
     public static let datasetCopyRow = ActionID(unchecked: "dataset.copyRow")
     public static let datasetPanelTab = ActionID(unchecked: "dataset.panelTab")
+    public static let pageSessions = ActionID(unchecked: "page.sessions")
     public static let pageInbox = ActionID(unchecked: "page.inbox")
     public static let pageClose = ActionID(unchecked: "page.close")
     public static let inboxMarkRead = ActionID(unchecked: "inbox.markRead")
@@ -750,7 +751,8 @@ extension ActionID {
         ActionSpec(id: ActionID(unchecked: "dataset.columns"), label: "Dataset: colunas", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dataset.copyRow"), label: "Copy Row JSON", shortcut: "", slice: .slice3),
         ActionSpec(id: ActionID(unchecked: "dataset.panelTab"), label: "Dataset: aba do painel", shortcut: "", slice: .slice3),
-        ActionSpec(id: ActionID(unchecked: "page.inbox"), label: "Inbox", shortcut: "⇧⌘I", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "page.sessions"), label: "Sessions", shortcut: "⇧⌘I", slice: .slice2),
+        ActionSpec(id: ActionID(unchecked: "page.inbox"), label: "Inbox (legado)", shortcut: "", slice: .slice2),
         ActionSpec(id: ActionID(unchecked: "page.close"), label: "Close page", shortcut: "Esc", slice: .slice1),
         ActionSpec(id: ActionID(unchecked: "inbox.markRead"), label: "Mark as Read", shortcut: "", slice: .slice2),
         ActionSpec(id: ActionID(unchecked: "inbox.markAllRead"), label: "Mark All as Read", shortcut: "", slice: .slice2),

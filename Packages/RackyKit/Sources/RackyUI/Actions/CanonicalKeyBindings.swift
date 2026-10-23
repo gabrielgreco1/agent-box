@@ -89,7 +89,7 @@ extension KeyBindingRegistry {
         try add("⇧⌘G", .global, .panelSourceControl, "Source Control")
         try add("⇧⌘C", .global, .panelComputers, "Computers panel")
         try add("⇧⌘H", .global, .panelConversations, "Conversations")
-        try add("⇧⌘I", .global, .pageInbox, "Inbox")
+        try add("⇧⌘I", .global, .pageSessions, "Sessions")
         try add("⇧⌘L", .global, .pageLibrary, "Library")
         try add("⎋", .app, .pageClose, "Close page")
 

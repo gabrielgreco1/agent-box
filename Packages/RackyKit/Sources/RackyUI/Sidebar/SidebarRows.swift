@@ -268,6 +268,14 @@ struct SessionCardView: View {
             if !data.computers.isEmpty, !data.agentsCollapsed {
                 computerRows
             }
+            // As tabelas que a sessão coletou: um clique abre como tab da sessão (o mesmo nível do agente e dos computadores).
+            let tables = model.sessionDatasets(data.id)
+            if !tables.isEmpty, !data.agentsCollapsed {
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(tables) { SessionDatasetRowView(sessionID: data.id, row: $0) }
+                }
+                .padding(.leading, agentIndent - SidebarMetrics.agentRowPaddingH)
+            }
         }
         .animation(MotionPolicy.shared.animation(MotionTokens.Springs.snappy), value: data.computers.map(\.id))
         .padding(.vertical, verticalPadding)
@@ -635,5 +643,35 @@ struct SummaryPillView: View {
         .buttonStyle(.plain)
         .accessibilityLabel(Text(verbatim: String(localized: "with \(data.agentRows.count) terminals", bundle: .module)))
         .accessibilityValue(Text(verbatim: data.summaryExpanded ? "expanded" : "collapsed"))
+    }
+}
+
+/// "▤ books2 · 80 rows" no card da sessão: abre a tabela numa tab da sessão.
+struct SessionDatasetRowView: View {
+    let sessionID: UUID
+    let row: SessionDatasetRow
+    @State private var hovering = false
+
+    var body: some View {
+        ActionButton(
+            .datasetOpen, id: .sidebarSessionDataset(sessionID.uuidString, row.id), argument: .select(row.id),
+            tooltip: String(localized: "Open the table in a tab", bundle: .module)
+        ) {
+            HStack(spacing: SidebarMetrics.agentRowGap) {
+                Image(systemName: "tablecells")
+                    .font(.system(size: SidebarMetrics.line2Icon + DS.Space.s0_5))
+                    .foregroundStyle(DS.Color.dataValid)
+                Text(verbatim: row.name).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary).lineLimit(1)
+                Spacer(minLength: DS.Space.s1)
+                Text(verbatim: row.rows.formatted()).dsFont(DS.Font.microNumeric).foregroundStyle(DS.Color.textTertiary).fixedSize()
+            }
+            .padding(.horizontal, SidebarMetrics.agentRowPaddingH)
+            .frame(height: SidebarMetrics.agentRowHeight)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: SidebarMetrics.agentRowRadius).fill(hovering ? DS.Color.hoverAgentRow : Color.clear))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
     }
 }

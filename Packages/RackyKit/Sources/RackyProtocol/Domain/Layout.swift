@@ -7,6 +7,8 @@ public enum PaneContent: Hashable, Codable, Sendable {
     case computerViewer(UUID)
     /// Tabela de um dataset (id ULID do `dataset`): fica numa tab própria ou ao lado do agente.
     case dataset(String)
+    /// Tela do computador de um subagente (pelo nome): uma tab da sessão como as outras, ao lado do agente ou da tabela.
+    case computer(String)
 
     private enum CodingKeys: String, CodingKey { case type, id }
     public init(from decoder: Decoder) throws {
@@ -14,6 +16,10 @@ public enum PaneContent: Hashable, Codable, Sendable {
         let type = try c.decode(String.self, forKey: .type)
         if type == "dataset" {
             self = .dataset(try c.decode(String.self, forKey: .id))
+            return
+        }
+        if type == "computer" {
+            self = .computer(try c.decode(String.self, forKey: .id))
             return
         }
         let id = try c.decode(UUID.self, forKey: .id)
@@ -30,6 +36,7 @@ public enum PaneContent: Hashable, Codable, Sendable {
         case .terminal(let id): try c.encode("terminal", forKey: .type); try c.encode(id, forKey: .id)
         case .computerViewer(let id): try c.encode("computer_viewer", forKey: .type); try c.encode(id, forKey: .id)
         case .dataset(let id): try c.encode("dataset", forKey: .type); try c.encode(id, forKey: .id)
+        case .computer(let name): try c.encode("computer", forKey: .type); try c.encode(name, forKey: .id)
         }
     }
 }

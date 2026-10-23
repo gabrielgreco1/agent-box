@@ -305,7 +305,7 @@ struct DatasetsUITests {
         f.controller.showPage = { page = $0 }
         f.controller.hidePage = { page = .workspace }
         #expect(try await f.registry.perform(.pageDatasets, .press).message == "datasets" && page == .datasets)
-        #expect(try await f.registry.perform(.pageDatasets, .press).message == "workspace" && page == .workspace)
+        #expect(try await f.registry.perform(.pageDatasets, .press).message == "datasets" && page == .datasets, "pressing again keeps the page open")
         await #expect(throws: ActionError.self) { _ = try await f.registry.perform(.datasetFilter, .select("all")) }
         await #expect(throws: ActionError.self) { _ = try await f.registry.perform(.datasetExport, .select("csv")) }
     }

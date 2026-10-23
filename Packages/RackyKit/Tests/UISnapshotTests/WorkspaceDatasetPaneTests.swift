@@ -57,6 +57,25 @@ extension WorkspaceModelTests {
         #expect(rig.model.tabs.count == 1)
     }
 
+    /// A tela do computador de um subagente é uma tab da sessão como as outras: abre, reabre a mesma e vai para o lado do agente.
+    @Test func aComputerScreenIsATabOfTheSessionAndGoesBesideTheAgent() async throws {
+        let rig = try await make(tabs: 1)
+        defer { Task { await cleanup(rig) } }
+        rig.model.contentSize = CGSize(width: 1400, height: 800)
+        rig.model.computerTitle = { "\($0) · computer" }
+        let agents = try #require(rig.model.activeTab)
+        let pane = try #require(rig.model.openComputer("books-p13"))
+        let tab = try #require(rig.model.activeTab)
+        #expect(tab.id != agents.id && tab.layout.panes.first?.content == .computer("books-p13"))
+        #expect(rig.model.displayTitle(of: tab) == "books-p13 · computer")
+        #expect(rig.model.openComputer("books-p13") == pane && rig.model.tabs.count == 2, "opening again focuses the same tab")
+        rig.model.selectTab(agents.id)
+        _ = rig.model.openComputer("books-p13", beside: true)
+        let joined = try #require(rig.model.tab(agents.id))
+        #expect(joined.layout.panes.contains { $0.content == .computer("books-p13") }, "beside the agent joins the agent's tab")
+        #expect(rig.model.tabs.count == 1)
+    }
+
     /// Soltar a tab do dataset no centro do pane do agente troca os dois de tab: a tab que fica com o agente não herda o nome do dataset.
     @Test func swappingADatasetTabWithTheAgentDoesNotLeaveTheDatasetNameOnTheAgentTab() async throws {
         let rig = try await make(tabs: 1)

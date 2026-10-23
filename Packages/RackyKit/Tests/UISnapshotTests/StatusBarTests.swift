@@ -283,7 +283,7 @@ struct StatusBarUITests {
         let (controller, registry, overlays) = controller(StatusBarContent())
         controller.agentsSource = { StatusBarAgents(working: 1, needYou: 0) }
         var opened = 0
-        try registry.register(.pageInbox) { _ in opened += 1; return "opened" }
+        try registry.register(.pageSessions) { _ in opened += 1; return "sessions" }
         await #expect(throws: ActionError.self) { _ = try await registry.perform(.statusBarOpenSegment, .select("agents")) }
         #expect(overlays.popover == nil)
 
@@ -292,7 +292,7 @@ struct StatusBarUITests {
         host.frame = NSRect(x: 0, y: 0, width: 800, height: DS.Layout.statusBarHeight)
         host.layoutSubtreeIfNeeded()
         let node = try #require(store.snapshot().find(.statusBarAgents))
-        #expect(node.action == .pageInbox && node.kind == "button")
+        #expect(node.action == .pageSessions && node.kind == "button")
         _ = try await registry.perform(try #require(node.action), .press)
         #expect(opened == 1)
     }

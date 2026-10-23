@@ -238,7 +238,7 @@ struct LibraryUITests {
     @Test func pageActionTogglesTheCenterPageAndEditProfilesOpensSettings() async throws {
         let f = try await LibraryFixture(fixedPath: true); defer { f.remove() }
         #expect(try await f.registry.perform(.pageLibrary, .press).message == "open" && f.page)
-        #expect(try await f.registry.perform(.pageLibrary, .press).message == "closed" && !f.page)
+        #expect(try await f.registry.perform(.pageLibrary, .press).message == "open" && f.page, "pressing again keeps the page open")
         _ = try await f.registry.perform(.libraryEditProfiles, .press)
         #expect(f.settingsSection == "agents")
     }

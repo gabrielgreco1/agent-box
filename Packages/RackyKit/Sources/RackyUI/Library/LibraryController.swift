@@ -199,8 +199,7 @@ final class LibraryController {
 
     func register(in registry: ActionRegistry) throws {
         try registry.register(.pageLibrary) { [unowned self] _ in
-            if isPageOpen() { hidePage(); return "closed" }
-            showPage()
+            if !isPageOpen() { showPage() }
             return "open"
         }
         try registry.register(.librarySetSection) { [unowned self] arg in

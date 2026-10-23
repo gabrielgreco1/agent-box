@@ -95,6 +95,12 @@ extension AppEnvironment {
             }
             return value
         }
+        // "Sessions" (o item que substituiu o Inbox): volta para as sessões, fecha a página do centro e o feed antigo.
+        try registry.register(.pageSessions) { [computers] _ in
+            sidebar.setInbox(open: false)
+            computers.closePage()
+            return "sessions"
+        }
         try registry.register(.pageInbox) { _ in
             sidebar.setInbox(open: !sidebar.inboxOpen)
             return sidebar.inboxOpen ? "opened" : "closed"

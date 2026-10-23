@@ -49,6 +49,8 @@ struct ComputerViewerView: View {
     var showsStrip = true
     /// Sem header próprio: as sub-tabs da sessão mostram os controles (uma barra só).
     var showsHeader = true
+    /// Num pane da sessão: o nome arrasta o pane (como o título de um terminal) e o X fecha só a tela (o computador segue).
+    var pane: ViewerPane? = nil
     @State private var badgeVisible = false
     @State private var breathing = false
 
@@ -57,7 +59,7 @@ struct ComputerViewerView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if showsHeader { ViewerHeader(controller: controller, backTitle: backTitle) }
+            if showsHeader { ViewerHeader(controller: controller, backTitle: backTitle, pane: pane) }
             if showsStrip { ViewerStrip(computers: computers, current: id) }
             if let help = model.help { helpBanner(help) }
             ZStack {
@@ -74,6 +76,8 @@ struct ComputerViewerView: View {
         .overlay { if computers.pendingExit?.computer == id { exitOverlay } }
         .a11y(.viewer(id), kind: "container", label: id)
         .task { await controller.start() }
+        // Num pane da sessão, fora da tela (tab trocada ou pane fechado) a tela do computador para de transmitir; volta ao reaparecer.
+        .onDisappear { if pane != nil { controller.stop() } }
         .onChange(of: model.keyboardCaptured) { _, captured in
             guard captured else { badgeVisible = false; return }
             badgeVisible = true
@@ -326,9 +330,18 @@ struct ViewerStrip: View {
 }
 
 /// Header de 32 (03 §11.2): nome, tipo, URL, pill de controle, Take Over / Hand Back, janela própria.
+/// O que o viewer precisa quando é um pane de sessão: arrastar, fechar e o nome do subagente.
+struct ViewerPane {
+    let id: UUID
+    let drag: PaneDragController
+    let title: String
+    let close: () -> Void
+}
+
 struct ViewerHeader: View {
     let controller: ComputerViewerController
     var backTitle: String?
+    var pane: ViewerPane? = nil
     /// Dentro das sub-tabs da sessão: sem fundo nem altura próprios e sem nome/tipo (a sub-tab já diz qual computador é).
     var embedded = false
     private var model: ComputerViewerModel { controller.model }
@@ -342,13 +355,24 @@ struct ViewerHeader: View {
                 if let backTitle {
                     DSButton(.pageClose, id: .viewerBack(id), "Back to \(backTitle)", variant: .ghost, size: .xs, symbol: "arrow.left")
                 }
-                Image(systemName: "display").foregroundStyle(DS.Color.textSecondary)
-                Text(verbatim: controller.name).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
-                    .a11y(.viewerName(id), kind: "text", label: controller.name)
+                HStack(spacing: DS.Space.s2) {
+                    Image(systemName: "display").foregroundStyle(DS.Color.textSecondary)
+                    Text(verbatim: pane?.title ?? controller.name).dsFont(DS.Font.bodyStrong).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
+                        .a11y(.viewerName(id), kind: "text", label: controller.name)
+                }
+                .overlay {
+                    if let pane { PaneDragSource(controller: pane.drag, payload: .otherPane(pane.id), title: { pane.title }) }
+                }
                 Text(verbatim: modeLabel).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
                     .a11y(.viewerMode(id), kind: "text", label: modeLabel)
                 Spacer(minLength: DS.Space.s2)
                 trailing
+                if let pane {
+                    // lint-ui: allow buttons fecha o pane da tela (layout do workspace, sem ação de registro própria)
+                    Button(action: pane.close) { Image(systemName: "xmark") }
+                        .buttonStyle(DSIconButtonStyle(.header))
+                        .dsTooltip(String(localized: "Close", bundle: .module), shortcut: nil)
+                }
             }
             .padding(.horizontal, DS.Space.s3)
             .frame(height: ViewerMetrics.header)

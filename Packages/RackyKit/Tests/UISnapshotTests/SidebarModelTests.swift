@@ -207,7 +207,7 @@ import Testing
         defer { host1.window?.close() }
         let t1 = await slice1.registry.uiTree(root: nil)
         #expect(t1.find(.sidebarSearch) == nil)
-        #expect(t1.find(.sidebarNavInbox) == nil && t1.find(.sidebarNavComputers) == nil && t1.find(.sidebarNavLibrary) == nil)
+        #expect(t1.find(.sidebarNavSessions) == nil && t1.find(.sidebarNavComputers) == nil && t1.find(.sidebarNavLibrary) == nil)
         #expect(t1.find(.sidebar) != nil)
 
         let all = AppEnvironment(environment: ["RACKY_SLICE": "4", "RACKY_SCREEN": SidebarFixtures.screenID])
@@ -215,7 +215,7 @@ import Testing
         defer { host4.window?.close() }
         try await Task.sleep(for: .milliseconds(200))
         let t4 = await all.registry.uiTree(root: nil)
-        for id in [A11yID.sidebarSearch, .sidebarNavInbox, .sidebarNavComputers, .sidebarNavLibrary] { #expect(t4.find(id) != nil, "\(id.rawValue)") }
+        for id in [A11yID.sidebarSearch, .sidebarNavSessions, .sidebarNavComputers, .sidebarNavLibrary] { #expect(t4.find(id) != nil, "\(id.rawValue)") }
     }
 
     @Test func systemActionsCopyPathBranchAndReveal() async throws {

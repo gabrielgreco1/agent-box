@@ -45,6 +45,9 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `sidebar.search.empty.clear`
 - `sidebar.nav.inbox`
 - `sidebar.nav.inbox.badge`
+- `sidebar.nav.sessions`
+- `sidebar.nav.sessions.badge`
+- `sidebar.needsYou`
 - `sidebar.nav.computers`
 - `sidebar.nav.datasets`
 - `sidebar.nav.library`
@@ -92,6 +95,7 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `sidebar.session.<id>.child.<childId>.openViewer`
 - `sidebar.session.<id>.child.<childId>.control`
 - `sidebar.session.<id>.child.<childId>.handBack`
+- `sidebar.session.<id>.dataset.<datasetId>`
 - `sidebar.pending.<id>`
 - `sidebar.pending.<id>.cancel`
 - `sidebar.cleanSessions`
@@ -929,7 +933,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 | `dataset.columns` | Dataset: colunas | — | slice3 |
 | `dataset.copyRow` | Copy Row JSON | — | slice3 |
 | `dataset.panelTab` | Dataset: aba do painel | — | slice3 |
-| `page.inbox` | Inbox | ⇧⌘I | slice2 |
+| `page.sessions` | Sessions | ⇧⌘I | slice2 |
+| `page.inbox` | Inbox (legado) | — | slice2 |
 | `page.close` | Close page | Esc | slice1 |
 | `inbox.markRead` | Mark as Read | — | slice2 |
 | `inbox.markAllRead` | Mark All as Read | — | slice2 |
