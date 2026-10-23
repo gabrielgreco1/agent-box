@@ -48,6 +48,16 @@ public final class DataHubController {
     /// Flow runs de cada orquestrador aberto e o filtro escolhido.
     public internal(set) var runs: [String: PrefectRunsState] = [:]
     public internal(set) var runsFilter: [String: PrefectRunsFilter] = [:]
+    /// Amazon S3 (conexões de verdade): o que o explorer já listou, cada pasta aberta e as prévias de arquivos.
+    var s3Tree: [String: S3Level] = [:]
+    var s3Folders: [DataObject: S3FolderState] = [:]
+    var s3Previews: [String: S3Preview] = [:]
+    @ObservationIgnored var s3Clients: [String: S3Client] = [:]
+    @ObservationIgnored var s3Providers: [String: AWSProfileCredentials] = [:]
+    @ObservationIgnored var s3Tasks: [String: Task<Void, Never>] = [:]
+    /// Leitura do S3 e do AWS CLI (trocáveis nos testes).
+    @ObservationIgnored var s3Transport: S3Client.Transport?
+    @ObservationIgnored var s3Runner: AWSProfileCredentials.Runner?
     @ObservationIgnored var store: RackyStore?
     @ObservationIgnored var vault: SecretVault?
     /// Leitura do Prefect (trocável nos testes por um servidor falso).
@@ -130,6 +140,7 @@ public final class DataHubController {
         if tableTabs[object] == nil { tableTabs[object] = .data }
         if let feeding = feedingDataset(of: object) { Task { await datasets.prepare(feeding) } }
         if case .query = object, queryText[object] == nil { queryText[object] = DataHubFixtures.sampleQuery }
+        if case .folder = object, isLiveS3(object.connectionID) { Task { await loadS3Folder(object) } }
     }
 
     public func close(_ object: DataObject) {
@@ -145,7 +156,10 @@ public final class DataHubController {
     }
 
     public func toggle(_ node: String) {
-        if expanded.contains(node) { expanded.remove(node) } else { expanded.insert(node) }
+        if expanded.contains(node) { expanded.remove(node) } else {
+            expanded.insert(node)
+            s3Expanded(node)
+        }
     }
 
     public func newQuery(on connection: String) -> DataObject {
@@ -288,7 +302,9 @@ public final class DataHubController {
             startConnecting(kind)
             return kind.rawValue
         }
+        try registry.register(.dataS3Page) { [unowned self] arg in try await s3PageAction(arg) }
         try registry.register(.dataConnectSave) { [unowned self] arg in
+            if connecting == .s3 { return try await saveS3(arg) }
             guard arg.kind == .set, let raw = arg.value, let form = try? JSONDecoder().decode(ConnectForm.self, from: Data(raw.utf8)) else {
                 throw ActionError.failed(.dataConnectSave, message: "expected set({\"name\",\"url\",\"auth\",\"user\",\"secret\"})")
             }
@@ -367,7 +383,9 @@ extension DataObject {
     }
 
     public init?(key: String) {
-        let parts = key.split(separator: ":", maxSplits: 3, omittingEmptySubsequences: false).map(String.init)
+        var parts = key.split(separator: ":", maxSplits: 3, omittingEmptySubsequences: false).map(String.init)
+        // Pasta de bucket: o nome pode ter ":" (o resto depois da conexão é o caminho inteiro).
+        if parts.first == "folder" { parts = key.split(separator: ":", maxSplits: 2, omittingEmptySubsequences: false).map(String.init) }
         guard let kind = parts.first else { return nil }
         switch (kind, parts.count) {
         case ("dataset", 2): self = .dataset(parts[1])

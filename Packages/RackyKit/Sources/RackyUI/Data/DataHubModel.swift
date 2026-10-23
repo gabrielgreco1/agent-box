@@ -96,7 +96,7 @@ public enum DataConnectionKind: String, CaseIterable, Sendable, Codable {
     /// Webhook só recebe; o resto dá para navegar e gravar.
     public var canBrowse: Bool { self != .webhook }
     /// Dá para conectar de verdade hoje (os outros tipos ainda são de exemplo; o card diz "Soon").
-    public var connectable: Bool { self == .prefect }
+    public var connectable: Bool { self == .prefect || self == .s3 }
     public var speaksSQL: Bool { family == .database || family == .warehouse }
 }
 
@@ -123,6 +123,8 @@ public struct DataNode: Identifiable, Equatable, Sendable {
     /// Linhas (tabela, aba) ou bytes (arquivo).
     public var size: Int?
     public var children: [DataNode] = []
+    /// Os filhos só se leem ao abrir (bucket do S3): mostra a seta mesmo sem filhos ainda.
+    public var lazy = false
 }
 
 /// O que está aberto numa tab da área Data.
@@ -198,6 +200,8 @@ nonisolated public struct SavedConnection: Codable, Equatable, Sendable, Identif
     public var secretID: UUID?
     public var tags: [String] = []
     public var protected = false
+    /// Amazon S3: região, bucket e como autenticar (as chaves ficam no cofre, nunca aqui).
+    public var s3: S3Settings?
 
     public var connection: DataConnection {
         DataConnection(id: id, kind: kind, name: name, tags: tags, protected: protected, address: url, children: [])

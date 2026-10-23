@@ -56,6 +56,7 @@ extension DataHubController {
         if s.kind == .prefect {
             c.children = [DataNode(id: "\(s.id)/runs", kind: .runs, name: String(localized: "Flow runs", bundle: .module))]
         }
+        if s.kind == .s3 { c.children = s3RootChildren(s) }
         return c
     }
 
@@ -121,6 +122,7 @@ extension DataHubController {
         try? await store?.setUIState(Self.savedKey, saved)
         for object in tabs where object.connectionID == id { close(object) }
         runs[id] = nil
+        forgetS3(id)
         rebuildConnections()
     }
 
