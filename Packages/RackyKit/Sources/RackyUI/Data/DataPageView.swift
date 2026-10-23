@@ -1128,7 +1128,7 @@ struct DataLineageStrip: View {
             // A seta nos cards sozinha não bastava: testers não sabiam o que o clique abre.
             if columns.flatMap(\.nodes).contains(where: { $0.action != nil && !$0.current }) {
                 Text("Click a card with › to open it: the agent opens its terminal, a table opens its rows.", bundle: .module)
-                    .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
+                    .dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
             }
         }
         .padding(.horizontal, DS.Space.s4)
@@ -1152,7 +1152,7 @@ struct DataLineageStrip: View {
             guard let name = hub.summary(ofDataset: id).map({ hub.datasets.displayName($0) }) else { return nil }
             return hub.destinations(of: object).isEmpty
                 ? String(localized: "\(name) on this Mac is the original. Nothing is copied out yet.", bundle: .module)
-                : String(localized: "\(name) on this Mac is the original. The copies only receive from it: edits made in a copy don't come back to it.", bundle: .module)
+                : String(localized: "\(name) on this Mac is the original: change the data here. The copies only receive from it, and edits made in a copy don't come back.", bundle: .module)
         case .webhook:
             guard let source = hub.copySource(of: object).map(hub.displayName(ofDatasetNamed:)) else { return nil }
             return String(localized: "Racky posts each new row of \(source) (this Mac) to this address. Nothing comes back.", bundle: .module)

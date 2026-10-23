@@ -11514,6 +11514,28 @@
           }
         }
       }
+    },
+    "Show Columns": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Columns"
+          }
+        }
+      }
+    },
+    "%@ on this Mac is the original: change the data here. The copies only receive from it, and edits made in a copy don't come back.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ on this Mac is the original: change the data here. The copies only receive from it, and edits made in a copy don't come back."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

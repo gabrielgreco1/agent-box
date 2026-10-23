@@ -922,8 +922,9 @@ struct DatasetToolbar: View {
 
     var body: some View {
         MenuButton(id: .datasetColumns, action: .datasetColumns, entries: columnEntries) {
-            Image(systemName: "tablecells")
-            if labels { Text("Columns", bundle: .module) }
+            // "Columns" sozinho competia com a aba Structure: o botão é de mostrar/esconder colunas na grade.
+            Image(systemName: "eye")
+            if labels { Text("Show Columns", bundle: .module) }
         }
         // O menu lista cada coluna com o tipo e mostra/esconde na grade; a aba Structure tem o detalhe completo.
         .help(String(localized: "Each column with its type; click one to show or hide it. The Structure tab has the full details.", bundle: .module))
