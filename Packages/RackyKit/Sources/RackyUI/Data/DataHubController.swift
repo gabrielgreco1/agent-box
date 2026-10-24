@@ -27,6 +27,8 @@ public final class DataHubController {
     /// Explorer: largura arrastada pelo usuário e se está recolhido.
     public var explorerWidth: CGFloat = 268
     public private(set) var explorerHidden = false
+    /// Conexão com o "Remove connection" pedindo confirmação inline.
+    public private(set) var confirmingRemoval: String?
     /// O usuário pediu a lista com a janela estreita: ela aparece mesmo sem a largura que o recolhimento automático exige.
     public private(set) var explorerForced = false
     /// A área Data foi aberta de dentro de uma sessão (clique na trilha): mostra "‹ Session" para voltar.
@@ -271,6 +273,10 @@ public final class DataHubController {
             guard let raw = arg.value, let object = DataObject(key: raw) else {
                 throw ActionError.failed(.dataOpen, message: String(localized: "No such object.", bundle: .module))
             }
+            // Objeto de uma conexão que não existe mais (removida): erro, em vez de uma tabela vazia rotulada "This Mac".
+            if case .dataset = object {} else if connection(object.connectionID) == nil {
+                throw ActionError.failed(.dataOpen, message: String(localized: "No such object.", bundle: .module))
+            }
             open(object)
             // Clicado de dentro de uma sessão (a trilha do dataset numa tab): leva para a área Data, já no lugar.
             if datasets.currentPage() != .datasets {
@@ -335,10 +341,16 @@ public final class DataHubController {
             guard await saveConnection(form) else { throw ActionError.failed(.dataConnectSave, message: connectError ?? "") }
             return "saved"
         }
+        // Remover apaga a conexão e a senha do cofre: o primeiro clique pede confirmação ali mesmo (`<id>`), só `<id>|confirm`
+        // remove e `cancel` desiste. Antes um clique solto (ou a varredura de cliques do teste completo) apagava sem perguntar.
         try registry.register(.dataConnectionRemove) { [unowned self] arg in
-            guard let id = arg.value else { throw ActionError.failed(.dataConnectionRemove, message: "expected select(<id>)") }
-            await removeConnection(id)
-            return id
+            guard let raw = arg.value else { throw ActionError.failed(.dataConnectionRemove, message: "expected select(<id>|<id>|confirm|cancel)") }
+            if raw == "cancel" { confirmingRemoval = nil; return "kept" }
+            let parts = raw.split(separator: "|").map(String.init)
+            guard parts.count == 2, parts[1] == "confirm" else { confirmingRemoval = raw; return "confirm" }
+            confirmingRemoval = nil
+            await removeConnection(parts[0])
+            return parts[0]
         }
         try registry.register(.dataRunsFilter) { [unowned self] arg in
             guard case .runs(let connection) = active, let raw = arg.value, let filter = PrefectRunsFilter(rawValue: raw) else {

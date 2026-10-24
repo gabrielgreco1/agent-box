@@ -542,6 +542,10 @@ extension A11yID {
     public static let dataRunsError = A11yID(unchecked: "data.runs.error")
     /// `data.connection.remove`
     public static let dataConnectionRemove = A11yID(unchecked: "data.connection.remove")
+    /// `data.connection.remove.confirm`
+    public static let dataConnectionRemoveConfirm = A11yID(unchecked: "data.connection.remove.confirm")
+    /// `data.connection.remove.cancel`
+    public static let dataConnectionRemoveCancel = A11yID(unchecked: "data.connection.remove.cancel")
     /// `data.empty`
     public static let dataEmpty = A11yID(unchecked: "data.empty")
     /// `data.production`
@@ -2411,6 +2415,8 @@ extension A11yID {
         A11yIDSpec(pattern: "data.runs.row.<id>", surface: "Páginas"),
         A11yIDSpec(pattern: "data.runs.error", surface: "Páginas"),
         A11yIDSpec(pattern: "data.connection.remove", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.connection.remove.confirm", surface: "Páginas"),
+        A11yIDSpec(pattern: "data.connection.remove.cancel", surface: "Páginas"),
         A11yIDSpec(pattern: "data.empty", surface: "Páginas"),
         A11yIDSpec(pattern: "data.production", surface: "Páginas"),
         A11yIDSpec(pattern: "data.production.pause", surface: "Páginas"),

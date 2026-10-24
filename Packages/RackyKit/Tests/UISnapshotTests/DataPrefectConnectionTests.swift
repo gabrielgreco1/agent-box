@@ -84,6 +84,8 @@ import Testing
         // Remover tira a conexão e apaga a senha.
         let secretID = try #require(saved.secretID)
         _ = try await registry.perform(.dataConnectionRemove, .select(saved.id))
+        #expect(hub.saved.contains { $0.id == saved.id }, "o primeiro clique só pede confirmação")
+        _ = try await registry.perform(.dataConnectionRemove, .select("\(saved.id)|confirm"))
         #expect(hub.saved.isEmpty && hub.connection(saved.id) == nil)
         await #expect(throws: (any Error).self) { _ = try await vault.reveal(id: secretID) }
     }

@@ -23,7 +23,7 @@ struct S3FolderView: View {
                 HStack(spacing: DS.Space.s2) {
                     Text(verbatim: "s3://" + path.joined(separator: "/")).dsFont(DS.Font.monoCell).foregroundStyle(DS.Color.textSecondary).lineLimit(1)
                     Spacer(minLength: DS.Space.s2)
-                    DSButton(.dataConnectionRemove, id: .dataConnectionRemove, "Remove connection", variant: .ghost, size: .xs, symbol: "trash", argument: .select(connection))
+                    RemoveConnectionControl(hub: hub, connection: connection, compact: true)
                 }
                 .padding(.horizontal, DS.Space.s4)
                 .frame(height: DS.Space.s8 + DS.Space.s1)

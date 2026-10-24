@@ -63,11 +63,11 @@ struct DataObjectActions: View {
             case .table(let connection, _, _):
                 button(.dataNewQuery, id: .dataQueryTarget, String(localized: "New query", bundle: .module), "terminal", .select(connection))
                 if hub.isLivePostgres(connection) {
-                    button(.dataConnectionRemove, id: .dataConnectionRemove, String(localized: "Remove connection", bundle: .module), "trash", .select(connection))
+                    RemoveConnectionControl(hub: hub, connection: connection, compact: compact)
                 }
             case .query(let connection, _):
                 if hub.isLivePostgres(connection) {
-                    button(.dataConnectionRemove, id: .dataConnectionRemove, String(localized: "Remove connection", bundle: .module), "trash", .select(connection))
+                    RemoveConnectionControl(hub: hub, connection: connection, compact: compact)
                 }
                 if compact {
                     button(.dataQueryRun, id: .dataQueryRun, String(localized: "Run", bundle: .module), "play.fill", .press)
@@ -959,8 +959,7 @@ struct PrefectRunsView: View {
                         .dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary)
                 }
                 if let saved = hub.saved.first(where: { $0.id == connectionID }) {
-                    DSButton(.dataConnectionRemove, id: .dataConnectionRemove, "Remove connection", variant: .ghost, size: .xs, symbol: "trash",
-                             argument: .select(saved.id))
+                    RemoveConnectionControl(hub: hub, connection: saved.id, compact: true)
                 }
             }
             .padding(.horizontal, DS.Space.s4)
@@ -1175,5 +1174,31 @@ struct ConnectFormView: View {
             .overlay {
                 if auth == kind { RoundedRectangle(cornerRadius: DS.Radius.sm).strokeBorder(DS.Color.textSecondary) }
             }
+    }
+}
+
+/// "Remove connection" com confirmação no lugar: o primeiro clique troca o botão por "Remove connection and its saved password?"
+/// com Remove e Cancel. Remover apaga a conexão e a senha do cofre.
+struct RemoveConnectionControl: View {
+    let hub: DataHubController
+    let connection: String
+    var compact = false
+
+    var body: some View {
+        if hub.confirmingRemoval == connection {
+            HStack(spacing: DS.Space.s1_5) {
+                Text("Remove connection and its saved password?", bundle: .module).dsFont(DS.Font.small).foregroundStyle(DS.Color.textSecondary)
+                    .lineLimit(1).fixedSize()
+                DSButton(.dataConnectionRemove, id: .dataConnectionRemoveCancel, "Cancel", variant: .outline, size: .xs, argument: .select("cancel"))
+                DSButton(.dataConnectionRemove, id: .dataConnectionRemoveConfirm, "Remove", variant: .destructive, size: .xs, argument: .select("\(connection)|confirm"))
+            }
+        } else if compact {
+            ActionButton(.dataConnectionRemove, id: .dataConnectionRemove, argument: .select(connection), tooltip: String(localized: "Remove connection", bundle: .module)) {
+                Image(systemName: "trash")
+            }
+            .buttonStyle(DSIconButtonStyle(.header))
+        } else {
+            DSButton(.dataConnectionRemove, id: .dataConnectionRemove, "Remove connection", variant: .outline, size: .sm, symbol: "trash", argument: .select(connection))
+        }
     }
 }

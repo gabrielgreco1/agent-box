@@ -52,5 +52,7 @@ struct DataPostgresLiveTests {
         _ = try await registry.perform(.dataQueryRun, .press)
         #expect(hub.queryErrors[query]?.contains("read-only") == true)
         _ = try await registry.perform(.dataConnectionRemove, .select(saved.id))
+        #expect(hub.saved.contains { $0.id == saved.id }, "o primeiro clique só pede confirmação")
+        _ = try await registry.perform(.dataConnectionRemove, .select("\(saved.id)|confirm"))
     }
 }

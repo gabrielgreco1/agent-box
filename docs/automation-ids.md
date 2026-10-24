@@ -542,6 +542,8 @@ Gerado por `scripts/gen-automation-ids.py` a partir de `docs/rebuild/spec/03-scr
 - `data.runs.row.<id>`
 - `data.runs.error`
 - `data.connection.remove`
+- `data.connection.remove.confirm`
+- `data.connection.remove.cancel`
 - `data.empty`
 - `data.production`
 - `data.production.pause`
