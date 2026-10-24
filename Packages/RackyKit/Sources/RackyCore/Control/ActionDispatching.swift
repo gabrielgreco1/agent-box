@@ -9,6 +9,9 @@ public protocol ActionDispatching: Sendable {
     /// Ação ligada a um controle (`ctl ui action <a11yID>`), se o controle estiver na tela e tiver ação.
     func actionID(forControl id: A11yID) async -> ActionID?
 
+    /// Argumento que o controle manda ao ser clicado (o mesmo de um clique de verdade).
+    func boundArgument(forControl id: A11yID) async -> ActionArgument?
+
     /// Árvore de controles montados; com `root`, só a subárvore (vazia se o ID não existe).
     func uiTree(root: A11yID?) async -> UITreeSnapshot
 
@@ -18,4 +21,8 @@ public protocol ActionDispatching: Sendable {
 
     /// Estado visível (`ctl state`); o modelo de domínio entra com T1-05.
     func appState() async -> AppStateSnapshot
+}
+
+extension ActionDispatching {
+    public func boundArgument(forControl id: A11yID) async -> ActionArgument? { nil }
 }

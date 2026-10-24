@@ -22,7 +22,7 @@ actor FakeDispatcher: ActionDispatching {
         switch id {
         case .sessionNew:
             performed.append(id)
-            return ActionResult(actionID: id, message: "arg=\(arg?.kind.rawValue ?? "nil")")
+            return ActionResult(actionID: id, message: "arg=\(arg?.kind.rawValue ?? "nil")" + (arg?.value.map { ":\($0)" } ?? ""))
         case .tabClose: throw ActionError.disabled(id, reason: "Select a session first.")
         case .viewToggleRightPanel: throw ActionError.notAvailable(id, slice: .slice2)
         case .appQuit: throw ActionError.failed(id, message: "boom")
@@ -31,6 +31,8 @@ actor FakeDispatcher: ActionDispatching {
     }
 
     func actionID(forControl id: A11yID) async -> ActionID? { tree.find(id)?.action }
+
+    func boundArgument(forControl id: A11yID) async -> ActionArgument? { tree.find(id)?.argument }
 
     func uiTree(root: A11yID?) async -> UITreeSnapshot {
         treeQueries += 1
@@ -72,6 +74,7 @@ private let sampleTree = UITreeSnapshot(
                 UITreeNode(id: .windowTitlebar, kind: "container", children: [
                     UITreeNode(id: .windowAppName, kind: "text", label: "Racky"),
                     UITreeNode(id: .tabsNew, kind: "button", label: "New Tab", action: .sessionNew),
+                    UITreeNode(id: .windowSidebarToggle, kind: "button", label: "Carries an argument", action: .sessionNew, argument: .select("supabase")),
                 ])
             ])
     ])
@@ -174,6 +177,16 @@ private func ctl(_ path: String, _ request: CtlRequest, service: AppSockService 
             let byControl = try await ctl(path, CtlRequest(command: .uiAction, target: "tabs.new")).response
             #expect(byControl?.action?.actionID == .sessionNew)
             #expect(await d.performed == [.sessionNew, .sessionNew])
+        }
+    }
+
+    /// Bug do teste completo: `ui action data.connect.kind.supabase` ia sem o "supabase" e o formulário não abria.
+    @Test func actionByControlUsesTheArgumentTheControlCarries() async throws {
+        try await withServer { path, _ in
+            let carried = try await ctl(path, CtlRequest(command: .uiAction, target: "window.sidebarToggle")).response
+            #expect(carried?.action?.message == "arg=select:supabase")
+            let explicit = try await ctl(path, CtlRequest(command: .uiAction, target: "window.sidebarToggle", argument: .select("postgres"))).response
+            #expect(explicit?.action?.message == "arg=select:postgres", "argumento explícito vence o do controle")
         }
     }
 

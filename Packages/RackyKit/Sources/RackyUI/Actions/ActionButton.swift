@@ -39,7 +39,7 @@ public struct ActionButton<Label: View>: View {
                 Self.tooltip(availability, fallback: tooltip),
                 shortcut: availability.isEnabled && tooltip != nil ? action.spec.shortcut : nil)
             if let a11yID {
-                button.a11y(a11yID, kind: "button", label: action.spec.label, action: action)
+                button.a11y(a11yID, kind: "button", label: action.spec.label, action: action, argument: argument == .press ? nil : argument)
             } else {
                 button
             }

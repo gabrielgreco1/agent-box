@@ -206,7 +206,7 @@ final class ComposerController {
                 return model.draft.createFrom
             }
             if arg.kind == .select, let value = arg.value {
-                model.draft.baseRef = value == "origin/\(model.defaultBranch ?? "main")" ? nil : value
+                model.draft.baseRef = value == model.defaultBaseRef ? nil : value
                 return model.baseLabel
             }
             guard let anchor = elements.frame(of: .overlayComposerBaseRef), let registry = self.registry else { return nil }

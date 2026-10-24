@@ -231,10 +231,13 @@ final class GitHubController {
 
     private func baseReference(for session: GitHubSessionRef, folder: URL) async -> String? {
         if let base = chips[session.id]?.baseRefName { return "origin/\(base)" }
-        if let cached = defaultBranches[session.folderPath] { return "origin/\(cached)" }
+        if let cached = defaultBranches[session.folderPath] { return cached }
         guard let name = try? await git.defaultBranch(in: folder) else { return nil }
-        defaultBranches[session.folderPath] = name
-        return "origin/\(name)"
+        // Repo só local (sem `origin`): a base é o branch local; "origin/main" não existe e o diff falhava ("Based on origin/main").
+        let hasOrigin = ((try? await git.remoteURL(in: folder)) ?? nil) != nil
+        let ref = hasOrigin ? "origin/\(name)" : name
+        defaultBranches[session.folderPath] = ref
+        return ref
     }
 
     /// Chamado pela sidebar a cada status novo: detecta push (upstream apareceu ou os commits à frente zeraram) e agenda a

@@ -12,6 +12,7 @@ public final class UIElementStore {
         public var label: String?
         public var value: String?
         public var action: ActionID?
+        public var argument: ActionArgument?
         public var parent: A11yID?
         public var frame: CGRect?
         var order: Int
@@ -28,14 +29,15 @@ public final class UIElementStore {
 
     public init() {}
 
-    func register(_ token: UUID, id: A11yID, kind: String, label: String?, value: String?, action: ActionID?, parent: A11yID?) {
-        var el = elements[token] ?? Element(id: id, kind: kind, label: label, value: value, action: action, parent: parent, frame: frames[token], order: nextOrder)
+    func register(_ token: UUID, id: A11yID, kind: String, label: String?, value: String?, action: ActionID?, argument: ActionArgument? = nil, parent: A11yID?) {
+        var el = elements[token] ?? Element(id: id, kind: kind, label: label, value: value, action: action, argument: argument, parent: parent, frame: frames[token], order: nextOrder)
         if elements[token] == nil { nextOrder += 1 }
         el.id = id
         el.kind = kind
         el.label = label
         el.value = value
         el.action = action
+        el.argument = argument
         el.parent = parent
         elements[token] = el
     }
@@ -80,7 +82,7 @@ public final class UIElementStore {
             let kids = visited.contains(el.id) ? [] : (byParent[el.id] ?? []).map { build($0, visited.union([el.id])) }
             return UITreeNode(
                 id: el.id, kind: el.kind, label: el.label, value: el.value, enabled: enabled, disabledReason: reason,
-                action: el.action,
+                action: el.action, argument: el.argument,
                 frame: el.frame.map { UIFrame(x: $0.minX, y: $0.minY, width: $0.width, height: $0.height) },
                 children: kids)
         }
@@ -120,6 +122,7 @@ private struct A11yProps: Equatable {
     var label: String?
     var value: String?
     var action: ActionID?
+    var argument: ActionArgument?
     var parent: A11yID?
 }
 
@@ -142,7 +145,7 @@ private struct A11yModifier: ViewModifier {
     }
 
     private func sync() {
-        store?.register(token, id: id, kind: props.kind, label: props.label, value: props.value, action: props.action, parent: props.parent)
+        store?.register(token, id: id, kind: props.kind, label: props.label, value: props.value, action: props.action, argument: props.argument, parent: props.parent)
     }
 }
 
@@ -150,9 +153,10 @@ extension View {
     /// Dá identificador canônico (A11yID) ao controle e o registra na árvore de `ctl ui tree`.
     /// `action` liga o controle a uma ação do registro (estado habilitado e motivo vêm de lá).
     public func a11y(
-        _ id: A11yID, kind: String = "container", label: String? = nil, value: String? = nil, action: ActionID? = nil
+        _ id: A11yID, kind: String = "container", label: String? = nil, value: String? = nil, action: ActionID? = nil,
+        argument: ActionArgument? = nil
     ) -> some View {
-        modifier(A11yParentReader(id: id, kind: kind, label: label, value: value, action: action))
+        modifier(A11yParentReader(id: id, kind: kind, label: label, value: value, action: action, argument: argument))
     }
 }
 
@@ -163,10 +167,11 @@ private struct A11yParentReader: ViewModifier {
     let label: String?
     let value: String?
     let action: ActionID?
+    let argument: ActionArgument?
     @Environment(\.a11yParent) private var parent
 
     func body(content: Content) -> some View {
         content.modifier(
-            A11yModifier(id: id, props: A11yProps(kind: kind, label: label, value: value, action: action, parent: parent)))
+            A11yModifier(id: id, props: A11yProps(kind: kind, label: label, value: value, action: action, argument: argument, parent: parent)))
     }
 }

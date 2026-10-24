@@ -14,7 +14,8 @@ enum DataMetrics {
     static let panelHeight: CGFloat = 360
     static let panelMinHeight: CGFloat = 160
     static let explorerMin: CGFloat = 200
-    static let contentMin: CGFloat = 640
+    /// Abaixo disso a lista se recolhe sozinha (com o painel direito aberto numa janela de 1440 ainda sobram ~510).
+    static let contentMin: CGFloat = 480
     static let explorerTitleMin: CGFloat = 100
     static let collapsedStripFallback: CGFloat = 220
     static let explorerMax: CGFloat = 520
@@ -109,7 +110,7 @@ struct DataPageView: View {
         return connection.protected && !hub.saved.contains { $0.id == connection.id }
     }
 
-    private var explorerShown: Bool { !hub.explorerHidden && width - hub.explorerWidth >= DataMetrics.contentMin }
+    private var explorerShown: Bool { !hub.explorerHidden && (hub.explorerForced || width - hub.explorerWidth >= DataMetrics.contentMin) }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -193,7 +194,7 @@ struct DataExplorerHeader: View {
                 Spacer(minLength: 0)
             }
             ActionButton(
-                .dataToggleExplorer, id: .dataExplorerToggle,
+                .dataToggleExplorer, id: .dataExplorerToggle, argument: .select(shown ? "hide" : "show"),
                 tooltip: !shown ? String(localized: "Show explorer", bundle: .module) : String(localized: "Hide explorer", bundle: .module)
             ) {
                 if shown {

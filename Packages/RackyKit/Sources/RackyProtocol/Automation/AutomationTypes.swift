@@ -79,13 +79,16 @@ public struct UITreeNode: Codable, Sendable, Equatable {
     public var disabledReason: String?
     /// Ação do registro disparada pelo controle, quando houver.
     public var action: ActionID?
+    /// Argumento que o controle manda junto (ex.: `select(supabase)`); `ctl ui action <id>` sem argumento usa este.
+    public var argument: ActionArgument?
     public var frame: UIFrame?
     public var children: [UITreeNode]
 
     public init(
         id: A11yID, kind: String, label: String? = nil, value: String? = nil, enabled: Bool = true,
-        disabledReason: String? = nil, action: ActionID? = nil, frame: UIFrame? = nil, children: [UITreeNode] = []
+        disabledReason: String? = nil, action: ActionID? = nil, argument: ActionArgument? = nil, frame: UIFrame? = nil, children: [UITreeNode] = []
     ) {
+        self.argument = argument
         self.id = id
         self.kind = kind
         self.label = label

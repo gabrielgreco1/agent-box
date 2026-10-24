@@ -130,6 +130,11 @@ public final class AppEnvironment {
         let flags = SliceFlags.fromEnvironment(environment)
         self.flags = flags
         self.automationEnabled = environment["RACKY_AUTOMATION"] == "1"
+        // 04 §11.3: `RACKY_MOTION_MODE=normal|instant|slow:<fator>`, só com o canal de automação ligado (revisar motion quadro a quadro).
+        if automationEnabled, let raw = environment["RACKY_MOTION_MODE"] {
+            if raw == "instant" { MotionPolicy.shared.mode = .instant }
+            else if raw.hasPrefix("slow:"), let factor = Double(raw.dropFirst(5)), factor > 0 { MotionPolicy.shared.mode = .slow(factor: factor) }
+        }
         self.dataHub = DataHubController(datasets: datasets, demo: environment["RACKY_DATA_DEMO"] == "1")
         self.headless = environment["RACKY_TEST_HEADLESS"] == "1"
         self.fixture = environment["RACKY_SCREEN"]

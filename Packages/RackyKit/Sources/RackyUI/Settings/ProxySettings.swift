@@ -206,7 +206,10 @@ extension SettingsModel {
             profile = saved
             secret = try await savedSecret(of: saved)
         } else if let draft = proxyDraft {
-            profile = try validatedProxy(draft)
+            // Testar não precisa de nome (só host e porta); o nome é exigido ao salvar.
+            var named = draft
+            if named.name.trimmingCharacters(in: .whitespaces).isEmpty { named.name = "Test" }
+            profile = try validatedProxy(named)
             if !draft.password.isEmpty {
                 secret = draft.password
             } else if let base = draft.base {

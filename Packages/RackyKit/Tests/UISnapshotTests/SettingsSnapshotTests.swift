@@ -41,6 +41,7 @@ import Testing
         let env = Self.demoEnv()
         await env.settings.refreshAgents(force: false)
         env.settings.select(section)
+        env.settings.open()  // a página só monta com o Settings aberto
         await edit(env.settings)
         snap(SettingsView(model: env.settings), env: env, size: size, name: "\(section)\(variant)-\(Int(size.width))x\(Int(size.height))")
     }

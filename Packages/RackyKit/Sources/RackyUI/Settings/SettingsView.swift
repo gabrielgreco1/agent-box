@@ -10,6 +10,12 @@ struct SettingsView: View {
     @Environment(\.actionRegistry) private var registry
 
     var body: some View {
+        // O host fica sempre na janela (escondido): sem a página aberta o conteúdo nem existe, senão os controles continuavam na
+        // árvore do `ctl` (com frames por cima da sidebar) e a view seguia atualizando fora da tela.
+        if model.isOpen { page } else { Color.clear }
+    }
+
+    private var page: some View {
         HStack(spacing: .zero) {
             SettingsNav(model: model)
                 .frame(width: SettingsMetrics.navWidth)

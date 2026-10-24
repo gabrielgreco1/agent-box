@@ -157,6 +157,7 @@ final class PaneContainerView: NSView {
         chrome.state = state
         chrome.timeline = timeline
         if case .failed(let detail) = state { chrome.errorDetail = detail }
+        if showsHeader != multiPane { needsLayout = true }  // o terminal muda de altura com o header
         showsHeader = multiPane
         present(.header, multiPane)
         present(.floating, !multiPane)
@@ -286,8 +287,11 @@ final class PaneContainerView: NSView {
 
     override func layout() {
         super.layout()
-        entry.host.frame = bounds
         let w = bounds.width
+        // Com header (pane dividido), o terminal começa abaixo dele: antes ocupava o pane inteiro e a 1ª linha e a busca (⌘F)
+        // ficavam por baixo do header.
+        let headerTop = showsHeader ? PaneMetrics.headerHeight : 0
+        entry.host.frame = NSRect(x: 0, y: headerTop, width: w, height: max(0, bounds.height - headerTop))
         hosts[.header]?.frame = NSRect(x: 0, y: 0, width: w, height: PaneMetrics.headerHeight)
         if let floating = hosts[.floating] {
             let size = floating.fittingSize

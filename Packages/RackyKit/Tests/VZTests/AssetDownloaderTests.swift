@@ -21,7 +21,8 @@ private final class Progress: Sendable {
     var all: [(Int64, Int64)] { values.withLock { $0 } }
 }
 
-@Suite struct AssetDownloaderTests {
+// Sobe um servidor HTTP local e corta a conexão no meio: sob a fase paralela o parcial às vezes nem chega ao disco. Fase serial.
+@Suite(.tags(.integration)) struct AssetDownloaderTests {
     // MARK: file://
 
     @Test func copiesALocalFileVerifiesItAndReportsProgress() async throws {

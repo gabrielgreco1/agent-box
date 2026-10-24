@@ -27,6 +27,8 @@ public final class DataHubController {
     /// Explorer: largura arrastada pelo usuário e se está recolhido.
     public var explorerWidth: CGFloat = 268
     public private(set) var explorerHidden = false
+    /// O usuário pediu a lista com a janela estreita: ela aparece mesmo sem a largura que o recolhimento automático exige.
+    public private(set) var explorerForced = false
     /// A área Data foi aberta de dentro de uma sessão (clique na trilha): mostra "‹ Session" para voltar.
     public var cameFromSession = false
     /// Quem o usuário pausou (agentes e cópias), por id.
@@ -304,8 +306,10 @@ public final class DataHubController {
             tableTabs[target] = tab
             return raw
         }
-        try registry.register(.dataQueryRun) { [unowned self] _ in
+        try registry.register(.dataQueryRun) { [unowned self] arg in
             guard let active, case .query = active else { throw ActionError.failed(.dataQueryRun, message: "no query open") }
+            // `set <sql>` escreve no editor antes de rodar (o editor não tem ação própria: sem isso a automação não digitava SQL).
+            if arg.kind == .set, let sql = arg.value { queryText[active] = sql }
             if isLivePostgres(active.connectionID) { await runQuery(active) } else { run(active) }
             return "ok"
         }
@@ -372,8 +376,14 @@ public final class DataHubController {
             await datasets.rename(id, to: parts[1])
             return datasets.name(of: id) ?? ""
         }
-        try registry.register(.dataToggleExplorer) { [unowned self] _ in
-            explorerHidden.toggle()
+        try registry.register(.dataToggleExplorer) { [unowned self] arg in
+            // O botão diz o que quer: com a lista recolhida por falta de espaço, "toggle" escondia o que já estava invisível e
+            // clicar em "Show Data list" não fazia nada.
+            switch arg.value {
+            case "show": explorerHidden = false; explorerForced = true
+            case "hide": explorerHidden = true; explorerForced = false
+            default: explorerHidden.toggle(); explorerForced = !explorerHidden
+            }
             return explorerHidden ? "hidden" : "shown"
         }
         try registry.register(.dataPauseWriter) { [unowned self] arg in

@@ -190,7 +190,9 @@ struct OnboardingDiagnosticRow: View {
                     Text(verbatim: item.detail)
                         .dsFont(DS.Font.small)
                         .foregroundStyle(item.state == .warning || item.state == .problem ? DS.Color.warning : DS.Color.textSecondary)
-                        .lineLimit(1)
+                        // Avisos e problemas dizem o que fazer: duas linhas em vez de cortar ("may compet…").
+                        .lineLimit(item.state == .warning || item.state == .problem ? 2 : 1)
+                        .fixedSize(horizontal: false, vertical: true)
                         .truncationMode(.tail)
                         .dsTooltip(item.detail)
                 }
@@ -274,7 +276,7 @@ private struct OnboardingFixButton: View {
 
     private var key: String { item.key.rawValue }
     private var id: A11yID { .onboardingItem(key + slot) }
-    private var variant: DSButtonVariant { primary ? .outline : .ghost }
+    private var variant: DSButtonVariant { .outline }
 
     var body: some View {
         switch model.effective(fix) {

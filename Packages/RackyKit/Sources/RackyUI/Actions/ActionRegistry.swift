@@ -93,6 +93,10 @@ public final class ActionRegistry: ActionDispatching {
         await onMain { $0.surface.uiTree(root: id).roots.first?.action }
     }
 
+    public nonisolated func boundArgument(forControl id: A11yID) async -> ActionArgument? {
+        await onMain { $0.surface.uiTree(root: id).roots.first?.argument }
+    }
+
     public nonisolated func uiTree(root: A11yID?) async -> UITreeSnapshot {
         await onMain { $0.surface.uiTree(root: root) }
     }

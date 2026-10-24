@@ -12,6 +12,7 @@ enum SettingsMetrics {
     static let contentSide: CGFloat = DS.Space.s8
     static let contentBottom: CGFloat = 96
     static let controlWidth: CGFloat = 240
+    static let folderControlWidth: CGFloat = 340
     static let sectionGap: CGFloat = DS.Space.s10
     static let rowGap: CGFloat = DS.Space.s4
     /// Abaixo de 560 de conteúdo o rótulo vai para cima e o controle para baixo (03 §1.5, §14.1).
@@ -66,17 +67,20 @@ struct SettingsRow<Control: View>: View {
     let title: LocalizedStringKey
     var help: LocalizedStringKey?
     var helpText: String?
+    /// Campos de pasta precisam de mais que 240 (o caminho cortava: "~/Racky/worktre…").
+    var controlWidth: CGFloat = SettingsMetrics.controlWidth
     @ViewBuilder var control: Control
 
     var body: some View {
         ViewThatFits(in: .horizontal) {
             HStack(alignment: .center, spacing: DS.Space.s4) {
-                label.frame(minWidth: SettingsMetrics.labelMinWidth, maxWidth: .infinity, alignment: .leading)
-                control.frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
+                // A largura ideal do rótulo é a mínima: uma ajuda longa quebra em 2 linhas em vez de jogar o controle para baixo.
+                label.frame(minWidth: SettingsMetrics.labelMinWidth, idealWidth: SettingsMetrics.labelMinWidth, maxWidth: .infinity, alignment: .leading)
+                control.frame(width: controlWidth, alignment: .trailing)
             }
             VStack(alignment: .leading, spacing: DS.Space.s2) {
                 label
-                control.frame(maxWidth: SettingsMetrics.controlWidth, alignment: .leading)
+                control.frame(maxWidth: controlWidth, alignment: .leading)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -94,7 +98,8 @@ struct SettingsRow<Control: View>: View {
                 Text(help, bundle: .module)
                     .dsFont(DS.Font.small)
                     .foregroundStyle(DS.Color.textSecondary)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
                     .truncationMode(.tail)
             } else if let helpText {
                 Text(verbatim: helpText)

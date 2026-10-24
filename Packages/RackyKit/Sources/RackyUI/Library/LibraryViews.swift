@@ -110,12 +110,26 @@ struct LibraryListView: View {
             : String(localized: "No skills found in ~/.claude/skills or ~/.agents/skills.", bundle: .module)
     }
 
+    /// A pasta de topo (`~/.codex`) quando outro item da lista tem o mesmo nome; senão nada.
+    private func duplicateFolder(_ item: LibraryEntry) -> String? {
+        guard controller.visibleItems.contains(where: { $0.name == item.name && $0.id != item.id }) else { return nil }
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        let path = item.path.hasPrefix(home) ? "~" + item.path.dropFirst(home.count) : item.path
+        return path.split(separator: "/").prefix(2).joined(separator: "/")
+    }
+
     private func row(_ item: LibraryEntry) -> some View {
         DSListRow(.librarySelectItem, id: .libraryRow(item.kind.rawValue, item.id), selected: item.id == controller.selectedID, argument: .select(item.id)) {
             HStack(spacing: DS.Space.s2) {
                 if let first = item.clients.first { DSAgentLogo(first.agentKind, size: LibraryMetrics.logo) }
                 VStack(alignment: .leading, spacing: DS.Space.s0_5) {
-                    Text(verbatim: item.name).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
+                    HStack(spacing: DS.Space.s1) {
+                        Text(verbatim: item.name).dsFont(DS.Font.label).foregroundStyle(DS.Color.textPrimary).lineLimit(1)
+                        // Mesmo nome em duas pastas (~/.claude e ~/.codex, ~/.agents): a lista mostrava duas linhas iguais.
+                        if let folder = duplicateFolder(item) {
+                            Text(verbatim: folder).dsFont(DS.Font.monoMicro).foregroundStyle(DS.Color.textTertiary).lineLimit(1).fixedSize()
+                        }
+                    }
                     Text(verbatim: item.summary ?? item.category.label).dsFont(DS.Font.small).foregroundStyle(DS.Color.textTertiary).lineLimit(1)
                 }
                 Spacer(minLength: DS.Space.s1)

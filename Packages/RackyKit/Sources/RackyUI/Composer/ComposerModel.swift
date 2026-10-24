@@ -37,6 +37,8 @@ final class ComposerModel {
     @ObservationIgnored var dataDestinations: () -> [ComposerDataDestination] = { [] }
 
     private(set) var defaultBranch: String?
+    /// Sem `origin` (repo só local) a base é o branch local: o rótulo não pode prometer "origin/main".
+    private(set) var hasOrigin = true
     private(set) var branchPrefix: String?
     private(set) var createFromLookup: GitBranchLookup?
     private(set) var branchNameLookup: GitBranchLookup?
@@ -232,7 +234,9 @@ final class ComposerModel {
             case .gitUser: (try? await git.gitUsernamePrefix(in: repo))?.value
             }
             let branches = (try? await git.branches(in: repo)) ?? []
+            let origin = ((try? await git.remoteURL(in: repo)) ?? nil) != nil
             guard !Task.isCancelled else { return }
+            self.hasOrigin = origin
             self.defaultBranch = base ?? project.defaultBranch
             self.branchPrefix = prefix
             self.baseBranches = branches

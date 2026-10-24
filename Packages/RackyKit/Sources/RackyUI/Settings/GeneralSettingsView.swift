@@ -71,7 +71,7 @@ struct GeneralSettingsView: View {
     }
 
     private func folderRow(_ title: LocalizedStringKey, help: LocalizedStringKey, key: String, action: ActionID, saved: String) -> some View {
-        SettingsRow(title: title, help: help) {
+        SettingsRow(title: title, help: help, controlWidth: SettingsMetrics.folderControlWidth) {
             HStack(spacing: DS.Space.s2) {
                 SettingsTextField(
                     id: .settings("general", key), action: action, saved: saved, error: model.fieldErrors["general.\(key)"], mono: true)

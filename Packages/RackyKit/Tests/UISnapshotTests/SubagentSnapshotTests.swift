@@ -160,6 +160,7 @@ actor FrameBackend: ComputerBackend {
         defer { try? FileManager.default.removeItem(at: folder) }
         env.settings.select("computers")
         env.settings.change("Subagent computers") { $0.computers.defaultSubagentMode = .ask }
+        env.settings.open()
         render(SettingsView(model: env.settings).environment(\.actionRegistry, env.registry).environment(\.elementStore, env.elements), size: CGSize(width: 1000, height: 420), name: "settingsComputers")
     }
 }

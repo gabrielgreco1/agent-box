@@ -372,7 +372,7 @@ extension ComposerModel {
     var baseLabel: String {
         let text = draft.createFromText
         if !text.isEmpty, createFromLookup != nil, createFromLookup != GitBranchLookup.none { return text }
-        return draft.baseRef ?? "origin/\(defaultBranch ?? "main")"
+        return draft.baseRef ?? defaultBaseRef
     }
 
     var locationText: String {
@@ -440,8 +440,11 @@ extension ComposerModel {
         }
     }
 
+    /// `origin/main` com remoto; `main` num repo só local.
+    var defaultBaseRef: String { hasOrigin ? "origin/\(defaultBranch ?? "main")" : (defaultBranch ?? "main") }
+
     var baseEntries: [DSMenuEntry] {
-        let main = "origin/\(defaultBranch ?? "main")"
+        let main = defaultBaseRef
         var refs = [main] + baseBranches.filter { $0 != main && $0 != defaultBranch }
         if refs.count > 30 { refs = Array(refs.prefix(30)) }
         return refs.enumerated().map { index, ref in

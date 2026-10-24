@@ -156,6 +156,7 @@ struct CtlHandler: Sendable {
             return .failure(CtlError(code: "bad_request", message: "ui action needs an ActionID or an A11yID"))
         }
         let id: ActionID
+        var argument = req.argument
         if let direct = ActionID(rawValue: target) {
             id = direct
         } else if let control = A11yID(rawValue: target) {
@@ -163,11 +164,13 @@ struct CtlHandler: Sendable {
                 return .failure(CtlError(code: "unknown_target", message: "control \(target) is not on screen or has no action"))
             }
             id = bound
+            // Sem argumento explícito, o mesmo de um clique de verdade (antes `data.connect.kind.supabase` ia sem o "supabase").
+            if argument == nil || argument == .press, let carried = await dispatcher.boundArgument(forControl: control) { argument = carried }
         } else {
             return .failure(CtlError(code: "unknown_target", message: "\(target) is neither an ActionID nor a canonical A11yID"))
         }
         do {
-            return CtlResponse(action: try await dispatcher.perform(id, req.argument))
+            return CtlResponse(action: try await dispatcher.perform(id, argument))
         } catch let e as ActionError {
             return .failure(Self.map(e))
         } catch {

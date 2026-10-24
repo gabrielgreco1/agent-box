@@ -172,7 +172,7 @@ struct PaneBannerView: View {
             switch model.state {
             case .closing:
                 DSButton(.terminalForceQuit, id: .paneClosingForceQuit(model.id), "Force Quit", variant: .outline, size: .xs, argument: arg)
-                DSButton(.terminalCancelClose, "Cancel", variant: .ghost, size: .xs, argument: arg)
+                DSButton(.terminalCancelClose, "Cancel", variant: .outline, size: .xs, argument: arg)
             case .interrupted where model.provider.isAgent:
                 if model.exactResume {
                     DSButton(.terminalResume, id: .paneInterruptedResume(model.id), "Resume", variant: .primary, size: .xs, argument: arg)
@@ -180,10 +180,10 @@ struct PaneBannerView: View {
                     DSButton(.terminalResume, id: .paneInterruptedResume(model.id), "Continue Last", variant: .primary, size: .xs, argument: arg)
                 }
                 DSButton(.terminalStartFresh, "Start Fresh", variant: .outline, size: .xs, argument: arg)
-                DSButton(.paneClose, "Close", variant: .ghost, size: .xs, argument: arg)
+                DSButton(.paneClose, "Close", variant: .outline, size: .xs, argument: arg)
             default:
                 DSButton(.terminalRestart, "Restart", variant: .outline, size: .xs, argument: arg)
-                DSButton(.paneClose, "Close", variant: .ghost, size: .xs, argument: arg)
+                DSButton(.paneClose, "Close", variant: .outline, size: .xs, argument: arg)
             }
         }
         .padding(.horizontal, DS.Space.s3)
@@ -248,9 +248,9 @@ struct PaneCardView: View {
                 HStack(spacing: DS.Space.s2) {
                     Spacer(minLength: 0)
                     if model.provider.isAgent {
-                        DSButton(.agentOpenSettings, "Open Agent Settings", variant: .ghost, size: .sm, argument: .select(model.provider.rawValue))
+                        DSButton(.agentOpenSettings, "Open Agent Settings", variant: .outline, size: .sm, argument: .select(model.provider.rawValue))
                     }
-                    DSButton(.terminalCopyStartError, "Copy Details", variant: .ghost, size: .sm, argument: arg)
+                    DSButton(.terminalCopyStartError, "Copy Details", variant: .outline, size: .sm, argument: arg)
                     DSButton(.terminalRetryStart, "Try Again", variant: .primary, size: .sm, argument: arg)
                 }
             case .exited(let code, let signal):
@@ -265,9 +265,10 @@ struct PaneCardView: View {
                     Spacer(minLength: 0)
                     if model.provider.isAgent, model.exactResume {
                         // F30: o botão que o dono quer é continuar a conversa; "Restart" confundia.
-                        DSButton(.paneClose, id: .paneExitOverlayClose(model.id), "Close", variant: .ghost, size: .sm, argument: arg)
+                        // Três botões no cartão: "Resume Conversation" cortava ("Resume Conver…"); "Close" sem contorno parecia texto.
+                        DSButton(.paneClose, id: .paneExitOverlayClose(model.id), "Close", variant: .outline, size: .sm, argument: arg)
                         DSButton(.terminalStartFresh, "Start Fresh", variant: .outline, size: .sm, argument: arg)
-                        DSButton(.terminalResume, id: .paneExitOverlayResume(model.id), "Resume Conversation", variant: .primary, size: .sm, argument: arg)
+                        DSButton(.terminalResume, id: .paneExitOverlayResume(model.id), "Resume", variant: .primary, size: .sm, argument: arg)
                     } else {
                         DSButton(.paneClose, id: .paneExitOverlayClose(model.id), "Close", variant: .outline, size: .sm, argument: arg)
                         DSButton(.terminalRestart, id: .paneExitOverlayRestart(model.id), "Restart", variant: .primary, size: .sm, argument: arg)
